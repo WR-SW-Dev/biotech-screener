@@ -61,9 +61,7 @@ CATALYST_RECOMMENDED_FIELDS: List[Tuple[str, ...]] = [
 
 # Flat dot-path keys derived from CATALYST_RECOMMENDED_FIELDS above
 # (used in to_dict() n_missing_catalyst_trace counter and tests)
-CATALYST_TRACE_KEYS: Tuple[str, ...] = tuple(
-    ".".join(path) for path in CATALYST_RECOMMENDED_FIELDS
-)
+CATALYST_TRACE_KEYS: Tuple[str, ...] = tuple(".".join(path) for path in CATALYST_RECOMMENDED_FIELDS)
 
 # --- Clinical input fields (read from csv_row at DE boundary) ---
 # These are on the csv_rows dict, not the Module 5 rec dict.
@@ -77,11 +75,13 @@ CLINICAL_CONDITIONAL_REQUIRED_FIELDS: List[str] = [
 ]
 
 # Archetypes for which clinical_score_z is required (have clinical trial data)
-CLINICAL_REQUIRED_ARCHETYPES = frozenset({
-    "drug_developer",
-    "commercial_biotech",
-    "commercial_pharma",
-})
+CLINICAL_REQUIRED_ARCHETYPES = frozenset(
+    {
+        "drug_developer",
+        "commercial_biotech",
+        "commercial_pharma",
+    }
+)
 
 CLINICAL_RECOMMENDED_FIELDS: List[str] = [
     "clinical_alpha_z",
@@ -91,8 +91,8 @@ CLINICAL_RECOMMENDED_FIELDS: List[str] = [
 
 # --- Eligibility/overlay input fields (read from rec) ---
 OVERLAY_REQUIRED_FIELDS: List[Tuple[str, ...]] = [
-    ("defensive_features",),            # dict must exist
-    ("severity",),                      # string
+    ("defensive_features",),  # dict must exist
+    ("severity",),  # string
 ]
 
 OVERLAY_RECOMMENDED_FIELDS: List[Tuple[str, ...]] = [
@@ -117,6 +117,7 @@ ALPHA_OUTPUT_RECOMMENDED_FIELDS: List[str] = [
 # =============================================================================
 # VALIDATION HELPERS
 # =============================================================================
+
 
 def _resolve_nested(d: Dict, path: Tuple[str, ...]) -> Tuple[bool, Any]:
     """Walk a nested dict along `path`. Returns (found, value)."""
@@ -187,6 +188,7 @@ def _check_row_fields(
 # INPUT VALIDATION (before DE loop)
 # =============================================================================
 
+
 class AlphaContractDiagnostics:
     """Accumulates validation results across all tickers."""
 
@@ -226,9 +228,7 @@ class AlphaContractDiagnostics:
         n_missing_rec = self.warning_field_counts.get("alpha_contract.missing_rec", 0)
         # Sum of the 3 nearest-catalyst traceability field warnings
         # (event_id, disclosed_at, source_uid from event ledger propagation)
-        n_missing_catalyst_trace = sum(
-            self.warning_field_counts.get(k, 0) for k in CATALYST_TRACE_KEYS
-        )
+        n_missing_catalyst_trace = sum(self.warning_field_counts.get(k, 0) for k in CATALYST_TRACE_KEYS)
         return {
             "alpha_contract_version": self.contract_version,
             "n_tickers_checked": self.n_tickers_checked,
@@ -238,12 +238,8 @@ class AlphaContractDiagnostics:
             "total_warnings": self.total_warnings,
             "n_missing_rec": n_missing_rec,
             "n_missing_catalyst_trace": n_missing_catalyst_trace,
-            "top_missing_required": dict(
-                sorted(self.error_field_counts.items(), key=lambda x: -x[1])[:10]
-            ),
-            "top_missing_recommended": dict(
-                sorted(self.warning_field_counts.items(), key=lambda x: -x[1])[:10]
-            ),
+            "top_missing_required": dict(sorted(self.error_field_counts.items(), key=lambda x: -x[1])[:10]),
+            "top_missing_recommended": dict(sorted(self.warning_field_counts.items(), key=lambda x: -x[1])[:10]),
             "sample_errors": self.sample_errors,
         }
 
@@ -293,14 +289,18 @@ def validate_alpha_inputs(
 
         # Catalyst fields on rec
         errs, warns = _check_rec_fields(
-            rec, CATALYST_REQUIRED_FIELDS, CATALYST_RECOMMENDED_FIELDS,
+            rec,
+            CATALYST_REQUIRED_FIELDS,
+            CATALYST_RECOMMENDED_FIELDS,
         )
         all_errors.extend(errs)
         all_warnings.extend(warns)
 
         # Overlay fields on rec
         errs, warns = _check_rec_fields(
-            rec, OVERLAY_REQUIRED_FIELDS, OVERLAY_RECOMMENDED_FIELDS,
+            rec,
+            OVERLAY_REQUIRED_FIELDS,
+            OVERLAY_RECOMMENDED_FIELDS,
         )
         all_errors.extend(errs)
         all_warnings.extend(warns)
@@ -363,16 +363,15 @@ def validate_alpha_outputs(
 
     if not alpha_cohort_enabled:
         # If alpha cohort is off, output fields are not expected
-        logger.info(
-            f"Alpha contract {ALPHA_CONTRACT_VERSION}: "
-            "alpha cohort disabled, skipping output validation"
-        )
+        logger.info(f"Alpha contract {ALPHA_CONTRACT_VERSION}: " "alpha cohort disabled, skipping output validation")
         return diag
 
     for row in csv_rows:
         ticker = row.get("ticker", "")
         errs, warns = _check_row_fields(
-            row, ALPHA_OUTPUT_REQUIRED_FIELDS, ALPHA_OUTPUT_RECOMMENDED_FIELDS,
+            row,
+            ALPHA_OUTPUT_REQUIRED_FIELDS,
+            ALPHA_OUTPUT_RECOMMENDED_FIELDS,
         )
         diag.record(ticker, errs, warns)
 
@@ -399,6 +398,7 @@ def validate_alpha_outputs(
 # =============================================================================
 # EXCEPTION
 # =============================================================================
+
 
 class AlphaContractViolation(Exception):
     """Raised when schema_mode='fail' and contract is violated."""

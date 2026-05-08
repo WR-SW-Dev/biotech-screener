@@ -1,26 +1,20 @@
 """Tests for gate fail triage drilldown (synthetic, no network)."""
+
 from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pytest
-import sys
 
 _root = str(Path(__file__).resolve().parent.parent)
 if _root not in sys.path:
     sys.path.insert(0, _root)
 
 from decision_engine import DecisionRuleset
-from scripts.triage_gate_fail import (
-    collect_top_movers,
-    find_prior_date,
-    reconstruct_movers_from_snapshots,
-    select_worst_date,
-    triage_gate_fail,
-)
 from scripts.explain_rank_shift import (
     ExplainResult,
     _feature_deltas,
@@ -28,7 +22,13 @@ from scripts.explain_rank_shift import (
     _stable_json,
     explain_rank_shift,
 )
-
+from scripts.triage_gate_fail import (
+    collect_top_movers,
+    find_prior_date,
+    reconstruct_movers_from_snapshots,
+    select_worst_date,
+    triage_gate_fail,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -62,27 +62,29 @@ def _rich_rows(tickers: List[str]) -> List[Dict[str, str]]:
     rows = []
     n = len(tickers)
     for i, t in enumerate(tickers):
-        rows.append({
-            "ticker": t,
-            "eligible": "1",
-            "archetype": "drug_developer",
-            "tier_dev": "A" if i < n // 2 else "B",
-            "composite_rank": str(i + 1),
-            "clinical_optionality_pct_dev": str(round((n - i) / n, 4)),
-            "clinical_score": str(round((n - i) * 10 / n, 2)),
-            "catalyst_mode": "specific_days",
-            "catalyst_days": str(90 + i * 10),
-            "mom_state": "neutral",
-            "momentum_score": str(round(0.5 + i * 0.02, 4)),
-            "financial_score": str(round(0.3 + i * 0.01, 4)),
-            "catalyst_score": str(round(0.6 - i * 0.01, 4)),
-            "smart_money_score": str(round(0.4 + i * 0.005, 4)),
-            "valuation_score": str(round(0.5, 4)),
-            "composite_score": str(round(1.5 + i * 0.05, 4)),
-            "coinvest_score_z": str(round(0.1 * i, 4)),
-            "alpha_cohort_raw": str(round(0.05 * (n - i), 4)),
-            "alpha_cohort_pct": str(round((n - i) / n, 4)),
-        })
+        rows.append(
+            {
+                "ticker": t,
+                "eligible": "1",
+                "archetype": "drug_developer",
+                "tier_dev": "A" if i < n // 2 else "B",
+                "composite_rank": str(i + 1),
+                "clinical_optionality_pct_dev": str(round((n - i) / n, 4)),
+                "clinical_score": str(round((n - i) * 10 / n, 2)),
+                "catalyst_mode": "specific_days",
+                "catalyst_days": str(90 + i * 10),
+                "mom_state": "neutral",
+                "momentum_score": str(round(0.5 + i * 0.02, 4)),
+                "financial_score": str(round(0.3 + i * 0.01, 4)),
+                "catalyst_score": str(round(0.6 - i * 0.01, 4)),
+                "smart_money_score": str(round(0.4 + i * 0.005, 4)),
+                "valuation_score": str(round(0.5, 4)),
+                "composite_score": str(round(1.5 + i * 0.05, 4)),
+                "coinvest_score_z": str(round(0.1 * i, 4)),
+                "alpha_cohort_raw": str(round(0.05 * (n - i), 4)),
+                "alpha_cohort_pct": str(round((n - i) / n, 4)),
+            }
+        )
     return rows
 
 
@@ -275,14 +277,24 @@ class TestExplainRankShift:
 
     def test_basic_explain(self):
         baseline_row = {
-            "ticker": "A", "financial_score_z": "0.5", "clinical_score_z": "0.3",
-            "catalyst_score_z": "0.2", "composite_score": "1.5",
-            "eligible": "1", "tier_dev": "A", "catalyst_days": "90",
+            "ticker": "A",
+            "financial_score_z": "0.5",
+            "clinical_score_z": "0.3",
+            "catalyst_score_z": "0.2",
+            "composite_score": "1.5",
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_days": "90",
         }
         candidate_row = {
-            "ticker": "A", "financial_score_z": "0.6", "clinical_score_z": "0.4",
-            "catalyst_score_z": "0.1", "composite_score": "1.7",
-            "eligible": "1", "tier_dev": "A", "catalyst_days": "60",
+            "ticker": "A",
+            "financial_score_z": "0.6",
+            "clinical_score_z": "0.4",
+            "catalyst_score_z": "0.1",
+            "composite_score": "1.7",
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_days": "60",
         }
         result = explain_rank_shift(
             as_of_date="2026-02-11",
@@ -504,10 +516,20 @@ class TestTriageGateFail:
 
         summary = triage_gate_fail(eval_json, snap_dir, out_dir)
         required_keys = {
-            "schema", "version", "candidate_id", "baseline_id",
-            "eval_mode", "verdict", "date_range", "n_evaluated",
-            "worst_date", "worst_metric_name", "worst_metric_value",
-            "top_movers", "explain_files", "notes",
+            "schema",
+            "version",
+            "candidate_id",
+            "baseline_id",
+            "eval_mode",
+            "verdict",
+            "date_range",
+            "n_evaluated",
+            "worst_date",
+            "worst_metric_name",
+            "worst_metric_value",
+            "top_movers",
+            "explain_files",
+            "notes",
         }
         assert required_keys.issubset(set(summary.keys()))
 
@@ -588,13 +610,14 @@ class TestTriageGateFail:
         rs = DecisionRuleset()
 
         summary = triage_gate_fail(
-            eval_json, snap_dir, tmp_path / "out",
-            max_tickers=5, ruleset=rs,
+            eval_json,
+            snap_dir,
+            tmp_path / "out",
+            max_tickers=5,
+            ruleset=rs,
         )
         assert len(summary["top_movers"]) >= 1
-        assert any(
-            "reconstructed" in n for n in summary["notes"]
-        )
+        assert any("reconstructed" in n for n in summary["notes"])
         # Explains should also be produced
         assert len(summary["explain_files"]) >= 1
 
@@ -631,8 +654,11 @@ class TestTriageGateFail:
 
         # No ruleset — should use actionable_rank
         summary = triage_gate_fail(
-            eval_json, snap_dir, tmp_path / "out",
-            max_tickers=5, ruleset=None,
+            eval_json,
+            snap_dir,
+            tmp_path / "out",
+            max_tickers=5,
+            ruleset=None,
         )
         assert len(summary["top_movers"]) >= 1
         assert summary["top_movers"][0]["ticker"] == "A"  # shifted by 2
@@ -654,7 +680,10 @@ class TestTriageGateFail:
         )
         # Add aggregate max_rank_shift
         eval_data["temporal_stability"]["max_rank_shift"] = {
-            "ticker": "IBRX", "shift": 201, "from": 29, "to": 230,
+            "ticker": "IBRX",
+            "shift": 201,
+            "from": 29,
+            "to": 230,
             "date": "2026-02-11",
         }
         eval_json = tmp_path / "eval.json"
@@ -662,7 +691,9 @@ class TestTriageGateFail:
 
         # No snapshots exist, no ruleset — should fall back to aggregate
         summary = triage_gate_fail(
-            eval_json, tmp_path / "empty_snaps", tmp_path / "out",
+            eval_json,
+            tmp_path / "empty_snaps",
+            tmp_path / "out",
         )
         assert len(summary["top_movers"]) == 1
         assert summary["top_movers"][0]["ticker"] == "IBRX"

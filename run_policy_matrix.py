@@ -37,12 +37,18 @@ from typing import Any, Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import DecisionRuleset, DEFAULT_RULESET
-from run_decision_ruleset_sweep import (
-    ArchiveData,
-    compute_snapshot_returns,
-    init_providers,
-    load_archive_data,
+from decision_engine import DEFAULT_RULESET, DecisionRuleset
+from run_decision_ruleset_sweep import ArchiveData, compute_snapshot_returns, init_providers, load_archive_data
+from run_decision_strategy_backtest import (
+    HORIZONS,
+    MultiHorizonReturns,
+    _percentile,
+    build_composite_baseline,
+    build_strategy_portfolio,
+    build_universe_baseline,
+    compute_multi_horizon_returns,
+    compute_portfolio_turnover,
+    evaluate_portfolio,
 )
 from run_rank_ic_backtest import (
     ARCHIVE_DIR,
@@ -51,22 +57,10 @@ from run_rank_ic_backtest import (
     compute_as_of_fence,
     compute_forward_returns,
     compute_residual_returns,
+    compute_xbi_regime,
     discover_archives,
     estimate_xbi_betas,
-    compute_xbi_regime,
 )
-from run_decision_strategy_backtest import (
-    HORIZONS,
-    MultiHorizonReturns,
-    build_strategy_portfolio,
-    build_composite_baseline,
-    build_universe_baseline,
-    evaluate_portfolio,
-    compute_portfolio_turnover,
-    compute_multi_horizon_returns,
-    _percentile,
-)
-
 
 # =============================================================================
 # MATRIX CONFIGURATION
@@ -91,6 +85,7 @@ TOP_K_VALUES = [10, 20, 30]
 # =============================================================================
 # SINGLE POLICY EVALUATION
 # =============================================================================
+
 
 def evaluate_policy(
     archive_cache: Dict[str, ArchiveData],
@@ -220,8 +215,7 @@ def evaluate_policy(
             result[f"spread_vs_topk_{h}d_mean"] = round(mean(spreads), 2)
             result[f"spread_vs_topk_{h}d_median"] = round(median(spreads), 2)
         elif vals and bvals:
-            result[f"spread_vs_topk_{h}d_mean"] = round(
-                (mean(vals) - mean(bvals)), 2)
+            result[f"spread_vs_topk_{h}d_mean"] = round((mean(vals) - mean(bvals)), 2)
             result[f"spread_vs_topk_{h}d_median"] = None
         else:
             result[f"spread_vs_topk_{h}d_mean"] = None
@@ -262,9 +256,7 @@ def evaluate_policy(
 
     # Concentration: top-3 tickers by frequency
     top3 = all_tickers.most_common(3)
-    result["top3_tickers"] = ", ".join(
-        f"{t}({c}/{len(dates)})" for t, c in top3
-    )
+    result["top3_tickers"] = ", ".join(f"{t}({c}/{len(dates)})" for t, c in top3)
 
     return result
 
@@ -272,6 +264,7 @@ def evaluate_policy(
 # =============================================================================
 # SCORING + SELECTION
 # =============================================================================
+
 
 def score_policy(row: Dict[str, Any]) -> Dict[str, Any]:
     """Compute a composite score for policy selection.
@@ -318,6 +311,7 @@ def rank_normalize(all_scores: List[Dict[str, Any]], keys: List[str]) -> List[fl
 # OUTPUT
 # =============================================================================
 
+
 def write_matrix_csv(
     rows: List[Dict[str, Any]],
     output_path: Path,
@@ -327,15 +321,28 @@ def write_matrix_csv(
         return
 
     fieldnames = [
-        "rank", "config_label", "ruleset", "tier_filter", "top_k", "ruleset_id",
-        "n_snapshots", "mean_n_positions", "unique_tickers",
-        "strat_wt_resid_20d_mean", "strat_wt_resid_60d_mean",
+        "rank",
+        "config_label",
+        "ruleset",
+        "tier_filter",
+        "top_k",
+        "ruleset_id",
+        "n_snapshots",
+        "mean_n_positions",
+        "unique_tickers",
+        "strat_wt_resid_20d_mean",
+        "strat_wt_resid_60d_mean",
         "strat_wt_resid_60d_winsor",
         "baseline_ew_resid_60d_mean",
-        "spread_vs_topk_20d_mean", "spread_vs_topk_60d_mean",
-        "hit_rate_20d_mean", "hit_rate_60d_mean",
-        "p5_60d_mean", "p10_60d_mean", "max_loss_60d_mean",
-        "mean_pos_turnover", "mean_wt_turnover_pct",
+        "spread_vs_topk_20d_mean",
+        "spread_vs_topk_60d_mean",
+        "hit_rate_20d_mean",
+        "hit_rate_60d_mean",
+        "p5_60d_mean",
+        "p10_60d_mean",
+        "max_loss_60d_mean",
+        "mean_pos_turnover",
+        "mean_wt_turnover_pct",
         "top3_tickers",
         "composite_score",
     ]
@@ -362,11 +369,12 @@ def generate_selection_report(
     # Section 1: Selection table
     lines.append("1. SELECTION TABLE (ranked by composite score)")
     lines.append("-" * 72)
-    hdr = (f"  {'#':>2} {'Config':<28} {'Resid60':>8} {'Spread':>7} "
-           f"{'Hit%':>5} {'P5':>7} {'PTO':>5} {'N':>4} {'Score':>6}")
+    hdr = (
+        f"  {'#':>2} {'Config':<28} {'Resid60':>8} {'Spread':>7} "
+        f"{'Hit%':>5} {'P5':>7} {'PTO':>5} {'N':>4} {'Score':>6}"
+    )
     lines.append(hdr)
-    lines.append(f"  {'--':>2} {'-'*28} {'-'*8} {'-'*7} "
-                 f"{'-'*5} {'-'*7} {'-'*5} {'-'*4} {'-'*6}")
+    lines.append(f"  {'--':>2} {'-'*28} {'-'*8} {'-'*7} " f"{'-'*5} {'-'*7} {'-'*5} {'-'*4} {'-'*6}")
 
     for row in ranked_rows:
         r60 = row.get("strat_wt_resid_60d_mean")
@@ -394,8 +402,7 @@ def generate_selection_report(
     lines.append("2. RECOMMENDED PHASE-2 DEFAULT")
     lines.append("-" * 72)
     lines.append(f"  Config:      {winner.get('config_label', 'n/a')}")
-    lines.append(f"  Ruleset:     {winner.get('ruleset', 'n/a')} "
-                 f"(ID: {winner.get('ruleset_id', 'n/a')})")
+    lines.append(f"  Ruleset:     {winner.get('ruleset', 'n/a')} " f"(ID: {winner.get('ruleset_id', 'n/a')})")
     lines.append(f"  Tier filter: {winner.get('tier_filter', 'n/a')}")
     lines.append(f"  Top-K:       {winner.get('top_k', 'n/a')}")
     lines.append("")
@@ -495,10 +502,9 @@ def generate_selection_report(
 # MAIN
 # =============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Policy Matrix Evaluation for Phase-2 Default Selection"
-    )
+    parser = argparse.ArgumentParser(description="Policy Matrix Evaluation for Phase-2 Default Selection")
     parser.add_argument("--output-dir", type=str, default=str(OUTPUT_DIR))
     parser.add_argument("--start", type=str, default=None)
     parser.add_argument("--end", type=str, default=None)
@@ -519,14 +525,16 @@ def main():
     for rs_name in RULESETS:
         for tf_name, tf_vals in TIER_FILTERS.items():
             for top_k in TOP_K_VALUES:
-                matrix.append({
-                    "ruleset_name": rs_name,
-                    "ruleset": rulesets[rs_name],
-                    "tier_filter_name": tf_name,
-                    "tier_filter": tf_vals,
-                    "top_k": top_k,
-                    "config_label": f"{rs_name}/{tf_name}/K{top_k}",
-                })
+                matrix.append(
+                    {
+                        "ruleset_name": rs_name,
+                        "ruleset": rulesets[rs_name],
+                        "tier_filter_name": tf_name,
+                        "tier_filter": tf_vals,
+                        "top_k": top_k,
+                        "config_label": f"{rs_name}/{tf_name}/K{top_k}",
+                    }
+                )
 
     print(f"\nPolicy Matrix: {len(matrix)} configurations")
     for m in matrix:
@@ -552,12 +560,9 @@ def main():
     snapshot_dates = [d for d, _ in archives]
     last_date = csv_provider.get_last_date()
     max_horizon = max(HORIZONS)
-    usable_dates, fence_skipped = compute_as_of_fence(
-        snapshot_dates, last_date, max_horizon
-    )
+    usable_dates, fence_skipped = compute_as_of_fence(snapshot_dates, last_date, max_horizon)
     usable_set = set(usable_dates)
-    print(f"Usable archives: {len(usable_dates)} "
-          f"(skipped {len(fence_skipped)} past fence)")
+    print(f"Usable archives: {len(usable_dates)} " f"(skipped {len(fence_skipped)} past fence)")
 
     # Phase 1: Load archives and compute returns ONCE
     print("\nPhase 1: Loading archives + computing returns ...")
@@ -571,14 +576,11 @@ def main():
         ad = load_archive_data(tar_path, date_str)
         archive_cache[date_str] = ad
 
-        mhr = compute_multi_horizon_returns(
-            chained, csv_provider, ad.tickers, date_str, HORIZONS
-        )
+        mhr = compute_multi_horizon_returns(chained, csv_provider, ad.tickers, date_str, HORIZONS)
         return_cache[date_str] = mhr
         print(f"ok (regime={mhr.regime})")
 
-    print(f"  Cached {len(archive_cache)} archives, "
-          f"{len(return_cache)} return sets")
+    print(f"  Cached {len(archive_cache)} archives, " f"{len(return_cache)} return sets")
 
     # Phase 2: Evaluate each policy
     print(f"\nPhase 2: Evaluating {len(matrix)} policies ...")
@@ -589,8 +591,12 @@ def main():
         print(f"  [{i+1}/{len(matrix)}] {label} ... ", end="", flush=True)
 
         metrics = evaluate_policy(
-            archive_cache, return_cache,
-            m["ruleset"], m["tier_filter"], m["top_k"], HORIZONS,
+            archive_cache,
+            return_cache,
+            m["ruleset"],
+            m["tier_filter"],
+            m["top_k"],
+            HORIZONS,
         )
 
         row = {
@@ -628,12 +634,17 @@ def main():
 
     json_path = output_dir / "policy_matrix_details.json"
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "generated": datetime.now().isoformat(timespec="seconds"),
-            "n_configs": len(results),
-            "n_snapshots": len(archive_cache),
-            "results": results,
-        }, f, indent=2, default=str)
+        json.dump(
+            {
+                "generated": datetime.now().isoformat(timespec="seconds"),
+                "n_configs": len(results),
+                "n_snapshots": len(archive_cache),
+                "results": results,
+            },
+            f,
+            indent=2,
+            default=str,
+        )
     print(f"  Wrote {json_path}")
 
     report_path = output_dir / "policy_selection_report.txt"
@@ -644,8 +655,7 @@ def main():
     print("\n" + "=" * 60)
     print("POLICY MATRIX RESULTS")
     print("=" * 60)
-    print(f"  {'#':>2} {'Config':<30} {'Spread60':>9} {'P5_60':>7} "
-          f"{'Hit60':>6} {'PTO':>6} {'N':>4}")
+    print(f"  {'#':>2} {'Config':<30} {'Spread60':>9} {'P5_60':>7} " f"{'Hit60':>6} {'PTO':>6} {'N':>4}")
     print(f"  {'--':>2} {'-'*30} {'-'*9} {'-'*7} {'-'*6} {'-'*6} {'-'*4}")
     for r in results[:10]:
         sp = r.get("spread_vs_topk_60d_mean")

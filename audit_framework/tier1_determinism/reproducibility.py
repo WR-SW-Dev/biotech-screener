@@ -25,11 +25,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -112,9 +108,7 @@ class ReproducibilityValidator:
 
         if isinstance(obj, dict):
             return {
-                k: self._strip_non_deterministic_fields(v)
-                for k, v in obj.items()
-                if k not in non_deterministic_keys
+                k: self._strip_non_deterministic_fields(v) for k, v in obj.items() if k not in non_deterministic_keys
             }
         elif isinstance(obj, list):
             return [self._strip_non_deterministic_fields(item) for item in obj]
@@ -167,10 +161,7 @@ class ReproducibilityValidator:
             return Decimal("1")
 
         # Calculate Spearman's rho
-        d_squared_sum = sum(
-            (rank1[ticker] - rank2[ticker]) ** 2
-            for ticker in common_tickers
-        )
+        d_squared_sum = sum((rank1[ticker] - rank2[ticker]) ** 2 for ticker in common_tickers)
 
         rho = Decimal("1") - (Decimal("6") * Decimal(d_squared_sum)) / (Decimal(n) * (Decimal(n) ** 2 - 1))
         return rho.quantize(Decimal("0.0000"))
@@ -203,9 +194,7 @@ class ReproducibilityValidator:
 
             mean = sum(scores) / len(scores)
             squared_diffs = [(s - mean) ** 2 for s in scores]
-            variance[ticker] = (sum(squared_diffs) / len(scores)).quantize(
-                Decimal("0.00000000")
-            )
+            variance[ticker] = (sum(squared_diffs) / len(scores)).quantize(Decimal("0.00000000"))
 
         return variance
 
@@ -257,9 +246,7 @@ class ReproducibilityValidator:
 
                         if re.search(pattern, line):
                             rel_path = file_path.relative_to(self.codebase_path)
-                            violations.append(
-                                f"{rel_path}:{i} - {description}: {stripped[:80]}"
-                            )
+                            violations.append(f"{rel_path}:{i} - {description}: {stripped[:80]}")
 
         return violations
 
@@ -283,9 +270,12 @@ class ReproducibilityValidator:
                 [
                     sys.executable,
                     str(self.codebase_path / "run_screen.py"),
-                    "--as-of-date", self.as_of_date,
-                    "--data-dir", str(self.codebase_path / self.data_dir),
-                    "--output", str(output_file),
+                    "--as-of-date",
+                    self.as_of_date,
+                    "--data-dir",
+                    str(self.codebase_path / self.data_dir),
+                    "--output",
+                    str(output_file),
                 ],
                 cwd=str(self.codebase_path),
                 capture_output=True,

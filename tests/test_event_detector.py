@@ -14,33 +14,34 @@ Tests CT.gov catalyst event detection:
 - Event scoring
 """
 
-import pytest
+import sys
 from datetime import date, timedelta
 from pathlib import Path
-import sys
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from ctgov_adapter import CanonicalTrialRecord, CompletionType, CTGovStatus
 from event_detector import (
-    EventType,
     CatalystEvent,
-    EventDetectorConfig,
     EventDetector,
+    EventDetectorConfig,
+    EventType,
     SimpleMarketCalendar,
-    classify_status_change,
-    classify_timeline_change,
     classify_date_confirmation,
     classify_results_posted,
+    classify_status_change,
+    classify_timeline_change,
+    compute_activity_proxy_score,
     compute_event_score,
     detect_activity_proxy_from_lookback,
-    compute_activity_proxy_score,
 )
-from ctgov_adapter import CTGovStatus, CompletionType, CanonicalTrialRecord
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -86,6 +87,7 @@ def sample_trial_record():
 # EVENT TYPE TESTS
 # ============================================================================
 
+
 class TestEventType:
     """Tests for EventType enum."""
 
@@ -116,6 +118,7 @@ class TestEventType:
 # ============================================================================
 # CATALYST EVENT TESTS
 # ============================================================================
+
 
 class TestCatalystEvent:
     """Tests for CatalystEvent dataclass."""
@@ -221,6 +224,7 @@ class TestCatalystEvent:
 # STATUS CHANGE CLASSIFICATION TESTS
 # ============================================================================
 
+
 class TestClassifyStatusChange:
     """Tests for classify_status_change function."""
 
@@ -290,6 +294,7 @@ class TestClassifyStatusChange:
 # TIMELINE CHANGE CLASSIFICATION TESTS
 # ============================================================================
 
+
 class TestClassifyTimelineChange:
     """Tests for classify_timeline_change function."""
 
@@ -330,9 +335,7 @@ class TestClassifyTimelineChange:
         new_date = date(2026, 6, 10)  # 9 days
 
         # With small noise band, this should be detected
-        event_type, impact, direction = classify_timeline_change(
-            old_date, new_date, noise_band_days=5
-        )
+        event_type, impact, direction = classify_timeline_change(old_date, new_date, noise_band_days=5)
 
         assert event_type is not None
 
@@ -367,6 +370,7 @@ class TestClassifyTimelineChange:
 # ============================================================================
 # DATE CONFIRMATION CLASSIFICATION TESTS
 # ============================================================================
+
 
 class TestClassifyDateConfirmation:
     """Tests for classify_date_confirmation function."""
@@ -435,6 +439,7 @@ class TestClassifyDateConfirmation:
 # RESULTS POSTED CLASSIFICATION TESTS
 # ============================================================================
 
+
 class TestClassifyResultsPosted:
     """Tests for classify_results_posted function."""
 
@@ -480,6 +485,7 @@ class TestClassifyResultsPosted:
 # EVENT DETECTOR CONFIG TESTS
 # ============================================================================
 
+
 class TestEventDetectorConfig:
     """Tests for EventDetectorConfig."""
 
@@ -509,6 +515,7 @@ class TestEventDetectorConfig:
 # ============================================================================
 # EVENT DETECTOR TESTS
 # ============================================================================
+
 
 class TestEventDetector:
     """Tests for EventDetector class."""
@@ -678,6 +685,7 @@ class TestEventDetector:
 # EVENT SCORING TESTS
 # ============================================================================
 
+
 class TestComputeEventScore:
     """Tests for compute_event_score function."""
 
@@ -720,6 +728,7 @@ class TestComputeEventScore:
 # ============================================================================
 # ACTIVITY PROXY DETECTION TESTS
 # ============================================================================
+
 
 class TestDetectActivityProxyFromLookback:
     """Tests for detect_activity_proxy_from_lookback function."""
@@ -829,6 +838,7 @@ class TestComputeActivityProxyScore:
 # SIMPLE MARKET CALENDAR TESTS
 # ============================================================================
 
+
 class TestSimpleMarketCalendar:
     """Tests for SimpleMarketCalendar."""
 
@@ -858,6 +868,7 @@ class TestSimpleMarketCalendar:
 # DETERMINISM TESTS
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests verifying deterministic behavior."""
 
@@ -886,10 +897,7 @@ class TestDeterminism:
             results_first_posted=None,
         )
 
-        results = [
-            detector.detect_events(current, prior, as_of_date)
-            for _ in range(5)
-        ]
+        results = [detector.detect_events(current, prior, as_of_date) for _ in range(5)]
 
         # All results should be identical
         for i in range(1, len(results)):

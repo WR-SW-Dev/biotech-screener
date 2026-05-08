@@ -7,25 +7,19 @@ Implements deterministic scoring with risk gates and audit trail.
 All functions are deterministic (no datetime.now() in scoring).
 Report generation uses provided as_of_date for timestamps.
 """
+
 import argparse
 import hashlib
 import json
 from typing import Any, Dict, List, Optional
 
-# Import risk gates for fail-closed filtering
-from risk_gates import (
-    load_market_data,
-    load_financial_data,
-    apply_all_gates,
-    compute_parameters_hash as compute_risk_gates_hash,
-)
-
 # Import from canonical manager registry
-from elite_managers import (
-    get_elite_managers,
-    get_all_managers,
-    get_elite_ciks,
-)
+from elite_managers import get_all_managers, get_elite_ciks, get_elite_managers
+
+# Import risk gates for fail-closed filtering
+from risk_gates import apply_all_gates
+from risk_gates import compute_parameters_hash as compute_risk_gates_hash
+from risk_gates import load_financial_data, load_market_data
 
 # =============================================================================
 # VERSION TRACKING
@@ -38,9 +32,10 @@ SIGNAL_SCORE_VERSION = "2.1.0"  # Updated: now loads from registry
 # MANAGER REGISTRY (loaded from canonical source)
 # =============================================================================
 
+
 def _build_manager_names() -> Dict[str, str]:
     """Build CIK -> name mapping from registry."""
-    return {m['cik']: m['name'] for m in get_all_managers()}
+    return {m["cik"]: m["name"] for m in get_all_managers()}
 
 
 def _build_elite_managers() -> set:
@@ -77,9 +72,10 @@ def get_elite_manager_ciks() -> set:
 # DATA LOADING
 # =============================================================================
 
+
 def load_data(filepath: str = "production_data/holdings_snapshots.json") -> Dict:
     """Load holdings data from JSON file."""
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -95,11 +91,7 @@ def analyze_coverage(data: Dict) -> Dict[str, Any]:
     """
     mgr_counts = [len(info["holdings"]["current"]) for info in data.values()]
     n = len(data)
-    coverage = {
-        "total_tickers": n,
-        "avg_managers": round(sum(mgr_counts) / n, 2) if n > 0 else 0,
-        "distribution": {}
-    }
+    coverage = {"total_tickers": n, "avg_managers": round(sum(mgr_counts) / n, 2) if n > 0 else 0, "distribution": {}}
     for threshold in [1, 2, 3, 4, 5, 6, 7, 8]:
         count = sum(1 for c in mgr_counts if c >= threshold)
         pct = (count / n * 100) if n > 0 else 0
@@ -111,11 +103,12 @@ def analyze_coverage(data: Dict) -> Dict[str, Any]:
 # SIGNAL SCORING
 # =============================================================================
 
+
 def calculate_signal_score(
     ticker: str,
     info: Dict,
     market_data: Optional[Dict[str, Dict[str, Any]]] = None,
-    financial_data: Optional[Dict[str, Dict[str, Any]]] = None
+    financial_data: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Calculate comprehensive signal score for a ticker.
@@ -266,6 +259,7 @@ def calculate_signal_score(
 # PARAMETER MANAGEMENT
 # =============================================================================
 
+
 def get_signal_parameters() -> Dict[str, Any]:
     """
     Get current signal scoring parameters.
@@ -298,20 +292,21 @@ def compute_signal_parameters_hash() -> str:
         First 16 characters of SHA256 hash
     """
     params = get_signal_parameters()
-    canonical = json.dumps(params, sort_keys=True, separators=(',', ':'))
-    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:16]
+    canonical = json.dumps(params, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
 
 
 # =============================================================================
 # REPORT GENERATION
 # =============================================================================
 
+
 def generate_report(
     data: Dict,
     market_data: Optional[Dict[str, Dict[str, Any]]] = None,
     financial_data: Optional[Dict[str, Dict[str, Any]]] = None,
     output_file: Optional[str] = None,
-    as_of_date: Optional[str] = None
+    as_of_date: Optional[str] = None,
 ) -> List[Dict]:
     """
     Generate institutional signal report.
@@ -375,7 +370,9 @@ def generate_report(
     # Passing signals table
     report.append("TOP 25 INSTITUTIONAL SIGNALS (PASSING RISK GATES):")
     report.append("-" * 120)
-    header = f"{'Ticker':<7} {'Score':<6} {'Mgrs':<5} {'Q/Q':<7} {'Net':<4} {'$Flow':<10} {'Conv':<5} {'Activity Summary'}"
+    header = (
+        f"{'Ticker':<7} {'Score':<6} {'Mgrs':<5} {'Q/Q':<7} {'Net':<4} {'$Flow':<10} {'Conv':<5} {'Activity Summary'}"
+    )
     report.append(header)
     report.append("-" * 120)
 
@@ -455,7 +452,7 @@ def generate_report(
     report.append("")
     # Build elite manager list dynamically from registry
     elite_mgrs = get_elite_managers()
-    elite_names = [m['short_name'] for m in elite_mgrs[:9]]
+    elite_names = [m["short_name"] for m in elite_mgrs[:9]]
     remaining = len(elite_mgrs) - 9
     elite_str = ", ".join(elite_names)
     if remaining > 0:
@@ -466,7 +463,7 @@ def generate_report(
     # Write output
     output = "\n".join(report)
     if output_file:
-        with open(output_file, 'w', encoding='utf-8', newline='\n') as f:
+        with open(output_file, "w", encoding="utf-8", newline="\n") as f:
             f.write(output)
         print(f"Report saved to: {output_file}")
 
@@ -478,41 +475,20 @@ def generate_report(
 # CLI
 # =============================================================================
 
+
 def main():
     """Command-line interface."""
-    parser = argparse.ArgumentParser(
-        description="Generate Institutional Signal Report"
-    )
+    parser = argparse.ArgumentParser(description="Generate Institutional Signal Report")
     parser.add_argument(
         "--holdings",
         type=str,
         default="production_data/holdings_snapshots.json",
-        help="Path to holdings_snapshots.json"
+        help="Path to holdings_snapshots.json",
     )
-    parser.add_argument(
-        "--market-data",
-        type=str,
-        default=None,
-        help="Path to market_data.json for risk gates"
-    )
-    parser.add_argument(
-        "--financial-data",
-        type=str,
-        default=None,
-        help="Path to financial_data.json for risk gates"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="INSTITUTIONAL_SIGNAL_REPORT.txt",
-        help="Output file path"
-    )
-    parser.add_argument(
-        "--as-of",
-        type=str,
-        default=None,
-        help="Analysis date (YYYY-MM-DD) for report header"
-    )
+    parser.add_argument("--market-data", type=str, default=None, help="Path to market_data.json for risk gates")
+    parser.add_argument("--financial-data", type=str, default=None, help="Path to financial_data.json for risk gates")
+    parser.add_argument("--output", type=str, default="INSTITUTIONAL_SIGNAL_REPORT.txt", help="Output file path")
+    parser.add_argument("--as-of", type=str, default=None, help="Analysis date (YYYY-MM-DD) for report header")
 
     args = parser.parse_args()
 
@@ -532,11 +508,7 @@ def main():
 
     # Generate report
     signals = generate_report(
-        data,
-        market_data=market_data,
-        financial_data=financial_data,
-        output_file=args.output,
-        as_of_date=args.as_of
+        data, market_data=market_data, financial_data=financial_data, output_file=args.output, as_of_date=args.as_of
     )
 
 

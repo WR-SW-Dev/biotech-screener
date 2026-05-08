@@ -13,26 +13,23 @@ Tests cover:
 """
 
 import json
-import pytest
 import tempfile
 from decimal import Decimal
 from pathlib import Path
 
-from common.run_manifest import (
-    # Hashing functions
-    compute_content_hash,
-    canonicalize_for_hash,
-    compute_results_hash,
+import pytest
+
+from common.run_manifest import (  # Hashing functions; Classes; Helpers; Constants
+    MANIFEST_VERSION,
     RESULTS_HASH_EXCLUDE_KEYS,
-    # Classes
+    DecimalEncoder,
     ManifestEntry,
     RunManifest,
-    DecimalEncoder,
-    # Helpers
+    canonicalize_for_hash,
+    compute_content_hash,
+    compute_results_hash,
     create_data_hashes,
     log_backtest_run,
-    # Constants
-    MANIFEST_VERSION,
 )
 
 
@@ -72,13 +69,7 @@ class TestComputeContentHash:
 
     def test_handles_nested_structures(self):
         """Should handle nested dicts and lists."""
-        data = {
-            "level1": {
-                "level2": {
-                    "list": [1, 2, {"deep": True}]
-                }
-            }
-        }
+        data = {"level1": {"level2": {"list": [1, 2, {"deep": True}]}}}
         result = compute_content_hash(data)
         assert result.startswith("sha256:")
 

@@ -1,4 +1,5 @@
 """Tests for tools/check_drift_cli.py — standalone drift check CLI."""
+
 from __future__ import annotations
 
 import csv
@@ -13,8 +14,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CLI_PATH = REPO_ROOT / "tools" / "check_drift_cli.py"
 
 HEADER = [
-    "ticker", "actionable_rank", "tier_dev", "eligible",
-    "composite_rank", "composite_score",
+    "ticker",
+    "actionable_rank",
+    "tier_dev",
+    "eligible",
+    "composite_rank",
+    "composite_score",
 ]
 
 
@@ -43,7 +48,9 @@ def _make_tickers(n: int, start: int = 1) -> list[dict]:
 def _run_cli(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(CLI_PATH), *args],
-        capture_output=True, text=True, cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
     )
 
 
@@ -57,9 +64,12 @@ class TestDriftCLIExitCodes:
         _write_rankings(prior, rows)
 
         result = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out"),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out"),
         )
         assert result.returncode == 0
         assert "OK" in result.stdout
@@ -72,9 +82,12 @@ class TestDriftCLIExitCodes:
         _write_rankings(prior, _make_tickers(30, start=100))
 
         result = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out"),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out"),
         )
         assert result.returncode == 2
         assert "WARN" in result.stdout
@@ -85,9 +98,12 @@ class TestDriftCLIExitCodes:
         _write_rankings(prior, _make_tickers(10))
 
         result = _run_cli(
-            "--current-csv", str(tmp_path / "nonexistent.csv"),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out"),
+            "--current-csv",
+            str(tmp_path / "nonexistent.csv"),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out"),
         )
         assert result.returncode == 2
 
@@ -97,9 +113,12 @@ class TestDriftCLIExitCodes:
         _write_rankings(current, _make_tickers(10))
 
         result = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(tmp_path / "nonexistent.csv"),
-            "--output-dir", str(tmp_path / "out"),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(tmp_path / "nonexistent.csv"),
+            "--output-dir",
+            str(tmp_path / "out"),
         )
         assert result.returncode == 2
 
@@ -115,9 +134,12 @@ class TestDriftCLIOutputFiles:
         out_dir = tmp_path / "out"
 
         _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(out_dir),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(out_dir),
         )
 
         assert (out_dir / "drift_report.json").exists()
@@ -133,9 +155,12 @@ class TestDriftCLIOutputFiles:
         out_dir = tmp_path / "out"
 
         _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(out_dir),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(out_dir),
         )
 
         report = json.loads((out_dir / "drift_report.json").read_text())
@@ -157,9 +182,12 @@ class TestDriftCLIOutputFiles:
         deep_out = tmp_path / "a" / "b" / "c"
 
         _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(deep_out),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(deep_out),
         )
 
         assert (deep_out / "drift_report.json").exists()
@@ -183,9 +211,12 @@ class TestDriftCLICustomThresholds:
 
         # With defaults → should be OK
         result_default = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out_default"),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out_default"),
         )
         assert result_default.returncode == 0
 
@@ -203,10 +234,14 @@ class TestDriftCLICustomThresholds:
             json.dump(tight, f)
 
         result_tight = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out_tight"),
-            "--thresholds", str(th_path),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out_tight"),
+            "--thresholds",
+            str(th_path),
         )
         assert result_tight.returncode == 2
 
@@ -224,10 +259,14 @@ class TestDriftCLICustomThresholds:
             json.dump(custom, f)
 
         _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out"),
-            "--thresholds", str(th_path),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--thresholds",
+            str(th_path),
         )
 
         report = json.loads((tmp_path / "out" / "drift_report.json").read_text())
@@ -243,9 +282,12 @@ class TestDriftCLIAnnotations:
         _write_rankings(prior, _make_tickers(30, start=100))
 
         result = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out"),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out"),
         )
 
         warning_lines = [l for l in result.stdout.splitlines() if l.startswith("::warning::")]
@@ -262,9 +304,12 @@ class TestDriftCLIAnnotations:
         _write_rankings(prior, rows)
 
         result = _run_cli(
-            "--current-csv", str(current),
-            "--prior-csv", str(prior),
-            "--output-dir", str(tmp_path / "out"),
+            "--current-csv",
+            str(current),
+            "--prior-csv",
+            str(prior),
+            "--output-dir",
+            str(tmp_path / "out"),
         )
 
         warning_lines = [l for l in result.stdout.splitlines() if l.startswith("::warning::")]

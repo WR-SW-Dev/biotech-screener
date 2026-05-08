@@ -9,35 +9,36 @@ Tests the tiered liquidity scoring module including:
 - GOSS-proof volume collapse
 - Audit logging
 """
+
 import json
 import tempfile
 from pathlib import Path
 
 from liquidity_scoring import (
-    classify_market_cap_tier,
-    get_adv_threshold_for_tier,
-    extract_spread_bps,
-    compute_adv_score,
-    compute_spread_score,
-    compute_liquidity_score,
-    create_liquidity_audit_record,
-    append_audit_log,
-    score_all_tickers,
-    get_parameters_snapshot,
-    compute_parameters_hash,
-    LIQUIDITY_SCORING_VERSION,
     ADV_THRESHOLDS,
-    TIER_MICRO_MAX,
-    TIER_SMALL_MAX,
-    TIER_MID_MAX,
     FLAG_WIDE_SPREAD,
+    LIQUIDITY_SCORING_VERSION,
+    TIER_MICRO_MAX,
+    TIER_MID_MAX,
+    TIER_SMALL_MAX,
+    append_audit_log,
+    classify_market_cap_tier,
+    compute_adv_score,
+    compute_liquidity_score,
+    compute_parameters_hash,
+    compute_spread_score,
+    create_liquidity_audit_record,
+    extract_spread_bps,
+    get_adv_threshold_for_tier,
+    get_parameters_snapshot,
+    score_all_tickers,
 )
 from risk_gates import FLAG_ADV_UNKNOWN, FLAG_LOW_LIQUIDITY, FLAG_PENNY_STOCK
-
 
 # =============================================================================
 # TIER CLASSIFICATION TESTS
 # =============================================================================
+
 
 class TestTierClassification:
     def test_micro_cap(self):
@@ -82,6 +83,7 @@ class TestTierClassification:
 # SPREAD EXTRACTION TESTS
 # =============================================================================
 
+
 class TestSpreadExtraction:
     def test_direct_spread_bps(self):
         """Extract direct spread_bps field."""
@@ -113,6 +115,7 @@ class TestSpreadExtraction:
 # =============================================================================
 # ADV SCORE TESTS
 # =============================================================================
+
 
 class TestADVScore:
     def test_zero_adv(self):
@@ -149,6 +152,7 @@ class TestADVScore:
 # SPREAD SCORE TESTS
 # =============================================================================
 
+
 class TestSpreadScore:
     def test_tight_spread(self):
         """Spread <= 50bps = full score (30)."""
@@ -175,6 +179,7 @@ class TestSpreadScore:
 # =============================================================================
 # FULL LIQUIDITY SCORE TESTS
 # =============================================================================
+
 
 class TestLiquidityScore:
     def test_good_liquidity_large_cap(self):
@@ -284,6 +289,7 @@ class TestLiquidityScore:
 # AUDIT LOGGING TESTS
 # =============================================================================
 
+
 class TestAuditLogging:
     def test_create_audit_record(self):
         """Audit record has required fields."""
@@ -297,9 +303,7 @@ class TestAuditLogging:
             "spread_score": 25,
             "risk_flags": [],
         }
-        record = create_liquidity_audit_record(
-            "TEST", score_result, "2024-01-15"
-        )
+        record = create_liquidity_audit_record("TEST", score_result, "2024-01-15")
 
         assert record["ticker"] == "TEST"
         assert record["as_of_date"] == "2024-01-15"
@@ -317,7 +321,7 @@ class TestAuditLogging:
         append_audit_log(str(log_path), record1)
         append_audit_log(str(log_path), record2)
 
-        lines = log_path.read_text().strip().split('\n')
+        lines = log_path.read_text().strip().split("\n")
         assert len(lines) == 2
 
         parsed1 = json.loads(lines[0])
@@ -334,10 +338,7 @@ class TestAuditLogging:
         log_path = tmp_path / "audit.jsonl"
 
         results = score_all_tickers(
-            ["B", "A"],  # Out of order - should be sorted
-            market_data,
-            "2024-01-15",
-            str(log_path)
+            ["B", "A"], market_data, "2024-01-15", str(log_path)  # Out of order - should be sorted
         )
 
         # Results should be sorted by ticker
@@ -346,13 +347,14 @@ class TestAuditLogging:
 
         # Audit log should exist
         assert log_path.exists()
-        lines = log_path.read_text().strip().split('\n')
+        lines = log_path.read_text().strip().split("\n")
         assert len(lines) == 2
 
 
 # =============================================================================
 # DETERMINISM TESTS
 # =============================================================================
+
 
 class TestDeterminism:
     def test_same_input_same_output(self):
@@ -398,4 +400,5 @@ class TestDeterminism:
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])

@@ -1,4 +1,5 @@
 """Tests for regime classifier (backtest/regime.py)."""
+
 import sys
 from pathlib import Path
 
@@ -9,15 +10,15 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backtest.regime import (
-    compute_regime_series,
-    assign_regime_to_rebalance_dates,
-    BULL,
     BEAR,
+    BULL,
     CHOP,
-    CHOP_LOWVOL,
     CHOP_HIGHVOL,
+    CHOP_LOWVOL,
     MA_SLOW_WINDOW,
     WARMUP_DAYS,
+    assign_regime_to_rebalance_dates,
+    compute_regime_series,
 )
 
 
@@ -40,11 +41,13 @@ def _make_price_series(
     daily_rets = trend + vol * rng.randn(n_days)
     daily_rets[0] = 0.0
     prices = start_price * np.cumprod(1 + daily_rets)
-    return pd.DataFrame({
-        "date": [d.strftime("%Y-%m-%d") for d in dates],
-        "ticker": ticker,
-        "close": prices,
-    })
+    return pd.DataFrame(
+        {
+            "date": [d.strftime("%Y-%m-%d") for d in dates],
+            "ticker": ticker,
+            "close": prices,
+        }
+    )
 
 
 class TestRegimeClassification:
@@ -75,9 +78,7 @@ class TestRegimeClassification:
         # BEAR should still be a meaningful fraction (>15%) and more common than BULL
         assert bear_pct > 0.15, f"Expected >15% BEAR in downtrend, got {bear_pct:.1%}"
         bull_pct = counts.get(BULL, 0) / len(valid)
-        assert bear_pct > bull_pct, (
-            f"BEAR ({bear_pct:.1%}) should exceed BULL ({bull_pct:.1%}) in downtrend"
-        )
+        assert bear_pct > bull_pct, f"BEAR ({bear_pct:.1%}) should exceed BULL ({bull_pct:.1%}) in downtrend"
 
     def test_flat_noisy_is_chop(self):
         """No trend + moderate vol → mostly CHOP."""
@@ -124,9 +125,7 @@ class TestRebalanceDateMapping:
         valid_dates = regime_df.dropna(subset=["regime"])
         last_date = valid_dates["date"].iloc[-1]
 
-        result = assign_regime_to_rebalance_dates(
-            regime_df, [last_date]
-        )
+        result = assign_regime_to_rebalance_dates(regime_df, [last_date])
         assert last_date in result
         assert result[last_date] in (BULL, BEAR, CHOP)
 
@@ -135,9 +134,7 @@ class TestRebalanceDateMapping:
         prices = _make_price_series(n_days=500, seed=70)
         regime_df = compute_regime_series(prices, market_ticker="XBI")
 
-        result = assign_regime_to_rebalance_dates(
-            regime_df, ["2020-01-01"]  # well before any data
-        )
+        result = assign_regime_to_rebalance_dates(regime_df, ["2020-01-01"])  # well before any data
         assert result["2020-01-01"] == CHOP
 
     def test_multiple_dates_all_mapped(self):
@@ -159,16 +156,16 @@ class TestChopSplit:
         """With split_chop=True, CHOP is replaced by CHOP_LOWVOL / CHOP_HIGHVOL."""
         prices = _make_price_series(n_days=500, trend=0.0, vol=0.015, seed=30)
         regime_df = compute_regime_series(
-            prices, market_ticker="XBI", split_chop=True,
+            prices,
+            market_ticker="XBI",
+            split_chop=True,
         )
 
         valid = regime_df.dropna(subset=["regime"])
         labels = set(valid["regime"].unique())
         # CHOP should not appear; at least one of the sub-labels should
         assert CHOP not in labels, f"CHOP should not appear with split_chop=True, got {labels}"
-        assert labels.issubset({BULL, BEAR, CHOP_LOWVOL, CHOP_HIGHVOL}), (
-            f"Unexpected labels: {labels}"
-        )
+        assert labels.issubset({BULL, BEAR, CHOP_LOWVOL, CHOP_HIGHVOL}), f"Unexpected labels: {labels}"
         chop_labels = labels & {CHOP_LOWVOL, CHOP_HIGHVOL}
         assert len(chop_labels) > 0, f"Expected CHOP_LOWVOL or CHOP_HIGHVOL, got {labels}"
 
@@ -203,8 +200,7 @@ class TestChopSplit:
         n_chop_low = (valid_split["regime"] == CHOP_LOWVOL).sum()
         n_chop_high = (valid_split["regime"] == CHOP_HIGHVOL).sum()
         assert n_chop_low + n_chop_high == n_chop, (
-            f"CHOP_LOWVOL ({n_chop_low}) + CHOP_HIGHVOL ({n_chop_high}) "
-            f"!= CHOP ({n_chop})"
+            f"CHOP_LOWVOL ({n_chop_low}) + CHOP_HIGHVOL ({n_chop_high}) " f"!= CHOP ({n_chop})"
         )
 
     def test_split_chop_bull_bear_unchanged(self):

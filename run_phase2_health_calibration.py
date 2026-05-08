@@ -43,40 +43,34 @@ from decision_engine import (
     compute_decision_fields,
     compute_target_weights,
 )
-from run_decision_ruleset_sweep import (
-    ArchiveData,
-    load_archive_data,
-)
+from run_decision_ruleset_sweep import ArchiveData, load_archive_data
 from run_phase2_snapshot_delta import (
+    DEFAULT_HEALTH_THRESHOLDS,
+    PHASE2_PINNED_RULESET_ID,
+    RECON_TIER_FILTER,
+    RECON_TOP_K,
     CatalystCoverage,
     DeltaResult,
     HealthResult,
     Phase2HealthThresholds,
-    DEFAULT_HEALTH_THRESHOLDS,
     SingleResult,
     SnapshotData,
     compute_delta,
     compute_health_gate,
     compute_single_snapshot_summary,
     generate_health_json,
-    PHASE2_PINNED_RULESET_ID,
-    RECON_TIER_FILTER,
-    RECON_TOP_K,
 )
 
 ARCHIVE_DIR = PROJECT_ROOT / "data" / "archives"
-PHASE2_RULESET_PATH = (
-    PROJECT_ROOT / "production_data" / "decision_rulesets" / "v1.3.0_candidate.json"
-)
-PHASE2_HEALTH_THRESHOLDS_PATH = (
-    PROJECT_ROOT / "production_data" / "phase2_health_thresholds" / "v1.json"
-)
+PHASE2_RULESET_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "v1.3.0_candidate.json"
+PHASE2_HEALTH_THRESHOLDS_PATH = PROJECT_ROOT / "production_data" / "phase2_health_thresholds" / "v1.json"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 
 
 # ---------------------------------------------------------------------------
 # Archive → SnapshotData conversion
 # ---------------------------------------------------------------------------
+
 
 def _build_snapshot_from_archive(
     archive_data: ArchiveData,
@@ -132,31 +126,37 @@ def _build_snapshot_from_archive(
         # Compute decision fields (only meaningful for drug_developer)
         if archetype == "drug_developer" and rec is not None:
             fields = compute_decision_fields(
-                rec, archetype, opt, ruleset=ruleset, est_cost_bps=est_cost_bps,
+                rec,
+                archetype,
+                opt,
+                ruleset=ruleset,
+                est_cost_bps=est_cost_bps,
             )
         else:
             fields = {}
 
         composite_rank = rank_by_ticker.get(ticker)
-        ranking_rows.append({
-            "ticker": ticker,
-            "archetype": archetype,
-            "composite_rank": composite_rank or 999,
-            "composite_score": row.get("composite_score", ""),
-            "tier_dev": fields.get("tier_dev", ""),
-            "eligible": fields.get("eligible", ""),
-            "catalyst_mode": fields.get("catalyst_mode", ""),
-            "catalyst_days": fields.get("catalyst_days", ""),
-            "size_band": fields.get("size_band", ""),
-            "risk_flags": fields.get("risk_flags", ""),
-            "mom_state": fields.get("mom_state", ""),
-            "tier_reason": fields.get("tier_reason", ""),
-            "actionable_rank": "",
-            "target_weight_pct": "",
-            "decision_engine_ruleset_id": ruleset.ruleset_id,
-            "decision_engine_version": "v1.2.0",
-            "clinical_optionality_pct_dev": opt if opt is not None else "",
-        })
+        ranking_rows.append(
+            {
+                "ticker": ticker,
+                "archetype": archetype,
+                "composite_rank": composite_rank or 999,
+                "composite_score": row.get("composite_score", ""),
+                "tier_dev": fields.get("tier_dev", ""),
+                "eligible": fields.get("eligible", ""),
+                "catalyst_mode": fields.get("catalyst_mode", ""),
+                "catalyst_days": fields.get("catalyst_days", ""),
+                "size_band": fields.get("size_band", ""),
+                "risk_flags": fields.get("risk_flags", ""),
+                "mom_state": fields.get("mom_state", ""),
+                "tier_reason": fields.get("tier_reason", ""),
+                "actionable_rank": "",
+                "target_weight_pct": "",
+                "decision_engine_ruleset_id": ruleset.ruleset_id,
+                "decision_engine_version": "v1.2.0",
+                "clinical_optionality_pct_dev": opt if opt is not None else "",
+            }
+        )
 
     if not ranking_rows:
         return None
@@ -189,11 +189,19 @@ def _build_snapshot_from_archive(
                 cand_cost_bps = cost_est.round_trip_bps
 
         fields = compute_decision_fields(
-            rec, rr["archetype"], opt, ruleset=ruleset, est_cost_bps=cand_cost_bps,
+            rec,
+            rr["archetype"],
+            opt,
+            ruleset=ruleset,
+            est_cost_bps=cand_cost_bps,
         )
         composite_rank = rank_by_ticker.get(ticker)
         sort_key = compute_actionable_sort_key(
-            fields, rr["archetype"], opt, composite_rank, ticker,
+            fields,
+            rr["archetype"],
+            opt,
+            composite_rank,
+            ticker,
             catalyst_event_type=rec.get("catalyst_event_type", ""),
             catalyst_source=rec.get("catalyst_source", ""),
             ruleset=ruleset,
@@ -208,10 +216,7 @@ def _build_snapshot_from_archive(
         pos["actionable_rank"] = i
 
     # Compute target weights
-    weight_input = [
-        {"ticker": p["ticker"], "size_band": p["size_band"]}
-        for p in selected
-    ]
+    weight_input = [{"ticker": p["ticker"], "size_band": p["size_band"]} for p in selected]
     weighted = compute_target_weights(weight_input, ruleset=ruleset)
     for p, w in zip(selected, weighted):
         p["target_weight_pct"] = w.get("target_weight_pct", 0.0)
@@ -226,9 +231,7 @@ def _build_snapshot_from_archive(
 
     # Build DataFrames
     rankings_df = pd.DataFrame(ranking_rows)
-    portfolio_df = pd.DataFrame(selected) if selected else pd.DataFrame(
-        columns=list(ranking_rows[0].keys())
-    )
+    portfolio_df = pd.DataFrame(selected) if selected else pd.DataFrame(columns=list(ranking_rows[0].keys()))
 
     return SnapshotData(
         date=archive_data.date_str,
@@ -244,6 +247,7 @@ def _build_snapshot_from_archive(
 # ---------------------------------------------------------------------------
 # Quantile helpers
 # ---------------------------------------------------------------------------
+
 
 def _quantiles(values: List[float]) -> Dict[str, float]:
     """Compute P5, P25, P50, P75, P90, P95 for a list of values."""
@@ -275,6 +279,7 @@ def _quantiles(values: List[float]) -> Dict[str, float]:
 # ---------------------------------------------------------------------------
 # Main calibration
 # ---------------------------------------------------------------------------
+
 
 def run_calibration(
     archive_dir: Path,
@@ -339,24 +344,26 @@ def run_calibration(
             # First snapshot: single-snapshot mode
             result = compute_single_snapshot_summary(current)
             health = compute_health_gate(current, None, result, thresholds=ht)
-            per_date_records.append({
-                "date": current.date,
-                "mode": "single",
-                "status": health.status,
-                "reasons": health.reasons,
-                "metrics": health.metrics,
-                "portfolio_size": len(current.portfolio),
-                # Delta-specific (N/A for single)
-                "name_turnover_pct": None,
-                "weight_l1_delta": None,
-                "catalyst_coverage_pct": health.metrics.get("catalyst_coverage_pct"),
-                "a_count": health.metrics.get("a_count"),
-                "catalyst_drop_pp": None,
-                "n_entrants": None,
-                "n_exits": None,
-                "dev_optionality_coverage_pct": health.metrics.get("dev_optionality_coverage_pct"),
-                "dev_above_a_floor_count": health.metrics.get("dev_above_a_floor_count"),
-            })
+            per_date_records.append(
+                {
+                    "date": current.date,
+                    "mode": "single",
+                    "status": health.status,
+                    "reasons": health.reasons,
+                    "metrics": health.metrics,
+                    "portfolio_size": len(current.portfolio),
+                    # Delta-specific (N/A for single)
+                    "name_turnover_pct": None,
+                    "weight_l1_delta": None,
+                    "catalyst_coverage_pct": health.metrics.get("catalyst_coverage_pct"),
+                    "a_count": health.metrics.get("a_count"),
+                    "catalyst_drop_pp": None,
+                    "n_entrants": None,
+                    "n_exits": None,
+                    "dev_optionality_coverage_pct": health.metrics.get("dev_optionality_coverage_pct"),
+                    "dev_above_a_floor_count": health.metrics.get("dev_above_a_floor_count"),
+                }
+            )
         else:
             prior = snapshots[idx - 1]
             result = compute_delta(current, prior)
@@ -365,23 +372,25 @@ def run_calibration(
             # Compute catalyst drop
             cat_drop = result.catalyst_coverage_prior.pct - result.catalyst_coverage_current.pct
 
-            per_date_records.append({
-                "date": current.date,
-                "mode": "delta",
-                "status": health.status,
-                "reasons": health.reasons,
-                "metrics": health.metrics,
-                "portfolio_size": len(current.portfolio),
-                "name_turnover_pct": result.name_turnover_pct,
-                "weight_l1_delta": result.weight_l1_delta,
-                "catalyst_coverage_pct": result.catalyst_coverage_current.pct,
-                "a_count": result.tier_counts_current.get("A", 0),
-                "catalyst_drop_pp": round(cat_drop, 1),
-                "n_entrants": len(result.entrants),
-                "n_exits": len(result.exits),
-                "dev_optionality_coverage_pct": health.metrics.get("dev_optionality_coverage_pct"),
-                "dev_above_a_floor_count": health.metrics.get("dev_above_a_floor_count"),
-            })
+            per_date_records.append(
+                {
+                    "date": current.date,
+                    "mode": "delta",
+                    "status": health.status,
+                    "reasons": health.reasons,
+                    "metrics": health.metrics,
+                    "portfolio_size": len(current.portfolio),
+                    "name_turnover_pct": result.name_turnover_pct,
+                    "weight_l1_delta": result.weight_l1_delta,
+                    "catalyst_coverage_pct": result.catalyst_coverage_current.pct,
+                    "a_count": result.tier_counts_current.get("A", 0),
+                    "catalyst_drop_pp": round(cat_drop, 1),
+                    "n_entrants": len(result.entrants),
+                    "n_exits": len(result.exits),
+                    "dev_optionality_coverage_pct": health.metrics.get("dev_optionality_coverage_pct"),
+                    "dev_above_a_floor_count": health.metrics.get("dev_above_a_floor_count"),
+                }
+            )
 
     # --- Phase 3: Compute summary statistics ---
     delta_records = [r for r in per_date_records if r["mode"] == "delta"]
@@ -418,8 +427,13 @@ def run_calibration(
     # 4a. Summary CSV
     summary_csv_path = output_dir / "phase2_health_calibration_summary.csv"
     _write_summary_csv(
-        summary_csv_path, status_counts, delta_status_counts,
-        reason_counts, distributions, len(all_records), len(delta_records),
+        summary_csv_path,
+        status_counts,
+        delta_status_counts,
+        reason_counts,
+        distributions,
+        len(all_records),
+        len(delta_records),
     )
     print(f"  -> {summary_csv_path}")
 
@@ -471,8 +485,13 @@ def run_calibration(
     # 4c. Threshold recommendation report
     report_path = output_dir / "phase2_health_threshold_recommendation.txt"
     report = _generate_recommendation_report(
-        status_counts, delta_status_counts, reason_counts,
-        distributions, per_date_records, ruleset, ht,
+        status_counts,
+        delta_status_counts,
+        reason_counts,
+        distributions,
+        per_date_records,
+        ruleset,
+        ht,
     )
     with open(report_path, "w") as f:
         f.write(report)
@@ -518,11 +537,21 @@ def _write_summary_csv(
         writer.writerow([])
         writer.writerow(["section", "metric", "min", "p5", "p25", "p50", "p75", "p90", "p95", "max", "mean"])
         for metric, dist in distributions.items():
-            writer.writerow([
-                "distribution", metric,
-                dist["min"], dist["p5"], dist["p25"], dist["p50"],
-                dist["p75"], dist["p90"], dist["p95"], dist["max"], dist["mean"],
-            ])
+            writer.writerow(
+                [
+                    "distribution",
+                    metric,
+                    dist["min"],
+                    dist["p5"],
+                    dist["p25"],
+                    dist["p50"],
+                    dist["p75"],
+                    dist["p90"],
+                    dist["p95"],
+                    dist["max"],
+                    dist["mean"],
+                ]
+            )
 
 
 def _generate_recommendation_report(
@@ -633,11 +662,14 @@ def _generate_recommendation_report(
     p90_turn = turnover_d.get("p90", 0)
     p95_turn = turnover_d.get("p95", 0)
     warn_rate_turn = sum(
-        1 for r in per_date_records
+        1
+        for r in per_date_records
         if r["name_turnover_pct"] is not None and r["name_turnover_pct"] > ht.warn_turnover_pct
     )
     lines.append(f"  Turnover WARN ({ht.warn_turnover_pct}%):")
-    lines.append(f"    Fires {warn_rate_turn}/{n_deltas} delta dates ({round(warn_rate_turn/n_deltas*100, 1) if n_deltas else 0}%)")
+    lines.append(
+        f"    Fires {warn_rate_turn}/{n_deltas} delta dates ({round(warn_rate_turn/n_deltas*100, 1) if n_deltas else 0}%)"
+    )
     lines.append(f"    P90={p90_turn}%, P95={p95_turn}%")
     if p95_turn > 0 and ht.warn_turnover_pct < p90_turn:
         lines.append(f"    -> Consider raising to ~{round(p90_turn + 5, -1)}% to reduce noise (fires below P90)")
@@ -651,11 +683,12 @@ def _generate_recommendation_report(
     weight_d = distributions.get("weight_l1_pct", {})
     p90_wt = weight_d.get("p90", 0)
     warn_rate_wt = sum(
-        1 for r in per_date_records
-        if r["weight_l1_delta"] is not None and r["weight_l1_delta"] > ht.warn_weight_l1_pct
+        1 for r in per_date_records if r["weight_l1_delta"] is not None and r["weight_l1_delta"] > ht.warn_weight_l1_pct
     )
     lines.append(f"  Weight L1 WARN ({ht.warn_weight_l1_pct}%):")
-    lines.append(f"    Fires {warn_rate_wt}/{n_deltas} delta dates ({round(warn_rate_wt/n_deltas*100, 1) if n_deltas else 0}%)")
+    lines.append(
+        f"    Fires {warn_rate_wt}/{n_deltas} delta dates ({round(warn_rate_wt/n_deltas*100, 1) if n_deltas else 0}%)"
+    )
     lines.append(f"    P90={p90_wt}%")
     if warn_rate_wt == 0:
         lines.append(f"    -> Never fires; may be too loose or data doesn't exhibit high churn")
@@ -669,11 +702,14 @@ def _generate_recommendation_report(
     cat_d = distributions.get("catalyst_coverage_pct", {})
     p5_cat = cat_d.get("p5", 0)
     fail_rate_cat = sum(
-        1 for r in per_date_records
+        1
+        for r in per_date_records
         if r["catalyst_coverage_pct"] is not None and r["catalyst_coverage_pct"] < ht.fail_catalyst_coverage_min
     )
     lines.append(f"  Catalyst FAIL (<{ht.fail_catalyst_coverage_min}%):")
-    lines.append(f"    Fires {fail_rate_cat}/{n_total} dates ({round(fail_rate_cat/n_total*100, 1) if n_total else 0}%)")
+    lines.append(
+        f"    Fires {fail_rate_cat}/{n_total} dates ({round(fail_rate_cat/n_total*100, 1) if n_total else 0}%)"
+    )
     lines.append(f"    P5={p5_cat}%, Min={cat_d.get('min', 0)}%")
     if fail_rate_cat > 0:
         lines.append(f"    -> FAIL fires historically — check if those dates had genuine data issues")
@@ -686,11 +722,14 @@ def _generate_recommendation_report(
     p90_drop = drop_d.get("p90", 0)
     p95_drop = drop_d.get("p95", 0)
     warn_rate_drop = sum(
-        1 for r in per_date_records
+        1
+        for r in per_date_records
         if r["catalyst_drop_pp"] is not None and r["catalyst_drop_pp"] > ht.warn_catalyst_drop_pp
     )
     lines.append(f"  Catalyst Drop WARN (>{ht.warn_catalyst_drop_pp}pp):")
-    lines.append(f"    Fires {warn_rate_drop}/{n_deltas} delta dates ({round(warn_rate_drop/n_deltas*100, 1) if n_deltas else 0}%)")
+    lines.append(
+        f"    Fires {warn_rate_drop}/{n_deltas} delta dates ({round(warn_rate_drop/n_deltas*100, 1) if n_deltas else 0}%)"
+    )
     lines.append(f"    P90={p90_drop}pp, P95={p95_drop}pp")
     if warn_rate_drop == 0:
         lines.append(f"    -> Never fires; catalyst coverage is stable across snapshots")
@@ -704,15 +743,11 @@ def _generate_recommendation_report(
     a_d = distributions.get("a_count", {})
     p5_a = a_d.get("p5", 0)
     warn_rate_a = sum(
-        1 for r in per_date_records
-        if r["a_count"] is not None
-        and r["a_count"] >= ht.fail_a_count_min
-        and r["a_count"] < ht.warn_a_count_low
+        1
+        for r in per_date_records
+        if r["a_count"] is not None and r["a_count"] >= ht.fail_a_count_min and r["a_count"] < ht.warn_a_count_low
     )
-    fail_rate_a = sum(
-        1 for r in per_date_records
-        if r["a_count"] is not None and r["a_count"] < ht.fail_a_count_min
-    )
+    fail_rate_a = sum(1 for r in per_date_records if r["a_count"] is not None and r["a_count"] < ht.fail_a_count_min)
     lines.append(f"  A-count FAIL (<{ht.fail_a_count_min}) / WARN (<{ht.warn_a_count_low}):")
     lines.append(f"    FAIL fires {fail_rate_a}/{n_total} dates")
     lines.append(f"    WARN fires {warn_rate_a}/{n_total} dates")
@@ -727,8 +762,10 @@ def _generate_recommendation_report(
     total_fail = status_counts.get("FAIL", 0)
     warn_pct = round(total_warn / n_total * 100, 1) if n_total else 0
     fail_pct = round(total_fail / n_total * 100, 1) if n_total else 0
-    lines.append(f"OVERALL: WARN={warn_pct}% ({total_warn}/{n_total}), "
-                 f"FAIL={fail_pct}% ({total_fail}/{n_total}) of historical dates")
+    lines.append(
+        f"OVERALL: WARN={warn_pct}% ({total_warn}/{n_total}), "
+        f"FAIL={fail_pct}% ({total_fail}/{n_total}) of historical dates"
+    )
 
     if warn_pct > 30:
         lines.append("VERDICT: WARN rate >30% — thresholds are too tight, will cause alert fatigue")
@@ -746,6 +783,7 @@ def _generate_recommendation_report(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(

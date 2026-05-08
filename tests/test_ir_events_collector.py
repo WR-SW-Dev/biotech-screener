@@ -1,20 +1,21 @@
 """Tests for IR events collector (offline, deterministic)."""
+
 from __future__ import annotations
 
 import json
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from wake_robin_data_pipeline.collectors.ir_events_collector import (
-    collect_ir_events,
-    normalize_company,
     _build_universe_map,
     _classify_event_kind,
     _extract_events_from_html,
     _stable_id,
+    collect_ir_events,
+    normalize_company,
 )
 
 AS_OF = date(2026, 3, 1)
@@ -69,6 +70,7 @@ IR_HTML = """\
 # Tests: normalize_company
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeCompany:
     def test_basic(self):
         assert normalize_company("Acme Therapeutics, Inc.") == "acme"
@@ -89,6 +91,7 @@ class TestNormalizeCompany:
 # ---------------------------------------------------------------------------
 # Tests: _build_universe_map
 # ---------------------------------------------------------------------------
+
 
 class TestBuildUniverseMap:
     def test_maps_company_name(self):
@@ -111,6 +114,7 @@ class TestBuildUniverseMap:
 # Tests: _classify_event_kind
 # ---------------------------------------------------------------------------
 
+
 class TestClassifyEventKind:
     def test_earnings(self):
         assert _classify_event_kind("Q1 2026 Earnings Conference Call") == "earnings"
@@ -132,6 +136,7 @@ class TestClassifyEventKind:
 # Tests: _stable_id
 # ---------------------------------------------------------------------------
 
+
 class TestStableId:
     def test_deterministic(self):
         id1 = _stable_id("ACME", "2026-03-15", "Earnings", "http://x.com")
@@ -149,11 +154,10 @@ class TestStableId:
 # Tests: _extract_events_from_html
 # ---------------------------------------------------------------------------
 
+
 class TestExtractEventsFromHtml:
     def test_extracts_future_events_only(self):
-        events = _extract_events_from_html(
-            IR_HTML, "ACME", "https://ir.acme.com/events", AS_OF
-        )
+        events = _extract_events_from_html(IR_HTML, "ACME", "https://ir.acme.com/events", AS_OF)
         dates = [e["event_date"] for e in events]
         # 2026-03-15 and 2026-04-20 are future; 2026-02-10 is past
         assert "2026-03-15" in dates
@@ -161,9 +165,7 @@ class TestExtractEventsFromHtml:
         assert "2026-02-10" not in dates
 
     def test_event_schema(self):
-        events = _extract_events_from_html(
-            IR_HTML, "ACME", "https://ir.acme.com/events", AS_OF
-        )
+        events = _extract_events_from_html(IR_HTML, "ACME", "https://ir.acme.com/events", AS_OF)
         assert len(events) >= 2
         for e in events:
             assert e["schema"] == "ir_event.v1"
@@ -173,16 +175,16 @@ class TestExtractEventsFromHtml:
             assert e["id"].startswith("IR_ACME_")
 
     def test_no_duplicate_ids(self):
-        events = _extract_events_from_html(
-            IR_HTML, "ACME", "https://ir.acme.com/events", AS_OF
-        )
+        events = _extract_events_from_html(IR_HTML, "ACME", "https://ir.acme.com/events", AS_OF)
         ids = [e["id"] for e in events]
         assert len(ids) == len(set(ids))
 
     def test_empty_html(self):
         events = _extract_events_from_html(
             "<html><body>Nothing here</body></html>",
-            "ACME", "https://ir.acme.com/events", AS_OF,
+            "ACME",
+            "https://ir.acme.com/events",
+            AS_OF,
         )
         assert events == []
 
@@ -190,6 +192,7 @@ class TestExtractEventsFromHtml:
 # ---------------------------------------------------------------------------
 # Tests: collect_ir_events (integration, no network)
 # ---------------------------------------------------------------------------
+
 
 class TestCollectIrEvents:
     def test_cache_only_no_cache(self, tmp_path):

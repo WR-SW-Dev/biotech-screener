@@ -24,15 +24,12 @@ import pytest
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pos_engine import (
-    ProbabilityOfSuccessEngine,
-    DataQualityState,
-)
-
+from pos_engine import DataQualityState, ProbabilityOfSuccessEngine
 
 # ============================================================================
 # ENGINE INITIALIZATION TESTS
 # ============================================================================
+
 
 class TestEngineInitialization:
     """Tests for PoS engine initialization."""
@@ -56,9 +53,7 @@ class TestEngineInitialization:
 
     def test_engine_fallback_benchmarks(self, tmp_path):
         """Engine should use fallback when benchmarks file missing."""
-        engine = ProbabilityOfSuccessEngine(
-            benchmarks_path=str(tmp_path / "nonexistent.json")
-        )
+        engine = ProbabilityOfSuccessEngine(benchmarks_path=str(tmp_path / "nonexistent.json"))
 
         # Should still work with fallback benchmarks
         result = engine.calculate_pos_score("phase_3", as_of_date=date(2026, 1, 15))
@@ -69,6 +64,7 @@ class TestEngineInitialization:
 # ============================================================================
 # STAGE NORMALIZATION TESTS
 # ============================================================================
+
 
 class TestStageNormalization:
     """Tests for stage name normalization."""
@@ -127,6 +123,7 @@ class TestStageNormalization:
 # STAGE SCORE TESTS
 # ============================================================================
 
+
 class TestStageScoring:
     """Tests for stage score calculation."""
 
@@ -166,6 +163,7 @@ class TestStageScoring:
 # ============================================================================
 # INDICATION NORMALIZATION TESTS
 # ============================================================================
+
 
 class TestIndicationNormalization:
     """Tests for indication normalization with word-boundary matching."""
@@ -237,6 +235,7 @@ class TestIndicationNormalization:
 # POS SCORE DIFFERENTIATION TESTS
 # ============================================================================
 
+
 class TestPosDifferentiation:
     """Tests for PoS score differentiation by indication."""
 
@@ -248,12 +247,8 @@ class TestPosDifferentiation:
         """Rare disease should have higher PoS than oncology at same stage."""
         as_of = date(2026, 1, 15)
 
-        oncology = engine.calculate_pos_score(
-            "phase_3", indication="oncology", as_of_date=as_of
-        )
-        rare = engine.calculate_pos_score(
-            "phase_3", indication="rare disease", as_of_date=as_of
-        )
+        oncology = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=as_of)
+        rare = engine.calculate_pos_score("phase_3", indication="rare disease", as_of_date=as_of)
 
         # Rare disease typically has higher approval rates
         assert rare["pos_score"] > oncology["pos_score"]
@@ -262,12 +257,8 @@ class TestPosDifferentiation:
         """Indication should affect PoS score but not stage score."""
         as_of = date(2026, 1, 15)
 
-        oncology = engine.calculate_pos_score(
-            "phase_3", indication="oncology", as_of_date=as_of
-        )
-        rare = engine.calculate_pos_score(
-            "phase_3", indication="rare disease", as_of_date=as_of
-        )
+        oncology = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=as_of)
+        rare = engine.calculate_pos_score("phase_3", indication="rare disease", as_of_date=as_of)
 
         # Stage scores should be equal (same stage)
         assert oncology["stage_score"] == rare["stage_score"]
@@ -278,6 +269,7 @@ class TestPosDifferentiation:
 # ============================================================================
 # DATA QUALITY ASSESSMENT TESTS
 # ============================================================================
+
 
 class TestDataQualityAssessment:
     """Tests for data quality state assessment."""
@@ -293,26 +285,19 @@ class TestDataQualityAssessment:
             indication="oncology",
             trial_design_quality=Decimal("1.1"),
             competitive_intensity=Decimal("0.9"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
         assert result["data_quality_state"] == "FULL"
 
     def test_partial_data_quality(self, engine):
         """Some optional fields missing should return PARTIAL."""
-        result = engine.calculate_pos_score(
-            "phase_3",
-            indication="oncology",
-            as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=date(2026, 1, 15))
         # Missing trial_design_quality and competitive_intensity
         assert result["data_quality_state"] == "PARTIAL"
 
     def test_missing_fields_tracked(self, engine):
         """Missing fields should be tracked in result."""
-        result = engine.calculate_pos_score(
-            "phase_3",
-            as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("phase_3", as_of_date=date(2026, 1, 15))
 
         assert "trial_design_quality" in result["missing_fields"]
         assert "competitive_intensity" in result["missing_fields"]
@@ -321,6 +306,7 @@ class TestDataQualityAssessment:
 # ============================================================================
 # ADJUSTMENT CLAMPING TESTS
 # ============================================================================
+
 
 class TestAdjustmentClamping:
     """Tests for adjustment value clamping."""
@@ -332,9 +318,7 @@ class TestAdjustmentClamping:
     def test_trial_design_quality_clamped_high(self, engine):
         """Trial design quality above 1.30 should be clamped."""
         result = engine.calculate_pos_score(
-            "phase_3",
-            trial_design_quality=Decimal("2.0"),
-            as_of_date=date(2026, 1, 15)
+            "phase_3", trial_design_quality=Decimal("2.0"), as_of_date=date(2026, 1, 15)
         )
 
         audit = result["audit_entry"]
@@ -343,9 +327,7 @@ class TestAdjustmentClamping:
     def test_trial_design_quality_clamped_low(self, engine):
         """Trial design quality below 0.70 should be clamped."""
         result = engine.calculate_pos_score(
-            "phase_3",
-            trial_design_quality=Decimal("0.5"),
-            as_of_date=date(2026, 1, 15)
+            "phase_3", trial_design_quality=Decimal("0.5"), as_of_date=date(2026, 1, 15)
         )
 
         audit = result["audit_entry"]
@@ -354,9 +336,7 @@ class TestAdjustmentClamping:
     def test_competitive_intensity_clamped(self, engine):
         """Competitive intensity should be clamped to 0.70-1.00."""
         result = engine.calculate_pos_score(
-            "phase_3",
-            competitive_intensity=Decimal("0.5"),
-            as_of_date=date(2026, 1, 15)
+            "phase_3", competitive_intensity=Decimal("0.5"), as_of_date=date(2026, 1, 15)
         )
 
         audit = result["audit_entry"]
@@ -366,6 +346,7 @@ class TestAdjustmentClamping:
 # ============================================================================
 # SCORE BOUNDING TESTS
 # ============================================================================
+
 
 class TestScoreBounding:
     """Tests for score value bounding."""
@@ -381,9 +362,7 @@ class TestScoreBounding:
         # Test various combinations
         for stage in ["preclinical", "phase_1", "phase_2", "phase_3", "nda_bla", "commercial"]:
             for indication in ["oncology", "rare disease", "neurology", None]:
-                result = engine.calculate_pos_score(
-                    stage, indication=indication, as_of_date=as_of
-                )
+                result = engine.calculate_pos_score(stage, indication=indication, as_of_date=as_of)
                 assert Decimal("0") <= result["pos_score"] <= Decimal("100")
 
     def test_stage_score_bounded_0_100(self, engine):
@@ -398,6 +377,7 @@ class TestScoreBounding:
 # ============================================================================
 # UNIVERSE SCORING TESTS
 # ============================================================================
+
 
 class TestUniverseScoring:
     """Tests for scoring an entire universe."""
@@ -446,6 +426,7 @@ class TestUniverseScoring:
 # AUDIT TRAIL TESTS
 # ============================================================================
 
+
 class TestAuditTrail:
     """Tests for audit trail functionality."""
 
@@ -470,9 +451,7 @@ class TestAuditTrail:
 
     def test_audit_trail_contains_inputs_hash(self, engine):
         """Audit entry should contain deterministic inputs hash."""
-        result = engine.calculate_pos_score(
-            "phase_3", indication="oncology", as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=date(2026, 1, 15))
 
         audit = result["audit_entry"]
         assert "inputs_hash" in audit
@@ -490,6 +469,7 @@ class TestAuditTrail:
 # ============================================================================
 # LOA PROBABILITY TESTS
 # ============================================================================
+
 
 class TestLoaProbability:
     """Tests for Likelihood of Approval probability."""
@@ -521,9 +501,7 @@ class TestLoaProbability:
 
     def test_loa_provenance_tracked(self, engine):
         """LOA provenance should indicate data source."""
-        result = engine.calculate_pos_score(
-            "phase_3", indication="oncology", as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=date(2026, 1, 15))
 
         assert "loa_provenance" in result
         assert "BIO" in result["loa_provenance"] or "fallback" in result["loa_provenance"]
@@ -532,6 +510,7 @@ class TestLoaProbability:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
@@ -547,11 +526,7 @@ class TestEdgeCases:
 
     def test_whitespace_handling(self, engine):
         """Whitespace in inputs should be handled."""
-        result = engine.calculate_pos_score(
-            "  Phase 3  ",
-            indication="  oncology  ",
-            as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("  Phase 3  ", indication="  oncology  ", as_of_date=date(2026, 1, 15))
         assert result["stage_normalized"] == "phase_3"
         assert result["indication_normalized"] == "oncology"
 
@@ -561,10 +536,7 @@ class TestEdgeCases:
 
         # Minimal pipeline (no trials) - gets floor of 0.82
         result_minimal = engine.calculate_pos_score(
-            "commercial",
-            indication="oncology",
-            as_of_date=as_of,
-            pipeline_trial_count=0
+            "commercial", indication="oncology", as_of_date=as_of, pipeline_trial_count=0
         )
         assert result_minimal["loa_probability"] == Decimal("0.82")
         assert "commercial" in result_minimal["loa_provenance"]
@@ -576,7 +548,7 @@ class TestEdgeCases:
             indication="rare_disease",  # No risk adjustment
             as_of_date=as_of,
             pipeline_trial_count=150,
-            pipeline_phase_diversity=4
+            pipeline_phase_diversity=4,
         )
         # 1.0 (base) + 0.00 (exceptional pipeline) + 0.00 (rare disease) + 0.02 (diversity)
         assert result_strong["loa_probability"] >= Decimal("0.98")
@@ -584,10 +556,7 @@ class TestEdgeCases:
 
         # Moderate pipeline (30 trials) with oncology indication
         result_moderate = engine.calculate_pos_score(
-            "commercial",
-            indication="oncology",
-            as_of_date=as_of,
-            pipeline_trial_count=50
+            "commercial", indication="oncology", as_of_date=as_of, pipeline_trial_count=50
         )
         # 1.0 (base) + (-0.02) (strong pipeline) + (-0.03) (oncology risk) = 0.95
         assert result_moderate["loa_probability"] == Decimal("0.95")
@@ -597,6 +566,7 @@ class TestEdgeCases:
 # ============================================================================
 # CONFIDENCE GATING TESTS
 # ============================================================================
+
 
 class TestConfidenceGating:
     """Tests for PoS confidence gating to prevent silent contribution from unknown stages."""
@@ -691,6 +661,7 @@ class TestConfidenceGating:
 # DETERMINISM AND PIT DISCIPLINE TESTS
 # ============================================================================
 
+
 class TestStageAdjustedConfidence:
     """Tests for stage-adjusted confidence system (industry best practice)."""
 
@@ -776,6 +747,7 @@ class TestStageAdjustedConfidence:
 # DETERMINISM AND PIT DISCIPLINE TESTS
 # ============================================================================
 
+
 class TestDeterminismRequirements:
     """Tests for determinism and PIT discipline enforcement."""
 
@@ -795,12 +767,8 @@ class TestDeterminismRequirements:
         """Same inputs must produce byte-identical outputs (determinism test)."""
         as_of = date(2026, 1, 15)
 
-        result1 = engine.calculate_pos_score(
-            "phase_3", indication="oncology", as_of_date=as_of
-        )
-        result2 = engine.calculate_pos_score(
-            "phase_3", indication="oncology", as_of_date=as_of
-        )
+        result1 = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=as_of)
+        result2 = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=as_of)
 
         # Compare key fields for determinism
         assert result1["pos_score"] == result2["pos_score"]
@@ -812,6 +780,7 @@ class TestDeterminismRequirements:
 # ============================================================================
 # MISSING STAGE DETECTION TESTS
 # ============================================================================
+
 
 class TestMissingStageDetection:
     """Tests for proper detection of missing base_stage in score_universe()."""
@@ -862,6 +831,7 @@ class TestMissingStageDetection:
 # INDICATION PARSE FALLBACK TESTS
 # ============================================================================
 
+
 class TestIndicationParseFallback:
     """Tests for indication parse fallback detection."""
 
@@ -872,9 +842,7 @@ class TestIndicationParseFallback:
     def test_unknown_indication_flags_parse_fallback(self, engine):
         """Unknown indication should flag indication_parse_fallback."""
         result = engine.calculate_pos_score(
-            "phase_3",
-            indication="some unknown therapy xyz",
-            as_of_date=date(2026, 1, 15)
+            "phase_3", indication="some unknown therapy xyz", as_of_date=date(2026, 1, 15)
         )
 
         assert result["indication_normalized"] == "all_indications"
@@ -882,22 +850,14 @@ class TestIndicationParseFallback:
 
     def test_valid_indication_no_fallback_flag(self, engine):
         """Valid indication should NOT have parse_fallback flag."""
-        result = engine.calculate_pos_score(
-            "phase_3",
-            indication="oncology",
-            as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("phase_3", indication="oncology", as_of_date=date(2026, 1, 15))
 
         assert result["indication_normalized"] == "oncology"
         assert "indication_parse_fallback" not in result["inputs_used"]
 
     def test_none_indication_no_fallback_flag(self, engine):
         """None indication should NOT have parse_fallback flag (expected behavior)."""
-        result = engine.calculate_pos_score(
-            "phase_3",
-            indication=None,
-            as_of_date=date(2026, 1, 15)
-        )
+        result = engine.calculate_pos_score("phase_3", indication=None, as_of_date=date(2026, 1, 15))
 
         assert result["indication_normalized"] is None
         assert "indication_parse_fallback" not in result["inputs_used"]
@@ -907,16 +867,14 @@ class TestIndicationParseFallback:
 # STRICT MODE BENCHMARK TESTS
 # ============================================================================
 
+
 class TestStrictModeBenchmarks:
     """Tests for strict mode benchmark loading."""
 
     def test_strict_mode_raises_on_missing_file(self, tmp_path):
         """strict=True should raise FileNotFoundError when benchmarks file missing."""
         with pytest.raises(FileNotFoundError) as exc_info:
-            ProbabilityOfSuccessEngine(
-                benchmarks_path=str(tmp_path / "nonexistent.json"),
-                strict=True
-            )
+            ProbabilityOfSuccessEngine(benchmarks_path=str(tmp_path / "nonexistent.json"), strict=True)
 
         assert "Benchmark file not found" in str(exc_info.value)
         assert "strict=False" in str(exc_info.value)
@@ -928,18 +886,14 @@ class TestStrictModeBenchmarks:
         invalid_file.write_text("{ not valid json }")
 
         with pytest.raises(ValueError) as exc_info:
-            ProbabilityOfSuccessEngine(
-                benchmarks_path=str(invalid_file),
-                strict=True
-            )
+            ProbabilityOfSuccessEngine(benchmarks_path=str(invalid_file), strict=True)
 
         assert "Invalid JSON" in str(exc_info.value)
 
     def test_non_strict_mode_falls_back_silently(self, tmp_path):
         """strict=False should use fallback benchmarks when file missing."""
         engine = ProbabilityOfSuccessEngine(
-            benchmarks_path=str(tmp_path / "nonexistent.json"),
-            strict=False  # Default behavior
+            benchmarks_path=str(tmp_path / "nonexistent.json"), strict=False  # Default behavior
         )
 
         # Should still work
@@ -952,10 +906,7 @@ class TestStrictModeBenchmarks:
 
     def test_fallback_benchmarks_labeled_in_provenance(self, tmp_path):
         """Fallback benchmarks should be clearly labeled in provenance."""
-        engine = ProbabilityOfSuccessEngine(
-            benchmarks_path=str(tmp_path / "nonexistent.json"),
-            strict=False
-        )
+        engine = ProbabilityOfSuccessEngine(benchmarks_path=str(tmp_path / "nonexistent.json"), strict=False)
 
         result = engine.calculate_pos_score("phase_3", as_of_date=date(2026, 1, 15))
 

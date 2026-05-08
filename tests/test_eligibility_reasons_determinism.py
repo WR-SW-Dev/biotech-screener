@@ -16,8 +16,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from decision_engine_codes import canonicalize_reasons, REASON_ORDER
-
+from decision_engine_codes import REASON_ORDER, canonicalize_reasons
 
 # =============================================================================
 # CANONICALIZE REASONS — LIST INPUT

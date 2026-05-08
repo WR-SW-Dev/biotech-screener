@@ -1,4 +1,5 @@
 """Tests for scripts/backtest_signal_robustness.py helpers."""
+
 from __future__ import annotations
 
 import sys
@@ -10,8 +11,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 import math
-import pytest
 
+import pytest
 from backtest_signal_robustness import (
     ALPHA_CLIP_MAX,
     ALPHA_CLIP_MIN,
@@ -34,10 +35,10 @@ from backtest_signal_robustness import (
     spearman_rank_corr,
 )
 
-
 # ---------------------------------------------------------------------------
 # Spearman rank correlation
 # ---------------------------------------------------------------------------
+
 
 class TestSpearmanRankCorr:
     def test_rank_corr_perfect(self):
@@ -66,6 +67,7 @@ class TestSpearmanRankCorr:
 # avg_ranks
 # ---------------------------------------------------------------------------
 
+
 class TestAvgRanks:
     def test_no_ties(self):
         assert _avg_ranks([10, 20, 30]) == [1.0, 2.0, 3.0]
@@ -84,6 +86,7 @@ class TestAvgRanks:
 # ---------------------------------------------------------------------------
 # Catalyst signal extraction
 # ---------------------------------------------------------------------------
+
 
 class TestCatalystSignal:
     def test_specific_days(self):
@@ -117,6 +120,7 @@ class TestCatalystSignal:
 # Clinical signal extraction
 # ---------------------------------------------------------------------------
 
+
 class TestClinicalSignal:
     def test_dd_with_value(self):
         row = {"archetype": "drug_developer", "clinical_score_z_tier": "1.5"}
@@ -134,6 +138,7 @@ class TestClinicalSignal:
 # ---------------------------------------------------------------------------
 # Spread computation
 # ---------------------------------------------------------------------------
+
 
 class TestSpread:
     def test_spread_positive_toy(self):
@@ -169,6 +174,7 @@ class TestSpread:
 # Alpha OOS: shrinkage + clipping
 # ---------------------------------------------------------------------------
 
+
 class TestAlphaShrinkage:
     def _make_train_entry(self, rows, excess):
         """Helper to build a train cache entry."""
@@ -181,13 +187,15 @@ class TestAlphaShrinkage:
         excess = {}
         for i in range(200):
             tk = f"T{i:03d}"
-            rows.append({
-                "ticker": tk,
-                "stage_bucket": "mid",
-                "catalyst_mode": "specific_days",
-                "catalyst_days": "50",
-                "clinical_score_z_tier": "1.0",
-            })
+            rows.append(
+                {
+                    "ticker": tk,
+                    "stage_bucket": "mid",
+                    "catalyst_mode": "specific_days",
+                    "catalyst_days": "50",
+                    "clinical_score_z_tier": "1.0",
+                }
+            )
             excess[tk] = 0.50  # extreme 50% excess return
 
         train = [self._make_train_entry(rows, excess)]
@@ -195,17 +203,29 @@ class TestAlphaShrinkage:
 
         # Cell mean = 0.50, n=200, shrink_k=50 → w=200/250=0.8, raw=0.40
         # Clip to 0.10
-        test_row = [{"ticker": "TEST", "stage_bucket": "mid",
-                     "catalyst_mode": "specific_days", "catalyst_days": "50",
-                     "clinical_score_z_tier": "1.0"}]
+        test_row = [
+            {
+                "ticker": "TEST",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            }
+        ]
         scores = score_alpha_oos(test_row, table)
         assert scores["TEST"] == ALPHA_CLIP_MAX  # clipped to 0.10
 
     def test_alpha_shrinkage_small_n(self):
         """Small n → heavy shrinkage toward 0."""
-        rows = [{"ticker": "A", "stage_bucket": "early",
-                 "catalyst_mode": "no_upcoming", "catalyst_days": "",
-                 "clinical_score_z_tier": "0.0"}]
+        rows = [
+            {
+                "ticker": "A",
+                "stage_bucket": "early",
+                "catalyst_mode": "no_upcoming",
+                "catalyst_days": "",
+                "clinical_score_z_tier": "0.0",
+            }
+        ]
         excess = {"A": 0.10}
         train = [self._make_train_entry(rows, excess)]
         table = build_rolling_alpha_table(train)
@@ -217,15 +237,27 @@ class TestAlphaShrinkage:
     def test_alpha_unseen_key_returns_zero(self):
         """Unseen cohort key → alpha=0.0."""
         # Train has mid|near_31_90|pos, eval has early|none|nonpos
-        train_rows = [{"ticker": "X", "stage_bucket": "mid",
-                       "catalyst_mode": "specific_days", "catalyst_days": "50",
-                       "clinical_score_z_tier": "1.0"}]
+        train_rows = [
+            {
+                "ticker": "X",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            }
+        ]
         train = [self._make_train_entry(train_rows, {"X": 0.05})]
         table = build_rolling_alpha_table(train)
 
-        eval_rows = [{"ticker": "Y", "stage_bucket": "early",
-                      "catalyst_mode": "no_upcoming", "catalyst_days": "",
-                      "clinical_score_z_tier": "-1.0"}]
+        eval_rows = [
+            {
+                "ticker": "Y",
+                "stage_bucket": "early",
+                "catalyst_mode": "no_upcoming",
+                "catalyst_days": "",
+                "clinical_score_z_tier": "-1.0",
+            }
+        ]
         scores = score_alpha_oos(eval_rows, table)
         assert scores["Y"] == 0.0
 
@@ -235,21 +267,29 @@ class TestAlphaShrinkage:
         excess = {}
         for i in range(200):
             tk = f"N{i:03d}"
-            rows.append({
-                "ticker": tk,
-                "stage_bucket": "late",
-                "catalyst_mode": "specific_days",
-                "catalyst_days": "10",
-                "clinical_score_z_tier": "-0.5",
-            })
+            rows.append(
+                {
+                    "ticker": tk,
+                    "stage_bucket": "late",
+                    "catalyst_mode": "specific_days",
+                    "catalyst_days": "10",
+                    "clinical_score_z_tier": "-0.5",
+                }
+            )
             excess[tk] = -0.50
 
         train = [self._make_train_entry(rows, excess)]
         table = build_rolling_alpha_table(train)
 
-        test_row = [{"ticker": "TEST", "stage_bucket": "late",
-                     "catalyst_mode": "specific_days", "catalyst_days": "10",
-                     "clinical_score_z_tier": "-0.5"}]
+        test_row = [
+            {
+                "ticker": "TEST",
+                "stage_bucket": "late",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "10",
+                "clinical_score_z_tier": "-0.5",
+            }
+        ]
         scores = score_alpha_oos(test_row, table)
         assert scores["TEST"] == ALPHA_CLIP_MIN  # clipped to -0.10
 
@@ -260,9 +300,15 @@ class TestAlphaOOSRequiresTrain:
         table = build_rolling_alpha_table([])
         assert table["cells"] == {}
 
-        test_rows = [{"ticker": "X", "stage_bucket": "mid",
-                      "catalyst_mode": "specific_days", "catalyst_days": "50",
-                      "clinical_score_z_tier": "1.0"}]
+        test_rows = [
+            {
+                "ticker": "X",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            }
+        ]
         scores = score_alpha_oos(test_rows, table)
         assert scores["X"] == 0.0
 
@@ -270,6 +316,7 @@ class TestAlphaOOSRequiresTrain:
 # ---------------------------------------------------------------------------
 # Residualize ranks
 # ---------------------------------------------------------------------------
+
 
 class TestResidualizeRanks:
     def test_residualize_identical(self):
@@ -307,6 +354,7 @@ class TestResidualizeRanks:
 # Double-sort spread
 # ---------------------------------------------------------------------------
 
+
 class TestDoubleSortSpread:
     def test_double_sort_positive(self):
         """Toy data where alpha separates within each catalyst tercile
@@ -340,16 +388,21 @@ class TestDoubleSortSpread:
 # Cell diagnostics
 # ---------------------------------------------------------------------------
 
+
 def _make_entry(date, rows, excess):
     return {"date": date, "rows": rows, "excess": excess}
 
 
-def _make_rows_excess(tickers, excess_vals, stage="mid", cat_mode="specific_days",
-                      cat_days="50", cz="1.0"):
+def _make_rows_excess(tickers, excess_vals, stage="mid", cat_mode="specific_days", cat_days="50", cz="1.0"):
     """Build matching rows + excess dict for a list of tickers."""
     rows = [
-        {"ticker": tk, "stage_bucket": stage, "catalyst_mode": cat_mode,
-         "catalyst_days": cat_days, "clinical_score_z_tier": cz}
+        {
+            "ticker": tk,
+            "stage_bucket": stage,
+            "catalyst_mode": cat_mode,
+            "catalyst_days": cat_days,
+            "clinical_score_z_tier": cz,
+        }
         for tk in tickers
     ]
     excess = dict(zip(tickers, excess_vals))
@@ -412,24 +465,45 @@ class TestCellDiagnostics:
 # Regime label propagation
 # ---------------------------------------------------------------------------
 
+
 class TestRegime:
     def test_regime_label_propagation(self):
         """ic_rows with regime → summary has regime stats."""
         ic_rows = [
-            {"date": "2024-06-01", "regime": "BULL",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
-            {"date": "2025-06-01", "regime": "BEAR",
-             "ic_clinical": -0.05, "ic_catalyst": -0.02, "ic_alpha": -0.04,
-             "ic_alpha_incr": -0.01},
+            {
+                "date": "2024-06-01",
+                "regime": "BULL",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
+            {
+                "date": "2025-06-01",
+                "regime": "BEAR",
+                "ic_clinical": -0.05,
+                "ic_catalyst": -0.02,
+                "ic_alpha": -0.04,
+                "ic_alpha_incr": -0.01,
+            },
         ]
         spread_rows = [
-            {"date": "2024-06-01", "regime": "BULL",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
-            {"date": "2025-06-01", "regime": "BEAR",
-             "spread_clinical": -0.01, "spread_catalyst": -0.005, "spread_alpha": -0.02,
-             "spread_alpha_double": -0.005},
+            {
+                "date": "2024-06-01",
+                "regime": "BULL",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
+            {
+                "date": "2025-06-01",
+                "regime": "BEAR",
+                "spread_clinical": -0.01,
+                "spread_catalyst": -0.005,
+                "spread_alpha": -0.02,
+                "spread_alpha_double": -0.005,
+            },
         ]
         summary = _build_summary(ic_rows, spread_rows, horizon=126, alpha_skipped=0)
         assert "regime" in summary
@@ -442,14 +516,24 @@ class TestRegime:
     def test_regime_empty_when_not_used(self):
         """No regime labels → no regime key in summary."""
         ic_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
         ]
         spread_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
         ]
         summary = _build_summary(ic_rows, spread_rows, horizon=126, alpha_skipped=0)
         assert "regime" not in summary
@@ -458,6 +542,7 @@ class TestRegime:
 # ---------------------------------------------------------------------------
 # Training mode parsing
 # ---------------------------------------------------------------------------
+
 
 class TestParseTrainMode:
     def test_parse_expanding(self):
@@ -482,6 +567,7 @@ class TestParseTrainMode:
 # Weighted alpha table
 # ---------------------------------------------------------------------------
 
+
 class TestWeightedAlphaTable:
     def _make_train_entry(self, rows, excess):
         return {"rows": rows, "excess": excess}
@@ -489,10 +575,20 @@ class TestWeightedAlphaTable:
     def test_weighted_uniform_matches_unweighted(self):
         """All weights=1.0 matches build_rolling_alpha_table()."""
         rows = [
-            {"ticker": "A", "stage_bucket": "mid", "catalyst_mode": "specific_days",
-             "catalyst_days": "50", "clinical_score_z_tier": "1.0"},
-            {"ticker": "B", "stage_bucket": "mid", "catalyst_mode": "specific_days",
-             "catalyst_days": "50", "clinical_score_z_tier": "1.0"},
+            {
+                "ticker": "A",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            },
+            {
+                "ticker": "B",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            },
         ]
         exc1 = {"A": 0.10, "B": 0.20}
         exc2 = {"A": 0.05, "B": 0.15}
@@ -504,16 +600,21 @@ class TestWeightedAlphaTable:
         weighted = build_weighted_alpha_table(cache, [1.0, 1.0], shrink_k=50)
         # Cell means and n should match
         for key in rolling["cells"]:
-            assert abs(rolling["cells"][key]["mean_excess_ret_6m"]
-                       - weighted["cells"][key]["mean_excess_ret_6m"]) < 1e-6
-            assert abs(rolling["cells"][key]["n"]
-                       - weighted["cells"][key]["n"]) < 1e-6
+            assert (
+                abs(rolling["cells"][key]["mean_excess_ret_6m"] - weighted["cells"][key]["mean_excess_ret_6m"]) < 1e-6
+            )
+            assert abs(rolling["cells"][key]["n"] - weighted["cells"][key]["n"]) < 1e-6
 
     def test_weighted_decay_weights(self):
         """Known weights → correct weighted mean + effective n."""
         rows = [
-            {"ticker": "A", "stage_bucket": "mid", "catalyst_mode": "specific_days",
-             "catalyst_days": "50", "clinical_score_z_tier": "1.0"},
+            {
+                "ticker": "A",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            },
         ]
         exc1 = {"A": 0.10}  # weight 0.5
         exc2 = {"A": 0.20}  # weight 1.0
@@ -531,8 +632,13 @@ class TestWeightedAlphaTable:
     def test_weighted_zero_weight(self):
         """Weight=0.0 contributes nothing."""
         rows = [
-            {"ticker": "A", "stage_bucket": "mid", "catalyst_mode": "specific_days",
-             "catalyst_days": "50", "clinical_score_z_tier": "1.0"},
+            {
+                "ticker": "A",
+                "stage_bucket": "mid",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": "50",
+                "clinical_score_z_tier": "1.0",
+            },
         ]
         exc1 = {"A": 0.10}  # weight 0.0 → ignored
         exc2 = {"A": 0.20}  # weight 1.0
@@ -550,6 +656,7 @@ class TestWeightedAlphaTable:
 # ---------------------------------------------------------------------------
 # Clinical coverage gate
 # ---------------------------------------------------------------------------
+
 
 class TestClinicalCoverageGate:
     def test_missing_z_tier_excluded_from_pairing(self):
@@ -570,8 +677,7 @@ class TestClinicalCoverageGate:
         """If no rows have parseable z_tier, IC should be NaN (< 3 pairs)."""
         # Simulate a 2026-01 archive: all DDs have z_tier="" after failed backfill
         rows_blank = [
-            {"archetype": "drug_developer", "clinical_score_z_tier": "",
-             "ticker": f"T{i}"} for i in range(50)
+            {"archetype": "drug_developer", "clinical_score_z_tier": "", "ticker": f"T{i}"} for i in range(50)
         ]
         clin_pairs = []
         excess = {f"T{i}": 0.01 * i for i in range(50)}
@@ -583,9 +689,11 @@ class TestClinicalCoverageGate:
         # No pairs should form
         assert len(clin_pairs) == 0
         # IC computation would return NaN (< 3 pairs)
-        ic = spearman_rank_corr(
-            [p[0] for p in clin_pairs], [p[1] for p in clin_pairs]
-        ) if len(clin_pairs) >= 3 else float("nan")
+        ic = (
+            spearman_rank_corr([p[0] for p in clin_pairs], [p[1] for p in clin_pairs])
+            if len(clin_pairs) >= 3
+            else float("nan")
+        )
         assert math.isnan(ic)
 
 
@@ -593,33 +701,63 @@ class TestClinicalCoverageGate:
 # Cutoff-based subperiod split
 # ---------------------------------------------------------------------------
 
+
 class TestCutoffSubperiod:
     def test_subperiod_uses_cutoff(self):
         """Subperiod keys are pre_cutoff/post_cutoff, split at cutoff date."""
         ic_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
-            {"date": "2024-12-01", "regime": "",
-             "ic_clinical": 0.12, "ic_catalyst": 0.06, "ic_alpha": 0.09,
-             "ic_alpha_incr": 0.04},
-            {"date": "2025-03-01", "regime": "",
-             "ic_clinical": -0.02, "ic_catalyst": -0.01, "ic_alpha": -0.03,
-             "ic_alpha_incr": -0.02},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
+            {
+                "date": "2024-12-01",
+                "regime": "",
+                "ic_clinical": 0.12,
+                "ic_catalyst": 0.06,
+                "ic_alpha": 0.09,
+                "ic_alpha_incr": 0.04,
+            },
+            {
+                "date": "2025-03-01",
+                "regime": "",
+                "ic_clinical": -0.02,
+                "ic_catalyst": -0.01,
+                "ic_alpha": -0.03,
+                "ic_alpha_incr": -0.02,
+            },
         ]
         spread_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
-            {"date": "2024-12-01", "regime": "",
-             "spread_clinical": 0.03, "spread_catalyst": 0.015, "spread_alpha": 0.04,
-             "spread_alpha_double": 0.02},
-            {"date": "2025-03-01", "regime": "",
-             "spread_clinical": -0.01, "spread_catalyst": -0.005, "spread_alpha": -0.02,
-             "spread_alpha_double": -0.005},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
+            {
+                "date": "2024-12-01",
+                "regime": "",
+                "spread_clinical": 0.03,
+                "spread_catalyst": 0.015,
+                "spread_alpha": 0.04,
+                "spread_alpha_double": 0.02,
+            },
+            {
+                "date": "2025-03-01",
+                "regime": "",
+                "spread_clinical": -0.01,
+                "spread_catalyst": -0.005,
+                "spread_alpha": -0.02,
+                "spread_alpha_double": -0.005,
+            },
         ]
-        summary = _build_summary(ic_rows, spread_rows, horizon=126, alpha_skipped=0,
-                                 cutoff="2025-01-01")
+        summary = _build_summary(ic_rows, spread_rows, horizon=126, alpha_skipped=0, cutoff="2025-01-01")
         assert "subperiod" in summary
         assert "pre_cutoff" in summary["subperiod"]
         assert "post_cutoff" in summary["subperiod"]
@@ -632,18 +770,32 @@ class TestCutoffSubperiod:
     def test_pos_share_thresholds_in_summary(self):
         """min/max pos_share thresholds appear in summary output."""
         ic_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
         ]
         spread_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
         ]
         summary = _build_summary(
-            ic_rows, spread_rows, horizon=126, alpha_skipped=0,
-            min_clinical_pos_share=0.10, max_clinical_pos_share=0.90,
+            ic_rows,
+            spread_rows,
+            horizon=126,
+            alpha_skipped=0,
+            min_clinical_pos_share=0.10,
+            max_clinical_pos_share=0.90,
         )
         assert summary["min_clinical_pos_share"] == 0.10
         assert summary["max_clinical_pos_share"] == 0.90
@@ -672,9 +824,9 @@ class TestCutoffSubperiod:
         # The decoupled filter condition:
         if (min_cov > 0.0) or (min_ps > 0.0) or (max_ps < 1.0):
             filtered = [
-                d for d in train_dates
-                if d["clinical_coverage"] >= min_cov
-                and min_ps <= d["clinical_pos_share"] <= max_ps
+                d
+                for d in train_dates
+                if d["clinical_coverage"] >= min_cov and min_ps <= d["clinical_pos_share"] <= max_ps
             ]
         else:
             filtered = train_dates
@@ -686,23 +838,33 @@ class TestCutoffSubperiod:
     def test_cutoff_recorded_in_summary(self):
         """Cutoff date appears in summary.json output."""
         ic_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
         ]
         spread_rows = [
-            {"date": "2024-06-01", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
+            {
+                "date": "2024-06-01",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
         ]
-        summary = _build_summary(ic_rows, spread_rows, horizon=126, alpha_skipped=0,
-                                 cutoff="2024-10-01")
+        summary = _build_summary(ic_rows, spread_rows, horizon=126, alpha_skipped=0, cutoff="2024-10-01")
         assert summary["cutoff"] == "2024-10-01"
 
 
 # ---------------------------------------------------------------------------
 # Forward-return coverage diagnostics
 # ---------------------------------------------------------------------------
+
 
 class TestFwdReturnDiagnostics:
     def test_coverage_metrics_basic(self):
@@ -761,41 +923,95 @@ class TestFwdReturnDiagnostics:
     def test_diagnostics_in_summary(self):
         """_build_summary() with date_diagnostics produces fwd_return_diagnostics block."""
         date_diagnostics = [
-            {"date": "2024-01-31", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 260, "fwd_ret_coverage": 0.9286,
-             "skip_reason": "", "included": True},
-            {"date": "2024-02-28", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 270, "fwd_ret_coverage": 0.9643,
-             "skip_reason": "", "included": True},
-            {"date": "2024-03-31", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 0, "fwd_ret_coverage": 0.0,
-             "skip_reason": "NO_FWD_RET", "included": False},
-            {"date": "2024-04-30", "n_rows": 0, "n_price_rows": 0,
-             "n_fwd_rets": 0, "fwd_ret_coverage": 0.0,
-             "skip_reason": "EMPTY_RANKINGS", "included": False},
-            {"date": "2024-05-31", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 30, "fwd_ret_coverage": 0.1071,
-             "skip_reason": "LOW_COVERAGE", "included": False},
+            {
+                "date": "2024-01-31",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 260,
+                "fwd_ret_coverage": 0.9286,
+                "skip_reason": "",
+                "included": True,
+            },
+            {
+                "date": "2024-02-28",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 270,
+                "fwd_ret_coverage": 0.9643,
+                "skip_reason": "",
+                "included": True,
+            },
+            {
+                "date": "2024-03-31",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 0,
+                "fwd_ret_coverage": 0.0,
+                "skip_reason": "NO_FWD_RET",
+                "included": False,
+            },
+            {
+                "date": "2024-04-30",
+                "n_rows": 0,
+                "n_price_rows": 0,
+                "n_fwd_rets": 0,
+                "fwd_ret_coverage": 0.0,
+                "skip_reason": "EMPTY_RANKINGS",
+                "included": False,
+            },
+            {
+                "date": "2024-05-31",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 30,
+                "fwd_ret_coverage": 0.1071,
+                "skip_reason": "LOW_COVERAGE",
+                "included": False,
+            },
         ]
         ic_rows = [
-            {"date": "2024-01-31", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
-            {"date": "2024-02-28", "regime": "",
-             "ic_clinical": 0.12, "ic_catalyst": 0.06, "ic_alpha": 0.09,
-             "ic_alpha_incr": 0.04},
+            {
+                "date": "2024-01-31",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
+            {
+                "date": "2024-02-28",
+                "regime": "",
+                "ic_clinical": 0.12,
+                "ic_catalyst": 0.06,
+                "ic_alpha": 0.09,
+                "ic_alpha_incr": 0.04,
+            },
         ]
         spread_rows = [
-            {"date": "2024-01-31", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
-            {"date": "2024-02-28", "regime": "",
-             "spread_clinical": 0.03, "spread_catalyst": 0.015, "spread_alpha": 0.04,
-             "spread_alpha_double": 0.02},
+            {
+                "date": "2024-01-31",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
+            {
+                "date": "2024-02-28",
+                "regime": "",
+                "spread_clinical": 0.03,
+                "spread_catalyst": 0.015,
+                "spread_alpha": 0.04,
+                "spread_alpha_double": 0.02,
+            },
         ]
         summary = _build_summary(
-            ic_rows, spread_rows, horizon=126, alpha_skipped=0,
-            date_diagnostics=date_diagnostics, min_fwd_coverage=0.5,
+            ic_rows,
+            spread_rows,
+            horizon=126,
+            alpha_skipped=0,
+            date_diagnostics=date_diagnostics,
+            min_fwd_coverage=0.5,
             n_price_universe=350,
             price_end_date="2024-04-15",
             max_archive_date="2024-05-31",
@@ -829,25 +1045,45 @@ class TestFwdReturnDiagnostics:
     def test_diagnostics_empty_included(self):
         """When no dates are included, coverage_stats should be empty."""
         date_diagnostics = [
-            {"date": "2024-01-31", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 0, "fwd_ret_coverage": 0.0,
-             "skip_reason": "NO_FWD_RET", "included": False},
+            {
+                "date": "2024-01-31",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 0,
+                "fwd_ret_coverage": 0.0,
+                "skip_reason": "NO_FWD_RET",
+                "included": False,
+            },
         ]
         # Empty ic/spread means we get early return, so test _build_summary directly
         # with non-empty ic_rows but all dates skipped in diagnostics
         ic_rows = [
-            {"date": "2024-01-31", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
+            {
+                "date": "2024-01-31",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
         ]
         spread_rows = [
-            {"date": "2024-01-31", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
+            {
+                "date": "2024-01-31",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
         ]
         summary = _build_summary(
-            ic_rows, spread_rows, horizon=126, alpha_skipped=0,
-            date_diagnostics=date_diagnostics, min_fwd_coverage=0.0,
+            ic_rows,
+            spread_rows,
+            horizon=126,
+            alpha_skipped=0,
+            date_diagnostics=date_diagnostics,
+            min_fwd_coverage=0.0,
         )
         diag = summary["fwd_return_diagnostics"]
         assert diag["coverage_stats"] == {}
@@ -862,32 +1098,68 @@ class TestFwdReturnDiagnostics:
     def test_freshness_not_stale(self):
         """When last archive date is included, fwd_returns_stale is False."""
         date_diagnostics = [
-            {"date": "2024-01-31", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 260, "fwd_ret_coverage": 0.9286,
-             "skip_reason": "", "included": True},
-            {"date": "2024-02-28", "n_rows": 300, "n_price_rows": 280,
-             "n_fwd_rets": 270, "fwd_ret_coverage": 0.9643,
-             "skip_reason": "", "included": True},
+            {
+                "date": "2024-01-31",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 260,
+                "fwd_ret_coverage": 0.9286,
+                "skip_reason": "",
+                "included": True,
+            },
+            {
+                "date": "2024-02-28",
+                "n_rows": 300,
+                "n_price_rows": 280,
+                "n_fwd_rets": 270,
+                "fwd_ret_coverage": 0.9643,
+                "skip_reason": "",
+                "included": True,
+            },
         ]
         ic_rows = [
-            {"date": "2024-01-31", "regime": "",
-             "ic_clinical": 0.10, "ic_catalyst": 0.05, "ic_alpha": 0.08,
-             "ic_alpha_incr": 0.03},
-            {"date": "2024-02-28", "regime": "",
-             "ic_clinical": 0.12, "ic_catalyst": 0.06, "ic_alpha": 0.09,
-             "ic_alpha_incr": 0.04},
+            {
+                "date": "2024-01-31",
+                "regime": "",
+                "ic_clinical": 0.10,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            },
+            {
+                "date": "2024-02-28",
+                "regime": "",
+                "ic_clinical": 0.12,
+                "ic_catalyst": 0.06,
+                "ic_alpha": 0.09,
+                "ic_alpha_incr": 0.04,
+            },
         ]
         spread_rows = [
-            {"date": "2024-01-31", "regime": "",
-             "spread_clinical": 0.02, "spread_catalyst": 0.01, "spread_alpha": 0.03,
-             "spread_alpha_double": 0.01},
-            {"date": "2024-02-28", "regime": "",
-             "spread_clinical": 0.03, "spread_catalyst": 0.015, "spread_alpha": 0.04,
-             "spread_alpha_double": 0.02},
+            {
+                "date": "2024-01-31",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            },
+            {
+                "date": "2024-02-28",
+                "regime": "",
+                "spread_clinical": 0.03,
+                "spread_catalyst": 0.015,
+                "spread_alpha": 0.04,
+                "spread_alpha_double": 0.02,
+            },
         ]
         summary = _build_summary(
-            ic_rows, spread_rows, horizon=63, alpha_skipped=0,
-            date_diagnostics=date_diagnostics, min_fwd_coverage=0.0,
+            ic_rows,
+            spread_rows,
+            horizon=63,
+            alpha_skipped=0,
+            date_diagnostics=date_diagnostics,
+            min_fwd_coverage=0.0,
             price_end_date="2024-12-31",
             max_archive_date="2024-02-28",
         )
@@ -902,15 +1174,20 @@ class TestFwdReturnDiagnostics:
 # _get_freshness helper
 # ---------------------------------------------------------------------------
 
+
 class TestGetFreshness:
     def test_stale_summary(self):
         """Stale summary returns True + expected fields."""
-        summary = {"fwd_return_diagnostics": {"data_freshness": {
-            "price_end_date": "2026-02-06",
-            "max_archive_date": "2026-02-07",
-            "price_gap_days": -1,
-            "fwd_returns_stale": True,
-        }}}
+        summary = {
+            "fwd_return_diagnostics": {
+                "data_freshness": {
+                    "price_end_date": "2026-02-06",
+                    "max_archive_date": "2026-02-07",
+                    "price_gap_days": -1,
+                    "fwd_returns_stale": True,
+                }
+            }
+        }
         fresh = _get_freshness(summary)
         assert fresh["fwd_returns_stale"] is True
         assert fresh["price_end_date"] == "2026-02-06"
@@ -918,12 +1195,16 @@ class TestGetFreshness:
 
     def test_not_stale_summary(self):
         """Healthy summary returns False."""
-        summary = {"fwd_return_diagnostics": {"data_freshness": {
-            "price_end_date": "2026-12-31",
-            "max_archive_date": "2026-02-07",
-            "price_gap_days": 327,
-            "fwd_returns_stale": False,
-        }}}
+        summary = {
+            "fwd_return_diagnostics": {
+                "data_freshness": {
+                    "price_end_date": "2026-12-31",
+                    "max_archive_date": "2026-02-07",
+                    "price_gap_days": 327,
+                    "fwd_returns_stale": False,
+                }
+            }
+        }
         fresh = _get_freshness(summary)
         assert fresh["fwd_returns_stale"] is False
         assert fresh["price_gap_days"] == 327
@@ -945,32 +1226,60 @@ class TestGetFreshness:
 # Price extension telemetry in summary
 # ---------------------------------------------------------------------------
 
+
 class TestPriceExtensionTelemetry:
     """Test price_extension_* flags in data_freshness block."""
 
     def _diag(self, date="2026-02-07", included=True, skip_reason=""):
-        return {"date": date, "n_rows": 100, "n_price_rows": 95,
-                "n_fwd_rets": 90, "fwd_ret_coverage": 0.9474,
-                "skip_reason": skip_reason, "included": included}
+        return {
+            "date": date,
+            "n_rows": 100,
+            "n_price_rows": 95,
+            "n_fwd_rets": 90,
+            "fwd_ret_coverage": 0.9474,
+            "skip_reason": skip_reason,
+            "included": included,
+        }
 
     def _ic(self, date="2026-02-07"):
-        return {"date": date, "regime": "", "ic_clinical": 0.1,
-                "ic_catalyst": 0.05, "ic_alpha": 0.08, "ic_alpha_incr": 0.03}
+        return {
+            "date": date,
+            "regime": "",
+            "ic_clinical": 0.1,
+            "ic_catalyst": 0.05,
+            "ic_alpha": 0.08,
+            "ic_alpha_incr": 0.03,
+        }
 
     def _sp(self, date="2026-02-07"):
-        return {"date": date, "regime": "", "spread_clinical": 0.02,
-                "spread_catalyst": 0.01, "spread_alpha": 0.03,
-                "spread_alpha_double": 0.01}
+        return {
+            "date": date,
+            "regime": "",
+            "spread_clinical": 0.02,
+            "spread_catalyst": 0.01,
+            "spread_alpha": 0.03,
+            "spread_alpha_double": 0.01,
+        }
 
     def test_extension_success(self):
         """Successful extension: attempted=True, no_tickers=False, failed_all=False."""
-        ext_result = {"n_extended": 5, "n_rows_appended": 50, "n_failed": 0,
-                      "failed_tickers": [], "n_already_current": 300,
-                      "n_tickers_total": 305}
+        ext_result = {
+            "n_extended": 5,
+            "n_rows_appended": 50,
+            "n_failed": 0,
+            "failed_tickers": [],
+            "n_already_current": 300,
+            "n_tickers_total": 305,
+        }
         summary = _build_summary(
-            [self._ic()], [self._sp()], horizon=126, alpha_skipped=0,
-            date_diagnostics=[self._diag()], min_fwd_coverage=0.0,
-            price_end_date="2026-08-07", max_archive_date="2026-02-07",
+            [self._ic()],
+            [self._sp()],
+            horizon=126,
+            alpha_skipped=0,
+            date_diagnostics=[self._diag()],
+            min_fwd_coverage=0.0,
+            price_end_date="2026-08-07",
+            max_archive_date="2026-02-07",
             price_extension_result=ext_result,
         )
         fresh = summary["fwd_return_diagnostics"]["data_freshness"]
@@ -980,13 +1289,23 @@ class TestPriceExtensionTelemetry:
 
     def test_extension_no_tickers(self):
         """No tickers found: no_tickers=True, failed_all=False."""
-        ext_result = {"n_extended": 0, "n_rows_appended": 0, "n_failed": 0,
-                      "failed_tickers": [], "n_already_current": 0,
-                      "n_tickers_total": 0}
+        ext_result = {
+            "n_extended": 0,
+            "n_rows_appended": 0,
+            "n_failed": 0,
+            "failed_tickers": [],
+            "n_already_current": 0,
+            "n_tickers_total": 0,
+        }
         summary = _build_summary(
-            [self._ic()], [self._sp()], horizon=126, alpha_skipped=0,
-            date_diagnostics=[self._diag()], min_fwd_coverage=0.0,
-            price_end_date="2026-02-06", max_archive_date="2026-02-07",
+            [self._ic()],
+            [self._sp()],
+            horizon=126,
+            alpha_skipped=0,
+            date_diagnostics=[self._diag()],
+            min_fwd_coverage=0.0,
+            price_end_date="2026-02-06",
+            max_archive_date="2026-02-07",
             price_extension_result=ext_result,
         )
         fresh = summary["fwd_return_diagnostics"]["data_freshness"]
@@ -996,13 +1315,23 @@ class TestPriceExtensionTelemetry:
 
     def test_extension_all_failed(self):
         """All tickers failed: no_tickers=False, failed_all=True."""
-        ext_result = {"n_extended": 0, "n_rows_appended": 0, "n_failed": 3,
-                      "failed_tickers": ["AAA", "BBB", "CCC"],
-                      "n_already_current": 0, "n_tickers_total": 3}
+        ext_result = {
+            "n_extended": 0,
+            "n_rows_appended": 0,
+            "n_failed": 3,
+            "failed_tickers": ["AAA", "BBB", "CCC"],
+            "n_already_current": 0,
+            "n_tickers_total": 3,
+        }
         summary = _build_summary(
-            [self._ic()], [self._sp()], horizon=126, alpha_skipped=0,
-            date_diagnostics=[self._diag()], min_fwd_coverage=0.0,
-            price_end_date="2026-02-06", max_archive_date="2026-02-07",
+            [self._ic()],
+            [self._sp()],
+            horizon=126,
+            alpha_skipped=0,
+            date_diagnostics=[self._diag()],
+            min_fwd_coverage=0.0,
+            price_end_date="2026-02-06",
+            max_archive_date="2026-02-07",
             price_extension_result=ext_result,
         )
         fresh = summary["fwd_return_diagnostics"]["data_freshness"]
@@ -1013,9 +1342,14 @@ class TestPriceExtensionTelemetry:
     def test_no_extension_no_flags(self):
         """When --extend-prices not used, no price_extension_* keys."""
         summary = _build_summary(
-            [self._ic()], [self._sp()], horizon=126, alpha_skipped=0,
-            date_diagnostics=[self._diag()], min_fwd_coverage=0.0,
-            price_end_date="2026-08-07", max_archive_date="2026-02-07",
+            [self._ic()],
+            [self._sp()],
+            horizon=126,
+            alpha_skipped=0,
+            date_diagnostics=[self._diag()],
+            min_fwd_coverage=0.0,
+            price_end_date="2026-08-07",
+            max_archive_date="2026-02-07",
         )
         fresh = summary["fwd_return_diagnostics"]["data_freshness"]
         assert "price_extension_attempted" not in fresh
@@ -1026,9 +1360,11 @@ class TestPriceExtensionTelemetry:
 # extend_price_csv
 # ---------------------------------------------------------------------------
 
+
 def _write_test_csv(path, rows):
     """Write a minimal price CSV for testing."""
     import csv as _csv
+
     with open(path, "w", newline="") as f:
         w = _csv.DictWriter(f, fieldnames=["date", "ticker", "close", "open", "high", "low", "volume"])
         w.writeheader()
@@ -1040,12 +1376,21 @@ class TestExtendPriceCsv:
     def test_noop_when_current(self, tmp_path):
         """No fetch when all tickers already have data through target date."""
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-15", "ticker": "AAA", "close": "10.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
-        result = extend_price_csv(csv_path, through_date="2026-02-15",
-                                  include_xbi=False)
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-15",
+                    "ticker": "AAA",
+                    "close": "10.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
+        result = extend_price_csv(csv_path, through_date="2026-02-15", include_xbi=False)
         assert result["n_extended"] == 0
         assert result["n_rows_appended"] == 0
         assert result["n_already_current"] == 1
@@ -1055,36 +1400,51 @@ class TestExtendPriceCsv:
         import pandas as pd
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-10", "ticker": "BBB", "close": "20.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "BBB",
+                    "close": "20.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
-        mock_hist = pd.DataFrame({
-            "Close": [21.0, 22.0],
-            "Open": [20.5, 21.5],
-            "High": [21.5, 22.5],
-            "Low": [20.0, 21.0],
-            "Volume": [1000, 2000],
-        }, index=pd.to_datetime(["2026-02-11", "2026-02-12"]))
+        mock_hist = pd.DataFrame(
+            {
+                "Close": [21.0, 22.0],
+                "Open": [20.5, 21.5],
+                "High": [21.5, 22.5],
+                "Low": [20.0, 21.0],
+                "Volume": [1000, 2000],
+            },
+            index=pd.to_datetime(["2026-02-11", "2026-02-12"]),
+        )
 
         class MockTicker:
             def __init__(self, _):
                 pass
+
             def history(self, **kwargs):
                 return mock_hist
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        result = extend_price_csv(csv_path, through_date="2026-02-12",
-                                  include_xbi=False)
+        result = extend_price_csv(csv_path, through_date="2026-02-12", include_xbi=False)
         assert result["n_extended"] == 1
         assert result["n_rows_appended"] == 2
         assert result["n_failed"] == 0
 
         # Verify CSV now has 3 rows (1 original + 2 appended), atomic write
         import csv as _csv
+
         with open(csv_path) as f:
             rows = list(_csv.DictReader(f))
         assert len(rows) == 3
@@ -1098,31 +1458,55 @@ class TestExtendPriceCsv:
         import pandas as pd
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-10", "ticker": "CCC", "close": "30.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-            {"date": "2026-02-10", "ticker": "DDD", "close": "40.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "CCC",
+                    "close": "30.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+                {
+                    "date": "2026-02-10",
+                    "ticker": "DDD",
+                    "close": "40.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
-        mock_hist = pd.DataFrame({
-            "Close": [31.0], "Open": [30.5], "High": [31.5],
-            "Low": [30.0], "Volume": [500],
-        }, index=pd.to_datetime(["2026-02-11"]))
+        mock_hist = pd.DataFrame(
+            {
+                "Close": [31.0],
+                "Open": [30.5],
+                "High": [31.5],
+                "Low": [30.0],
+                "Volume": [500],
+            },
+            index=pd.to_datetime(["2026-02-11"]),
+        )
 
         class MockTicker:
             def __init__(self, ticker):
                 self._ticker = ticker
+
             def history(self, **kwargs):
                 if self._ticker == "DDD":
                     raise ConnectionError("API down")
                 return mock_hist
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        result = extend_price_csv(csv_path, through_date="2026-02-11",
-                                  include_xbi=False)
+        result = extend_price_csv(csv_path, through_date="2026-02-11", include_xbi=False)
         assert result["n_extended"] == 1  # CCC succeeded
         assert result["n_failed"] == 1
         assert "DDD" in result["failed_tickers"]
@@ -1133,25 +1517,36 @@ class TestExtendPriceCsv:
         import pandas as pd
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-10", "ticker": "EEE", "close": "50.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "EEE",
+                    "close": "50.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
         captured_kwargs = {}
 
         class MockTicker:
             def __init__(self, _):
                 pass
+
             def history(self, **kwargs):
                 captured_kwargs.update(kwargs)
                 return pd.DataFrame()  # empty — no data in window
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        result = extend_price_csv(csv_path, through_date="2026-02-12",
-                                  include_xbi=False)
+        result = extend_price_csv(csv_path, through_date="2026-02-12", include_xbi=False)
         assert captured_kwargs["end"] == "2026-02-13"
         assert captured_kwargs["start"] == "2026-02-11"
         assert result["n_rows_appended"] == 0
@@ -1161,21 +1556,38 @@ class TestExtendPriceCsv:
         import pandas as pd
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-15", "ticker": "OLD", "close": "10.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-15",
+                    "ticker": "OLD",
+                    "close": "10.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
-        mock_hist = pd.DataFrame({
-            "Close": [5.0, 6.0], "Open": [4.5, 5.5], "High": [5.5, 6.5],
-            "Low": [4.0, 5.0], "Volume": [100, 200],
-        }, index=pd.to_datetime(["2026-02-14", "2026-02-15"]))
+        mock_hist = pd.DataFrame(
+            {
+                "Close": [5.0, 6.0],
+                "Open": [4.5, 5.5],
+                "High": [5.5, 6.5],
+                "Low": [4.0, 5.0],
+                "Volume": [100, 200],
+            },
+            index=pd.to_datetime(["2026-02-14", "2026-02-15"]),
+        )
 
         captured = {}
 
         class MockTicker:
             def __init__(self, ticker):
                 self._ticker = ticker
+
             def history(self, **kwargs):
                 captured[self._ticker] = dict(kwargs)
                 if self._ticker == "NEW":
@@ -1183,11 +1595,10 @@ class TestExtendPriceCsv:
                 return pd.DataFrame()
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        result = extend_price_csv(csv_path, through_date="2026-02-15",
-                                  tickers=["OLD", "NEW"],
-                                  include_xbi=False)
+        result = extend_price_csv(csv_path, through_date="2026-02-15", tickers=["OLD", "NEW"], include_xbi=False)
         # OLD is already current — no fetch needed
         assert "OLD" not in captured
         # NEW gets full bootstrap from start_date
@@ -1203,27 +1614,35 @@ class TestExtendPriceCsv:
         csv_path = tmp_path / "prices.csv"
         assert not csv_path.exists()
 
-        mock_hist = pd.DataFrame({
-            "Close": [10.0], "Open": [9.0], "High": [11.0],
-            "Low": [8.0], "Volume": [500],
-        }, index=pd.to_datetime(["2026-02-15"]))
+        mock_hist = pd.DataFrame(
+            {
+                "Close": [10.0],
+                "Open": [9.0],
+                "High": [11.0],
+                "Low": [8.0],
+                "Volume": [500],
+            },
+            index=pd.to_datetime(["2026-02-15"]),
+        )
 
         class MockTicker:
             def __init__(self, _):
                 pass
+
             def history(self, **kwargs):
                 return mock_hist
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        result = extend_price_csv(csv_path, through_date="2026-02-15",
-                                  tickers=["FRESH"], include_xbi=False)
+        result = extend_price_csv(csv_path, through_date="2026-02-15", tickers=["FRESH"], include_xbi=False)
         assert csv_path.exists()
         assert result["n_extended"] == 1
         assert result["n_rows_appended"] == 1
 
         import csv as _csv
+
         with open(csv_path) as f:
             rows = list(_csv.DictReader(f))
         assert len(rows) == 1
@@ -1233,8 +1652,7 @@ class TestExtendPriceCsv:
     def test_no_tickers_warns(self, tmp_path):
         """Missing CSV + no tickers + include_xbi=False returns zeros."""
         csv_path = tmp_path / "prices.csv"
-        result = extend_price_csv(csv_path, through_date="2026-02-15",
-                                  include_xbi=False)
+        result = extend_price_csv(csv_path, through_date="2026-02-15", include_xbi=False)
         assert result["n_tickers_total"] == 0
         assert result["n_extended"] == 0
 
@@ -1243,21 +1661,33 @@ class TestExtendPriceCsv:
         import pandas as pd
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-10", "ticker": "AAA", "close": "10.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "AAA",
+                    "close": "10.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
         fetched_tickers = []
 
         class MockTicker:
             def __init__(self, ticker):
                 self._ticker = ticker
+
             def history(self, **kwargs):
                 fetched_tickers.append(self._ticker)
                 return pd.DataFrame()  # empty — no new data
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
         result = extend_price_csv(csv_path, through_date="2026-02-15")
@@ -1273,37 +1703,56 @@ class TestExtendPriceCsv:
         Simulates the run_backtest flow: extend → build CSVReturnsProvider →
         provider.get_last_date() reflects post-extension state.
         """
-        import pandas as pd
         from datetime import date
+
+        import pandas as pd
+
         from backtest.returns_provider import CSVReturnsProvider
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-10", "ticker": "TEST", "close": "10.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "TEST",
+                    "close": "10.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
         # Provider BEFORE extension
         prov_before = CSVReturnsProvider(csv_path, price_col="close")
         assert prov_before.get_last_date() == date(2026, 2, 10)
 
         # Extend
-        mock_hist = pd.DataFrame({
-            "Close": [11.0, 12.0], "Open": [10.5, 11.5], "High": [11.5, 12.5],
-            "Low": [10.0, 11.0], "Volume": [1000, 2000],
-        }, index=pd.to_datetime(["2026-02-11", "2026-02-12"]))
+        mock_hist = pd.DataFrame(
+            {
+                "Close": [11.0, 12.0],
+                "Open": [10.5, 11.5],
+                "High": [11.5, 12.5],
+                "Low": [10.0, 11.0],
+                "Volume": [1000, 2000],
+            },
+            index=pd.to_datetime(["2026-02-11", "2026-02-12"]),
+        )
 
         class MockTicker:
             def __init__(self, _):
                 pass
+
             def history(self, **kwargs):
                 return mock_hist
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        ext = extend_price_csv(csv_path, through_date="2026-02-12",
-                               include_xbi=False)
+        ext = extend_price_csv(csv_path, through_date="2026-02-12", include_xbi=False)
         assert ext["n_rows_appended"] == 2
 
         # Provider AFTER extension — must see new end date
@@ -1315,44 +1764,85 @@ class TestExtendPriceCsv:
         import pandas as pd
 
         csv_path = tmp_path / "prices.csv"
-        _write_test_csv(csv_path, [
-            {"date": "2026-02-10", "ticker": "GGG", "close": "10.0",
-             "open": "", "high": "", "low": "", "volume": ""},
-        ])
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "GGG",
+                    "close": "10.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
 
-        mock_hist = pd.DataFrame({
-            "Close": [11.0], "Open": [10.5], "High": [11.5],
-            "Low": [10.0], "Volume": [1000],
-        }, index=pd.to_datetime(["2026-02-11"]))
+        mock_hist = pd.DataFrame(
+            {
+                "Close": [11.0],
+                "Open": [10.5],
+                "High": [11.5],
+                "Low": [10.0],
+                "Volume": [1000],
+            },
+            index=pd.to_datetime(["2026-02-11"]),
+        )
 
         class MockTicker:
             def __init__(self, _):
                 pass
+
             def history(self, **kwargs):
                 return mock_hist
 
         import yfinance
+
         monkeypatch.setattr(yfinance, "Ticker", MockTicker)
 
-        extend_price_csv(csv_path, through_date="2026-02-11",
-                         include_xbi=False)
+        extend_price_csv(csv_path, through_date="2026-02-11", include_xbi=False)
 
         # Simulate post-extension diagnostics where last archive is included
         date_diagnostics = [
-            {"date": "2026-02-10", "n_rows": 1, "n_price_rows": 1,
-             "n_fwd_rets": 1, "fwd_ret_coverage": 1.0,
-             "skip_reason": "", "included": True},
+            {
+                "date": "2026-02-10",
+                "n_rows": 1,
+                "n_price_rows": 1,
+                "n_fwd_rets": 1,
+                "fwd_ret_coverage": 1.0,
+                "skip_reason": "",
+                "included": True,
+            },
         ]
-        ic_rows = [{"date": "2026-02-10", "regime": "",
-                     "ic_clinical": 0.1, "ic_catalyst": 0.05,
-                     "ic_alpha": 0.08, "ic_alpha_incr": 0.03}]
-        spread_rows = [{"date": "2026-02-10", "regime": "",
-                         "spread_clinical": 0.02, "spread_catalyst": 0.01,
-                         "spread_alpha": 0.03, "spread_alpha_double": 0.01}]
+        ic_rows = [
+            {
+                "date": "2026-02-10",
+                "regime": "",
+                "ic_clinical": 0.1,
+                "ic_catalyst": 0.05,
+                "ic_alpha": 0.08,
+                "ic_alpha_incr": 0.03,
+            }
+        ]
+        spread_rows = [
+            {
+                "date": "2026-02-10",
+                "regime": "",
+                "spread_clinical": 0.02,
+                "spread_catalyst": 0.01,
+                "spread_alpha": 0.03,
+                "spread_alpha_double": 0.01,
+            }
+        ]
 
         summary = _build_summary(
-            ic_rows, spread_rows, horizon=1, alpha_skipped=0,
-            date_diagnostics=date_diagnostics, min_fwd_coverage=0.0,
+            ic_rows,
+            spread_rows,
+            horizon=1,
+            alpha_skipped=0,
+            date_diagnostics=date_diagnostics,
+            min_fwd_coverage=0.0,
             price_end_date="2026-02-11",
             max_archive_date="2026-02-10",
         )
@@ -1365,17 +1855,21 @@ class TestExtendPriceCsv:
 # _last_trading_day
 # ---------------------------------------------------------------------------
 
+
 class TestLastTradingDay:
     def test_weekday_unchanged(self):
         from datetime import date
+
         # Monday through Friday — returned as-is
         assert _last_trading_day(date(2026, 2, 16)) == date(2026, 2, 16)  # Mon
         assert _last_trading_day(date(2026, 2, 20)) == date(2026, 2, 20)  # Fri
 
     def test_saturday_rolls_to_friday(self):
         from datetime import date
+
         assert _last_trading_day(date(2026, 2, 21)) == date(2026, 2, 20)  # Sat → Fri
 
     def test_sunday_rolls_to_friday(self):
         from datetime import date
+
         assert _last_trading_day(date(2026, 2, 22)) == date(2026, 2, 20)  # Sun → Fri

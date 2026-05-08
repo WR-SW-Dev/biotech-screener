@@ -11,49 +11,42 @@ Validates:
 
 Author: Wake Robin Capital Management
 """
-import pytest
+
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Dict, List, Tuple, Any
+from typing import Any, Dict, List, Tuple
 
-from src.modules.intelligent_governance import (
-    # Main orchestrator
+import pytest
+
+from src.modules.intelligent_governance import (  # Main orchestrator; Components; Enums; Constants; Helpers
+    V3_PRODUCTION_WEIGHTS,
+    EnsembleRank,
+    EnsembleRanker,
     IntelligentGovernanceLayer,
     IntelligentGovernanceResult,
-
-    # Components
-    SharpeWeightOptimizer,
-    SharpeOptimizationResult,
+    InteractionEffect,
     InteractionEffectsEngine,
     InteractionEffectsResult,
-    InteractionEffect,
-    EnsembleRanker,
-    EnsembleRank,
-    RegimeAdaptiveOrchestrator,
-
-    # Enums
-    OptimizationMethod,
     InteractionType,
+    OptimizationMethod,
     RankingMethod,
-
-    # Constants
-    V3_PRODUCTION_WEIGHTS,
-
-    # Helpers
-    _to_decimal,
-    _coalesce,
-    _quantize_weight,
-    _quantize_score,
+    RegimeAdaptiveOrchestrator,
+    SharpeOptimizationResult,
+    SharpeWeightOptimizer,
     _clamp,
+    _coalesce,
+    _compute_audit_hash,
     _compute_l1_distance,
     _normalize_weights,
-    _compute_audit_hash,
+    _quantize_score,
+    _quantize_weight,
+    _to_decimal,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def base_weights() -> Dict[str, Decimal]:
@@ -90,15 +83,17 @@ def historical_scores() -> List[Dict[str, Any]]:
         score_date = base_date - timedelta(days=month_offset * 30)
         for ticker_idx in range(20):
             ticker = f"TKR{ticker_idx:02d}"
-            scores.append({
-                "as_of_date": score_date,
-                "ticker": ticker,
-                "clinical": Decimal("50") + Decimal(str(ticker_idx * 2)),
-                "financial": Decimal("40") + Decimal(str(ticker_idx * 3)),
-                "catalyst": Decimal("45") + Decimal(str(ticker_idx * 2.5)),
-                "momentum": Decimal("35") + Decimal(str(ticker_idx * 2)),
-                "pos": Decimal("55") + Decimal(str(ticker_idx * 1.5)),
-            })
+            scores.append(
+                {
+                    "as_of_date": score_date,
+                    "ticker": ticker,
+                    "clinical": Decimal("50") + Decimal(str(ticker_idx * 2)),
+                    "financial": Decimal("40") + Decimal(str(ticker_idx * 3)),
+                    "catalyst": Decimal("45") + Decimal(str(ticker_idx * 2.5)),
+                    "momentum": Decimal("35") + Decimal(str(ticker_idx * 2)),
+                    "pos": Decimal("55") + Decimal(str(ticker_idx * 1.5)),
+                }
+            )
     return scores
 
 
@@ -132,7 +127,7 @@ def ticker_data_batch() -> List[Dict[str, Any]]:
             "metadata": {
                 "runway_months": Decimal("30"),
                 "days_to_catalyst": 25,
-            }
+            },
         },
         {
             "ticker": "BETA",
@@ -146,7 +141,7 @@ def ticker_data_batch() -> List[Dict[str, Any]]:
             "metadata": {
                 "runway_months": Decimal("8"),
                 "short_interest_pct": Decimal("22"),
-            }
+            },
         },
         {
             "ticker": "GAMMA",
@@ -160,7 +155,7 @@ def ticker_data_batch() -> List[Dict[str, Any]]:
             "metadata": {
                 "runway_months": Decimal("36"),
                 "institutional_net_change": Decimal("5"),
-            }
+            },
         },
         {
             "ticker": "DELTA",
@@ -173,7 +168,7 @@ def ticker_data_batch() -> List[Dict[str, Any]]:
             "valuation": Decimal("80"),
             "metadata": {
                 "runway_months": Decimal("48"),
-            }
+            },
         },
     ]
 
@@ -181,6 +176,7 @@ def ticker_data_batch() -> List[Dict[str, Any]]:
 # =============================================================================
 # HELPER FUNCTION TESTS
 # =============================================================================
+
 
 class TestHelperFunctions:
     """Tests for utility helper functions."""
@@ -286,6 +282,7 @@ class TestHelperFunctions:
 # SHARPE WEIGHT OPTIMIZER TESTS
 # =============================================================================
 
+
 class TestSharpeWeightOptimizer:
     """Tests for Sharpe-ratio weight optimization."""
 
@@ -303,9 +300,7 @@ class TestSharpeWeightOptimizer:
         assert result.optimized_weights == base_weights
         assert result.confidence <= Decimal("0.15")
 
-    def test_optimization_with_sufficient_data(
-        self, base_weights, historical_scores, forward_returns
-    ):
+    def test_optimization_with_sufficient_data(self, base_weights, historical_scores, forward_returns):
         """Test optimization runs with sufficient data."""
         optimizer = SharpeWeightOptimizer(min_periods=6)
         result = optimizer.optimize(
@@ -325,9 +320,7 @@ class TestSharpeWeightOptimizer:
             assert weight >= Decimal("0.02")
             assert weight <= Decimal("0.60")
 
-    def test_shrinkage_toward_base_weights(
-        self, base_weights, historical_scores, forward_returns
-    ):
+    def test_shrinkage_toward_base_weights(self, base_weights, historical_scores, forward_returns):
         """Test that shrinkage pulls weights toward base."""
         # High shrinkage
         optimizer_high = SharpeWeightOptimizer(
@@ -359,9 +352,7 @@ class TestSharpeWeightOptimizer:
 
         assert l1_high <= l1_low
 
-    def test_weight_bounds_enforced(
-        self, base_weights, historical_scores, forward_returns
-    ):
+    def test_weight_bounds_enforced(self, base_weights, historical_scores, forward_returns):
         """Test that weight bounds are enforced."""
         optimizer = SharpeWeightOptimizer(
             min_weight=Decimal("0.05"),
@@ -378,9 +369,7 @@ class TestSharpeWeightOptimizer:
             assert weight >= Decimal("0.05")
             assert weight <= Decimal("0.40")
 
-    def test_pit_safety_embargo(
-        self, base_weights, historical_scores, forward_returns
-    ):
+    def test_pit_safety_embargo(self, base_weights, historical_scores, forward_returns):
         """Test that embargo period is respected."""
         optimizer = SharpeWeightOptimizer(embargo_months=3)
 
@@ -396,9 +385,7 @@ class TestSharpeWeightOptimizer:
         assert "embargo_months" in result.provenance
         assert result.provenance["embargo_months"] == 3
 
-    def test_determinism(
-        self, base_weights, historical_scores, forward_returns
-    ):
+    def test_determinism(self, base_weights, historical_scores, forward_returns):
         """Test that optimization is deterministic."""
         optimizer = SharpeWeightOptimizer()
 
@@ -423,6 +410,7 @@ class TestSharpeWeightOptimizer:
 # =============================================================================
 # INTERACTION EFFECTS ENGINE TESTS
 # =============================================================================
+
 
 class TestInteractionEffectsEngine:
     """Tests for business logic interaction effects."""
@@ -598,15 +586,14 @@ class TestInteractionEffectsEngine:
 # ENSEMBLE RANKER TESTS
 # =============================================================================
 
+
 class TestEnsembleRanker:
     """Tests for ensemble ranking system."""
 
     def test_single_ticker(self):
         """Test ensemble ranking with single ticker."""
         ranker = EnsembleRanker()
-        result = ranker.compute_ranks([
-            {"ticker": "ACME", "clinical": Decimal("70"), "financial": Decimal("65")}
-        ])
+        result = ranker.compute_ranks([{"ticker": "ACME", "clinical": Decimal("70"), "financial": Decimal("65")}])
 
         assert len(result) == 1
         assert result[0].ticker == "ACME"
@@ -632,9 +619,9 @@ class TestEnsembleRanker:
 
         for r in result:
             expected = (
-                Decimal(r.composite_rank) * Decimal("0.50") +
-                Decimal(r.momentum_rank) * Decimal("0.25") +
-                Decimal(r.value_rank) * Decimal("0.25")
+                Decimal(r.composite_rank) * Decimal("0.50")
+                + Decimal(r.momentum_rank) * Decimal("0.25")
+                + Decimal(r.value_rank) * Decimal("0.25")
             )
             assert abs(r.ensemble_rank - expected) < Decimal("0.1")
 
@@ -674,6 +661,7 @@ class TestEnsembleRanker:
 # =============================================================================
 # REGIME ADAPTIVE ORCHESTRATOR TESTS
 # =============================================================================
+
 
 class TestRegimeAdaptiveOrchestrator:
     """Tests for regime-adaptive weight orchestration."""
@@ -767,6 +755,7 @@ class TestRegimeAdaptiveOrchestrator:
 # =============================================================================
 # MAIN ORCHESTRATOR TESTS
 # =============================================================================
+
 
 class TestIntelligentGovernanceLayer:
     """Tests for the main intelligent governance orchestrator."""
@@ -933,12 +922,11 @@ class TestIntelligentGovernanceLayer:
 # INTEGRATION TESTS
 # =============================================================================
 
+
 class TestIntegration:
     """Integration tests combining multiple components."""
 
-    def test_full_pipeline(
-        self, base_weights, historical_scores, forward_returns, ticker_data_batch
-    ):
+    def test_full_pipeline(self, base_weights, historical_scores, forward_returns, ticker_data_batch):
         """Test full intelligent governance pipeline."""
         layer = IntelligentGovernanceLayer(
             enable_sharpe_optimization=True,
@@ -1050,6 +1038,7 @@ class TestIntegration:
 # =============================================================================
 # EDGE CASE TESTS
 # =============================================================================
+
 
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""

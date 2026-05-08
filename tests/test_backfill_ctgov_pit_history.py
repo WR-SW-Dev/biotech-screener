@@ -1,40 +1,40 @@
 """Tests for tools/backfill_ctgov_pit_history.py — PIT-safe CTgov history backfill."""
+
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date
 from pathlib import Path
 from typing import List
 
 import pytest
 
-import sys
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 from tools.backfill_ctgov_pit_history import (
-    TOOL_VERSION,
-    SCHEMA_VERSION,
     PIT_DATE_PRIORITY,
-    generate_quarter_end_dates,
-    generate_month_end_dates,
-    generate_weekly_dates,
+    SCHEMA_VERSION,
+    TOOL_VERSION,
+    _is_date_complete,
+    _stable_sort_trials,
+    backfill_ctgov_history,
+    build_pit_cache_for_date,
+    filter_trials_pit,
     generate_daily_dates,
     generate_dates,
+    generate_month_end_dates,
+    generate_quarter_end_dates,
+    generate_weekly_dates,
     is_pit_admitted,
-    filter_trials_pit,
-    _stable_sort_trials,
-    _is_date_complete,
-    build_pit_cache_for_date,
-    backfill_ctgov_history,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_trial(
     nct_id: str = "NCT00000001",
@@ -72,6 +72,7 @@ SAMPLE_TRIALS = [
 # ===================================================================
 # Date generation tests
 # ===================================================================
+
 
 class TestQuarterEndDates:
     def test_basic_range(self):
@@ -133,15 +134,19 @@ class TestDailyDates:
         dates = generate_daily_dates(date(2024, 1, 1), date(2024, 1, 7))
         # Jan 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat, 7=Sun
         assert dates == [
-            date(2024, 1, 1), date(2024, 1, 2), date(2024, 1, 3),
-            date(2024, 1, 4), date(2024, 1, 5),
+            date(2024, 1, 1),
+            date(2024, 1, 2),
+            date(2024, 1, 3),
+            date(2024, 1, 4),
+            date(2024, 1, 5),
         ]
 
 
 class TestGenerateDates:
     def test_quarterly(self):
         assert generate_dates(date(2024, 1, 1), date(2024, 6, 30), "quarterly") == [
-            date(2024, 3, 31), date(2024, 6, 30),
+            date(2024, 3, 31),
+            date(2024, 6, 30),
         ]
 
     def test_unknown_cadence_raises(self):
@@ -152,6 +157,7 @@ class TestGenerateDates:
 # ===================================================================
 # PIT filtering tests
 # ===================================================================
+
 
 class TestIsPitAdmitted:
     def test_admitted_by_first_posted(self):
@@ -234,6 +240,7 @@ class TestStableSort:
 # Resume tests
 # ===================================================================
 
+
 class TestIsDateComplete:
     def test_returns_false_for_missing_file(self, tmp_path):
         assert _is_date_complete(tmp_path, date(2024, 3, 31)) is False
@@ -257,6 +264,7 @@ class TestIsDateComplete:
 # ===================================================================
 # Build cache for date tests
 # ===================================================================
+
 
 class TestBuildPitCacheForDate:
     def test_writes_cache_and_meta(self, tmp_path):
@@ -327,6 +335,7 @@ class TestBuildPitCacheForDate:
 # ===================================================================
 # Backfill orchestrator tests
 # ===================================================================
+
 
 class TestBackfillCtgovHistory:
     def test_basic_quarterly(self, tmp_path):
@@ -446,9 +455,7 @@ class TestBackfillCtgovHistory:
         )
         counts = [d["trials_admitted"] for d in summary["per_date"]]
         for i in range(1, len(counts)):
-            assert counts[i] >= counts[i - 1], (
-                f"Non-monotonic: {counts[i]} < {counts[i-1]} at index {i}"
-            )
+            assert counts[i] >= counts[i - 1], f"Non-monotonic: {counts[i]} < {counts[i-1]} at index {i}"
 
     def test_pit_invariant_no_future_trials(self, tmp_path):
         """Verify no trial with first_posted > as_of_date in output."""
@@ -471,6 +478,4 @@ class TestBackfillCtgovHistory:
         for t in cached:
             fp = t.get("first_posted", "")
             if fp:
-                assert fp <= as_of.isoformat(), (
-                    f"Future trial leaked: {t['nct_id']} first_posted={fp}"
-                )
+                assert fp <= as_of.isoformat(), f"Future trial leaked: {t['nct_id']} first_posted={fp}"

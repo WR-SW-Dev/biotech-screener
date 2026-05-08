@@ -25,25 +25,28 @@ from typing import Any, Dict, List, Optional, Tuple
 
 class BurnTrajectory(Enum):
     """Classification of burn rate direction."""
-    DECELERATING = "decelerating"      # Burn rate decreasing (discipline)
-    STABLE = "stable"                   # Burn rate roughly flat
-    ACCELERATING = "accelerating"       # Burn rate increasing
+
+    DECELERATING = "decelerating"  # Burn rate decreasing (discipline)
+    STABLE = "stable"  # Burn rate roughly flat
+    ACCELERATING = "accelerating"  # Burn rate increasing
     ACCELERATING_JUSTIFIED = "accelerating_justified"  # Phase 3 ramp
     UNKNOWN = "unknown"
 
 
 class BurnRiskLevel(Enum):
     """Overall burn risk assessment."""
-    LOW = "low"           # Decelerating or stable with good runway
-    MODERATE = "moderate" # Accelerating but justified, or stable with short runway
-    HIGH = "high"         # Accelerating + short runway
-    CRITICAL = "critical" # Accelerating + very short runway (<6mo)
+
+    LOW = "low"  # Decelerating or stable with good runway
+    MODERATE = "moderate"  # Accelerating but justified, or stable with short runway
+    HIGH = "high"  # Accelerating + short runway
+    CRITICAL = "critical"  # Accelerating + very short runway (<6mo)
     UNKNOWN = "unknown"
 
 
 @dataclass
 class BurnTrajectoryResult:
     """Result of burn trajectory analysis."""
+
     ticker: str
     trajectory: BurnTrajectory
     risk_level: BurnRiskLevel
@@ -72,8 +75,8 @@ class CashBurnEngine:
     VERSION = "1.0.0"
 
     # Thresholds for trajectory classification
-    DECEL_THRESHOLD = Decimal("-0.15")   # >15% reduction = decelerating
-    ACCEL_THRESHOLD = Decimal("0.15")    # >15% increase = accelerating
+    DECEL_THRESHOLD = Decimal("-0.15")  # >15% reduction = decelerating
+    ACCEL_THRESHOLD = Decimal("0.15")  # >15% increase = accelerating
     # Between -15% and +15% = stable
 
     # Runway thresholds (months)
@@ -121,9 +124,7 @@ class CashBurnEngine:
         flags = []
 
         # Extract burn rates
-        burn_current, burn_prior, confidence = self._extract_burn_rates(
-            financial_data, as_of_date
-        )
+        burn_current, burn_prior, confidence = self._extract_burn_rates(financial_data, as_of_date)
 
         # Extract runway
         runway_months = self._to_decimal(financial_data.get("runway_months"))
@@ -138,9 +139,7 @@ class CashBurnEngine:
             flags.append("insufficient_burn_data")
         else:
             burn_change_pct = self._compute_change_pct(burn_current, burn_prior)
-            trajectory = self._classify_trajectory(
-                burn_change_pct, has_late_stage
-            )
+            trajectory = self._classify_trajectory(burn_change_pct, has_late_stage)
 
             if trajectory == BurnTrajectory.DECELERATING:
                 flags.append("burn_decelerating")
@@ -150,9 +149,7 @@ class CashBurnEngine:
                 flags.append("burn_accelerating_phase3_justified")
 
         # Compute risk level
-        risk_level = self._compute_risk_level(
-            trajectory, runway_months, burn_change_pct
-        )
+        risk_level = self._compute_risk_level(trajectory, runway_months, burn_change_pct)
 
         if risk_level == BurnRiskLevel.CRITICAL:
             flags.append("burn_risk_critical")
@@ -160,9 +157,7 @@ class CashBurnEngine:
             flags.append("burn_risk_high")
 
         # Compute score modifier
-        score_modifier = self._compute_score_modifier(
-            trajectory, risk_level, runway_months, confidence
-        )
+        score_modifier = self._compute_score_modifier(trajectory, risk_level, runway_months, confidence)
 
         result = BurnTrajectoryResult(
             ticker=ticker,
@@ -215,19 +210,16 @@ class CashBurnEngine:
 
         # Filter to PIT-safe data (period_end <= as_of_date)
         valid_quarters = [
-            q for q in quarterly_data
-            if self._parse_date(q.get("period_end")) is not None
-            and self._parse_date(q.get("period_end")) <= as_of_date
+            q
+            for q in quarterly_data
+            if self._parse_date(q.get("period_end")) is not None and self._parse_date(q.get("period_end")) <= as_of_date
         ]
 
         if len(valid_quarters) < 2:
             return None, None, Decimal("0.3")
 
         # Sort by period_end descending
-        valid_quarters.sort(
-            key=lambda q: self._parse_date(q.get("period_end")),
-            reverse=True
-        )
+        valid_quarters.sort(key=lambda q: self._parse_date(q.get("period_end")), reverse=True)
 
         # Get most recent two quarters
         current_q = valid_quarters[0]
@@ -441,9 +433,7 @@ class CashBurnEngine:
             financial = financial_by_ticker.get(ticker, {})
             clinical = clinical_by_ticker.get(ticker, {})
 
-            result = self.compute_trajectory(
-                ticker, financial, clinical, as_of_date
-            )
+            result = self.compute_trajectory(ticker, financial, clinical, as_of_date)
 
             scores_by_ticker[ticker] = {
                 "ticker": ticker,
@@ -480,13 +470,15 @@ class CashBurnEngine:
         result: BurnTrajectoryResult,
     ) -> None:
         """Add entry to audit trail."""
-        self.audit_trail.append({
-            "ticker": ticker,
-            "as_of_date": as_of_date.isoformat(),
-            "trajectory": result.trajectory.value,
-            "risk_level": result.risk_level.value,
-            "score_modifier": str(result.score_modifier),
-        })
+        self.audit_trail.append(
+            {
+                "ticker": ticker,
+                "as_of_date": as_of_date.isoformat(),
+                "trajectory": result.trajectory.value,
+                "risk_level": result.risk_level.value,
+                "score_modifier": str(result.score_modifier),
+            }
+        )
 
     def get_audit_trail(self) -> List[Dict[str, Any]]:
         """Return audit trail."""

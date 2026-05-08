@@ -1,13 +1,14 @@
 """Tests for ruleset evaluator v1."""
+
 from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pytest
-import sys
 
 _root = str(Path(__file__).resolve().parent.parent)
 if _root not in sys.path:
@@ -15,20 +16,19 @@ if _root not in sys.path:
 
 from scripts.eval_ruleset import (
     SCHEMA,
+    compute_max_shift,
     compute_overlap,
     compute_rank_correlation,
-    compute_max_shift,
     evaluate_gate,
     evaluate_ruleset,
     is_degraded,
     load_ruleset_id,
-    ranked_tickers,
+    main,
     rank_map,
+    ranked_tickers,
     render_markdown,
     snapshot_ruleset_id,
-    main,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -57,9 +57,8 @@ TICKERS = [f"T{i:02d}" for i in range(1, 11)]
 def _compute_ruleset_id(data: dict) -> str:
     """Compute ruleset ID same way as decision_engine.py."""
     import hashlib
-    return hashlib.sha256(
-        json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()[:8]
+
+    return hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 
 _TEST_RULESET_DATA = {"test_param": "value", "version": "test"}
@@ -77,26 +76,34 @@ def _make_snapshot(
     d.mkdir(parents=True, exist_ok=True)
     rows = []
     for i, t in enumerate(tickers):
-        rows.append({
-            "ticker": t,
-            "actionable_rank": str(i + 1),
-            "eligible": "1",
-            "decision_engine_ruleset_id": ruleset_id,
-            "tier_dev": "A" if i < len(tickers) // 2 else "B",
-        })
+        rows.append(
+            {
+                "ticker": t,
+                "actionable_rank": str(i + 1),
+                "eligible": "1",
+                "decision_engine_ruleset_id": ruleset_id,
+                "tier_dev": "A" if i < len(tickers) // 2 else "B",
+            }
+        )
     _write_csv(d / "rankings.csv", rows)
-    _write_json(d / "metadata.json", {
-        "as_of_date": date,
-        "version": "1.6.0",
-        "decision_mode": "phase2",
-        "clinical_sort_telemetry": {"ruleset_id": ruleset_id},
-        "cache_degraded_run": degraded,
-    })
-    _write_json(d / "cache_health.json", {
-        "schema": "cache_health.v1",
-        "overall_status": "bad" if degraded else "ok",
-        "degraded_run": degraded,
-    })
+    _write_json(
+        d / "metadata.json",
+        {
+            "as_of_date": date,
+            "version": "1.6.0",
+            "decision_mode": "phase2",
+            "clinical_sort_telemetry": {"ruleset_id": ruleset_id},
+            "cache_degraded_run": degraded,
+        },
+    )
+    _write_json(
+        d / "cache_health.json",
+        {
+            "schema": "cache_health.v1",
+            "overall_status": "bad" if degraded else "ok",
+            "degraded_run": degraded,
+        },
+    )
     return d
 
 
@@ -125,10 +132,26 @@ def _make_price_csv(path: Path, tickers: List[str], dates: List[str]) -> Path:
 
 # Trading dates for tests — weekdays only
 TRADE_DATES = [
-    "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06",
-    "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13",
-    "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20",
-    "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27",
+    "2026-02-02",
+    "2026-02-03",
+    "2026-02-04",
+    "2026-02-05",
+    "2026-02-06",
+    "2026-02-09",
+    "2026-02-10",
+    "2026-02-11",
+    "2026-02-12",
+    "2026-02-13",
+    "2026-02-16",
+    "2026-02-17",
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-02-25",
+    "2026-02-26",
+    "2026-02-27",
 ]
 
 
@@ -146,15 +169,22 @@ class TestDateDiscovery:
 
         price_csv = _make_price_csv(tmp_path / "prices.csv", TICKERS, TRADE_DATES)
         from scripts.eval_forward_returns import load_price_series
+
         ps = load_price_series(price_csv)
         all_dates = sorted({d for p in ps.values() for d in p})
 
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06", "2026-02-07"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=all_dates, regime_map=None,
-            k=5, horizon=5, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=all_dates,
+            regime_map=None,
+            k=5,
+            horizon=5,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         assert result["n_evaluated"] == 2
         skipped = {s["date"]: s["reason"] for s in result["dates_skipped"]}
@@ -166,11 +196,17 @@ class TestDateDiscovery:
 
         ps = {"T01": {"2026-02-05": 100.0}}
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=["2026-02-05"], regime_map=None,
-            k=5, horizon=5, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=["2026-02-05"],
+            regime_map=None,
+            k=5,
+            horizon=5,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         skipped = {s["date"]: s["reason"] for s in result["dates_skipped"]}
         assert skipped.get("2026-02-06") == "missing_snapshot"
@@ -188,11 +224,17 @@ class TestRulesetMismatch:
 
         ps = {"T01": {"2026-02-05": 100.0}}
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=["2026-02-05"], regime_map=None,
-            k=5, horizon=5, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=["2026-02-05"],
+            regime_map=None,
+            k=5,
+            horizon=5,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         assert result["n_evaluated"] == 0
         skipped = {s["date"]: s["reason"] for s in result["dates_skipped"]}
@@ -204,11 +246,17 @@ class TestRulesetMismatch:
 
         ps = {"T01": {"2026-02-05": 100.0}}
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=["2026-02-05"], regime_map=None,
-            k=5, horizon=5, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=["2026-02-05"],
+            regime_map=None,
+            k=5,
+            horizon=5,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         assert result["n_evaluated"] == 1
 
@@ -263,11 +311,17 @@ class TestStability:
         all_dates = ["2026-02-05", "2026-02-06"]
 
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=all_dates, regime_map=None,
-            k=5, horizon=1, cost_bps=0, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=all_dates,
+            regime_map=None,
+            k=5,
+            horizon=1,
+            cost_bps=0,
+            anchor_mode="exact",
         )
         ts = result["temporal_stability"]
         assert ts.get("mean_top60_overlap") is not None
@@ -294,11 +348,17 @@ class TestReturns:
         all_dates = ["2026-02-05", "2026-02-06"]
 
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=all_dates, regime_map=None,
-            k=5, horizon=1, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=all_dates,
+            regime_map=None,
+            k=5,
+            horizon=1,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         per_date = result["per_date"]
         # Day 2: turnover = 0.5 * 4 / 5 = 0.4
@@ -315,11 +375,17 @@ class TestReturns:
         all_dates = ["2026-02-05", "2026-02-06", "2026-02-07"]
 
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=all_dates, regime_map=None,
-            k=3, horizon=1, cost_bps=100, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=all_dates,
+            regime_map=None,
+            k=3,
+            horizon=1,
+            cost_bps=100,
+            anchor_mode="exact",
         )
         per_date = result["per_date"]
         # Day 1 (2026-02-05): gross = P(06)/P(05)-1 = 1%, turnover = 0.5 (first day), net = 1% - 2*0.5*100/10000 = 0%
@@ -345,12 +411,17 @@ class TestRegime:
         regime_map = {"2026-02-05": "BULL", "2026-02-06": "BEAR"}
 
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06"],
-            snapshot_dir=snap_dir, price_series=ps,
+            snapshot_dir=snap_dir,
+            price_series=ps,
             all_trade_dates=["2026-02-05", "2026-02-06", "2026-02-07"],
             regime_map=regime_map,
-            k=5, horizon=1, cost_bps=0, anchor_mode="exact",
+            k=5,
+            horizon=1,
+            cost_bps=0,
+            anchor_mode="exact",
         )
         assert "BULL" in result["regime"]
         assert "BEAR" in result["regime"]
@@ -371,18 +442,30 @@ class TestDeterminism:
         ps = {t: {"2026-02-05": 100.0} for t in TICKERS[:5]}
 
         r1 = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=["2026-02-05"], regime_map=None,
-            k=5, horizon=1, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=["2026-02-05"],
+            regime_map=None,
+            k=5,
+            horizon=1,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         r2 = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=["2026-02-05"], regime_map=None,
-            k=5, horizon=1, cost_bps=30, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=["2026-02-05"],
+            regime_map=None,
+            k=5,
+            horizon=1,
+            cost_bps=30,
+            anchor_mode="exact",
         )
         j1 = json.dumps(r1, sort_keys=True, indent=2)
         j2 = json.dumps(r2, sort_keys=True, indent=2)
@@ -395,11 +478,17 @@ class TestDeterminism:
 
         ps = {}
         result = evaluate_ruleset(
-            candidate_id=_TEST_RULESET_ID, baseline_id=_TEST_RULESET_ID,
+            candidate_id=_TEST_RULESET_ID,
+            baseline_id=_TEST_RULESET_ID,
             dates=["2026-02-05", "2026-02-06"],
-            snapshot_dir=snap_dir, price_series=ps,
-            all_trade_dates=[], regime_map=None,
-            k=3, horizon=1, cost_bps=0, anchor_mode="exact",
+            snapshot_dir=snap_dir,
+            price_series=ps,
+            all_trade_dates=[],
+            regime_map=None,
+            k=3,
+            horizon=1,
+            cost_bps=0,
+            anchor_mode="exact",
         )
         # Both skipped for different reasons
         assert result["n_skipped"] == 2
@@ -477,8 +566,11 @@ class TestGate:
             "temporal_stability": {
                 "mean_top60_overlap": 95.0,
                 "max_rank_shift": {
-                    "ticker": "IBRX", "shift": shift, "date": "2026-02-24",
-                    "from": 32, "to": 221,
+                    "ticker": "IBRX",
+                    "shift": shift,
+                    "date": "2026-02-24",
+                    "from": 32,
+                    "to": 221,
                 },
             },
             "cross_comparison": {
@@ -513,8 +605,8 @@ class TestGate:
     def test_non_noop_temporal_fail_stays_fail(self):
         """High temporal shift + degraded cross top60 => FAIL (no override)."""
         result = self._noop_eval(shift=150)
-        result["cross_comparison"]["mean_top60_overlap"] = 85.0   # below no-op floor
-        result["cross_comparison"]["mean_spearman"] = 0.95        # below no-op floor
+        result["cross_comparison"]["mean_top60_overlap"] = 85.0  # below no-op floor
+        result["cross_comparison"]["mean_spearman"] = 0.95  # below no-op floor
         gate = evaluate_gate(result)
         assert gate["verdict"] == "FAIL"
         assert any("max_rank_shift" in r for r in gate["fail_reasons"])
@@ -536,19 +628,32 @@ class TestCLI:
         ruleset = _make_ruleset(tmp_path / "ruleset.json")
         out_dir = tmp_path / "output"
 
-        rc = main([
-            "--candidate", str(ruleset),
-            "--baseline", str(ruleset),
-            "--start", "2026-02-05",
-            "--end", "2026-02-06",
-            "--k", "3",
-            "--horizon", "1",
-            "--cost-bps", "30",
-            "--snapshot-dir", str(snap_dir),
-            "--price-csv", str(price_csv),
-            "--out-dir", str(out_dir),
-            "--anchor-mode", "exact",
-        ])
+        rc = main(
+            [
+                "--candidate",
+                str(ruleset),
+                "--baseline",
+                str(ruleset),
+                "--start",
+                "2026-02-05",
+                "--end",
+                "2026-02-06",
+                "--k",
+                "3",
+                "--horizon",
+                "1",
+                "--cost-bps",
+                "30",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--price-csv",
+                str(price_csv),
+                "--out-dir",
+                str(out_dir),
+                "--anchor-mode",
+                "exact",
+            ]
+        )
         assert rc == 0
         # Check outputs exist
         eval_dir = list(out_dir.glob("*/*"))
@@ -570,19 +675,31 @@ class TestCLI:
         ruleset = _make_ruleset(tmp_path / "ruleset.json")
         out_dir = tmp_path / "output"
 
-        rc = main([
-            "--candidate", str(ruleset),
-            "--baseline", str(ruleset),
-            "--start", "2026-02-05",
-            "--end", "2026-02-06",
-            "--k", "5",
-            "--horizon", "1",
-            "--snapshot-dir", str(snap_dir),
-            "--price-csv", str(price_csv),
-            "--out-dir", str(out_dir),
-            "--anchor-mode", "exact",
-            "--gate",
-        ])
+        rc = main(
+            [
+                "--candidate",
+                str(ruleset),
+                "--baseline",
+                str(ruleset),
+                "--start",
+                "2026-02-05",
+                "--end",
+                "2026-02-06",
+                "--k",
+                "5",
+                "--horizon",
+                "1",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--price-csv",
+                str(price_csv),
+                "--out-dir",
+                str(out_dir),
+                "--anchor-mode",
+                "exact",
+                "--gate",
+            ]
+        )
         # Max shift = 9 (T01 goes from rank 1 to rank 10), which is < 100 fail threshold
         # So this should PASS unless overlap is bad
         # top-5 overlap: {T01..T05} vs {T10..T06} = 0 overlap → 0%
@@ -601,14 +718,22 @@ class TestCLI:
         snap_dir.mkdir()
         ruleset = _make_ruleset(tmp_path / "ruleset.json")
 
-        rc = main([
-            "--candidate", str(ruleset),
-            "--start", "2099-01-01",
-            "--end", "2099-12-31",
-            "--snapshot-dir", str(snap_dir),
-            "--price-csv", str(tmp_path / "empty.csv"),
-            "--out-dir", str(tmp_path / "out"),
-        ])
+        rc = main(
+            [
+                "--candidate",
+                str(ruleset),
+                "--start",
+                "2099-01-01",
+                "--end",
+                "2099-12-31",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--price-csv",
+                str(tmp_path / "empty.csv"),
+                "--out-dir",
+                str(tmp_path / "out"),
+            ]
+        )
         assert rc == 1
 
 
@@ -626,17 +751,25 @@ class TestHelpers:
     def test_is_degraded_true(self, tmp_path):
         d = tmp_path / "snap"
         d.mkdir()
-        _write_json(d / "cache_health.json", {
-            "overall_status": "bad", "degraded_run": True,
-        })
+        _write_json(
+            d / "cache_health.json",
+            {
+                "overall_status": "bad",
+                "degraded_run": True,
+            },
+        )
         assert is_degraded(d) is True
 
     def test_is_degraded_false(self, tmp_path):
         d = tmp_path / "snap"
         d.mkdir()
-        _write_json(d / "cache_health.json", {
-            "overall_status": "ok", "degraded_run": False,
-        })
+        _write_json(
+            d / "cache_health.json",
+            {
+                "overall_status": "ok",
+                "degraded_run": False,
+            },
+        )
         assert is_degraded(d) is False
 
     def test_ranked_tickers_filters_ineligible(self):
@@ -658,15 +791,21 @@ class TestHelpers:
     def test_snapshot_ruleset_id_from_metadata(self, tmp_path):
         d = tmp_path / "snap"
         d.mkdir()
-        _write_json(d / "metadata.json", {
-            "clinical_sort_telemetry": {"ruleset_id": "xyz789"},
-        })
+        _write_json(
+            d / "metadata.json",
+            {
+                "clinical_sort_telemetry": {"ruleset_id": "xyz789"},
+            },
+        )
         assert snapshot_ruleset_id(d) == "xyz789"
 
     def test_snapshot_ruleset_id_fallback_rankings(self, tmp_path):
         d = tmp_path / "snap"
         d.mkdir()
-        _write_csv(d / "rankings.csv", [
-            {"ticker": "A", "decision_engine_ruleset_id": "fallback_id"},
-        ])
+        _write_csv(
+            d / "rankings.csv",
+            [
+                {"ticker": "A", "decision_engine_ruleset_id": "fallback_id"},
+            ],
+        )
         assert snapshot_ruleset_id(d) == "fallback_id"

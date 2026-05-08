@@ -10,12 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools.check_output_contract import (  # noqa: E402
-    OPTIONAL_ARTIFACTS,
-    REQUIRED_ARTIFACTS,
-    check_contract,
-    main,
-)
+from tools.check_output_contract import OPTIONAL_ARTIFACTS, REQUIRED_ARTIFACTS, check_contract, main  # noqa: E402
 
 
 def _make_snapshot(root: Path, as_of: str, *, include: tuple[str, ...]) -> Path:

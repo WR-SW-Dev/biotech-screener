@@ -15,6 +15,33 @@ repos:
     rev: "7.0.0"
     hooks:
       - id: flake8
+        # Enforce only on maintained pipeline code; legacy utility scripts at
+        # root are excluded — they predate this CI setup and are not production paths.
+        files: >-
+          (?x)^(
+            common/.*\.py|
+            tools/.*\.py|
+            scripts/.*\.py|
+            agents/.*\.py|
+            tests/.*\.py|
+            decision_engine\.py|
+            run_screen\.py|
+            run_screen_columns\.py|
+            module_\d+.*\.py|
+            module_5_composite.*\.py|
+            module_5_scoring.*\.py|
+            module_5_diagnostics.*\.py|
+            selector_engine\.py|
+            ranker_engine\.py|
+            ranker_v2_pairwise\.py|
+            catalyst_diagnostics\.py|
+            catalyst_summary\.py|
+            morningstar_signal_engine\.py|
+            pit_enforcement\.py|
+            pit_financials\.py|
+            run_phase2.*\.py|
+            run_production_screen\.py
+          )$
         args:
           - --max-line-length=120
           - --extend-ignore=E501,W503,E203,E266,E402

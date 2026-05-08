@@ -1,4 +1,5 @@
 """Tests for scripts/backfill_archive_catalysts.py — catalyst backfill from trial milestones."""
+
 from __future__ import annotations
 
 import csv
@@ -6,6 +7,7 @@ import json
 import os
 import random
 import shutil
+import sys
 import tarfile
 import tempfile
 from datetime import date
@@ -13,18 +15,11 @@ from pathlib import Path
 
 import pytest
 
-import sys
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from backfill_archive_catalysts import (
-    ACTIVE_STATUSES,
-    BackfillResult,
-    backfill_archive,
-    compute_backfill_catalyst,
-)
+from backfill_archive_catalysts import ACTIVE_STATUSES, BackfillResult, backfill_archive, compute_backfill_catalyst
 
 
 # ---------------------------------------------------------------------------
@@ -192,9 +187,7 @@ class TestSourcePriority:
         trials = [
             _make_trial(ticker="ACME", completion_date="2025-03-15"),
         ]
-        tar_path = _make_archive(
-            tmp_path, "2025-01-31", ["ACME"], trials, decision_inputs=existing_di
-        )
+        tar_path = _make_archive(tmp_path, "2025-01-31", ["ACME"], trials, decision_inputs=existing_di)
         result = backfill_archive(tar_path)
         assert result.n_existing == 1
         assert result.n_backfilled == 0
@@ -319,7 +312,8 @@ class TestStructural:
         ]
         # MISS has no trials at all
         tar_path = _make_archive(
-            tmp_path, "2025-01-31",
+            tmp_path,
+            "2025-01-31",
             ["EXIST", "BKFILL", "MISS"],
             trials,
             decision_inputs=existing_di,
@@ -380,7 +374,9 @@ class TestIntegration:
         }
 
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.65,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.65,
         )
 
         # The decision engine should see a real catalyst signal
@@ -402,7 +398,7 @@ class TestTrialCdSkipsPcdPresent:
             _make_trial(
                 ticker="ACME",
                 primary_completion_date="2025-12-01",  # PCD present
-                completion_date="2025-03-01",           # CD is closer
+                completion_date="2025-03-01",  # CD is closer
                 status="RECRUITING",
             ),
         ]

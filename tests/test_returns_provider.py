@@ -9,31 +9,32 @@ Covers:
 - Diagnostic providers (null, fixed, shuffled, lagged)
 """
 
-import pytest
-import tempfile
-from datetime import date, timedelta
-from pathlib import Path
-from decimal import Decimal
-
 # Import module under test
 import sys
+import tempfile
+from datetime import date, timedelta
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backtest.returns_provider import (
     CSVReturnsProvider,
-    NullReturnsProvider,
     FixedReturnsProvider,
-    ShuffledReturnsProvider,
     LaggedReturnsProvider,
+    NullReturnsProvider,
+    ShuffledReturnsProvider,
     create_csv_provider,
-    create_shuffled_provider,
     create_lagged_provider,
+    create_shuffled_provider,
 )
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def csv_content():
@@ -65,6 +66,7 @@ def provider(csv_file):
 # ============================================================================
 # CSV RETURNS PROVIDER
 # ============================================================================
+
 
 class TestCSVReturnsProvider:
     """Tests for CSVReturnsProvider class."""
@@ -153,6 +155,7 @@ class TestCSVReturnsProvider:
 # NULL RETURNS PROVIDER
 # ============================================================================
 
+
 class TestNullReturnsProvider:
     """Tests for NullReturnsProvider class."""
 
@@ -173,6 +176,7 @@ class TestNullReturnsProvider:
 # FIXED RETURNS PROVIDER
 # ============================================================================
 
+
 class TestFixedReturnsProvider:
     """Tests for FixedReturnsProvider class."""
 
@@ -192,6 +196,7 @@ class TestFixedReturnsProvider:
 # ============================================================================
 # SHUFFLED RETURNS PROVIDER
 # ============================================================================
+
 
 class TestShuffledReturnsProvider:
     """Tests for ShuffledReturnsProvider class."""
@@ -250,6 +255,7 @@ class TestShuffledReturnsProvider:
 # LAGGED RETURNS PROVIDER
 # ============================================================================
 
+
 class TestLaggedReturnsProvider:
     """Tests for LaggedReturnsProvider class."""
 
@@ -291,6 +297,7 @@ class TestLaggedReturnsProvider:
 # FACTORY FUNCTIONS
 # ============================================================================
 
+
 class TestFactoryFunctions:
     """Tests for factory functions."""
 
@@ -313,6 +320,7 @@ class TestFactoryFunctions:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -363,6 +371,7 @@ invalid,ACME,100.00
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -384,4 +393,3 @@ class TestDeterminism:
         # Should be 6 decimal places (0.000001 quantization)
         decimal_val = Decimal(ret)
         assert decimal_val == decimal_val.quantize(Decimal("0.000001"))
-

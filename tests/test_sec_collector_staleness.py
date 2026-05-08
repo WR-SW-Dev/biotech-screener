@@ -35,9 +35,7 @@ class TestStalenessAnchoring:
         }
         as_of = datetime(2026, 1, 29)
 
-        val, end_date = extract_latest_metric(
-            facts, "Assets", max_age_days=365, as_of_dt=as_of
-        )
+        val, end_date = extract_latest_metric(facts, "Assets", max_age_days=365, as_of_dt=as_of)
 
         # Should return the fresh 2025-09-30 value
         assert val == 90000000000
@@ -60,9 +58,7 @@ class TestStalenessAnchoring:
         }
         as_of = datetime(2026, 1, 29)
 
-        val, end_date = extract_latest_metric(
-            facts, "Assets", max_age_days=365, as_of_dt=as_of
-        )
+        val, end_date = extract_latest_metric(facts, "Assets", max_age_days=365, as_of_dt=as_of)
 
         assert val is None
         assert end_date is None
@@ -84,9 +80,7 @@ class TestStalenessAnchoring:
         }
 
         # No as_of_dt = no filtering
-        val, end_date = extract_latest_metric(
-            facts, "Assets", max_age_days=365, as_of_dt=None
-        )
+        val, end_date = extract_latest_metric(facts, "Assets", max_age_days=365, as_of_dt=None)
 
         # Should return the data (no filter applied)
         assert val == 50000000000

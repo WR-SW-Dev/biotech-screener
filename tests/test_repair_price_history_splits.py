@@ -1,4 +1,5 @@
 """Tests for scripts/repair_price_history_splits.py."""
+
 from __future__ import annotations
 
 import csv
@@ -13,22 +14,16 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.repair_price_history_splits import (
-    compute_adjusted_prices,
-    detect_splits,
-    write_adjusted_csv,
-)
-
+from scripts.repair_price_history_splits import compute_adjusted_prices, detect_splits, write_adjusted_csv
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _prices(ticker: str, date_prices: List[tuple]) -> Dict[str, Dict[date, Decimal]]:
     """Build prices dict for one ticker: [(date_str, price_float), ...]."""
-    return {
-        ticker: {date.fromisoformat(d): Decimal(str(p)) for d, p in date_prices}
-    }
+    return {ticker: {date.fromisoformat(d): Decimal(str(p)) for d, p in date_prices}}
 
 
 def _merge(*maps) -> Dict[str, Dict[date, Decimal]]:
@@ -50,15 +45,19 @@ def _write_price_csv(path: Path, rows: list[tuple[str, str, str]]) -> None:
 # detect_splits
 # ---------------------------------------------------------------------------
 
+
 class TestDetectSplits:
 
     def test_reverse_split_detected(self):
         """10x jump → reverse_split with correct factor."""
-        prices = _prices("DRUG", [
-            ("2024-10-14", 1.0),
-            ("2024-10-15", 35.0),
-            ("2024-10-16", 34.0),
-        ])
+        prices = _prices(
+            "DRUG",
+            [
+                ("2024-10-14", 1.0),
+                ("2024-10-15", 35.0),
+                ("2024-10-16", 34.0),
+            ],
+        )
         splits = detect_splits(prices)
         assert "DRUG" in splits
         assert len(splits["DRUG"]) == 1
@@ -69,12 +68,15 @@ class TestDetectSplits:
 
     def test_forward_split_detected(self):
         """80% drop → forward_split with correct factor."""
-        prices = _prices("SPLT", [
-            ("2025-03-01", 100.0),
-            ("2025-03-02", 100.0),
-            ("2025-03-03", 20.0),
-            ("2025-03-04", 21.0),
-        ])
+        prices = _prices(
+            "SPLT",
+            [
+                ("2025-03-01", 100.0),
+                ("2025-03-02", 100.0),
+                ("2025-03-03", 20.0),
+                ("2025-03-04", 21.0),
+            ],
+        )
         splits = detect_splits(prices)
         assert "SPLT" in splits
         e = splits["SPLT"][0]
@@ -83,35 +85,44 @@ class TestDetectSplits:
 
     def test_normal_volatility_not_flagged(self):
         """±50% single day is NOT flagged."""
-        prices = _prices("BIOT", [
-            ("2025-01-10", 10.0),
-            ("2025-01-13", 15.0),   # +50%
-            ("2025-01-14", 7.5),    # -50%
-            ("2025-01-15", 8.0),
-        ])
+        prices = _prices(
+            "BIOT",
+            [
+                ("2025-01-10", 10.0),
+                ("2025-01-13", 15.0),  # +50%
+                ("2025-01-14", 7.5),  # -50%
+                ("2025-01-15", 8.0),
+            ],
+        )
         splits = detect_splits(prices)
         assert "BIOT" not in splits
 
     def test_multiple_splits_same_ticker(self):
         """Two splits on same ticker are both detected, sorted by date."""
-        prices = _prices("JBIO", [
-            ("2024-06-14", 800.0),
-            ("2024-06-17", 50.0),    # forward split (-93.75%)
-            ("2024-06-18", 52.0),
-            ("2025-04-28", 90.0),
-            ("2025-04-29", 10.0),    # another forward split (-88.9%)
-            ("2025-04-30", 11.0),
-        ])
+        prices = _prices(
+            "JBIO",
+            [
+                ("2024-06-14", 800.0),
+                ("2024-06-17", 50.0),  # forward split (-93.75%)
+                ("2024-06-18", 52.0),
+                ("2025-04-28", 90.0),
+                ("2025-04-29", 10.0),  # another forward split (-88.9%)
+                ("2025-04-30", 11.0),
+            ],
+        )
         splits = detect_splits(prices)
         assert len(splits["JBIO"]) == 2
         assert splits["JBIO"][0]["date"] < splits["JBIO"][1]["date"]
 
     def test_zero_price_skipped(self):
         """Zero previous price doesn't cause division error."""
-        prices = _prices("BAD", [
-            ("2025-01-01", 0.0),
-            ("2025-01-02", 10.0),
-        ])
+        prices = _prices(
+            "BAD",
+            [
+                ("2025-01-01", 0.0),
+                ("2025-01-02", 10.0),
+            ],
+        )
         splits = detect_splits(prices)
         assert "BAD" not in splits
 
@@ -120,16 +131,20 @@ class TestDetectSplits:
 # compute_adjusted_prices
 # ---------------------------------------------------------------------------
 
+
 class TestComputeAdjustedPrices:
 
     def test_single_reverse_split(self):
         """Pre-split prices multiplied by factor; post-split unchanged."""
-        prices = _prices("DRUG", [
-            ("2024-10-13", Decimal("1.00")),
-            ("2024-10-14", Decimal("1.00")),
-            ("2024-10-15", Decimal("35.00")),  # 35x reverse split
-            ("2024-10-16", Decimal("34.00")),
-        ])
+        prices = _prices(
+            "DRUG",
+            [
+                ("2024-10-13", Decimal("1.00")),
+                ("2024-10-14", Decimal("1.00")),
+                ("2024-10-15", Decimal("35.00")),  # 35x reverse split
+                ("2024-10-16", Decimal("34.00")),
+            ],
+        )
         splits = detect_splits(prices)
         adj = compute_adjusted_prices(prices, splits)
         # Pre-split prices should be multiplied by 35
@@ -141,11 +156,14 @@ class TestComputeAdjustedPrices:
 
     def test_continuity_after_adjustment(self):
         """After adjustment, the return across the split date should be modest."""
-        prices = _prices("DRUG", [
-            ("2024-10-14", Decimal("1.08")),
-            ("2024-10-15", Decimal("38.49")),
-            ("2024-10-16", Decimal("37.50")),
-        ])
+        prices = _prices(
+            "DRUG",
+            [
+                ("2024-10-14", Decimal("1.08")),
+                ("2024-10-15", Decimal("38.49")),
+                ("2024-10-16", Decimal("37.50")),
+            ],
+        )
         splits = detect_splits(prices)
         adj = compute_adjusted_prices(prices, splits)
         # Return from 10/14 to 10/15 should now be ~0% (both ~38.49 level)
@@ -154,12 +172,15 @@ class TestComputeAdjustedPrices:
 
     def test_forward_split_adjustment(self):
         """Forward split: pre-split prices multiplied by factor < 1."""
-        prices = _prices("SPLT", [
-            ("2025-03-01", Decimal("100.0")),
-            ("2025-03-02", Decimal("100.0")),
-            ("2025-03-03", Decimal("20.0")),   # 5:1 forward split
-            ("2025-03-04", Decimal("21.0")),
-        ])
+        prices = _prices(
+            "SPLT",
+            [
+                ("2025-03-01", Decimal("100.0")),
+                ("2025-03-02", Decimal("100.0")),
+                ("2025-03-03", Decimal("20.0")),  # 5:1 forward split
+                ("2025-03-04", Decimal("21.0")),
+            ],
+        )
         splits = detect_splits(prices)
         adj = compute_adjusted_prices(prices, splits)
         # Pre-split prices multiplied by 0.2
@@ -169,17 +190,20 @@ class TestComputeAdjustedPrices:
 
     def test_two_splits_cumulative(self):
         """Two splits: all pre-first-split prices get both factors."""
-        prices = _prices("MULTI", [
-            ("2024-01-01", Decimal("2.0")),
-            ("2024-01-02", Decimal("2.0")),
-            # First split: 10x reverse split (2→20)
-            ("2024-06-01", Decimal("20.0")),
-            ("2024-06-02", Decimal("19.0")),
-            ("2024-06-03", Decimal("5.0")),
-            # Second split: 4x reverse split (5→20, +300%)
-            ("2024-12-01", Decimal("20.0")),
-            ("2024-12-02", Decimal("19.0")),
-        ])
+        prices = _prices(
+            "MULTI",
+            [
+                ("2024-01-01", Decimal("2.0")),
+                ("2024-01-02", Decimal("2.0")),
+                # First split: 10x reverse split (2→20)
+                ("2024-06-01", Decimal("20.0")),
+                ("2024-06-02", Decimal("19.0")),
+                ("2024-06-03", Decimal("5.0")),
+                # Second split: 4x reverse split (5→20, +300%)
+                ("2024-12-01", Decimal("20.0")),
+                ("2024-12-02", Decimal("19.0")),
+            ],
+        )
         splits = detect_splits(prices)
         assert len(splits["MULTI"]) == 2
         f1 = splits["MULTI"][0]["factor"]  # 10
@@ -209,6 +233,7 @@ class TestComputeAdjustedPrices:
 # write_adjusted_csv
 # ---------------------------------------------------------------------------
 
+
 class TestWriteAdjustedCsv:
 
     def test_roundtrip(self, tmp_path):
@@ -235,19 +260,29 @@ class TestWriteAdjustedCsv:
 # End-to-end
 # ---------------------------------------------------------------------------
 
+
 class TestEndToEnd:
 
     def test_full_pipeline_synthetic(self, tmp_path):
         """Full detect → adjust → write pipeline on synthetic data."""
         prices = _merge(
-            _prices("CLEAN", [
-                ("2025-01-01", 50.0), ("2025-01-02", 51.0), ("2025-01-03", 49.0),
-            ]),
-            _prices("SPLIT", [
-                ("2025-01-01", 2.0), ("2025-01-02", 2.0),
-                ("2025-01-03", 40.0),  # 20x reverse split
-                ("2025-01-04", 39.0),
-            ]),
+            _prices(
+                "CLEAN",
+                [
+                    ("2025-01-01", 50.0),
+                    ("2025-01-02", 51.0),
+                    ("2025-01-03", 49.0),
+                ],
+            ),
+            _prices(
+                "SPLIT",
+                [
+                    ("2025-01-01", 2.0),
+                    ("2025-01-02", 2.0),
+                    ("2025-01-03", 40.0),  # 20x reverse split
+                    ("2025-01-04", 39.0),
+                ],
+            ),
         )
         splits = detect_splits(prices)
         adj = compute_adjusted_prices(prices, splits)

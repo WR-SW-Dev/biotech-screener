@@ -27,14 +27,14 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from datetime import date
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Union
 
 from common.accuracy_improvements import (
-    apply_all_accuracy_improvements,
     MarketRegimeType,
+    apply_all_accuracy_improvements,
     classify_therapeutic_area,
     compute_regulatory_pathway_score,
 )
@@ -45,6 +45,7 @@ __version__ = "1.0.0"
 @dataclass
 class AccuracyAdjustment:
     """Result of accuracy enhancement calculations."""
+
     ticker: str
     clinical_adjustment: Decimal  # Multiplier for clinical score
     financial_adjustment: Decimal  # Multiplier for financial score
@@ -84,9 +85,14 @@ class AccuracyEnhancementsAdapter:
     MAX_MULTIPLIER = Decimal("1.30")
     MAX_REGULATORY_BONUS = Decimal("15")
 
-    def __init__(self, enable_staleness: bool = True, enable_regulatory: bool = True,
-                 enable_vix_adjustment: bool = True, enable_seasonality: bool = True,
-                 enable_proximity_boost: bool = True):
+    def __init__(
+        self,
+        enable_staleness: bool = True,
+        enable_regulatory: bool = True,
+        enable_vix_adjustment: bool = True,
+        enable_seasonality: bool = True,
+        enable_proximity_boost: bool = True,
+    ):
         """
         Initialize adapter with feature flags.
 
@@ -326,6 +332,7 @@ class AccuracyEnhancementsAdapter:
             except Exception as e:
                 # Fail-closed: no adjustment on error, but log for debugging
                 import logging
+
                 logging.getLogger(__name__).debug(f"Accuracy adjustment error for {ticker}: {e}")
                 results[ticker] = AccuracyAdjustment(
                     ticker=ticker,
@@ -337,10 +344,12 @@ class AccuracyEnhancementsAdapter:
                     adjustments_applied=[f"error:{str(e)}"],
                 )
                 # Also add to audit trail for diagnostics
-                self.audit_trail.append({
-                    "ticker": ticker,
-                    "error": str(e),
-                })
+                self.audit_trail.append(
+                    {
+                        "ticker": ticker,
+                        "error": str(e),
+                    }
+                )
 
         return results
 
@@ -358,14 +367,16 @@ class AccuracyEnhancementsAdapter:
             }
 
         total = len(self.audit_trail)
-        with_staleness = sum(1 for a in self.audit_trail
-                           if any("staleness" in adj for adj in a.get("adjustments_applied", [])))
-        with_regulatory = sum(1 for a in self.audit_trail
-                            if any("regulatory" in adj for adj in a.get("adjustments_applied", [])))
-        with_vix = sum(1 for a in self.audit_trail
-                      if any("vix" in adj for adj in a.get("adjustments_applied", [])))
-        with_proximity = sum(1 for a in self.audit_trail
-                           if any("proximity" in adj for adj in a.get("adjustments_applied", [])))
+        with_staleness = sum(
+            1 for a in self.audit_trail if any("staleness" in adj for adj in a.get("adjustments_applied", []))
+        )
+        with_regulatory = sum(
+            1 for a in self.audit_trail if any("regulatory" in adj for adj in a.get("adjustments_applied", []))
+        )
+        with_vix = sum(1 for a in self.audit_trail if any("vix" in adj for adj in a.get("adjustments_applied", [])))
+        with_proximity = sum(
+            1 for a in self.audit_trail if any("proximity" in adj for adj in a.get("adjustments_applied", []))
+        )
 
         return {
             "total": total,
@@ -396,8 +407,7 @@ def apply_accuracy_to_scores(
     Returns:
         Dict with adjusted scores
     """
-    adjusted_clinical = (base_clinical * adjustment.clinical_adjustment +
-                        adjustment.regulatory_bonus)
+    adjusted_clinical = base_clinical * adjustment.clinical_adjustment + adjustment.regulatory_bonus
     adjusted_financial = base_financial * adjustment.financial_adjustment
     adjusted_catalyst = base_catalyst * adjustment.catalyst_adjustment
 
@@ -416,6 +426,7 @@ def apply_accuracy_to_scores(
 # =============================================================================
 # SELF-CHECKS
 # =============================================================================
+
 
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify adapter correctness."""

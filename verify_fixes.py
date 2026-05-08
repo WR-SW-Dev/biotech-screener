@@ -10,16 +10,16 @@ from pathlib import Path
 
 def verify_run_screen():
     """Verify run_screen.py uses financial_records.json"""
-    
+
     file_path = Path("run_screen.py")
-    
+
     if not file_path.exists():
         print(f"❌ {file_path} not found!")
         return False
-    
-    with open(file_path, 'r') as f:
+
+    with open(file_path, "r") as f:
         content = f.read()
-    
+
     # Check for new line
     if 'data_dir / "financial_records.json"' in content:
         print("✅ Fix 1: run_screen.py uses financial_records.json")
@@ -34,21 +34,21 @@ def verify_run_screen():
 
 def verify_module_5():
     """Verify module_5_composite_with_defensive.py has top_n parameter"""
-    
+
     file_path = Path("module_5_composite_with_defensive.py")
-    
+
     if not file_path.exists():
         print(f"❌ {file_path} not found!")
         return False
-    
-    with open(file_path, 'r') as f:
+
+    with open(file_path, "r") as f:
         content = f.read()
-    
+
     # Check for top_n parameter
-    if 'top_n=60' in content or 'top_n = 60' in content:
+    if "top_n=60" in content or "top_n = 60" in content:
         print("✅ Fix 2: module_5_composite_with_defensive.py has top_n=60")
         return True
-    elif 'enrich_with_defensive_overlays' in content:
+    elif "enrich_with_defensive_overlays" in content:
         print("❌ Fix 2: module_5_composite_with_defensive.py missing top_n parameter")
         return False
     else:
@@ -57,22 +57,22 @@ def verify_module_5():
 
 
 def main():
-    print("="*80)
+    print("=" * 80)
     print("VERIFYING FIXES")
-    print("="*80)
+    print("=" * 80)
     print()
-    
+
     results = []
-    
+
     results.append(verify_run_screen())
     results.append(verify_module_5())
-    
+
     print()
-    print("="*80)
-    
+    print("=" * 80)
+
     if all(results):
         print("✅ ALL FIXES VERIFIED!")
-        print("="*80)
+        print("=" * 80)
         print()
         print("Ready to run:")
         print("  python run_screen.py --as-of-date 2026-01-06 --data-dir production_data --output screening_FIXED.json")
@@ -80,7 +80,7 @@ def main():
         return 0
     else:
         print("❌ FIXES NOT APPLIED")
-        print("="*80)
+        print("=" * 80)
         print()
         print("Run this to apply automatically:")
         print("  python apply_fixes_automatically.py")
@@ -90,4 +90,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

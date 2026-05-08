@@ -28,12 +28,11 @@ Version: 1.0.0
 
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any, Set
-from datetime import date
-from enum import Enum
 from dataclasses import dataclass
-
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -41,17 +40,19 @@ __author__ = "Wake Robin Capital Management"
 
 class DesignationType(Enum):
     """FDA designation types with regulatory significance."""
-    BREAKTHROUGH_THERAPY = "BTD"      # Breakthrough Therapy Designation
-    FAST_TRACK = "FT"                 # Fast Track Designation
-    ORPHAN_DRUG = "ODD"               # Orphan Drug Designation
-    PRIORITY_REVIEW = "PR"            # Priority Review
-    ACCELERATED_APPROVAL = "AA"       # Accelerated Approval pathway
-    RMAT = "RMAT"                     # Regenerative Medicine Advanced Therapy
+
+    BREAKTHROUGH_THERAPY = "BTD"  # Breakthrough Therapy Designation
+    FAST_TRACK = "FT"  # Fast Track Designation
+    ORPHAN_DRUG = "ODD"  # Orphan Drug Designation
+    PRIORITY_REVIEW = "PR"  # Priority Review
+    ACCELERATED_APPROVAL = "AA"  # Accelerated Approval pathway
+    RMAT = "RMAT"  # Regenerative Medicine Advanced Therapy
 
 
 @dataclass
 class DesignationRecord:
     """Record of an FDA designation for a specific program."""
+
     ticker: str
     designation_type: DesignationType
     indication: str
@@ -83,34 +84,34 @@ class FDADesignationEngine:
     # PoS adjustment factors by designation type
     # Based on FDA designation approval rate differentials (BIO/FDA data)
     POS_ADJUSTMENT_FACTORS: Dict[DesignationType, Decimal] = {
-        DesignationType.BREAKTHROUGH_THERAPY: Decimal("1.25"),   # +25% approval lift
-        DesignationType.FAST_TRACK: Decimal("1.12"),             # +12% approval lift
-        DesignationType.ORPHAN_DRUG: Decimal("1.18"),            # +18% approval lift
-        DesignationType.PRIORITY_REVIEW: Decimal("1.08"),        # +8% (timeline, not rate)
-        DesignationType.ACCELERATED_APPROVAL: Decimal("1.15"),   # +15% (surrogate endpoints)
-        DesignationType.RMAT: Decimal("1.20"),                   # +20% for CGT
+        DesignationType.BREAKTHROUGH_THERAPY: Decimal("1.25"),  # +25% approval lift
+        DesignationType.FAST_TRACK: Decimal("1.12"),  # +12% approval lift
+        DesignationType.ORPHAN_DRUG: Decimal("1.18"),  # +18% approval lift
+        DesignationType.PRIORITY_REVIEW: Decimal("1.08"),  # +8% (timeline, not rate)
+        DesignationType.ACCELERATED_APPROVAL: Decimal("1.15"),  # +15% (surrogate endpoints)
+        DesignationType.RMAT: Decimal("1.20"),  # +20% for CGT
     }
 
     # Confidence multipliers for designation source reliability
     CONFIDENCE_MULTIPLIERS: Dict[str, Decimal] = {
-        "confirmed": Decimal("1.00"),    # FDA announcement or database
-        "announced": Decimal("0.95"),    # Company announcement, not yet in FDA database
-        "inferred": Decimal("0.70"),     # Inferred from trial characteristics
+        "confirmed": Decimal("1.00"),  # FDA announcement or database
+        "announced": Decimal("0.95"),  # Company announcement, not yet in FDA database
+        "inferred": Decimal("0.70"),  # Inferred from trial characteristics
     }
 
     # Timeline acceleration (months saved) by designation
     TIMELINE_ACCELERATION: Dict[DesignationType, int] = {
-        DesignationType.BREAKTHROUGH_THERAPY: 6,   # Intensive FDA engagement
-        DesignationType.FAST_TRACK: 3,             # Rolling review
-        DesignationType.ORPHAN_DRUG: 0,            # No timeline impact
-        DesignationType.PRIORITY_REVIEW: 4,        # 6 vs 10 month review
+        DesignationType.BREAKTHROUGH_THERAPY: 6,  # Intensive FDA engagement
+        DesignationType.FAST_TRACK: 3,  # Rolling review
+        DesignationType.ORPHAN_DRUG: 0,  # No timeline impact
+        DesignationType.PRIORITY_REVIEW: 4,  # 6 vs 10 month review
         DesignationType.ACCELERATED_APPROVAL: 12,  # Surrogate endpoints
-        DesignationType.RMAT: 6,                   # Expedited development
+        DesignationType.RMAT: 6,  # Expedited development
     }
 
     # Score contribution caps (prevent over-weighting)
     MAX_DESIGNATION_BONUS = Decimal("35")  # Max 35 points from designations
-    DIMINISHING_RETURNS_THRESHOLD = 3      # After 3 designations, diminishing returns
+    DIMINISHING_RETURNS_THRESHOLD = 3  # After 3 designations, diminishing returns
 
     def __init__(self):
         """Initialize the FDA designation engine."""
@@ -173,12 +174,7 @@ class FDADesignationEngine:
 
         return loaded
 
-    def score_ticker(
-        self,
-        ticker: str,
-        as_of_date: date,
-        base_pos: Optional[Decimal] = None
-    ) -> Dict[str, Any]:
+    def score_ticker(self, ticker: str, as_of_date: date, base_pos: Optional[Decimal] = None) -> Dict[str, Any]:
         """
         Calculate designation score and PoS adjustment for a ticker.
 
@@ -200,10 +196,7 @@ class FDADesignationEngine:
         records = self.designations.get(ticker, [])
 
         # Filter to active designations (granted before as_of_date)
-        active = [
-            r for r in records
-            if r.grant_date is None or r.grant_date <= as_of_date
-        ]
+        active = [r for r in records if r.grant_date is None or r.grant_date <= as_of_date]
 
         if not active:
             return self._no_designations_result(ticker, base_pos, as_of_date)
@@ -214,9 +207,9 @@ class FDADesignationEngine:
 
         # Get base multiplier from strongest designation
         multipliers = [
-            self.POS_ADJUSTMENT_FACTORS[d] * self.CONFIDENCE_MULTIPLIERS.get(
-                next((r.confidence for r in active if r.designation_type == d), "announced"),
-                Decimal("0.90")
+            self.POS_ADJUSTMENT_FACTORS[d]
+            * self.CONFIDENCE_MULTIPLIERS.get(
+                next((r.confidence for r in active if r.designation_type == d), "announced"), Decimal("0.90")
             )
             for d in designation_types
         ]
@@ -263,18 +256,14 @@ class FDADesignationEngine:
         designation_score = min(designation_score, Decimal("100"))
 
         # Calculate timeline acceleration
-        timeline_months = sum(
-            self.TIMELINE_ACCELERATION.get(d, 0) for d in designation_types
-        )
+        timeline_months = sum(self.TIMELINE_ACCELERATION.get(d, 0) for d in designation_types)
         # Cap at 18 months (don't double-count overlapping benefits)
         timeline_months = min(timeline_months, 18)
 
         # Adjusted PoS
         adjusted_pos = None
         if base_pos is not None:
-            adjusted_pos = (base_pos * composite_mult).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            adjusted_pos = (base_pos * composite_mult).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             adjusted_pos = min(adjusted_pos, Decimal("100"))
 
         # Build audit entry
@@ -314,12 +303,7 @@ class FDADesignationEngine:
             "audit_entry": audit_entry,
         }
 
-    def _no_designations_result(
-        self,
-        ticker: str,
-        base_pos: Optional[Decimal],
-        as_of_date: date
-    ) -> Dict[str, Any]:
+    def _no_designations_result(self, ticker: str, base_pos: Optional[Decimal], as_of_date: date) -> Dict[str, Any]:
         """Return result for ticker with no designations."""
         return {
             "ticker": ticker,
@@ -338,11 +322,7 @@ class FDADesignationEngine:
             },
         }
 
-    def score_universe(
-        self,
-        universe: List[Dict[str, Any]],
-        as_of_date: date
-    ) -> Dict[str, Any]:
+    def score_universe(self, universe: List[Dict[str, Any]], as_of_date: date) -> Dict[str, Any]:
         """
         Score an entire universe of tickers.
 
@@ -366,15 +346,17 @@ class FDADesignationEngine:
 
             result = self.score_ticker(ticker, as_of_date, base_pos)
 
-            scores.append({
-                "ticker": ticker,
-                "designation_score": result["designation_score"],
-                "pos_multiplier": result["pos_multiplier"],
-                "adjusted_pos": result["adjusted_pos"],
-                "designation_count": result["designation_count"],
-                "designation_types": result["designation_types"],
-                "timeline_acceleration_months": result["timeline_acceleration_months"],
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "designation_score": result["designation_score"],
+                    "pos_multiplier": result["pos_multiplier"],
+                    "adjusted_pos": result["adjusted_pos"],
+                    "designation_count": result["designation_count"],
+                    "designation_types": result["designation_types"],
+                    "timeline_acceleration_months": result["timeline_acceleration_months"],
+                }
+            )
 
             if result["designation_count"] > 0:
                 designation_coverage += 1
@@ -382,10 +364,7 @@ class FDADesignationEngine:
                     type_distribution[des_type] = type_distribution.get(des_type, 0) + 1
 
         # Content hash for determinism
-        scores_json = json.dumps(
-            [{"t": s["ticker"], "s": str(s["designation_score"])} for s in scores],
-            sort_keys=True
-        )
+        scores_json = json.dumps([{"t": s["ticker"], "s": str(s["designation_score"])} for s in scores], sort_keys=True)
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
         return {
@@ -418,6 +397,7 @@ class FDADesignationEngine:
 # SAMPLE DATA GENERATOR (for testing/bootstrapping)
 # =============================================================================
 
+
 def generate_sample_designations() -> List[Dict[str, Any]]:
     """
     Generate sample FDA designation data for common biotech tickers.
@@ -429,38 +409,118 @@ def generate_sample_designations() -> List[Dict[str, Any]]:
     """
     return [
         # Breakthrough Therapy examples
-        {"ticker": "MRNA", "designation_type": "BTD", "indication": "oncology",
-         "drug_name": "mRNA-4157", "grant_date": "2023-02-01", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "BEAM", "designation_type": "BTD", "indication": "rare_disease",
-         "drug_name": "BEAM-101", "grant_date": "2023-06-15", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "EDIT", "designation_type": "BTD", "indication": "rare_disease",
-         "drug_name": "EDIT-101", "grant_date": "2022-11-01", "source": "fda", "confidence": "confirmed"},
-
+        {
+            "ticker": "MRNA",
+            "designation_type": "BTD",
+            "indication": "oncology",
+            "drug_name": "mRNA-4157",
+            "grant_date": "2023-02-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "BEAM",
+            "designation_type": "BTD",
+            "indication": "rare_disease",
+            "drug_name": "BEAM-101",
+            "grant_date": "2023-06-15",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "EDIT",
+            "designation_type": "BTD",
+            "indication": "rare_disease",
+            "drug_name": "EDIT-101",
+            "grant_date": "2022-11-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
         # Orphan Drug examples
-        {"ticker": "RARE", "designation_type": "ODD", "indication": "rare_disease",
-         "drug_name": "RARx-01", "grant_date": "2024-01-15", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "FOLD", "designation_type": "ODD", "indication": "rare_disease",
-         "drug_name": "Folotyn", "grant_date": "2020-03-01", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "IONS", "designation_type": "ODD", "indication": "neurology",
-         "drug_name": "IONIS-HTTRx", "grant_date": "2021-08-01", "source": "fda", "confidence": "confirmed"},
-
+        {
+            "ticker": "RARE",
+            "designation_type": "ODD",
+            "indication": "rare_disease",
+            "drug_name": "RARx-01",
+            "grant_date": "2024-01-15",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "FOLD",
+            "designation_type": "ODD",
+            "indication": "rare_disease",
+            "drug_name": "Folotyn",
+            "grant_date": "2020-03-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "IONS",
+            "designation_type": "ODD",
+            "indication": "neurology",
+            "drug_name": "IONIS-HTTRx",
+            "grant_date": "2021-08-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
         # Fast Track examples
-        {"ticker": "NVAX", "designation_type": "FT", "indication": "infectious_disease",
-         "drug_name": "NVX-CoV2373", "grant_date": "2020-11-01", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "SIGA", "designation_type": "FT", "indication": "infectious_disease",
-         "drug_name": "TPOXX", "grant_date": "2018-05-01", "source": "fda", "confidence": "confirmed"},
-
+        {
+            "ticker": "NVAX",
+            "designation_type": "FT",
+            "indication": "infectious_disease",
+            "drug_name": "NVX-CoV2373",
+            "grant_date": "2020-11-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "SIGA",
+            "designation_type": "FT",
+            "indication": "infectious_disease",
+            "drug_name": "TPOXX",
+            "grant_date": "2018-05-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
         # RMAT examples (regenerative medicine)
-        {"ticker": "BLUE", "designation_type": "RMAT", "indication": "rare_disease",
-         "drug_name": "LentiGlobin", "grant_date": "2019-04-01", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "CRSP", "designation_type": "RMAT", "indication": "rare_disease",
-         "drug_name": "CTX001", "grant_date": "2020-02-01", "source": "fda", "confidence": "confirmed"},
-
+        {
+            "ticker": "BLUE",
+            "designation_type": "RMAT",
+            "indication": "rare_disease",
+            "drug_name": "LentiGlobin",
+            "grant_date": "2019-04-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "CRSP",
+            "designation_type": "RMAT",
+            "indication": "rare_disease",
+            "drug_name": "CTX001",
+            "grant_date": "2020-02-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
         # Multiple designations for same company
-        {"ticker": "MRNA", "designation_type": "FT", "indication": "infectious_disease",
-         "drug_name": "mRNA-1273", "grant_date": "2020-05-01", "source": "fda", "confidence": "confirmed"},
-        {"ticker": "BEAM", "designation_type": "ODD", "indication": "rare_disease",
-         "drug_name": "BEAM-101", "grant_date": "2023-04-01", "source": "fda", "confidence": "confirmed"},
+        {
+            "ticker": "MRNA",
+            "designation_type": "FT",
+            "indication": "infectious_disease",
+            "drug_name": "mRNA-1273",
+            "grant_date": "2020-05-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
+        {
+            "ticker": "BEAM",
+            "designation_type": "ODD",
+            "indication": "rare_disease",
+            "drug_name": "BEAM-101",
+            "grant_date": "2023-04-01",
+            "source": "fda",
+            "confidence": "confirmed",
+        },
     ]
 
 

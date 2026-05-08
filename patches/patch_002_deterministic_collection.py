@@ -24,23 +24,25 @@ Usage:
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class DeterministicCollectionError(Exception):
     """Raised when collection would be non-deterministic."""
+
     pass
 
 
 @dataclass(frozen=True)
 class CollectionMetadata:
     """Immutable collection metadata."""
+
     as_of_date: str
     collection_date: str  # The date data was actually collected
     source: str
@@ -49,10 +51,7 @@ class CollectionMetadata:
     is_retrospective: bool  # True if collection_date != as_of_date
 
 
-def validate_collection_date(
-    as_of_date: str,
-    max_staleness_days: int = 1
-) -> Tuple[bool, str]:
+def validate_collection_date(as_of_date: str, max_staleness_days: int = 1) -> Tuple[bool, str]:
     """
     Validate that we're collecting data for an appropriate date.
 
@@ -90,9 +89,10 @@ def enforce_explicit_as_of_date(func):
 
     Raises DeterministicCollectionError if as_of_date is not provided.
     """
+
     def wrapper(*args, **kwargs):
         # Check for as_of_date in kwargs
-        as_of_date = kwargs.get('as_of_date')
+        as_of_date = kwargs.get("as_of_date")
 
         # Check for as_of_date in args (assuming it's first positional arg)
         if as_of_date is None and len(args) > 0:
@@ -181,10 +181,7 @@ class DeterministicMarketDataCollector:
         with open(universe_file) as f:
             universe = json.load(f)
 
-        tickers = [
-            s['ticker'] for s in universe
-            if s.get('ticker') and s['ticker'] != '_XBI_BENCHMARK_'
-        ]
+        tickers = [s["ticker"] for s in universe if s.get("ticker") and s["ticker"] != "_XBI_BENCHMARK_"]
 
         # Collect data with deterministic timestamps
         all_data = []
@@ -193,25 +190,24 @@ class DeterministicMarketDataCollector:
             data = self._get_ticker_data(ticker, as_of_date)
             if data:
                 # Use as_of_date in metadata, NOT collection time
-                data['_metadata'] = {
-                    'as_of_date': as_of_date,
-                    'collection_date': collection_date,
-                    'source': self.source,
-                    'is_retrospective': is_retrospective,
+                data["_metadata"] = {
+                    "as_of_date": as_of_date,
+                    "collection_date": collection_date,
+                    "source": self.source,
+                    "is_retrospective": is_retrospective,
                 }
                 # CRITICAL: collected_at uses as_of_date, not now()
-                data['collected_at'] = as_of_date
+                data["collected_at"] = as_of_date
                 all_data.append(data)
 
         # Compute content hash (for reproducibility checking)
         import hashlib
-        content_hash = hashlib.sha256(
-            json.dumps(all_data, sort_keys=True).encode()
-        ).hexdigest()[:16]
+
+        content_hash = hashlib.sha256(json.dumps(all_data, sort_keys=True).encode()).hexdigest()[:16]
 
         # Save output
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(all_data, f, indent=2, sort_keys=True)
 
         return CollectionMetadata(
@@ -243,8 +239,7 @@ class DeterministicMarketDataCollector:
             start_date = end_date - timedelta(days=90)
 
             hist = stock.history(
-                start=start_date.isoformat(),
-                end=(end_date + timedelta(days=1)).isoformat()  # end is exclusive
+                start=start_date.isoformat(), end=(end_date + timedelta(days=1)).isoformat()  # end is exclusive
             )
 
             if hist.empty:
@@ -257,20 +252,20 @@ class DeterministicMarketDataCollector:
             if hist_to_date.empty:
                 return None
 
-            current_price = float(hist_to_date['Close'].iloc[-1])
-            avg_volume_90d = float(hist_to_date['Volume'].mean())
+            current_price = float(hist_to_date["Close"].iloc[-1])
+            avg_volume_90d = float(hist_to_date["Volume"].mean())
 
             # Volatility calculation - corrected (sqrt(252), not *252)
-            returns = hist_to_date['Close'].pct_change()
-            volatility_90d = float(returns.std() * (252 ** 0.5)) if len(returns) > 1 else None
+            returns = hist_to_date["Close"].pct_change()
+            volatility_90d = float(returns.std() * (252**0.5)) if len(returns) > 1 else None
 
             info = stock.info
 
             return {
                 "ticker": ticker,
                 "price": current_price,
-                "market_cap": info.get('marketCap'),
-                "avg_volume": info.get('averageVolume'),
+                "market_cap": info.get("marketCap"),
+                "avg_volume": info.get("averageVolume"),
                 "avg_volume_90d": avg_volume_90d,
                 "volatility_90d": volatility_90d,
                 # ... other fields
@@ -308,19 +303,17 @@ def validate_collection_metadata(
         return False, ["Empty data file"]
 
     for i, record in enumerate(data):
-        ticker = record.get('ticker', f'record_{i}')
+        ticker = record.get("ticker", f"record_{i}")
 
         # Check collected_at
-        collected_at = record.get('collected_at')
+        collected_at = record.get("collected_at")
         if not collected_at:
             issues.append(f"{ticker}: Missing collected_at field")
         elif collected_at != expected_as_of_date:
             # This might be OK if retrospective, but should be flagged
-            metadata = record.get('_metadata', {})
-            if not metadata.get('is_retrospective'):
-                issues.append(
-                    f"{ticker}: collected_at={collected_at} != expected={expected_as_of_date}"
-                )
+            metadata = record.get("_metadata", {})
+            if not metadata.get("is_retrospective"):
+                issues.append(f"{ticker}: collected_at={collected_at} != expected={expected_as_of_date}")
 
     is_valid = len(issues) == 0
     return is_valid, issues

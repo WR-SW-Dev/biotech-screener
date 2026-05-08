@@ -19,35 +19,38 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from datetime import date, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass, field
+from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 __version__ = "1.0.0"
 
 
 class SlippageDirection(str, Enum):
     """Direction of timeline slippage."""
-    PUSHOUT = "pushout"      # Delayed vs prior estimate
-    PULLIN = "pullin"        # Accelerated vs prior estimate
-    STABLE = "stable"        # No significant change
-    UNKNOWN = "unknown"      # Insufficient data
+
+    PUSHOUT = "pushout"  # Delayed vs prior estimate
+    PULLIN = "pullin"  # Accelerated vs prior estimate
+    STABLE = "stable"  # No significant change
+    UNKNOWN = "unknown"  # Insufficient data
 
 
 class SlippageSeverity(str, Enum):
     """Severity of slippage impact."""
-    SEVERE = "severe"        # >180 days pushout
-    MODERATE = "moderate"    # 60-180 days pushout
-    MINOR = "minor"          # 30-60 days pushout
-    NONE = "none"            # <30 days or stable
+
+    SEVERE = "severe"  # >180 days pushout
+    MODERATE = "moderate"  # 60-180 days pushout
+    MINOR = "minor"  # 30-60 days pushout
+    NONE = "none"  # <30 days or stable
     ACCELERATED = "accelerated"  # Pull-in (positive)
 
 
 @dataclass
 class TrialTimelineSnapshot:
     """Point-in-time trial timeline data."""
+
     nct_id: str
     snapshot_date: date
     primary_completion_date: Optional[date]
@@ -59,6 +62,7 @@ class TrialTimelineSnapshot:
 @dataclass
 class SlippageResult:
     """Result of slippage analysis for a single trial."""
+
     nct_id: str
     ticker: str
     direction: SlippageDirection
@@ -74,6 +78,7 @@ class SlippageResult:
 @dataclass
 class TickerSlippageScore:
     """Aggregated slippage score for a ticker."""
+
     ticker: str
     execution_risk_score: Decimal  # 0-100, higher=better execution
     avg_slippage_days: Decimal
@@ -200,16 +205,14 @@ class TimelineSlippageEngine:
 
         # Get current completion date (prefer primary_completion_date)
         current_date = self._parse_date(
-            current_trial.get("primary_completion_date")
-            or current_trial.get("completion_date")
+            current_trial.get("primary_completion_date") or current_trial.get("completion_date")
         )
 
         # Get prior completion date
         prior_date = None
         if prior_trial:
             prior_date = self._parse_date(
-                prior_trial.get("primary_completion_date")
-                or prior_trial.get("completion_date")
+                prior_trial.get("primary_completion_date") or prior_trial.get("completion_date")
             )
 
         # Calculate slippage
@@ -322,16 +325,12 @@ class TimelineSlippageEngine:
         stable_count = sum(1 for r in trial_results if r.direction == SlippageDirection.STABLE)
 
         # Calculate average slippage
-        total_slippage = sum(
-            r.days_slipped for r in trial_results
-            if r.direction == SlippageDirection.PUSHOUT
-        )
+        total_slippage = sum(r.days_slipped for r in trial_results if r.direction == SlippageDirection.PUSHOUT)
         avg_slippage = Decimal(str(total_slippage / len(trial_results) if trial_results else 0))
 
         # Check for repeat offender pattern
         severe_moderate_count = sum(
-            1 for r in trial_results
-            if r.severity in (SlippageSeverity.SEVERE, SlippageSeverity.MODERATE)
+            1 for r in trial_results if r.severity in (SlippageSeverity.SEVERE, SlippageSeverity.MODERATE)
         )
         repeat_offender = severe_moderate_count >= 2
 
@@ -370,16 +369,18 @@ class TimelineSlippageEngine:
         )
 
         # Add to audit trail
-        self.audit_trail.append({
-            "ticker": ticker,
-            "as_of_date": as_of_date.isoformat(),
-            "execution_risk_score": str(result.execution_risk_score),
-            "pushout_count": pushout_count,
-            "pullin_count": pullin_count,
-            "repeat_offender": repeat_offender,
-            "confidence": confidence,
-            "trial_count": len(trial_results),
-        })
+        self.audit_trail.append(
+            {
+                "ticker": ticker,
+                "as_of_date": as_of_date.isoformat(),
+                "execution_risk_score": str(result.execution_risk_score),
+                "pushout_count": pushout_count,
+                "pullin_count": pullin_count,
+                "repeat_offender": repeat_offender,
+                "confidence": confidence,
+                "trial_count": len(trial_results),
+            }
+        )
 
         return result
 
@@ -427,17 +428,19 @@ class TimelineSlippageEngine:
                 as_of_date=as_of_date,
             )
 
-            scores.append({
-                "ticker": ticker,
-                "execution_risk_score": str(result.execution_risk_score),
-                "avg_slippage_days": str(result.avg_slippage_days),
-                "pushout_count": result.pushout_count,
-                "pullin_count": result.pullin_count,
-                "stable_count": result.stable_count,
-                "repeat_offender": result.repeat_offender,
-                "confidence": result.confidence,
-                "flags": result.flags,
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "execution_risk_score": str(result.execution_risk_score),
+                    "avg_slippage_days": str(result.avg_slippage_days),
+                    "pushout_count": result.pushout_count,
+                    "pullin_count": result.pullin_count,
+                    "stable_count": result.stable_count,
+                    "repeat_offender": result.repeat_offender,
+                    "confidence": result.confidence,
+                    "flags": result.flags,
+                }
+            )
 
         # Diagnostics
         total_scored = len(scores)
@@ -480,6 +483,7 @@ class TimelineSlippageEngine:
 # =============================================================================
 # SELF-CHECKS
 # =============================================================================
+
 
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify engine correctness."""

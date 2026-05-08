@@ -13,22 +13,24 @@ Also provides:
     - describe_code(code) — human-readable description lookup
     - registry_fingerprint() — SHA256[:12] of canonical code set for drift detection
 """
+
 from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
 from typing import Any, Dict, FrozenSet, List, Optional
 
-
 # =============================================================================
 # REASON CODE DATACLASS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class ReasonCode:
     """A single reason code emitted by the decision engine."""
+
     code: str
-    domain: str       # "eligibility" | "tier" | "sizing" | "risk" | "overlay"
+    domain: str  # "eligibility" | "tier" | "sizing" | "risk" | "overlay"
     description: str  # Short human-readable explanation
 
 
@@ -37,16 +39,11 @@ class ReasonCode:
 # =============================================================================
 
 _ELIGIBILITY_CODE_LIST: List[ReasonCode] = [
-    ReasonCode("financials_missing", "eligibility",
-               "Survivability data absent (cash + burn both missing)"),
-    ReasonCode("fundamental_red_flag", "eligibility",
-               "Fundamental red flag (survivability / runway critical)"),
-    ReasonCode("sev3", "eligibility",
-               "Severity SEV3 hard exclusion"),
-    ReasonCode("deep_drawdown", "eligibility",
-               "Drawdown below hard gate threshold"),
-    ReasonCode("adv_fail", "eligibility",
-               "Liquidity / ADV below minimum"),
+    ReasonCode("financials_missing", "eligibility", "Survivability data absent (cash + burn both missing)"),
+    ReasonCode("fundamental_red_flag", "eligibility", "Fundamental red flag (survivability / runway critical)"),
+    ReasonCode("sev3", "eligibility", "Severity SEV3 hard exclusion"),
+    ReasonCode("deep_drawdown", "eligibility", "Drawdown below hard gate threshold"),
+    ReasonCode("adv_fail", "eligibility", "Liquidity / ADV below minimum"),
 ]
 
 ELIGIBILITY_CODES: FrozenSet[str] = frozenset(rc.code for rc in _ELIGIBILITY_CODE_LIST)
@@ -61,20 +58,13 @@ REASON_ORDER: List[str] = [rc.code for rc in _ELIGIBILITY_CODE_LIST]
 # =============================================================================
 
 _RISK_FLAG_CODE_LIST: List[ReasonCode] = [
-    ReasonCode("high_vol", "risk",
-               "60d volatility above threshold"),
-    ReasonCode("high_beta", "risk",
-               "60d beta vs XBI above threshold"),
-    ReasonCode("deep_drawdown", "risk",
-               "Drawdown below flag threshold (less severe than gate)"),
-    ReasonCode("overbought_rsi", "risk",
-               "14d RSI above overbought threshold"),
-    ReasonCode("low_confidence", "risk",
-               "Overall confidence below threshold"),
-    ReasonCode("deep_drawdown_rel_xbi", "risk",
-               "Relative drawdown vs XBI below threshold"),
-    ReasonCode("drawdown_data_missing", "risk",
-               "No drawdown data available for assessment"),
+    ReasonCode("high_vol", "risk", "60d volatility above threshold"),
+    ReasonCode("high_beta", "risk", "60d beta vs XBI above threshold"),
+    ReasonCode("deep_drawdown", "risk", "Drawdown below flag threshold (less severe than gate)"),
+    ReasonCode("overbought_rsi", "risk", "14d RSI above overbought threshold"),
+    ReasonCode("low_confidence", "risk", "Overall confidence below threshold"),
+    ReasonCode("deep_drawdown_rel_xbi", "risk", "Relative drawdown vs XBI below threshold"),
+    ReasonCode("drawdown_data_missing", "risk", "No drawdown data available for assessment"),
 ]
 
 RISK_FLAG_CODES: FrozenSet[str] = frozenset(rc.code for rc in _RISK_FLAG_CODE_LIST)
@@ -85,33 +75,23 @@ RISK_FLAG_CODES: FrozenSet[str] = frozenset(rc.code for rc in _RISK_FLAG_CODE_LI
 # =============================================================================
 
 _SIZING_CODE_LIST: List[ReasonCode] = [
-    ReasonCode("ineligible", "sizing",
-               "Ineligible ticker — forced to XS band"),
-    ReasonCode("tier_a_dev", "sizing",
-               "A-tier dev with high optionality — band upgrade"),
-    ReasonCode("catalyst_far_lift", "sizing",
-               "FAR catalyst data present — minor band upgrade vs missing"),
-    ReasonCode("sponsor_confirmed", "sizing",
-               "Tier-1 sponsor count above threshold — band upgrade"),
-    ReasonCode("momentum_tailwind", "sizing",
-               "Positive 60d alpha momentum — band upgrade"),
-    ReasonCode("momentum_headwind", "sizing",
-               "Negative 60d alpha momentum — band downgrade"),
-    ReasonCode("runway_short", "sizing",
-               "SEV2 runway concern — band downgrade"),
-    ReasonCode("runway_critical", "sizing",
-               "Critical runway (SEV3 / <6m cash) — band downgrade"),
-    ReasonCode("high_risk", "sizing",
-               "High volatility or beta — band downgrade"),
-    ReasonCode("drawdown_penalty", "sizing",
-               "Soft drawdown mode breach — band downgrade"),
+    ReasonCode("ineligible", "sizing", "Ineligible ticker — forced to XS band"),
+    ReasonCode("tier_a_dev", "sizing", "A-tier dev with high optionality — band upgrade"),
+    ReasonCode("catalyst_far_lift", "sizing", "FAR catalyst data present — minor band upgrade vs missing"),
+    ReasonCode("sponsor_confirmed", "sizing", "Tier-1 sponsor count above threshold — band upgrade"),
+    ReasonCode("momentum_tailwind", "sizing", "Positive 60d alpha momentum — band upgrade"),
+    ReasonCode("momentum_headwind", "sizing", "Negative 60d alpha momentum — band downgrade"),
+    ReasonCode("runway_short", "sizing", "SEV2 runway concern — band downgrade"),
+    ReasonCode("runway_critical", "sizing", "Critical runway (SEV3 / <6m cash) — band downgrade"),
+    ReasonCode("high_risk", "sizing", "High volatility or beta — band downgrade"),
+    ReasonCode("drawdown_penalty", "sizing", "Soft drawdown mode breach — band downgrade"),
 ]
 
 SIZING_CODES: FrozenSet[str] = frozenset(rc.code for rc in _SIZING_CODE_LIST)
 
 # Band index deltas for each sizing modifier
 _SIZING_DELTA: Dict[str, int] = {
-    "ineligible": 0,           # forces XS, no delta
+    "ineligible": 0,  # forces XS, no delta
     "tier_a_dev": +1,
     "catalyst_far_lift": +1,
     "sponsor_confirmed": +1,
@@ -120,7 +100,7 @@ _SIZING_DELTA: Dict[str, int] = {
     "runway_short": -1,
     "runway_critical": -1,
     "high_risk": -1,
-    "drawdown_penalty": -1,    # ruleset.drawdown_size_penalty (typically -1)
+    "drawdown_penalty": -1,  # ruleset.drawdown_size_penalty (typically -1)
 }
 
 
@@ -128,51 +108,84 @@ _SIZING_DELTA: Dict[str, int] = {
 # OVERLAY ENUMS (valid values for categorical overlay fields)
 # =============================================================================
 
-VALID_CATALYST_MODES: FrozenSet[str] = frozenset({
-    "specific_days", "blended_window", "far_window", "no_upcoming", "missing",
-})
+VALID_CATALYST_MODES: FrozenSet[str] = frozenset(
+    {
+        "specific_days",
+        "blended_window",
+        "far_window",
+        "no_upcoming",
+        "missing",
+    }
+)
 
-VALID_CATALYST_STRENGTHS: FrozenSet[str] = frozenset({
-    "near", "mid", "far", "missing",
-})
+VALID_CATALYST_STRENGTHS: FrozenSet[str] = frozenset(
+    {
+        "near",
+        "mid",
+        "far",
+        "missing",
+    }
+)
 
-VALID_MOM_STATES: FrozenSet[str] = frozenset({
-    "tailwind", "neutral", "headwind",
-})
+VALID_MOM_STATES: FrozenSet[str] = frozenset(
+    {
+        "tailwind",
+        "neutral",
+        "headwind",
+    }
+)
 
-VALID_RUNWAY_BUCKETS: FrozenSet[str] = frozenset({
-    "critical", "short", "adequate", "",
-})
+VALID_RUNWAY_BUCKETS: FrozenSet[str] = frozenset(
+    {
+        "critical",
+        "short",
+        "adequate",
+        "",
+    }
+)
 
-VALID_TIER_DEVS: FrozenSet[str] = frozenset({
-    "A", "B", "C", "D", "",
-})
+VALID_TIER_DEVS: FrozenSet[str] = frozenset(
+    {
+        "A",
+        "B",
+        "C",
+        "D",
+        "",
+    }
+)
 
-VALID_SIZE_BANDS: FrozenSet[str] = frozenset({
-    "L", "M", "S", "XS",
-})
+VALID_SIZE_BANDS: FrozenSet[str] = frozenset(
+    {
+        "L",
+        "M",
+        "S",
+        "XS",
+    }
+)
 
 
 # =============================================================================
 # TIER REASONS — exhaustive set from _compute_tier_dev() code paths
 # =============================================================================
 
-VALID_TIER_REASONS: FrozenSet[str] = frozenset({
-    "",                           # non-drug-developer
-    "ineligible",                 # D — not eligible
-    "no_optionality_data",        # C — optionality is None
-    "high_opt+catalyst_near",     # A — opt >= a_floor, actionable, specific_days near
-    "high_opt+catalyst_mid",      # A — opt >= a_floor, actionable, specific_days mid
-    "high_opt+catalyst_window",   # A — opt >= a_floor, actionable, blended_window
-    "high_opt+catalyst_far",      # B — opt >= a_floor, NOT actionable (far catalyst)
-    "mod_opt+catalyst_near",      # B — b_floor <= opt < a_floor, actionable, near
-    "mod_opt+catalyst_mid",       # B — b_floor <= opt < a_floor, actionable, mid
-    "mod_opt+catalyst_window",    # B — b_floor <= opt < a_floor, actionable, blended
-    "high_opt+no_catalyst_data",  # B — opt >= a_floor, no catalyst data
-    "mod_opt+no_catalyst_data",   # C — b_floor <= opt < a_floor, no catalyst data
-    "low_opt+no_catalyst_data",   # C — opt < b_floor, no catalyst data
-    "low_opt",                    # C — opt < b_floor with catalyst, or mod_opt+far
-})
+VALID_TIER_REASONS: FrozenSet[str] = frozenset(
+    {
+        "",  # non-drug-developer
+        "ineligible",  # D — not eligible
+        "no_optionality_data",  # C — optionality is None
+        "high_opt+catalyst_near",  # A — opt >= a_floor, actionable, specific_days near
+        "high_opt+catalyst_mid",  # A — opt >= a_floor, actionable, specific_days mid
+        "high_opt+catalyst_window",  # A — opt >= a_floor, actionable, blended_window
+        "high_opt+catalyst_far",  # B — opt >= a_floor, NOT actionable (far catalyst)
+        "mod_opt+catalyst_near",  # B — b_floor <= opt < a_floor, actionable, near
+        "mod_opt+catalyst_mid",  # B — b_floor <= opt < a_floor, actionable, mid
+        "mod_opt+catalyst_window",  # B — b_floor <= opt < a_floor, actionable, blended
+        "high_opt+no_catalyst_data",  # B — opt >= a_floor, no catalyst data
+        "mod_opt+no_catalyst_data",  # C — b_floor <= opt < a_floor, no catalyst data
+        "low_opt+no_catalyst_data",  # C — opt < b_floor, no catalyst data
+        "low_opt",  # C — opt < b_floor with catalyst, or mod_opt+far
+    }
+)
 
 
 # =============================================================================
@@ -223,6 +236,7 @@ for _rc_list in (_ELIGIBILITY_CODE_LIST, _RISK_FLAG_CODE_LIST, _SIZING_CODE_LIST
 # TIER REASON PARSING
 # =============================================================================
 
+
 def _parse_tier_reason(tier_reason: str) -> Dict[str, str]:
     """Decompose a compound tier_reason string into components.
 
@@ -250,6 +264,7 @@ def _parse_tier_reason(tier_reason: str) -> Dict[str, str]:
 # =============================================================================
 # EXPLANATION BUILDER
 # =============================================================================
+
 
 def build_explanation(fields: Dict[str, Any]) -> Dict[str, Any]:
     """Build a structured explanation from decision engine output fields.
@@ -298,9 +313,7 @@ def build_explanation(fields: Dict[str, Any]) -> Dict[str, Any]:
 
     reason_descs: Dict[str, str] = {}
     for r in primary_reasons:
-        reason_descs[r] = _COMPONENT_DESCRIPTIONS.get(
-            r, _TIER_REASON_DESCRIPTIONS.get(r, r)
-        )
+        reason_descs[r] = _COMPONENT_DESCRIPTIONS.get(r, _TIER_REASON_DESCRIPTIONS.get(r, r))
 
     tier_block = {
         "tier": tier_dev,
@@ -321,11 +334,13 @@ def build_explanation(fields: Dict[str, Any]) -> Dict[str, Any]:
     for code in size_codes:
         delta = _SIZING_DELTA.get(code, 0)
         rc = _ALL_CODES.get(code)
-        modifiers.append({
-            "code": code,
-            "delta": delta,
-            "description": rc.description if rc else code,
-        })
+        modifiers.append(
+            {
+                "code": code,
+                "delta": delta,
+                "description": rc.description if rc else code,
+            }
+        )
         net_modifier += delta
 
     sizing_block = {
@@ -385,6 +400,7 @@ def build_explanation(fields: Dict[str, Any]) -> Dict[str, Any]:
 # =============================================================================
 # PUBLIC UTILITIES
 # =============================================================================
+
 
 def describe_code(code: str) -> str:
     """Look up the human-readable description for a reason code.

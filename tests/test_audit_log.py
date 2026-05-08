@@ -11,30 +11,31 @@ Tests audit trail functionality:
 - Loading audit logs
 """
 
-import pytest
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from governance.audit_log import (
+    AuditErrorCode,
     AuditLog,
     AuditLogError,
     AuditRecord,
     AuditStage,
     AuditStatus,
-    AuditErrorCode,
     StageIO,
     load_audit_log,
 )
 
-
 # ============================================================================
 # STAGE IO TESTS
 # ============================================================================
+
 
 class TestStageIO:
     """Tests for StageIO dataclass."""
@@ -82,6 +83,7 @@ class TestStageIO:
 # ============================================================================
 # AUDIT RECORD TESTS
 # ============================================================================
+
 
 class TestAuditRecord:
     """Tests for AuditRecord dataclass."""
@@ -175,6 +177,7 @@ class TestAuditRecord:
 # ============================================================================
 # AUDIT LOG TESTS
 # ============================================================================
+
 
 class TestAuditLog:
     """Tests for AuditLog class."""
@@ -360,7 +363,7 @@ class TestAuditLogWriting:
 
         # File should exist with one record
         content = (tmp_path / "audit.jsonl").read_text()
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
         # Note: append adds the record, and log_stage already added it to records
         # So we may have 2 lines
         assert len(lines) >= 1
@@ -369,6 +372,7 @@ class TestAuditLogWriting:
 # ============================================================================
 # LOAD AUDIT LOG TESTS
 # ============================================================================
+
 
 class TestLoadAuditLog:
     """Tests for load_audit_log function."""
@@ -396,9 +400,7 @@ class TestLoadAuditLog:
         """Should skip malformed JSON lines with warning."""
         log_file = tmp_path / "audit.jsonl"
         log_file.write_text(
-            '{"run_id": "run1", "stage_name": "INIT"}\n'
-            'not valid json\n'
-            '{"run_id": "run1", "stage_name": "LOAD"}\n'
+            '{"run_id": "run1", "stage_name": "INIT"}\n' "not valid json\n" '{"run_id": "run1", "stage_name": "LOAD"}\n'
         )
 
         records = load_audit_log(log_file)
@@ -428,6 +430,7 @@ class TestLoadAuditLog:
 # ============================================================================
 # AUDIT STAGE AND STATUS ENUMS
 # ============================================================================
+
 
 class TestAuditEnums:
     """Tests for audit-related enums."""
@@ -460,6 +463,7 @@ class TestAuditEnums:
 # ============================================================================
 # INTEGRATION TESTS
 # ============================================================================
+
 
 class TestAuditLogIntegration:
     """Integration tests for complete audit log workflow."""

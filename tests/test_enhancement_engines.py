@@ -10,9 +10,10 @@ Covers previously untested enhancement engines:
 All tests are deterministic and do not use datetime.now().
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
+
+import pytest
 
 # =============================================================================
 # LIQUIDITY SCORING TESTS
@@ -217,7 +218,7 @@ class TestTimelineSlippageEngine:
 
     def test_slippage_direction_pushout(self):
         """Test pushout detection."""
-        from timeline_slippage_engine import TimelineSlippageEngine, SlippageDirection
+        from timeline_slippage_engine import SlippageDirection, TimelineSlippageEngine
 
         engine = TimelineSlippageEngine()
 
@@ -236,7 +237,7 @@ class TestTimelineSlippageEngine:
 
     def test_slippage_direction_pullin(self):
         """Test pullin (acceleration) detection."""
-        from timeline_slippage_engine import TimelineSlippageEngine, SlippageDirection
+        from timeline_slippage_engine import SlippageDirection, TimelineSlippageEngine
 
         engine = TimelineSlippageEngine()
 
@@ -255,7 +256,7 @@ class TestTimelineSlippageEngine:
 
     def test_slippage_direction_stable(self):
         """Test stable timeline detection."""
-        from timeline_slippage_engine import TimelineSlippageEngine, SlippageDirection
+        from timeline_slippage_engine import SlippageDirection, TimelineSlippageEngine
 
         engine = TimelineSlippageEngine()
 
@@ -274,7 +275,7 @@ class TestTimelineSlippageEngine:
 
     def test_slippage_severity_severe(self):
         """Test severe pushout classification (>180 days)."""
-        from timeline_slippage_engine import TimelineSlippageEngine, SlippageSeverity
+        from timeline_slippage_engine import SlippageSeverity, TimelineSlippageEngine
 
         engine = TimelineSlippageEngine()
 
@@ -293,7 +294,7 @@ class TestTimelineSlippageEngine:
 
     def test_slippage_severity_moderate(self):
         """Test moderate pushout classification (60-180 days)."""
-        from timeline_slippage_engine import TimelineSlippageEngine, SlippageSeverity
+        from timeline_slippage_engine import SlippageSeverity, TimelineSlippageEngine
 
         engine = TimelineSlippageEngine()
 
@@ -472,6 +473,7 @@ class TestManagerMomentum:
         """Check if manager_momentum_v1 module exists."""
         try:
             import manager_momentum_v1
+
             return True
         except ImportError:
             return False
@@ -482,6 +484,7 @@ class TestManagerMomentum:
             pytest.skip("manager_momentum_v1 not available")
 
         import manager_momentum_v1
+
         assert hasattr(manager_momentum_v1, "__version__") or True
 
 

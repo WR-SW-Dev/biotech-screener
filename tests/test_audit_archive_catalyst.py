@@ -1,4 +1,5 @@
 """Tests for scripts/audit_archive_catalyst.py."""
+
 from __future__ import annotations
 
 import csv
@@ -23,10 +24,10 @@ from scripts.audit_archive_catalyst import (
     format_audit_report_md,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers — build minimal archive .tar.gz for testing
 # ---------------------------------------------------------------------------
+
 
 def _make_archive(
     tmp_dir: Path,
@@ -98,6 +99,7 @@ def _comm_row(ticker: str) -> Dict[str, str]:
 # ---------------------------------------------------------------------------
 # TestAuditSingleArchive
 # ---------------------------------------------------------------------------
+
 
 class TestAuditSingleArchive:
 
@@ -212,19 +214,21 @@ class TestAuditSingleArchive:
 # TestHypotheticalCoverage
 # ---------------------------------------------------------------------------
 
+
 class TestHypotheticalCoverage:
 
     def test_trial_within_180d(self):
         """Trial at 100d → counted at all windows (180, 270, 365)."""
         eligible = {"AAA"}
-        trials = [{
-            "ticker": "AAA", "phase": "PHASE3",
-            "first_posted": "2025-01-01",
-            "primary_completion_date": "2025-07-11",  # ~100d from 2025-04-01
-        }]
-        result = compute_hypothetical_coverage(
-            trials, [], eligible, date(2025, 4, 1), [180, 270, 365]
-        )
+        trials = [
+            {
+                "ticker": "AAA",
+                "phase": "PHASE3",
+                "first_posted": "2025-01-01",
+                "primary_completion_date": "2025-07-11",  # ~100d from 2025-04-01
+            }
+        ]
+        result = compute_hypothetical_coverage(trials, [], eligible, date(2025, 4, 1), [180, 270, 365])
         assert result[180] == 1
         assert result[270] == 1
         assert result[365] == 1
@@ -232,14 +236,15 @@ class TestHypotheticalCoverage:
     def test_trial_at_250d(self):
         """Trial at 250d → counted only at 270d and 365d, not 180d."""
         eligible = {"AAA"}
-        trials = [{
-            "ticker": "AAA", "phase": "PHASE2",
-            "first_posted": "2024-06-01",
-            "primary_completion_date": "2025-12-07",  # 250d from 2025-04-01
-        }]
-        result = compute_hypothetical_coverage(
-            trials, [], eligible, date(2025, 4, 1), [180, 270, 365]
-        )
+        trials = [
+            {
+                "ticker": "AAA",
+                "phase": "PHASE2",
+                "first_posted": "2024-06-01",
+                "primary_completion_date": "2025-12-07",  # 250d from 2025-04-01
+            }
+        ]
+        result = compute_hypothetical_coverage(trials, [], eligible, date(2025, 4, 1), [180, 270, 365])
         assert result[180] == 0
         assert result[270] == 1
         assert result[365] == 1
@@ -247,13 +252,13 @@ class TestHypotheticalCoverage:
     def test_pdufa_no_cap(self):
         """PDUFA at 400d → counted at all windows (no cap on PDUFA)."""
         eligible = {"AAA"}
-        pdufa = [{
-            "ticker": "AAA",
-            "pdufa_date": "2026-05-06",  # 400d from 2025-04-01
-        }]
-        result = compute_hypothetical_coverage(
-            [], pdufa, eligible, date(2025, 4, 1), [180, 270, 365]
-        )
+        pdufa = [
+            {
+                "ticker": "AAA",
+                "pdufa_date": "2026-05-06",  # 400d from 2025-04-01
+            }
+        ]
+        result = compute_hypothetical_coverage([], pdufa, eligible, date(2025, 4, 1), [180, 270, 365])
         assert result[180] == 1
         assert result[270] == 1
         assert result[365] == 1
@@ -261,14 +266,15 @@ class TestHypotheticalCoverage:
     def test_pit_filter_excludes_future_posted(self):
         """Trial with first_posted > as_of is excluded at all windows."""
         eligible = {"AAA"}
-        trials = [{
-            "ticker": "AAA", "phase": "PHASE3",
-            "first_posted": "2025-06-01",  # AFTER as_of
-            "primary_completion_date": "2025-07-01",
-        }]
-        result = compute_hypothetical_coverage(
-            trials, [], eligible, date(2025, 4, 1), [180, 270, 365]
-        )
+        trials = [
+            {
+                "ticker": "AAA",
+                "phase": "PHASE3",
+                "first_posted": "2025-06-01",  # AFTER as_of
+                "primary_completion_date": "2025-07-01",
+            }
+        ]
+        result = compute_hypothetical_coverage(trials, [], eligible, date(2025, 4, 1), [180, 270, 365])
         assert result[180] == 0
         assert result[270] == 0
         assert result[365] == 0
@@ -276,27 +282,29 @@ class TestHypotheticalCoverage:
     def test_only_eligible_counted(self):
         """Trials for non-eligible tickers are ignored."""
         eligible = {"AAA"}
-        trials = [{
-            "ticker": "BBB", "phase": "PHASE3",
-            "first_posted": "2025-01-01",
-            "primary_completion_date": "2025-05-01",
-        }]
-        result = compute_hypothetical_coverage(
-            trials, [], eligible, date(2025, 4, 1), [180]
-        )
+        trials = [
+            {
+                "ticker": "BBB",
+                "phase": "PHASE3",
+                "first_posted": "2025-01-01",
+                "primary_completion_date": "2025-05-01",
+            }
+        ]
+        result = compute_hypothetical_coverage(trials, [], eligible, date(2025, 4, 1), [180])
         assert result[180] == 0
 
     def test_past_trial_excluded(self):
         """Trial with PCD before as_of is excluded."""
         eligible = {"AAA"}
-        trials = [{
-            "ticker": "AAA", "phase": "PHASE3",
-            "first_posted": "2024-01-01",
-            "primary_completion_date": "2025-03-01",  # BEFORE as_of
-        }]
-        result = compute_hypothetical_coverage(
-            trials, [], eligible, date(2025, 4, 1), [180, 365]
-        )
+        trials = [
+            {
+                "ticker": "AAA",
+                "phase": "PHASE3",
+                "first_posted": "2024-01-01",
+                "primary_completion_date": "2025-03-01",  # BEFORE as_of
+            }
+        ]
+        result = compute_hypothetical_coverage(trials, [], eligible, date(2025, 4, 1), [180, 365])
         assert result[180] == 0
         assert result[365] == 0
 
@@ -305,14 +313,19 @@ class TestHypotheticalCoverage:
 # TestFormatReport
 # ---------------------------------------------------------------------------
 
+
 class TestFormatReport:
 
     def _sample_results(self) -> List[Dict[str, Any]]:
         return [
             {
-                "date": "2025-06-30", "status": "ok",
-                "n_eligible": 10, "catalyst_present": 5, "catalyst_missing": 5,
-                "catalyst_missing_pct": 50.0, "passes_dq_gate": True,
+                "date": "2025-06-30",
+                "status": "ok",
+                "n_eligible": 10,
+                "catalyst_present": 5,
+                "catalyst_missing": 5,
+                "catalyst_missing_pct": 50.0,
+                "passes_dq_gate": True,
                 "source_breakdown": {"trial_pcd": 3, "pdufa": 2},
                 "hypothetical": {
                     "180d": {"present": 5, "missing": 5, "missing_pct": 50.0, "passes_dq": True},

@@ -1,4 +1,5 @@
 """Tests for run_decision_ruleset_sweep.py"""
+
 from __future__ import annotations
 
 import sys
@@ -13,16 +14,15 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from decision_engine import DecisionRuleset
 from run_decision_ruleset_sweep import (
     GRID_AXES,
+    ArchiveData,
+    ForwardReturnData,
     compute_turnover,
     evaluate_snapshot,
     generate_grid,
     run_holdout_validation,
     score_ruleset,
     split_dates,
-    ArchiveData,
-    ForwardReturnData,
 )
-
 
 # =============================================================================
 # GRID TESTS
@@ -36,8 +36,7 @@ class TestGenerateGrid:
         assert len(grid) > 0
         for rs in grid:
             assert rs.tier_a_optionality_floor > rs.tier_b_optionality_floor, (
-                f"Invalid combo: a={rs.tier_a_optionality_floor} "
-                f"<= b={rs.tier_b_optionality_floor}"
+                f"Invalid combo: a={rs.tier_a_optionality_floor} " f"<= b={rs.tier_b_optionality_floor}"
             )
 
     def test_grid_contains_default(self):
@@ -45,9 +44,7 @@ class TestGenerateGrid:
         grid = generate_grid()
         default = DecisionRuleset()
         ids = {rs.ruleset_id for rs in grid}
-        assert default.ruleset_id in ids, (
-            f"Default ruleset {default.ruleset_id} not in grid of {len(grid)}"
-        )
+        assert default.ruleset_id in ids, f"Default ruleset {default.ruleset_id} not in grid of {len(grid)}"
 
     def test_grid_ids_unique(self):
         """Each ruleset in the grid has a unique id."""
@@ -79,16 +76,12 @@ class TestScoreRuleset:
         """Same inputs produce same composite score."""
         per_date = {
             "2024-01-31": {
-                "A": {"n": 10, "mean_pct": 5.0, "resid_mean_pct": 3.0,
-                       "hit_pct": 60.0, "resid_hit_pct": 55.0},
-                "C": {"n": 30, "mean_pct": 1.0, "resid_mean_pct": -1.0,
-                       "hit_pct": 45.0, "resid_hit_pct": 40.0},
+                "A": {"n": 10, "mean_pct": 5.0, "resid_mean_pct": 3.0, "hit_pct": 60.0, "resid_hit_pct": 55.0},
+                "C": {"n": 30, "mean_pct": 1.0, "resid_mean_pct": -1.0, "hit_pct": 45.0, "resid_hit_pct": 40.0},
             },
             "2024-04-30": {
-                "A": {"n": 8, "mean_pct": 4.0, "resid_mean_pct": 2.5,
-                       "hit_pct": 55.0, "resid_hit_pct": 50.0},
-                "C": {"n": 25, "mean_pct": 0.5, "resid_mean_pct": -0.5,
-                       "hit_pct": 40.0, "resid_hit_pct": 38.0},
+                "A": {"n": 8, "mean_pct": 4.0, "resid_mean_pct": 2.5, "hit_pct": 55.0, "resid_hit_pct": 50.0},
+                "C": {"n": 25, "mean_pct": 0.5, "resid_mean_pct": -0.5, "hit_pct": 40.0, "resid_hit_pct": 38.0},
             },
         }
         turnover = 0.15
@@ -102,10 +95,8 @@ class TestScoreRuleset:
         """When A outperforms C, delta should be positive."""
         per_date = {
             "2024-01-31": {
-                "A": {"n": 15, "mean_pct": 10.0, "resid_mean_pct": 8.0,
-                       "hit_pct": 70.0, "resid_hit_pct": 65.0},
-                "C": {"n": 40, "mean_pct": 2.0, "resid_mean_pct": -2.0,
-                       "hit_pct": 45.0, "resid_hit_pct": 40.0},
+                "A": {"n": 15, "mean_pct": 10.0, "resid_mean_pct": 8.0, "hit_pct": 70.0, "resid_hit_pct": 65.0},
+                "C": {"n": 40, "mean_pct": 2.0, "resid_mean_pct": -2.0, "hit_pct": 45.0, "resid_hit_pct": 40.0},
             },
         }
         scores = score_ruleset(per_date, turnover=0.0)
@@ -179,51 +170,103 @@ class TestHoldoutValidation:
         """Build minimal results with per_date stats for two rulesets."""
         per_date_early = {
             "2024-01-31": {
-                "A": {"n": 10, "mean_pct": 8.0, "resid_mean_pct": 6.0,
-                       "median_resid_pct": 5.5, "winsor_resid_pct": 5.8,
-                       "hit_pct": 65.0, "resid_hit_pct": 60.0},
-                "C": {"n": 30, "mean_pct": 2.0, "resid_mean_pct": -1.0,
-                       "median_resid_pct": -1.5, "winsor_resid_pct": -0.8,
-                       "hit_pct": 40.0, "resid_hit_pct": 35.0},
+                "A": {
+                    "n": 10,
+                    "mean_pct": 8.0,
+                    "resid_mean_pct": 6.0,
+                    "median_resid_pct": 5.5,
+                    "winsor_resid_pct": 5.8,
+                    "hit_pct": 65.0,
+                    "resid_hit_pct": 60.0,
+                },
+                "C": {
+                    "n": 30,
+                    "mean_pct": 2.0,
+                    "resid_mean_pct": -1.0,
+                    "median_resid_pct": -1.5,
+                    "winsor_resid_pct": -0.8,
+                    "hit_pct": 40.0,
+                    "resid_hit_pct": 35.0,
+                },
             },
         }
         per_date_late = {
             "2025-01-31": {
-                "A": {"n": 8, "mean_pct": 6.0, "resid_mean_pct": 4.0,
-                       "median_resid_pct": 3.5, "winsor_resid_pct": 3.8,
-                       "hit_pct": 60.0, "resid_hit_pct": 55.0},
-                "C": {"n": 25, "mean_pct": 1.0, "resid_mean_pct": -0.5,
-                       "median_resid_pct": -1.0, "winsor_resid_pct": -0.3,
-                       "hit_pct": 42.0, "resid_hit_pct": 38.0},
+                "A": {
+                    "n": 8,
+                    "mean_pct": 6.0,
+                    "resid_mean_pct": 4.0,
+                    "median_resid_pct": 3.5,
+                    "winsor_resid_pct": 3.8,
+                    "hit_pct": 60.0,
+                    "resid_hit_pct": 55.0,
+                },
+                "C": {
+                    "n": 25,
+                    "mean_pct": 1.0,
+                    "resid_mean_pct": -0.5,
+                    "median_resid_pct": -1.0,
+                    "winsor_resid_pct": -0.3,
+                    "hit_pct": 42.0,
+                    "resid_hit_pct": 38.0,
+                },
             },
         }
         results = [
             {
                 "ruleset_id": "good_one",
-                "tier_a_floor": 0.55, "tier_b_floor": 0.30,
-                "catalyst_near_days": 90, "sponsor_threshold": 2,
+                "tier_a_floor": 0.55,
+                "tier_b_floor": 0.30,
+                "catalyst_near_days": 90,
+                "sponsor_threshold": 2,
                 "per_date": {**per_date_early, **per_date_late},
             },
             {
                 "ruleset_id": "bad_one",
-                "tier_a_floor": 0.65, "tier_b_floor": 0.30,
-                "catalyst_near_days": 90, "sponsor_threshold": 2,
+                "tier_a_floor": 0.65,
+                "tier_b_floor": 0.30,
+                "catalyst_near_days": 90,
+                "sponsor_threshold": 2,
                 "per_date": {
                     "2024-01-31": {
-                        "A": {"n": 3, "mean_pct": 1.0, "resid_mean_pct": -2.0,
-                               "median_resid_pct": -2.0, "winsor_resid_pct": -2.0,
-                               "hit_pct": 33.0, "resid_hit_pct": 33.0},
-                        "C": {"n": 40, "mean_pct": 3.0, "resid_mean_pct": 1.0,
-                               "median_resid_pct": 0.5, "winsor_resid_pct": 0.8,
-                               "hit_pct": 50.0, "resid_hit_pct": 45.0},
+                        "A": {
+                            "n": 3,
+                            "mean_pct": 1.0,
+                            "resid_mean_pct": -2.0,
+                            "median_resid_pct": -2.0,
+                            "winsor_resid_pct": -2.0,
+                            "hit_pct": 33.0,
+                            "resid_hit_pct": 33.0,
+                        },
+                        "C": {
+                            "n": 40,
+                            "mean_pct": 3.0,
+                            "resid_mean_pct": 1.0,
+                            "median_resid_pct": 0.5,
+                            "winsor_resid_pct": 0.8,
+                            "hit_pct": 50.0,
+                            "resid_hit_pct": 45.0,
+                        },
                     },
                     "2025-01-31": {
-                        "A": {"n": 2, "mean_pct": -1.0, "resid_mean_pct": -3.0,
-                               "median_resid_pct": -3.0, "winsor_resid_pct": -3.0,
-                               "hit_pct": 0.0, "resid_hit_pct": 0.0},
-                        "C": {"n": 35, "mean_pct": 2.0, "resid_mean_pct": 0.5,
-                               "median_resid_pct": 0.0, "winsor_resid_pct": 0.3,
-                               "hit_pct": 48.0, "resid_hit_pct": 42.0},
+                        "A": {
+                            "n": 2,
+                            "mean_pct": -1.0,
+                            "resid_mean_pct": -3.0,
+                            "median_resid_pct": -3.0,
+                            "winsor_resid_pct": -3.0,
+                            "hit_pct": 0.0,
+                            "resid_hit_pct": 0.0,
+                        },
+                        "C": {
+                            "n": 35,
+                            "mean_pct": 2.0,
+                            "resid_mean_pct": 0.5,
+                            "median_resid_pct": 0.0,
+                            "winsor_resid_pct": 0.3,
+                            "hit_pct": 48.0,
+                            "resid_hit_pct": 42.0,
+                        },
                     },
                 },
             },
@@ -242,9 +285,7 @@ class TestHoldoutValidation:
 
     def test_holdout_identifies_passing(self):
         results, histories = self._make_results()
-        holdout = run_holdout_validation(
-            results, histories, cutoff="2024-12-31", top_k=2
-        )
+        holdout = run_holdout_validation(results, histories, cutoff="2024-12-31", top_k=2)
         assert holdout["n_early_dates"] == 1
         assert holdout["n_late_dates"] == 1
         # good_one should pass (positive late delta, sufficient A obs)
@@ -253,9 +294,7 @@ class TestHoldoutValidation:
 
     def test_holdout_rejects_negative_delta(self):
         results, histories = self._make_results()
-        holdout = run_holdout_validation(
-            results, histories, cutoff="2024-12-31", top_k=2
-        )
+        holdout = run_holdout_validation(results, histories, cutoff="2024-12-31", top_k=2)
         # bad_one has negative late delta
         for v in holdout["validated"]:
             if v["ruleset_id"] == "bad_one":

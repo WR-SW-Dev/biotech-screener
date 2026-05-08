@@ -11,35 +11,31 @@ Uses realistic sample data to verify:
 4. Institutional signal report generation
 5. Deterministic output across multiple runs
 """
+
 import json
 import tempfile
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import pytest
 
+from liquidity_scoring import classify_market_cap_tier, compute_liquidity_score, score_all_tickers
 from risk_gates import (
-    load_market_data,
-    load_financial_data,
+    FLAG_CASH_RISK,
+    FLAG_LOW_LIQUIDITY,
+    FLAG_MICRO_CAP,
+    FLAG_PENNY_STOCK,
     apply_all_gates,
     calculate_adv,
     calculate_runway_months,
-    FLAG_LOW_LIQUIDITY,
-    FLAG_PENNY_STOCK,
-    FLAG_MICRO_CAP,
-    FLAG_CASH_RISK,
+    load_financial_data,
+    load_market_data,
 )
-
-from liquidity_scoring import (
-    compute_liquidity_score,
-    score_all_tickers,
-    classify_market_cap_tier,
-)
-
 
 # =============================================================================
 # SAMPLE DATA FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_market_data_file(tmp_path):
@@ -87,7 +83,7 @@ def sample_market_data_file(tmp_path):
     ]
 
     filepath = tmp_path / "market_data.json"
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         json.dump(data, f)
 
     return filepath
@@ -130,7 +126,7 @@ def sample_financial_data_file(tmp_path):
     ]
 
     filepath = tmp_path / "financial_data.json"
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         json.dump(data, f)
 
     return filepath
@@ -176,6 +172,7 @@ def sample_holdings_data():
 # DATA LOADING TESTS
 # =============================================================================
 
+
 class TestDataLoading:
     """Tests for data loading functions."""
 
@@ -204,7 +201,7 @@ class TestDataLoading:
         }
 
         filepath = tmp_path / "market_dict.json"
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(data, f)
 
         loaded = load_market_data(str(filepath))
@@ -216,12 +213,11 @@ class TestDataLoading:
 # FULL PIPELINE INTEGRATION TESTS
 # =============================================================================
 
+
 class TestFullPipelineIntegration:
     """End-to-end pipeline tests with sample data."""
 
-    def test_risk_gates_across_universe(
-        self, sample_market_data_file, sample_financial_data_file
-    ):
+    def test_risk_gates_across_universe(self, sample_market_data_file, sample_financial_data_file):
         """Apply risk gates to full sample universe."""
         market_data = load_market_data(str(sample_market_data_file))
         financial_data = load_financial_data(str(sample_financial_data_file))
@@ -258,9 +254,7 @@ class TestFullPipelineIntegration:
             audit_path = f.name
 
         try:
-            results = score_all_tickers(
-                tickers, market_data, "2024-01-15", audit_path
-            )
+            results = score_all_tickers(tickers, market_data, "2024-01-15", audit_path)
 
             # Results should be sorted
             result_tickers = [r["ticker"] for r in results]
@@ -281,7 +275,7 @@ class TestFullPipelineIntegration:
             assert results_by_ticker["PENNY"]["liquidity_score"] <= 10
 
             # Audit log should have all entries
-            audit_lines = Path(audit_path).read_text().strip().split('\n')
+            audit_lines = Path(audit_path).read_text().strip().split("\n")
             assert len(audit_lines) == len(tickers)
         finally:
             Path(audit_path).unlink(missing_ok=True)
@@ -300,7 +294,7 @@ class TestFullPipelineIntegration:
         # Expected distribution based on sample data
         assert tier_counts["micro"] == 2  # PENNY, MICRO
         assert tier_counts["small"] == 1  # LOWLIQ
-        assert tier_counts["mid"] == 2    # GOOD, MIDCAP
+        assert tier_counts["mid"] == 2  # GOOD, MIDCAP
         assert tier_counts["large"] == 1  # LARGE
 
     def test_adv_calculation_consistency(self, sample_market_data_file):
@@ -333,12 +327,11 @@ class TestFullPipelineIntegration:
 # DETERMINISM VERIFICATION TESTS
 # =============================================================================
 
+
 class TestDeterminismVerification:
     """Tests that verify deterministic behavior across runs."""
 
-    def test_multiple_runs_identical(
-        self, sample_market_data_file, sample_financial_data_file
-    ):
+    def test_multiple_runs_identical(self, sample_market_data_file, sample_financial_data_file):
         """Multiple runs with same data produce identical results."""
         market_data = load_market_data(str(sample_market_data_file))
         financial_data = load_financial_data(str(sample_financial_data_file))
@@ -377,9 +370,7 @@ class TestDeterminismVerification:
         # All audit logs should be identical
         assert audit_contents[0] == audit_contents[1] == audit_contents[2]
 
-    def test_json_output_deterministic(
-        self, sample_market_data_file, sample_financial_data_file
-    ):
+    def test_json_output_deterministic(self, sample_market_data_file, sample_financial_data_file):
         """JSON serialization is deterministic."""
         market_data = load_market_data(str(sample_market_data_file))
         financial_data = load_financial_data(str(sample_financial_data_file))
@@ -391,7 +382,7 @@ class TestDeterminismVerification:
                 results[ticker] = apply_all_gates(ticker, market_data, financial_data)
 
             # Serialize to JSON
-            output = json.dumps(results, sort_keys=True, separators=(',', ':'))
+            output = json.dumps(results, sort_keys=True, separators=(",", ":"))
             outputs.append(output)
 
         assert outputs[0] == outputs[1] == outputs[2]
@@ -401,12 +392,11 @@ class TestDeterminismVerification:
 # SIGNAL FILTERING TESTS
 # =============================================================================
 
+
 class TestSignalFiltering:
     """Tests for signal filtering based on risk gates."""
 
-    def test_passing_signals_count(
-        self, sample_market_data_file, sample_financial_data_file
-    ):
+    def test_passing_signals_count(self, sample_market_data_file, sample_financial_data_file):
         """Count signals that pass all gates."""
         market_data = load_market_data(str(sample_market_data_file))
         financial_data = load_financial_data(str(sample_financial_data_file))
@@ -431,9 +421,7 @@ class TestSignalFiltering:
 
         assert len(killed) == 3
 
-    def test_rejection_reasons_correct(
-        self, sample_market_data_file, sample_financial_data_file
-    ):
+    def test_rejection_reasons_correct(self, sample_market_data_file, sample_financial_data_file):
         """Verify rejection reasons are correct."""
         market_data = load_market_data(str(sample_market_data_file))
         financial_data = load_financial_data(str(sample_financial_data_file))
@@ -455,6 +443,7 @@ class TestSignalFiltering:
 # EDGE CASE INTEGRATION TESTS
 # =============================================================================
 
+
 class TestEdgeCaseIntegration:
     """Integration tests for edge cases."""
 
@@ -475,7 +464,7 @@ class TestEdgeCaseIntegration:
         ]
 
         filepath = tmp_path / "partial.json"
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(data, f)
 
         market_data = load_market_data(str(filepath))
@@ -498,11 +487,11 @@ class TestEdgeCaseIntegration:
         ]
 
         market_path = tmp_path / "market.json"
-        with open(market_path, 'w') as f:
+        with open(market_path, "w") as f:
             json.dump(market_data, f)
 
         fin_path = tmp_path / "financial.json"
-        with open(fin_path, 'w') as f:
+        with open(fin_path, "w") as f:
             json.dump(financial_data, f)
 
         market = load_market_data(str(market_path))
@@ -525,6 +514,7 @@ class TestEdgeCaseIntegration:
 # PERFORMANCE SANITY TESTS
 # =============================================================================
 
+
 class TestPerformanceSanity:
     """Basic performance sanity checks."""
 
@@ -533,16 +523,18 @@ class TestPerformanceSanity:
         # Generate 500 tickers
         market_data = []
         for i in range(500):
-            market_data.append({
-                "ticker": f"TICK{i:04d}",
-                "price": 50.0 + (i % 100),
-                "avg_volume": 100000 + (i * 1000),
-                "market_cap": 1_000_000_000 + (i * 10_000_000),
-                "spread_bps": 50.0 + (i % 50),
-            })
+            market_data.append(
+                {
+                    "ticker": f"TICK{i:04d}",
+                    "price": 50.0 + (i % 100),
+                    "avg_volume": 100000 + (i * 1000),
+                    "market_cap": 1_000_000_000 + (i * 10_000_000),
+                    "spread_bps": 50.0 + (i % 50),
+                }
+            )
 
         filepath = tmp_path / "large_market.json"
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(market_data, f)
 
         loaded = load_market_data(str(filepath))
@@ -550,6 +542,7 @@ class TestPerformanceSanity:
 
         # Should complete in reasonable time
         import time
+
         start = time.time()
 
         results = score_all_tickers(tickers, loaded, "2024-01-15", None)

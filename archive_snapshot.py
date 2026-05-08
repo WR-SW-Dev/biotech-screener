@@ -102,21 +102,30 @@ def get_git_info(repo_dir: Path) -> Dict[str, Any]:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, cwd=repo_dir, timeout=5,
+            capture_output=True,
+            text=True,
+            cwd=repo_dir,
+            timeout=5,
         )
         if result.returncode == 0:
             info["branch"] = result.stdout.strip()
 
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, cwd=repo_dir, timeout=5,
+            capture_output=True,
+            text=True,
+            cwd=repo_dir,
+            timeout=5,
         )
         if result.returncode == 0:
             info["commit_sha"] = result.stdout.strip()
 
         result = subprocess.run(
             ["git", "status", "--porcelain"],
-            capture_output=True, text=True, cwd=repo_dir, timeout=5,
+            capture_output=True,
+            text=True,
+            cwd=repo_dir,
+            timeout=5,
         )
         if result.returncode == 0:
             info["dirty"] = len(result.stdout.strip()) > 0
@@ -178,7 +187,8 @@ def build_manifest(
 
 
 def _collect_input_files(
-    data_dir: Path, snapshot_date: str,
+    data_dir: Path,
+    snapshot_date: str,
 ) -> Tuple[Dict[str, Path], List[str]]:
     """Resolve input files, returning (found, warnings)."""
     found: Dict[str, Path] = {}
@@ -221,9 +231,7 @@ def create_archive(
     metadata = snapshot_path / "metadata.json"
 
     if not rankings.exists() or not metadata.exists():
-        raise FileNotFoundError(
-            f"Snapshot incomplete — need rankings.csv and metadata.json in {snapshot_path}"
-        )
+        raise FileNotFoundError(f"Snapshot incomplete — need rankings.csv and metadata.json in {snapshot_path}")
 
     input_files, warnings = _collect_input_files(data_dir, snapshot_date)
     for w in warnings:
@@ -270,8 +278,7 @@ def create_archive(
         old_archive = archive_path.with_suffix(".tar.gz.tmp")
         archive_path.rename(old_archive)
 
-        with tarfile.open(old_archive, "r:gz") as old_tar, \
-             tarfile.open(archive_path, "w:gz") as new_tar:
+        with tarfile.open(old_archive, "r:gz") as old_tar, tarfile.open(archive_path, "w:gz") as new_tar:
             prefix = snapshot_date
             new_tar.add(str(manifest_path), arcname=f"{prefix}/manifest.json")
             for member in old_tar.getmembers():

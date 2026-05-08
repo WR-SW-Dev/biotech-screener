@@ -16,9 +16,8 @@ _provider = None
 def _get_provider():
     global _provider
     if _provider is None:
-        from wake_robin_data_pipeline.morningstar_data_provider import (
-            MorningstarDataProvider,
-        )
+        from wake_robin_data_pipeline.morningstar_data_provider import MorningstarDataProvider
+
         _provider = MorningstarDataProvider()
     return _provider
 
@@ -56,18 +55,20 @@ def get_daily_returns(
         mean_ret = sum(returns) / len(returns)
         std_ret = (sum((r - mean_ret) ** 2 for r in returns) / len(returns)) ** 0.5
 
-        return json.dumps({
-            "ticker": ticker,
-            "as_of": as_of.isoformat(),
-            "lookback_days": lookback_days,
-            "num_observations": len(returns),
-            "mean_daily_return": round(mean_ret, 8),
-            "std_daily_return": round(std_ret, 8),
-            "min_return": round(min(returns), 8),
-            "max_return": round(max(returns), 8),
-            "cumulative_return": round(math.exp(sum(returns)) - 1, 6),
-            "returns": [round(r, 8) for r in returns],
-        })
+        return json.dumps(
+            {
+                "ticker": ticker,
+                "as_of": as_of.isoformat(),
+                "lookback_days": lookback_days,
+                "num_observations": len(returns),
+                "mean_daily_return": round(mean_ret, 8),
+                "std_daily_return": round(std_ret, 8),
+                "min_return": round(min(returns), 8),
+                "max_return": round(max(returns), 8),
+                "cumulative_return": round(math.exp(sum(returns)) - 1, 6),
+                "returns": [round(r, 8) for r in returns],
+            }
+        )
     except Exception as e:
         logger.exception("get_daily_returns failed for %s", ticker)
         return json.dumps({"ticker": ticker, "error": str(e)})
@@ -97,16 +98,18 @@ def get_prices(
             return json.dumps({"ticker": ticker, "error": "No price data available"})
 
         float_prices = [float(p) for p in prices]
-        return json.dumps({
-            "ticker": ticker,
-            "as_of": as_of.isoformat(),
-            "lookback_days": lookback_days,
-            "num_observations": len(float_prices),
-            "latest_price": float_prices[-1],
-            "high": max(float_prices),
-            "low": min(float_prices),
-            "prices": float_prices,
-        })
+        return json.dumps(
+            {
+                "ticker": ticker,
+                "as_of": as_of.isoformat(),
+                "lookback_days": lookback_days,
+                "num_observations": len(float_prices),
+                "latest_price": float_prices[-1],
+                "high": max(float_prices),
+                "low": min(float_prices),
+                "prices": float_prices,
+            }
+        )
     except Exception as e:
         logger.exception("get_prices failed for %s", ticker)
         return json.dumps({"ticker": ticker, "error": str(e)})
@@ -135,17 +138,19 @@ def get_volumes(
         if not volumes:
             return json.dumps({"ticker": ticker, "error": "No volume data available"})
 
-        return json.dumps({
-            "ticker": ticker,
-            "as_of": as_of.isoformat(),
-            "lookback_days": lookback_days,
-            "num_observations": len(volumes),
-            "average_volume": int(sum(volumes) / len(volumes)),
-            "max_volume": max(volumes),
-            "min_volume": min(volumes),
-            "latest_volume": volumes[-1],
-            "volumes": volumes,
-        })
+        return json.dumps(
+            {
+                "ticker": ticker,
+                "as_of": as_of.isoformat(),
+                "lookback_days": lookback_days,
+                "num_observations": len(volumes),
+                "average_volume": int(sum(volumes) / len(volumes)),
+                "max_volume": max(volumes),
+                "min_volume": min(volumes),
+                "latest_volume": volumes[-1],
+                "volumes": volumes,
+            }
+        )
     except Exception as e:
         logger.exception("get_volumes failed for %s", ticker)
         return json.dumps({"ticker": ticker, "error": str(e)})
@@ -176,18 +181,20 @@ def compute_volatility(
 
         mean_ret = sum(returns) / len(returns)
         variance = sum((r - mean_ret) ** 2 for r in returns) / (len(returns) - 1)
-        daily_vol = variance ** 0.5
-        annual_vol = daily_vol * (252 ** 0.5)
+        daily_vol = variance**0.5
+        annual_vol = daily_vol * (252**0.5)
 
-        return json.dumps({
-            "ticker": ticker,
-            "as_of": as_of.isoformat(),
-            "window_days": window_days,
-            "num_observations": len(returns),
-            "daily_volatility": round(daily_vol, 8),
-            "annualized_volatility": round(annual_vol, 6),
-            "annualized_volatility_pct": f"{annual_vol * 100:.2f}%",
-        })
+        return json.dumps(
+            {
+                "ticker": ticker,
+                "as_of": as_of.isoformat(),
+                "window_days": window_days,
+                "num_observations": len(returns),
+                "daily_volatility": round(daily_vol, 8),
+                "annualized_volatility": round(annual_vol, 6),
+                "annualized_volatility_pct": f"{annual_vol * 100:.2f}%",
+            }
+        )
     except Exception as e:
         logger.exception("compute_volatility failed for %s", ticker)
         return json.dumps({"ticker": ticker, "error": str(e)})
@@ -208,9 +215,7 @@ def get_batch_market_data(
     volume, annualised volatility).
     """
     try:
-        from wake_robin_data_pipeline.morningstar_data_provider import (
-            BatchMorningstarProvider,
-        )
+        from wake_robin_data_pipeline.morningstar_data_provider import BatchMorningstarProvider
 
         as_of = _parse_date(as_of_date)
         batch = BatchMorningstarProvider()
@@ -226,21 +231,21 @@ def get_batch_market_data(
             if prices:
                 summary["latest_price"] = float(prices[-1])
             if volumes:
-                summary["avg_volume_30d"] = int(
-                    sum(volumes[-30:]) / min(len(volumes), 30)
-                )
+                summary["avg_volume_30d"] = int(sum(volumes[-30:]) / min(len(volumes), 30))
             if len(returns) >= 5:
                 mean_r = sum(returns) / len(returns)
                 var = sum((r - mean_r) ** 2 for r in returns) / (len(returns) - 1)
-                summary["annualized_vol"] = round((var ** 0.5) * (252 ** 0.5), 6)
+                summary["annualized_vol"] = round((var**0.5) * (252**0.5), 6)
 
             summaries[tk] = summary
 
-        return json.dumps({
-            "as_of": as_of.isoformat(),
-            "num_tickers": len(summaries),
-            "data": summaries,
-        })
+        return json.dumps(
+            {
+                "as_of": as_of.isoformat(),
+                "num_tickers": len(summaries),
+                "data": summaries,
+            }
+        )
     except Exception as e:
         logger.exception("get_batch_market_data failed")
         return json.dumps({"error": str(e)})

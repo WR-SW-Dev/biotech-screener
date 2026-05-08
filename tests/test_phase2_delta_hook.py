@@ -3,6 +3,7 @@
 Tests that _run_phase2_delta is wired correctly into the post-snapshot flow
 and that --no-delta suppresses it. Uses monkeypatching — no full pipeline run.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,10 +16,10 @@ import pytest
 
 from run_phase2_snapshot_delta import PHASE2_PINNED_RULESET_ID as _PINNED_ID
 
-
 # ---------------------------------------------------------------------------
 # Helpers to build minimal snapshot dirs on disk
 # ---------------------------------------------------------------------------
+
 
 def _write_snapshot(snap_dir: Path, date: str, ruleset_id: str = _PINNED_ID):
     """Write a minimal but valid snapshot (rankings.csv + metadata.json)."""
@@ -28,22 +29,24 @@ def _write_snapshot(snap_dir: Path, date: str, ruleset_id: str = _PINNED_ID):
     tickers = [f"T{i:02d}" for i in range(25)]
     rows = []
     for i, t in enumerate(tickers):
-        rows.append({
-            "ticker": t,
-            "composite_rank": i + 1,
-            "composite_score": 50.0 - i * 0.1,
-            "archetype": "drug_developer",
-            "tier_dev": "A" if i < 10 else "B",
-            "catalyst_mode": "specific_days",
-            "catalyst_days": 10 + i,
-            "actionable_rank": i + 1,
-            "risk_flags": "",
-            "target_weight_pct": round(100 / 25, 2),
-            "decision_engine_ruleset_id": ruleset_id,
-            "decision_engine_version": "v1.2.0",
-            "size_band": "L" if i < 8 else "M",
-            "clinical_optionality_pct_dev": 0.7,
-        })
+        rows.append(
+            {
+                "ticker": t,
+                "composite_rank": i + 1,
+                "composite_score": 50.0 - i * 0.1,
+                "archetype": "drug_developer",
+                "tier_dev": "A" if i < 10 else "B",
+                "catalyst_mode": "specific_days",
+                "catalyst_days": 10 + i,
+                "actionable_rank": i + 1,
+                "risk_flags": "",
+                "target_weight_pct": round(100 / 25, 2),
+                "decision_engine_ruleset_id": ruleset_id,
+                "decision_engine_version": "v1.2.0",
+                "size_band": "L" if i < 8 else "M",
+                "clinical_optionality_pct_dev": 0.7,
+            }
+        )
     df = pd.DataFrame(rows)
     df.to_csv(d / "rankings.csv", index=False)
 
@@ -57,6 +60,7 @@ def _write_snapshot(snap_dir: Path, date: str, ruleset_id: str = _PINNED_ID):
 # ---------------------------------------------------------------------------
 # Test: Hook writes delta artifacts into snapshot dir
 # ---------------------------------------------------------------------------
+
 
 class TestDeltaHookWiring:
     def test_hook_writes_artifacts(self, tmp_path):
@@ -131,10 +135,7 @@ class TestDeltaHookWiring:
             no_delta=True,
         )
         # The condition that gates the call:
-        should_run = (
-            args.decision_mode == "phase2"
-            and not getattr(args, "no_delta", False)
-        )
+        should_run = args.decision_mode == "phase2" and not getattr(args, "no_delta", False)
         assert not should_run
 
     def test_observe_mode_does_not_trigger(self):
@@ -143,10 +144,7 @@ class TestDeltaHookWiring:
             decision_mode="observe",
             no_delta=False,
         )
-        should_run = (
-            args.decision_mode == "phase2"
-            and not getattr(args, "no_delta", False)
-        )
+        should_run = args.decision_mode == "phase2" and not getattr(args, "no_delta", False)
         assert not should_run
 
     def test_hook_warns_on_ruleset_change(self, tmp_path):
@@ -163,9 +161,7 @@ class TestDeltaHookWiring:
         _run_phase2_delta(current, snapshot_dir, args, logger)
 
         # Should have logged a warning about ruleset change
-        warning_calls = [
-            str(call) for call in logger.warning.call_args_list
-        ]
+        warning_calls = [str(call) for call in logger.warning.call_args_list]
         assert any("Ruleset changed" in w for w in warning_calls)
 
     def test_delta_csv_content(self, tmp_path):
@@ -183,9 +179,16 @@ class TestDeltaHookWiring:
 
         df = pd.read_csv(current / "phase2_run_delta.csv")
         expected_cols = {
-            "ticker", "in_current", "in_prior", "weight_current",
-            "weight_prior", "weight_delta", "tier_current", "tier_prior",
-            "rank_current", "rank_prior",
+            "ticker",
+            "in_current",
+            "in_prior",
+            "weight_current",
+            "weight_prior",
+            "weight_delta",
+            "tier_current",
+            "tier_prior",
+            "rank_current",
+            "rank_prior",
         }
         assert expected_cols == set(df.columns)
 

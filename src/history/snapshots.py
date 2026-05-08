@@ -20,29 +20,34 @@ from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 # TypedDicts for 13F holdings snapshot structures
 class SchemaInfo(TypedDict, total=False):
     """Schema metadata section."""
+
     version: str
     quarter_end: str
 
 
 class HoldingsData(TypedDict, total=False):
     """Holdings data for a ticker."""
+
     current: Dict[str, Any]
     history: List[Dict[str, Any]]
 
 
 class TickerHoldingsInfo(TypedDict, total=False):
     """Per-ticker holdings information."""
+
     holdings: HoldingsData
 
 
 class StatsInfo(TypedDict, total=False):
     """Snapshot statistics."""
+
     tickers_count: int
     managers_count: int
 
 
 class HoldingsSnapshot(TypedDict, total=False):
     """13F holdings snapshot structure."""
+
     _schema: SchemaInfo
     tickers: Dict[str, TickerHoldingsInfo]
     managers: Dict[str, Any]
@@ -51,6 +56,7 @@ class HoldingsSnapshot(TypedDict, total=False):
 
 class QuarterInfo(TypedDict):
     """Quarter entry in manifest."""
+
     quarter_end: str
     filename: str
     sha256: str
@@ -58,23 +64,27 @@ class QuarterInfo(TypedDict):
 
 class ManifestParams(TypedDict, total=False):
     """Parameters section of manifest."""
+
     universe: str
     quarters_back: int
 
 
 class InputHashes(TypedDict, total=False):
     """Input hashes section of manifest."""
+
     universe: str
     filings: str
 
 
 class HoldingsManifest(TypedDict, total=False):
     """13F manifest structure."""
+
     _schema: SchemaInfo
     run_id: str
     params: ManifestParams
     quarters: List[QuarterInfo]
     input_hashes: InputHashes
+
 
 # Schema versions
 SNAPSHOT_SCHEMA_VERSION = "13f_holdings_snapshot_v1"
@@ -82,26 +92,29 @@ MANIFEST_SCHEMA_VERSION = "13f_manifest_v1"
 
 # Quarter end months and days
 QUARTER_ENDS = [
-    (3, 31),   # Q1
-    (6, 30),   # Q2
-    (9, 30),   # Q3
+    (3, 31),  # Q1
+    (6, 30),  # Q2
+    (9, 30),  # Q3
     (12, 31),  # Q4
 ]
 
 
 class SnapshotError(Exception):
     """Error in snapshot operations."""
+
     pass
 
 
 class SchemaValidationError(SnapshotError):
     """Schema validation failed."""
+
     pass
 
 
 # =============================================================================
 # QUARTER DATE ARITHMETIC
 # =============================================================================
+
 
 def get_quarter_end_for_date(d: Union[date, str]) -> date:
     """
@@ -207,6 +220,7 @@ def is_valid_quarter_end(d: Union[date, str]) -> bool:
 # SNAPSHOT LOADING
 # =============================================================================
 
+
 def _get_snapshot_filename(quarter_end: Union[date, str]) -> str:
     """Get the filename for a quarter snapshot."""
     if isinstance(quarter_end, date):
@@ -229,7 +243,7 @@ def list_quarters(out_dir: Union[str, Path]) -> List[date]:
     if not out_dir.exists():
         return []
 
-    pattern = re.compile(r'^holdings_(\d{4}-\d{2}-\d{2})\.json$')
+    pattern = re.compile(r"^holdings_(\d{4}-\d{2}-\d{2})\.json$")
     quarters = []
 
     for path in out_dir.iterdir():
@@ -278,7 +292,7 @@ def load_snapshot(
         raise SnapshotError(f"Snapshot not found: {filepath}")
 
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             snapshot = json.load(f)
     except json.JSONDecodeError as e:
         raise SnapshotError(f"Invalid JSON in {filepath}: {e}")
@@ -306,7 +320,7 @@ def load_manifest(out_dir: Union[str, Path]) -> HoldingsManifest:
         raise SnapshotError(f"Manifest not found: {filepath}")
 
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             manifest = json.load(f)
     except json.JSONDecodeError as e:
         raise SnapshotError(f"Invalid JSON in {filepath}: {e}")
@@ -317,6 +331,7 @@ def load_manifest(out_dir: Union[str, Path]) -> HoldingsManifest:
 # =============================================================================
 # SCHEMA VALIDATION
 # =============================================================================
+
 
 def validate_snapshot_schema(snapshot: HoldingsSnapshot) -> Tuple[bool, List[str]]:
     """
@@ -340,8 +355,7 @@ def validate_snapshot_schema(snapshot: HoldingsSnapshot) -> Tuple[bool, List[str
         schema = snapshot["_schema"]
         if schema.get("version") != SNAPSHOT_SCHEMA_VERSION:
             errors.append(
-                f"Schema version mismatch: expected {SNAPSHOT_SCHEMA_VERSION}, "
-                f"got {schema.get('version')}"
+                f"Schema version mismatch: expected {SNAPSHOT_SCHEMA_VERSION}, " f"got {schema.get('version')}"
             )
         if "quarter_end" not in schema:
             errors.append("Missing 'quarter_end' in _schema")
@@ -395,8 +409,7 @@ def validate_manifest_schema(manifest: HoldingsManifest) -> Tuple[bool, List[str
         schema = manifest["_schema"]
         if schema.get("version") != MANIFEST_SCHEMA_VERSION:
             errors.append(
-                f"Schema version mismatch: expected {MANIFEST_SCHEMA_VERSION}, "
-                f"got {schema.get('version')}"
+                f"Schema version mismatch: expected {MANIFEST_SCHEMA_VERSION}, " f"got {schema.get('version')}"
             )
 
     # Check required keys
@@ -423,6 +436,7 @@ def validate_manifest_schema(manifest: HoldingsManifest) -> Tuple[bool, List[str
 # =============================================================================
 # SNAPSHOT WRITING
 # =============================================================================
+
 
 def write_snapshot(
     snapshot: HoldingsSnapshot,
@@ -456,13 +470,13 @@ def write_snapshot(
 
     # Serialize canonically
     content = canonical_dumps(snapshot)
-    content_bytes = content.encode('utf-8')
+    content_bytes = content.encode("utf-8")
 
     # Compute hash
     file_hash = hash_bytes(content_bytes)
 
     # Write
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
 
     return filepath, file_hash
@@ -492,13 +506,13 @@ def write_manifest(
 
     # Serialize canonically
     content = canonical_dumps(manifest)
-    content_bytes = content.encode('utf-8')
+    content_bytes = content.encode("utf-8")
 
     # Compute hash
     file_hash = hash_bytes(content_bytes)
 
     # Write
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
 
     return filepath, file_hash

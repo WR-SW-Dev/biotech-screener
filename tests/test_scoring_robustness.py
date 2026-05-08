@@ -17,42 +17,40 @@ Usage:
 """
 
 from decimal import Decimal
+
 import pytest
 
-from src.modules.scoring_robustness import (
-    # Core functions
-    winsorize_component_score,
-    winsorize_cohort,
-    apply_confidence_shrinkage,
-    compute_rank_stability_penalty,
-    blend_timeframe_signals,
-    apply_asymmetric_bounds,
-    apply_weight_floors,
-    evaluate_defensive_triggers,
-    check_distribution_health,
-    apply_robustness_enhancements,
-    # Types
-    WinsorizedScore,
-    ShrinkageResult,
-    RankStabilityAdjustment,
+from src.modules.scoring_robustness import (  # Core functions; Types; Constants
+    COMPONENT_WINSOR_HIGH,
+    COMPONENT_WINSOR_LOW,
+    INTERACTION_NEGATIVE_FLOOR,
+    INTERACTION_POSITIVE_CAP,
     AsymmetricBounds,
-    WeightFloorResult,
     DefensiveOverrideResult,
-    DistributionHealthCheck,
-    RobustnessEnhancements,
     DefensivePosture,
     DistributionHealth,
-    # Constants
-    COMPONENT_WINSOR_LOW,
-    COMPONENT_WINSOR_HIGH,
-    INTERACTION_POSITIVE_CAP,
-    INTERACTION_NEGATIVE_FLOOR,
+    DistributionHealthCheck,
+    RankStabilityAdjustment,
+    RobustnessEnhancements,
+    ShrinkageResult,
+    WeightFloorResult,
+    WinsorizedScore,
+    apply_asymmetric_bounds,
+    apply_confidence_shrinkage,
+    apply_robustness_enhancements,
+    apply_weight_floors,
+    blend_timeframe_signals,
+    check_distribution_health,
+    compute_rank_stability_penalty,
+    evaluate_defensive_triggers,
+    winsorize_cohort,
+    winsorize_component_score,
 )
-
 
 # =============================================================================
 # 1. WINSORIZATION TESTS
 # =============================================================================
+
 
 class TestWinsorization:
     """Tests for component-level winsorization."""
@@ -86,7 +84,7 @@ class TestWinsorization:
     def test_winsorize_cohort(self):
         """Winsorize entire cohort."""
         scores = {
-            "A": Decimal("2"),   # Too low
+            "A": Decimal("2"),  # Too low
             "B": Decimal("50"),  # Normal
             "C": Decimal("98"),  # Too high
             "D": Decimal("40"),  # Normal
@@ -103,6 +101,7 @@ class TestWinsorization:
 # =============================================================================
 # 2. CONFIDENCE SHRINKAGE TESTS
 # =============================================================================
+
 
 class TestConfidenceShrinkage:
     """Tests for confidence-weighted shrinkage."""
@@ -148,6 +147,7 @@ class TestConfidenceShrinkage:
 # =============================================================================
 # 3. RANK STABILITY TESTS
 # =============================================================================
+
 
 class TestRankStability:
     """Tests for rank stability regularization."""
@@ -203,6 +203,7 @@ class TestRankStability:
 # 4. MULTI-TIMEFRAME BLENDING TESTS
 # =============================================================================
 
+
 class TestTimeframeBlending:
     """Tests for multi-timeframe signal blending."""
 
@@ -247,6 +248,7 @@ class TestTimeframeBlending:
 # 5. ASYMMETRIC BOUNDS TESTS
 # =============================================================================
 
+
 class TestAsymmetricBounds:
     """Tests for asymmetric interaction bounds."""
 
@@ -288,6 +290,7 @@ class TestAsymmetricBounds:
 # =============================================================================
 # 6. WEIGHT FLOORS TESTS
 # =============================================================================
+
 
 class TestWeightFloors:
     """Tests for regime-conditional weight floors."""
@@ -335,6 +338,7 @@ class TestWeightFloors:
 # =============================================================================
 # 7. DEFENSIVE TRIGGERS TESTS
 # =============================================================================
+
 
 class TestDefensiveTriggers:
     """Tests for defensive override triggers."""
@@ -396,15 +400,15 @@ class TestDefensiveTriggers:
 # 8. DISTRIBUTION HEALTH TESTS
 # =============================================================================
 
+
 class TestDistributionHealth:
     """Tests for score distribution health checks."""
 
     def test_healthy_distribution(self):
         """Normal distribution is marked healthy."""
-        scores = [Decimal(str(x)) for x in [
-            30, 35, 40, 42, 45, 48, 50, 52, 55, 58,
-            60, 62, 65, 68, 70, 72, 75, 78, 80, 85
-        ]]
+        scores = [
+            Decimal(str(x)) for x in [30, 35, 40, 42, 45, 48, 50, 52, 55, 58, 60, 62, 65, 68, 70, 72, 75, 78, 80, 85]
+        ]
         result = check_distribution_health(scores)
 
         assert result.health == DistributionHealth.HEALTHY
@@ -412,9 +416,7 @@ class TestDistributionHealth:
 
     def test_clustered_distribution(self):
         """Clustered scores are detected."""
-        scores = [Decimal(str(x)) for x in [
-            49, 49.5, 50, 50.5, 51, 49, 50, 50, 51, 49.5
-        ]]
+        scores = [Decimal(str(x)) for x in [49, 49.5, 50, 50.5, 51, 49, 50, 50, 51, 49.5]]
         result = check_distribution_health(scores)
 
         assert result.std < Decimal("8")
@@ -439,6 +441,7 @@ class TestDistributionHealth:
 # =============================================================================
 # INTEGRATION TESTS
 # =============================================================================
+
 
 class TestRobustnessIntegration:
     """Integration tests for full robustness pipeline."""

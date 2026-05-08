@@ -277,10 +277,7 @@ class CompetitiveIntensityEngine:
             return None
         if as_of_date:
             # Filter to files dated <= as_of_date (filename format: program_entity_view_YYYY-MM-DD.json)
-            candidates = [
-                c for c in candidates
-                if c.stem.rsplit("_", 1)[-1] <= as_of_date
-            ]
+            candidates = [c for c in candidates if c.stem.rsplit("_", 1)[-1] <= as_of_date]
             if not candidates:
                 return None
         try:

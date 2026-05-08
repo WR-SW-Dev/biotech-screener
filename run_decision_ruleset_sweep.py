@@ -63,7 +63,6 @@ from run_rank_ic_backtest import (
     estimate_xbi_betas,
 )
 
-
 # =============================================================================
 # GRID GENERATION
 # =============================================================================
@@ -100,6 +99,7 @@ def generate_grid() -> List[DecisionRuleset]:
 # PROVIDER INITIALIZATION
 # =============================================================================
 
+
 def init_providers(
     returns_json: Path = RETURNS_JSON,
     price_csv: Path = PRICE_CSV,
@@ -115,15 +115,17 @@ def init_providers(
 # ARCHIVE DATA CACHING
 # =============================================================================
 
+
 class ArchiveData(NamedTuple):
     """Cached per-archive data, loaded once and reused across rulesets."""
+
     date_str: str
-    rows: List[Dict[str, str]]                   # raw CSV rows
-    recs: Dict[str, Dict[str, Any]]              # ticker -> rec dict
-    archetypes: Dict[str, str]                    # ticker -> archetype
-    optionalities: Dict[str, Optional[float]]     # ticker -> optionality_pct_dev
-    tickers: List[str]                            # all tickers in CSV
-    market_data: Dict[str, Dict[str, Any]] = {}   # ticker -> {avg_volume, price, ...}
+    rows: List[Dict[str, str]]  # raw CSV rows
+    recs: Dict[str, Dict[str, Any]]  # ticker -> rec dict
+    archetypes: Dict[str, str]  # ticker -> archetype
+    optionalities: Dict[str, Optional[float]]  # ticker -> optionality_pct_dev
+    tickers: List[str]  # all tickers in CSV
+    market_data: Dict[str, Dict[str, Any]] = {}  # ticker -> {avg_volume, price, ...}
 
 
 def _load_market_data(inputs_dir: Path) -> Dict[str, Dict[str, Any]]:
@@ -220,9 +222,11 @@ def load_archive_data(tar_path: Path, date_str: str) -> ArchiveData:
 # FORWARD RETURNS (computed once per archive, shared across rulesets)
 # =============================================================================
 
+
 class ForwardReturnData(NamedTuple):
     """Cached forward return data for one snapshot date."""
-    raw_returns: Dict[str, float]      # ticker -> 60d raw return
+
+    raw_returns: Dict[str, float]  # ticker -> 60d raw return
     residual_returns: Dict[str, float]  # ticker -> 60d residual return
     xbi_return: Optional[float]
     betas: Dict[str, float]
@@ -255,6 +259,7 @@ def compute_snapshot_returns(
 # =============================================================================
 # EVALUATE ONE SNAPSHOT + RULESET
 # =============================================================================
+
 
 def evaluate_snapshot(
     archive_data: ArchiveData,
@@ -321,8 +326,7 @@ def evaluate_snapshot(
             "median_resid_pct": median(resid_pcts) if resid_pcts else 0.0,
             "winsor_resid_pct": mean(_winsorize(resid_pcts)) if resid_pcts else 0.0,
             "hit_pct": sum(1 for v in raw_vals if v > 0) / n * 100,
-            "resid_hit_pct": (sum(1 for v in resid_pcts if v > 0) / n * 100
-                              if resid_pcts else 0.0),
+            "resid_hit_pct": (sum(1 for v in resid_pcts if v > 0) / n * 100 if resid_pcts else 0.0),
         }
 
     return tier_stats, tier_assignments
@@ -331,6 +335,7 @@ def evaluate_snapshot(
 # =============================================================================
 # TURNOVER
 # =============================================================================
+
 
 def compute_turnover(tier_history: List[Dict[str, str]]) -> float:
     """Compute mean tier turnover across adjacent snapshots.
@@ -445,6 +450,7 @@ def score_ruleset(
 # HOLDOUT VALIDATION
 # =============================================================================
 
+
 def split_dates(
     all_dates: List[str],
     cutoff: str,
@@ -499,16 +505,18 @@ def run_holdout_validation(
         early_turnover = compute_turnover(early_th)
 
         early_scores = score_ruleset(early_stats, early_turnover)
-        early_scored.append({
-            "ruleset_id": rid,
-            "params": {
-                "tier_a_floor": r["tier_a_floor"],
-                "tier_b_floor": r["tier_b_floor"],
-                "catalyst_near_days": r["catalyst_near_days"],
-                "sponsor_threshold": r["sponsor_threshold"],
-            },
-            **{f"early_{k}": v for k, v in early_scores.items()},
-        })
+        early_scored.append(
+            {
+                "ruleset_id": rid,
+                "params": {
+                    "tier_a_floor": r["tier_a_floor"],
+                    "tier_b_floor": r["tier_b_floor"],
+                    "catalyst_near_days": r["catalyst_near_days"],
+                    "sponsor_threshold": r["sponsor_threshold"],
+                },
+                **{f"early_{k}": v for k, v in early_scores.items()},
+            }
+        )
 
     # Rank by early composite
     early_scored.sort(key=lambda x: x["early_composite_score"], reverse=True)
@@ -521,8 +529,7 @@ def run_holdout_validation(
         # Find full result
         full_r = next(r for r in all_results if r["ruleset_id"] == rid)
 
-        late_stats = {d: full_r["per_date"][d] for d in late_dates
-                      if d in full_r["per_date"]}
+        late_stats = {d: full_r["per_date"][d] for d in late_dates if d in full_r["per_date"]}
 
         th = tier_histories.get(rid, [])
         late_th = [assigns for d, assigns in th if d > cutoff]
@@ -533,18 +540,21 @@ def run_holdout_validation(
         # Gates
         passes_delta = late_scores["delta_ac_resid_60d"] > 0
         passes_a_obs = late_scores["a_count_total"] >= 5
-        passes_turnover = (late_scores["turnover"] <= cand["early_turnover"] * 2.0
-                           if cand["early_turnover"] > 0 else True)
+        passes_turnover = (
+            late_scores["turnover"] <= cand["early_turnover"] * 2.0 if cand["early_turnover"] > 0 else True
+        )
         passes_all = passes_delta and passes_a_obs and passes_turnover
 
-        validated.append({
-            **cand,
-            **{f"late_{k}": v for k, v in late_scores.items()},
-            "gate_positive_delta": passes_delta,
-            "gate_min_a_obs": passes_a_obs,
-            "gate_stable_turnover": passes_turnover,
-            "passes_holdout": passes_all,
-        })
+        validated.append(
+            {
+                **cand,
+                **{f"late_{k}": v for k, v in late_scores.items()},
+                "gate_positive_delta": passes_delta,
+                "gate_min_a_obs": passes_a_obs,
+                "gate_stable_turnover": passes_turnover,
+                "passes_holdout": passes_all,
+            }
+        )
 
     # Find best candidate that passes all gates
     passing = [v for v in validated if v["passes_holdout"]]
@@ -569,6 +579,7 @@ def run_holdout_validation(
 # CANDIDATE OUTPUT
 # =============================================================================
 
+
 def save_candidate_ruleset(
     candidate: Dict[str, Any],
     output_path: Path,
@@ -589,6 +600,7 @@ def save_candidate_ruleset(
 # CALIBRATION MEMO
 # =============================================================================
 
+
 def generate_calibration_memo(
     all_results: List[Dict[str, Any]],
     holdout: Dict[str, Any],
@@ -600,9 +612,7 @@ def generate_calibration_memo(
         (i + 1 for i, r in enumerate(all_results) if r["ruleset_id"] == default_id),
         None,
     )
-    default_result = next(
-        (r for r in all_results if r["ruleset_id"] == default_id), None
-    )
+    default_result = next((r for r in all_results if r["ruleset_id"] == default_id), None)
 
     recommended = holdout.get("recommended")
     top3 = all_results[:3]
@@ -623,8 +633,9 @@ def generate_calibration_memo(
         lines.append(f"    {k}: {vals}")
     lines.append(f"  Valid combinations: {len(all_results)}")
     lines.append(f"  Note: sponsor_confirm_threshold has ZERO effect on tier")
-    lines.append(f"    assignments (only affects sizing). Effective grid = "
-                 f"{len(all_results) // 2} unique tier behaviors.")
+    lines.append(
+        f"    assignments (only affects sizing). Effective grid = " f"{len(all_results) // 2} unique tier behaviors."
+    )
     lines.append(f"  Usable archives: {all_results[0]['n_usable_snapshots']}")
     lines.append("")
 
@@ -641,9 +652,11 @@ def generate_calibration_memo(
     # 3. What won (full period)
     lines.append("3. FULL-PERIOD RESULTS (top 5)")
     lines.append("-" * 40)
-    hdr = (f"  {'#':>2}  {'ID':>8}  {'a_fl':>5} {'b_fl':>5} {'cat':>4}  "
-           f"{'Δ(A-C)':>8} {'A_med':>7} {'A_win':>7} {'A_hit%':>6} "
-           f"{'A_n':>5}  {'score':>8}")
+    hdr = (
+        f"  {'#':>2}  {'ID':>8}  {'a_fl':>5} {'b_fl':>5} {'cat':>4}  "
+        f"{'Δ(A-C)':>8} {'A_med':>7} {'A_win':>7} {'A_hit%':>6} "
+        f"{'A_n':>5}  {'score':>8}"
+    )
     lines.append(hdr)
     for i, r in enumerate(all_results[:5]):
         marker = " *" if r["ruleset_id"] == default_id else "  "
@@ -661,9 +674,11 @@ def generate_calibration_memo(
         )
     lines.append("")
     if default_result:
-        lines.append(f"  Default v1.0 ({default_id}) ranked #{default_rank}/{len(all_results)}: "
-                     f"Δ(A-C)={default_result['delta_ac_resid_60d']:.2f}, "
-                     f"composite={default_result['composite_score']:.2f}")
+        lines.append(
+            f"  Default v1.0 ({default_id}) ranked #{default_rank}/{len(all_results)}: "
+            f"Δ(A-C)={default_result['delta_ac_resid_60d']:.2f}, "
+            f"composite={default_result['composite_score']:.2f}"
+        )
         lines.append(f"  Default has NEGATIVE Δ(A-C): C-tier outperforms A-tier at a_floor=0.60.")
         lines.append(f"  Lowering a_floor to 0.55 captures names in 0.55-0.59 range that")
         lines.append(f"  perform well, flipping the separation positive.")
@@ -672,16 +687,17 @@ def generate_calibration_memo(
     # 4. Holdout validation
     lines.append("4. HOLDOUT VALIDATION")
     lines.append("-" * 40)
-    lines.append(f"  Split: early <= {holdout['cutoff']} ({holdout['n_early_dates']} dates), "
-                 f"late > {holdout['cutoff']} ({holdout['n_late_dates']} dates)")
+    lines.append(
+        f"  Split: early <= {holdout['cutoff']} ({holdout['n_early_dates']} dates), "
+        f"late > {holdout['cutoff']} ({holdout['n_late_dates']} dates)"
+    )
     lines.append(f"  Top {holdout['top_k_evaluated']} by early composite evaluated on late period.")
     lines.append(f"  Gates: positive Δ(A-C) residual OOS, min 5 A obs, turnover <= 2x early.")
     lines.append(f"  Passing: {holdout['n_passing']}/{holdout['top_k_evaluated']}")
     lines.append("")
 
     if holdout.get("validated"):
-        lines.append(f"  {'ID':>8}  {'early_Δ':>8} {'late_Δ':>8} "
-                     f"{'late_A_n':>7} {'late_turn':>9}  {'pass':>5}")
+        lines.append(f"  {'ID':>8}  {'early_Δ':>8} {'late_Δ':>8} " f"{'late_A_n':>7} {'late_turn':>9}  {'pass':>5}")
         for v in holdout["validated"]:
             lines.append(
                 f"  {v['ruleset_id']:>8}  "
@@ -721,10 +737,14 @@ def generate_calibration_memo(
         lines.append(f"  Candidate: {recommended['ruleset_id']} (saved as v1.2_candidate.json)")
         default_rs = DecisionRuleset()
         for k, v in p.items():
-            default_v = getattr(default_rs, {
-                "tier_a_floor": "tier_a_optionality_floor",
-                "tier_b_floor": "tier_b_optionality_floor",
-            }.get(k, k), None)
+            default_v = getattr(
+                default_rs,
+                {
+                    "tier_a_floor": "tier_a_optionality_floor",
+                    "tier_b_floor": "tier_b_optionality_floor",
+                }.get(k, k),
+                None,
+            )
             changed = " (CHANGED)" if default_v is not None and default_v != v else ""
             lines.append(f"    {k}: {v}{changed}")
         early_d = recommended.get("early_delta_ac_resid_60d", 0)
@@ -740,9 +760,11 @@ def generate_calibration_memo(
                 vl = v.get("late_delta_ac_resid_60d", 0)
                 va = v.get("late_a_count_total", 0)
                 if ve > 0 and vl > 0:
-                    lines.append(f"  Conservative alternative: {v['ruleset_id']} "
-                                 f"(early Δ={ve:.2f}, late Δ={vl:.2f}, "
-                                 f"late A obs={va})")
+                    lines.append(
+                        f"  Conservative alternative: {v['ruleset_id']} "
+                        f"(early Δ={ve:.2f}, late Δ={vl:.2f}, "
+                        f"late A obs={va})"
+                    )
                     lines.append(f"    Positive Δ in BOTH periods — more consistent.")
                     break
         lines.append(f"  Holdout: passes all gates")
@@ -754,8 +776,7 @@ def generate_calibration_memo(
             lines.append("  Consider: relaxing gates or using best full-period ruleset")
             lines.append(f"  with awareness that OOS validation is inconclusive.")
             if top3:
-                lines.append(f"  Best full-period: {top3[0]['ruleset_id']} "
-                             f"(Δ={top3[0]['delta_ac_resid_60d']:.2f})")
+                lines.append(f"  Best full-period: {top3[0]['ruleset_id']} " f"(Δ={top3[0]['delta_ac_resid_60d']:.2f})")
     lines.append("")
 
     # 7. Caveats
@@ -782,36 +803,48 @@ def generate_calibration_memo(
 # MAIN
 # =============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Decision Ruleset Calibration Sweep"
-    )
+    parser = argparse.ArgumentParser(description="Decision Ruleset Calibration Sweep")
     parser.add_argument(
-        "--output-dir", type=str, default=str(OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(OUTPUT_DIR),
         help="Output directory (default: output/)",
     )
     parser.add_argument(
-        "--start", type=str, default=None,
+        "--start",
+        type=str,
+        default=None,
         help="Start date filter for archives (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--end", type=str, default=None,
+        "--end",
+        type=str,
+        default=None,
         help="End date filter for archives (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--top-n", type=int, default=10,
+        "--top-n",
+        type=int,
+        default=10,
         help="Print top N rulesets (default: 10)",
     )
     parser.add_argument(
-        "--holdout-split", type=str, default="2024-12-31",
+        "--holdout-split",
+        type=str,
+        default="2024-12-31",
         help="Cutoff date: early <= date, late > date (default: 2024-12-31)",
     )
     parser.add_argument(
-        "--top-k-holdout", type=int, default=10,
+        "--top-k-holdout",
+        type=int,
+        default=10,
         help="Evaluate top-K rulesets from early period on late (default: 10)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print grid size + archive count, don't run",
     )
     args = parser.parse_args()
@@ -823,11 +856,13 @@ def main():
     grid = generate_grid()
     print(f"Ruleset grid: {len(grid)} valid parameter combinations")
     for i, rs in enumerate(grid[:3]):
-        print(f"  [{i}] a_floor={rs.tier_a_optionality_floor}, "
-              f"b_floor={rs.tier_b_optionality_floor}, "
-              f"cat_days={rs.catalyst_near_days}, "
-              f"sponsor={rs.sponsor_confirm_threshold}  "
-              f"id={rs.ruleset_id}")
+        print(
+            f"  [{i}] a_floor={rs.tier_a_optionality_floor}, "
+            f"b_floor={rs.tier_b_optionality_floor}, "
+            f"cat_days={rs.catalyst_near_days}, "
+            f"sponsor={rs.sponsor_confirm_threshold}  "
+            f"id={rs.ruleset_id}"
+        )
     if len(grid) > 3:
         print(f"  ... ({len(grid) - 3} more)")
     print()
@@ -840,8 +875,7 @@ def main():
     print()
 
     if args.dry_run:
-        print("DRY RUN — would evaluate "
-              f"{len(grid)} rulesets x {len(archives)} archives")
+        print("DRY RUN — would evaluate " f"{len(grid)} rulesets x {len(archives)} archives")
         return
 
     if not archives:
@@ -856,9 +890,7 @@ def main():
 
     # Determine usable archives (need 60d forward data)
     snapshot_dates = [d for d, _ in archives]
-    usable_dates, fence_skipped = compute_as_of_fence(
-        snapshot_dates, last_date, 60
-    )
+    usable_dates, fence_skipped = compute_as_of_fence(snapshot_dates, last_date, 60)
     print(f"  Usable snapshots: {len(usable_dates)} / {len(archives)}")
     if fence_skipped:
         for sk in fence_skipped:
@@ -883,19 +915,15 @@ def main():
             ad = load_archive_data(tar_path, date_str)
             archive_cache[date_str] = ad
 
-            fd = compute_snapshot_returns(
-                chained, csv_provider, ad.tickers, date_str
-            )
+            fd = compute_snapshot_returns(chained, csv_provider, ad.tickers, date_str)
             return_cache[date_str] = fd
-            print(f"OK ({len(ad.tickers)} tickers, "
-                  f"{len(fd.raw_returns)} with returns)")
+            print(f"OK ({len(ad.tickers)} tickers, " f"{len(fd.raw_returns)} with returns)")
         except Exception as e:
             print(f"ERROR: {e}")
     print()
 
     # Phase 2: Evaluate each ruleset across all cached snapshots
-    print(f"Phase 2: Evaluating {len(grid)} rulesets across "
-          f"{len(archive_cache)} snapshots...")
+    print(f"Phase 2: Evaluating {len(grid)} rulesets across " f"{len(archive_cache)} snapshots...")
 
     all_results: List[Dict[str, Any]] = []
     # Store tier histories for holdout turnover computation
@@ -903,8 +931,7 @@ def main():
 
     for ri, ruleset in enumerate(grid):
         if (ri + 1) % 10 == 0 or ri == 0:
-            print(f"  Ruleset {ri+1}/{len(grid)} "
-                  f"(id={ruleset.ruleset_id})...", flush=True)
+            print(f"  Ruleset {ri+1}/{len(grid)} " f"(id={ruleset.ruleset_id})...", flush=True)
 
         per_date_stats: Dict[str, Dict[str, Dict[str, Any]]] = {}
         tier_history_pairs: List[Tuple[str, Dict[str, str]]] = []
@@ -945,11 +972,22 @@ def main():
 
     # CSV summary
     csv_columns = [
-        "ruleset_id", "tier_a_floor", "tier_b_floor", "catalyst_near_days",
-        "sponsor_threshold", "delta_ac_resid_60d", "a_resid_mean_60d",
-        "c_resid_mean_60d", "a_resid_median_60d", "a_resid_winsor_60d",
-        "a_hit_pct", "a_count_total", "a_present_in",
-        "n_usable_snapshots", "turnover", "composite_score",
+        "ruleset_id",
+        "tier_a_floor",
+        "tier_b_floor",
+        "catalyst_near_days",
+        "sponsor_threshold",
+        "delta_ac_resid_60d",
+        "a_resid_mean_60d",
+        "c_resid_mean_60d",
+        "a_resid_median_60d",
+        "a_resid_winsor_60d",
+        "a_hit_pct",
+        "a_count_total",
+        "a_present_in",
+        "n_usable_snapshots",
+        "turnover",
+        "composite_score",
     ]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=csv_columns, extrasaction="ignore")
@@ -1005,34 +1043,40 @@ def main():
     # Print top N
     top_n = min(args.top_n, len(all_results))
     print(f"Top {top_n} rulesets by composite score:")
-    print(f"{'#':>3}  {'ID':>8}  {'a_fl':>5} {'b_fl':>5} {'cat':>4} {'spon':>4}  "
-          f"{'Δ(A-C)':>8} {'A_res':>7} {'A_med':>7} {'A_win':>7} {'A_hit%':>6} "
-          f"{'A_n':>5} {'A_in':>4} {'turn':>6}  {'score':>8}")
+    print(
+        f"{'#':>3}  {'ID':>8}  {'a_fl':>5} {'b_fl':>5} {'cat':>4} {'spon':>4}  "
+        f"{'Δ(A-C)':>8} {'A_res':>7} {'A_med':>7} {'A_win':>7} {'A_hit%':>6} "
+        f"{'A_n':>5} {'A_in':>4} {'turn':>6}  {'score':>8}"
+    )
     print("-" * 112)
 
     for i, r in enumerate(all_results[:top_n]):
         is_default = r["ruleset_id"] == DecisionRuleset().ruleset_id
         marker = " *" if is_default else "  "
-        print(f"{i+1:>3}{marker}"
-              f"{r['ruleset_id']:>8}  "
-              f"{r['tier_a_floor']:>5.2f} {r['tier_b_floor']:>5.2f} "
-              f"{r['catalyst_near_days']:>4d} {r['sponsor_threshold']:>4d}  "
-              f"{r['delta_ac_resid_60d']:>8.2f} "
-              f"{r['a_resid_mean_60d']:>7.2f} "
-              f"{r.get('a_resid_median_60d', 0):>7.2f} "
-              f"{r.get('a_resid_winsor_60d', 0):>7.2f} "
-              f"{r['a_hit_pct']:>6.1f} "
-              f"{r['a_count_total']:>5d} "
-              f"{r['a_present_in']:>4d} "
-              f"{r['turnover']:>6.3f}  "
-              f"{r['composite_score']:>8.2f}")
+        print(
+            f"{i+1:>3}{marker}"
+            f"{r['ruleset_id']:>8}  "
+            f"{r['tier_a_floor']:>5.2f} {r['tier_b_floor']:>5.2f} "
+            f"{r['catalyst_near_days']:>4d} {r['sponsor_threshold']:>4d}  "
+            f"{r['delta_ac_resid_60d']:>8.2f} "
+            f"{r['a_resid_mean_60d']:>7.2f} "
+            f"{r.get('a_resid_median_60d', 0):>7.2f} "
+            f"{r.get('a_resid_winsor_60d', 0):>7.2f} "
+            f"{r['a_hit_pct']:>6.1f} "
+            f"{r['a_count_total']:>5d} "
+            f"{r['a_present_in']:>4d} "
+            f"{r['turnover']:>6.3f}  "
+            f"{r['composite_score']:>8.2f}"
+        )
 
     # Find where default lives
     default_id = DecisionRuleset().ruleset_id
     for i, r in enumerate(all_results):
         if r["ruleset_id"] == default_id:
-            print(f"\nDefault ruleset ({default_id}) ranked #{i+1}/{len(all_results)} "
-                  f"(composite={r['composite_score']:.2f})")
+            print(
+                f"\nDefault ruleset ({default_id}) ranked #{i+1}/{len(all_results)} "
+                f"(composite={r['composite_score']:.2f})"
+            )
             break
     else:
         print(f"\nDefault ruleset ({default_id}) not found in grid (unexpected)")
@@ -1055,25 +1099,29 @@ def main():
     if "error" in holdout:
         print(f"  ERROR: {holdout['error']}")
     else:
-        print(f"  Split: early <= {holdout['cutoff']} ({holdout['n_early_dates']} dates), "
-              f"late > {holdout['cutoff']} ({holdout['n_late_dates']} dates)")
+        print(
+            f"  Split: early <= {holdout['cutoff']} ({holdout['n_early_dates']} dates), "
+            f"late > {holdout['cutoff']} ({holdout['n_late_dates']} dates)"
+        )
         print(f"  Evaluated top {holdout['top_k_evaluated']} on holdout period")
         print()
 
-        print(f"  {'ID':>8}  {'early_Δ':>8} {'late_Δ':>8} "
-              f"{'late_A_n':>8} {'late_turn':>9}  {'gates':>7}")
+        print(f"  {'ID':>8}  {'early_Δ':>8} {'late_Δ':>8} " f"{'late_A_n':>8} {'late_turn':>9}  {'gates':>7}")
         print("  " + "-" * 60)
         for v in holdout.get("validated", []):
-            gates = ("YES" if v["passes_holdout"] else
-                     "delta" if not v["gate_positive_delta"] else
-                     "a_obs" if not v["gate_min_a_obs"] else
-                     "turn")
-            print(f"  {v['ruleset_id']:>8}  "
-                  f"{v['early_delta_ac_resid_60d']:>8.2f} "
-                  f"{v['late_delta_ac_resid_60d']:>8.2f} "
-                  f"{v['late_a_count_total']:>8d} "
-                  f"{v['late_turnover']:>9.4f}  "
-                  f"{gates:>7}")
+            gates = (
+                "YES"
+                if v["passes_holdout"]
+                else "delta" if not v["gate_positive_delta"] else "a_obs" if not v["gate_min_a_obs"] else "turn"
+            )
+            print(
+                f"  {v['ruleset_id']:>8}  "
+                f"{v['early_delta_ac_resid_60d']:>8.2f} "
+                f"{v['late_delta_ac_resid_60d']:>8.2f} "
+                f"{v['late_a_count_total']:>8d} "
+                f"{v['late_turnover']:>9.4f}  "
+                f"{gates:>7}"
+            )
 
         print()
         print(f"  Candidates passing all gates: {holdout['n_passing']}")

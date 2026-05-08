@@ -32,10 +32,10 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import date, timedelta
 import math
+from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 SCHEMA_VERSION = "v1.0"
@@ -52,6 +52,7 @@ def _dq(x: float) -> Decimal:
 # ============================================================================
 # IC CALCULATION
 # ============================================================================
+
 
 def spearman_rank_correlation(x: List[float], y: List[float]) -> Optional[float]:
     """
@@ -173,7 +174,7 @@ def calculate_cross_sectional_ic(
     forward_returns = []
 
     for ticker, prices in prices_by_ticker.items():
-        if ticker.startswith('_'):  # Skip internal tickers
+        if ticker.startswith("_"):  # Skip internal tickers
             continue
 
         # Need enough data for both lookback and forward horizon
@@ -184,7 +185,7 @@ def calculate_cross_sectional_ic(
         # Split prices: history for momentum, future for forward returns
         history_end = len(prices) - forward_horizon
         history_prices = prices[:history_end]
-        future_prices = prices[history_end - 1:]  # Include overlap point
+        future_prices = prices[history_end - 1 :]  # Include overlap point
 
         # Calculate momentum at history_end
         mom = calculate_momentum_signal(history_prices, momentum_lookback)
@@ -238,16 +239,9 @@ def calculate_rolling_ic(
     # Calculate IC at each point
     for offset in range(0, min_len - min_required, forward_horizon):
         # Slice prices to this window
-        window_prices = {
-            ticker: prices[offset:offset + min_required]
-            for ticker, prices in prices_by_ticker.items()
-        }
+        window_prices = {ticker: prices[offset : offset + min_required] for ticker, prices in prices_by_ticker.items()}
 
-        ic = calculate_cross_sectional_ic(
-            window_prices,
-            momentum_lookback,
-            forward_horizon
-        )
+        ic = calculate_cross_sectional_ic(window_prices, momentum_lookback, forward_horizon)
 
         if ic is not None:
             results.append((offset, ic))
@@ -260,17 +254,17 @@ def calculate_rolling_ic(
 # ============================================================================
 
 # IC thresholds for weight adjustment
-IC_EXCELLENT = Decimal("0.15")   # Strong predictive power
-IC_GOOD = Decimal("0.10")        # Good predictive power
-IC_MARGINAL = Decimal("0.05")    # Marginal signal
-IC_WEAK = Decimal("0.00")        # No predictive power
-IC_INVERTED = Decimal("-0.05")   # Mean reversion regime
+IC_EXCELLENT = Decimal("0.15")  # Strong predictive power
+IC_GOOD = Decimal("0.10")  # Good predictive power
+IC_MARGINAL = Decimal("0.05")  # Marginal signal
+IC_WEAK = Decimal("0.00")  # No predictive power
+IC_INVERTED = Decimal("-0.05")  # Mean reversion regime
 
 # Weight levels
-WEIGHT_FULL = Decimal("1.00")     # Full regime-adaptive weight
+WEIGHT_FULL = Decimal("1.00")  # Full regime-adaptive weight
 WEIGHT_REDUCED = Decimal("0.10")  # Reduced weight for marginal signal
 WEIGHT_MINIMAL = Decimal("0.05")  # Minimal weight for weak signal
-WEIGHT_DISABLED = Decimal("0.00") # Momentum disabled
+WEIGHT_DISABLED = Decimal("0.00")  # Momentum disabled
 
 
 class MomentumHealthMonitor:
@@ -328,7 +322,7 @@ class MomentumHealthMonitor:
         # Update history
         self.ic_history.append(ic_decimal)
         if len(self.ic_history) > self.ic_history_length:
-            self.ic_history = self.ic_history[-self.ic_history_length:]
+            self.ic_history = self.ic_history[-self.ic_history_length :]
 
         # Assess health
         self.health_status = self._assess_health(ic_decimal)
@@ -484,6 +478,7 @@ class MomentumHealthMonitor:
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
+
 
 def get_regime_adaptive_momentum_weight(
     ic_3m_rolling: float,

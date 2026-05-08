@@ -24,14 +24,16 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from governance.hashing import hash_file
 from outcome_provenance import PRICE_CSV, build_provenance, get_git_sha
-from price_history_provenance import compute_price_history_stats, main as phm_main
+from price_history_provenance import compute_price_history_stats
+from price_history_provenance import main as phm_main
 
+from governance.hashing import hash_file
 
 # =============================================================================
 # HELPERS
 # =============================================================================
+
 
 def _write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
     """Write a small CSV for testing."""
@@ -56,40 +58,56 @@ def _make_price_csv(path: Path, n_tickers: int = 3, n_dates: int = 5) -> None:
 def _make_panel_csv(path: Path, n_rows: int = 10) -> None:
     """Write a minimal walkforward panel CSV."""
     fieldnames = [
-        "as_of_date", "ticker", "tier", "band", "eligible", "weight",
-        "tier_reason", "risk_flags", "catalyst_mode", "mom_state",
-        "optionality", "catalyst_days_raw", "ruleset_id",
-        "fwd_ret_20d", "fwd_ret_60d", "fwd_max_dd_20d", "fwd_max_dd_60d",
+        "as_of_date",
+        "ticker",
+        "tier",
+        "band",
+        "eligible",
+        "weight",
+        "tier_reason",
+        "risk_flags",
+        "catalyst_mode",
+        "mom_state",
+        "optionality",
+        "catalyst_days_raw",
+        "ruleset_id",
+        "fwd_ret_20d",
+        "fwd_ret_60d",
+        "fwd_max_dd_20d",
+        "fwd_max_dd_60d",
         "fwd_dd_missing_reason",
     ]
     rows = []
     for i in range(n_rows):
-        rows.append({
-            "as_of_date": "2025-06-30",
-            "ticker": f"TK{i}",
-            "tier": "B",
-            "band": "M",
-            "eligible": "1",
-            "weight": "5.0",
-            "tier_reason": "test",
-            "risk_flags": "",
-            "catalyst_mode": "specific_days",
-            "mom_state": "positive",
-            "optionality": "0.60",
-            "catalyst_days_raw": "45",
-            "ruleset_id": "test123",
-            "fwd_ret_20d": "2.5",
-            "fwd_ret_60d": "5.0",
-            "fwd_max_dd_20d": "-3.0",
-            "fwd_max_dd_60d": "-8.0",
-            "fwd_dd_missing_reason": "",
-        })
+        rows.append(
+            {
+                "as_of_date": "2025-06-30",
+                "ticker": f"TK{i}",
+                "tier": "B",
+                "band": "M",
+                "eligible": "1",
+                "weight": "5.0",
+                "tier_reason": "test",
+                "risk_flags": "",
+                "catalyst_mode": "specific_days",
+                "mom_state": "positive",
+                "optionality": "0.60",
+                "catalyst_days_raw": "45",
+                "ruleset_id": "test123",
+                "fwd_ret_20d": "2.5",
+                "fwd_ret_60d": "5.0",
+                "fwd_max_dd_20d": "-3.0",
+                "fwd_max_dd_60d": "-8.0",
+                "fwd_dd_missing_reason": "",
+            }
+        )
     _write_csv(path, rows, fieldnames)
 
 
 # =============================================================================
 # TestBuildProvenance
 # =============================================================================
+
 
 class TestBuildProvenance:
     """Tests for build_provenance()."""
@@ -138,6 +156,7 @@ class TestBuildProvenance:
 # TestPriceHistoryStats
 # =============================================================================
 
+
 class TestPriceHistoryStats:
     """Tests for price_history_provenance.compute_price_history_stats()."""
 
@@ -183,6 +202,7 @@ class TestPriceHistoryStats:
 # TestWalkforwardProvenance
 # =============================================================================
 
+
 class TestWalkforwardProvenance:
     """Tests that walkforward report JSON includes provenance."""
 
@@ -217,6 +237,7 @@ class TestWalkforwardProvenance:
 # =============================================================================
 # TestCalibrationProvenance
 # =============================================================================
+
 
 class TestCalibrationProvenance:
     """Tests that calibration report JSON includes provenance."""
@@ -262,6 +283,7 @@ class TestCalibrationProvenance:
 # =============================================================================
 # TestFingerprintGate
 # =============================================================================
+
 
 class TestFingerprintGate:
     """Tests that fingerprint changes detect data mutations."""
@@ -318,6 +340,7 @@ class TestFingerprintGate:
 # =============================================================================
 # TestRegistryFingerprintProvenance
 # =============================================================================
+
 
 class TestRegistryFingerprintProvenance:
     """Tests for explanation_registry_fingerprint in build_provenance()."""

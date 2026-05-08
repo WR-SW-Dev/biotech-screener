@@ -10,32 +10,34 @@ Covers:
 - Cache TTL
 """
 
-import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
 import json
 import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 pytestmark = pytest.mark.slow
 
 # Import module under test
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from cusip_mapper import (
-    CUSIPMapping,
-    CUSIPMapper,
-    validate_cusip,
-    load_static_cusip_map,
-    load_cache,
-    save_cache,
     CACHE_TTL_DAYS,
+    CUSIPMapper,
+    CUSIPMapping,
+    load_cache,
+    load_static_cusip_map,
+    save_cache,
+    validate_cusip,
 )
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def reference_time():
@@ -54,7 +56,7 @@ def sample_static_map():
             "exchange": "NASDAQ",
             "security_type": "Common Stock",
             "mapped_at": "2026-01-01T00:00:00",
-            "source": "static"
+            "source": "static",
         },
         "594918104": {
             "cusip": "594918104",
@@ -63,8 +65,8 @@ def sample_static_map():
             "exchange": "NASDAQ",
             "security_type": "Common Stock",
             "mapped_at": "2026-01-01T00:00:00",
-            "source": "static"
-        }
+            "source": "static",
+        },
     }
 
 
@@ -82,7 +84,7 @@ def sample_cache_data(reference_time):
             "exchange": "NASDAQ",
             "security_type": "Common Stock",
             "mapped_at": fresh_time,
-            "source": "openfigi"
+            "source": "openfigi",
         },
         "023135106": {  # Stale entry
             "cusip": "023135106",
@@ -91,8 +93,8 @@ def sample_cache_data(reference_time):
             "exchange": "NASDAQ",
             "security_type": "Common Stock",
             "mapped_at": stale_time,
-            "source": "openfigi"
-        }
+            "source": "openfigi",
+        },
     }
 
 
@@ -100,7 +102,7 @@ def sample_cache_data(reference_time):
 def static_map_file(tmp_path, sample_static_map):
     """Create a temporary static map file."""
     file_path = tmp_path / "cusip_static_map.json"
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump(sample_static_map, f)
     return file_path
 
@@ -109,7 +111,7 @@ def static_map_file(tmp_path, sample_static_map):
 def cache_file(tmp_path, sample_cache_data):
     """Create a temporary cache file."""
     file_path = tmp_path / "cusip_cache.json"
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump(sample_cache_data, f)
     return file_path
 
@@ -118,7 +120,7 @@ def cache_file(tmp_path, sample_cache_data):
 def empty_cache_file(tmp_path):
     """Create an empty cache file."""
     file_path = tmp_path / "cusip_cache_empty.json"
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump({}, f)
     return file_path
 
@@ -126,6 +128,7 @@ def empty_cache_file(tmp_path):
 # ============================================================================
 # CUSIP VALIDATION
 # ============================================================================
+
 
 class TestCUSIPValidation:
     """Tests for CUSIP format validation."""
@@ -165,6 +168,7 @@ class TestCUSIPValidation:
 # CUSIP MAPPING DATA CLASS
 # ============================================================================
 
+
 class TestCUSIPMapping:
     """Tests for CUSIPMapping data class."""
 
@@ -177,7 +181,7 @@ class TestCUSIPMapping:
             exchange="NASDAQ",
             security_type="Common Stock",
             mapped_at="2026-01-01T00:00:00",
-            source="static"
+            source="static",
         )
 
         assert mapping.cusip == "037833100"
@@ -193,7 +197,7 @@ class TestCUSIPMapping:
             exchange="NASDAQ",
             security_type="Common Stock",
             mapped_at="2026-01-01T00:00:00",
-            source="static"
+            source="static",
         )
 
         d = mapping.to_dict()
@@ -211,7 +215,7 @@ class TestCUSIPMapping:
             "exchange": "NASDAQ",
             "security_type": "Common Stock",
             "mapped_at": "2026-01-01T00:00:00",
-            "source": "static"
+            "source": "static",
         }
 
         mapping = CUSIPMapping.from_dict(data)
@@ -223,6 +227,7 @@ class TestCUSIPMapping:
 # ============================================================================
 # STATIC MAP LOADING
 # ============================================================================
+
 
 class TestStaticMapLoading:
     """Tests for static map loading."""
@@ -253,6 +258,7 @@ class TestStaticMapLoading:
 # ============================================================================
 # CACHE LOADING WITH TTL
 # ============================================================================
+
 
 class TestCacheLoading:
     """Tests for cache loading with TTL filtering."""
@@ -300,6 +306,7 @@ class TestCacheLoading:
 # CACHE SAVING
 # ============================================================================
 
+
 class TestCacheSaving:
     """Tests for cache persistence."""
 
@@ -315,7 +322,7 @@ class TestCacheSaving:
                 exchange="NASDAQ",
                 security_type="Common Stock",
                 mapped_at=reference_time.isoformat(),
-                source="openfigi"
+                source="openfigi",
             )
         }
 
@@ -346,15 +353,14 @@ class TestCacheSaving:
 # CUSIP MAPPER CLASS
 # ============================================================================
 
+
 class TestCUSIPMapper:
     """Tests for the main CUSIPMapper class."""
 
     def test_mapper_initialization(self, static_map_file, empty_cache_file, reference_time):
         """Initialize mapper with static map and cache."""
         mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=empty_cache_file,
-            reference_time=reference_time
+            static_map_path=static_map_file, cache_path=empty_cache_file, reference_time=reference_time
         )
 
         stats = mapper.stats()
@@ -364,9 +370,7 @@ class TestCUSIPMapper:
     def test_mapper_get_from_static_map(self, static_map_file, empty_cache_file, reference_time):
         """Get ticker from static map."""
         mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=empty_cache_file,
-            reference_time=reference_time
+            static_map_path=static_map_file, cache_path=empty_cache_file, reference_time=reference_time
         )
 
         ticker = mapper.get("037833100")
@@ -374,11 +378,7 @@ class TestCUSIPMapper:
 
     def test_mapper_get_from_cache(self, static_map_file, cache_file, reference_time):
         """Get ticker from cache."""
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_file,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_file, reference_time=reference_time)
 
         ticker = mapper.get("38259P508")
         assert ticker == "GOOG"
@@ -386,9 +386,7 @@ class TestCUSIPMapper:
     def test_mapper_get_mapping(self, static_map_file, empty_cache_file, reference_time):
         """Get full mapping details."""
         mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=empty_cache_file,
-            reference_time=reference_time
+            static_map_path=static_map_file, cache_path=empty_cache_file, reference_time=reference_time
         )
 
         mapping = mapper.get_mapping("037833100")
@@ -404,7 +402,7 @@ class TestCUSIPMapper:
             static_map_path=static_map_file,
             cache_path=empty_cache_file,
             openfigi_api_key=None,  # No API key means no live lookups
-            reference_time=reference_time
+            reference_time=reference_time,
         )
 
         # This won't make API call without key, returns None
@@ -416,11 +414,7 @@ class TestCUSIPMapper:
 
     def test_mapper_get_batch(self, static_map_file, cache_file, reference_time):
         """Get batch of tickers."""
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_file,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_file, reference_time=reference_time)
 
         cusips = ["037833100", "594918104", "38259P508"]
         results = mapper.get_batch(cusips)
@@ -431,11 +425,7 @@ class TestCUSIPMapper:
 
     def test_mapper_stats(self, static_map_file, cache_file, reference_time):
         """Get mapper statistics."""
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_file,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_file, reference_time=reference_time)
 
         stats = mapper.stats()
 
@@ -447,14 +437,10 @@ class TestCUSIPMapper:
     def test_mapper_save_updates_cache(self, static_map_file, tmp_path, reference_time):
         """Mapper save persists new mappings."""
         cache_path = tmp_path / "test_cache.json"
-        with open(cache_path, 'w') as f:
+        with open(cache_path, "w") as f:
             json.dump({}, f)
 
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_path,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_path, reference_time=reference_time)
 
         # Manually add a new mapping to cache
         new_mapping = CUSIPMapping(
@@ -464,7 +450,7 @@ class TestCUSIPMapper:
             exchange="NYSE",
             security_type="Common Stock",
             mapped_at=reference_time.isoformat(),
-            source="openfigi"
+            source="openfigi",
         )
         mapper.cache["111111111"] = new_mapping
         mapper.new_mappings["111111111"] = new_mapping
@@ -482,15 +468,14 @@ class TestCUSIPMapper:
 # PIT SAFETY
 # ============================================================================
 
+
 class TestPITSafety:
     """Tests for point-in-time safety."""
 
     def test_mapper_uses_reference_time(self, static_map_file, empty_cache_file, reference_time):
         """Mapper uses provided reference time."""
         mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=empty_cache_file,
-            reference_time=reference_time
+            static_map_path=static_map_file, cache_path=empty_cache_file, reference_time=reference_time
         )
 
         assert mapper.reference_time == reference_time
@@ -511,7 +496,7 @@ class TestPITSafety:
                 "exchange": "NYSE",
                 "security_type": "Common Stock",
                 "mapped_at": old_time.isoformat(),
-                "source": "openfigi"
+                "source": "openfigi",
             },
             "RECENT01": {
                 "cusip": "RECENT01",
@@ -520,11 +505,11 @@ class TestPITSafety:
                 "exchange": "NYSE",
                 "security_type": "Common Stock",
                 "mapped_at": recent_time.isoformat(),
-                "source": "openfigi"
-            }
+                "source": "openfigi",
+            },
         }
 
-        with open(cache_path, 'w') as f:
+        with open(cache_path, "w") as f:
             json.dump(cache_data, f)
 
         # Load with reference time that makes "OLD" entry stale
@@ -540,6 +525,7 @@ class TestPITSafety:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -548,27 +534,19 @@ class TestEdgeCases:
         static_path = tmp_path / "empty_static.json"
         cache_path = tmp_path / "empty_cache.json"
 
-        with open(static_path, 'w') as f:
+        with open(static_path, "w") as f:
             json.dump({}, f)
-        with open(cache_path, 'w') as f:
+        with open(cache_path, "w") as f:
             json.dump({}, f)
 
-        mapper = CUSIPMapper(
-            static_map_path=static_path,
-            cache_path=cache_path,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_path, cache_path=cache_path, reference_time=reference_time)
 
         assert mapper.stats()["static_map_size"] == 0
         assert mapper.stats()["cache_size"] == 0
 
     def test_batch_with_mixed_sources(self, static_map_file, cache_file, reference_time):
         """Batch lookup from multiple sources."""
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_file,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_file, reference_time=reference_time)
 
         cusips = [
             "037833100",  # Static map
@@ -585,9 +563,7 @@ class TestEdgeCases:
     def test_cusip_case_handling(self, static_map_file, empty_cache_file, reference_time):
         """CUSIP lookups handle case."""
         mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=empty_cache_file,
-            reference_time=reference_time
+            static_map_path=static_map_file, cache_path=empty_cache_file, reference_time=reference_time
         )
 
         # Static map has uppercase CUSIPs
@@ -600,16 +576,13 @@ class TestEdgeCases:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
     def test_batch_results_deterministic(self, static_map_file, cache_file, reference_time):
         """Batch lookups are deterministic."""
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_file,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_file, reference_time=reference_time)
 
         cusips = ["037833100", "594918104"]
 
@@ -621,14 +594,10 @@ class TestDeterminism:
     def test_save_produces_consistent_output(self, static_map_file, tmp_path, reference_time):
         """Saving produces consistent JSON output."""
         cache_path = tmp_path / "test_cache.json"
-        with open(cache_path, 'w') as f:
+        with open(cache_path, "w") as f:
             json.dump({}, f)
 
-        mapper = CUSIPMapper(
-            static_map_path=static_map_file,
-            cache_path=cache_path,
-            reference_time=reference_time
-        )
+        mapper = CUSIPMapper(static_map_path=static_map_file, cache_path=cache_path, reference_time=reference_time)
 
         # Add mappings
         for cusip, ticker in [("AAA111111", "AAA"), ("BBB222222", "BBB")]:
@@ -639,7 +608,7 @@ class TestDeterminism:
                 exchange="NYSE",
                 security_type="Common Stock",
                 mapped_at=reference_time.isoformat(),
-                source="openfigi"
+                source="openfigi",
             )
             mapper.cache[cusip] = mapping
             mapper.new_mappings[cusip] = mapping

@@ -7,17 +7,18 @@ Tests edge cases and error scenarios including:
 - Boundary conditions for scoring functions
 """
 
-import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 
+import pytest
+
 from module_3_scoring_v2 import (
+    DECAY_HALF_LIFE_DAYS,
+    SCORE_MAX,
+    SCORE_MIN,
+    STALENESS_THRESHOLD_DAYS,
     compute_recency_weight,
     compute_staleness_factor,
-    SCORE_MIN,
-    SCORE_MAX,
-    DECAY_HALF_LIFE_DAYS,
-    STALENESS_THRESHOLD_DAYS,
 )
 
 

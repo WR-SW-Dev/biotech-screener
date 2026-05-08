@@ -11,32 +11,33 @@ Tests parameter loading and validation:
 - Parameter saving
 """
 
-import pytest
 import json
-import tempfile
-from pathlib import Path
-from decimal import Decimal
 import sys
+import tempfile
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from governance.params_loader import (
-    get_params_path,
-    load_params,
-    save_params,
-    compute_parameters_hash,
-    validate_params_structure,
-    get_params_metadata,
-    load_and_validate_params,
+    DEFAULT_PARAMS_DIR,
     ParamsLoadError,
     ParamsValidationError,
-    DEFAULT_PARAMS_DIR,
+    compute_parameters_hash,
+    get_params_metadata,
+    get_params_path,
+    load_and_validate_params,
+    load_params,
+    save_params,
+    validate_params_structure,
 )
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_params():
@@ -67,6 +68,7 @@ def params_dir(tmp_path):
 # PATH RESOLUTION TESTS
 # ============================================================================
 
+
 class TestGetParamsPath:
     """Tests for get_params_path function."""
 
@@ -89,6 +91,7 @@ class TestGetParamsPath:
 # ============================================================================
 # LOAD PARAMS TESTS
 # ============================================================================
+
 
 class TestLoadParams:
     """Tests for load_params function."""
@@ -132,6 +135,7 @@ class TestLoadParams:
 # HASH COMPUTATION TESTS
 # ============================================================================
 
+
 class TestComputeParametersHash:
     """Tests for compute_parameters_hash function."""
 
@@ -166,6 +170,7 @@ class TestComputeParametersHash:
 # ============================================================================
 # SAVE PARAMS TESTS
 # ============================================================================
+
 
 class TestSaveParams:
     """Tests for save_params function."""
@@ -205,6 +210,7 @@ class TestSaveParams:
 # VALIDATE PARAMS STRUCTURE TESTS
 # ============================================================================
 
+
 class TestValidateParamsStructure:
     """Tests for validate_params_structure function."""
 
@@ -221,25 +227,20 @@ class TestValidateParamsStructure:
 
     def test_missing_required_keys(self, sample_params):
         """Missing required keys should fail."""
-        valid, msg = validate_params_structure(
-            sample_params,
-            required_keys=["score_version", "missing_key"]
-        )
+        valid, msg = validate_params_structure(sample_params, required_keys=["score_version", "missing_key"])
         assert valid is False
         assert "missing_key" in msg
 
     def test_all_required_keys_present(self, sample_params):
         """All required keys present should pass."""
-        valid, msg = validate_params_structure(
-            sample_params,
-            required_keys=["score_version", "weights"]
-        )
+        valid, msg = validate_params_structure(sample_params, required_keys=["score_version", "weights"])
         assert valid is True
 
 
 # ============================================================================
 # GET PARAMS METADATA TESTS
 # ============================================================================
+
 
 class TestGetParamsMetadata:
     """Tests for get_params_metadata function."""
@@ -267,6 +268,7 @@ class TestGetParamsMetadata:
 # SECURITY TESTS
 # ============================================================================
 
+
 class TestSecurityFeatures:
     """Tests for security features."""
 
@@ -288,6 +290,7 @@ class TestSecurityFeatures:
 # ============================================================================
 # DETERMINISM TESTS
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests verifying deterministic behavior."""

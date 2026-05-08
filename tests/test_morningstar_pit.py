@@ -11,19 +11,21 @@ Tests cover:
 
 Author: Wake Robin Capital Management
 """
+
 import json
-import pytest
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 
-from morningstar_signal_engine import MorningstarSignalEngine
+import pytest
 
+from morningstar_signal_engine import MorningstarSignalEngine
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def engine():
@@ -32,13 +34,13 @@ def engine():
     # Inject synthetic fundamental data
     e._data = {
         "TESTCO": {
-            "QV009": "50.00",   # Quantitative Fair Value = $50
-            "STA4Z": "12.5",    # ROIC
-            "HS08F": "8.0",     # ROE
-            "ST389": "0.5",     # D/E
-            "HS06U": "25.0",    # D/Capital
-            "HS035": "15.0",    # Sales Growth
-            "HS08D": "5.0",     # Net Margin
+            "QV009": "50.00",  # Quantitative Fair Value = $50
+            "STA4Z": "12.5",  # ROIC
+            "HS08F": "8.0",  # ROE
+            "ST389": "0.5",  # D/E
+            "HS06U": "25.0",  # D/Capital
+            "HS035": "15.0",  # Sales Growth
+            "HS08D": "5.0",  # Net Margin
         },
     }
     e._snapshot_date = "2026-06-30"
@@ -68,6 +70,7 @@ def engine_with_prices(engine):
 # =============================================================================
 # PIT CLIPPING TESTS
 # =============================================================================
+
 
 class TestPITClipping:
     """Tests for point-in-time price clipping logic."""
@@ -127,6 +130,7 @@ class TestPITClipping:
 # SCORING WITH PIT PRICES
 # =============================================================================
 
+
 class TestScoringWithPITPrices:
     """Tests that score_ticker respects PIT price clipping."""
 
@@ -169,6 +173,7 @@ class TestScoringWithPITPrices:
 # =============================================================================
 # ID COLLISION RESOLUTION TESTS
 # =============================================================================
+
 
 class TestIDCollisionResolution:
     """Tests for _resolve_id_collisions() method."""
@@ -253,6 +258,7 @@ class TestIDCollisionResolution:
 # FV UNCERTAINTY GATING (ST201)
 # =============================================================================
 
+
 class TestFVUncertaintyGating:
     """Tests for ST201 Fair Value Uncertainty → confidence multiplier."""
 
@@ -326,6 +332,7 @@ class TestFVUncertaintyGating:
 # ANALYST FV BLENDING (ST202 + QV009)
 # =============================================================================
 
+
 class TestAnalystFVBlending:
     """Tests for ST202 (analyst FV) blending with QV009 (quant FV)."""
 
@@ -385,6 +392,7 @@ class TestAnalystFVBlending:
 # =============================================================================
 # ECONOMIC MOAT SCORING (LT181)
 # =============================================================================
+
 
 class TestMoatQuality:
     """Tests for LT181 (Economic Moat) quality signal."""

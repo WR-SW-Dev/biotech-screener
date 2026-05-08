@@ -32,10 +32,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from backtest.fmb import (
-    fama_macbeth,
-    zscore_features,
-)
+from backtest.fmb import fama_macbeth, zscore_features
 
 logging.basicConfig(
     level=logging.INFO,
@@ -118,10 +115,7 @@ def pooled_ridge(
             continue
         # Check for constant features (std ~ 0 after z-scoring = all NaN → filled 0)
         slice_df = df.loc[mask, feature_cols]
-        non_constant = [
-            c for c in feature_cols
-            if slice_df[c].std(ddof=1) > 1e-12
-        ]
+        non_constant = [c for c in feature_cols if slice_df[c].std(ddof=1) > 1e-12]
         if len(non_constant) < len(feature_cols):
             dropped_cols = sorted(set(feature_cols) - set(non_constant))
             dropped_dates.append((dt, f"constant_features:{','.join(dropped_cols)}"))
@@ -204,12 +198,14 @@ def fmb_weights(
     for _, row in summary.iterrows():
         feat = row["feature"]
         weights[feat] = float(row["mean_beta"])
-        meta_rows.append({
-            "feature": feat,
-            "mean_beta": row["mean_beta"],
-            "t_stat": row["t_stat"],
-            "n_valid_weeks": int(row["n_valid_weeks"]),
-        })
+        meta_rows.append(
+            {
+                "feature": feat,
+                "mean_beta": row["mean_beta"],
+                "t_stat": row["t_stat"],
+                "n_valid_weeks": int(row["n_valid_weeks"]),
+            }
+        )
 
     # Features that were in feature_cols but not in summary (fully dropped)
     for c in feature_cols:
@@ -313,7 +309,9 @@ def _git_hash() -> Optional[str]:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
             cwd=str(_PROJECT_ROOT),
         )
         if result.returncode == 0:
@@ -349,13 +347,15 @@ def write_calibration_report(
     rows = []
     all_features = sorted(set(raw_weights) | set(final_weights))
     for feat in all_features:
-        rows.append({
-            "feature": feat,
-            "raw_weight": round(raw_weights.get(feat, 0.0), 8),
-            "final_weight": round(final_weights.get(feat, 0.0), 8),
-            "sign_violation": violations.get(feat, ""),
-            "dropped_reason": dropped.get(feat, ""),
-        })
+        rows.append(
+            {
+                "feature": feat,
+                "raw_weight": round(raw_weights.get(feat, 0.0), 8),
+                "final_weight": round(final_weights.get(feat, 0.0), 8),
+                "sign_violation": violations.get(feat, ""),
+                "dropped_reason": dropped.get(feat, ""),
+            }
+        )
     df = pd.DataFrame(rows).sort_values("feature").reset_index(drop=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
@@ -371,26 +371,22 @@ def parse_args(argv=None):
         description="M3: Calibrate Module 5 weights from backtest panel",
     )
     p.add_argument("--panel", required=True, help="Path to M1 panel (csv.gz)")
-    p.add_argument("--out", default="data/module5_weights_m3.json",
-                   help="Output weights JSON path")
-    p.add_argument("--outdir", default=None,
-                   help="Directory for report CSVs (default: same as --out parent)")
-    p.add_argument("--return-col", default="fwd_21d",
-                   help="Forward return column to calibrate on")
-    p.add_argument("--features", nargs="+", default=None,
-                   help="Feature columns (default: 4 core normalized)")
-    p.add_argument("--method", choices=["ridge", "fmb"], default="ridge",
-                   help="Estimation method (default: ridge)")
-    p.add_argument("--ridge-lambda", type=float, default=10.0,
-                   help="Ridge regularization parameter (default: 10.0)")
-    p.add_argument("--min-stocks-per-week", type=int, default=100,
-                   help="Minimum cross-section size per week (default: 100)")
-    p.add_argument("--max-abs-weight", type=float, default=0.60,
-                   help="Maximum absolute weight per feature (default: 0.60)")
-    p.add_argument("--nw-lags", type=int, default=4,
-                   help="Newey-West lags for FMB method (default: 4)")
-    p.add_argument("--m3-disable-negative", action="store_true",
-                   help="Clamp all negative weights to 0 (long-only mode)")
+    p.add_argument("--out", default="data/module5_weights_m3.json", help="Output weights JSON path")
+    p.add_argument("--outdir", default=None, help="Directory for report CSVs (default: same as --out parent)")
+    p.add_argument("--return-col", default="fwd_21d", help="Forward return column to calibrate on")
+    p.add_argument("--features", nargs="+", default=None, help="Feature columns (default: 4 core normalized)")
+    p.add_argument("--method", choices=["ridge", "fmb"], default="ridge", help="Estimation method (default: ridge)")
+    p.add_argument("--ridge-lambda", type=float, default=10.0, help="Ridge regularization parameter (default: 10.0)")
+    p.add_argument(
+        "--min-stocks-per-week", type=int, default=100, help="Minimum cross-section size per week (default: 100)"
+    )
+    p.add_argument(
+        "--max-abs-weight", type=float, default=0.60, help="Maximum absolute weight per feature (default: 0.60)"
+    )
+    p.add_argument("--nw-lags", type=int, default=4, help="Newey-West lags for FMB method (default: 4)")
+    p.add_argument(
+        "--m3-disable-negative", action="store_true", help="Clamp all negative weights to 0 (long-only mode)"
+    )
     p.add_argument("--date-col", default="rebalance_date")
     return p.parse_args(argv)
 
@@ -450,13 +446,19 @@ def calibrate(
     # Estimate raw weights
     if method == "ridge":
         raw_weights, est_meta = pooled_ridge(
-            panel, return_col, present, date_col,
+            panel,
+            return_col,
+            present,
+            date_col,
             ridge_lambda=ridge_lambda,
             min_stocks_per_week=min_stocks_per_week,
         )
     elif method == "fmb":
         raw_weights, est_meta = fmb_weights(
-            panel, return_col, present, date_col,
+            panel,
+            return_col,
+            present,
+            date_col,
             nw_lags=nw_lags,
         )
     else:
@@ -464,7 +466,9 @@ def calibrate(
 
     # Apply sign priors
     adjusted, violations = apply_sign_priors(
-        raw_weights, sign_priors, disable_negative=disable_negative,
+        raw_weights,
+        sign_priors,
+        disable_negative=disable_negative,
     )
 
     # Add zero entries for dropped features
@@ -512,10 +516,7 @@ def main(argv=None):
     panel = panel.sort_values([args.date_col, "ticker"]).reset_index(drop=True)
 
     dates = sorted(panel[args.date_col].unique())
-    logger.info(
-        f"  Panel: {len(panel)} rows, {len(dates)} dates, "
-        f"{panel['ticker'].nunique()} tickers"
-    )
+    logger.info(f"  Panel: {len(panel)} rows, {len(dates)} dates, " f"{panel['ticker'].nunique()} tickers")
 
     feature_cols = args.features or _DEFAULT_FEATURES
     logger.info(f"  Features: {feature_cols}")
@@ -537,9 +538,7 @@ def main(argv=None):
 
     # Content hash for integrity
     weights_json = json.dumps(final_weights, sort_keys=True)
-    metadata["content_hash"] = hashlib.sha256(
-        weights_json.encode()
-    ).hexdigest()[:16]
+    metadata["content_hash"] = hashlib.sha256(weights_json.encode()).hexdigest()[:16]
 
     # Write outputs
     out_path = Path(args.out)

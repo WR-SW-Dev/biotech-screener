@@ -1,4 +1,5 @@
 """Tests for scripts/eval_company_calendar_gate.py — 8 tests."""
+
 from __future__ import annotations
 
 import json
@@ -6,19 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.eval_company_calendar_gate import (
-    EXIT_FAIL,
-    EXIT_PASS,
-    EXIT_WARN,
-    evaluate_gate,
-    main,
-    validate_stream,
-)
-
+from scripts.eval_company_calendar_gate import EXIT_FAIL, EXIT_PASS, EXIT_WARN, evaluate_gate, main, validate_stream
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_cache(
     tmp_path: Path,
@@ -36,7 +30,8 @@ def _make_cache(
         "schema": schema,
         "as_of_date": "2026-03-01",
         "events": events,
-        "stats": stats or {
+        "stats": stats
+        or {
             "fetched_pages": 0,
             "parsed_items": 0,
             "matched": len(events),
@@ -65,59 +60,102 @@ AS_OF = "2026-03-01"
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestPassFutureDatesOnly:
     def test_pass_future_dates_only(self, tmp_path: Path) -> None:
-        ir_path = _make_cache(tmp_path, "ir", [
-            _make_event("MRNA", "2026-04-15"),
-            _make_event("BIIB", "2026-05-01"),
-        ])
-        pr_path = _make_cache(tmp_path, "pr", [
-            _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
-        ])
+        ir_path = _make_cache(
+            tmp_path,
+            "ir",
+            [
+                _make_event("MRNA", "2026-04-15"),
+                _make_event("BIIB", "2026-05-01"),
+            ],
+        )
+        pr_path = _make_cache(
+            tmp_path,
+            "pr",
+            [
+                _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
+            ],
+        )
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_PASS
 
 
 class TestFailPastDate:
     def test_fail_past_date(self, tmp_path: Path) -> None:
-        ir_path = _make_cache(tmp_path, "ir", [
-            _make_event("MRNA", "2026-04-15"),
-            _make_event("BIIB", "2026-02-15"),  # past date
-        ])
-        pr_path = _make_cache(tmp_path, "pr", [
-            _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
-        ])
+        ir_path = _make_cache(
+            tmp_path,
+            "ir",
+            [
+                _make_event("MRNA", "2026-04-15"),
+                _make_event("BIIB", "2026-02-15"),  # past date
+            ],
+        )
+        pr_path = _make_cache(
+            tmp_path,
+            "pr",
+            [
+                _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
+            ],
+        )
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_FAIL
 
 
 class TestFailNonDayPrecision:
     def test_fail_non_day_precision(self, tmp_path: Path) -> None:
-        ir_path = _make_cache(tmp_path, "ir", [
-            _make_event("MRNA", "2026-03"),  # month only
-        ])
-        pr_path = _make_cache(tmp_path, "pr", [
-            _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
-        ])
+        ir_path = _make_cache(
+            tmp_path,
+            "ir",
+            [
+                _make_event("MRNA", "2026-03"),  # month only
+            ],
+        )
+        pr_path = _make_cache(
+            tmp_path,
+            "pr",
+            [
+                _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
+            ],
+        )
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_FAIL
 
 
@@ -126,42 +164,64 @@ class TestWarnEmptyCaches:
         ir_path = _make_cache(tmp_path, "ir", [])
         pr_path = _make_cache(tmp_path, "pr", [])
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_WARN
 
 
 class TestWarnMissingCacheFile:
     def test_warn_missing_cache_file(self, tmp_path: Path) -> None:
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(tmp_path / "nonexistent_ir.json"),
-            "--pr-cache", str(tmp_path / "nonexistent_pr.json"),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(tmp_path / "nonexistent_ir.json"),
+                "--pr-cache",
+                str(tmp_path / "nonexistent_pr.json"),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_WARN
 
 
 class TestMixedPassAndWarn:
     def test_mixed_pass_and_warn(self, tmp_path: Path) -> None:
         """IR has events, PR empty → WARN (below min)."""
-        ir_path = _make_cache(tmp_path, "ir", [
-            _make_event("MRNA", "2026-04-15"),
-            _make_event("BIIB", "2026-05-01"),
-        ])
+        ir_path = _make_cache(
+            tmp_path,
+            "ir",
+            [
+                _make_event("MRNA", "2026-04-15"),
+                _make_event("BIIB", "2026-05-01"),
+            ],
+        )
         pr_path = _make_cache(tmp_path, "pr", [])  # empty
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_WARN
 
 
@@ -170,48 +230,74 @@ class TestUnmatchedSamplesBounded:
         """200 unmatched samples, cap=100 → output has 100."""
         big_unmatched = [{"ticker": f"T{i}", "raw": f"text_{i}"} for i in range(200)]
         ir_path = _make_cache(
-            tmp_path, "ir",
+            tmp_path,
+            "ir",
             [_make_event("MRNA", "2026-04-15")],
             stats={
-                "fetched_pages": 1, "parsed_items": 200,
-                "matched": 1, "unmatched": 200,
+                "fetched_pages": 1,
+                "parsed_items": 200,
+                "matched": 1,
+                "unmatched": 200,
                 "unmatched_samples": big_unmatched,
             },
         )
-        pr_path = _make_cache(tmp_path, "pr", [
-            _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
-        ])
+        pr_path = _make_cache(
+            tmp_path,
+            "pr",
+            [
+                _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
+            ],
+        )
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-            "--max-unmatched-samples", "100",
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+                "--max-unmatched-samples",
+                "100",
+            ]
+        )
         assert rc == EXIT_PASS
 
-        unmatched = json.loads(
-            (out_dir / "unmatched_samples.json").read_text(encoding="utf-8")
-        )
+        unmatched = json.loads((out_dir / "unmatched_samples.json").read_text(encoding="utf-8"))
         assert len(unmatched) == 100
 
 
 class TestOutputFilesWritten:
     def test_output_files_written(self, tmp_path: Path) -> None:
-        ir_path = _make_cache(tmp_path, "ir", [
-            _make_event("MRNA", "2026-04-15"),
-        ])
-        pr_path = _make_cache(tmp_path, "pr", [
-            _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
-        ])
+        ir_path = _make_cache(
+            tmp_path,
+            "ir",
+            [
+                _make_event("MRNA", "2026-04-15"),
+            ],
+        )
+        pr_path = _make_cache(
+            tmp_path,
+            "pr",
+            [
+                _make_event("GILD", "2026-03-20", "PRESS_RELEASE"),
+            ],
+        )
         out_dir = tmp_path / "out"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--ir-cache", str(ir_path),
-            "--pr-cache", str(pr_path),
-            "--out-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--ir-cache",
+                str(ir_path),
+                "--pr-cache",
+                str(pr_path),
+                "--out-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == EXIT_PASS
 
         # Verify all three output files exist
@@ -220,9 +306,7 @@ class TestOutputFilesWritten:
         assert (out_dir / "unmatched_samples.json").exists()
 
         # Verify JSON schema
-        gate = json.loads(
-            (out_dir / "company_calendar_gate.json").read_text(encoding="utf-8")
-        )
+        gate = json.loads((out_dir / "company_calendar_gate.json").read_text(encoding="utf-8"))
         assert gate["schema"] == "company_calendar_gate.v1"
         assert gate["verdict"] == "PASS"
         assert gate["as_of_date"] == AS_OF

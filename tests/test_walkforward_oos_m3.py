@@ -1,4 +1,5 @@
 """Tests for Walk-Forward OOS M3 Evaluation."""
+
 import sys
 from pathlib import Path
 
@@ -10,17 +11,17 @@ pytestmark = pytest.mark.slow
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest.walkforward_oos_m3 import (
-    walk_forward_evaluate,
-    aggregate_results,
-    aggregate_by_regime,
-    collapse_thin_regimes,
-    _quintile_spread,
-)
 from backtest.evaluate_m3_weights import DEFAULT_V3_WEIGHTS, FEATURE_COLS
-
+from backtest.walkforward_oos_m3 import (
+    _quintile_spread,
+    aggregate_by_regime,
+    aggregate_results,
+    collapse_thin_regimes,
+    walk_forward_evaluate,
+)
 
 # ── Helpers ───────────────────────────────────────────────────────────
+
 
 def _make_panel(
     n_weeks: int = 60,
@@ -46,18 +47,21 @@ def _make_panel(
             feats = {c: rng.uniform(0, 1) for c in FEATURE_COLS}
             noise = rng.normal(0, 0.05)
             ret = signal_beta * feats[signal_feature] + noise
-            rows.append({
-                "rebalance_date": dt,
-                "ticker": tk,
-                **feats,
-                "composite_score": rng.uniform(0, 1),
-                "fwd_5d": ret,
-                "fwd_21d": ret * 2,  # scaled version for multi-horizon
-            })
+            rows.append(
+                {
+                    "rebalance_date": dt,
+                    "ticker": tk,
+                    **feats,
+                    "composite_score": rng.uniform(0, 1),
+                    "fwd_5d": ret,
+                    "fwd_21d": ret * 2,  # scaled version for multi-horizon
+                }
+            )
     return pd.DataFrame(rows)
 
 
 # ── 1) Walk-forward uses only past weeks ──────────────────────────────
+
 
 class TestPITSafety:
     def test_training_excludes_eval_date(self):
@@ -75,9 +79,7 @@ class TestPITSafety:
         # The earliest eval_date should be dates[52], not dates[51]
         if len(ts_df) > 0:
             earliest_eval = ts_df["eval_date"].min()
-            assert earliest_eval == dates[52], (
-                f"Earliest eval {earliest_eval} should be {dates[52]}"
-            )
+            assert earliest_eval == dates[52], f"Earliest eval {earliest_eval} should be {dates[52]}"
 
     def test_no_future_leakage_in_weights(self):
         """Weights at eval date t should only use data from dates < t."""
@@ -99,6 +101,7 @@ class TestPITSafety:
 
 # ── 2) Positive OOS signal is captured ────────────────────────────────
 
+
 class TestSignalCapture:
     def test_known_signal_produces_positive_ic(self):
         """
@@ -106,7 +109,9 @@ class TestSignalCapture:
         learn the signal and produce positive OOS IC.
         """
         panel = _make_panel(
-            n_weeks=60, n_stocks=200, seed=123,
+            n_weeks=60,
+            n_stocks=200,
+            seed=123,
             signal_feature="valuation_normalized",
             signal_beta=0.10,
         )
@@ -128,16 +133,23 @@ class TestSignalCapture:
 
 # ── 3) Determinism ────────────────────────────────────────────────────
 
+
 class TestDeterminism:
     def test_identical_runs(self):
         """Two runs on same data produce identical results."""
         panel = _make_panel(n_weeks=58, n_stocks=80, seed=99)
 
         ts1, wt1 = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
         ts2, wt2 = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         pd.testing.assert_frame_equal(ts1, ts2)
@@ -146,6 +158,7 @@ class TestDeterminism:
 
 # ── 4) Handles missing returns ────────────────────────────────────────
 
+
 class TestMissingData:
     def test_nan_returns_skipped(self):
         """Weeks where return is NaN should not crash; stocks are dropped."""
@@ -153,11 +166,14 @@ class TestMissingData:
         # Inject NaN returns for some stocks on the last eval date
         dates = sorted(panel["rebalance_date"].unique())
         last_date = dates[-1]
-        mask = (panel["rebalance_date"] == last_date)
+        mask = panel["rebalance_date"] == last_date
         panel.loc[mask & (panel.index % 3 == 0), "fwd_5d"] = np.nan
 
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         # Should still produce results (the date isn't fully NaN)
@@ -168,11 +184,14 @@ class TestMissingData:
         panel = _make_panel(n_weeks=58, n_stocks=100)
         dates = sorted(panel["rebalance_date"].unique())
         last_date = dates[-1]
-        mask = (panel["rebalance_date"] == last_date)
+        mask = panel["rebalance_date"] == last_date
         panel.loc[mask & (panel.index % 5 == 0), "clinical_normalized"] = np.nan
 
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         # n_stocks count should reflect the valid subset
@@ -182,6 +201,7 @@ class TestMissingData:
 
 
 # ── 5) Min-stocks threshold ──────────────────────────────────────────
+
 
 class TestMinStocks:
     def test_small_date_skipped(self):
@@ -196,7 +216,10 @@ class TestMinStocks:
         panel = panel[~(last_mask & panel["ticker"].isin(tickers_to_drop))]
 
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=50,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=50,
         )
 
         eval_dates = ts_df["eval_date"].unique()
@@ -205,6 +228,7 @@ class TestMinStocks:
 
 # ── 6) Top-N computation correctness ─────────────────────────────────
 
+
 class TestTopNCorrectness:
     def test_top_n_selects_correct_stocks(self):
         """On a small eval set, top-N mean return matches hand calculation."""
@@ -212,8 +236,11 @@ class TestTopNCorrectness:
         dates = sorted(panel["rebalance_date"].unique())
 
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52,
-            min_stocks=10, top_n=5,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
+            top_n=5,
         )
 
         # Just verify we get results and they're finite
@@ -224,6 +251,7 @@ class TestTopNCorrectness:
 
 # ── 7) Ridge fitting stability ────────────────────────────────────────
 
+
 class TestRidgeStability:
     def test_collinear_features_no_crash(self):
         """Collinear features should not crash; ridge regularizes."""
@@ -232,7 +260,10 @@ class TestRidgeStability:
         panel["momentum_normalized"] = panel["financial_normalized"]
 
         ts_df, wt_df = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         # Should still produce results with finite weights
@@ -240,24 +271,28 @@ class TestRidgeStability:
         if len(wt_df) > 0:
             for col in FEATURE_COLS:
                 if col in wt_df.columns:
-                    assert wt_df[col].apply(np.isfinite).all(), (
-                        f"Weight for {col} has non-finite values"
-                    )
+                    assert wt_df[col].apply(np.isfinite).all(), f"Weight for {col} has non-finite values"
 
 
 # ── 8) NW t-stat sanity ──────────────────────────────────────────────
+
 
 class TestNWTstat:
     def test_positive_ic_positive_tstat(self):
         """If IC is consistently positive, t-stat should be positive and finite."""
         panel = _make_panel(
-            n_weeks=60, n_stocks=200, seed=456,
+            n_weeks=60,
+            n_stocks=200,
+            seed=456,
             signal_feature="valuation_normalized",
             signal_beta=0.15,  # strong signal
         )
 
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         summary = aggregate_results(ts_df, nw_lags=4)
@@ -272,12 +307,16 @@ class TestNWTstat:
 
 # ── 9) Aggregate summary structure ───────────────────────────────────
 
+
 class TestAggregation:
     def test_summary_has_all_variants(self):
         """Summary should have rows for all three variants."""
         panel = _make_panel(n_weeks=58, n_stocks=80)
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         summary = aggregate_results(ts_df)
@@ -290,19 +329,31 @@ class TestAggregation:
         """Summary has all expected metric columns."""
         panel = _make_panel(n_weeks=58, n_stocks=80)
         ts_df, _ = walk_forward_evaluate(
-            panel, return_col="fwd_5d", train_window_weeks=52, min_stocks=10,
+            panel,
+            return_col="fwd_5d",
+            train_window_weeks=52,
+            min_stocks=10,
         )
 
         summary = aggregate_results(ts_df)
         expected_cols = {
-            "variant", "IC_mean", "IC_tstat", "IC_hit",
-            "TopN_mean", "TopN_tstat", "CumRet", "Sharpe", "MDD",
-            "QSpread_mean", "n_weeks",
+            "variant",
+            "IC_mean",
+            "IC_tstat",
+            "IC_hit",
+            "TopN_mean",
+            "TopN_tstat",
+            "CumRet",
+            "Sharpe",
+            "MDD",
+            "QSpread_mean",
+            "n_weeks",
         }
         assert expected_cols.issubset(set(summary.columns))
 
 
 # ── 10) Regime walk-forward tests ─────────────────────────────────────
+
 
 def _make_regime_map(dates, pattern="alternating"):
     """Create a synthetic regime map for testing."""
@@ -343,9 +394,9 @@ class TestRegimeWalkforward:
         # BEAR eval dates should have GLOBAL_FALLBACK since only 5 BEAR weeks
         bear_rows = regime_rows[regime_rows["regime"] == "BEAR"]
         if len(bear_rows) > 0:
-            assert (bear_rows["fit_scope"] == "GLOBAL_FALLBACK").all(), (
-                "BEAR weeks with <20 training weeks should use GLOBAL_FALLBACK"
-            )
+            assert (
+                bear_rows["fit_scope"] == "GLOBAL_FALLBACK"
+            ).all(), "BEAR weeks with <20 training weeks should use GLOBAL_FALLBACK"
 
     def test_regime_training_uses_regime_when_sufficient(self):
         """With enough training weeks per regime, fit_scope should be REGIME."""
@@ -366,9 +417,9 @@ class TestRegimeWalkforward:
 
         regime_rows = ts_df[ts_df["variant"] == "m3_oos_regime"]
         assert len(regime_rows) > 0
-        assert (regime_rows["fit_scope"] == "REGIME").all(), (
-            "All-BULL panel with 52w window should always use REGIME fit"
-        )
+        assert (
+            regime_rows["fit_scope"] == "REGIME"
+        ).all(), "All-BULL panel with 52w window should always use REGIME fit"
 
     def test_oos_regime_variant_exists(self):
         """With --use-regime, outputs include m3_oos_regime variant."""
@@ -386,9 +437,7 @@ class TestRegimeWalkforward:
         )
 
         variants = set(ts_df["variant"].unique())
-        assert "m3_oos_regime" in variants, (
-            f"m3_oos_regime not in variants: {variants}"
-        )
+        assert "m3_oos_regime" in variants, f"m3_oos_regime not in variants: {variants}"
         assert "m3_oos" in variants  # global should still be present
 
     def test_regime_column_populated(self):
@@ -432,9 +481,7 @@ class TestRegimeWalkforward:
         assert len(regime_rows) > 0
         regimes_seen = set(regime_rows["regime"].unique())
         # Should see at least some of the sub-regimes
-        assert regimes_seen & {"CHOP_LOWVOL", "CHOP_HIGHVOL"}, (
-            f"Expected CHOP sub-regimes, got {regimes_seen}"
-        )
+        assert regimes_seen & {"CHOP_LOWVOL", "CHOP_HIGHVOL"}, f"Expected CHOP sub-regimes, got {regimes_seen}"
 
     def test_aggregate_by_regime_structure(self):
         """Per-regime aggregation has correct columns and breakdown."""
@@ -460,14 +507,21 @@ class TestRegimeWalkforward:
 
 # ── 11) Auto-collapse thin regimes ───────────────────────────────────
 
+
 class TestCollapseRegimes:
     def test_collapse_tiny_bucket(self):
         """Regime with < min_eval_weeks eval dates collapses to parent."""
         regime_map = {
-            "d01": "BULL", "d02": "BULL", "d03": "BULL",
-            "d04": "BEAR", "d05": "BEAR",
-            "d06": "CHOP_HIGHVOL", "d07": "CHOP_HIGHVOL",  # only 2 eval weeks
-            "d08": "CHOP_LOWVOL", "d09": "CHOP_LOWVOL", "d10": "CHOP_LOWVOL",
+            "d01": "BULL",
+            "d02": "BULL",
+            "d03": "BULL",
+            "d04": "BEAR",
+            "d05": "BEAR",
+            "d06": "CHOP_HIGHVOL",
+            "d07": "CHOP_HIGHVOL",  # only 2 eval weeks
+            "d08": "CHOP_LOWVOL",
+            "d09": "CHOP_LOWVOL",
+            "d10": "CHOP_LOWVOL",
         }
         eval_dates = list(regime_map.keys())
         result = collapse_thin_regimes(regime_map, eval_dates, min_eval_weeks=3)

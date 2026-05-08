@@ -18,11 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -137,12 +133,8 @@ class TestCoverageValidator:
                             fixtures_used.append(node.name)
 
         content_lower = content.lower()
-        has_golden = any(
-            re.search(p, content_lower) for p in self.GOLDEN_TEST_PATTERNS
-        )
-        has_edge = any(
-            re.search(p, content_lower) for p in self.EDGE_CASE_PATTERNS
-        )
+        has_golden = any(re.search(p, content_lower) for p in self.GOLDEN_TEST_PATTERNS)
+        has_edge = any(re.search(p, content_lower) for p in self.EDGE_CASE_PATTERNS)
 
         return TestFile(
             file_path=rel_path,
@@ -221,23 +213,21 @@ class TestCoverageValidator:
                 if not source_functions:
                     continue
 
-                tested, untested = self._estimate_function_coverage(
-                    module_path, all_test_content
-                )
+                tested, untested = self._estimate_function_coverage(module_path, all_test_content)
 
                 cov_percent = Decimal("0")
                 if source_functions:
-                    cov_percent = (
-                        Decimal(tested) / Decimal(len(source_functions))
-                    ).quantize(Decimal("0.0001"))
+                    cov_percent = (Decimal(tested) / Decimal(len(source_functions))).quantize(Decimal("0.0001"))
 
-                coverage.append(ModuleCoverage(
-                    module_name=module_path.name,
-                    source_functions=len(source_functions),
-                    tested_functions=tested,
-                    coverage_percent=cov_percent,
-                    untested_functions=untested[:10],
-                ))
+                coverage.append(
+                    ModuleCoverage(
+                        module_name=module_path.name,
+                        source_functions=len(source_functions),
+                        tested_functions=tested,
+                        coverage_percent=cov_percent,
+                        untested_functions=untested[:10],
+                    )
+                )
 
         return coverage
 
@@ -283,9 +273,7 @@ class TestCoverageValidator:
         # Check for special test types
         has_integration = self.check_integration_tests()
         has_golden = any(tf.has_golden_test for tf in test_files)
-        has_regression = any(
-            "regression" in tf.file_path.lower() for tf in test_files
-        )
+        has_regression = any("regression" in tf.file_path.lower() for tf in test_files)
 
         # Estimate overall coverage
         if module_coverage:
@@ -293,18 +281,12 @@ class TestCoverageValidator:
             tested_funcs = sum(mc.tested_functions for mc in module_coverage)
             estimated_cov = Decimal("0")
             if total_funcs > 0:
-                estimated_cov = (
-                    Decimal(tested_funcs) / Decimal(total_funcs)
-                ).quantize(Decimal("0.0001"))
+                estimated_cov = (Decimal(tested_funcs) / Decimal(total_funcs)).quantize(Decimal("0.0001"))
         else:
             estimated_cov = Decimal("0")
 
         # Determine pass/fail
-        passed = (
-            total_tests >= 50
-            and estimated_cov >= Decimal("0.60")
-            and has_integration
-        )
+        passed = total_tests >= 50 and estimated_cov >= Decimal("0.60") and has_integration
 
         return TestCoverageReport(
             total_test_files=len(test_files),
@@ -344,7 +326,7 @@ def validate_test_coverage(codebase_path: str) -> AuditResult:
             "has_golden_tests": report.has_golden_tests,
         },
         details=f"Found {report.total_tests} tests across {report.total_test_files} files, "
-                f"estimated coverage: {report.estimated_coverage*100:.1f}%",
+        f"estimated coverage: {report.estimated_coverage*100:.1f}%",
     )
 
     # Add findings for coverage gaps

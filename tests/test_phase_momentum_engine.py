@@ -3,15 +3,12 @@
 Tests for Phase Transition Momentum Engine
 """
 
-import pytest
-from decimal import Decimal
 from datetime import date, timedelta
+from decimal import Decimal
 
-from phase_momentum_engine import (
-    PhaseTransitionEngine,
-    PhaseMomentum,
-    PhaseLevel,
-)
+import pytest
+
+from phase_momentum_engine import PhaseLevel, PhaseMomentum, PhaseTransitionEngine
 
 
 class TestPhaseTransitionEngine:

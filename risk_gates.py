@@ -7,9 +7,10 @@ if a required metric cannot be computed, the gate rejects.
 
 All functions are deterministic (no datetime.now(), no network calls).
 """
+
 import json
 import logging
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +22,12 @@ logger = logging.getLogger(__name__)
 RISK_GATES_VERSION = "1.0.0"
 
 # Liquidity thresholds
-ADV_MINIMUM = 500_000           # $500K minimum average dollar volume
-PRICE_MINIMUM = 2.00            # $2.00 penny stock threshold
-MARKET_CAP_MINIMUM = 50_000_000 # $50M micro cap floor
+ADV_MINIMUM = 500_000  # $500K minimum average dollar volume
+PRICE_MINIMUM = 2.00  # $2.00 penny stock threshold
+MARKET_CAP_MINIMUM = 50_000_000  # $50M micro cap floor
 
 # Financial thresholds
-RUNWAY_MINIMUM_MONTHS = 6       # 6 months minimum cash runway
+RUNWAY_MINIMUM_MONTHS = 6  # 6 months minimum cash runway
 
 # Risk flag constants
 FLAG_ADV_UNKNOWN = "ADV_UNKNOWN"
@@ -43,6 +44,7 @@ FLAG_RUNWAY_UNKNOWN = "RUNWAY_UNKNOWN"
 # DATA LOADING
 # =============================================================================
 
+
 def load_market_data(filepath: str) -> Dict[str, Dict[str, Any]]:
     """
     Load market data from JSON file and index by ticker.
@@ -53,7 +55,7 @@ def load_market_data(filepath: str) -> Dict[str, Dict[str, Any]]:
     Returns:
         Dict mapping ticker -> market data record
     """
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Handle list format (array of records)
@@ -74,7 +76,7 @@ def load_financial_data(filepath: str) -> Dict[str, Dict[str, Any]]:
     Returns:
         Dict mapping ticker -> financial data record
     """
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Handle list format (array of records)
@@ -88,6 +90,7 @@ def load_financial_data(filepath: str) -> Dict[str, Dict[str, Any]]:
 # =============================================================================
 # FIELD EXTRACTION HELPERS
 # =============================================================================
+
 
 def _extract_price(market_record: Dict[str, Any]) -> Optional[float]:
     """
@@ -122,13 +125,7 @@ def _extract_volume(market_record: Dict[str, Any]) -> Optional[float]:
     Returns:
         Volume as float, or None if not available
     """
-    volume_fields = [
-        "avg_volume_20d",
-        "avg_volume",
-        "volume_avg_30d",
-        "volume",
-        "avg_volume_90d"
-    ]
+    volume_fields = ["avg_volume_20d", "avg_volume", "volume_avg_30d", "volume", "avg_volume_90d"]
 
     for field in volume_fields:
         value = market_record.get(field)
@@ -176,13 +173,7 @@ def _extract_direct_adv(market_record: Dict[str, Any]) -> Optional[float]:
     Returns:
         ADV in USD as float, or None if no direct field available
     """
-    adv_fields = [
-        "adv_usd_20d",
-        "adv_20d_usd",
-        "avg_volume_usd",
-        "avg_dollar_volume_20d",
-        "adv_usd"
-    ]
+    adv_fields = ["adv_usd_20d", "adv_20d_usd", "avg_volume_usd", "avg_dollar_volume_20d", "adv_usd"]
 
     for field in adv_fields:
         value = market_record.get(field)
@@ -200,6 +191,7 @@ def _extract_direct_adv(market_record: Dict[str, Any]) -> Optional[float]:
 # =============================================================================
 # ADV CALCULATION
 # =============================================================================
+
 
 def calculate_adv(ticker: str, market_data: Dict[str, Dict[str, Any]]) -> float:
     """
@@ -243,10 +235,8 @@ def calculate_adv(ticker: str, market_data: Dict[str, Dict[str, Any]]) -> float:
 # RUNWAY CALCULATION
 # =============================================================================
 
-def calculate_runway_months(
-    ticker: str,
-    financial_data: Dict[str, Dict[str, Any]]
-) -> Optional[float]:
+
+def calculate_runway_months(ticker: str, financial_data: Dict[str, Dict[str, Any]]) -> Optional[float]:
     """
     Calculate cash runway in months for a ticker.
 
@@ -333,10 +323,8 @@ def calculate_runway_months(
 # RISK GATES
 # =============================================================================
 
-def apply_liquidity_gate(
-    ticker: str,
-    market_data: Dict[str, Dict[str, Any]]
-) -> Tuple[bool, Optional[str]]:
+
+def apply_liquidity_gate(ticker: str, market_data: Dict[str, Dict[str, Any]]) -> Tuple[bool, Optional[str]]:
     """
     Apply liquidity-related risk gates.
 
@@ -376,10 +364,7 @@ def apply_liquidity_gate(
     return (True, None)
 
 
-def apply_financial_gate(
-    ticker: str,
-    financial_data: Dict[str, Dict[str, Any]]
-) -> Tuple[bool, Optional[str]]:
+def apply_financial_gate(ticker: str, financial_data: Dict[str, Dict[str, Any]]) -> Tuple[bool, Optional[str]]:
     """
     Apply financial health risk gates.
 
@@ -413,7 +398,7 @@ def apply_financial_gate(
 def apply_all_gates(
     ticker: str,
     market_data: Optional[Dict[str, Dict[str, Any]]] = None,
-    financial_data: Optional[Dict[str, Dict[str, Any]]] = None
+    financial_data: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
     Apply all risk gates and return comprehensive results.
@@ -440,7 +425,7 @@ def apply_all_gates(
         "price": None,
         "market_cap": None,
         "runway_months": None,
-        "rejection_reasons": []
+        "rejection_reasons": [],
     }
 
     # Apply liquidity gates if market data provided
@@ -492,6 +477,7 @@ def apply_all_gates(
 # PARAMETER SNAPSHOT
 # =============================================================================
 
+
 def get_parameters_snapshot() -> Dict[str, Any]:
     """
     Get current parameter values for audit trail.
@@ -516,7 +502,8 @@ def compute_parameters_hash() -> str:
         First 16 characters of SHA256 hash
     """
     import hashlib
+
     params = get_parameters_snapshot()
     # Canonical JSON (sorted keys, no spaces)
-    canonical = json.dumps(params, sort_keys=True, separators=(',', ':'))
-    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:16]
+    canonical = json.dumps(params, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]

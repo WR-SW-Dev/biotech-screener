@@ -1,4 +1,5 @@
 """Tests for scripts/replay_diff.py — replay-bundle regression harness."""
+
 from __future__ import annotations
 
 import csv
@@ -37,7 +38,6 @@ from scripts.replay_diff import (
     main,
 )
 
-
 # ---------------------------------------------------------------------------
 # Synthetic DataFrame builder (pattern: test_phase2_health_gate.py:33-64)
 # ---------------------------------------------------------------------------
@@ -68,9 +68,7 @@ def _make_rankings(
         "composite_rank": [str(i) for i in range(1, n + 1)],
         "actionable_rank": [str(i) for i in range(1, n + 1)],
         "composite_score": [str(s) for s in (scores or [50.0] * n)],
-        "score_rank_pct": [
-            str(s) for s in (score_rank_pcts or [round(1 - i / n, 4) for i in range(n)])
-        ],
+        "score_rank_pct": [str(s) for s in (score_rank_pcts or [round(1 - i / n, 4) for i in range(n)])],
         "catalyst_mode": catalyst_modes or ["specific_days"] * n,
         "target_weight_pct": [str(w) for w in (weights or [5.0] * n)],
         "size_band": ["M"] * n,
@@ -305,9 +303,7 @@ class TestComputeDiff:
         base = _make_rankings(n=10)
         cand = base.copy()
         # Offset score_rank_pct by 0.05
-        cand["score_rank_pct"] = [
-            str(float(base.loc[i, "score_rank_pct"]) + 0.05) for i in range(10)
-        ]
+        cand["score_rank_pct"] = [str(float(base.loc[i, "score_rank_pct"]) + 0.05) for i in range(10)]
 
         result = compute_diff(base, cand)
         assert result.score_rank_pct_mae is not None
@@ -323,8 +319,8 @@ class TestComputeDiff:
 
         result = compute_diff(base, cand)
         assert result.catalyst_mode_change_count == 4  # last one unchanged
-        assert len(result.catalyst_bad_to_good) == 2   # no_upcoming->specific_days, missing->blended_window
-        assert len(result.catalyst_good_to_bad) == 2   # specific_days->no_upcoming, blended_window->missing
+        assert len(result.catalyst_bad_to_good) == 2  # no_upcoming->specific_days, missing->blended_window
+        assert len(result.catalyst_good_to_bad) == 2  # specific_days->no_upcoming, blended_window->missing
 
     def test_weight_l1_computation(self):
         base = _make_rankings(n=20, weights=[5.0] * 20)
@@ -703,11 +699,16 @@ class TestCLI:
         _write_rankings_csv(df, cand_dir)
 
         out_dir = tmp_path / "output"
-        rc = main([
-            "--baseline", str(base_dir),
-            "--candidate", str(cand_dir),
-            "--output-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--baseline",
+                str(base_dir),
+                "--candidate",
+                str(cand_dir),
+                "--output-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == 0
         assert (out_dir / "diff_report.json").exists()
         assert (out_dir / "diff_report.md").exists()
@@ -727,12 +728,17 @@ class TestCLI:
         _write_rankings_csv(cand, cand_dir)
 
         out_dir = tmp_path / "output"
-        rc = main([
-            "--baseline", str(base_dir),
-            "--candidate", str(cand_dir),
-            "--output-dir", str(out_dir),
-            "--strict",
-        ])
+        rc = main(
+            [
+                "--baseline",
+                str(base_dir),
+                "--candidate",
+                str(cand_dir),
+                "--output-dir",
+                str(out_dir),
+                "--strict",
+            ]
+        )
         # Should be WARN or FAIL (reversed ranks), --strict upgrades WARN→1
         assert rc == 1
 
@@ -745,11 +751,16 @@ class TestCLI:
         _write_rankings_csv(df, cand_dir)
 
         out_dir = tmp_path / "output"
-        rc = main([
-            "--baseline", str(tar_path),
-            "--candidate", str(cand_dir),
-            "--output-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--baseline",
+                str(tar_path),
+                "--candidate",
+                str(cand_dir),
+                "--output-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == 0
 
 
@@ -868,11 +879,16 @@ class TestBaselineFreshness:
         _write_rankings_csv(df, cand_dir)
 
         out_dir = tmp_path / "output"
-        rc = main([
-            "--baseline", str(base_dir),
-            "--candidate", str(cand_dir),
-            "--output-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--baseline",
+                str(base_dir),
+                "--candidate",
+                str(cand_dir),
+                "--output-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == 2  # WARN (baseline_stale)
 
         report = json.loads((out_dir / "diff_report.json").read_text())
@@ -895,11 +911,16 @@ class TestBaselineFreshness:
         _write_rankings_csv(df, cand_dir)
 
         out_dir = tmp_path / "output"
-        rc = main([
-            "--baseline", str(base_dir),
-            "--candidate", str(cand_dir),
-            "--output-dir", str(out_dir),
-        ])
+        rc = main(
+            [
+                "--baseline",
+                str(base_dir),
+                "--candidate",
+                str(cand_dir),
+                "--output-dir",
+                str(out_dir),
+            ]
+        )
         assert rc == 0
 
         report = json.loads((out_dir / "diff_report.json").read_text())

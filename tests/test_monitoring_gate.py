@@ -1,26 +1,20 @@
 """Tests for monitoring alert gate (thresholds + annotations)."""
+
 from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
 import pytest
 
-import sys
-
 _root = str(Path(__file__).resolve().parent.parent)
 if _root not in sys.path:
     sys.path.insert(0, _root)
 
-from scripts.evaluate_monitoring_gate import (
-    evaluate,
-    build_summary_table,
-    main,
-    _metric_status,
-)
-
+from scripts.evaluate_monitoring_gate import _metric_status, build_summary_table, evaluate, main
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -346,7 +340,11 @@ class TestBuildSummaryTable:
     def test_pass_summary_contains_key_fields(self):
         mon = _healthy_monitoring()
         summary = build_summary_table(
-            mon, DEFAULT_THRESHOLDS, "PASS", [], [],
+            mon,
+            DEFAULT_THRESHOLDS,
+            "PASS",
+            [],
+            [],
             as_of_date="2026-02-26",
         )
         assert "Monitoring Gate" in summary
@@ -359,7 +357,9 @@ class TestBuildSummaryTable:
     def test_fail_summary_includes_reasons(self):
         mon = _healthy_monitoring()
         summary = build_summary_table(
-            mon, DEFAULT_THRESHOLDS, "FAIL",
+            mon,
+            DEFAULT_THRESHOLDS,
+            "FAIL",
             ["top60_overlap=40% < fail=50%"],
             [],
             as_of_date="2026-02-26",
@@ -371,7 +371,11 @@ class TestBuildSummaryTable:
         mon = _healthy_monitoring()
         mon["stability"] = {"suppressed": True, "reason": "degraded_run"}
         summary = build_summary_table(
-            mon, DEFAULT_THRESHOLDS, "DEGRADED_SKIP", [], [],
+            mon,
+            DEFAULT_THRESHOLDS,
+            "DEGRADED_SKIP",
+            [],
+            [],
         )
         assert "suppressed" in summary
         assert "DEGRADED_SKIP" in summary
@@ -389,12 +393,17 @@ class TestCLI:
         _write_json(mon_path, _healthy_monitoring())
         _write_json(thresh_path, DEFAULT_THRESHOLDS)
 
-        rc = main([
-            "--monitoring", str(mon_path),
-            "--thresholds", str(thresh_path),
-            "--as-of-date", "2026-02-26",
-            "--no-annotations",
-        ])
+        rc = main(
+            [
+                "--monitoring",
+                str(mon_path),
+                "--thresholds",
+                str(thresh_path),
+                "--as-of-date",
+                "2026-02-26",
+                "--no-annotations",
+            ]
+        )
         assert rc == 0
 
     def test_fail_exits_1(self, tmp_path):
@@ -406,11 +415,15 @@ class TestCLI:
         _write_json(mon_path, mon)
         _write_json(thresh_path, DEFAULT_THRESHOLDS)
 
-        rc = main([
-            "--monitoring", str(mon_path),
-            "--thresholds", str(thresh_path),
-            "--no-annotations",
-        ])
+        rc = main(
+            [
+                "--monitoring",
+                str(mon_path),
+                "--thresholds",
+                str(thresh_path),
+                "--no-annotations",
+            ]
+        )
         assert rc == 1
 
     def test_bad_schema_exits_2(self, tmp_path):
@@ -419,19 +432,27 @@ class TestCLI:
         thresh_path = tmp_path / "thresholds.json"
         _write_json(thresh_path, DEFAULT_THRESHOLDS)
 
-        rc = main([
-            "--monitoring", str(mon_path),
-            "--thresholds", str(thresh_path),
-            "--no-annotations",
-        ])
+        rc = main(
+            [
+                "--monitoring",
+                str(mon_path),
+                "--thresholds",
+                str(thresh_path),
+                "--no-annotations",
+            ]
+        )
         assert rc == 2
 
     def test_missing_file_exits_2(self, tmp_path):
-        rc = main([
-            "--monitoring", str(tmp_path / "nope.json"),
-            "--thresholds", str(tmp_path / "also_nope.json"),
-            "--no-annotations",
-        ])
+        rc = main(
+            [
+                "--monitoring",
+                str(tmp_path / "nope.json"),
+                "--thresholds",
+                str(tmp_path / "also_nope.json"),
+                "--no-annotations",
+            ]
+        )
         assert rc == 2
 
     def test_degraded_exits_0(self, tmp_path):
@@ -445,11 +466,15 @@ class TestCLI:
         _write_json(mon_path, mon)
         _write_json(thresh_path, DEFAULT_THRESHOLDS)
 
-        rc = main([
-            "--monitoring", str(mon_path),
-            "--thresholds", str(thresh_path),
-            "--no-annotations",
-        ])
+        rc = main(
+            [
+                "--monitoring",
+                str(mon_path),
+                "--thresholds",
+                str(thresh_path),
+                "--no-annotations",
+            ]
+        )
         assert rc == 0
 
     def test_writes_github_step_summary(self, tmp_path):
@@ -461,11 +486,15 @@ class TestCLI:
 
         os.environ["GITHUB_STEP_SUMMARY"] = str(summary_file)
         try:
-            rc = main([
-                "--monitoring", str(mon_path),
-                "--thresholds", str(thresh_path),
-                "--no-annotations",
-            ])
+            rc = main(
+                [
+                    "--monitoring",
+                    str(mon_path),
+                    "--thresholds",
+                    str(thresh_path),
+                    "--no-annotations",
+                ]
+            )
         finally:
             os.environ.pop("GITHUB_STEP_SUMMARY", None)
 

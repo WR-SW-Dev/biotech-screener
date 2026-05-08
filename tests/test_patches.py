@@ -8,17 +8,18 @@ Run: pytest tests/test_patches.py -v
 """
 
 import json
-import pytest
+import tempfile
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Dict, Any
-import tempfile
+from typing import Any, Dict
 
+import pytest
 
 # =============================================================================
 # PATCH 001: PIT-Safe IC Validation Tests
 # =============================================================================
+
 
 class TestPITSafeICValidation:
     """Tests for patch_001_pit_safe_ic_validation.py"""
@@ -27,24 +28,24 @@ class TestPITSafeICValidation:
         """PIT cutoff should be as_of_date - 1"""
         from patches.patch_001_pit_safe_ic_validation import PITSafeICValidator
 
-        validator = PITSafeICValidator(data_dir=Path('.'))
-        cutoff = validator._compute_pit_cutoff('2026-01-15')
+        validator = PITSafeICValidator(data_dir=Path("."))
+        cutoff = validator._compute_pit_cutoff("2026-01-15")
 
-        assert cutoff == '2026-01-14', "PIT cutoff should be day before as_of_date"
+        assert cutoff == "2026-01-14", "PIT cutoff should be day before as_of_date"
 
     def test_lookback_window_ends_before_forward_horizon(self):
         """Lookback window must end before forward horizon to avoid look-ahead"""
         from patches.patch_001_pit_safe_ic_validation import PITSafeICValidator
 
         validator = PITSafeICValidator(
-            data_dir=Path('.'),
+            data_dir=Path("."),
             forward_horizon_days=21,
         )
-        start, end = validator._compute_lookback_window('2026-01-15')
+        start, end = validator._compute_lookback_window("2026-01-15")
 
         # End date should be at least forward_horizon days before PIT cutoff
         end_date = date.fromisoformat(end)
-        pit_cutoff = date.fromisoformat('2026-01-14')
+        pit_cutoff = date.fromisoformat("2026-01-14")
 
         days_gap = (pit_cutoff - end_date).days
         assert days_gap >= 21, f"Gap {days_gap} should be >= forward_horizon (21)"
@@ -56,7 +57,7 @@ class TestPITSafeICValidation:
         # Create temp directory without ic_history.json
         with tempfile.TemporaryDirectory() as tmpdir:
             validator = PITSafeICValidator(data_dir=Path(tmpdir))
-            result = validator.validate_momentum_signal('2026-01-15')
+            result = validator.validate_momentum_signal("2026-01-15")
 
             assert not result.is_significant
             assert not result.passes_threshold
@@ -66,6 +67,7 @@ class TestPITSafeICValidation:
 # =============================================================================
 # PATCH 002: Deterministic Collection Tests
 # =============================================================================
+
 
 class TestDeterministicCollection:
     """Tests for patch_002_deterministic_collection.py"""
@@ -103,10 +105,7 @@ class TestDeterministicCollection:
 
     def test_enforce_explicit_as_of_date_decorator(self):
         """Decorator should require explicit as_of_date"""
-        from patches.patch_002_deterministic_collection import (
-            enforce_explicit_as_of_date,
-            DeterministicCollectionError,
-        )
+        from patches.patch_002_deterministic_collection import DeterministicCollectionError, enforce_explicit_as_of_date
 
         @enforce_explicit_as_of_date
         def my_func(as_of_date=None):
@@ -124,6 +123,7 @@ class TestDeterministicCollection:
 # =============================================================================
 # PATCH 003: Schema Validation Tests
 # =============================================================================
+
 
 class TestSchemaValidation:
     """Tests for patch_003_schema_validation.py"""
@@ -169,12 +169,9 @@ class TestSchemaValidation:
 
     def test_load_and_validate_trial_records_strict(self):
         """Strict mode should raise on validation errors"""
-        from patches.patch_003_schema_validation import (
-            load_and_validate_trial_records,
-            SchemaValidationError,
-        )
+        from patches.patch_003_schema_validation import SchemaValidationError, load_and_validate_trial_records
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             # Invalid record - missing nct_id
             json.dump([{"ticker": "ACME", "overall_status": "ACTIVE"}], f)
             f.flush()
@@ -216,6 +213,7 @@ class TestSchemaValidation:
 # =============================================================================
 # PATCH 004: Exception Handling Tests
 # =============================================================================
+
 
 class TestExceptionHandling:
     """Tests for patch_004_exception_handling.py"""
@@ -319,6 +317,7 @@ class TestExceptionHandling:
 # REGRESSION TESTS FOR KNOWN BUGS
 # =============================================================================
 
+
 class TestRegressionBugs:
     """Regression tests for bugs found during review"""
 
@@ -329,6 +328,7 @@ class TestRegressionBugs:
 
         This is fixed in module_2_financial.py but we test the pattern here.
         """
+
         # The bug pattern
         def buggy_check(runway_months):
             if runway_months:  # BUG: 0 is falsy!
@@ -380,8 +380,8 @@ class TestRegressionBugs:
         """
         # Bug demonstration
         item = {}  # No compositeFIGI
-        cusip_buggy = item.get('compositeFIGI', '')[-9:]
-        assert cusip_buggy == ''  # Empty string, not None
+        cusip_buggy = item.get("compositeFIGI", "")[-9:]
+        assert cusip_buggy == ""  # Empty string, not None
 
         # The real issue: empty string passes `if cusip:` check
         # because the check happens BEFORE the slice, but in buggy code
@@ -389,19 +389,20 @@ class TestRegressionBugs:
 
         # Fix: validate FIGI length (standard FIGI is 12 chars, CUSIP is last 9)
         def get_cusip_fixed(item):
-            figi = item.get('compositeFIGI')
+            figi = item.get("compositeFIGI")
             if not figi or len(figi) < 12:
                 return None
             return figi[-9:]
 
         assert get_cusip_fixed({}) is None
-        assert get_cusip_fixed({'compositeFIGI': 'too_short'}) is None
-        assert get_cusip_fixed({'compositeFIGI': 'BBGXYZ123ABC'}) == 'XYZ123ABC'
+        assert get_cusip_fixed({"compositeFIGI": "too_short"}) is None
+        assert get_cusip_fixed({"compositeFIGI": "BBGXYZ123ABC"}) == "XYZ123ABC"
 
 
 # =============================================================================
 # INTEGRATION TEST: Full Pipeline Validation Flow
 # =============================================================================
+
 
 class TestPipelineValidation:
     """Integration tests for validation flow"""
@@ -430,13 +431,10 @@ class TestPipelineValidation:
 
     def test_pipeline_data_loading(self):
         """Test loading and validating pipeline data"""
-        from patches.patch_003_schema_validation import (
-            load_and_validate_trial_records,
-            ValidationResult,
-        )
+        from patches.patch_003_schema_validation import ValidationResult, load_and_validate_trial_records
 
         # Create valid test data
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             test_data = [
                 {
                     "nct_id": "NCT00000001",

@@ -8,55 +8,70 @@ Covers:
 - Factor stability analysis
 """
 
-import pytest
-from datetime import date, timedelta
-from pathlib import Path
-from typing import Dict, Any, List
-from statistics import mean, stdev
-
 # Import module under test
 import sys
+from datetime import date, timedelta
+from pathlib import Path
+from statistics import mean, stdev
+from typing import Any, Dict, List
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backtest.sanity_metrics import (
-    compute_rank_stability,
-    compute_factor_stability,
-)
-
+from backtest.sanity_metrics import compute_factor_stability, compute_rank_stability
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def sample_snapshots():
     """Sample snapshots with ranked securities (10+ for MIN_OBS_IC threshold)."""
     # Need at least 10 tickers to meet MIN_OBS_IC = 10 threshold
-    base_tickers = ["ACME", "BETA", "GAMA", "DELT", "EPSI",
-                    "ZETA", "ETHA", "THET", "IOTA", "KAPA", "LAMB", "MUUU"]
+    base_tickers = ["ACME", "BETA", "GAMA", "DELT", "EPSI", "ZETA", "ETHA", "THET", "IOTA", "KAPA", "LAMB", "MUUU"]
 
     return [
         {
             "as_of_date": "2026-01-15",
             "ranked_securities": [
-                {"ticker": t, "composite_rank": i+1, "composite_score": 90-i*5,
-                 "clinical_dev_normalized": 85-i*5, "financial_normalized": 88-i*4, "catalyst_normalized": 92-i*6}
+                {
+                    "ticker": t,
+                    "composite_rank": i + 1,
+                    "composite_score": 90 - i * 5,
+                    "clinical_dev_normalized": 85 - i * 5,
+                    "financial_normalized": 88 - i * 4,
+                    "catalyst_normalized": 92 - i * 6,
+                }
                 for i, t in enumerate(base_tickers)
             ],
         },
         {
             "as_of_date": "2026-02-15",
             "ranked_securities": [
-                {"ticker": t, "composite_rank": (i+2) % len(base_tickers) + 1, "composite_score": 88-i*4,
-                 "clinical_dev_normalized": 82-i*4, "financial_normalized": 85-i*3, "catalyst_normalized": 90-i*5}
+                {
+                    "ticker": t,
+                    "composite_rank": (i + 2) % len(base_tickers) + 1,
+                    "composite_score": 88 - i * 4,
+                    "clinical_dev_normalized": 82 - i * 4,
+                    "financial_normalized": 85 - i * 3,
+                    "catalyst_normalized": 90 - i * 5,
+                }
                 for i, t in enumerate(base_tickers)
             ],
         },
         {
             "as_of_date": "2026-03-15",
             "ranked_securities": [
-                {"ticker": t, "composite_rank": (i+4) % len(base_tickers) + 1, "composite_score": 85-i*3,
-                 "clinical_dev_normalized": 80-i*3, "financial_normalized": 82-i*2, "catalyst_normalized": 88-i*4}
+                {
+                    "ticker": t,
+                    "composite_rank": (i + 4) % len(base_tickers) + 1,
+                    "composite_score": 85 - i * 3,
+                    "clinical_dev_normalized": 80 - i * 3,
+                    "financial_normalized": 82 - i * 2,
+                    "catalyst_normalized": 88 - i * 4,
+                }
                 for i, t in enumerate(base_tickers)
             ],
         },
@@ -80,6 +95,7 @@ def single_snapshot():
 # ============================================================================
 # RANK STABILITY
 # ============================================================================
+
 
 class TestRankStability:
     """Tests for rank stability computation."""
@@ -112,17 +128,11 @@ class TestRankStability:
         snapshots = [
             {
                 "as_of_date": "2026-01-15",
-                "ranked_securities": [
-                    {"ticker": f"T{i}", "composite_rank": i}
-                    for i in range(1, 11)
-                ],
+                "ranked_securities": [{"ticker": f"T{i}", "composite_rank": i} for i in range(1, 11)],
             },
             {
                 "as_of_date": "2026-02-15",
-                "ranked_securities": [
-                    {"ticker": f"T{i}", "composite_rank": i}
-                    for i in range(1, 11)
-                ],
+                "ranked_securities": [{"ticker": f"T{i}", "composite_rank": i} for i in range(1, 11)],
             },
         ]
 
@@ -179,7 +189,7 @@ class TestRankStability:
             },
             {
                 "as_of_date": "2026-02-15",
-                "ranked_securities": [{"ticker": f"T{i}", "composite_rank": 11-i} for i in range(1, 11)],  # Reversed
+                "ranked_securities": [{"ticker": f"T{i}", "composite_rank": 11 - i} for i in range(1, 11)],  # Reversed
             },
         ]
 
@@ -192,6 +202,7 @@ class TestRankStability:
 # ============================================================================
 # FACTOR STABILITY
 # ============================================================================
+
 
 class TestFactorStability:
     """Tests for factor stability computation."""
@@ -270,6 +281,7 @@ class TestFactorStability:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -332,8 +344,13 @@ class TestEdgeCases:
             {
                 "as_of_date": "2026-01-15",
                 "ranked_securities": [
-                    {"ticker": f"T{i}", "composite_score": 50,
-                     "clinical_dev_normalized": 50, "financial_normalized": 50, "catalyst_normalized": 50}
+                    {
+                        "ticker": f"T{i}",
+                        "composite_score": 50,
+                        "clinical_dev_normalized": 50,
+                        "financial_normalized": 50,
+                        "catalyst_normalized": 50,
+                    }
                     for i in range(10)
                 ],
             },
@@ -347,6 +364,7 @@ class TestEdgeCases:
 # ============================================================================
 # DETERMINISM
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests for deterministic behavior."""
@@ -366,4 +384,3 @@ class TestDeterminism:
 
         assert result1["clinical_vs_composite"] == result2["clinical_vs_composite"]
         assert result1["summary"] == result2["summary"]
-

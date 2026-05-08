@@ -20,12 +20,12 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-import logging
 
 __version__ = "1.0.0"
 
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class RegimeState(str, Enum):
     """Market regime states."""
+
     BULL = "BULL"
     BEAR = "BEAR"
     VOLATILITY_SPIKE = "VOLATILITY_SPIKE"
@@ -43,15 +44,17 @@ class RegimeState(str, Enum):
 
 class TransitionType(str, Enum):
     """Type of regime transition."""
-    NONE = "NONE"           # No transition
-    CONFIRMED = "CONFIRMED" # Transition confirmed (crossed buffer)
-    PENDING = "PENDING"     # Threshold crossed but within buffer
-    REJECTED = "REJECTED"   # Returned to original regime
+
+    NONE = "NONE"  # No transition
+    CONFIRMED = "CONFIRMED"  # Transition confirmed (crossed buffer)
+    PENDING = "PENDING"  # Threshold crossed but within buffer
+    REJECTED = "REJECTED"  # Returned to original regime
 
 
 @dataclass
 class RegimeTransition:
     """Record of a regime transition."""
+
     from_regime: RegimeState
     to_regime: RegimeState
     transition_date: str
@@ -73,6 +76,7 @@ class RegimeTransition:
 @dataclass
 class HysteresisState:
     """Current hysteresis state for regime tracking."""
+
     current_regime: RegimeState
     regime_since: str  # ISO date
     days_in_regime: int
@@ -89,8 +93,9 @@ class HysteresisState:
             "pending_transition": self.pending_transition.value if self.pending_transition else None,
             "pending_since": self.pending_since,
             "stability_score": str(self.stability_score),
-            "transition_count_30d": sum(1 for t in self.transition_history
-                                        if t.transition_type == TransitionType.CONFIRMED),
+            "transition_count_30d": sum(
+                1 for t in self.transition_history if t.transition_type == TransitionType.CONFIRMED
+            ),
         }
 
 
@@ -131,7 +136,7 @@ class RegimeHysteresisEngine:
     VIX_HYSTERESIS_BUFFER = Decimal("2.0")
 
     # Momentum thresholds
-    XBI_BULL_THRESHOLD = Decimal("0.02")   # 2% outperformance
+    XBI_BULL_THRESHOLD = Decimal("0.02")  # 2% outperformance
     XBI_BEAR_THRESHOLD = Decimal("-0.02")  # 2% underperformance
     XBI_HYSTERESIS_BUFFER = Decimal("0.01")
 
@@ -288,8 +293,7 @@ class RegimeHysteresisEngine:
         # Initialize state if first call
         if self._state is None:
             initial_regime = self._classify_regime_raw(
-                vix, xbi_momentum,
-                self._get_effective_thresholds(RegimeState.SECTOR_ROTATION)
+                vix, xbi_momentum, self._get_effective_thresholds(RegimeState.SECTOR_ROTATION)
             )
             self._state = HysteresisState(
                 current_regime=initial_regime,
@@ -384,11 +388,10 @@ class RegimeHysteresisEngine:
         self._state.days_in_regime = days_in_regime
 
         # Compute stability
-        recent_transitions = sum(1 for t in self._state.transition_history[-10:]
-                                 if t.transition_type == TransitionType.CONFIRMED)
-        self._state.stability_score = self._compute_stability_score(
-            days_in_regime, recent_transitions
+        recent_transitions = sum(
+            1 for t in self._state.transition_history[-10:] if t.transition_type == TransitionType.CONFIRMED
         )
+        self._state.stability_score = self._compute_stability_score(days_in_regime, recent_transitions)
 
         return {
             "regime": self._state.current_regime.value,
@@ -513,15 +516,15 @@ if __name__ == "__main__":
 
     # Simulate regime transitions
     test_data = [
-        (date(2026, 1, 1), Decimal("18.0"), Decimal("0.03")),   # BULL
-        (date(2026, 1, 2), Decimal("19.0"), Decimal("0.02")),   # Still BULL
-        (date(2026, 1, 3), Decimal("23.0"), Decimal("0.01")),   # Approaching BEAR threshold
+        (date(2026, 1, 1), Decimal("18.0"), Decimal("0.03")),  # BULL
+        (date(2026, 1, 2), Decimal("19.0"), Decimal("0.02")),  # Still BULL
+        (date(2026, 1, 3), Decimal("23.0"), Decimal("0.01")),  # Approaching BEAR threshold
         (date(2026, 1, 4), Decimal("26.0"), Decimal("-0.01")),  # Crosses threshold
         (date(2026, 1, 5), Decimal("27.0"), Decimal("-0.02")),  # Still above (pending)
         (date(2026, 1, 6), Decimal("28.0"), Decimal("-0.03")),  # Confirmed BEAR
         (date(2026, 1, 7), Decimal("27.0"), Decimal("-0.02")),  # Still BEAR
         (date(2026, 1, 8), Decimal("24.0"), Decimal("-0.01")),  # Improving
-        (date(2026, 1, 9), Decimal("22.0"), Decimal("0.01")),   # Back to neutral
+        (date(2026, 1, 9), Decimal("22.0"), Decimal("0.01")),  # Back to neutral
     ]
 
     print("\nSimulating regime transitions with hysteresis:\n")
@@ -530,7 +533,7 @@ if __name__ == "__main__":
         print(f"{as_of}: VIX={vix}, XBI={xbi*100:.0f}%")
         print(f"  Regime: {result['regime']}")
         print(f"  Transition: {result['transition_type']}")
-        if result['pending_transition']:
+        if result["pending_transition"]:
             print(f"  Pending: {result['pending_transition']} (day {result['pending_days']})")
         print(f"  Stability: {result['stability_score']}")
         print()

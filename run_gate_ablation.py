@@ -52,14 +52,7 @@ from run_decision_ruleset_sweep import (
     init_providers,
     load_archive_data,
 )
-from run_rank_ic_backtest import (
-    ARCHIVE_DIR,
-    OUTPUT_DIR,
-    _winsorize,
-    compute_as_of_fence,
-    discover_archives,
-)
-
+from run_rank_ic_backtest import ARCHIVE_DIR, OUTPUT_DIR, _winsorize, compute_as_of_fence, discover_archives
 
 # =============================================================================
 # CONSTANTS
@@ -78,6 +71,7 @@ ABLATION_SCENARIOS = [
 # =============================================================================
 # HELPERS
 # =============================================================================
+
 
 def _percentile(vals: List[float], pct: float) -> float:
     """Compute the given percentile from a sorted list. pct in [0, 100]."""
@@ -99,6 +93,7 @@ def _safe_div(num: float, denom: float) -> float:
 # =============================================================================
 # PHASE 1: GATE FREQUENCY
 # =============================================================================
+
 
 def count_gate_frequencies(
     archive_cache: Dict[str, ArchiveData],
@@ -154,14 +149,10 @@ def count_gate_frequencies(
             "n_dev": n_dev,
             "n_ineligible": n_ineligible,
             "gates": {
-                g: {"n": gate_counts.get(g, 0),
-                    "pct": round(_safe_div(gate_counts.get(g, 0), n_dev) * 100, 1)}
+                g: {"n": gate_counts.get(g, 0), "pct": round(_safe_div(gate_counts.get(g, 0), n_dev) * 100, 1)}
                 for g in KNOWN_GATES
             },
-            "overlap": {
-                k: {"n": v, "pct": round(_safe_div(v, n_dev) * 100, 1)}
-                for k, v in overlap_counts.items()
-            },
+            "overlap": {k: {"n": v, "pct": round(_safe_div(v, n_dev) * 100, 1)} for k, v in overlap_counts.items()},
         }
 
         pooled_n_dev += n_dev
@@ -176,13 +167,14 @@ def count_gate_frequencies(
         "n_dev": pooled_n_dev,
         "n_ineligible": pooled_n_ineligible,
         "gates": {
-            g: {"n": pooled_gate_counts.get(g, 0),
-                "pct": round(_safe_div(pooled_gate_counts.get(g, 0), pooled_n_dev) * 100, 1)}
+            g: {
+                "n": pooled_gate_counts.get(g, 0),
+                "pct": round(_safe_div(pooled_gate_counts.get(g, 0), pooled_n_dev) * 100, 1),
+            }
             for g in KNOWN_GATES
         },
         "overlap": {
-            k: {"n": v, "pct": round(_safe_div(v, pooled_n_dev) * 100, 1)}
-            for k, v in pooled_overlap_counts.items()
+            k: {"n": v, "pct": round(_safe_div(v, pooled_n_dev) * 100, 1)} for k, v in pooled_overlap_counts.items()
         },
     }
 
@@ -196,6 +188,7 @@ def count_gate_frequencies(
 # =============================================================================
 # PHASE 2: D vs ABC RETURN STATS
 # =============================================================================
+
 
 def compute_tier_return_stats(
     archive_cache: Dict[str, ArchiveData],
@@ -276,6 +269,7 @@ def compute_tier_return_stats(
 # PHASE 3: ABLATION SCENARIOS
 # =============================================================================
 
+
 def _make_scenario_ruleset(scenario: str) -> DecisionRuleset:
     """Return the DecisionRuleset for the given ablation scenario."""
     if scenario in ("no_drawdown", "no_gates"):
@@ -329,14 +323,16 @@ def find_promoted_names(
         raw_ret = forward_data.raw_returns.get(ticker)
         resid_ret = forward_data.residual_returns.get(ticker)
 
-        promoted.append({
-            "ticker": ticker,
-            "date": date_str,
-            "old_tier": "D",
-            "new_tier": new_tier,
-            "raw_return_pct": round(raw_ret * 100, 2) if raw_ret is not None else None,
-            "resid_return_pct": round(resid_ret * 100, 2) if resid_ret is not None else None,
-        })
+        promoted.append(
+            {
+                "ticker": ticker,
+                "date": date_str,
+                "old_tier": "D",
+                "new_tier": new_tier,
+                "raw_return_pct": round(raw_ret * 100, 2) if raw_ret is not None else None,
+                "resid_return_pct": round(resid_ret * 100, 2) if resid_ret is not None else None,
+            }
+        )
 
     return promoted
 
@@ -385,9 +381,7 @@ def run_ablation_scenario(
             patched_rec = _patch_rec_for_scenario(rec, scenario)
             opt = ad.optionalities.get(ticker)
 
-            fields = compute_decision_fields(
-                patched_rec, archetype, opt, ruleset=ruleset
-            )
+            fields = compute_decision_fields(patched_rec, archetype, opt, ruleset=ruleset)
             tier = fields.get("tier_dev", "")
             if not tier:
                 continue
@@ -396,9 +390,7 @@ def run_ablation_scenario(
             tier_counts_pooled[tier] += 1
 
             if ticker in fd.raw_returns:
-                resid_ret = fd.residual_returns.get(
-                    ticker, fd.raw_returns[ticker]
-                )
+                resid_ret = fd.residual_returns.get(ticker, fd.raw_returns[ticker])
                 if tier == "A":
                     a_resids.append(resid_ret * 100)
                 elif tier == "C":
@@ -411,9 +403,7 @@ def run_ablation_scenario(
         # Find promoted names (vs baseline)
         baseline_tiers = baseline_tiers_by_date.get(date_str, {})
         if baseline_tiers and fd is not None:
-            promoted = find_promoted_names(
-                baseline_tiers, tier_assignments, fd, date_str
-            )
+            promoted = find_promoted_names(baseline_tiers, tier_assignments, fd, date_str)
             all_promoted.extend(promoted)
 
         per_date[date_str] = {
@@ -426,23 +416,15 @@ def run_ablation_scenario(
 
     # Pooled stats
     n_total_tier = sum(tier_counts_pooled.values())
-    d_share = round(
-        _safe_div(tier_counts_pooled.get("D", 0), n_total_tier) * 100, 1
-    )
+    d_share = round(_safe_div(tier_counts_pooled.get("D", 0), n_total_tier) * 100, 1)
 
     a_resid_mean = round(mean(_winsorize(all_a_resids)), 2) if all_a_resids else 0.0
     c_resid_mean = round(mean(_winsorize(all_c_resids)), 2) if all_c_resids else 0.0
     delta_ac = round(a_resid_mean - c_resid_mean, 2)
 
     # Promoted names stats
-    promoted_raw = [
-        p["raw_return_pct"] for p in all_promoted
-        if p["raw_return_pct"] is not None
-    ]
-    promoted_resid = [
-        p["resid_return_pct"] for p in all_promoted
-        if p["resid_return_pct"] is not None
-    ]
+    promoted_raw = [p["raw_return_pct"] for p in all_promoted if p["raw_return_pct"] is not None]
+    promoted_resid = [p["resid_return_pct"] for p in all_promoted if p["resid_return_pct"] is not None]
     promoted_new_tiers: Counter = Counter(p["new_tier"] for p in all_promoted)
 
     promoted_stats: Dict[str, Any] = {
@@ -450,17 +432,18 @@ def run_ablation_scenario(
         "new_tier_distribution": dict(promoted_new_tiers),
     }
     if promoted_resid:
-        promoted_stats.update({
-            "mean_resid_pct": round(mean(promoted_resid), 2),
-            "median_resid_pct": round(median(promoted_resid), 2),
-            "winsor_resid_pct": round(mean(_winsorize(promoted_resid)), 2),
-            "hit_pct": round(
-                _safe_div(sum(1 for v in promoted_raw if v is not None and v > 0),
-                          len(promoted_raw)) * 100, 1
-            ),
-            "p5_resid_pct": round(_percentile(promoted_resid, 5), 2),
-            "p10_resid_pct": round(_percentile(promoted_resid, 10), 2),
-        })
+        promoted_stats.update(
+            {
+                "mean_resid_pct": round(mean(promoted_resid), 2),
+                "median_resid_pct": round(median(promoted_resid), 2),
+                "winsor_resid_pct": round(mean(_winsorize(promoted_resid)), 2),
+                "hit_pct": round(
+                    _safe_div(sum(1 for v in promoted_raw if v is not None and v > 0), len(promoted_raw)) * 100, 1
+                ),
+                "p5_resid_pct": round(_percentile(promoted_resid, 5), 2),
+                "p10_resid_pct": round(_percentile(promoted_resid, 10), 2),
+            }
+        )
 
     return {
         "scenario": scenario,
@@ -468,9 +451,7 @@ def run_ablation_scenario(
         "tier_distribution": {
             tier: {
                 "n": tier_counts_pooled.get(tier, 0),
-                "pct": round(
-                    _safe_div(tier_counts_pooled.get(tier, 0), n_total_tier) * 100, 1
-                ),
+                "pct": round(_safe_div(tier_counts_pooled.get(tier, 0), n_total_tier) * 100, 1),
             }
             for tier in ["A", "B", "C", "D"]
         },
@@ -493,6 +474,7 @@ def build_ablation_scenarios() -> List[str]:
 # =============================================================================
 # PHASE 4: REPORT
 # =============================================================================
+
 
 def generate_ablation_report(
     gate_freq: Dict[str, Any],
@@ -517,8 +499,10 @@ def generate_ablation_report(
 
     pooled = gate_freq["pooled"]
     lines.append(f"  Total dev-stage ticker-snapshots: {pooled['n_dev']}")
-    lines.append(f"  Total ineligible: {pooled['n_ineligible']} "
-                 f"({_safe_div(pooled['n_ineligible'], pooled['n_dev']) * 100:.1f}%)")
+    lines.append(
+        f"  Total ineligible: {pooled['n_ineligible']} "
+        f"({_safe_div(pooled['n_ineligible'], pooled['n_dev']) * 100:.1f}%)"
+    )
     lines.append("")
 
     # Sort gates by hit count descending
@@ -536,8 +520,7 @@ def generate_ablation_report(
     if pooled["overlap"]:
         lines.append("")
         lines.append("  Overlaps (both gates fire):")
-        for pair, stats in sorted(pooled["overlap"].items(),
-                                   key=lambda x: x[1]["n"], reverse=True):
+        for pair, stats in sorted(pooled["overlap"].items(), key=lambda x: x[1]["n"], reverse=True):
             lines.append(f"    {pair:<30} {stats['n']:>4} ({stats['pct']:.1f}%)")
 
     lines.append("")
@@ -550,8 +533,10 @@ def generate_ablation_report(
     lines.append("2. D-TIER vs ABC RETURN COMPARISON (60d residual)")
     lines.append("-" * 40)
 
-    hdr = (f"  {'Tier':>4} {'N':>6} {'Mean%':>7} {'Med%':>7} {'Win%':>7} "
-           f"{'Hit%':>6} {'P5%':>7} {'P10%':>7} {'MaxLoss%':>9}")
+    hdr = (
+        f"  {'Tier':>4} {'N':>6} {'Mean%':>7} {'Med%':>7} {'Win%':>7} "
+        f"{'Hit%':>6} {'P5%':>7} {'P10%':>7} {'MaxLoss%':>9}"
+    )
     lines.append(hdr)
     lines.append(f"  {'-'*4} {'-'*6} {'-'*7} {'-'*7} {'-'*7} {'-'*6} {'-'*7} {'-'*7} {'-'*9}")
 
@@ -603,8 +588,10 @@ def generate_ablation_report(
     lines.append("3. ABLATION SCENARIO RESULTS")
     lines.append("-" * 40)
 
-    hdr2 = (f"  {'Scenario':<15} {'D_share%':>8} {'A_res%':>7} {'C_res%':>7} "
-            f"{'dAC%':>6} {'Promoted':>8} {'Prom_hit%':>9}")
+    hdr2 = (
+        f"  {'Scenario':<15} {'D_share%':>8} {'A_res%':>7} {'C_res%':>7} "
+        f"{'dAC%':>6} {'Promoted':>8} {'Prom_hit%':>9}"
+    )
     lines.append(hdr2)
     lines.append(f"  {'-'*15} {'-'*8} {'-'*7} {'-'*7} {'-'*6} {'-'*8} {'-'*9}")
 
@@ -693,25 +680,25 @@ def generate_ablation_report(
     no_gates_delta = no_gates_sr.get("delta_ac_resid_pct", 0)
 
     lines.append(f"  Baseline Δ(A-C): {baseline_delta:+.2f}%")
-    lines.append(f"  No-drawdown Δ(A-C): {no_dd_delta:+.2f}% "
-                 f"(change: {no_dd_delta - baseline_delta:+.2f}%)")
-    lines.append(f"  No-SEV3 Δ(A-C): {no_sev3_delta:+.2f}% "
-                 f"(change: {no_sev3_delta - baseline_delta:+.2f}%)")
-    lines.append(f"  No-gates Δ(A-C): {no_gates_delta:+.2f}% "
-                 f"(change: {no_gates_delta - baseline_delta:+.2f}%)")
+    lines.append(f"  No-drawdown Δ(A-C): {no_dd_delta:+.2f}% " f"(change: {no_dd_delta - baseline_delta:+.2f}%)")
+    lines.append(f"  No-SEV3 Δ(A-C): {no_sev3_delta:+.2f}% " f"(change: {no_sev3_delta - baseline_delta:+.2f}%)")
+    lines.append(f"  No-gates Δ(A-C): {no_gates_delta:+.2f}% " f"(change: {no_gates_delta - baseline_delta:+.2f}%)")
     lines.append("")
 
     # Decision logic for proposal
     if dd_promoted > 0 and dd_prom_mean > 0:
         lines.append("  DRAWDOWN GATE:")
-        lines.append(f"    Removing promotes {dd_promoted} name-snapshots with "
-                     f"positive avg residual ({dd_prom_mean:+.2f}%).")
+        lines.append(
+            f"    Removing promotes {dd_promoted} name-snapshots with " f"positive avg residual ({dd_prom_mean:+.2f}%)."
+        )
         lines.append(f"    Consider: soften drawdown_gate from -40% to -50%,")
         lines.append(f"    or convert to a sizing penalty (M->S) instead of exclusion.")
     elif dd_promoted > 0:
         lines.append("  DRAWDOWN GATE:")
-        lines.append(f"    Removing promotes {dd_promoted} name-snapshots but avg "
-                     f"residual is negative ({dd_prom_mean:+.2f}%). Gate is effective.")
+        lines.append(
+            f"    Removing promotes {dd_promoted} name-snapshots but avg "
+            f"residual is negative ({dd_prom_mean:+.2f}%). Gate is effective."
+        )
         lines.append(f"    Recommendation: keep as-is.")
     else:
         lines.append("  DRAWDOWN GATE:")
@@ -721,14 +708,18 @@ def generate_ablation_report(
 
     if sev3_promoted > 0 and sev3_prom_mean > 0:
         lines.append("  SEV3 GATE:")
-        lines.append(f"    Removing promotes {sev3_promoted} name-snapshots with "
-                     f"positive avg residual ({sev3_prom_mean:+.2f}%).")
+        lines.append(
+            f"    Removing promotes {sev3_promoted} name-snapshots with "
+            f"positive avg residual ({sev3_prom_mean:+.2f}%)."
+        )
         lines.append(f"    Consider: convert to risk_flag + sizing penalty instead")
         lines.append(f"    of hard exclusion.")
     elif sev3_promoted > 0:
         lines.append("  SEV3 GATE:")
-        lines.append(f"    Removing promotes {sev3_promoted} name-snapshots but avg "
-                     f"residual is negative ({sev3_prom_mean:+.2f}%). Gate is effective.")
+        lines.append(
+            f"    Removing promotes {sev3_promoted} name-snapshots but avg "
+            f"residual is negative ({sev3_prom_mean:+.2f}%). Gate is effective."
+        )
         lines.append(f"    Recommendation: keep as-is.")
     else:
         lines.append("  SEV3 GATE:")
@@ -743,12 +734,15 @@ def generate_ablation_report(
 
     # Overall recommendation
     best_scenario = max(
-        [("no_drawdown", no_dd_delta), ("no_sev3", no_sev3_delta),
-         ("no_gates", no_gates_delta), ("baseline", baseline_delta)],
+        [
+            ("no_drawdown", no_dd_delta),
+            ("no_sev3", no_sev3_delta),
+            ("no_gates", no_gates_delta),
+            ("baseline", baseline_delta),
+        ],
         key=lambda x: x[1],
     )
-    lines.append(f"  OVERALL: Best Δ(A-C) under '{best_scenario[0]}' "
-                 f"({best_scenario[1]:+.2f}%).")
+    lines.append(f"  OVERALL: Best Δ(A-C) under '{best_scenario[0]}' " f"({best_scenario[1]:+.2f}%).")
     if best_scenario[0] == "baseline":
         lines.append("  Current gates are optimal for A-vs-C separation.")
     else:
@@ -775,24 +769,30 @@ def generate_ablation_report(
 # MAIN
 # =============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Gate Ablation + D-tier Audit Report"
-    )
+    parser = argparse.ArgumentParser(description="Gate Ablation + D-tier Audit Report")
     parser.add_argument(
-        "--output-dir", type=str, default=str(OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(OUTPUT_DIR),
         help="Output directory (default: output/)",
     )
     parser.add_argument(
-        "--start", type=str, default=None,
+        "--start",
+        type=str,
+        default=None,
         help="Start date filter for archives (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--end", type=str, default=None,
+        "--end",
+        type=str,
+        default=None,
         help="End date filter for archives (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print archive count + scenario names, don't run",
     )
     args = parser.parse_args()
@@ -811,8 +811,7 @@ def main():
     print()
 
     if args.dry_run:
-        print(f"DRY RUN — would process {len(archives)} archives "
-              f"x {len(ABLATION_SCENARIOS)} scenarios")
+        print(f"DRY RUN — would process {len(archives)} archives " f"x {len(ABLATION_SCENARIOS)} scenarios")
         return
 
     if not archives:
@@ -827,9 +826,7 @@ def main():
 
     # Determine usable archives
     snapshot_dates = [d for d, _ in archives]
-    usable_dates, fence_skipped = compute_as_of_fence(
-        snapshot_dates, last_date, 60
-    )
+    usable_dates, fence_skipped = compute_as_of_fence(snapshot_dates, last_date, 60)
     print(f"  Usable snapshots: {len(usable_dates)} / {len(archives)}")
     if fence_skipped:
         for sk in fence_skipped:
@@ -855,12 +852,9 @@ def main():
             ad = load_archive_data(tar_path, date_str)
             archive_cache[date_str] = ad
 
-            fd = compute_snapshot_returns(
-                chained, csv_provider, ad.tickers, date_str
-            )
+            fd = compute_snapshot_returns(chained, csv_provider, ad.tickers, date_str)
             return_cache[date_str] = fd
-            print(f"OK ({len(ad.tickers)} tickers, "
-                  f"{len(fd.raw_returns)} with returns)")
+            print(f"OK ({len(ad.tickers)} tickers, " f"{len(fd.raw_returns)} with returns)")
         except Exception as e:
             print(f"ERROR: {e}")
     print()
@@ -872,8 +866,9 @@ def main():
     gate_freq = count_gate_frequencies(archive_cache, default_ruleset)
     pooled = gate_freq["pooled"]
     print(f"  Dev ticker-snapshots: {pooled['n_dev']}")
-    print(f"  Ineligible: {pooled['n_ineligible']} "
-          f"({_safe_div(pooled['n_ineligible'], pooled['n_dev']) * 100:.1f}%)")
+    print(
+        f"  Ineligible: {pooled['n_ineligible']} " f"({_safe_div(pooled['n_ineligible'], pooled['n_dev']) * 100:.1f}%)"
+    )
     for g in KNOWN_GATES:
         gs = pooled["gates"][g]
         inert = " (INERT)" if g in gate_freq["inert_gates"] else ""
@@ -884,16 +879,16 @@ def main():
     # Phase 2: D vs ABC return stats
     # =================================================================
     print("Phase 2: Computing tier return stats...", flush=True)
-    tier_stats = compute_tier_return_stats(
-        archive_cache, return_cache, default_ruleset
-    )
+    tier_stats = compute_tier_return_stats(archive_cache, return_cache, default_ruleset)
     for tier in ["A", "B", "C", "D"]:
         ts = tier_stats.get(tier, {})
         n = ts.get("n", 0)
         if n > 0:
-            print(f"  {tier}: n={n}, winsor_resid={ts.get('winsor_resid_pct', 0):+.2f}%, "
-                  f"hit={ts.get('hit_pct', 0):.1f}%, "
-                  f"P5={ts.get('p5_resid_pct', 0):+.2f}%")
+            print(
+                f"  {tier}: n={n}, winsor_resid={ts.get('winsor_resid_pct', 0):+.2f}%, "
+                f"hit={ts.get('hit_pct', 0):.1f}%, "
+                f"P5={ts.get('p5_resid_pct', 0):+.2f}%"
+            )
         else:
             print(f"  {tier}: n=0")
     print()
@@ -905,9 +900,7 @@ def main():
 
     # First run baseline to get tier assignments
     print("  [baseline] ...", end=" ", flush=True)
-    baseline_result = run_ablation_scenario(
-        "baseline", archive_cache, return_cache, {}
-    )
+    baseline_result = run_ablation_scenario("baseline", archive_cache, return_cache, {})
     # Build baseline tiers by date for promoted-name detection
     baseline_tiers_by_date: Dict[str, Dict[str, str]] = {}
     for date_str in sorted(archive_cache.keys()):
@@ -926,8 +919,7 @@ def main():
             if tier:
                 tiers[ticker] = tier
         baseline_tiers_by_date[date_str] = tiers
-    print(f"D={baseline_result['d_share_pct']}%, "
-          f"Δ(A-C)={baseline_result['delta_ac_resid_pct']:+.2f}%")
+    print(f"D={baseline_result['d_share_pct']}%, " f"Δ(A-C)={baseline_result['delta_ac_resid_pct']:+.2f}%")
 
     scenario_results: Dict[str, Dict[str, Any]] = {"baseline": baseline_result}
 
@@ -935,13 +927,9 @@ def main():
         if scenario == "baseline":
             continue
         print(f"  [{scenario}] ...", end=" ", flush=True)
-        sr = run_ablation_scenario(
-            scenario, archive_cache, return_cache, baseline_tiers_by_date
-        )
+        sr = run_ablation_scenario(scenario, archive_cache, return_cache, baseline_tiers_by_date)
         scenario_results[scenario] = sr
-        print(f"D={sr['d_share_pct']}%, "
-              f"Δ(A-C)={sr['delta_ac_resid_pct']:+.2f}%, "
-              f"promoted={sr['n_promoted']}")
+        print(f"D={sr['d_share_pct']}%, " f"Δ(A-C)={sr['delta_ac_resid_pct']:+.2f}%, " f"promoted={sr['n_promoted']}")
     print()
 
     # =================================================================
@@ -952,10 +940,19 @@ def main():
     # CSV summary — one row per scenario
     csv_path = output_dir / "gate_ablation_summary.csv"
     csv_columns = [
-        "scenario", "ruleset_id", "d_share_pct",
-        "a_resid_mean_pct", "c_resid_mean_pct", "delta_ac_resid_pct",
-        "n_promoted", "promoted_mean_resid_pct", "promoted_hit_pct",
-        "a_n", "b_n", "c_n", "d_n",
+        "scenario",
+        "ruleset_id",
+        "d_share_pct",
+        "a_resid_mean_pct",
+        "c_resid_mean_pct",
+        "delta_ac_resid_pct",
+        "n_promoted",
+        "promoted_mean_resid_pct",
+        "promoted_hit_pct",
+        "a_n",
+        "b_n",
+        "c_n",
+        "d_n",
     ]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=csv_columns, extrasaction="ignore")
@@ -993,10 +990,7 @@ def main():
         "gate_frequency": gate_freq,
         "tier_return_stats": tier_stats,
         "scenarios": {
-            name: {
-                k: v for k, v in sr.items()
-                if k != "per_date"  # keep JSON size manageable
-            }
+            name: {k: v for k, v in sr.items() if k != "per_date"}  # keep JSON size manageable
             for name, sr in scenario_results.items()
         },
     }
@@ -1022,10 +1016,12 @@ def main():
         prom_stats = sr.get("promoted_stats", {})
         prom_res = prom_stats.get("winsor_resid_pct")
         prom_str = f"{prom_res:+.2f}" if prom_res is not None else "---"
-        print(f"{name:<15} {sr['d_share_pct']:>8.1f} "
-              f"{sr['delta_ac_resid_pct']:>8.2f} "
-              f"{sr['n_promoted']:>8} "
-              f"{prom_str:>9}")
+        print(
+            f"{name:<15} {sr['d_share_pct']:>8.1f} "
+            f"{sr['delta_ac_resid_pct']:>8.2f} "
+            f"{sr['n_promoted']:>8} "
+            f"{prom_str:>9}"
+        )
     print()
 
 

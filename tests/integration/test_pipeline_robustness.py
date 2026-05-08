@@ -16,50 +16,36 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List
+
+import pytest
+
+from common.data_quality import CircuitBreakerConfig, CircuitBreakerError, check_circuit_breaker
+
+# Import utilities
+from common.input_validation import (
+    PipelineValidationError,
+    ValidationResult,
+    validate_financial_record,
+    validate_pipeline_inputs,
+    validate_ticker,
+    validate_tickers,
+    validate_trial_record,
+)
+from common.null_safety import coalesce, is_present, is_zero_or_none, safe_divide, safe_get, safe_get_nested
+from common.score_utils import clamp_score, normalize_to_range, to_decimal, weighted_average
 
 # Import module functions
 from module_2_financial_v2 import run_module_2_v2
 from module_4_clinical_dev_v2 import compute_module_4_clinical_dev_v2
 from module_5_composite_v2 import compute_module_5_composite_v2
 
-# Import utilities
-from common.input_validation import (
-    validate_pipeline_inputs,
-    validate_ticker,
-    validate_tickers,
-    validate_financial_record,
-    validate_trial_record,
-    ValidationResult,
-    PipelineValidationError,
-)
-from common.score_utils import (
-    clamp_score,
-    normalize_to_range,
-    weighted_average,
-    to_decimal,
-)
-from common.null_safety import (
-    safe_get,
-    safe_get_nested,
-    safe_divide,
-    coalesce,
-    is_present,
-    is_zero_or_none,
-)
-from common.data_quality import (
-    check_circuit_breaker,
-    CircuitBreakerConfig,
-    CircuitBreakerError,
-)
-
-
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -132,6 +118,7 @@ def sample_trial_data():
 # EMPTY UNIVERSE TESTS
 # ============================================================================
 
+
 class TestEmptyUniverseHandling:
     """Tests for graceful handling of empty universes."""
 
@@ -175,6 +162,7 @@ class TestEmptyUniverseHandling:
 # EMPTY DATA TESTS
 # ============================================================================
 
+
 class TestEmptyDataHandling:
     """Tests for graceful handling of empty data."""
 
@@ -204,6 +192,7 @@ class TestEmptyDataHandling:
 # ============================================================================
 # INPUT VALIDATION TESTS
 # ============================================================================
+
 
 class TestInputValidation:
     """Tests for input validation utilities."""
@@ -273,6 +262,7 @@ class TestInputValidation:
 # SCORE CLAMPING TESTS
 # ============================================================================
 
+
 class TestScoreClamping:
     """Tests for score clamping utilities."""
 
@@ -319,6 +309,7 @@ class TestScoreClamping:
 # ============================================================================
 # NULL SAFETY TESTS
 # ============================================================================
+
 
 class TestNullSafety:
     """Tests for null safety utilities."""
@@ -396,6 +387,7 @@ class TestNullSafety:
 # CIRCUIT BREAKER TESTS
 # ============================================================================
 
+
 class TestCircuitBreaker:
     """Tests for circuit breaker functionality."""
 
@@ -449,6 +441,7 @@ class TestCircuitBreaker:
 # PIPELINE DETERMINISM TESTS
 # ============================================================================
 
+
 class TestPipelineDeterminism:
     """Tests for pipeline determinism."""
 
@@ -495,6 +488,7 @@ class TestPipelineDeterminism:
 # BOUNDARY VALUE TESTS
 # ============================================================================
 
+
 class TestBoundaryValues:
     """Tests for boundary value handling."""
 
@@ -527,6 +521,7 @@ class TestBoundaryValues:
 # TYPE CONVERSION TESTS
 # ============================================================================
 
+
 class TestTypeConversions:
     """Tests for type conversion utilities."""
 
@@ -555,6 +550,7 @@ class TestTypeConversions:
 # ============================================================================
 # TRIAL RECORD VALIDATION TESTS
 # ============================================================================
+
 
 class TestTrialRecordValidation:
     """Tests for trial record validation."""

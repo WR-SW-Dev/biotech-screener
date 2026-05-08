@@ -17,29 +17,26 @@ Tests cover:
 - compute_concentration_metrics (concentration analysis)
 """
 
-import pytest
 from decimal import Decimal
 from statistics import mean
 
-from backtest.compare_module5_versions import (
-    # Data generation
-    generate_module_inputs,
-    DEFAULT_UNIVERSE,
+import pytest
+
+from backtest.compare_module5_versions import (  # Data generation; Score utilities; Rank correlation; Portfolio metrics
     CLINICAL_DATA,
+    DEFAULT_UNIVERSE,
     MARKET_CAP_DATA,
-    # Score utilities
-    extract_scores,
+    bootstrap_ic_ci,
+    compute_concentration_metrics,
+    compute_costed_return,
+    compute_drawdown,
     compute_ic,
     compute_ic_tstat,
-    bootstrap_ic_ci,
-    # Rank correlation
     compute_rank_correlation,
-    # Portfolio metrics
     compute_top_bottom_spread,
     compute_turnover,
-    compute_drawdown,
-    compute_costed_return,
-    compute_concentration_metrics,
+    extract_scores,
+    generate_module_inputs,
 )
 
 
@@ -205,6 +202,7 @@ class TestBootstrapIcCi:
     def test_insufficient_data_returns_nan(self):
         """Should return NaN for insufficient data."""
         import math
+
         lower, upper = bootstrap_ic_ci([0.05])
 
         assert math.isnan(lower)
@@ -275,13 +273,19 @@ class TestComputeTopBottomSpread:
             "J": Decimal("10"),  # Bottom
         }
         returns = {
-            "A": 0.20, "B": 0.15, "C": 0.10, "D": 0.05, "E": 0.02,  # Top performers
-            "F": -0.02, "G": -0.05, "H": -0.10, "I": -0.15, "J": -0.20,  # Bottom performers
+            "A": 0.20,
+            "B": 0.15,
+            "C": 0.10,
+            "D": 0.05,
+            "E": 0.02,  # Top performers
+            "F": -0.02,
+            "G": -0.05,
+            "H": -0.10,
+            "I": -0.15,
+            "J": -0.20,  # Bottom performers
         }
 
-        top_mean, bottom_mean, spread, sign_consistent = compute_top_bottom_spread(
-            scores, returns, top_n=2
-        )
+        top_mean, bottom_mean, spread, sign_consistent = compute_top_bottom_spread(scores, returns, top_n=2)
 
         assert top_mean > bottom_mean
         assert spread > 0
@@ -291,9 +295,7 @@ class TestComputeTopBottomSpread:
         scores = {"A": Decimal("100"), "B": Decimal("90")}
         returns = {"A": 0.10, "B": 0.05}
 
-        top_mean, bottom_mean, spread, sign_consistent = compute_top_bottom_spread(
-            scores, returns, top_n=5
-        )
+        top_mean, bottom_mean, spread, sign_consistent = compute_top_bottom_spread(scores, returns, top_n=5)
 
         assert top_mean is None
         assert bottom_mean is None

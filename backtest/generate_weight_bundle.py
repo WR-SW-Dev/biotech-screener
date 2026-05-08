@@ -17,6 +17,7 @@ Usage:
         --blend-k 25 --min-fit-weeks 5 \
         --output data/module5_weights_m3_bundle.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -109,9 +110,10 @@ def generate_bundle(
     print(f"  Global: {prod_fw}")
     print(f"  Regimes: {sorted(by_regime.keys())}")
     for r, data in sorted(by_regime.items()):
-        raw_l1 = sum(abs(v) for v in wt[wt["fit_scope"] == f"REGIME_{r}"].sort_values("eval_date").iloc[-1][feature_cols])
-        print(f"    {r}: n_weeks={data['n_weeks']}, "
-              f"raw_L1={raw_l1:.6f} → rescaled_L1={global_l1:.6f}")
+        raw_l1 = sum(
+            abs(v) for v in wt[wt["fit_scope"] == f"REGIME_{r}"].sort_values("eval_date").iloc[-1][feature_cols]
+        )
+        print(f"    {r}: n_weeks={data['n_weeks']}, " f"raw_L1={raw_l1:.6f} → rescaled_L1={global_l1:.6f}")
         for col in sorted(data["feature_weights"].keys()):
             print(f"      {col}: {data['feature_weights'][col]:.6f}")
 
@@ -120,10 +122,12 @@ def generate_bundle(
 
 def main():
     parser = argparse.ArgumentParser(description="Generate schema v2 weight bundle")
-    parser.add_argument("--weights-csv", required=True,
-                        help="Path to oos_weights_by_date.csv.gz from walkforward")
-    parser.add_argument("--global-weights", required=True,
-                        help="Path to production-scale calibrated JSON (e.g., data/module5_weights_m3.json)")
+    parser.add_argument("--weights-csv", required=True, help="Path to oos_weights_by_date.csv.gz from walkforward")
+    parser.add_argument(
+        "--global-weights",
+        required=True,
+        help="Path to production-scale calibrated JSON (e.g., data/module5_weights_m3.json)",
+    )
     parser.add_argument("--blend-k", type=int, default=25)
     parser.add_argument("--min-fit-weeks", type=int, default=5)
     parser.add_argument("--output", default="data/module5_weights_m3_bundle.json")

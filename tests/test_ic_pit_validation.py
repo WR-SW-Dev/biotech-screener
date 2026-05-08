@@ -12,28 +12,29 @@ Covers:
 - Ablation testing framework
 """
 
-import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 
+import pytest
+
 from src.modules.ic_pit_validation import (
-    PITValidationError,
-    WeightStabilityError,
-    DataQualityError,
-    ValidationStatus,
-    PITValidationResult,
-    WeightProvenance,
-    ProductionGateResult,
-    validate_adaptive_weight_pit,
-    validate_peer_valuation_pit,
-    validate_coinvest_pit,
-    validate_weight_stability,
-    create_weight_provenance,
-    run_production_gate,
-    run_ablation_test,
-    AblationResult,
     DEFAULT_EMBARGO_DAYS,
     MAX_WEIGHT_L1_CHANGE,
+    AblationResult,
+    DataQualityError,
+    PITValidationError,
+    PITValidationResult,
+    ProductionGateResult,
+    ValidationStatus,
+    WeightProvenance,
+    WeightStabilityError,
+    create_weight_provenance,
+    run_ablation_test,
+    run_production_gate,
+    validate_adaptive_weight_pit,
+    validate_coinvest_pit,
+    validate_peer_valuation_pit,
+    validate_weight_stability,
 )
 
 
@@ -337,9 +338,7 @@ class TestValidateWeightStability:
         previous = {"clinical": Decimal("0.40"), "financial": Decimal("0.30")}
         current = {"clinical": Decimal("0.60"), "financial": Decimal("0.10")}  # 0.40 total change
 
-        result = validate_weight_stability(
-            current, previous, max_l1_change=Decimal("0.15")
-        )
+        result = validate_weight_stability(current, previous, max_l1_change=Decimal("0.15"))
 
         assert result.status == ValidationStatus.FAILED
         assert any("L1 change" in v for v in result.violations)
@@ -360,15 +359,11 @@ class TestValidateWeightStability:
         current = {"w1": Decimal("0.30")}  # 0.20 change
 
         # Should fail with 0.15 max
-        result1 = validate_weight_stability(
-            current, previous, max_l1_change=Decimal("0.15")
-        )
+        result1 = validate_weight_stability(current, previous, max_l1_change=Decimal("0.15"))
         assert result1.status == ValidationStatus.FAILED
 
         # Should pass with 0.25 max
-        result2 = validate_weight_stability(
-            current, previous, max_l1_change=Decimal("0.25")
-        )
+        result2 = validate_weight_stability(current, previous, max_l1_change=Decimal("0.25"))
         assert result2.status == ValidationStatus.PASSED
 
 
@@ -540,29 +535,44 @@ class TestAblationTest:
         """Feature that adds IC should pass ablation."""
         # Baseline scores correlate with returns
         baseline_scores = [
-            ("A", Decimal("90")), ("B", Decimal("70")),
-            ("C", Decimal("50")), ("D", Decimal("30")),
-            ("E", Decimal("80")), ("F", Decimal("60")),
-            ("G", Decimal("40")), ("H", Decimal("20")),
-            ("I", Decimal("85")), ("J", Decimal("65")),
+            ("A", Decimal("90")),
+            ("B", Decimal("70")),
+            ("C", Decimal("50")),
+            ("D", Decimal("30")),
+            ("E", Decimal("80")),
+            ("F", Decimal("60")),
+            ("G", Decimal("40")),
+            ("H", Decimal("20")),
+            ("I", Decimal("85")),
+            ("J", Decimal("65")),
         ]
 
         # Ablated scores are less correlated (random-ish)
         ablated_scores = [
-            ("A", Decimal("50")), ("B", Decimal("80")),
-            ("C", Decimal("30")), ("D", Decimal("70")),
-            ("E", Decimal("40")), ("F", Decimal("90")),
-            ("G", Decimal("60")), ("H", Decimal("20")),
-            ("I", Decimal("45")), ("J", Decimal("75")),
+            ("A", Decimal("50")),
+            ("B", Decimal("80")),
+            ("C", Decimal("30")),
+            ("D", Decimal("70")),
+            ("E", Decimal("40")),
+            ("F", Decimal("90")),
+            ("G", Decimal("60")),
+            ("H", Decimal("20")),
+            ("I", Decimal("45")),
+            ("J", Decimal("75")),
         ]
 
         # Returns correlate with baseline better
         forward_returns = {
-            "A": Decimal("0.10"), "B": Decimal("0.08"),
-            "C": Decimal("0.05"), "D": Decimal("0.02"),
-            "E": Decimal("0.09"), "F": Decimal("0.06"),
-            "G": Decimal("0.03"), "H": Decimal("0.01"),
-            "I": Decimal("0.095"), "J": Decimal("0.07"),
+            "A": Decimal("0.10"),
+            "B": Decimal("0.08"),
+            "C": Decimal("0.05"),
+            "D": Decimal("0.02"),
+            "E": Decimal("0.09"),
+            "F": Decimal("0.06"),
+            "G": Decimal("0.03"),
+            "H": Decimal("0.01"),
+            "I": Decimal("0.095"),
+            "J": Decimal("0.07"),
         }
 
         result = run_ablation_test(
@@ -594,8 +604,8 @@ class TestAblationTest:
 
     def test_ablation_result_fields(self):
         """AblationResult should have all fields."""
-        scores = [(chr(65+i), Decimal(str(90-i*5))) for i in range(15)]
-        returns = {chr(65+i): Decimal(str(0.1-i*0.005)) for i in range(15)}
+        scores = [(chr(65 + i), Decimal(str(90 - i * 5))) for i in range(15)]
+        returns = {chr(65 + i): Decimal(str(0.1 - i * 0.005)) for i in range(15)}
 
         result = run_ablation_test("test", scores, scores, returns)
 

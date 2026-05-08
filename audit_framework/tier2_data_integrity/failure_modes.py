@@ -18,11 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -54,9 +50,7 @@ class FailureModeReport:
     def pass_rate(self) -> Decimal:
         if self.tests_run == 0:
             return Decimal("0")
-        return (Decimal(self.tests_passed) / Decimal(self.tests_run)).quantize(
-            Decimal("0.0001")
-        )
+        return (Decimal(self.tests_passed) / Decimal(self.tests_run)).quantize(Decimal("0.0001"))
 
 
 class FailureModeValidator:
@@ -133,15 +127,17 @@ class FailureModeValidator:
         for fake_ticker in self.FABRICATED_TICKERS:
             is_present = fake_ticker in all_tickers
 
-            results.append(FailureModeTest(
-                test_name=f"fabrication_rejection_{fake_ticker}",
-                category="fabrication",
-                description=f"Verify ticker {fake_ticker} is not in production data",
-                expected_behavior="Ticker should not be present in any data file",
-                actual_behavior="Not present" if not is_present else "PRESENT - VIOLATION",
-                passed=not is_present,
-                error_message=None if not is_present else f"Fake ticker {fake_ticker} found in data",
-            ))
+            results.append(
+                FailureModeTest(
+                    test_name=f"fabrication_rejection_{fake_ticker}",
+                    category="fabrication",
+                    description=f"Verify ticker {fake_ticker} is not in production data",
+                    expected_behavior="Ticker should not be present in any data file",
+                    actual_behavior="Not present" if not is_present else "PRESENT - VIOLATION",
+                    passed=not is_present,
+                    error_message=None if not is_present else f"Fake ticker {fake_ticker} found in data",
+                )
+            )
 
         return results
 
@@ -165,35 +161,32 @@ class FailureModeValidator:
             # Get universe tickers
             universe_tickers = set()
             if isinstance(universe_data, list):
-                universe_tickers = {
-                    r.get("ticker", "") for r in universe_data if isinstance(r, dict)
-                }
+                universe_tickers = {r.get("ticker", "") for r in universe_data if isinstance(r, dict)}
             elif isinstance(universe_data, dict) and "active_securities" in universe_data:
                 universe_tickers = {
-                    r.get("ticker", "") for r in universe_data["active_securities"]
-                    if isinstance(r, dict)
+                    r.get("ticker", "") for r in universe_data["active_securities"] if isinstance(r, dict)
                 }
 
             # Get tickers with financial data
             if isinstance(financial_data, list):
-                financial_tickers = {
-                    r.get("ticker", "") for r in financial_data if isinstance(r, dict)
-                }
+                financial_tickers = {r.get("ticker", "") for r in financial_data if isinstance(r, dict)}
             else:
                 financial_tickers = set()
 
             # Check for tickers missing financial data
             missing_financial = universe_tickers - financial_tickers
 
-            results.append(FailureModeTest(
-                test_name="sparse_data_financial",
-                category="sparse_data",
-                description="Verify tickers with missing financial data are handled",
-                expected_behavior="Missing financial data should be flagged, not fabricated",
-                actual_behavior=f"{len(missing_financial)} tickers without financial data",
-                passed=True,  # Pass if we can identify them
-                affected_tickers=sorted(list(missing_financial))[:10],
-            ))
+            results.append(
+                FailureModeTest(
+                    test_name="sparse_data_financial",
+                    category="sparse_data",
+                    description="Verify tickers with missing financial data are handled",
+                    expected_behavior="Missing financial data should be flagged, not fabricated",
+                    actual_behavior=f"{len(missing_financial)} tickers without financial data",
+                    passed=True,  # Pass if we can identify them
+                    affected_tickers=sorted(list(missing_financial))[:10],
+                )
+            )
 
         # Check for trials without completion dates
         if trial_data and isinstance(trial_data, list):
@@ -205,15 +198,17 @@ class FailureModeValidator:
                     if ticker and not completion:
                         no_completion.append(ticker)
 
-            results.append(FailureModeTest(
-                test_name="sparse_data_trial_dates",
-                category="sparse_data",
-                description="Verify trials without completion dates are handled",
-                expected_behavior="Missing dates should use UNKNOWN or conservative estimate",
-                actual_behavior=f"{len(set(no_completion))} tickers with undated trials",
-                passed=True,
-                affected_tickers=sorted(list(set(no_completion)))[:10],
-            ))
+            results.append(
+                FailureModeTest(
+                    test_name="sparse_data_trial_dates",
+                    category="sparse_data",
+                    description="Verify trials without completion dates are handled",
+                    expected_behavior="Missing dates should use UNKNOWN or conservative estimate",
+                    actual_behavior=f"{len(set(no_completion))} tickers with undated trials",
+                    passed=True,
+                    affected_tickers=sorted(list(set(no_completion)))[:10],
+                )
+            )
 
         return results
 
@@ -260,15 +255,17 @@ class FailureModeValidator:
                 except Exception:
                     pass
 
-            results.append(FailureModeTest(
-                test_name="anomalous_pattern_detection",
-                category="anomalous_data",
-                description="Verify anomalous financial patterns are flagged",
-                expected_behavior="Anomalies should trigger manual review flags",
-                actual_behavior=f"Found {len(anomalies)} potential anomalies",
-                passed=True,  # Pass if we can detect them
-                affected_tickers=[a[0] for a in anomalies[:10]],
-            ))
+            results.append(
+                FailureModeTest(
+                    test_name="anomalous_pattern_detection",
+                    category="anomalous_data",
+                    description="Verify anomalous financial patterns are flagged",
+                    expected_behavior="Anomalies should trigger manual review flags",
+                    actual_behavior=f"Found {len(anomalies)} potential anomalies",
+                    passed=True,  # Pass if we can detect them
+                    affected_tickers=[a[0] for a in anomalies[:10]],
+                )
+            )
 
         return results
 
@@ -305,15 +302,17 @@ class FailureModeValidator:
                 except Exception:
                     pass
 
-        results.append(FailureModeTest(
-            test_name="boundary_small_market_cap",
-            category="boundary",
-            description="Verify handling of extremely small market caps (<$50M)",
-            expected_behavior="Small caps should be flagged for liquidity risk",
-            actual_behavior=f"Found {len(small_cap_tickers)} tickers below $50M",
-            passed=True,
-            affected_tickers=small_cap_tickers[:10],
-        ))
+        results.append(
+            FailureModeTest(
+                test_name="boundary_small_market_cap",
+                category="boundary",
+                description="Verify handling of extremely small market caps (<$50M)",
+                expected_behavior="Small caps should be flagged for liquidity risk",
+                actual_behavior=f"Found {len(small_cap_tickers)} tickers below $50M",
+                passed=True,
+                affected_tickers=small_cap_tickers[:10],
+            )
+        )
 
         # Check for large pipelines
         trial_data = self._load_json_data("trial_records.json")
@@ -327,15 +326,17 @@ class FailureModeValidator:
 
             large_pipeline = [t for t, c in ticker_trial_count.items() if c > 20]
 
-            results.append(FailureModeTest(
-                test_name="boundary_large_pipeline",
-                category="boundary",
-                description="Verify handling of large pipelines (>20 trials)",
-                expected_behavior="Large pipelines should be analyzed correctly",
-                actual_behavior=f"Found {len(large_pipeline)} tickers with >20 trials",
-                passed=True,
-                affected_tickers=large_pipeline[:10],
-            ))
+            results.append(
+                FailureModeTest(
+                    test_name="boundary_large_pipeline",
+                    category="boundary",
+                    description="Verify handling of large pipelines (>20 trials)",
+                    expected_behavior="Large pipelines should be analyzed correctly",
+                    actual_behavior=f"Found {len(large_pipeline)} tickers with >20 trials",
+                    passed=True,
+                    affected_tickers=large_pipeline[:10],
+                )
+            )
 
         return results
 
@@ -382,25 +383,29 @@ class FailureModeValidator:
                 except Exception:
                     continue
 
-        results.append(FailureModeTest(
-            test_name="error_handling_bare_except",
-            category="error_handling",
-            description="Check for bare 'except:' clauses",
-            expected_behavior="No bare except clauses that hide errors",
-            actual_behavior=f"Found {len(bare_except_files)} bare except clauses",
-            passed=len(bare_except_files) == 0,
-            error_message=", ".join(bare_except_files[:5]) if bare_except_files else None,
-        ))
+        results.append(
+            FailureModeTest(
+                test_name="error_handling_bare_except",
+                category="error_handling",
+                description="Check for bare 'except:' clauses",
+                expected_behavior="No bare except clauses that hide errors",
+                actual_behavior=f"Found {len(bare_except_files)} bare except clauses",
+                passed=len(bare_except_files) == 0,
+                error_message=", ".join(bare_except_files[:5]) if bare_except_files else None,
+            )
+        )
 
-        results.append(FailureModeTest(
-            test_name="error_handling_silent_pass",
-            category="error_handling",
-            description="Check for silent exception swallowing (except: pass)",
-            expected_behavior="Exceptions should be logged or re-raised",
-            actual_behavior=f"Found {len(silent_failure_files)} silent failures",
-            passed=len(silent_failure_files) == 0,
-            error_message=", ".join(silent_failure_files[:5]) if silent_failure_files else None,
-        ))
+        results.append(
+            FailureModeTest(
+                test_name="error_handling_silent_pass",
+                category="error_handling",
+                description="Check for silent exception swallowing (except: pass)",
+                expected_behavior="Exceptions should be logged or re-raised",
+                actual_behavior=f"Found {len(silent_failure_files)} silent failures",
+                passed=len(silent_failure_files) == 0,
+                error_message=", ".join(silent_failure_files[:5]) if silent_failure_files else None,
+            )
+        )
 
         return results
 

@@ -16,11 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -90,13 +86,15 @@ class DeploymentValidator:
 
         # Check for pyproject.toml
         pyproject = self.codebase_path / "pyproject.toml"
-        items.append(ChecklistItem(
-            category="environment",
-            item="pyproject.toml exists",
-            passed=pyproject.exists(),
-            evidence=str(pyproject) if pyproject.exists() else "",
-            recommendation="Add pyproject.toml for package configuration",
-        ))
+        items.append(
+            ChecklistItem(
+                category="environment",
+                item="pyproject.toml exists",
+                passed=pyproject.exists(),
+                evidence=str(pyproject) if pyproject.exists() else "",
+                recommendation="Add pyproject.toml for package configuration",
+            )
+        )
 
         # Check for Python version specification
         if pyproject.exists():
@@ -104,28 +102,29 @@ class DeploymentValidator:
                 with open(pyproject, "r") as f:
                     content = f.read()
                 has_python_version = "python" in content.lower()
-                items.append(ChecklistItem(
-                    category="environment",
-                    item="Python version specified",
-                    passed=has_python_version,
-                    evidence="Found python version requirement" if has_python_version else "",
-                    recommendation="Specify python version in pyproject.toml",
-                ))
+                items.append(
+                    ChecklistItem(
+                        category="environment",
+                        item="Python version specified",
+                        passed=has_python_version,
+                        evidence="Found python version requirement" if has_python_version else "",
+                        recommendation="Specify python version in pyproject.toml",
+                    )
+                )
             except Exception:
                 pass
 
         # Check for requirements.txt or dependencies
-        has_deps = (
-            (self.codebase_path / "requirements.txt").exists()
-            or pyproject.exists()
+        has_deps = (self.codebase_path / "requirements.txt").exists() or pyproject.exists()
+        items.append(
+            ChecklistItem(
+                category="environment",
+                item="Dependencies documented",
+                passed=has_deps,
+                evidence="requirements.txt or pyproject.toml",
+                recommendation="Add requirements.txt or pyproject.toml dependencies",
+            )
         )
-        items.append(ChecklistItem(
-            category="environment",
-            item="Dependencies documented",
-            passed=has_deps,
-            evidence="requirements.txt or pyproject.toml",
-            recommendation="Add requirements.txt or pyproject.toml dependencies",
-        ))
 
         # Check for setup instructions
         readme = self.codebase_path / "README.md"
@@ -138,13 +137,15 @@ class DeploymentValidator:
             except Exception:
                 pass
 
-        items.append(ChecklistItem(
-            category="environment",
-            item="Installation instructions documented",
-            passed=has_setup,
-            evidence="Found in README.md" if has_setup else "",
-            recommendation="Add installation instructions to README.md",
-        ))
+        items.append(
+            ChecklistItem(
+                category="environment",
+                item="Installation instructions documented",
+                passed=has_setup,
+                evidence="Found in README.md" if has_setup else "",
+                recommendation="Add installation instructions to README.md",
+            )
+        )
 
         return items
 
@@ -175,13 +176,15 @@ class DeploymentValidator:
             if has_logging:
                 break
 
-        items.append(ChecklistItem(
-            category="monitoring",
-            item="Logging infrastructure present",
-            passed=has_logging,
-            evidence="logging module usage found" if has_logging else "",
-            recommendation="Implement structured logging throughout",
-        ))
+        items.append(
+            ChecklistItem(
+                category="monitoring",
+                item="Logging infrastructure present",
+                passed=has_logging,
+                evidence="logging module usage found" if has_logging else "",
+                recommendation="Implement structured logging throughout",
+            )
+        )
 
         # Check for health check endpoints or monitoring
         has_health = False
@@ -198,23 +201,27 @@ class DeploymentValidator:
             if has_health:
                 break
 
-        items.append(ChecklistItem(
-            category="monitoring",
-            item="Health monitoring capability",
-            passed=has_health,
-            evidence="Health check file found" if has_health else "",
-            recommendation="Add health check endpoint or monitoring script",
-        ))
+        items.append(
+            ChecklistItem(
+                category="monitoring",
+                item="Health monitoring capability",
+                passed=has_health,
+                evidence="Health check file found" if has_health else "",
+                recommendation="Add health check endpoint or monitoring script",
+            )
+        )
 
         # Check for audit logging
         audit_log = self.codebase_path / "governance" / "audit_log.py"
-        items.append(ChecklistItem(
-            category="monitoring",
-            item="Audit logging infrastructure",
-            passed=audit_log.exists(),
-            evidence=str(audit_log) if audit_log.exists() else "",
-            recommendation="Implement audit logging for compliance",
-        ))
+        items.append(
+            ChecklistItem(
+                category="monitoring",
+                item="Audit logging infrastructure",
+                passed=audit_log.exists(),
+                evidence=str(audit_log) if audit_log.exists() else "",
+                recommendation="Implement audit logging for compliance",
+            )
+        )
 
         return items
 
@@ -224,33 +231,39 @@ class DeploymentValidator:
 
         # Check for data directory
         data_dir = self.codebase_path / "production_data"
-        items.append(ChecklistItem(
-            category="backup",
-            item="Production data directory exists",
-            passed=data_dir.exists(),
-            evidence=str(data_dir) if data_dir.exists() else "",
-            recommendation="Create production_data directory for data storage",
-        ))
+        items.append(
+            ChecklistItem(
+                category="backup",
+                item="Production data directory exists",
+                passed=data_dir.exists(),
+                evidence=str(data_dir) if data_dir.exists() else "",
+                recommendation="Create production_data directory for data storage",
+            )
+        )
 
         # Check for state management
         state_mgmt = self.codebase_path / "state_management.py"
-        items.append(ChecklistItem(
-            category="backup",
-            item="State management implemented",
-            passed=state_mgmt.exists(),
-            evidence=str(state_mgmt) if state_mgmt.exists() else "",
-            recommendation="Implement state management for recovery",
-        ))
+        items.append(
+            ChecklistItem(
+                category="backup",
+                item="State management implemented",
+                passed=state_mgmt.exists(),
+                evidence=str(state_mgmt) if state_mgmt.exists() else "",
+                recommendation="Implement state management for recovery",
+            )
+        )
 
         # Check for output regeneration capability
         run_screen = self.codebase_path / "run_screen.py"
-        items.append(ChecklistItem(
-            category="backup",
-            item="Output regeneration capability",
-            passed=run_screen.exists(),
-            evidence=str(run_screen) if run_screen.exists() else "",
-            recommendation="Ensure outputs can be regenerated from inputs",
-        ))
+        items.append(
+            ChecklistItem(
+                category="backup",
+                item="Output regeneration capability",
+                passed=run_screen.exists(),
+                evidence=str(run_screen) if run_screen.exists() else "",
+                recommendation="Ensure outputs can be regenerated from inputs",
+            )
+        )
 
         return items
 
@@ -260,23 +273,27 @@ class DeploymentValidator:
 
         # Check for git
         git_dir = self.codebase_path / ".git"
-        items.append(ChecklistItem(
-            category="change_mgmt",
-            item="Version control (Git) used",
-            passed=git_dir.exists(),
-            evidence="Git repository found" if git_dir.exists() else "",
-            recommendation="Initialize git repository for version control",
-        ))
+        items.append(
+            ChecklistItem(
+                category="change_mgmt",
+                item="Version control (Git) used",
+                passed=git_dir.exists(),
+                evidence="Git repository found" if git_dir.exists() else "",
+                recommendation="Initialize git repository for version control",
+            )
+        )
 
         # Check for tests directory
         tests_dir = self.codebase_path / "tests"
-        items.append(ChecklistItem(
-            category="change_mgmt",
-            item="Test suite present",
-            passed=tests_dir.exists() and any(tests_dir.glob("test_*.py")),
-            evidence=str(tests_dir) if tests_dir.exists() else "",
-            recommendation="Add test suite for regression prevention",
-        ))
+        items.append(
+            ChecklistItem(
+                category="change_mgmt",
+                item="Test suite present",
+                passed=tests_dir.exists() and any(tests_dir.glob("test_*.py")),
+                evidence=str(tests_dir) if tests_dir.exists() else "",
+                recommendation="Add test suite for regression prevention",
+            )
+        )
 
         # Check for CI/CD configuration
         ci_files = [
@@ -286,23 +303,27 @@ class DeploymentValidator:
             ".circleci/config.yml",
         ]
         has_ci = any((self.codebase_path / ci).exists() for ci in ci_files)
-        items.append(ChecklistItem(
-            category="change_mgmt",
-            item="CI/CD configuration present",
-            passed=has_ci,
-            evidence="CI/CD config found" if has_ci else "",
-            recommendation="Add CI/CD pipeline for automated testing",
-        ))
+        items.append(
+            ChecklistItem(
+                category="change_mgmt",
+                item="CI/CD configuration present",
+                passed=has_ci,
+                evidence="CI/CD config found" if has_ci else "",
+                recommendation="Add CI/CD pipeline for automated testing",
+            )
+        )
 
         # Check for schema versioning
         schema_registry = self.codebase_path / "governance" / "schema_registry.py"
-        items.append(ChecklistItem(
-            category="change_mgmt",
-            item="Schema versioning implemented",
-            passed=schema_registry.exists(),
-            evidence=str(schema_registry) if schema_registry.exists() else "",
-            recommendation="Implement schema versioning for backwards compatibility",
-        ))
+        items.append(
+            ChecklistItem(
+                category="change_mgmt",
+                item="Schema versioning implemented",
+                passed=schema_registry.exists(),
+                evidence=str(schema_registry) if schema_registry.exists() else "",
+                recommendation="Implement schema versioning for backwards compatibility",
+            )
+        )
 
         return items
 
@@ -376,16 +397,13 @@ def validate_deployment_readiness(codebase_path: str) -> AuditResult:
             "change_mgmt_ready": report.change_mgmt_ready,
         },
         details=f"Deployment readiness: {report.readiness_score}% "
-                f"({report.items_passed}/{report.items_total} items)",
+        f"({report.items_passed}/{report.items_total} items)",
     )
 
     # Add findings for failed items
     for item in report.checklist:
         if not item.passed:
-            severity = (
-                AuditSeverity.HIGH if item.category in ["environment", "backup"]
-                else AuditSeverity.MEDIUM
-            )
+            severity = AuditSeverity.HIGH if item.category in ["environment", "backup"] else AuditSeverity.MEDIUM
 
             result.add_finding(
                 severity=severity,

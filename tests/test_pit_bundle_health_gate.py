@@ -1,18 +1,18 @@
 """Tests for pit_bundle_health gate in tools/run_daily_production.py."""
+
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
-
-import sys
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
-from tools.run_daily_production import check_pit_bundle_health, GATE_ALLOWLIST
+from tools.run_daily_production import GATE_ALLOWLIST, check_pit_bundle_health
 
 
 class TestPitBundleHealthGate:
@@ -37,6 +37,7 @@ class TestPitBundleHealthGate:
 
         # Monkey-patch REPO_ROOT for trial_records check
         import tools.run_daily_production as mod
+
         orig_root = mod.REPO_ROOT
         mod.REPO_ROOT = tmp_path
         try:
@@ -64,6 +65,7 @@ class TestPitBundleHealthGate:
         (prod / "trial_records.json").write_text("[]")
 
         import tools.run_daily_production as mod
+
         orig_root = mod.REPO_ROOT
         mod.REPO_ROOT = tmp_path
         try:
@@ -89,6 +91,7 @@ class TestPitBundleHealthGate:
         (prod / "trial_records.json").write_text("[]")
 
         import tools.run_daily_production as mod
+
         orig_root = mod.REPO_ROOT
         mod.REPO_ROOT = tmp_path
         try:
@@ -114,6 +117,7 @@ class TestPitBundleHealthGate:
         # No production_data/trial_records.json
 
         import tools.run_daily_production as mod
+
         orig_root = mod.REPO_ROOT
         mod.REPO_ROOT = tmp_path
         try:
@@ -133,6 +137,7 @@ class TestPitBundleHealthGate:
         ctgov_dir.mkdir()
 
         import tools.run_daily_production as mod
+
         orig_root = mod.REPO_ROOT
         mod.REPO_ROOT = tmp_path
         try:
@@ -152,6 +157,7 @@ class TestPitBundleHealthGate:
         ctgov_dir.mkdir()
 
         import tools.run_daily_production as mod
+
         orig_root = mod.REPO_ROOT
         mod.REPO_ROOT = tmp_path
         try:

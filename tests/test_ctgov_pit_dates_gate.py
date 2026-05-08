@@ -1,4 +1,5 @@
 """Tests for ctgov_pit_dates gate in run_daily_production.py."""
+
 from __future__ import annotations
 
 import json
@@ -10,10 +11,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 from run_daily_production import check_ctgov_pit_dates
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_trial_records(
     path: Path,
@@ -157,7 +158,8 @@ class TestCtgovPitDatesGate:
 
         # Stricter thresholds → WARN
         gate = check_ctgov_pit_dates(
-            tmp_path, "2026-02-19",
+            tmp_path,
+            "2026-02-19",
             warn_first_posted_min=0.99,
         )
         assert gate.status == "WARN"

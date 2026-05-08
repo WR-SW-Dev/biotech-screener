@@ -1,4 +1,5 @@
 """Tests for _hydrate_drawdown() and _hydrate_beta_rsi() in run_screen.py."""
+
 from __future__ import annotations
 
 import csv
@@ -14,18 +15,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from run_screen import (
-    _hydrate_drawdown,
-    _hydrate_beta_rsi,
-    MIN_BARS_FOR_ESTIMATE,
     BETA_WINDOW,
+    MIN_BARS_FOR_ESTIMATE,
     MIN_OVERLAP_BARS,
     XBI_STALE_THRESHOLD,
+    _hydrate_beta_rsi,
+    _hydrate_drawdown,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_rec(
     ticker: str,
@@ -56,6 +57,7 @@ def _write_price_csv(path: Path, rows: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 # Step A: key normalization
 # ---------------------------------------------------------------------------
+
 
 class TestKeyNormalization:
 
@@ -113,9 +115,15 @@ class TestKeyNormalization:
 
     def test_non_numeric_alt_key_skipped(self):
         """Non-numeric alt-key is skipped; falls through to next alt or CSV."""
-        recs = {"V": {"ticker": "V", "defensive_features": {
-            "drawdown_current": "bad", "drawdown_60d": "-0.15",
-        }}}
+        recs = {
+            "V": {
+                "ticker": "V",
+                "defensive_features": {
+                    "drawdown_current": "bad",
+                    "drawdown_60d": "-0.15",
+                },
+            }
+        }
         n = _hydrate_drawdown(recs, None, "2025-06-01")
         assert n == 1
         dd = recs["V"]["defensive_features"]["drawdown"]
@@ -134,19 +142,20 @@ class TestKeyNormalization:
 # Step B: compute from price_history.csv
 # ---------------------------------------------------------------------------
 
+
 class TestComputeFromPriceHistory:
 
     def test_basic_computation(self):
         """Drawdown computed as (current / peak) - 1.0."""
         from datetime import date, timedelta
+
         recs = {"XYZ": _make_rec("XYZ")}
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "price_history.csv"
             # Build MIN_BARS_FOR_ESTIMATE bars: flat at 100, then peak at 100, last at 80
             base = date(2024, 6, 1)
             prices = [
-                {"ticker": "XYZ", "date": (base + timedelta(days=i)).isoformat(),
-                 "close": "100"}
+                {"ticker": "XYZ", "date": (base + timedelta(days=i)).isoformat(), "close": "100"}
                 for i in range(MIN_BARS_FOR_ESTIMATE - 1)
             ]
             # Last bar: drop to 80 → dd = (80 / 100) - 1.0 = -0.20
@@ -160,6 +169,7 @@ class TestComputeFromPriceHistory:
     def test_pit_safety(self):
         """Future dates (after as_of_date) are excluded."""
         from datetime import date, timedelta
+
         recs = {"PIT": _make_rec("PIT")}
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "price_history.csv"
@@ -167,8 +177,7 @@ class TestComputeFromPriceHistory:
             base = date(2024, 6, 1)
             as_of = date(2025, 6, 1)
             prices = [
-                {"ticker": "PIT", "date": (base + timedelta(days=i)).isoformat(),
-                 "close": "100"}
+                {"ticker": "PIT", "date": (base + timedelta(days=i)).isoformat(), "close": "100"}
                 for i in range(MIN_BARS_FOR_ESTIMATE - 1)
             ]
             # Last bar on as_of_date at 80
@@ -193,13 +202,13 @@ class TestComputeFromPriceHistory:
     def test_csv_overwrites_normalized_value(self):
         """When price CSV has data, CSV-computed drawdown overwrites pipeline value."""
         from datetime import date, timedelta
+
         recs = {"NORM": _make_rec("NORM", drawdown_current=-0.10)}
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "price_history.csv"
             base = date(2024, 6, 1)
             prices = [
-                {"ticker": "NORM", "date": (base + timedelta(days=i)).isoformat(),
-                 "close": "100"}
+                {"ticker": "NORM", "date": (base + timedelta(days=i)).isoformat(), "close": "100"}
                 for i in range(MIN_BARS_FOR_ESTIMATE - 1)
             ]
             last_date = (base + timedelta(days=MIN_BARS_FOR_ESTIMATE - 1)).isoformat()
@@ -227,6 +236,7 @@ class TestComputeFromPriceHistory:
 # Min-bars threshold and missing-reason tracking
 # ---------------------------------------------------------------------------
 
+
 class TestMinBarsAndMissingReason:
 
     def test_series_too_short_marked_missing(self):
@@ -236,8 +246,7 @@ class TestMinBarsAndMissingReason:
             csv_path = Path(tmp) / "price_history.csv"
             # Generate 50 daily prices
             prices = [
-                {"ticker": "SHORT", "date": f"2025-{(i // 28) + 1:02d}-{(i % 28) + 1:02d}",
-                 "close": str(100 + i)}
+                {"ticker": "SHORT", "date": f"2025-{(i // 28) + 1:02d}-{(i % 28) + 1:02d}", "close": str(100 + i)}
                 for i in range(50)
             ]
             _write_price_csv(csv_path, prices)
@@ -252,10 +261,14 @@ class TestMinBarsAndMissingReason:
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "price_history.csv"
             from datetime import date, timedelta
+
             base = date(2024, 6, 1)
             prices = [
-                {"ticker": "GOOD", "date": (base + timedelta(days=i)).isoformat(),
-                 "close": str(100.0)}  # flat → dd = 0.0
+                {
+                    "ticker": "GOOD",
+                    "date": (base + timedelta(days=i)).isoformat(),
+                    "close": str(100.0),
+                }  # flat → dd = 0.0
                 for i in range(MIN_BARS_FOR_ESTIMATE)
             ]
             _write_price_csv(csv_path, prices)
@@ -271,9 +284,12 @@ class TestMinBarsAndMissingReason:
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "price_history.csv"
             # CSV exists but has no rows for ABSENT
-            _write_price_csv(csv_path, [
-                {"ticker": "OTHER", "date": "2025-01-01", "close": "100"},
-            ])
+            _write_price_csv(
+                csv_path,
+                [
+                    {"ticker": "OTHER", "date": "2025-01-01", "close": "100"},
+                ],
+            )
             n = _hydrate_drawdown(recs, csv_path, "2025-06-01")
         assert n == 0
         assert recs["ABSENT"]["defensive_features"].get("drawdown") is None
@@ -306,16 +322,16 @@ class TestMinBarsAndMissingReason:
 # Alias resolution (dot↔dash symbol normalization)
 # ---------------------------------------------------------------------------
 
+
 class TestAliasResolution:
 
     def _make_alias_prices(self, csv_ticker: str, n_bars: int = MIN_BARS_FOR_ESTIMATE):
         """Build price rows for a given CSV ticker with enough bars."""
         from datetime import date, timedelta
+
         base = date(2024, 6, 1)
         prices = [
-            {"ticker": csv_ticker,
-             "date": (base + timedelta(days=i)).isoformat(),
-             "close": "100"}
+            {"ticker": csv_ticker, "date": (base + timedelta(days=i)).isoformat(), "close": "100"}
             for i in range(n_bars - 1)
         ]
         # Last bar at 80 → dd = -0.20
@@ -401,23 +417,26 @@ class TestAliasResolution:
 # XBI drawdown + relative drawdown
 # ---------------------------------------------------------------------------
 
+
 class TestXbiRelativeDrawdown:
 
     @staticmethod
-    def _make_prices(ticker: str, n_bars: int, start_price: float = 10.0,
-                     end_price: float = 8.0):
+    def _make_prices(ticker: str, n_bars: int, start_price: float = 10.0, end_price: float = 8.0):
         """Generate a linearly declining price series."""
         from datetime import date, timedelta
+
         base = date(2025, 6, 1)
         rows = []
         for i in range(n_bars):
             frac = i / max(n_bars - 1, 1)
             price = start_price + (end_price - start_price) * frac
-            rows.append({
-                "ticker": ticker,
-                "date": (base + timedelta(days=i)).isoformat(),
-                "close": f"{price:.4f}",
-            })
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "date": (base + timedelta(days=i)).isoformat(),
+                    "close": f"{price:.4f}",
+                }
+            )
         return rows, (base + timedelta(days=n_bars - 1)).isoformat()
 
     def test_xbi_drawdown_populated(self):
@@ -466,6 +485,7 @@ class TestXbiRelativeDrawdown:
 # Regression: stale pipeline drawdown overwrite (KRYS case)
 # ---------------------------------------------------------------------------
 
+
 class TestStaleDrawdownOverwrite:
     """Regression tests for the KRYS bug: Morningstar pipeline provided stale
     drawdown (-45.8%) while price_history.csv showed only -5.3%.  The fix
@@ -476,16 +496,19 @@ class TestStaleDrawdownOverwrite:
     @staticmethod
     def _make_prices(ticker, n_bars, start_price, end_price):
         from datetime import date, timedelta
+
         base = date(2025, 6, 1)
         rows = []
         for i in range(n_bars):
             frac = i / max(n_bars - 1, 1)
             price = start_price + (end_price - start_price) * frac
-            rows.append({
-                "ticker": ticker,
-                "date": (base + timedelta(days=i)).isoformat(),
-                "close": f"{price:.4f}",
-            })
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "date": (base + timedelta(days=i)).isoformat(),
+                    "close": f"{price:.4f}",
+                }
+            )
         return rows, (base + timedelta(days=n_bars - 1)).isoformat()
 
     def test_stale_pipeline_drawdown_overwritten(self):
@@ -566,9 +589,9 @@ class TestStaleDrawdownOverwrite:
     def test_multiple_tickers_all_recomputed(self):
         """All tickers with price data get fresh drawdowns, not just missing."""
         recs = {
-            "FRESH": _make_rec("FRESH", drawdown=-0.80),   # stale, overstated
-            "STALE": _make_rec("STALE", drawdown=-0.05),   # stale, understated
-            "EMPTY": _make_rec("EMPTY"),                     # missing
+            "FRESH": _make_rec("FRESH", drawdown=-0.80),  # stale, overstated
+            "STALE": _make_rec("STALE", drawdown=-0.05),  # stale, understated
+            "EMPTY": _make_rec("EMPTY"),  # missing
         }
         fresh_prices, last_date = self._make_prices("FRESH", 200, 100.0, 90.0)
         stale_prices, _ = self._make_prices("STALE", 200, 100.0, 50.0)
@@ -588,12 +611,14 @@ class TestStaleDrawdownOverwrite:
 # RSI Overwrite Tests (_hydrate_beta_rsi)
 # ===========================================================================
 
+
 def _make_rsi_prices(ticker: str, n_bars: int, start_close: float = 50.0):
     """Generate price series suitable for RSI computation.
 
     Alternates between up/down moves to produce a mid-range RSI (~50).
     """
     from datetime import date, timedelta
+
     rows = []
     d = date(2026, 1, 1)
     close = start_close
@@ -714,6 +739,7 @@ class TestRsiOverwrite:
 # Beta / Alpha Overwrite Tests (_hydrate_beta_rsi)
 # ===========================================================================
 
+
 def _make_aligned_prices(
     ticker: str,
     n_bars: int = 80,
@@ -730,6 +756,7 @@ def _make_aligned_prices(
     Returns (all_rows, last_date, xbi_last_date).
     """
     from datetime import date, timedelta
+
     rows = []
     d = date(2026, 1, 1)
     t_close = ticker_start
@@ -737,11 +764,9 @@ def _make_aligned_prices(
     xbi_last = None
     for i in range(n_bars):
         day_str = d.isoformat()
-        rows.append({"ticker": ticker, "date": day_str,
-                      "close": round(t_close, 4)})
+        rows.append({"ticker": ticker, "date": day_str, "close": round(t_close, 4)})
         if i < n_bars - xbi_ends_early:
-            rows.append({"ticker": "XBI", "date": day_str,
-                          "close": round(x_close, 4)})
+            rows.append({"ticker": "XBI", "date": day_str, "close": round(x_close, 4)})
             xbi_last = day_str
         d += timedelta(days=1)
         # Ticker: +0.5% per bar, XBI: +0.3% per bar
@@ -780,11 +805,7 @@ class TestBetaAlphaOverwrite:
             "ACME": {
                 "ticker": "ACME",
                 "defensive_features": {},
-                "score_breakdown": {
-                    "enhancements": {
-                        "momentum": {"alpha_60d": 0.999}  # stale pipeline
-                    }
-                },
+                "score_breakdown": {"enhancements": {"momentum": {"alpha_60d": 0.999}}},  # stale pipeline
             },
         }
         prices, last_date, _ = _make_aligned_prices("ACME", n_bars=80)
@@ -808,7 +829,9 @@ class TestBetaAlphaOverwrite:
             },
         }
         prices, last_date, _ = _make_aligned_prices(
-            "ACME", n_bars=80, xbi_ends_early=gap,
+            "ACME",
+            n_bars=80,
+            xbi_ends_early=gap,
         )
         with tempfile.TemporaryDirectory() as tmp:
             csv_path = Path(tmp) / "price_history.csv"
@@ -825,6 +848,7 @@ class TestBetaAlphaOverwrite:
     def test_no_xbi_series(self):
         """When XBI is completely absent from price CSV, mark no_xbi_series."""
         from datetime import date, timedelta
+
         recs = {
             "ALONE": {
                 "ticker": "ALONE",
@@ -849,6 +873,7 @@ class TestBetaAlphaOverwrite:
     def test_insufficient_overlap(self):
         """When overlap bars < MIN_OVERLAP_BARS, mark insufficient_overlap."""
         from datetime import date, timedelta
+
         recs = {
             "SHORT": {
                 "ticker": "SHORT",

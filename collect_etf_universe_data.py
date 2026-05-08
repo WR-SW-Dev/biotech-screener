@@ -11,27 +11,28 @@ Usage:
 
 import argparse
 import json
+import subprocess
 import sys
 import time
-import requests
-from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Optional
-import subprocess
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import requests
 
 # Try to import yfinance for financial data
 try:
     import yfinance as yf
+
     HAS_YFINANCE = True
 except ImportError:
     HAS_YFINANCE = False
 
 # Try to import yahoo_collector for market data
 try:
-    from wake_robin_data_pipeline.collectors.yahoo_collector import (
-        collect_yahoo_data,
-        collect_batch as yahoo_collect_batch,
-    )
+    from wake_robin_data_pipeline.collectors.yahoo_collector import collect_batch as yahoo_collect_batch
+    from wake_robin_data_pipeline.collectors.yahoo_collector import collect_yahoo_data
+
     HAS_YAHOO_COLLECTOR = True
 except ImportError:
     HAS_YAHOO_COLLECTOR = False
@@ -39,10 +40,10 @@ except ImportError:
 
 def load_ticker_list(universe_file: str) -> List[str]:
     """Load tickers from universe template."""
-    with open(universe_file, 'r') as f:
+    with open(universe_file, "r") as f:
         data = json.load(f)
-    
-    tickers = [sec['ticker'] for sec in data]
+
+    tickers = [sec["ticker"] for sec in data]
     print(f"Loaded {len(tickers)} tickers from {universe_file}")
     return tickers
 
@@ -57,9 +58,9 @@ def collect_market_data_batch(tickers: List[str], as_of_date: str, output_dir: P
     - Volume data
     - Balance sheet basics (for supplementary data)
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("COLLECTING MARKET DATA (defensive_features)")
-    print("="*80)
+    print("=" * 80)
     print(f"Tickers: {len(tickers)}")
     print(f"As of date: {as_of_date}")
 
@@ -73,7 +74,7 @@ def collect_market_data_batch(tickers: List[str], as_of_date: str, output_dir: P
             "status": "error",
             "message": "yahoo_collector not available",
             "tickers": len(tickers),
-            "output": str(market_data_file)
+            "output": str(market_data_file),
         }
 
     try:
@@ -85,30 +86,34 @@ def collect_market_data_batch(tickers: List[str], as_of_date: str, output_dir: P
         market_data = []
         successful = 0
         for ticker, data in results.items():
-            if data.get('success'):
+            if data.get("success"):
                 successful += 1
-                market_data.append({
-                    "ticker": ticker,
-                    "price": data.get('price', {}).get('current'),
-                    "market_cap": data.get('market_cap', {}).get('value'),
-                    "52_week_high": data.get('price', {}).get('52_week_high'),
-                    "52_week_low": data.get('price', {}).get('52_week_low'),
-                    "volume_avg_30d": data.get('volume', {}).get('average_30d'),
-                    "shares_outstanding": data.get('shares_outstanding'),
-                    "balance_sheet": data.get('balance_sheet', {}),
-                    "cash_flow": data.get('cash_flow', {}),
-                    "collected_at": datetime.now().isoformat(),
-                    "source": "yahoo_collector",
-                })
+                market_data.append(
+                    {
+                        "ticker": ticker,
+                        "price": data.get("price", {}).get("current"),
+                        "market_cap": data.get("market_cap", {}).get("value"),
+                        "52_week_high": data.get("price", {}).get("52_week_high"),
+                        "52_week_low": data.get("price", {}).get("52_week_low"),
+                        "volume_avg_30d": data.get("volume", {}).get("average_30d"),
+                        "shares_outstanding": data.get("shares_outstanding"),
+                        "balance_sheet": data.get("balance_sheet", {}),
+                        "cash_flow": data.get("cash_flow", {}),
+                        "collected_at": datetime.now().isoformat(),
+                        "source": "yahoo_collector",
+                    }
+                )
             else:
-                market_data.append({
-                    "ticker": ticker,
-                    "error": data.get('error', 'Unknown error'),
-                    "collected_at": datetime.now().isoformat(),
-                })
+                market_data.append(
+                    {
+                        "ticker": ticker,
+                        "error": data.get("error", "Unknown error"),
+                        "collected_at": datetime.now().isoformat(),
+                    }
+                )
 
         # Save to file
-        with open(market_data_file, 'w') as f:
+        with open(market_data_file, "w") as f:
             json.dump(market_data, f, indent=2)
 
         print(f"\nMarket data collected: {successful}/{len(tickers)} successful")
@@ -119,19 +124,15 @@ def collect_market_data_batch(tickers: List[str], as_of_date: str, output_dir: P
             "message": f"Collected {successful}/{len(tickers)} tickers",
             "tickers": len(tickers),
             "successful": successful,
-            "output": str(market_data_file)
+            "output": str(market_data_file),
         }
 
     except Exception as e:
         print(f"\nERROR collecting market data: {e}")
         import traceback
+
         traceback.print_exc()
-        return {
-            "status": "error",
-            "message": str(e),
-            "tickers": len(tickers),
-            "output": str(market_data_file)
-        }
+        return {"status": "error", "message": str(e), "tickers": len(tickers), "output": str(market_data_file)}
 
 
 def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir: Path) -> Dict:
@@ -145,9 +146,9 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
     - R&D expense
     - Total assets/liabilities
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("COLLECTING FINANCIAL DATA")
-    print("="*80)
+    print("=" * 80)
     print(f"Tickers: {len(tickers)}")
     print(f"As of date: {as_of_date}")
 
@@ -160,7 +161,7 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
             "status": "error",
             "message": "yfinance not available",
             "tickers": len(tickers),
-            "output": str(financial_data_file)
+            "output": str(financial_data_file),
         }
 
     try:
@@ -184,7 +185,9 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
 
                 if bs is not None and not bs.empty:
                     latest_col = bs.columns[0]
-                    period_date = latest_col.strftime('%Y-%m-%d') if hasattr(latest_col, 'strftime') else str(latest_col)
+                    period_date = (
+                        latest_col.strftime("%Y-%m-%d") if hasattr(latest_col, "strftime") else str(latest_col)
+                    )
                     record["period_date"] = period_date
 
                     # Helper to safely get values
@@ -194,18 +197,22 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
                         for key in keys:
                             if key in bs.index:
                                 val = bs.loc[key, latest_col]
-                                if val is not None and str(val) != 'nan':
+                                if val is not None and str(val) != "nan":
                                     return float(val)
                         return None
 
-                    record["cash"] = get_bs_value(['Cash And Cash Equivalents'])
-                    record["total_liquidity"] = get_bs_value(['Cash Cash Equivalents And Short Term Investments'])
-                    record["total_assets"] = get_bs_value(['Total Assets'])
-                    record["total_liabilities"] = get_bs_value(['Total Liabilities Net Minority Interest', 'Current Liabilities'])
-                    record["stockholders_equity"] = get_bs_value(['Stockholders Equity', 'Common Stock Equity'])
-                    record["long_term_debt"] = get_bs_value(['Long Term Debt', 'Long Term Debt And Capital Lease Obligation'])
-                    record["current_debt"] = get_bs_value(['Current Debt', 'Current Debt And Capital Lease Obligation'])
-                    record["total_debt"] = get_bs_value(['Total Debt'])
+                    record["cash"] = get_bs_value(["Cash And Cash Equivalents"])
+                    record["total_liquidity"] = get_bs_value(["Cash Cash Equivalents And Short Term Investments"])
+                    record["total_assets"] = get_bs_value(["Total Assets"])
+                    record["total_liabilities"] = get_bs_value(
+                        ["Total Liabilities Net Minority Interest", "Current Liabilities"]
+                    )
+                    record["stockholders_equity"] = get_bs_value(["Stockholders Equity", "Common Stock Equity"])
+                    record["long_term_debt"] = get_bs_value(
+                        ["Long Term Debt", "Long Term Debt And Capital Lease Obligation"]
+                    )
+                    record["current_debt"] = get_bs_value(["Current Debt", "Current Debt And Capital Lease Obligation"])
+                    record["total_debt"] = get_bs_value(["Total Debt"])
 
                     # Aggregate total debt if not directly available
                     if record["total_debt"] is None:
@@ -227,12 +234,14 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
                         for key in keys:
                             if key in cf.index:
                                 val = cf.loc[key, latest_col]
-                                if val is not None and str(val) != 'nan':
+                                if val is not None and str(val) != "nan":
                                     return float(val)
                         return None
 
-                    record["operating_cash_flow"] = get_cf_value(['Operating Cash Flow', 'Cash Flow From Continuing Operating Activities'])
-                    record["free_cash_flow"] = get_cf_value(['Free Cash Flow'])
+                    record["operating_cash_flow"] = get_cf_value(
+                        ["Operating Cash Flow", "Cash Flow From Continuing Operating Activities"]
+                    )
+                    record["free_cash_flow"] = get_cf_value(["Free Cash Flow"])
 
                 # Calculate runway if we have cash and burn
                 if record.get("total_liquidity") and record.get("operating_cash_flow"):
@@ -240,7 +249,9 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
                     if ocf < 0:  # Negative CFO = burning cash
                         quarterly_burn = abs(ocf)
                         record["quarterly_burn"] = quarterly_burn
-                        record["runway_quarters"] = record["total_liquidity"] / quarterly_burn if quarterly_burn > 0 else None
+                        record["runway_quarters"] = (
+                            record["total_liquidity"] / quarterly_burn if quarterly_burn > 0 else None
+                        )
 
                 record["collected_at"] = datetime.now().isoformat()
                 record["source"] = "yfinance"
@@ -248,7 +259,7 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
                 # Check if we got meaningful data
                 if record.get("cash") or record.get("total_assets"):
                     successful += 1
-                    cash_str = f"${record.get('cash', 0)/1e9:.2f}B" if record.get('cash') else "N/A"
+                    cash_str = f"${record.get('cash', 0)/1e9:.2f}B" if record.get("cash") else "N/A"
                     print(f"OK Cash: {cash_str}")
                 else:
                     print(f"No financial data")
@@ -257,18 +268,20 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
 
             except Exception as e:
                 print(f"ERROR: {e}")
-                financial_data.append({
-                    "ticker": ticker,
-                    "error": str(e),
-                    "collected_at": datetime.now().isoformat(),
-                })
+                financial_data.append(
+                    {
+                        "ticker": ticker,
+                        "error": str(e),
+                        "collected_at": datetime.now().isoformat(),
+                    }
+                )
 
             # Rate limit
             if i < total:
                 time.sleep(0.3)
 
         # Save to file
-        with open(financial_data_file, 'w') as f:
+        with open(financial_data_file, "w") as f:
             json.dump(financial_data, f, indent=2)
 
         print(f"\nFinancial data collected: {successful}/{total} successful")
@@ -279,19 +292,15 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
             "message": f"Collected {successful}/{total} tickers",
             "tickers": total,
             "successful": successful,
-            "output": str(financial_data_file)
+            "output": str(financial_data_file),
         }
 
     except Exception as e:
         print(f"\nERROR collecting financial data: {e}")
         import traceback
+
         traceback.print_exc()
-        return {
-            "status": "error",
-            "message": str(e),
-            "tickers": len(tickers),
-            "output": str(financial_data_file)
-        }
+        return {"status": "error", "message": str(e), "tickers": len(tickers), "output": str(financial_data_file)}
 
 
 def fetch_ctgov_trials_for_sponsor(sponsor_name: str) -> List[Dict]:
@@ -303,7 +312,7 @@ def fetch_ctgov_trials_for_sponsor(sponsor_name: str) -> List[Dict]:
     params = {
         "query.spons": sponsor_name,
         "pageSize": 100,
-        "fields": "NCTId,BriefTitle,Phase,OverallStatus,Condition,StartDate,PrimaryCompletionDate,LastUpdatePostDate,ResultsFirstPostDate"
+        "fields": "NCTId,BriefTitle,Phase,OverallStatus,Condition,StartDate,PrimaryCompletionDate,LastUpdatePostDate,ResultsFirstPostDate",
     }
 
     try:
@@ -348,9 +357,9 @@ def collect_clinical_data_batch(tickers: List[str], as_of_date: str, output_dir:
     - Phase, status, conditions
     - Key date fields for PIT filtering
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("COLLECTING CLINICAL DATA (ClinicalTrials.gov API v2)")
-    print("="*80)
+    print("=" * 80)
     print(f"Tickers: {len(tickers)}")
     print(f"As of date: {as_of_date}")
 
@@ -395,7 +404,7 @@ def collect_clinical_data_batch(tickers: List[str], as_of_date: str, output_dir:
                 time.sleep(1.0)
 
         # Save to file
-        with open(clinical_data_file, 'w') as f:
+        with open(clinical_data_file, "w") as f:
             json.dump(all_trials, f, indent=2)
 
         print(f"\nClinical data collected:")
@@ -409,97 +418,91 @@ def collect_clinical_data_batch(tickers: List[str], as_of_date: str, output_dir:
             "tickers": total,
             "tickers_with_trials": successful,
             "total_trials": total_trials,
-            "output": str(clinical_data_file)
+            "output": str(clinical_data_file),
         }
 
     except Exception as e:
         print(f"\nERROR collecting clinical data: {e}")
         import traceback
+
         traceback.print_exc()
-        return {
-            "status": "error",
-            "message": str(e),
-            "tickers": len(tickers),
-            "output": str(clinical_data_file)
-        }
+        return {"status": "error", "message": str(e), "tickers": len(tickers), "output": str(clinical_data_file)}
 
 
 def build_universe_snapshot(output_dir: Path, as_of_date: str) -> str:
     """
     Combine all collected data into final universe snapshot.
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("BUILDING UNIVERSE SNAPSHOT")
-    print("="*80)
-    
+    print("=" * 80)
+
     output_file = output_dir / f"universe_snapshot_{as_of_date}.json"
-    
+
     print(f"Combining data sources:")
     print(f"  • Market data (defensive_features)")
     print(f"  • Financial data (cash, burn, runway)")
     print(f"  • Clinical data (lead programs)")
-    
+
     print(f"\nOutput: {output_file}")
     print("TO IMPLEMENT: Merge all data sources into final universe structure")
-    
+
     return str(output_file)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Collect ETF universe data")
-    parser.add_argument("--universe-file", default="etf_universe_template.json",
-                       help="Universe template file")
+    parser.add_argument("--universe-file", default="etf_universe_template.json", help="Universe template file")
     parser.add_argument("--as-of-date", required=True, help="Date YYYY-MM-DD")
-    parser.add_argument("--output-dir", default="etf_universe_data",
-                       help="Output directory")
+    parser.add_argument("--output-dir", default="etf_universe_data", help="Output directory")
     parser.add_argument("--skip-market", action="store_true", help="Skip market data collection")
     parser.add_argument("--skip-financial", action="store_true", help="Skip financial data collection")
     parser.add_argument("--skip-clinical", action="store_true", help="Skip clinical data collection")
     args = parser.parse_args()
-    
+
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
-    
-    print("="*80)
+
+    print("=" * 80)
     print("ETF UNIVERSE DATA COLLECTION")
-    print("="*80)
+    print("=" * 80)
     print(f"As of date: {args.as_of_date}")
     print(f"Output directory: {args.output_dir}")
     print()
-    
+
     # Load tickers
     tickers = load_ticker_list(args.universe_file)
-    
+
     # Collect data
     results = {}
-    
+
     if not args.skip_market:
-        results['market'] = collect_market_data_batch(tickers, args.as_of_date, output_dir)
-    
+        results["market"] = collect_market_data_batch(tickers, args.as_of_date, output_dir)
+
     if not args.skip_financial:
-        results['financial'] = collect_financial_data_batch(tickers, args.as_of_date, output_dir)
-    
+        results["financial"] = collect_financial_data_batch(tickers, args.as_of_date, output_dir)
+
     if not args.skip_clinical:
-        results['clinical'] = collect_clinical_data_batch(tickers, args.as_of_date, output_dir)
-    
+        results["clinical"] = collect_clinical_data_batch(tickers, args.as_of_date, output_dir)
+
     # Build final universe
     universe_file = build_universe_snapshot(output_dir, args.as_of_date)
-    
+
     # Summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("COLLECTION SUMMARY")
-    print("="*80)
+    print("=" * 80)
     print(f"Tickers processed: {len(tickers)}")
     print(f"Data collected:")
     for data_type, result in results.items():
         print(f"  • {data_type}: {result['status']}")
-    
+
     print(f"\nFinal universe: {universe_file}")
-    
-    print("\n" + "="*80)
+
+    print("\n" + "=" * 80)
     print("NEXT STEPS")
-    print("="*80)
+    print("=" * 80)
     print("\n1. IMPLEMENT DATA COLLECTION:")
     print("   This script is a FRAMEWORK - you need to add:")
     print("   - Market data fetching (Yahoo Finance, Alpha Vantage, etc.)")

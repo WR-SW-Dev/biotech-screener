@@ -8,26 +8,23 @@ Covers:
 - Instability diagnosis
 """
 
-import pytest
-from datetime import date
-from pathlib import Path
-from typing import Dict, Any, List
-from statistics import mean
-
 # Import module under test
 import sys
+from datetime import date
+from pathlib import Path
+from statistics import mean
+from typing import Any, Dict, List
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backtest.stability_attribution import (
-    compute_monthly_deltas,
-    compute_stability_attribution,
-    diagnose_instability,
-)
-
+from backtest.stability_attribution import compute_monthly_deltas, compute_stability_attribution, diagnose_instability
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def snapshot_pair():
@@ -36,29 +33,71 @@ def snapshot_pair():
         {
             "as_of_date": "2026-01-15",
             "ranked_securities": [
-                {"ticker": "ACME", "composite_rank": 1, "composite_score": 85,
-                 "clinical_dev_normalized": 80, "financial_normalized": 85,
-                 "catalyst_normalized": 90, "uncertainty_penalty": 0.05, "severity": "none"},
-                {"ticker": "BETA", "composite_rank": 2, "composite_score": 75,
-                 "clinical_dev_normalized": 70, "financial_normalized": 80,
-                 "catalyst_normalized": 75, "uncertainty_penalty": 0.10, "severity": "none"},
-                {"ticker": "GAMA", "composite_rank": 3, "composite_score": 65,
-                 "clinical_dev_normalized": 60, "financial_normalized": 70,
-                 "catalyst_normalized": 65, "uncertainty_penalty": 0.15, "severity": "sev1"},
+                {
+                    "ticker": "ACME",
+                    "composite_rank": 1,
+                    "composite_score": 85,
+                    "clinical_dev_normalized": 80,
+                    "financial_normalized": 85,
+                    "catalyst_normalized": 90,
+                    "uncertainty_penalty": 0.05,
+                    "severity": "none",
+                },
+                {
+                    "ticker": "BETA",
+                    "composite_rank": 2,
+                    "composite_score": 75,
+                    "clinical_dev_normalized": 70,
+                    "financial_normalized": 80,
+                    "catalyst_normalized": 75,
+                    "uncertainty_penalty": 0.10,
+                    "severity": "none",
+                },
+                {
+                    "ticker": "GAMA",
+                    "composite_rank": 3,
+                    "composite_score": 65,
+                    "clinical_dev_normalized": 60,
+                    "financial_normalized": 70,
+                    "catalyst_normalized": 65,
+                    "uncertainty_penalty": 0.15,
+                    "severity": "sev1",
+                },
             ],
         },
         {
             "as_of_date": "2026-02-15",
             "ranked_securities": [
-                {"ticker": "ACME", "composite_rank": 1, "composite_score": 90,  # Increased
-                 "clinical_dev_normalized": 85, "financial_normalized": 88,
-                 "catalyst_normalized": 97, "uncertainty_penalty": 0.03, "severity": "none"},
-                {"ticker": "BETA", "composite_rank": 3, "composite_score": 70,  # Dropped
-                 "clinical_dev_normalized": 65, "financial_normalized": 75,
-                 "catalyst_normalized": 70, "uncertainty_penalty": 0.12, "severity": "sev1"},  # Severity changed
-                {"ticker": "GAMA", "composite_rank": 2, "composite_score": 72,  # Rose
-                 "clinical_dev_normalized": 68, "financial_normalized": 76,
-                 "catalyst_normalized": 72, "uncertainty_penalty": 0.10, "severity": "none"},  # Severity improved
+                {
+                    "ticker": "ACME",
+                    "composite_rank": 1,
+                    "composite_score": 90,  # Increased
+                    "clinical_dev_normalized": 85,
+                    "financial_normalized": 88,
+                    "catalyst_normalized": 97,
+                    "uncertainty_penalty": 0.03,
+                    "severity": "none",
+                },
+                {
+                    "ticker": "BETA",
+                    "composite_rank": 3,
+                    "composite_score": 70,  # Dropped
+                    "clinical_dev_normalized": 65,
+                    "financial_normalized": 75,
+                    "catalyst_normalized": 70,
+                    "uncertainty_penalty": 0.12,
+                    "severity": "sev1",
+                },  # Severity changed
+                {
+                    "ticker": "GAMA",
+                    "composite_rank": 2,
+                    "composite_score": 72,  # Rose
+                    "clinical_dev_normalized": 68,
+                    "financial_normalized": 76,
+                    "catalyst_normalized": 72,
+                    "uncertainty_penalty": 0.10,
+                    "severity": "none",
+                },  # Severity improved
             ],
         },
     )
@@ -71,15 +110,36 @@ def sample_snapshots(snapshot_pair):
     snap3 = {
         "as_of_date": "2026-03-15",
         "ranked_securities": [
-            {"ticker": "ACME", "composite_rank": 2, "composite_score": 82,
-             "clinical_dev_normalized": 78, "financial_normalized": 82,
-             "catalyst_normalized": 86, "uncertainty_penalty": 0.08, "severity": "none"},
-            {"ticker": "BETA", "composite_rank": 1, "composite_score": 88,
-             "clinical_dev_normalized": 82, "financial_normalized": 90,
-             "catalyst_normalized": 92, "uncertainty_penalty": 0.05, "severity": "none"},
-            {"ticker": "GAMA", "composite_rank": 3, "composite_score": 68,
-             "clinical_dev_normalized": 62, "financial_normalized": 72,
-             "catalyst_normalized": 70, "uncertainty_penalty": 0.12, "severity": "sev1"},
+            {
+                "ticker": "ACME",
+                "composite_rank": 2,
+                "composite_score": 82,
+                "clinical_dev_normalized": 78,
+                "financial_normalized": 82,
+                "catalyst_normalized": 86,
+                "uncertainty_penalty": 0.08,
+                "severity": "none",
+            },
+            {
+                "ticker": "BETA",
+                "composite_rank": 1,
+                "composite_score": 88,
+                "clinical_dev_normalized": 82,
+                "financial_normalized": 90,
+                "catalyst_normalized": 92,
+                "uncertainty_penalty": 0.05,
+                "severity": "none",
+            },
+            {
+                "ticker": "GAMA",
+                "composite_rank": 3,
+                "composite_score": 68,
+                "clinical_dev_normalized": 62,
+                "financial_normalized": 72,
+                "catalyst_normalized": 70,
+                "uncertainty_penalty": 0.12,
+                "severity": "sev1",
+            },
         ],
     }
     return [snap1, snap2, snap3]
@@ -97,6 +157,7 @@ def rank_stability_results():
 # ============================================================================
 # MONTHLY DELTAS
 # ============================================================================
+
 
 class TestMonthlyDeltas:
     """Tests for compute_monthly_deltas function."""
@@ -173,7 +234,7 @@ class TestMonthlyDeltas:
 
         top_movers = result["top_movers"]
         for i in range(1, len(top_movers)):
-            assert abs(top_movers[i-1]["Δcomposite"]) >= abs(top_movers[i]["Δcomposite"])
+            assert abs(top_movers[i - 1]["Δcomposite"]) >= abs(top_movers[i]["Δcomposite"])
 
     def test_aggregate_attribution(self, snapshot_pair):
         """Aggregate attribution percentages sum reasonably."""
@@ -211,6 +272,7 @@ class TestMonthlyDeltas:
 # ============================================================================
 # STABILITY ATTRIBUTION
 # ============================================================================
+
 
 class TestStabilityAttribution:
     """Tests for compute_stability_attribution function."""
@@ -270,6 +332,7 @@ class TestStabilityAttribution:
 # ============================================================================
 # INSTABILITY DIAGNOSIS
 # ============================================================================
+
 
 class TestInstabilityDiagnosis:
     """Tests for diagnose_instability function."""
@@ -382,6 +445,7 @@ class TestInstabilityDiagnosis:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -449,6 +513,7 @@ class TestEdgeCases:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -468,4 +533,3 @@ class TestDeterminism:
         result2 = compute_stability_attribution(sample_snapshots)
 
         assert result1["summary"] == result2["summary"]
-

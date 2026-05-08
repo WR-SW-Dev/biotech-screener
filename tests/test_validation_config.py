@@ -7,11 +7,13 @@ criteria with qualified pass options.
 Author: Wake Robin Capital Management
 """
 
-import pytest
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 from validation.validation_config import (
+    DEFAULT_COVERAGE_TIERS,
     AdaptiveCoverageConfig,
     CoverageMode,
     CoverageTierConfig,
@@ -21,12 +23,11 @@ from validation.validation_config import (
     ValidationOutcome,
     ValidationResult,
     ValidationSummary,
-    DEFAULT_COVERAGE_TIERS,
-    get_strict_config,
-    get_standard_config,
     get_adaptive_config,
     get_lenient_config,
     get_minimal_config,
+    get_standard_config,
+    get_strict_config,
 )
 
 
@@ -85,16 +86,14 @@ class TestDefaultCoverageTiers:
         """Tiers are sorted from highest to lowest coverage."""
         for category, tiers in DEFAULT_COVERAGE_TIERS.items():
             for i in range(len(tiers) - 1):
-                assert tiers[i].min_coverage_pct >= tiers[i + 1].min_coverage_pct, (
-                    f"Tiers in {category} not sorted descending"
-                )
+                assert (
+                    tiers[i].min_coverage_pct >= tiers[i + 1].min_coverage_pct
+                ), f"Tiers in {category} not sorted descending"
 
     def test_lowest_tier_is_zero(self):
         """Lowest tier in each category starts at 0."""
         for category, tiers in DEFAULT_COVERAGE_TIERS.items():
-            assert tiers[-1].min_coverage_pct == Decimal("0.00"), (
-                f"Lowest tier in {category} should be 0"
-            )
+            assert tiers[-1].min_coverage_pct == Decimal("0.00"), f"Lowest tier in {category} should be 0"
 
 
 class TestAdaptiveCoverageConfig:
@@ -122,9 +121,7 @@ class TestAdaptiveCoverageConfig:
     def test_get_confidence_for_coverage_excellent(self):
         """Excellent coverage returns full confidence."""
         config = AdaptiveCoverageConfig()
-        confidence, tier_name = config.get_confidence_for_coverage(
-            "financial", Decimal("0.95")
-        )
+        confidence, tier_name = config.get_confidence_for_coverage("financial", Decimal("0.95"))
         assert confidence == Decimal("1.00")
         assert tier_name == "excellent"
 
@@ -132,18 +129,14 @@ class TestAdaptiveCoverageConfig:
         """Marginal coverage returns reduced confidence."""
         config = AdaptiveCoverageConfig()
         # 0.40 falls into "minimal" tier (>= 0.35, < 0.50)
-        confidence, tier_name = config.get_confidence_for_coverage(
-            "financial", Decimal("0.40")
-        )
+        confidence, tier_name = config.get_confidence_for_coverage("financial", Decimal("0.40"))
         assert confidence < Decimal("1.00")
         assert tier_name in ("minimal", "marginal")
 
     def test_get_confidence_for_coverage_low(self):
         """Low coverage returns minimal confidence."""
         config = AdaptiveCoverageConfig()
-        confidence, tier_name = config.get_confidence_for_coverage(
-            "financial", Decimal("0.20")
-        )
+        confidence, tier_name = config.get_confidence_for_coverage("financial", Decimal("0.20"))
         assert confidence <= Decimal("0.30")
         assert tier_name in ("minimal", "insufficient")
 
@@ -376,12 +369,18 @@ class TestValidationSummary:
         summary = ValidationSummary(
             results=[
                 ValidationResult(
-                    "ic", Decimal("0.04"), ValidationOutcome.QUALIFIED_PASS, Decimal("0.05"),
-                    limitations=["IC meets qualified threshold"]
+                    "ic",
+                    Decimal("0.04"),
+                    ValidationOutcome.QUALIFIED_PASS,
+                    Decimal("0.05"),
+                    limitations=["IC meets qualified threshold"],
                 ),
                 ValidationResult(
-                    "hit_rate", Decimal("0.53"), ValidationOutcome.QUALIFIED_PASS, Decimal("0.55"),
-                    limitations=["Hit rate meets qualified threshold"]
+                    "hit_rate",
+                    Decimal("0.53"),
+                    ValidationOutcome.QUALIFIED_PASS,
+                    Decimal("0.55"),
+                    limitations=["Hit rate meets qualified threshold"],
                 ),
             ],
             sample_size=300,
@@ -441,8 +440,13 @@ class TestPresetConfigurations:
 
     def test_all_presets_return_three_configs(self):
         """All preset getters return three configuration objects."""
-        for getter in [get_strict_config, get_standard_config, get_adaptive_config,
-                       get_lenient_config, get_minimal_config]:
+        for getter in [
+            get_strict_config,
+            get_standard_config,
+            get_adaptive_config,
+            get_lenient_config,
+            get_minimal_config,
+        ]:
             result = getter()
             assert len(result) == 3
             assert isinstance(result[0], AdaptiveCoverageConfig)

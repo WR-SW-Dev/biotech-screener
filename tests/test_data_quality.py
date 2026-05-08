@@ -11,22 +11,23 @@ These tests cover:
 - Circuit breaker functionality
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from common.data_quality import (
-    DataQualityGates,
+    CircuitBreakerConfig,
+    CircuitBreakerError,
+    CircuitBreakerResult,
     DataQualityConfig,
+    DataQualityGates,
     QualityGateResult,
     ValidationResult,
-    validate_financial_staleness,
-    validate_liquidity,
     check_circuit_breaker,
     validate_batch_with_circuit_breaker,
-    CircuitBreakerConfig,
-    CircuitBreakerResult,
-    CircuitBreakerError,
+    validate_financial_staleness,
+    validate_liquidity,
 )
 
 
@@ -350,9 +351,7 @@ class TestConvenienceFunctions:
 
     def test_validate_financial_staleness_custom_threshold(self):
         """Convenience function should accept custom threshold."""
-        assert validate_financial_staleness(
-            "2026-01-10", "2026-01-15", max_age_days=3
-        ) is False
+        assert validate_financial_staleness("2026-01-10", "2026-01-15", max_age_days=3) is False
 
     def test_validate_liquidity_function(self):
         """Convenience function should work correctly."""
@@ -450,9 +449,7 @@ class TestValidateBatchWithCircuitBreaker:
         def validator(r):
             return True, []
 
-        valid, invalid, cb_result = validate_batch_with_circuit_breaker(
-            records, validator
-        )
+        valid, invalid, cb_result = validate_batch_with_circuit_breaker(records, validator)
         assert len(valid) == 3
         assert len(invalid) == 0
         assert cb_result.tripped is False
@@ -466,9 +463,7 @@ class TestValidateBatchWithCircuitBreaker:
                 return False, ["Negative value"]
             return True, []
 
-        valid, invalid, cb_result = validate_batch_with_circuit_breaker(
-            records, validator
-        )
+        valid, invalid, cb_result = validate_batch_with_circuit_breaker(records, validator)
         assert len(valid) == 2
         assert len(invalid) == 1
         assert invalid[0]["errors"] == ["Negative value"]
@@ -483,8 +478,6 @@ class TestValidateBatchWithCircuitBreaker:
                 return False, ["Too low"]
             return True, []
 
-        valid, invalid, cb_result = validate_batch_with_circuit_breaker(
-            records, validator
-        )
+        valid, invalid, cb_result = validate_batch_with_circuit_breaker(records, validator)
         assert cb_result.tripped is True
         assert cb_result.failure_rate == 0.75

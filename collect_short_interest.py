@@ -22,13 +22,14 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 # Check for yfinance
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
@@ -52,13 +53,13 @@ def get_short_interest_data(ticker: str) -> Optional[Dict[str, Any]]:
         info = stock.info
 
         # Extract short interest fields
-        short_pct_float = info.get('shortPercentOfFloat')
-        short_ratio = info.get('shortRatio')
-        shares_short = info.get('sharesShort')
-        shares_short_prior = info.get('sharesShortPriorMonth')
-        inst_pct = info.get('heldPercentInstitutions')
-        avg_volume = info.get('averageVolume')
-        date_short_interest = info.get('dateShortInterest')
+        short_pct_float = info.get("shortPercentOfFloat")
+        short_ratio = info.get("shortRatio")
+        shares_short = info.get("sharesShort")
+        shares_short_prior = info.get("sharesShortPriorMonth")
+        inst_pct = info.get("heldPercentInstitutions")
+        avg_volume = info.get("averageVolume")
+        date_short_interest = info.get("dateShortInterest")
 
         # Skip if no short interest data
         if short_pct_float is None and shares_short is None:
@@ -73,7 +74,7 @@ def get_short_interest_data(ticker: str) -> Optional[Dict[str, Any]]:
         report_date = None
         if date_short_interest:
             try:
-                report_date = datetime.fromtimestamp(date_short_interest).strftime('%Y-%m-%d')
+                report_date = datetime.fromtimestamp(date_short_interest).strftime("%Y-%m-%d")
             except (ValueError, OSError):
                 pass
 
@@ -82,13 +83,13 @@ def get_short_interest_data(ticker: str) -> Optional[Dict[str, Any]]:
             report_date = date.today().isoformat()
 
         return {
-            'ticker': ticker,
-            'short_interest_pct': round(short_pct_float * 100, 1) if short_pct_float else None,
-            'days_to_cover': round(short_ratio, 1) if short_ratio else None,
-            'short_interest_change_pct': change_pct,
-            'institutional_long_pct': round(inst_pct * 100, 1) if inst_pct else None,
-            'avg_daily_volume': avg_volume,
-            'report_date': report_date,
+            "ticker": ticker,
+            "short_interest_pct": round(short_pct_float * 100, 1) if short_pct_float else None,
+            "days_to_cover": round(short_ratio, 1) if short_ratio else None,
+            "short_interest_change_pct": change_pct,
+            "institutional_long_pct": round(inst_pct * 100, 1) if inst_pct else None,
+            "avg_daily_volume": avg_volume,
+            "report_date": report_date,
         }
 
     except Exception as e:
@@ -101,7 +102,7 @@ def load_cached_data(output_file: Path) -> tuple[List[Dict], str]:
         return [], ""
 
     try:
-        with open(output_file, 'r', encoding='utf-8') as f:
+        with open(output_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         if not data or not isinstance(data, list):
@@ -110,8 +111,8 @@ def load_cached_data(output_file: Path) -> tuple[List[Dict], str]:
         # Get report date from first valid record
         report_date = ""
         for item in data:
-            if isinstance(item, dict) and item.get('report_date'):
-                report_date = item['report_date']
+            if isinstance(item, dict) and item.get("report_date"):
+                report_date = item["report_date"]
                 break
 
         return data, report_date
@@ -166,15 +167,15 @@ def collect_short_interest(
         print(f"\n❌ ERROR: Universe file not found: {universe_file}")
         return 1
 
-    with open(universe_file, 'r', encoding='utf-8') as f:
+    with open(universe_file, "r", encoding="utf-8") as f:
         universe = json.load(f)
 
     # Extract tickers
     if isinstance(universe, list):
-        tickers = [s.get('ticker') for s in universe if s.get('ticker')]
+        tickers = [s.get("ticker") for s in universe if s.get("ticker")]
     elif isinstance(universe, dict):
-        securities = universe.get('active_securities', universe.get('securities', []))
-        tickers = [s.get('ticker') for s in securities if s.get('ticker')]
+        securities = universe.get("active_securities", universe.get("securities", []))
+        tickers = [s.get("ticker") for s in securities if s.get("ticker")]
     else:
         print(f"\n❌ ERROR: Invalid universe format")
         return 1
@@ -198,22 +199,24 @@ def collect_short_interest(
         if data:
             results.append(data)
             success_count += 1
-            si_pct = data.get('short_interest_pct')
+            si_pct = data.get("short_interest_pct")
             si_str = f"{si_pct:>5.1f}%" if si_pct else "  N/A"
-            days = data.get('days_to_cover')
+            days = data.get("days_to_cover")
             days_str = f"{days:>4.1f}d" if days else " N/A"
             print(f"[{i+1:>3}/{len(tickers)}] {ticker:<6} ✅ SI: {si_str}  DTC: {days_str}")
         else:
             # Create placeholder record
-            results.append({
-                'ticker': ticker,
-                'short_interest_pct': None,
-                'days_to_cover': None,
-                'short_interest_change_pct': None,
-                'institutional_long_pct': None,
-                'avg_daily_volume': None,
-                'report_date': date.today().isoformat(),
-            })
+            results.append(
+                {
+                    "ticker": ticker,
+                    "short_interest_pct": None,
+                    "days_to_cover": None,
+                    "short_interest_change_pct": None,
+                    "institutional_long_pct": None,
+                    "avg_daily_volume": None,
+                    "report_date": date.today().isoformat(),
+                }
+            )
             error_count += 1
             print(f"[{i+1:>3}/{len(tickers)}] {ticker:<6} ⚠️  No data")
 
@@ -229,10 +232,10 @@ def collect_short_interest(
     print(f"No data:          {error_count}")
 
     # Sort by ticker
-    results.sort(key=lambda x: x.get('ticker', ''))
+    results.sort(key=lambda x: x.get("ticker", ""))
 
     # Calculate statistics
-    si_values = [r['short_interest_pct'] for r in results if r.get('short_interest_pct')]
+    si_values = [r["short_interest_pct"] for r in results if r.get("short_interest_pct")]
     if si_values:
         avg_si = sum(si_values) / len(si_values)
         max_si = max(si_values)
@@ -246,7 +249,7 @@ def collect_short_interest(
     print(f"\nWriting to {output_file}...")
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
     print(f"✅ Saved {len(results)} records")
@@ -255,26 +258,20 @@ def collect_short_interest(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Collect short interest data from Yahoo Finance"
-    )
+    parser = argparse.ArgumentParser(description="Collect short interest data from Yahoo Finance")
     parser.add_argument(
         "--universe",
         type=Path,
         default=Path("production_data/universe.json"),
-        help="Path to universe JSON file (default: production_data/universe.json)"
+        help="Path to universe JSON file (default: production_data/universe.json)",
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=Path("production_data/short_interest.json"),
-        help="Output path for short interest data (default: production_data/short_interest.json)"
+        help="Output path for short interest data (default: production_data/short_interest.json)",
     )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force refresh even if cache is recent"
-    )
+    parser.add_argument("--force", action="store_true", help="Force refresh even if cache is recent")
 
     args = parser.parse_args()
 

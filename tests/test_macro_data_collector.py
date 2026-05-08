@@ -12,19 +12,20 @@ Tests cover:
 
 import json
 import os
-import pytest
+import tempfile
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import tempfile
+
+import pytest
 
 from wake_robin_data_pipeline.collectors.macro_data_collector import (
     FREDCollector,
     FundFlowCollector,
     MacroDataCollector,
-    MacroSnapshot,
     MacroDataPoint,
+    MacroSnapshot,
 )
 
 
@@ -211,8 +212,8 @@ class TestFundFlowCollector:
     def test_get_weekly_fund_flow(self):
         """Should calculate fund flow from AUM changes."""
         try:
-            import yfinance  # noqa: F401
             import pandas  # noqa: F401
+            import yfinance  # noqa: F401
         except ImportError:
             pytest.skip("yfinance or pandas not installed")
 
@@ -223,9 +224,12 @@ class TestFundFlowCollector:
 
             # Create mock history with price change
             import pandas as pd
-            mock_hist = pd.DataFrame({
-                "Close": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0],
-            })
+
+            mock_hist = pd.DataFrame(
+                {
+                    "Close": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0],
+                }
+            )
             mock_ticker.history.return_value = mock_hist
             mock_ticker_class.return_value = mock_ticker
 

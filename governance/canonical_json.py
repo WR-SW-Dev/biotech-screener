@@ -15,8 +15,8 @@ Rules:
 
 import json
 import math
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Any, IO, Optional
+from decimal import ROUND_HALF_UP, Decimal
+from typing import IO, Any, Optional
 
 
 class CanonicalJSONEncoder(json.JSONEncoder):
@@ -77,10 +77,10 @@ class CanonicalJSONEncoder(json.JSONEncoder):
         formatted = f"{value:.{self.FLOAT_PRECISION}f}"
 
         # Strip trailing zeros but keep at least one decimal place
-        if '.' in formatted:
-            formatted = formatted.rstrip('0')
-            if formatted.endswith('.'):
-                formatted += '0'
+        if "." in formatted:
+            formatted = formatted.rstrip("0")
+            if formatted.endswith("."):
+                formatted += "0"
 
         # Return as float for JSON encoding
         return float(formatted)
@@ -101,7 +101,7 @@ class CanonicalJSONEncoder(json.JSONEncoder):
         """Handle types not natively supported by JSON."""
         if isinstance(o, Decimal):
             return self._format_decimal(o)
-        elif hasattr(o, '__dict__'):
+        elif hasattr(o, "__dict__"):
             # Convert objects to dicts
             return self._canonicalize(o.__dict__)
         else:
@@ -134,9 +134,9 @@ def canonical_dumps(
         indent=indent,
         sort_keys=True,  # Belt and suspenders with encoder
         ensure_ascii=ensure_ascii,
-        separators=(',', ': ') if indent else (',', ':'),
+        separators=(",", ": ") if indent else (",", ":"),
     )
-    return result + '\n'
+    return result + "\n"
 
 
 def canonical_dump(
@@ -168,7 +168,7 @@ def validate_canonical_json(json_str: str) -> bool:
         True if canonical, False otherwise
     """
     try:
-        obj = json.loads(json_str.rstrip('\n'))
+        obj = json.loads(json_str.rstrip("\n"))
         canonical = canonical_dumps(obj)
         return json_str == canonical
     except (json.JSONDecodeError, ValueError):

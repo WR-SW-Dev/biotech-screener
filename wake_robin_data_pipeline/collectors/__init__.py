@@ -8,14 +8,11 @@ Modules for collecting biotech data from free, public sources:
 - macro_data_collector: Macro signals for regime detection (FRED, CBOE)
 """
 
-from . import yahoo_collector
-from . import sec_collector
-from . import trials_collector
-from . import macro_data_collector
+from . import macro_data_collector, sec_collector, trials_collector, yahoo_collector
 
 __all__ = [
-    'yahoo_collector',
-    'sec_collector',
-    'trials_collector',
-    'macro_data_collector',
+    "yahoo_collector",
+    "sec_collector",
+    "trials_collector",
+    "macro_data_collector",
 ]

@@ -6,15 +6,17 @@ Environment Variables:
     SEC_USER_AGENT: Override default User-Agent
     SEC_CACHE_DIR: Override default cache directory
 """
+
+import hashlib
 import json
 import logging
 import os
 import time
-import requests
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
-import hashlib
+
+import requests
 
 from common.robustness import create_resilient_session
 
@@ -27,14 +29,12 @@ def _get_session() -> requests.Session:
         _session = create_resilient_session()
     return _session
 
+
 logger = logging.getLogger(__name__)
 
 # SEC requires User-Agent header with contact info
 # Can be overridden via environment variable
-USER_AGENT = os.environ.get(
-    "SEC_USER_AGENT",
-    "Wake Robin Research contact@wakerobincapital.com"
-)
+USER_AGENT = os.environ.get("SEC_USER_AGENT", "Wake Robin Research contact@wakerobincapital.com")
 
 # Default cache directory (can be overridden)
 DEFAULT_CACHE_DIR = Path(__file__).parent.parent / "cache" / "sec"
@@ -59,6 +59,7 @@ def get_cache_path(identifier: str, data_type: str = "financials") -> Path:
     """Get cache file path."""
     return get_cache_dir() / f"{identifier}_{data_type}.json"
 
+
 def is_cache_valid(cache_path: Path, max_age_hours: int = 24) -> bool:
     """Check if cache file exists.
 
@@ -69,24 +70,25 @@ def is_cache_valid(cache_path: Path, max_age_hours: int = 24) -> bool:
     """
     return cache_path.exists()
 
+
 def ticker_to_cik(ticker: str) -> Optional[str]:
     """
     Resolve ticker to CIK using SEC's company tickers JSON.
     Returns 10-digit CIK string or None if not found.
     """
     cache_path = get_cache_path(ticker, "cik_mapping")
-    
+
     # Check cache first
     if is_cache_valid(cache_path, max_age_hours=168):  # Cache for 1 week
         with open(cache_path) as f:
             cached = json.load(f)
-            return cached.get('cik')
-    
+            return cached.get("cik")
+
     try:
         # SEC maintains a ticker->CIK mapping file
         url = "https://www.sec.gov/files/company_tickers.json"
-        headers = {'User-Agent': USER_AGENT}
-        
+        headers = {"User-Agent": USER_AGENT}
+
         response = _get_session().get(url, headers=headers, timeout=15)
         response.raise_for_status()
 
@@ -95,40 +97,46 @@ def ticker_to_cik(ticker: str) -> Optional[str]:
         # Search for ticker (case-insensitive)
         ticker_upper = ticker.upper()
         for entry in data.values():
-            if entry.get('ticker', '').upper() == ticker_upper:
-                cik = str(entry['cik_str']).zfill(10)
-                
+            if entry.get("ticker", "").upper() == ticker_upper:
+                cik = str(entry["cik_str"]).zfill(10)
+
                 # Cache the mapping
-                with open(cache_path, 'w') as f:
-                    json.dump({
-                        'ticker': ticker,
-                        'cik': cik,
-                        'company_name': entry.get('title', ''),
-                        'timestamp': 'cached'
-                    }, f, indent=2)
-                
+                with open(cache_path, "w") as f:
+                    json.dump(
+                        {"ticker": ticker, "cik": cik, "company_name": entry.get("title", ""), "timestamp": "cached"},
+                        f,
+                        indent=2,
+                    )
+
                 return cik
-        
+
         # Not found
-        with open(cache_path, 'w') as f:
-            json.dump({
-                'ticker': ticker,
-                'cik': None,
-                'error': 'Ticker not found in SEC database',
-                'timestamp': 'cached'
-            }, f, indent=2)
-        
+        with open(cache_path, "w") as f:
+            json.dump(
+                {"ticker": ticker, "cik": None, "error": "Ticker not found in SEC database", "timestamp": "cached"},
+                f,
+                indent=2,
+            )
+
         return None
-        
+
     except Exception as e:
         print(f"  Warning: CIK resolution failed: {e}")
         return None
+
 
 # Maximum age in days for financial data to be considered valid
 MAX_DATA_AGE_DAYS = 365  # Filter out data older than 1 year
 
 
-def extract_latest_metric(facts_data: dict, metric_name: str, unit: str = 'USD', namespace: str = 'us-gaap', max_age_days: int = None, as_of_dt: datetime = None) -> tuple[Optional[float], Optional[str]]:
+def extract_latest_metric(
+    facts_data: dict,
+    metric_name: str,
+    unit: str = "USD",
+    namespace: str = "us-gaap",
+    max_age_days: int = None,
+    as_of_dt: datetime = None,
+) -> tuple[Optional[float], Optional[str]]:
     """
     Extract latest value for a GAAP/IFRS metric from SEC company facts.
 
@@ -147,20 +155,20 @@ def extract_latest_metric(facts_data: dict, metric_name: str, unit: str = 'USD',
     """
     try:
         # Navigate to specified namespace facts
-        ns_data = facts_data.get('facts', {}).get(namespace, {})
+        ns_data = facts_data.get("facts", {}).get(namespace, {})
 
         if metric_name not in ns_data:
             return None, None
 
         # Get units data
         metric_data = ns_data[metric_name]
-        units_data = metric_data.get('units', {})
+        units_data = metric_data.get("units", {})
 
         # Try to find the right unit
         if unit in units_data:
             values = units_data[unit]
-        elif 'USD' in units_data:
-            values = units_data['USD']
+        elif "USD" in units_data:
+            values = units_data["USD"]
         else:
             # Try first available unit
             if units_data:
@@ -169,11 +177,11 @@ def extract_latest_metric(facts_data: dict, metric_name: str, unit: str = 'USD',
                 return None, None
 
         # Sort by date and get most recent
-        sorted_values = sorted(values, key=lambda x: x.get('end', ''), reverse=True)
+        sorted_values = sorted(values, key=lambda x: x.get("end", ""), reverse=True)
 
         if sorted_values:
             latest = sorted_values[0]
-            end_date = latest.get('end')
+            end_date = latest.get("end")
 
             # Filter out stale data if max_age_days AND as_of_dt provided (PIT-safe)
             if max_age_days is not None and end_date and as_of_dt is not None:
@@ -188,7 +196,7 @@ def extract_latest_metric(facts_data: dict, metric_name: str, unit: str = 'USD',
                 except ValueError:
                     pass
 
-            return float(latest.get('val', 0)), end_date
+            return float(latest.get("val", 0)), end_date
 
         return None, None
 
@@ -204,14 +212,15 @@ def detect_accounting_standard(facts_data: dict) -> str:
     Returns:
         'us-gaap' or 'ifrs-full'
     """
-    facts = facts_data.get('facts', {})
-    us_gaap = facts.get('us-gaap', {})
-    ifrs = facts.get('ifrs-full', {})
+    facts = facts_data.get("facts", {})
+    us_gaap = facts.get("us-gaap", {})
+    ifrs = facts.get("ifrs-full", {})
 
     # If IFRS has more metrics or US-GAAP is empty, use IFRS
     if len(ifrs) > len(us_gaap) or (len(ifrs) > 0 and len(us_gaap) == 0):
-        return 'ifrs-full'
-    return 'us-gaap'
+        return "ifrs-full"
+    return "us-gaap"
+
 
 def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str = None) -> dict:
     """
@@ -240,14 +249,14 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
                 "ticker": ticker,
                 "success": False,
                 "error": "Could not resolve ticker to CIK",
-                "timestamp": "cached"
+                "timestamp": "cached",
             }
-    
+
     try:
         # Fetch company facts
         url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
-        headers = {'User-Agent': USER_AGENT}
-        
+        headers = {"User-Agent": USER_AGENT}
+
         response = _get_session().get(url, headers=headers, timeout=30)
         response.raise_for_status()
 
@@ -257,44 +266,50 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
         namespace = detect_accounting_standard(facts_data)
 
         # Define metrics for each standard
-        if namespace == 'ifrs-full':
+        if namespace == "ifrs-full":
             # IFRS metric names
-            cash_metrics = ['CashAndCashEquivalents', 'Cash']
+            cash_metrics = ["CashAndCashEquivalents", "Cash"]
             # IFRS marketable securities / short-term investments
             marketable_securities_metrics = [
-                'OtherCurrentFinancialAssets',
-                'CurrentFinancialAssets',
-                'ShortTermInvestments'
+                "OtherCurrentFinancialAssets",
+                "CurrentFinancialAssets",
+                "ShortTermInvestments",
             ]
-            debt_metrics = ['NoncurrentLiabilities', 'LongTermBorrowings', 'BorrowingsNoncurrent']
-            revenue_metrics = ['RevenueFromSaleOfGoods', 'Revenue', 'RevenueFromContractsWithCustomers']
-            assets_metric = 'Assets'
-            liabilities_metric = 'Liabilities'
+            debt_metrics = ["NoncurrentLiabilities", "LongTermBorrowings", "BorrowingsNoncurrent"]
+            revenue_metrics = ["RevenueFromSaleOfGoods", "Revenue", "RevenueFromContractsWithCustomers"]
+            assets_metric = "Assets"
+            liabilities_metric = "Liabilities"
         else:
             # US-GAAP metric names
-            cash_metrics = ['CashAndCashEquivalentsAtCarryingValue', 'Cash', 'CashAndCashEquivalents']
+            cash_metrics = ["CashAndCashEquivalentsAtCarryingValue", "Cash", "CashAndCashEquivalents"]
             # Marketable securities and short-term investments (common in biotech)
             marketable_securities_metrics = [
-                'MarketableSecuritiesCurrent',
-                'MarketableSecurities',
-                'ShortTermInvestments',
-                'AvailableForSaleSecuritiesCurrent',
-                'AvailableForSaleSecurities',
-                'HeldToMaturitySecuritiesCurrent',
-                'InvestmentsAndCash',
-                'ShortTermInvestmentsAndCash'
+                "MarketableSecuritiesCurrent",
+                "MarketableSecurities",
+                "ShortTermInvestments",
+                "AvailableForSaleSecuritiesCurrent",
+                "AvailableForSaleSecurities",
+                "HeldToMaturitySecuritiesCurrent",
+                "InvestmentsAndCash",
+                "ShortTermInvestmentsAndCash",
             ]
             # Comprehensive debt metrics - try most common first, then alternatives
             debt_metrics = [
-                'LongTermDebt', 'LongTermDebtNoncurrent', 'DebtCurrent',
-                'ConvertibleDebt', 'ConvertibleDebtNoncurrent',
-                'DebtInstrumentCarryingAmount',
-                'ConvertibleLongTermNotesPayable', 'NotesPayable',
-                'SeniorNotes', 'SecuredDebt', 'UnsecuredDebt'
+                "LongTermDebt",
+                "LongTermDebtNoncurrent",
+                "DebtCurrent",
+                "ConvertibleDebt",
+                "ConvertibleDebtNoncurrent",
+                "DebtInstrumentCarryingAmount",
+                "ConvertibleLongTermNotesPayable",
+                "NotesPayable",
+                "SeniorNotes",
+                "SecuredDebt",
+                "UnsecuredDebt",
             ]
-            revenue_metrics = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet']
-            assets_metric = 'Assets'
-            liabilities_metric = 'Liabilities'
+            revenue_metrics = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet"]
+            assets_metric = "Assets"
+            liabilities_metric = "Liabilities"
 
         # Track dates for staleness validation
         data_dates = {}
@@ -303,9 +318,11 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
         # Cash - critical field, filter stale data
         cash, cash_date = None, None
         for metric in cash_metrics:
-            cash, cash_date = extract_latest_metric(facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            cash, cash_date = extract_latest_metric(
+                facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
             if cash is not None:
-                data_dates['cash'] = cash_date
+                data_dates["cash"] = cash_date
                 break
         # If filtered due to staleness, try again without filter to note staleness
         if cash is None:
@@ -318,9 +335,11 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
         # Extract marketable securities / short-term investments - filter stale
         marketable_securities, ms_date = None, None
         for metric in marketable_securities_metrics:
-            marketable_securities, ms_date = extract_latest_metric(facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            marketable_securities, ms_date = extract_latest_metric(
+                facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
             if marketable_securities is not None:
-                data_dates['marketable_securities'] = ms_date
+                data_dates["marketable_securities"] = ms_date
                 break
 
         # Calculate total liquidity (cash + marketable securities)
@@ -333,67 +352,93 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
         # Debt - filter stale data
         debt, debt_date = None, None
         for metric in debt_metrics:
-            debt, debt_date = extract_latest_metric(facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            debt, debt_date = extract_latest_metric(
+                facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
             if debt is not None:
-                data_dates['debt'] = debt_date
+                data_dates["debt"] = debt_date
                 break
 
         # Revenue - filter stale data (pre-revenue biotechs may have old/no data)
         revenue, revenue_date = None, None
         for metric in revenue_metrics:
-            revenue, revenue_date = extract_latest_metric(facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            revenue, revenue_date = extract_latest_metric(
+                facts_data, metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
             if revenue is not None:
-                data_dates['revenue'] = revenue_date
+                data_dates["revenue"] = revenue_date
                 break
 
         # Assets - critical, filter stale
-        assets, assets_date = extract_latest_metric(facts_data, assets_metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+        assets, assets_date = extract_latest_metric(
+            facts_data, assets_metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+        )
 
         # Try multiple approaches for liabilities (priority order for most complete total)
         # All methods filter for staleness
-        liabilities, liabilities_date = extract_latest_metric(facts_data, liabilities_metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
-        liabilities_method = 'direct' if liabilities is not None else None
+        liabilities, liabilities_date = extract_latest_metric(
+            facts_data, liabilities_metric, namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+        )
+        liabilities_method = "direct" if liabilities is not None else None
 
         # Method 2: Try LiabilitiesCurrent + LiabilitiesNoncurrent
         if liabilities is None:
-            liab_current, liab_current_date = extract_latest_metric(facts_data, 'LiabilitiesCurrent', namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
-            liab_noncurrent, liab_nc_date = extract_latest_metric(facts_data, 'LiabilitiesNoncurrent', namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            liab_current, liab_current_date = extract_latest_metric(
+                facts_data, "LiabilitiesCurrent", namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
+            liab_noncurrent, liab_nc_date = extract_latest_metric(
+                facts_data,
+                "LiabilitiesNoncurrent",
+                namespace=namespace,
+                max_age_days=MAX_DATA_AGE_DAYS,
+                as_of_dt=as_of_dt,
+            )
 
             if liab_current is not None and liab_noncurrent is not None:
                 liabilities = liab_current + liab_noncurrent
                 liabilities_date = liab_current_date or liab_nc_date
-                liabilities_method = 'current+noncurrent'
+                liabilities_method = "current+noncurrent"
 
         # Method 3: Derive from LiabilitiesAndStockholdersEquity - StockholdersEquity
         # This gives total liabilities even when components aren't separately reported
         if liabilities is None:
-            total_liab_eq, total_date = extract_latest_metric(facts_data, 'LiabilitiesAndStockholdersEquity', namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
-            stockholders_eq, eq_date = extract_latest_metric(facts_data, 'StockholdersEquity', namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            total_liab_eq, total_date = extract_latest_metric(
+                facts_data,
+                "LiabilitiesAndStockholdersEquity",
+                namespace=namespace,
+                max_age_days=MAX_DATA_AGE_DAYS,
+                as_of_dt=as_of_dt,
+            )
+            stockholders_eq, eq_date = extract_latest_metric(
+                facts_data, "StockholdersEquity", namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
 
             if total_liab_eq is not None and stockholders_eq is not None:
                 liabilities = total_liab_eq - stockholders_eq
                 liabilities_date = total_date or eq_date
-                liabilities_method = 'derived_from_equity'
+                liabilities_method = "derived_from_equity"
 
         # Method 4: Fall back to current liabilities only (incomplete but better than nothing)
         if liabilities is None:
-            liab_current, liab_current_date = extract_latest_metric(facts_data, 'LiabilitiesCurrent', namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+            liab_current, liab_current_date = extract_latest_metric(
+                facts_data, "LiabilitiesCurrent", namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+            )
             if liab_current is not None:
                 liabilities = liab_current
                 liabilities_date = liab_current_date
-                liabilities_method = 'current_only'
+                liabilities_method = "current_only"
 
         if assets is not None:
-            data_dates['assets'] = assets_date
+            data_dates["assets"] = assets_date
         if liabilities is not None:
-            data_dates['liabilities'] = liabilities_date
+            data_dates["liabilities"] = liabilities_date
 
         # If company has balance sheet data but no debt found, they're debt-free
         # Set debt to 0 for accurate coverage (vs null which means "unknown")
         if debt is None and assets is not None and liabilities is not None:
             debt = 0.0
             # Use the assets date as proxy for debt date since balance sheet is complete
-            data_dates['debt'] = assets_date
+            data_dates["debt"] = assets_date
 
         # Calculate derived metrics
         # Use total_liquidity (cash + marketable securities) for net debt calculation
@@ -410,13 +455,15 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
         equity_method = None
 
         # Try direct StockholdersEquity first (with staleness filter)
-        stockholders_equity, se_date = extract_latest_metric(facts_data, 'StockholdersEquity', namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt)
+        stockholders_equity, se_date = extract_latest_metric(
+            facts_data, "StockholdersEquity", namespace=namespace, max_age_days=MAX_DATA_AGE_DAYS, as_of_dt=as_of_dt
+        )
         if stockholders_equity is not None:
             equity = stockholders_equity
-            equity_method = 'direct'
+            equity_method = "direct"
         elif assets is not None and liabilities is not None:
             equity = assets - liabilities
-            equity_method = 'derived'
+            equity_method = "derived"
 
         # Determine most recent and oldest data dates for staleness check
         valid_dates = [d for d in data_dates.values() if d]
@@ -455,7 +502,7 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
                 "assets": assets,
                 "liabilities": liabilities,
                 "equity": equity,
-                "currency": "USD"
+                "currency": "USD",
             },
             "data_dates": data_dates,
             "data_freshness": {
@@ -473,12 +520,16 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
                 "has_debt": debt is not None,
                 "has_revenue": revenue is not None,
                 "has_balance_sheet": assets is not None and liabilities is not None,
-                "pct_complete": sum([
-                    total_liquidity is not None,  # Use total_liquidity instead of just cash
-                    debt is not None,
-                    revenue is not None,
-                    assets is not None
-                ]) / 4 * 100
+                "pct_complete": sum(
+                    [
+                        total_liquidity is not None,  # Use total_liquidity instead of just cash
+                        debt is not None,
+                        revenue is not None,
+                        assets is not None,
+                    ]
+                )
+                / 4
+                * 100,
             },
             "provenance": {
                 "source": "SEC EDGAR Company Facts API",
@@ -487,96 +538,87 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
                 "cik": cik,
                 "accounting_standard": namespace,
                 "liabilities_method": liabilities_method,
-                "equity_method": equity_method
-            }
+                "equity_method": equity_method,
+            },
         }
 
         return data
-        
+
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
             error = f"CIK {cik} not found in SEC database"
         else:
             error = f"HTTP {e.response.status_code}: {str(e)}"
-        
-        return {
-            "ticker": ticker,
-            "cik": cik,
-            "success": False,
-            "error": error,
-            "timestamp": "cached"
-        }
-        
+
+        return {"ticker": ticker, "cik": cik, "success": False, "error": error, "timestamp": "cached"}
+
     except Exception as e:
-        return {
-            "ticker": ticker,
-            "cik": cik,
-            "success": False,
-            "error": str(e),
-            "timestamp": "cached"
-        }
+        return {"ticker": ticker, "cik": cik, "success": False, "error": str(e), "timestamp": "cached"}
+
 
 def collect_sec_data(ticker: str, force_refresh: bool = False) -> dict:
     """
     Main entry point: collect SEC financial data with caching.
     """
     cache_path = get_cache_path(ticker, "financials")
-    
+
     # Check cache first
     if not force_refresh and is_cache_valid(cache_path):
         with open(cache_path) as f:
             cached = json.load(f)
-            cached['from_cache'] = True
+            cached["from_cache"] = True
             return cached
-    
+
     # Fetch fresh data
     data = fetch_sec_financials(ticker)
-    
+
     # Cache successful results
-    if data.get('success'):
-        with open(cache_path, 'w') as f:
+    if data.get("success"):
+        with open(cache_path, "w") as f:
             json.dump(data, f, indent=2)
-    
-    data['from_cache'] = False
+
+    data["from_cache"] = False
     return data
+
 
 def collect_batch(tickers: list[str], delay_seconds: float = 1.0) -> dict:
     """Collect SEC data for multiple tickers with rate limiting."""
     results = {}
     total = len(tickers)
-    
+
     print(f"\n📄 Collecting SEC EDGAR data for {total} tickers...")
-    
+
     for i, ticker in enumerate(tickers, 1):
         print(f"[{i}/{total}] Fetching {ticker}...", end=" ")
-        
+
         data = collect_sec_data(ticker)
         results[ticker] = data
-        
-        if data.get('success'):
-            fin = data['financials']
-            coverage = data['coverage']['pct_complete']
+
+        if data.get("success"):
+            fin = data["financials"]
+            coverage = data["coverage"]["pct_complete"]
             # Show total liquidity (cash + marketable securities) instead of just cash
-            liquidity = fin.get('total_liquidity') or fin.get('cash')
+            liquidity = fin.get("total_liquidity") or fin.get("cash")
             liquidity_str = f"${liquidity/1e6:.0f}M" if liquidity else "N/A"
-            cached = " (cached)" if data.get('from_cache') else ""
+            cached = " (cached)" if data.get("from_cache") else ""
             print(f"✓ Liquidity: {liquidity_str}, Coverage: {coverage:.0f}%{cached}")
         else:
             print(f"✗ {data.get('error', 'Unknown error')}")
-        
+
         # Rate limiting
-        if i < total and not data.get('from_cache'):
+        if i < total and not data.get("from_cache"):
             time.sleep(delay_seconds)
-    
-    successful = sum(1 for d in results.values() if d.get('success'))
+
+    successful = sum(1 for d in results.values() if d.get("success"))
     print(f"\n✓ Successfully collected data for {successful}/{total} tickers")
-    
+
     return results
+
 
 if __name__ == "__main__":
     # Test with a single ticker
     test_ticker = "VRTX"
     print(f"Testing SEC collector with {test_ticker}...")
-    
+
     data = collect_sec_data(test_ticker, force_refresh=True)
     print(json.dumps(data, indent=2))

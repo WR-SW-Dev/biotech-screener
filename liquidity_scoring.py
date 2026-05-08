@@ -6,18 +6,19 @@ Produces deterministic scores with audit logging for governance.
 
 All functions are deterministic (no datetime.now(), no network calls).
 """
+
 import json
 import logging
 from decimal import Decimal
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from risk_gates import (
-    calculate_adv,
-    _extract_price,
-    _extract_market_cap,
     FLAG_ADV_UNKNOWN,
     FLAG_LOW_LIQUIDITY,
     FLAG_PENNY_STOCK,
+    _extract_market_cap,
+    _extract_price,
+    calculate_adv,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,9 +30,9 @@ logger = logging.getLogger(__name__)
 LIQUIDITY_SCORING_VERSION = "1.0.0"
 
 # Market cap tier boundaries (USD)
-TIER_MICRO_MAX = 300_000_000           # < $300M
-TIER_SMALL_MAX = 2_000_000_000         # $300M - $2B
-TIER_MID_MAX = 10_000_000_000          # $2B - $10B
+TIER_MICRO_MAX = 300_000_000  # < $300M
+TIER_SMALL_MAX = 2_000_000_000  # $300M - $2B
+TIER_MID_MAX = 10_000_000_000  # $2B - $10B
 # Large cap: >= $10B
 
 # ADV thresholds by tier (USD)
@@ -43,8 +44,8 @@ ADV_THRESHOLDS = {
 }
 
 # Spread scoring thresholds (basis points)
-SPREAD_LOW_BPS = 50      # Full score (30) at or below
-SPREAD_HIGH_BPS = 400    # Zero score at or above
+SPREAD_LOW_BPS = 50  # Full score (30) at or below
+SPREAD_HIGH_BPS = 400  # Zero score at or above
 
 # Penny stock threshold
 PENNY_STOCK_PRICE = 2.00
@@ -61,6 +62,7 @@ FLAG_WIDE_SPREAD = "WIDE_SPREAD"
 # =============================================================================
 # TIER CLASSIFICATION
 # =============================================================================
+
 
 def classify_market_cap_tier(market_cap: Optional[float]) -> str:
     """
@@ -101,6 +103,7 @@ def get_adv_threshold_for_tier(tier: str) -> float:
 # =============================================================================
 # SPREAD EXTRACTION
 # =============================================================================
+
 
 def extract_spread_bps(market_record: Dict[str, Any]) -> Optional[float]:
     """
@@ -149,6 +152,7 @@ def extract_spread_bps(market_record: Dict[str, Any]) -> Optional[float]:
 # =============================================================================
 # SCORE COMPUTATION
 # =============================================================================
+
 
 def compute_adv_score(adv_usd: float, tier_threshold: float) -> int:
     """
@@ -212,9 +216,7 @@ def compute_spread_score(spread_bps: Optional[float]) -> int:
 
 
 def compute_liquidity_score(
-    ticker: str,
-    market_data: Dict[str, Dict[str, Any]],
-    as_of_date: str = None
+    ticker: str, market_data: Dict[str, Dict[str, Any]], as_of_date: str = None
 ) -> Dict[str, Any]:
     """
     Compute comprehensive liquidity score for a ticker.
@@ -309,11 +311,9 @@ def compute_liquidity_score(
 # AUDIT LOGGING
 # =============================================================================
 
+
 def create_liquidity_audit_record(
-    ticker: str,
-    score_result: Dict[str, Any],
-    as_of_date: str,
-    thresholds_by_tier: Dict[str, float] = None
+    ticker: str, score_result: Dict[str, Any], as_of_date: str, thresholds_by_tier: Dict[str, float] = None
 ) -> Dict[str, Any]:
     """
     Create an audit record for liquidity scoring.
@@ -345,10 +345,7 @@ def create_liquidity_audit_record(
     }
 
 
-def append_audit_log(
-    filepath: str,
-    record: Dict[str, Any]
-) -> None:
+def append_audit_log(filepath: str, record: Dict[str, Any]) -> None:
     """
     Append audit record to JSONL log file.
 
@@ -357,17 +354,14 @@ def append_audit_log(
         record: Audit record to append
     """
     # Serialize with sorted keys for determinism
-    line = json.dumps(record, sort_keys=True, separators=(',', ':'))
+    line = json.dumps(record, sort_keys=True, separators=(",", ":"))
 
-    with open(filepath, 'a', encoding='utf-8') as f:
-        f.write(line + '\n')
+    with open(filepath, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
 
 
 def score_all_tickers(
-    tickers: List[str],
-    market_data: Dict[str, Dict[str, Any]],
-    as_of_date: str,
-    audit_log_path: Optional[str] = None
+    tickers: List[str], market_data: Dict[str, Dict[str, Any]], as_of_date: str, audit_log_path: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
     Score liquidity for all tickers with optional audit logging.
@@ -388,9 +382,7 @@ def score_all_tickers(
         results.append(score_result)
 
         if audit_log_path:
-            audit_record = create_liquidity_audit_record(
-                ticker, score_result, as_of_date
-            )
+            audit_record = create_liquidity_audit_record(ticker, score_result, as_of_date)
             append_audit_log(audit_log_path, audit_record)
 
     return results
@@ -399,6 +391,7 @@ def score_all_tickers(
 # =============================================================================
 # PARAMETER SNAPSHOT
 # =============================================================================
+
 
 def get_parameters_snapshot() -> Dict[str, Any]:
     """
@@ -430,6 +423,7 @@ def compute_parameters_hash() -> str:
         First 16 characters of SHA256 hash
     """
     import hashlib
+
     params = get_parameters_snapshot()
-    canonical = json.dumps(params, sort_keys=True, separators=(',', ':'))
-    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:16]
+    canonical = json.dumps(params, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]

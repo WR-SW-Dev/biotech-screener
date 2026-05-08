@@ -21,11 +21,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -136,10 +132,7 @@ class PITIntegrityValidator:
         func_name = func_def.name
 
         # Check if this function should have as_of_date
-        needs_as_of_date = any(
-            func_name.startswith(prefix)
-            for prefix in ["load_", "fetch_", "compute_", "get_"]
-        )
+        needs_as_of_date = any(func_name.startswith(prefix) for prefix in ["load_", "fetch_", "compute_", "get_"])
 
         if not needs_as_of_date:
             return None
@@ -148,10 +141,7 @@ class PITIntegrityValidator:
         param_names = {arg.arg for arg in func_def.args.args}
         param_names.update({arg.arg for arg in func_def.args.kwonlyargs})
 
-        has_as_of = any(
-            p in param_names
-            for p in ["as_of_date", "as_of", "date", "pit_date", "cutoff_date"]
-        )
+        has_as_of = any(p in param_names for p in ["as_of_date", "as_of", "date", "pit_date", "cutoff_date"])
 
         if has_as_of:
             return None
@@ -181,7 +171,7 @@ class PITIntegrityValidator:
         for pattern, description, severity in self.UNSAFE_PATTERNS:
             for match in re.finditer(pattern, content):
                 # Get line number
-                line_start = content[:match.start()].count("\n") + 1
+                line_start = content[: match.start()].count("\n") + 1
                 snippet = lines[line_start - 1] if line_start <= len(lines) else ""
 
                 # Skip if in comment or docstring context
@@ -189,14 +179,16 @@ class PITIntegrityValidator:
                 if stripped.startswith("#") or stripped.startswith('"""'):
                     continue
 
-                violations.append(PITViolation(
-                    file_path=str(file_path),
-                    line_number=line_start,
-                    violation_type="PIT_UNSAFE_PATTERN",
-                    description=description,
-                    code_snippet=snippet.strip()[:100],
-                    severity=severity,
-                ))
+                violations.append(
+                    PITViolation(
+                        file_path=str(file_path),
+                        line_number=line_start,
+                        violation_type="PIT_UNSAFE_PATTERN",
+                        description=description,
+                        code_snippet=snippet.strip()[:100],
+                        severity=severity,
+                    )
+                )
 
         return violations
 
@@ -235,9 +227,11 @@ class PITIntegrityValidator:
                     source_info["record_count"] = len(data)
                     if data:
                         sample = data[0]
-                        source_info["sample_record"] = {
-                            k: type(v).__name__ for k, v in sample.items()
-                        } if isinstance(sample, dict) else str(type(sample))
+                        source_info["sample_record"] = (
+                            {k: type(v).__name__ for k, v in sample.items()}
+                            if isinstance(sample, dict)
+                            else str(type(sample))
+                        )
 
                         if isinstance(sample, dict):
                             source_info["has_source_date"] = any(
@@ -255,9 +249,7 @@ class PITIntegrityValidator:
                         source_info["has_timestamp"] = "generated_at" in gov
 
                     # Check for as_of_date at top level
-                    source_info["has_source_date"] = any(
-                        k in data for k in ["as_of_date", "source_date"]
-                    )
+                    source_info["has_source_date"] = any(k in data for k in ["as_of_date", "source_date"])
 
             except Exception:
                 pass
@@ -335,8 +327,13 @@ class PITIntegrityValidator:
         """
         if exclude_dirs is None:
             exclude_dirs = {
-                "tests", "deprecated", "venv", ".venv",
-                "__pycache__", "mnt", "audit_framework",
+                "tests",
+                "deprecated",
+                "venv",
+                ".venv",
+                "__pycache__",
+                "mnt",
+                "audit_framework",
             }
 
         python_files = []
@@ -413,9 +410,9 @@ def validate_pit_integrity(codebase_path: str) -> AuditResult:
     # Add findings for violations
     for v in report.violations:
         severity = (
-            AuditSeverity.CRITICAL if v.severity == "critical"
-            else AuditSeverity.HIGH if v.severity == "high"
-            else AuditSeverity.MEDIUM
+            AuditSeverity.CRITICAL
+            if v.severity == "critical"
+            else AuditSeverity.HIGH if v.severity == "high" else AuditSeverity.MEDIUM
         )
 
         result.add_finding(

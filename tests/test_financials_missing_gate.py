@@ -4,6 +4,7 @@ When survivability coverage flags include BOTH 'missing_cash' AND
 'missing_burn_data', the ticker should be flagged 'financials_missing'
 instead of 'fundamental_red_flag' (which would be a false positive).
 """
+
 from __future__ import annotations
 
 import sys
@@ -57,11 +58,12 @@ class TestFinancialsMissingGate:
         """Both missing_cash + missing_burn_data → financials_missing."""
         rec = _rec(
             ticker="AZN",
-            survivability_coverage=["missing_cash", "missing_burn_data",
-                                    "missing_near_term_debt"],
+            survivability_coverage=["missing_cash", "missing_burn_data", "missing_near_term_debt"],
         )
         result = compute_decision_fields(
-            rec, archetype="commercial_pharma", optionality_pct_dev=0.50,
+            rec,
+            archetype="commercial_pharma",
+            optionality_pct_dev=0.50,
         )
         assert result["eligible"] == "0"
         assert "financials_missing" in result["ineligible_reasons"]
@@ -75,7 +77,9 @@ class TestFinancialsMissingGate:
             survivability_coverage=["missing_cash", "missing_burn_data"],
         )
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.70,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.70,
         )
         assert result["eligible"] == "0"
         assert "financials_missing" in result["ineligible_reasons"]
@@ -89,7 +93,9 @@ class TestFinancialsMissingGate:
             survivability_coverage=["missing_cash"],
         )
         result = compute_decision_fields(
-            rec, archetype="commercial_biotech", optionality_pct_dev=0.60,
+            rec,
+            archetype="commercial_biotech",
+            optionality_pct_dev=0.60,
         )
         assert result["eligible"] == "0"
         assert "fundamental_red_flag" in result["ineligible_reasons"]
@@ -103,7 +109,9 @@ class TestFinancialsMissingGate:
             survivability_coverage=["burn_approximated"],
         )
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.65,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.65,
         )
         assert result["eligible"] == "0"
         assert "fundamental_red_flag" in result["ineligible_reasons"]
@@ -117,7 +125,9 @@ class TestFinancialsMissingGate:
         )
         # No survivability_signal key at all
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.65,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.65,
         )
         assert "fundamental_red_flag" in result["ineligible_reasons"]
         assert "financials_missing" not in result["ineligible_reasons"]
@@ -132,12 +142,13 @@ class TestFinancialsMissingGate:
         rec = _rec(
             ticker="GILD",
             fundamental_red_flag=False,
-            survivability_coverage=["missing_cash", "missing_burn_data",
-                                    "missing_interest_expense"],
+            survivability_coverage=["missing_cash", "missing_burn_data", "missing_interest_expense"],
             surv_metrics={"cash_total": 68_000_000.0, "burn_ttm": 0.0},
         )
         result = compute_decision_fields(
-            rec, archetype="commercial_pharma", optionality_pct_dev=0.50,
+            rec,
+            archetype="commercial_pharma",
+            optionality_pct_dev=0.50,
         )
         assert result["eligible"] == "1"
         assert "financials_missing" not in result["ineligible_reasons"]
@@ -151,7 +162,9 @@ class TestFinancialsMissingGate:
             surv_metrics={"cash_total": 714_967_000.0, "burn_ttm": 0.0},
         )
         result = compute_decision_fields(
-            rec, archetype="commercial_biotech", optionality_pct_dev=0.60,
+            rec,
+            archetype="commercial_biotech",
+            optionality_pct_dev=0.60,
         )
         assert result["eligible"] == "1"
         assert "financials_missing" not in result["ineligible_reasons"]
@@ -165,7 +178,9 @@ class TestFinancialsMissingGate:
             surv_metrics={"cash_total": 0.0, "burn_ttm": 0.0},
         )
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.50,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.50,
         )
         assert result["eligible"] == "0"
         assert "financials_missing" in result["ineligible_reasons"]
@@ -184,8 +199,11 @@ class TestFinancialsMissingBypass:
         )
         rs = DecisionRuleset(financials_missing_bypass_market_cap=5_000_000_000.0)
         result = compute_decision_fields(
-            rec, archetype="commercial_pharma", optionality_pct_dev=0.50,
-            ruleset=rs, market_cap=10_000_000_000.0,
+            rec,
+            archetype="commercial_pharma",
+            optionality_pct_dev=0.50,
+            ruleset=rs,
+            market_cap=10_000_000_000.0,
         )
         assert result["eligible"] == "1"
         assert "financials_missing" not in result["ineligible_reasons"]
@@ -200,7 +218,9 @@ class TestFinancialsMissingBypass:
             surv_metrics={"cash_total": 0.0, "burn_ttm": 0.0},
         )
         result = compute_decision_fields(
-            rec, archetype="commercial_biotech", optionality_pct_dev=0.50,
+            rec,
+            archetype="commercial_biotech",
+            optionality_pct_dev=0.50,
             market_cap=50_000_000_000.0,
         )
         assert result["eligible"] == "0"
@@ -216,8 +236,11 @@ class TestFinancialsMissingBypass:
         )
         rs = DecisionRuleset(financials_missing_bypass_market_cap=5_000_000_000.0)
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.50,
-            ruleset=rs, market_cap=3_000_000_000.0,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.50,
+            ruleset=rs,
+            market_cap=3_000_000_000.0,
         )
         assert result["eligible"] == "0"
         assert "financials_missing" in result["ineligible_reasons"]
@@ -232,8 +255,11 @@ class TestFinancialsMissingBypass:
         )
         rs = DecisionRuleset(financials_missing_bypass_market_cap=5_000_000_000.0)
         result = compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.50,
-            ruleset=rs, market_cap=None,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.50,
+            ruleset=rs,
+            market_cap=None,
         )
         assert result["eligible"] == "0"
         assert "financials_missing" in result["ineligible_reasons"]

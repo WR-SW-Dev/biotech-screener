@@ -40,15 +40,15 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from backtest.cost_model import (
+    DEFAULT_SCHEDULE,
     CostEstimate,
     CostSchedule,
-    DEFAULT_SCHEDULE,
     compute_cost_telemetry,
     estimate_trade_cost,
 )
 from decision_engine import (
-    DecisionRuleset,
     DEFAULT_RULESET,
+    DecisionRuleset,
     compute_actionable_sort_key,
     compute_decision_fields,
     compute_gate_margins,
@@ -72,11 +72,10 @@ from run_rank_ic_backtest import (
     compute_as_of_fence,
     compute_forward_returns,
     compute_residual_returns,
+    compute_xbi_regime,
     discover_archives,
     estimate_xbi_betas,
-    compute_xbi_regime,
 )
-
 
 # =============================================================================
 # CONSTANTS
@@ -87,19 +86,45 @@ DEFAULT_TIER_FILTER = ["A", "B"]
 DEFAULT_TOP_K = 20
 
 PANEL_COLUMNS = [
-    "as_of_date", "ticker", "tier", "band", "eligible", "weight",
-    "ineligible_reasons", "first_failed_gate",
-    "tier_reason", "risk_flags", "catalyst_mode", "catalyst_strength", "mom_state",
-    "optionality", "catalyst_days_raw", "ruleset_id",
-    "drawdown_abs", "drawdown_xbi", "drawdown_rel_xbi",
-    "dd_abs_margin", "dd_rel_margin", "rescued_by_rel", "dd_rel_margin_rescued",
-    "optionality_margin_a", "actionable_catalyst",
-    "fwd_ret_20d", "fwd_ret_60d", "fwd_max_dd_20d", "fwd_max_dd_60d",
+    "as_of_date",
+    "ticker",
+    "tier",
+    "band",
+    "eligible",
+    "weight",
+    "ineligible_reasons",
+    "first_failed_gate",
+    "tier_reason",
+    "risk_flags",
+    "catalyst_mode",
+    "catalyst_strength",
+    "mom_state",
+    "optionality",
+    "catalyst_days_raw",
+    "ruleset_id",
+    "drawdown_abs",
+    "drawdown_xbi",
+    "drawdown_rel_xbi",
+    "dd_abs_margin",
+    "dd_rel_margin",
+    "rescued_by_rel",
+    "dd_rel_margin_rescued",
+    "optionality_margin_a",
+    "actionable_catalyst",
+    "fwd_ret_20d",
+    "fwd_ret_60d",
+    "fwd_max_dd_20d",
+    "fwd_max_dd_60d",
     "fwd_dd_missing_reason",
-    "adv_dollars", "est_cost_bps", "participation_pct",
-    "fwd_ret_20d_net", "fwd_ret_60d_net",
-    "catalyst_tilt_mult", "catalyst_tilt_applied",
-    "mom_state_tilt_mult", "mom_state_tilt_applied",
+    "adv_dollars",
+    "est_cost_bps",
+    "participation_pct",
+    "fwd_ret_20d_net",
+    "fwd_ret_60d_net",
+    "catalyst_tilt_mult",
+    "catalyst_tilt_applied",
+    "mom_state_tilt_mult",
+    "mom_state_tilt_applied",
     "returns_source",
     "catalyst_source",
     "catalyst_event_type",
@@ -111,11 +136,13 @@ PANEL_COLUMNS = [
 # MULTI-HORIZON FORWARD RETURNS
 # =============================================================================
 
+
 class MultiHorizonReturns(NamedTuple):
     """Forward return data across multiple horizons for one snapshot date."""
-    raw: Dict[int, Dict[str, float]]        # {20: {ticker: ret}, 60: {...}}
-    resid: Dict[int, Dict[str, float]]       # {20: {ticker: ret}, 60: {...}}
-    xbi: Dict[int, Optional[float]]          # {20: xbi_ret, 60: xbi_ret}
+
+    raw: Dict[int, Dict[str, float]]  # {20: {ticker: ret}, 60: {...}}
+    resid: Dict[int, Dict[str, float]]  # {20: {ticker: ret}, 60: {...}}
+    xbi: Dict[int, Optional[float]]  # {20: xbi_ret, 60: xbi_ret}
     betas: Dict[str, float]
     regime: str
 
@@ -169,6 +196,7 @@ def compute_multi_horizon_returns(
 # HELPERS
 # =============================================================================
 
+
 def _percentile(vals: List[float], pct: float) -> float:
     """Compute the given percentile from a sorted list. pct in [0, 100]."""
     if not vals:
@@ -198,6 +226,7 @@ def _safe_div(num: float, denom: float) -> float:
 # =============================================================================
 # PORTFOLIO CONSTRUCTION
 # =============================================================================
+
 
 def build_strategy_portfolio(
     archive_data: ArchiveData,
@@ -260,7 +289,11 @@ def build_strategy_portfolio(
                 est_cost_bps = cost_est.round_trip_bps
 
         fields = compute_decision_fields(
-            rec, archetype, opt, ruleset=ruleset, est_cost_bps=est_cost_bps,
+            rec,
+            archetype,
+            opt,
+            ruleset=ruleset,
+            est_cost_bps=est_cost_bps,
         )
 
         # Filter: eligible + tier in filter
@@ -274,33 +307,42 @@ def build_strategy_portfolio(
         cat_et = rec.get("catalyst_event_type", "")
         cat_src = rec.get("catalyst_source", "")
         sort_key = compute_actionable_sort_key(
-            fields, archetype, opt, composite_rank, ticker,
+            fields,
+            archetype,
+            opt,
+            composite_rank,
+            ticker,
             catalyst_event_type=cat_et,
             catalyst_source=cat_src,
             ruleset=ruleset,
         )
 
-        candidates.append((sort_key, {
-            "ticker": ticker,
-            "tier_dev": tier,
-            "size_band": fields.get("size_band", ""),
-            "catalyst_mode": fields.get("catalyst_mode", ""),
-            "catalyst_days": fields.get("catalyst_days", ""),
-            "mom_state": fields.get("mom_state", ""),
-            "tier_reason": fields.get("tier_reason", ""),
-            "size_reasons": fields.get("size_reasons", ""),
-            "risk_flags": fields.get("risk_flags", ""),
-            "composite_rank": composite_rank,
-            "optionality": opt,
-            "est_cost_bps": est_cost_bps,
-            "cost_mult": fields.get("cost_mult", ""),
-            "cost_bucket": fields.get("cost_bucket", ""),
-            "cost_haircut_applied": fields.get("cost_haircut_applied", ""),
-            "catalyst_tilt_mult": fields.get("catalyst_tilt_mult", 1.0),
-            "catalyst_tilt_applied": fields.get("catalyst_tilt_applied", "0"),
-            "mom_state_tilt_mult": fields.get("mom_state_tilt_mult", 1.0),
-            "mom_state_tilt_applied": fields.get("mom_state_tilt_applied", "0"),
-        }))
+        candidates.append(
+            (
+                sort_key,
+                {
+                    "ticker": ticker,
+                    "tier_dev": tier,
+                    "size_band": fields.get("size_band", ""),
+                    "catalyst_mode": fields.get("catalyst_mode", ""),
+                    "catalyst_days": fields.get("catalyst_days", ""),
+                    "mom_state": fields.get("mom_state", ""),
+                    "tier_reason": fields.get("tier_reason", ""),
+                    "size_reasons": fields.get("size_reasons", ""),
+                    "risk_flags": fields.get("risk_flags", ""),
+                    "composite_rank": composite_rank,
+                    "optionality": opt,
+                    "est_cost_bps": est_cost_bps,
+                    "cost_mult": fields.get("cost_mult", ""),
+                    "cost_bucket": fields.get("cost_bucket", ""),
+                    "cost_haircut_applied": fields.get("cost_haircut_applied", ""),
+                    "catalyst_tilt_mult": fields.get("catalyst_tilt_mult", 1.0),
+                    "catalyst_tilt_applied": fields.get("catalyst_tilt_applied", "0"),
+                    "mom_state_tilt_mult": fields.get("mom_state_tilt_mult", 1.0),
+                    "mom_state_tilt_applied": fields.get("mom_state_tilt_applied", "0"),
+                },
+            )
+        )
 
     # Sort by actionable key and take top-k
     candidates.sort(key=lambda x: x[0])
@@ -351,10 +393,7 @@ def build_composite_baseline(
         return []
 
     weight = round(100.0 / len(selected), 2)
-    return [
-        {"ticker": t, "composite_rank": r, "weight_pct": weight}
-        for r, t in selected
-    ]
+    return [{"ticker": t, "composite_rank": r, "weight_pct": weight} for r, t in selected]
 
 
 def build_universe_baseline(
@@ -409,46 +448,46 @@ def build_all_dev_decisions(
 
         # Gate margin diagnostics (panel-only)
         margins = compute_gate_margins(rec, ruleset)
-        tier_margins = compute_tier_margins(
-            opt, fields.get("catalyst_strength", "missing"), ruleset
-        )
+        tier_margins = compute_tier_margins(opt, fields.get("catalyst_strength", "missing"), ruleset)
 
         df = rec.get("defensive_features") or {}
-        results.append({
-            "ticker": ticker,
-            "tier_dev": fields.get("tier_dev", ""),
-            "band": fields.get("size_band", ""),
-            "eligible": fields.get("eligible", "0"),
-            "ineligible_reasons": fields.get("ineligible_reasons", ""),
-            "first_failed_gate": margins.get("first_failed_gate", ""),
-            "tier_reason": fields.get("tier_reason", ""),
-            "risk_flags": fields.get("risk_flags", ""),
-            "catalyst_mode": fields.get("catalyst_mode", ""),
-            "catalyst_strength": fields.get("catalyst_strength", ""),
-            "catalyst_days": fields.get("catalyst_days", ""),
-            "mom_state": fields.get("mom_state", ""),
-            "optionality": opt,
-            "drawdown_abs": df.get("drawdown"),
-            "drawdown_xbi": df.get("drawdown_xbi"),
-            "drawdown_rel_xbi": df.get("drawdown_rel_xbi"),
-            "dd_abs_margin": margins["dd_abs_margin"],
-            "dd_rel_margin": margins["dd_rel_margin"],
-            "rescued_by_rel": margins["rescued_by_rel"],
-            "dd_rel_margin_rescued": fields.get("dd_rel_margin_rescued", "0"),
-            "optionality_margin_a": tier_margins["optionality_margin_a"],
-            "actionable_catalyst": tier_margins["actionable_catalyst"],
-            "catalyst_tilt_mult": fields.get("catalyst_tilt_mult", 1.0),
-            "catalyst_tilt_applied": fields.get("catalyst_tilt_applied", "0"),
-            "mom_state_tilt_mult": fields.get("mom_state_tilt_mult", 1.0),
-            "mom_state_tilt_applied": fields.get("mom_state_tilt_applied", "0"),
-            "catalyst_source": rec.get("catalyst_source", ""),
-            "catalyst_event_type": rec.get("catalyst_event_type", ""),
-            "cat_priority": resolve_catalyst_priority(
-                rec.get("catalyst_event_type", ""),
-                rec.get("catalyst_source", ""),
-                ruleset,
-            ),
-        })
+        results.append(
+            {
+                "ticker": ticker,
+                "tier_dev": fields.get("tier_dev", ""),
+                "band": fields.get("size_band", ""),
+                "eligible": fields.get("eligible", "0"),
+                "ineligible_reasons": fields.get("ineligible_reasons", ""),
+                "first_failed_gate": margins.get("first_failed_gate", ""),
+                "tier_reason": fields.get("tier_reason", ""),
+                "risk_flags": fields.get("risk_flags", ""),
+                "catalyst_mode": fields.get("catalyst_mode", ""),
+                "catalyst_strength": fields.get("catalyst_strength", ""),
+                "catalyst_days": fields.get("catalyst_days", ""),
+                "mom_state": fields.get("mom_state", ""),
+                "optionality": opt,
+                "drawdown_abs": df.get("drawdown"),
+                "drawdown_xbi": df.get("drawdown_xbi"),
+                "drawdown_rel_xbi": df.get("drawdown_rel_xbi"),
+                "dd_abs_margin": margins["dd_abs_margin"],
+                "dd_rel_margin": margins["dd_rel_margin"],
+                "rescued_by_rel": margins["rescued_by_rel"],
+                "dd_rel_margin_rescued": fields.get("dd_rel_margin_rescued", "0"),
+                "optionality_margin_a": tier_margins["optionality_margin_a"],
+                "actionable_catalyst": tier_margins["actionable_catalyst"],
+                "catalyst_tilt_mult": fields.get("catalyst_tilt_mult", 1.0),
+                "catalyst_tilt_applied": fields.get("catalyst_tilt_applied", "0"),
+                "mom_state_tilt_mult": fields.get("mom_state_tilt_mult", 1.0),
+                "mom_state_tilt_applied": fields.get("mom_state_tilt_applied", "0"),
+                "catalyst_source": rec.get("catalyst_source", ""),
+                "catalyst_event_type": rec.get("catalyst_event_type", ""),
+                "cat_priority": resolve_catalyst_priority(
+                    rec.get("catalyst_event_type", ""),
+                    rec.get("catalyst_source", ""),
+                    ruleset,
+                ),
+            }
+        )
 
     return results
 
@@ -525,6 +564,7 @@ def write_panel_csv(
 # PORTFOLIO EVALUATION
 # =============================================================================
 
+
 def evaluate_portfolio(
     positions: List[Dict[str, Any]],
     returns: MultiHorizonReturns,
@@ -572,9 +612,7 @@ def evaluate_portfolio(
                 pos_detail = {"ticker": ticker, "weight_pct": weight}
             else:
                 # Find existing detail
-                pos_detail = next(
-                    (p for p in per_position if p["ticker"] == ticker), None
-                )
+                pos_detail = next((p for p in per_position if p["ticker"] == ticker), None)
                 if pos_detail is None:
                     pos_detail = {"ticker": ticker, "weight_pct": weight}
                     per_position.append(pos_detail)
@@ -593,9 +631,7 @@ def evaluate_portfolio(
         if matched_raw:
             total_weight = sum(w for w, _ in matched_raw)
             if total_weight > 0:
-                weighted_ret = sum(
-                    (w / total_weight) * r for w, r in matched_raw
-                )
+                weighted_ret = sum((w / total_weight) * r for w, r in matched_raw)
             else:
                 weighted_ret = 0.0
             result[f"weighted_ret_{h}d_pct"] = round(weighted_ret * 100, 4)
@@ -606,9 +642,7 @@ def evaluate_portfolio(
         if matched_resid:
             total_weight_r = sum(w for w, _ in matched_resid)
             if total_weight_r > 0:
-                weighted_resid = sum(
-                    (w / total_weight_r) * r for w, r in matched_resid
-                )
+                weighted_resid = sum((w / total_weight_r) * r for w, r in matched_resid)
             else:
                 weighted_resid = 0.0
             result[f"weighted_resid_{h}d_pct"] = round(weighted_resid * 100, 4)
@@ -655,6 +689,7 @@ def evaluate_portfolio(
 # TURNOVER
 # =============================================================================
 
+
 def compute_portfolio_turnover(
     prev_positions: List[Dict[str, Any]],
     curr_positions: List[Dict[str, Any]],
@@ -677,13 +712,16 @@ def compute_portfolio_turnover(
     curr_weights = {p["ticker"]: p.get("weight_pct", 0.0) for p in curr_positions}
 
     all_tickers = prev_tickers | curr_tickers
-    weight_turnover = sum(
-        abs(
-            (float(curr_weights.get(t, 0.0)) if curr_weights.get(t, 0.0) != "" else 0.0)
-            - (float(prev_weights.get(t, 0.0)) if prev_weights.get(t, 0.0) != "" else 0.0)
+    weight_turnover = (
+        sum(
+            abs(
+                (float(curr_weights.get(t, 0.0)) if curr_weights.get(t, 0.0) != "" else 0.0)
+                - (float(prev_weights.get(t, 0.0)) if prev_weights.get(t, 0.0) != "" else 0.0)
+            )
+            for t in all_tickers
         )
-        for t in all_tickers
-    ) / 2.0
+        / 2.0
+    )
 
     return {
         "position_turnover": round(position_turnover, 4),
@@ -695,8 +733,10 @@ def compute_portfolio_turnover(
 # SNAPSHOT RESULT
 # =============================================================================
 
+
 class SnapshotResult(NamedTuple):
     """Result for one snapshot date."""
+
     date_str: str
     regime: str
     strategy_eval: Dict[str, Any]
@@ -711,6 +751,7 @@ class SnapshotResult(NamedTuple):
 # =============================================================================
 # MAIN LOOP
 # =============================================================================
+
 
 def run_strategy_backtest(
     archives: List[Tuple[str, Path]],
@@ -738,13 +779,10 @@ def run_strategy_backtest(
     snapshot_dates = [d for d, _ in archives]
     last_date = csv_provider.get_last_date()
     max_horizon = max(horizons)
-    usable_dates, fence_skipped = compute_as_of_fence(
-        snapshot_dates, last_date, max_horizon
-    )
+    usable_dates, fence_skipped = compute_as_of_fence(snapshot_dates, last_date, max_horizon)
     usable_set = set(usable_dates)
 
-    print(f"  Archives: {len(archives)} total, {len(usable_dates)} usable "
-          f"(max horizon={max_horizon}d)")
+    print(f"  Archives: {len(archives)} total, {len(usable_dates)} usable " f"(max horizon={max_horizon}d)")
     if fence_skipped:
         print(f"  Skipped {len(fence_skipped)} archives past return fence")
 
@@ -761,20 +799,12 @@ def run_strategy_backtest(
         hydrate_archive_drawdown(archive_data, csv_provider, date_str)
 
         # Compute multi-horizon returns
-        mh_returns = compute_multi_horizon_returns(
-            chained, csv_provider, archive_data.tickers, date_str, horizons
-        )
+        mh_returns = compute_multi_horizon_returns(chained, csv_provider, archive_data.tickers, date_str, horizons)
 
         # Build portfolios
-        strategy_positions = build_strategy_portfolio(
-            archive_data, ruleset, tier_filter, top_k
-        )
-        baseline_topk_positions = build_composite_baseline(
-            archive_data, top_k
-        )
-        baseline_universe_positions = build_universe_baseline(
-            archive_data, ruleset
-        )
+        strategy_positions = build_strategy_portfolio(archive_data, ruleset, tier_filter, top_k)
+        baseline_topk_positions = build_composite_baseline(archive_data, top_k)
+        baseline_universe_positions = build_universe_baseline(archive_data, ruleset)
 
         # Panel: all dev-stage decisions + forward returns + forward max-DD
         if emit_panel:
@@ -799,12 +829,8 @@ def run_strategy_backtest(
                 fwd_20 = mh_returns.raw.get(20, {}).get(ticker)
                 fwd_60 = mh_returns.raw.get(60, {}).get(ticker)
 
-                dd_20, dd_20_reason = csv_provider.get_forward_max_drawdown(
-                    ticker, date_str, 20
-                )
-                dd_60, dd_60_reason = csv_provider.get_forward_max_drawdown(
-                    ticker, date_str, 60
-                )
+                dd_20, dd_20_reason = csv_provider.get_forward_max_drawdown(ticker, date_str, 20)
+                dd_60, dd_60_reason = csv_provider.get_forward_max_drawdown(ticker, date_str, 60)
                 # Use the longer-horizon reason as representative
                 dd_reason = dd_60_reason or dd_20_reason
 
@@ -836,66 +862,70 @@ def run_strategy_backtest(
                 dd_abs = dev.get("drawdown_abs")
                 dd_xbi = dev.get("drawdown_xbi")
                 dd_rel = dev.get("drawdown_rel_xbi")
-                panel_rows.append({
-                    "as_of_date": date_str,
-                    "ticker": ticker,
-                    "tier": dev["tier_dev"],
-                    "band": dev["band"],
-                    "eligible": dev["eligible"],
-                    "weight": weight_map.get(ticker, 0.0),
-                    "ineligible_reasons": dev.get("ineligible_reasons", ""),
-                    "first_failed_gate": dev.get("first_failed_gate", ""),
-                    "tier_reason": dev["tier_reason"],
-                    "risk_flags": dev["risk_flags"],
-                    "catalyst_mode": dev["catalyst_mode"],
-                    "catalyst_strength": dev.get("catalyst_strength", ""),
-                    "mom_state": dev["mom_state"],
-                    "optionality": opt_str,
-                    "catalyst_days_raw": cat_days,
-                    "ruleset_id": ruleset.ruleset_id,
-                    "drawdown_abs": round(dd_abs, 4) if dd_abs is not None else "",
-                    "drawdown_xbi": round(dd_xbi, 4) if dd_xbi is not None else "",
-                    "drawdown_rel_xbi": round(dd_rel, 4) if dd_rel is not None else "",
-                    "dd_abs_margin": round(dev["dd_abs_margin"], 4) if isinstance(dev.get("dd_abs_margin"), (int, float)) else "",
-                    "dd_rel_margin": round(dev["dd_rel_margin"], 4) if isinstance(dev.get("dd_rel_margin"), (int, float)) else "",
-                    "rescued_by_rel": "1" if dev.get("rescued_by_rel") else "0",
-                    "dd_rel_margin_rescued": dev.get("dd_rel_margin_rescued", "0"),
-                    "optionality_margin_a": round(dev["optionality_margin_a"], 4) if isinstance(dev.get("optionality_margin_a"), (int, float)) else "",
-                    "actionable_catalyst": "1" if dev.get("actionable_catalyst") else "0",
-                    "fwd_ret_20d": fwd_20_pct,
-                    "fwd_ret_60d": fwd_60_pct,
-                    "fwd_max_dd_20d": round(dd_20 * 100, 4) if dd_20 is not None else "",
-                    "fwd_max_dd_60d": round(dd_60 * 100, 4) if dd_60 is not None else "",
-                    "fwd_dd_missing_reason": dd_reason,
-                    "adv_dollars": round(adv, 2),
-                    "est_cost_bps": round(est_cost_bps, 2),
-                    "participation_pct": round(participation, 4),
-                    "fwd_ret_20d_net": fwd_20_net,
-                    "fwd_ret_60d_net": fwd_60_net,
-                    "returns_source": _get_return_source(chained, ticker, date_str, 60),
-                    "catalyst_source": dev.get("catalyst_source", ""),
-                    "catalyst_event_type": dev.get("catalyst_event_type", ""),
-                    "cat_priority": resolve_catalyst_priority(
-                        dev.get("catalyst_event_type", ""),
-                        dev.get("catalyst_source", ""),
-                        ruleset,
-                    ),
-                })
+                panel_rows.append(
+                    {
+                        "as_of_date": date_str,
+                        "ticker": ticker,
+                        "tier": dev["tier_dev"],
+                        "band": dev["band"],
+                        "eligible": dev["eligible"],
+                        "weight": weight_map.get(ticker, 0.0),
+                        "ineligible_reasons": dev.get("ineligible_reasons", ""),
+                        "first_failed_gate": dev.get("first_failed_gate", ""),
+                        "tier_reason": dev["tier_reason"],
+                        "risk_flags": dev["risk_flags"],
+                        "catalyst_mode": dev["catalyst_mode"],
+                        "catalyst_strength": dev.get("catalyst_strength", ""),
+                        "mom_state": dev["mom_state"],
+                        "optionality": opt_str,
+                        "catalyst_days_raw": cat_days,
+                        "ruleset_id": ruleset.ruleset_id,
+                        "drawdown_abs": round(dd_abs, 4) if dd_abs is not None else "",
+                        "drawdown_xbi": round(dd_xbi, 4) if dd_xbi is not None else "",
+                        "drawdown_rel_xbi": round(dd_rel, 4) if dd_rel is not None else "",
+                        "dd_abs_margin": (
+                            round(dev["dd_abs_margin"], 4) if isinstance(dev.get("dd_abs_margin"), (int, float)) else ""
+                        ),
+                        "dd_rel_margin": (
+                            round(dev["dd_rel_margin"], 4) if isinstance(dev.get("dd_rel_margin"), (int, float)) else ""
+                        ),
+                        "rescued_by_rel": "1" if dev.get("rescued_by_rel") else "0",
+                        "dd_rel_margin_rescued": dev.get("dd_rel_margin_rescued", "0"),
+                        "optionality_margin_a": (
+                            round(dev["optionality_margin_a"], 4)
+                            if isinstance(dev.get("optionality_margin_a"), (int, float))
+                            else ""
+                        ),
+                        "actionable_catalyst": "1" if dev.get("actionable_catalyst") else "0",
+                        "fwd_ret_20d": fwd_20_pct,
+                        "fwd_ret_60d": fwd_60_pct,
+                        "fwd_max_dd_20d": round(dd_20 * 100, 4) if dd_20 is not None else "",
+                        "fwd_max_dd_60d": round(dd_60 * 100, 4) if dd_60 is not None else "",
+                        "fwd_dd_missing_reason": dd_reason,
+                        "adv_dollars": round(adv, 2),
+                        "est_cost_bps": round(est_cost_bps, 2),
+                        "participation_pct": round(participation, 4),
+                        "fwd_ret_20d_net": fwd_20_net,
+                        "fwd_ret_60d_net": fwd_60_net,
+                        "returns_source": _get_return_source(chained, ticker, date_str, 60),
+                        "catalyst_source": dev.get("catalyst_source", ""),
+                        "catalyst_event_type": dev.get("catalyst_event_type", ""),
+                        "cat_priority": resolve_catalyst_priority(
+                            dev.get("catalyst_event_type", ""),
+                            dev.get("catalyst_source", ""),
+                            ruleset,
+                        ),
+                    }
+                )
 
             # Accumulate cost telemetry across snapshots
             all_cost_estimates.extend(cost_estimates)
             total_positions += len(strategy_positions)
 
         # Evaluate
-        strategy_eval = evaluate_portfolio(
-            strategy_positions, mh_returns, horizons
-        )
-        baseline_topk_eval = evaluate_portfolio(
-            baseline_topk_positions, mh_returns, horizons
-        )
-        baseline_universe_eval = evaluate_portfolio(
-            baseline_universe_positions, mh_returns, horizons
-        )
+        strategy_eval = evaluate_portfolio(strategy_positions, mh_returns, horizons)
+        baseline_topk_eval = evaluate_portfolio(baseline_topk_positions, mh_returns, horizons)
+        baseline_universe_eval = evaluate_portfolio(baseline_universe_positions, mh_returns, horizons)
 
         # Turnover
         turnover = None
@@ -906,20 +936,21 @@ def run_strategy_backtest(
         n_strat = strategy_eval.get("n_positions", 0)
         w60 = strategy_eval.get("weighted_resid_60d_pct")
         w60_str = f"{w60:+.2f}%" if w60 is not None else "n/a"
-        print(f"n={n_strat}, regime={mh_returns.regime}, "
-              f"strat_resid_60d={w60_str}")
+        print(f"n={n_strat}, regime={mh_returns.regime}, " f"strat_resid_60d={w60_str}")
 
-        results.append(SnapshotResult(
-            date_str=date_str,
-            regime=mh_returns.regime,
-            strategy_eval=strategy_eval,
-            baseline_topk_eval=baseline_topk_eval,
-            baseline_universe_eval=baseline_universe_eval,
-            strategy_positions=strategy_positions,
-            baseline_topk_positions=baseline_topk_positions,
-            baseline_universe_positions=baseline_universe_positions,
-            turnover=turnover,
-        ))
+        results.append(
+            SnapshotResult(
+                date_str=date_str,
+                regime=mh_returns.regime,
+                strategy_eval=strategy_eval,
+                baseline_topk_eval=baseline_topk_eval,
+                baseline_universe_eval=baseline_universe_eval,
+                strategy_positions=strategy_positions,
+                baseline_topk_positions=baseline_topk_positions,
+                baseline_universe_positions=baseline_universe_positions,
+                turnover=turnover,
+            )
+        )
 
     # Compute aggregate cost telemetry
     if emit_panel and total_positions > 0:
@@ -928,9 +959,7 @@ def run_strategy_backtest(
             if ruleset.enable_cost_haircut
             else DEFAULT_SCHEDULE
         )
-        cost_telem = compute_cost_telemetry(
-            total_positions, all_cost_estimates, cost_sched
-        )
+        cost_telem = compute_cost_telemetry(total_positions, all_cost_estimates, cost_sched)
     else:
         cost_telem = {}
 
@@ -940,6 +969,7 @@ def run_strategy_backtest(
 # =============================================================================
 # AGGREGATION
 # =============================================================================
+
 
 def aggregate_results(
     results: List[SnapshotResult],
@@ -1053,10 +1083,8 @@ def aggregate_results(
     agg["per_regime"] = regime_stats
 
     # Turnover
-    turnover_pos = [r.turnover["position_turnover"]
-                    for r in results if r.turnover is not None]
-    turnover_wt = [r.turnover["weight_turnover_pct"]
-                   for r in results if r.turnover is not None]
+    turnover_pos = [r.turnover["position_turnover"] for r in results if r.turnover is not None]
+    turnover_wt = [r.turnover["weight_turnover_pct"] for r in results if r.turnover is not None]
     agg["mean_position_turnover"] = round(mean(turnover_pos), 4) if turnover_pos else None
     agg["mean_weight_turnover_pct"] = round(mean(turnover_wt), 2) if turnover_wt else None
 
@@ -1068,8 +1096,7 @@ def aggregate_results(
 
     top_tickers = ticker_counter.most_common(20)
     agg["top_tickers"] = [
-        {"ticker": t, "appearances": c, "pct_of_snapshots": round(c / len(results) * 100, 1)}
-        for t, c in top_tickers
+        {"ticker": t, "appearances": c, "pct_of_snapshots": round(c / len(results) * 100, 1)} for t, c in top_tickers
     ]
     agg["unique_ticker_count"] = len(ticker_counter)
 
@@ -1084,6 +1111,7 @@ def aggregate_results(
 # OUTPUT
 # =============================================================================
 
+
 def write_portfolio_csv(
     results: List[SnapshotResult],
     output_path: Path,
@@ -1091,8 +1119,14 @@ def write_portfolio_csv(
 ) -> None:
     """Write per-date per-ticker portfolio CSV."""
     fieldnames = [
-        "date", "ticker", "tier_dev", "actionable_rank", "weight_pct",
-        "size_band", "catalyst_mode", "mom_state",
+        "date",
+        "ticker",
+        "tier_dev",
+        "actionable_rank",
+        "weight_pct",
+        "size_band",
+        "catalyst_mode",
+        "mom_state",
     ]
     for h in horizons:
         fieldnames.extend([f"fwd_{h}d", f"resid_{h}d"])
@@ -1135,14 +1169,16 @@ def write_summary_csv(
     """Write per-date summary CSV with a POOLED row."""
     fieldnames = ["date", "regime", "n_positions"]
     for h in horizons:
-        fieldnames.extend([
-            f"strategy_weighted_resid_{h}d_pct",
-            f"strategy_ew_resid_{h}d_pct",
-            f"baseline_topk_ew_resid_{h}d_pct",
-            f"baseline_universe_ew_resid_{h}d_pct",
-            f"spread_vs_topk_{h}d",
-            f"hit_rate_{h}d_pct",
-        ])
+        fieldnames.extend(
+            [
+                f"strategy_weighted_resid_{h}d_pct",
+                f"strategy_ew_resid_{h}d_pct",
+                f"baseline_topk_ew_resid_{h}d_pct",
+                f"baseline_universe_ew_resid_{h}d_pct",
+                f"spread_vs_topk_{h}d",
+                f"hit_rate_{h}d_pct",
+            ]
+        )
     fieldnames.extend(["position_turnover", "weight_turnover_pct"])
 
     rows: List[Dict[str, Any]] = []
@@ -1153,27 +1189,17 @@ def write_summary_csv(
             "n_positions": r.strategy_eval.get("n_positions", 0),
         }
         for h in horizons:
-            row[f"strategy_weighted_resid_{h}d_pct"] = r.strategy_eval.get(
-                f"weighted_resid_{h}d_pct", ""
-            )
-            row[f"strategy_ew_resid_{h}d_pct"] = r.strategy_eval.get(
-                f"ew_resid_{h}d_pct", ""
-            )
-            row[f"baseline_topk_ew_resid_{h}d_pct"] = r.baseline_topk_eval.get(
-                f"ew_resid_{h}d_pct", ""
-            )
-            row[f"baseline_universe_ew_resid_{h}d_pct"] = r.baseline_universe_eval.get(
-                f"ew_resid_{h}d_pct", ""
-            )
+            row[f"strategy_weighted_resid_{h}d_pct"] = r.strategy_eval.get(f"weighted_resid_{h}d_pct", "")
+            row[f"strategy_ew_resid_{h}d_pct"] = r.strategy_eval.get(f"ew_resid_{h}d_pct", "")
+            row[f"baseline_topk_ew_resid_{h}d_pct"] = r.baseline_topk_eval.get(f"ew_resid_{h}d_pct", "")
+            row[f"baseline_universe_ew_resid_{h}d_pct"] = r.baseline_universe_eval.get(f"ew_resid_{h}d_pct", "")
             strat_v = r.strategy_eval.get(f"weighted_resid_{h}d_pct")
             topk_v = r.baseline_topk_eval.get(f"ew_resid_{h}d_pct")
             if strat_v is not None and topk_v is not None:
                 row[f"spread_vs_topk_{h}d"] = round(strat_v - topk_v, 4)
             else:
                 row[f"spread_vs_topk_{h}d"] = ""
-            row[f"hit_rate_{h}d_pct"] = r.strategy_eval.get(
-                f"hit_rate_{h}d_pct", ""
-            )
+            row[f"hit_rate_{h}d_pct"] = r.strategy_eval.get(f"hit_rate_{h}d_pct", "")
         if r.turnover:
             row["position_turnover"] = r.turnover["position_turnover"]
             row["weight_turnover_pct"] = r.turnover["weight_turnover_pct"]
@@ -1189,24 +1215,12 @@ def write_summary_csv(
         "n_positions": agg.get("mean_n_positions", ""),
     }
     for h in horizons:
-        pooled[f"strategy_weighted_resid_{h}d_pct"] = agg.get(
-            f"strategy_weighted_resid_{h}d_pct_mean", ""
-        )
-        pooled[f"strategy_ew_resid_{h}d_pct"] = agg.get(
-            f"strategy_ew_resid_{h}d_pct_mean", ""
-        )
-        pooled[f"baseline_topk_ew_resid_{h}d_pct"] = agg.get(
-            f"baseline_topk_ew_resid_{h}d_pct_mean", ""
-        )
-        pooled[f"baseline_universe_ew_resid_{h}d_pct"] = agg.get(
-            f"baseline_universe_ew_resid_{h}d_pct_mean", ""
-        )
-        pooled[f"spread_vs_topk_{h}d"] = agg.get(
-            f"spread_vs_topk_{h}d_mean", ""
-        )
-        pooled[f"hit_rate_{h}d_pct"] = agg.get(
-            f"strategy_hit_rate_{h}d_pct_mean", ""
-        )
+        pooled[f"strategy_weighted_resid_{h}d_pct"] = agg.get(f"strategy_weighted_resid_{h}d_pct_mean", "")
+        pooled[f"strategy_ew_resid_{h}d_pct"] = agg.get(f"strategy_ew_resid_{h}d_pct_mean", "")
+        pooled[f"baseline_topk_ew_resid_{h}d_pct"] = agg.get(f"baseline_topk_ew_resid_{h}d_pct_mean", "")
+        pooled[f"baseline_universe_ew_resid_{h}d_pct"] = agg.get(f"baseline_universe_ew_resid_{h}d_pct_mean", "")
+        pooled[f"spread_vs_topk_{h}d"] = agg.get(f"spread_vs_topk_{h}d_mean", "")
+        pooled[f"hit_rate_{h}d_pct"] = agg.get(f"strategy_hit_rate_{h}d_pct_mean", "")
     pooled["position_turnover"] = agg.get("mean_position_turnover", "")
     pooled["weight_turnover_pct"] = agg.get("mean_weight_turnover_pct", "")
     rows.append(pooled)
@@ -1226,30 +1240,30 @@ def write_details_json(
     """Write full nested JSON details."""
     per_date = []
     for r in results:
-        per_date.append({
-            "date": r.date_str,
-            "regime": r.regime,
-            "strategy": {
-                "n_positions": r.strategy_eval.get("n_positions", 0),
-                "metrics": {k: v for k, v in r.strategy_eval.items()
-                            if k not in ("per_position", "n_positions")},
-                "positions": [
-                    {k: v for k, v in p.items()}
-                    for p in r.strategy_positions
-                ],
-            },
-            "baseline_topk": {
-                "n_positions": r.baseline_topk_eval.get("n_positions", 0),
-                "metrics": {k: v for k, v in r.baseline_topk_eval.items()
-                            if k not in ("per_position", "n_positions")},
-            },
-            "baseline_universe": {
-                "n_positions": r.baseline_universe_eval.get("n_positions", 0),
-                "metrics": {k: v for k, v in r.baseline_universe_eval.items()
-                            if k not in ("per_position", "n_positions")},
-            },
-            "turnover": r.turnover,
-        })
+        per_date.append(
+            {
+                "date": r.date_str,
+                "regime": r.regime,
+                "strategy": {
+                    "n_positions": r.strategy_eval.get("n_positions", 0),
+                    "metrics": {k: v for k, v in r.strategy_eval.items() if k not in ("per_position", "n_positions")},
+                    "positions": [{k: v for k, v in p.items()} for p in r.strategy_positions],
+                },
+                "baseline_topk": {
+                    "n_positions": r.baseline_topk_eval.get("n_positions", 0),
+                    "metrics": {
+                        k: v for k, v in r.baseline_topk_eval.items() if k not in ("per_position", "n_positions")
+                    },
+                },
+                "baseline_universe": {
+                    "n_positions": r.baseline_universe_eval.get("n_positions", 0),
+                    "metrics": {
+                        k: v for k, v in r.baseline_universe_eval.items() if k not in ("per_position", "n_positions")
+                    },
+                },
+                "turnover": r.turnover,
+            }
+        )
 
     output = {
         "metadata": config,
@@ -1293,9 +1307,7 @@ def generate_report(
     lines.append("2. HEADLINE RESULTS (mean across snapshots, %)")
     lines.append("-" * 40)
 
-    hdr = (f"  {'Portfolio':<22} "
-           + " ".join(f"{'resid_'+str(h)+'d':>12}" for h in horizons)
-           + f" {'hit_60d':>8}")
+    hdr = f"  {'Portfolio':<22} " + " ".join(f"{'resid_'+str(h)+'d':>12}" for h in horizons) + f" {'hit_60d':>8}"
     lines.append(hdr)
     lines.append(f"  {'-'*22} " + " ".join(f"{'-'*12}" for _ in horizons) + f" {'-'*8}")
 
@@ -1357,10 +1369,12 @@ def generate_report(
     lines.append("-" * 40)
     pos_to = agg.get("mean_position_turnover")
     wt_to = agg.get("mean_weight_turnover_pct")
-    lines.append(f"  Mean position turnover: "
-                 f"{pos_to:.1%}" if pos_to is not None else "  Mean position turnover: n/a")
-    lines.append(f"  Mean weight turnover:   "
-                 f"{wt_to:.1f}%" if wt_to is not None else "  Mean weight turnover:   n/a")
+    lines.append(
+        f"  Mean position turnover: " f"{pos_to:.1%}" if pos_to is not None else "  Mean position turnover: n/a"
+    )
+    lines.append(
+        f"  Mean weight turnover:   " f"{wt_to:.1f}%" if wt_to is not None else "  Mean weight turnover:   n/a"
+    )
     lines.append("")
 
     # Section 5: Top positions
@@ -1370,15 +1384,15 @@ def generate_report(
     lines.append(f"  {'Ticker':<8} {'Appearances':>12} {'% of snapshots':>15}")
     lines.append(f"  {'-'*8} {'-'*12} {'-'*15}")
     for tt in top_tickers[:15]:
-        lines.append(f"  {tt['ticker']:<8} {tt['appearances']:>12} "
-                     f"{tt['pct_of_snapshots']:>14.1f}%")
+        lines.append(f"  {tt['ticker']:<8} {tt['appearances']:>12} " f"{tt['pct_of_snapshots']:>14.1f}%")
     lines.append("")
 
     # Section 6: Per-date detail
     lines.append("6. PER-DATE SUMMARY")
     lines.append("-" * 40)
-    lines.append(f"  {'Date':<12} {'Regime':<9} {'N':>3} "
-                 f"{'Strat_60d':>10} {'TopK_60d':>10} {'Spread':>8} {'PTO':>6}")
+    lines.append(
+        f"  {'Date':<12} {'Regime':<9} {'N':>3} " f"{'Strat_60d':>10} {'TopK_60d':>10} {'Spread':>8} {'PTO':>6}"
+    )
     lines.append(f"  {'-'*12} {'-'*9} {'-'*3} {'-'*10} {'-'*10} {'-'*8} {'-'*6}")
     for r in results:
         s60 = r.strategy_eval.get("weighted_resid_60d_pct")
@@ -1386,8 +1400,7 @@ def generate_report(
         spread = (s60 - b60) if s60 is not None and b60 is not None else None
         pto = r.turnover["position_turnover"] if r.turnover else None
 
-        parts = [f"  {r.date_str:<12} {r.regime:<9} "
-                 f"{r.strategy_eval.get('n_positions', 0):>3}"]
+        parts = [f"  {r.date_str:<12} {r.regime:<9} " f"{r.strategy_eval.get('n_positions', 0):>3}"]
         parts.append(f" {s60:>+10.2f}" if s60 is not None else f" {'n/a':>10}")
         parts.append(f" {b60:>+10.2f}" if b60 is not None else f" {'n/a':>10}")
         parts.append(f" {spread:>+8.2f}" if spread is not None else f" {'n/a':>8}")
@@ -1415,48 +1428,66 @@ def generate_report(
 # MAIN
 # =============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Strategy-Level Decision Engine Backtest"
-    )
+    parser = argparse.ArgumentParser(description="Strategy-Level Decision Engine Backtest")
     parser.add_argument(
-        "--ruleset", type=str, default=None,
+        "--ruleset",
+        type=str,
+        default=None,
         help="DecisionRuleset JSON path (default: built-in default)",
     )
     parser.add_argument(
-        "--tier-filter", type=str, default="A,B",
+        "--tier-filter",
+        type=str,
+        default="A,B",
         help="Comma-separated tiers to include (default: A,B)",
     )
     parser.add_argument(
-        "--top-k", type=int, default=DEFAULT_TOP_K,
+        "--top-k",
+        type=int,
+        default=DEFAULT_TOP_K,
         help=f"Max portfolio positions (default: {DEFAULT_TOP_K})",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=str(OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(OUTPUT_DIR),
         help="Output directory (default: output/)",
     )
     parser.add_argument(
-        "--start", type=str, default=None,
+        "--start",
+        type=str,
+        default=None,
         help="Archive start date filter (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--end", type=str, default=None,
+        "--end",
+        type=str,
+        default=None,
         help="Archive end date filter (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--emit-panel", type=str, default=None,
+        "--emit-panel",
+        type=str,
+        default=None,
         help="Write per-ticker walk-forward panel CSV to PATH",
     )
     parser.add_argument(
-        "--archive-dir", type=str, default=None,
+        "--archive-dir",
+        type=str,
+        default=None,
         help=f"Archive directory (default: {ARCHIVE_DIR})",
     )
     parser.add_argument(
-        "--price-csv", type=str, default=None,
+        "--price-csv",
+        type=str,
+        default=None,
         help="Price CSV path for returns (default: production_data/price_history.csv)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print config + archive count, exit",
     )
     args = parser.parse_args()
@@ -1577,8 +1608,7 @@ def main():
     wt_to = agg.get("mean_weight_turnover_pct")
     if pos_to is not None:
         print(f"  Turnover: position={pos_to:.1%}, weight={wt_to:.1f}%")
-    print(f"  Snapshots: {agg.get('n_snapshots', 0)}, "
-          f"Unique tickers: {agg.get('unique_ticker_count', 0)}")
+    print(f"  Snapshots: {agg.get('n_snapshots', 0)}, " f"Unique tickers: {agg.get('unique_ticker_count', 0)}")
     print("=" * 60)
 
 

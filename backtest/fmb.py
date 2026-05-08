@@ -7,6 +7,7 @@ Two-step procedure:
 
 No scipy or statsmodels required.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -18,10 +19,10 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 import numpy as np
 import pandas as pd
 
-
 # ---------------------------------------------------------------------------
 # Cross-sectional OLS (single date)
 # ---------------------------------------------------------------------------
+
 
 def _ols_betas(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
@@ -70,6 +71,7 @@ def cross_sectional_regression(
 # Newey–West HAC standard errors on a time series
 # ---------------------------------------------------------------------------
 
+
 def newey_west_se(series: np.ndarray, lags: int = 4) -> float:
     """
     Newey–West HAC standard error for the mean of a time series.
@@ -85,7 +87,7 @@ def newey_west_se(series: np.ndarray, lags: int = 4) -> float:
     demeaned = series - mean
 
     # Variance term (lag 0)
-    gamma_0 = np.sum(demeaned ** 2) / T
+    gamma_0 = np.sum(demeaned**2) / T
 
     # Autocovariance terms with Bartlett weights
     nw_sum = gamma_0
@@ -102,6 +104,7 @@ def newey_west_se(series: np.ndarray, lags: int = 4) -> float:
 # ---------------------------------------------------------------------------
 # z-score standardisation (cross-sectional, per date)
 # ---------------------------------------------------------------------------
+
 
 def zscore_features(
     df: pd.DataFrame,
@@ -188,6 +191,7 @@ def prune_correlated_features(
 # Full Fama–MacBeth procedure
 # ---------------------------------------------------------------------------
 
+
 def fama_macbeth(
     panel: pd.DataFrame,
     return_col: str,
@@ -260,13 +264,8 @@ def fama_macbeth(
             beta_records.append(rec)
 
     if not beta_records:
-        empty_summary = pd.DataFrame(
-            columns=["feature", "mean_beta", "t_stat", "p_value",
-                     "n_weeks", "avg_n_stocks"]
-        )
-        empty_betas = pd.DataFrame(
-            columns=[date_col, "n_obs"] + feature_cols
-        )
+        empty_summary = pd.DataFrame(columns=["feature", "mean_beta", "t_stat", "p_value", "n_weeks", "avg_n_stocks"])
+        empty_betas = pd.DataFrame(columns=[date_col, "n_obs"] + feature_cols)
         return empty_summary, empty_betas
 
     betas_df = pd.DataFrame(beta_records)
@@ -300,16 +299,18 @@ def fama_macbeth(
             p_value = np.nan
 
         n_dropped = sum(1 for d in dropped_features_log if col in dropped_features_log[d])
-        summary_rows.append({
-            "feature": col,
-            "mean_beta": round(mean_beta, 6),
-            "t_stat": round(t_stat, 4) if np.isfinite(t_stat) else np.nan,
-            "p_value": round(p_value, 6) if np.isfinite(p_value) else np.nan,
-            "n_weeks": n_weeks,
-            "n_valid_weeks": n_valid,
-            "n_dropped_dates": n_dropped,
-            "avg_n_stocks": round(avg_n_stocks, 1),
-        })
+        summary_rows.append(
+            {
+                "feature": col,
+                "mean_beta": round(mean_beta, 6),
+                "t_stat": round(t_stat, 4) if np.isfinite(t_stat) else np.nan,
+                "p_value": round(p_value, 6) if np.isfinite(p_value) else np.nan,
+                "n_weeks": n_weeks,
+                "n_valid_weeks": n_valid,
+                "n_dropped_dates": n_dropped,
+                "avg_n_stocks": round(avg_n_stocks, 1),
+            }
+        )
 
     summary_df = pd.DataFrame(summary_rows)
     summary_df = summary_df.sort_values("feature").reset_index(drop=True)
@@ -320,6 +321,7 @@ def fama_macbeth(
 # ---------------------------------------------------------------------------
 # Normal CDF approximation (no scipy)
 # ---------------------------------------------------------------------------
+
 
 def _normal_cdf(x: float) -> float:
     """Standard normal CDF via Abramowitz & Stegun approximation."""
@@ -350,6 +352,7 @@ def _normal_two_sided_p(t_stat: float) -> float:
 # Convenience: write outputs
 # ---------------------------------------------------------------------------
 
+
 def write_fmb_outputs(
     summary_df: pd.DataFrame,
     betas_df: pd.DataFrame,
@@ -371,9 +374,7 @@ def write_fmb_outputs(
     betas_df.to_csv(betas_path, index=False, compression="gzip")
 
     # Metadata
-    content_hash = hashlib.sha256(
-        summary_df.to_csv(index=False).encode()
-    ).hexdigest()[:16]
+    content_hash = hashlib.sha256(summary_df.to_csv(index=False).encode()).hexdigest()[:16]
     metadata = {
         "return_col": return_col,
         "feature_cols": sorted(feature_cols),

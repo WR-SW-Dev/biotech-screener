@@ -17,11 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -139,32 +135,36 @@ class ResilienceValidator:
         # Check positive patterns
         for pattern, pattern_type, description in self.POSITIVE_PATTERNS:
             for match in re.finditer(pattern, content, re.IGNORECASE):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
-                patterns.append(ResiliencePattern(
-                    file_path=rel_path,
-                    line_number=line_num,
-                    pattern_type=pattern_type,
-                    is_positive=True,
-                    description=description,
-                    code_snippet=snippet.strip()[:80],
-                ))
+                patterns.append(
+                    ResiliencePattern(
+                        file_path=rel_path,
+                        line_number=line_num,
+                        pattern_type=pattern_type,
+                        is_positive=True,
+                        description=description,
+                        code_snippet=snippet.strip()[:80],
+                    )
+                )
 
         # Check anti-patterns
         for pattern, pattern_type, description in self.ANTI_PATTERNS:
             for match in re.finditer(pattern, content, re.MULTILINE):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
-                patterns.append(ResiliencePattern(
-                    file_path=rel_path,
-                    line_number=line_num,
-                    pattern_type=pattern_type,
-                    is_positive=False,
-                    description=description,
-                    code_snippet=snippet.strip()[:80],
-                ))
+                patterns.append(
+                    ResiliencePattern(
+                        file_path=rel_path,
+                        line_number=line_num,
+                        pattern_type=pattern_type,
+                        is_positive=False,
+                        description=description,
+                        code_snippet=snippet.strip()[:80],
+                    )
+                )
 
         return patterns
 

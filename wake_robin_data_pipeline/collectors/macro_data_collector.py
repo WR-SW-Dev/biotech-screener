@@ -18,9 +18,9 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -33,9 +33,11 @@ __version__ = "1.0.0"
 # Data Classes
 # =============================================================================
 
+
 @dataclass
 class MacroDataPoint:
     """A single macro data observation."""
+
     series_id: str
     date: str  # ISO format
     value: str  # String to preserve precision
@@ -46,9 +48,10 @@ class MacroDataPoint:
 @dataclass
 class MacroSnapshot:
     """Complete macro data snapshot for regime detection."""
+
     as_of_date: str
     yield_curve_slope_bps: Optional[str]  # 10Y-2Y in basis points
-    hy_credit_spread_bps: Optional[str]   # HY OAS in basis points
+    hy_credit_spread_bps: Optional[str]  # HY OAS in basis points
     biotech_fund_flows_mm: Optional[str]  # Weekly flows in $MM
     data_quality: Dict[str, Any]
     provenance: Dict[str, Any]
@@ -60,6 +63,7 @@ class MacroSnapshot:
 # =============================================================================
 # FRED API Collector
 # =============================================================================
+
 
 class FREDCollector:
     """
@@ -75,14 +79,14 @@ class FREDCollector:
 
     # FRED series IDs
     SERIES = {
-        "yield_curve_10y2y": "T10Y2Y",      # 10Y-2Y Treasury spread (already in %)
-        "yield_10y": "DGS10",                # 10-Year Treasury yield
-        "yield_2y": "DGS2",                  # 2-Year Treasury yield
-        "hy_spread": "BAMLH0A0HYM2",        # ICE BofA US High Yield OAS (in %)
-        "hy_spread_bb": "BAMLH0A1HYBB",     # BB-rated OAS
-        "hy_spread_b": "BAMLH0A2HYB",       # B-rated OAS
-        "hy_spread_ccc": "BAMLH0A3HYC",     # CCC & lower OAS
-        "ig_spread": "BAMLC0A0CM",          # Investment grade OAS
+        "yield_curve_10y2y": "T10Y2Y",  # 10Y-2Y Treasury spread (already in %)
+        "yield_10y": "DGS10",  # 10-Year Treasury yield
+        "yield_2y": "DGS2",  # 2-Year Treasury yield
+        "hy_spread": "BAMLH0A0HYM2",  # ICE BofA US High Yield OAS (in %)
+        "hy_spread_bb": "BAMLH0A1HYBB",  # BB-rated OAS
+        "hy_spread_b": "BAMLH0A2HYB",  # B-rated OAS
+        "hy_spread_ccc": "BAMLH0A3HYC",  # CCC & lower OAS
+        "ig_spread": "BAMLC0A0CM",  # Investment grade OAS
     }
 
     # FRED API key must be supplied via env var or constructor arg.
@@ -337,6 +341,7 @@ class FREDCollector:
 # ETF Fund Flow Collector
 # =============================================================================
 
+
 class FundFlowCollector:
     """
     Collector for biotech ETF fund flows.
@@ -517,7 +522,9 @@ class FundFlowCollector:
             metadata["price_return"] = f"{price_return:.4f}"
             metadata["dollar_volume"] = f"{dollar_volume:,.0f}"
             metadata["ap_rate"] = "2%"
-            metadata["calculation_note"] = "ESTIMATE: ~2% of volume as AP activity. For accurate data use Bloomberg/ETF.com"
+            metadata["calculation_note"] = (
+                "ESTIMATE: ~2% of volume as AP activity. For accurate data use Bloomberg/ETF.com"
+            )
 
             return flow_mm, metadata
 
@@ -591,6 +598,7 @@ class FundFlowCollector:
 # =============================================================================
 # Main Collector Interface
 # =============================================================================
+
 
 class MacroDataCollector:
     """
@@ -695,11 +703,13 @@ class MacroDataCollector:
             data_quality["errors"].append(f"fund_flows: {e}")
 
         # Calculate completeness score
-        complete_fields = sum([
-            data_quality["has_yield_curve"],
-            data_quality["has_hy_spread"],
-            data_quality["has_fund_flows"],
-        ])
+        complete_fields = sum(
+            [
+                data_quality["has_yield_curve"],
+                data_quality["has_hy_spread"],
+                data_quality["has_fund_flows"],
+            ]
+        )
         data_quality["completeness"] = f"{complete_fields}/3"
 
         return MacroSnapshot(
@@ -725,24 +735,16 @@ class MacroDataCollector:
             Dict ready to pass to detect_regime(**kwargs)
         """
         return {
-            "yield_curve_slope": (
-                Decimal(snapshot.yield_curve_slope_bps)
-                if snapshot.yield_curve_slope_bps else None
-            ),
-            "hy_credit_spread": (
-                Decimal(snapshot.hy_credit_spread_bps)
-                if snapshot.hy_credit_spread_bps else None
-            ),
-            "biotech_fund_flows": (
-                Decimal(snapshot.biotech_fund_flows_mm)
-                if snapshot.biotech_fund_flows_mm else None
-            ),
+            "yield_curve_slope": (Decimal(snapshot.yield_curve_slope_bps) if snapshot.yield_curve_slope_bps else None),
+            "hy_credit_spread": (Decimal(snapshot.hy_credit_spread_bps) if snapshot.hy_credit_spread_bps else None),
+            "biotech_fund_flows": (Decimal(snapshot.biotech_fund_flows_mm) if snapshot.biotech_fund_flows_mm else None),
         }
 
 
 # =============================================================================
 # CLI and Testing
 # =============================================================================
+
 
 def demonstration() -> None:
     """Demonstrate the macro data collector."""

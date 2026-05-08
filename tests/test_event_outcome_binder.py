@@ -165,8 +165,12 @@ def test_bind_end_to_end(tmp_path):
     res_dir.mkdir()
     # Two resolved catalysts and one orphan
     write_resolution(
-        res_dir, "ABCD", "2026-06-15",
-        outcome="HIT", price_t_minus_1=10.0, price_t_plus_5=12.0,
+        res_dir,
+        "ABCD",
+        "2026-06-15",
+        outcome="HIT",
+        price_t_minus_1=10.0,
+        price_t_plus_5=12.0,
     )
     write_resolution(res_dir, "EFGH", "2026-07-01", outcome="MISS")
 
@@ -271,9 +275,7 @@ def test_bind_idempotent_rewrites_sidecar(tmp_path):
         [
             {
                 "as_of_date": "2026-05-01",
-                "changed_names": [
-                    {"ticker": "ABCD", "event_type": "PDUFA", "expected_date": "2026-06-15"}
-                ],
+                "changed_names": [{"ticker": "ABCD", "event_type": "PDUFA", "expected_date": "2026-06-15"}],
             }
         ],
     )
@@ -314,9 +316,7 @@ def test_bind_handles_missing_resolutions_dir(tmp_path):
         [
             {
                 "as_of_date": "2026-05-01",
-                "changed_names": [
-                    {"ticker": "ABCD", "event_type": "PDUFA", "expected_date": "2026-06-15"}
-                ],
+                "changed_names": [{"ticker": "ABCD", "event_type": "PDUFA", "expected_date": "2026-06-15"}],
             }
         ],
     )

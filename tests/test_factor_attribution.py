@@ -9,19 +9,20 @@ Tests cover:
 - T-statistic computation
 """
 
-import pytest
 from decimal import Decimal
 
+import pytest
+
 from backtest.factor_attribution import (
-    FactorIC,
-    FactorContribution,
     DecayPoint,
-    FactorDecayCurve,
-    RegimePerformance,
     FactorAttributionResult,
-    _to_decimal,
+    FactorContribution,
+    FactorDecayCurve,
+    FactorIC,
+    RegimePerformance,
     _quantize,
     _rank_data,
+    _to_decimal,
     compute_spearman_ic,
     compute_t_statistic,
 )

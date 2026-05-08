@@ -21,15 +21,11 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
-from decimal import Decimal
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -40,7 +36,7 @@ class ProvenanceRecord:
     field_name: str
     value: Any
     source_type: Optional[str] = None  # "SEC_EDGAR", "CTGOV", "FDA", "IR"
-    source_id: Optional[str] = None    # NCT number, form ID, etc.
+    source_id: Optional[str] = None  # NCT number, form ID, etc.
     source_date: Optional[str] = None
     is_verified: bool = False
     is_fabricated: bool = False
@@ -64,9 +60,7 @@ class ProvenanceReport:
     def provenance_coverage(self) -> Decimal:
         if self.total_records == 0:
             return Decimal("0")
-        return (
-            Decimal(self.records_with_source) / Decimal(self.total_records)
-        ).quantize(Decimal("0.0001"))
+        return (Decimal(self.records_with_source) / Decimal(self.total_records)).quantize(Decimal("0.0001"))
 
 
 class ProvenanceValidator:
@@ -292,23 +286,15 @@ class ProvenanceValidator:
         source_breakdown: Dict[str, int] = {}
         for record in all_records:
             if record.source_type:
-                source_breakdown[record.source_type] = (
-                    source_breakdown.get(record.source_type, 0) + 1
-                )
+                source_breakdown[record.source_type] = source_breakdown.get(record.source_type, 0) + 1
 
         # Missing sources
-        missing = [
-            f"{r.ticker}.{r.field_name}"
-            for r in all_records
-            if not r.source_type
-        ]
+        missing = [f"{r.ticker}.{r.field_name}" for r in all_records if not r.source_type]
 
         # Calculate coverage
         coverage = Decimal("0")
         if total > 0:
-            coverage = (Decimal(with_source) / Decimal(total)).quantize(
-                Decimal("0.0001")
-            )
+            coverage = (Decimal(with_source) / Decimal(total)).quantize(Decimal("0.0001"))
 
         # Test fabrication firewall
         firewall_test = self.test_fabrication_firewall()
@@ -364,9 +350,7 @@ def validate_provenance(
         severity = (
             AuditSeverity.CRITICAL
             if report.provenance_coverage < Decimal("0.90")
-            else AuditSeverity.HIGH
-            if report.provenance_coverage < Decimal("0.95")
-            else AuditSeverity.MEDIUM
+            else AuditSeverity.HIGH if report.provenance_coverage < Decimal("0.95") else AuditSeverity.MEDIUM
         )
 
         result.add_finding(
@@ -374,12 +358,11 @@ def validate_provenance(
             category=ValidationCategory.PROVENANCE,
             title="Data records missing source provenance",
             description=(
-                f"{report.records_without_source} of {report.total_records} records "
-                f"lack source type identification"
+                f"{report.records_without_source} of {report.total_records} records " f"lack source type identification"
             ),
             location="production_data/",
             evidence=f"Coverage: {report.provenance_coverage*100:.2f}%\n"
-                     f"Missing: {', '.join(report.missing_sources[:10])}...",
+            f"Missing: {', '.join(report.missing_sources[:10])}...",
             remediation="Add source_type, source_id, and source_date to all records",
             compliance_impact="Untracked data sources prevent audit verification",
         )

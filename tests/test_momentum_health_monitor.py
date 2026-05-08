@@ -5,29 +5,29 @@ test_momentum_health_monitor.py - Tests for momentum health monitoring
 Tests the IC-based momentum health monitoring and kill switch functionality.
 """
 
-import unittest
-from decimal import Decimal
-from datetime import date
-
 import sys
+import unittest
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from momentum_health_monitor import (
-    MomentumHealthMonitor,
-    spearman_rank_correlation,
-    calculate_momentum_signal,
-    calculate_cross_sectional_ic,
-    get_regime_adaptive_momentum_weight,
-    assess_momentum_signal_health,
     IC_EXCELLENT,
     IC_GOOD,
     IC_MARGINAL,
     IC_WEAK,
-    WEIGHT_FULL,
-    WEIGHT_REDUCED,
-    WEIGHT_MINIMAL,
     WEIGHT_DISABLED,
+    WEIGHT_FULL,
+    WEIGHT_MINIMAL,
+    WEIGHT_REDUCED,
+    MomentumHealthMonitor,
+    assess_momentum_signal_health,
+    calculate_cross_sectional_ic,
+    calculate_momentum_signal,
+    get_regime_adaptive_momentum_weight,
+    spearman_rank_correlation,
 )
 from regime_engine import RegimeDetectionEngine
 
@@ -215,9 +215,7 @@ class TestRegimeEngineIntegration(unittest.TestCase):
     def test_detect_regime_without_ic(self):
         """detect_regime without IC should work normally."""
         result = self.engine.detect_regime(
-            vix_current=Decimal("18.0"),
-            xbi_vs_spy_30d=Decimal("3.0"),
-            fed_rate_change_3m=Decimal("-0.25")
+            vix_current=Decimal("18.0"), xbi_vs_spy_30d=Decimal("3.0"), fed_rate_change_3m=Decimal("-0.25")
         )
         self.assertIn("regime", result)
         self.assertIn("signal_adjustments", result)
@@ -229,7 +227,7 @@ class TestRegimeEngineIntegration(unittest.TestCase):
             vix_current=Decimal("18.0"),
             xbi_vs_spy_30d=Decimal("3.0"),
             fed_rate_change_3m=Decimal("-0.25"),
-            momentum_ic_3m=Decimal("0.15")
+            momentum_ic_3m=Decimal("0.15"),
         )
 
         self.assertIsNotNone(result.get("momentum_health"))
@@ -243,7 +241,7 @@ class TestRegimeEngineIntegration(unittest.TestCase):
             vix_current=Decimal("18.0"),
             xbi_vs_spy_30d=Decimal("3.0"),
             fed_rate_change_3m=Decimal("-0.25"),
-            momentum_ic_3m=Decimal("-0.10")
+            momentum_ic_3m=Decimal("-0.10"),
         )
 
         self.assertIsNotNone(result.get("momentum_health"))
@@ -258,7 +256,7 @@ class TestRegimeEngineIntegration(unittest.TestCase):
             vix_current=Decimal("18.0"),
             xbi_vs_spy_30d=Decimal("3.0"),
             fed_rate_change_3m=Decimal("-0.25"),
-            momentum_ic_3m=Decimal("0.07")
+            momentum_ic_3m=Decimal("0.07"),
         )
 
         self.assertIsNotNone(result.get("momentum_health"))

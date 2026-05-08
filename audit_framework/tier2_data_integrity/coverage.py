@@ -17,11 +17,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -121,13 +117,13 @@ class CoverageValidator:
 
     # Freshness thresholds (days)
     STALE_FINANCIAL_DAYS = 90  # > 90 days = stale
-    STALE_TRIAL_DAYS = 30      # > 30 days = stale
-    STALE_13F_DAYS = 60        # > 60 days (quarterly + lag)
+    STALE_TRIAL_DAYS = 30  # > 30 days = stale
+    STALE_13F_DAYS = 60  # > 60 days (quarterly + lag)
 
     # Coverage thresholds
     MIN_FINANCIAL_COVERAGE = Decimal("0.90")  # 90%
-    MIN_POS_COVERAGE = Decimal("0.70")        # 70%
-    MIN_CATALYST_COVERAGE = Decimal("0.70")   # 70%
+    MIN_POS_COVERAGE = Decimal("0.70")  # 70%
+    MIN_CATALYST_COVERAGE = Decimal("0.70")  # 70%
 
     def __init__(
         self,
@@ -152,26 +148,14 @@ class CoverageValidator:
 
             # Handle different structures
             if isinstance(data, list):
-                return {
-                    r.get("ticker", r.get("symbol", ""))
-                    for r in data
-                    if isinstance(r, dict)
-                }
+                return {r.get("ticker", r.get("symbol", "")) for r in data if isinstance(r, dict)}
             elif isinstance(data, dict):
                 # Check for active_securities
                 if "active_securities" in data:
-                    return {
-                        r.get("ticker", "")
-                        for r in data["active_securities"]
-                        if isinstance(r, dict)
-                    }
+                    return {r.get("ticker", "") for r in data["active_securities"] if isinstance(r, dict)}
                 # Check for records
                 if "records" in data:
-                    return {
-                        r.get("ticker", "")
-                        for r in data["records"]
-                        if isinstance(r, dict)
-                    }
+                    return {r.get("ticker", "") for r in data["records"] if isinstance(r, dict)}
 
         except Exception:
             pass
@@ -274,9 +258,7 @@ class CoverageValidator:
 
         coverage = Decimal("0")
         if universe:
-            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(
-                Decimal("0.0001")
-            )
+            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(Decimal("0.0001"))
 
         return CoverageMetrics(
             data_type="financial",
@@ -307,9 +289,7 @@ class CoverageValidator:
 
         coverage = Decimal("0")
         if universe:
-            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(
-                Decimal("0.0001")
-            )
+            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(Decimal("0.0001"))
 
         return CoverageMetrics(
             data_type="clinical_pos",
@@ -342,9 +322,7 @@ class CoverageValidator:
 
         coverage = Decimal("0")
         if universe:
-            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(
-                Decimal("0.0001")
-            )
+            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(Decimal("0.0001"))
 
         return CoverageMetrics(
             data_type="catalyst",
@@ -365,9 +343,7 @@ class CoverageValidator:
 
         coverage = Decimal("0")
         if universe:
-            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(
-                Decimal("0.0001")
-            )
+            coverage = (Decimal(covered_count) / Decimal(len(universe))).quantize(Decimal("0.0001"))
 
         return CoverageMetrics(
             data_type="13f_holdings",
@@ -387,49 +363,49 @@ class CoverageValidator:
         gates = []
 
         # Financial coverage gate
-        financial = next(
-            (m for m in coverage_metrics if m.data_type == "financial"), None
-        )
+        financial = next((m for m in coverage_metrics if m.data_type == "financial"), None)
         if financial:
             passed = financial.coverage_percent >= self.MIN_FINANCIAL_COVERAGE
-            gates.append(QualityGate(
-                gate_name="financial_coverage",
-                threshold=f">= {self.MIN_FINANCIAL_COVERAGE*100}%",
-                actual_value=f"{financial.coverage_percent*100:.1f}%",
-                passed=passed,
-                warning_level="critical" if not passed else "info",
-                affected_tickers=financial.missing_tickers,
-            ))
+            gates.append(
+                QualityGate(
+                    gate_name="financial_coverage",
+                    threshold=f">= {self.MIN_FINANCIAL_COVERAGE*100}%",
+                    actual_value=f"{financial.coverage_percent*100:.1f}%",
+                    passed=passed,
+                    warning_level="critical" if not passed else "info",
+                    affected_tickers=financial.missing_tickers,
+                )
+            )
 
         # PoS coverage gate
-        pos = next(
-            (m for m in coverage_metrics if m.data_type == "clinical_pos"), None
-        )
+        pos = next((m for m in coverage_metrics if m.data_type == "clinical_pos"), None)
         if pos:
             passed = pos.coverage_percent >= self.MIN_POS_COVERAGE
-            gates.append(QualityGate(
-                gate_name="pos_coverage",
-                threshold=f">= {self.MIN_POS_COVERAGE*100}%",
-                actual_value=f"{pos.coverage_percent*100:.1f}%",
-                passed=passed,
-                warning_level="warning" if not passed else "info",
-                affected_tickers=pos.missing_tickers,
-            ))
+            gates.append(
+                QualityGate(
+                    gate_name="pos_coverage",
+                    threshold=f">= {self.MIN_POS_COVERAGE*100}%",
+                    actual_value=f"{pos.coverage_percent*100:.1f}%",
+                    passed=passed,
+                    warning_level="warning" if not passed else "info",
+                    affected_tickers=pos.missing_tickers,
+                )
+            )
 
         # Catalyst coverage gate
-        catalyst = next(
-            (m for m in coverage_metrics if m.data_type == "catalyst"), None
-        )
+        catalyst = next((m for m in coverage_metrics if m.data_type == "catalyst"), None)
         if catalyst:
             passed = catalyst.coverage_percent >= self.MIN_CATALYST_COVERAGE
-            gates.append(QualityGate(
-                gate_name="catalyst_coverage",
-                threshold=f">= {self.MIN_CATALYST_COVERAGE*100}%",
-                actual_value=f"{catalyst.coverage_percent*100:.1f}%",
-                passed=passed,
-                warning_level="warning" if not passed else "info",
-                affected_tickers=catalyst.missing_tickers,
-            ))
+            gates.append(
+                QualityGate(
+                    gate_name="catalyst_coverage",
+                    threshold=f">= {self.MIN_CATALYST_COVERAGE*100}%",
+                    actual_value=f"{catalyst.coverage_percent*100:.1f}%",
+                    passed=passed,
+                    warning_level="warning" if not passed else "info",
+                    affected_tickers=catalyst.missing_tickers,
+                )
+            )
 
         # Staleness gates
         for freshness in freshness_metrics:
@@ -440,14 +416,16 @@ class CoverageValidator:
                     if total > 0:
                         stale_pct = (freshness.stale_count / total) * 100
 
-                gates.append(QualityGate(
-                    gate_name=f"{freshness.data_type}_freshness",
-                    threshold="< 90 days",
-                    actual_value=f"max {freshness.max_age_days} days, {stale_pct:.1f}% stale",
-                    passed=freshness.stale_count == 0,
-                    warning_level="warning" if freshness.stale_count > 0 else "info",
-                    affected_tickers=freshness.stale_tickers,
-                ))
+                gates.append(
+                    QualityGate(
+                        gate_name=f"{freshness.data_type}_freshness",
+                        threshold="< 90 days",
+                        actual_value=f"max {freshness.max_age_days} days, {stale_pct:.1f}% stale",
+                        passed=freshness.stale_count == 0,
+                        warning_level="warning" if freshness.stale_count > 0 else "info",
+                        affected_tickers=freshness.stale_tickers,
+                    )
+                )
 
         return gates
 
@@ -487,16 +465,12 @@ class CoverageValidator:
 
         # Calculate overall coverage
         if coverage_metrics:
-            overall = sum(
-                m.coverage_percent for m in coverage_metrics
-            ) / Decimal(len(coverage_metrics))
+            overall = sum(m.coverage_percent for m in coverage_metrics) / Decimal(len(coverage_metrics))
         else:
             overall = Decimal("0")
 
         # Determine pass/fail
-        critical_gates_passed = all(
-            g.passed for g in quality_gates if g.warning_level == "critical"
-        )
+        critical_gates_passed = all(g.passed for g in quality_gates if g.warning_level == "critical")
         passed = critical_gates_passed and overall >= Decimal("0.75")
 
         return CoverageReport(
@@ -533,17 +507,16 @@ def validate_data_coverage(
         check_name="data_coverage",
         passed=report.passed,
         metrics=report.to_dict(),
-        details=f"Overall coverage: {report.overall_coverage*100:.1f}%, "
-                f"Universe size: {report.universe_size}",
+        details=f"Overall coverage: {report.overall_coverage*100:.1f}%, " f"Universe size: {report.universe_size}",
     )
 
     # Add findings for failed quality gates
     for gate in report.quality_gates:
         if not gate.passed:
             severity = (
-                AuditSeverity.CRITICAL if gate.warning_level == "critical"
-                else AuditSeverity.HIGH if gate.warning_level == "warning"
-                else AuditSeverity.MEDIUM
+                AuditSeverity.CRITICAL
+                if gate.warning_level == "critical"
+                else AuditSeverity.HIGH if gate.warning_level == "warning" else AuditSeverity.MEDIUM
             )
 
             result.add_finding(

@@ -202,7 +202,7 @@ def main():
         )
     if t.get("legacy_shadow") and t["legacy_shadow"].get("pnl_pct") is not None:
         print(
-            f"  {'Legacy shadow':<20} {t['legacy_shadow']['pnl_pct']:>+7.2f}%     {c['legacy_pct']:>+8.2f}%      {c.get('legacy_excess_pct','—'):>+7.2f}%"
+            f"  {'Legacy shadow':<20} {t['legacy_shadow']['pnl_pct']:>+7.2f}%     {c['legacy_pct']:>+8.2f}%      {c.get('legacy_excess_pct', '—'):>+7.2f}%"
             if c.get("legacy_excess_pct")
             else f"  {'Legacy shadow':<20} {t['legacy_shadow']['pnl_pct']:>+7.2f}%     {c['legacy_pct']:>+8.2f}%"
         )

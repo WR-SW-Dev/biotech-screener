@@ -10,22 +10,19 @@ Tests deterministic run ID generation:
 - Metadata parsing
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from governance.run_id import (
-    compute_run_id,
-    validate_run_id,
-    parse_run_id_components,
-)
-
+from governance.run_id import compute_run_id, parse_run_id_components, validate_run_id
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_inputs():
@@ -46,6 +43,7 @@ def sample_inputs():
 # ============================================================================
 # COMPUTE RUN ID TESTS
 # ============================================================================
+
 
 class TestComputeRunId:
     """Tests for compute_run_id function."""
@@ -137,6 +135,7 @@ class TestComputeRunId:
 # VALIDATE RUN ID TESTS
 # ============================================================================
 
+
 class TestValidateRunId:
     """Tests for validate_run_id function."""
 
@@ -176,6 +175,7 @@ class TestValidateRunId:
 # PARSE RUN ID COMPONENTS TESTS
 # ============================================================================
 
+
 class TestParseRunIdComponents:
     """Tests for parse_run_id_components function."""
 
@@ -199,6 +199,7 @@ class TestParseRunIdComponents:
 # ============================================================================
 # DETERMINISM TESTS
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests verifying deterministic behavior."""
@@ -246,6 +247,7 @@ class TestDeterminism:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests for run ID generation."""

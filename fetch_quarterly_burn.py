@@ -16,26 +16,27 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
 
 
-def load_universe_tickers(universe_file: str = 'production_data/universe.json') -> List[str]:
+def load_universe_tickers(universe_file: str = "production_data/universe.json") -> List[str]:
     """Load tickers from universe file."""
     with open(universe_file) as f:
         data = json.load(f)
 
     tickers = []
     for item in data:
-        ticker = item.get('ticker', '')
-        if ticker and not ticker.startswith('_') and not ticker.endswith('_'):
+        ticker = item.get("ticker", "")
+        if ticker and not ticker.startswith("_") and not ticker.endswith("_"):
             tickers.append(ticker)
 
     return sorted(set(tickers))
@@ -62,17 +63,17 @@ def fetch_quarterly_cashflow(ticker: str) -> Optional[List[Dict[str, Any]]]:
         ocf_row = None
         for row_name in cf.index:
             row_lower = str(row_name).lower()
-            if 'operating' in row_lower and ('cash' in row_lower or 'flow' in row_lower):
+            if "operating" in row_lower and ("cash" in row_lower or "flow" in row_lower):
                 ocf_row = row_name
                 break
-            if 'cash from operating' in row_lower:
+            if "cash from operating" in row_lower:
                 ocf_row = row_name
                 break
 
         if ocf_row is None:
             # Try 'Free Cash Flow' as fallback
             for row_name in cf.index:
-                if 'free cash flow' in str(row_name).lower():
+                if "free cash flow" in str(row_name).lower():
                     ocf_row = row_name
                     break
 
@@ -82,27 +83,24 @@ def fetch_quarterly_cashflow(ticker: str) -> Optional[List[Dict[str, Any]]]:
         quarterly_data = []
         for col in cf.columns:
             period_end = col
-            if hasattr(period_end, 'strftime'):
-                period_str = period_end.strftime('%Y-%m-%d')
+            if hasattr(period_end, "strftime"):
+                period_str = period_end.strftime("%Y-%m-%d")
             else:
                 period_str = str(period_end)[:10]
 
             value = cf.loc[ocf_row, col]
 
             # Skip NaN values
-            if value is None or (hasattr(value, 'isna') and value.isna()):
+            if value is None or (hasattr(value, "isna") and value.isna()):
                 continue
 
             # Convert to millions
             ocf_mm = float(value) / 1_000_000
 
-            quarterly_data.append({
-                'period_end': period_str,
-                'operating_cash_flow': round(ocf_mm, 2)
-            })
+            quarterly_data.append({"period_end": period_str, "operating_cash_flow": round(ocf_mm, 2)})
 
         # Sort by period_end descending (most recent first)
-        quarterly_data.sort(key=lambda x: x['period_end'], reverse=True)
+        quarterly_data.sort(key=lambda x: x["period_end"], reverse=True)
 
         return quarterly_data if quarterly_data else None
 
@@ -112,9 +110,7 @@ def fetch_quarterly_cashflow(ticker: str) -> Optional[List[Dict[str, Any]]]:
 
 
 def fetch_all_quarterly_burn(
-    tickers: List[str],
-    delay: float = 0.3,
-    progress: bool = True
+    tickers: List[str], delay: float = 0.3, progress: bool = True
 ) -> Dict[str, Dict[str, Any]]:
     """
     Fetch quarterly burn data for all tickers.
@@ -142,23 +138,23 @@ def fetch_all_quarterly_burn(
             else:
                 eta = "calculating..."
 
-            print(f"[{i:3d}/{len(tickers)}] {ticker:8s} (ETA: {eta})...", end='', flush=True)
+            print(f"[{i:3d}/{len(tickers)}] {ticker:8s} (ETA: {eta})...", end="", flush=True)
 
         quarterly_data = fetch_quarterly_cashflow(ticker)
 
         if quarterly_data:
             burn_history[ticker] = {
-                'ticker': ticker,
-                'quarterly_burn': quarterly_data,
-                'data_source': 'yahoo_finance',
-                'last_updated': datetime.now().strftime('%Y-%m-%d')
+                "ticker": ticker,
+                "quarterly_burn": quarterly_data,
+                "data_source": "yahoo_finance",
+                "last_updated": datetime.now().strftime("%Y-%m-%d"),
             }
             success_count += 1
             if progress:
                 # Show burn trend
                 if len(quarterly_data) >= 2:
-                    recent = quarterly_data[0]['operating_cash_flow']
-                    prior = quarterly_data[1]['operating_cash_flow']
+                    recent = quarterly_data[0]["operating_cash_flow"]
+                    prior = quarterly_data[1]["operating_cash_flow"]
                     trend = "↓" if recent > prior else "↑" if recent < prior else "→"
                     print(f" OK ({len(quarterly_data)} quarters, {recent:.1f}MM {trend})")
                 else:
@@ -182,35 +178,19 @@ def fetch_all_quarterly_burn(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Fetch quarterly cash flow data for burn trajectory analysis'
-    )
+    parser = argparse.ArgumentParser(description="Fetch quarterly cash flow data for burn trajectory analysis")
     parser.add_argument(
-        '--output', '-o',
-        default='production_data/quarterly_burn_history.json',
-        help='Output file path (default: production_data/quarterly_burn_history.json)'
+        "--output",
+        "-o",
+        default="production_data/quarterly_burn_history.json",
+        help="Output file path (default: production_data/quarterly_burn_history.json)",
     )
+    parser.add_argument("--tickers", "-t", nargs="+", help="Specific tickers to fetch (default: all universe tickers)")
     parser.add_argument(
-        '--tickers', '-t',
-        nargs='+',
-        help='Specific tickers to fetch (default: all universe tickers)'
+        "--universe", "-u", default="production_data/universe.json", help="Universe file to load tickers from"
     )
-    parser.add_argument(
-        '--universe', '-u',
-        default='production_data/universe.json',
-        help='Universe file to load tickers from'
-    )
-    parser.add_argument(
-        '--delay',
-        type=float,
-        default=0.3,
-        help='Delay between API requests in seconds (default: 0.3)'
-    )
-    parser.add_argument(
-        '--merge',
-        action='store_true',
-        help='Merge with existing data instead of replacing'
-    )
+    parser.add_argument("--delay", type=float, default=0.3, help="Delay between API requests in seconds (default: 0.3)")
+    parser.add_argument("--merge", action="store_true", help="Merge with existing data instead of replacing")
 
     args = parser.parse_args()
 
@@ -238,7 +218,7 @@ def main():
     if args.merge and Path(args.output).exists():
         with open(args.output) as f:
             existing = json.load(f)
-        existing_burn = existing.get('burn_history', {})
+        existing_burn = existing.get("burn_history", {})
         # Update existing with new data
         existing_burn.update(burn_history)
         burn_history = existing_burn
@@ -247,37 +227,38 @@ def main():
     # Get quarters included
     all_quarters = set()
     for data in burn_history.values():
-        for q in data.get('quarterly_burn', []):
-            all_quarters.add(q['period_end'])
+        for q in data.get("quarterly_burn", []):
+            all_quarters.add(q["period_end"])
 
     # Compute content hash for integrity verification
     import hashlib
+
     content_str = json.dumps(burn_history, sort_keys=True)
     content_hash = hashlib.sha256(content_str.encode()).hexdigest()[:16]
 
     # Build output with governance metadata
     output = {
-        'metadata': {
-            'description': 'Quarterly operating cash flow history for burn trajectory analysis',
-            'units': 'USD millions (negative = cash burn, positive = cash generation)',
-            'quarters_included': sorted(all_quarters, reverse=True)[:8],
-            'ticker_count': len(burn_history),
-            'generated_date': datetime.now().strftime('%Y-%m-%d'),
-            'fetched_at': datetime.now().isoformat() + 'Z',
-            'data_source': 'yahoo_finance',
-            'data_is_pit_safe': False,  # Yahoo data can be revised retroactively
-            'pit_warning': 'Yahoo Finance cash flow data reflects current values and may be revised. Not suitable for strict PIT backtesting without frozen snapshots.',
-            'content_hash': content_hash,
-            'version': '1.1.0'
+        "metadata": {
+            "description": "Quarterly operating cash flow history for burn trajectory analysis",
+            "units": "USD millions (negative = cash burn, positive = cash generation)",
+            "quarters_included": sorted(all_quarters, reverse=True)[:8],
+            "ticker_count": len(burn_history),
+            "generated_date": datetime.now().strftime("%Y-%m-%d"),
+            "fetched_at": datetime.now().isoformat() + "Z",
+            "data_source": "yahoo_finance",
+            "data_is_pit_safe": False,  # Yahoo data can be revised retroactively
+            "pit_warning": "Yahoo Finance cash flow data reflects current values and may be revised. Not suitable for strict PIT backtesting without frozen snapshots.",
+            "content_hash": content_hash,
+            "version": "1.1.0",
         },
-        'burn_history': burn_history
+        "burn_history": burn_history,
     }
 
     # Write output
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
 
     print(f"\nWrote {len(burn_history)} tickers to {args.output}")
@@ -289,10 +270,10 @@ def main():
     insufficient = 0
 
     for data in burn_history.values():
-        quarters = data.get('quarterly_burn', [])
+        quarters = data.get("quarterly_burn", [])
         if len(quarters) >= 2:
-            recent = quarters[0]['operating_cash_flow']
-            prior = quarters[1]['operating_cash_flow']
+            recent = quarters[0]["operating_cash_flow"]
+            prior = quarters[1]["operating_cash_flow"]
 
             # Calculate change (for burn, more negative = accelerating)
             if prior != 0:
@@ -315,5 +296,5 @@ def main():
     print(f"  Insufficient data: {insufficient}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

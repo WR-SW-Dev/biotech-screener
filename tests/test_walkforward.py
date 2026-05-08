@@ -19,10 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from backtest.returns_provider import CSVReturnsProvider
 from decision_engine import DecisionRuleset
 from run_decision_ruleset_sweep import ArchiveData
-from run_decision_strategy_backtest import (
-    PANEL_COLUMNS,
-    build_all_dev_decisions,
-)
+from run_decision_strategy_backtest import PANEL_COLUMNS, build_all_dev_decisions
 
 # Lazy import — scripts/ not always on path
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
@@ -31,6 +28,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 # =============================================================================
 # HELPERS
 # =============================================================================
+
 
 def _write_price_csv(path: Path, rows: list[tuple[str, str, str]]) -> None:
     """Write a tiny price CSV for testing. rows = [(date, ticker, close), ...]"""
@@ -109,6 +107,7 @@ def _make_archive_data(
 # TEST: Forward Max Drawdown
 # =============================================================================
 
+
 class TestForwardMaxDrawdown:
     """Tests for CSVReturnsProvider.get_forward_max_drawdown()."""
 
@@ -135,7 +134,7 @@ class TestForwardMaxDrawdown:
     def test_peak_then_trough(self, tmp_path):
         """Known drawdown: peak at 100, trough at 80 → -20%."""
         rows = [
-            ("2024-01-01", "BBB", "50"),   # as_of anchor (excluded)
+            ("2024-01-01", "BBB", "50"),  # as_of anchor (excluded)
             ("2024-01-02", "BBB", "100"),
             ("2024-01-03", "BBB", "95"),
             ("2024-01-04", "BBB", "90"),
@@ -198,25 +197,52 @@ class TestForwardMaxDrawdown:
 # TEST: Panel Schema
 # =============================================================================
 
+
 class TestPanelSchema:
     """Tests for panel columns and build_all_dev_decisions output."""
 
     def test_panel_columns_frozen(self):
         """PANEL_COLUMNS constant matches expected list."""
         expected = [
-            "as_of_date", "ticker", "tier", "band", "eligible", "weight",
-            "ineligible_reasons", "first_failed_gate",
-            "tier_reason", "risk_flags", "catalyst_mode", "catalyst_strength", "mom_state",
-            "optionality", "catalyst_days_raw", "ruleset_id",
-            "drawdown_abs", "drawdown_xbi", "drawdown_rel_xbi",
-            "dd_abs_margin", "dd_rel_margin", "rescued_by_rel", "dd_rel_margin_rescued",
-            "optionality_margin_a", "actionable_catalyst",
-            "fwd_ret_20d", "fwd_ret_60d", "fwd_max_dd_20d", "fwd_max_dd_60d",
+            "as_of_date",
+            "ticker",
+            "tier",
+            "band",
+            "eligible",
+            "weight",
+            "ineligible_reasons",
+            "first_failed_gate",
+            "tier_reason",
+            "risk_flags",
+            "catalyst_mode",
+            "catalyst_strength",
+            "mom_state",
+            "optionality",
+            "catalyst_days_raw",
+            "ruleset_id",
+            "drawdown_abs",
+            "drawdown_xbi",
+            "drawdown_rel_xbi",
+            "dd_abs_margin",
+            "dd_rel_margin",
+            "rescued_by_rel",
+            "dd_rel_margin_rescued",
+            "optionality_margin_a",
+            "actionable_catalyst",
+            "fwd_ret_20d",
+            "fwd_ret_60d",
+            "fwd_max_dd_20d",
+            "fwd_max_dd_60d",
             "fwd_dd_missing_reason",
-            "adv_dollars", "est_cost_bps", "participation_pct",
-            "fwd_ret_20d_net", "fwd_ret_60d_net",
-            "catalyst_tilt_mult", "catalyst_tilt_applied",
-            "mom_state_tilt_mult", "mom_state_tilt_applied",
+            "adv_dollars",
+            "est_cost_bps",
+            "participation_pct",
+            "fwd_ret_20d_net",
+            "fwd_ret_60d_net",
+            "catalyst_tilt_mult",
+            "catalyst_tilt_applied",
+            "mom_state_tilt_mult",
+            "mom_state_tilt_applied",
             "returns_source",
             "catalyst_source",
             "catalyst_event_type",
@@ -226,8 +252,7 @@ class TestPanelSchema:
 
     def test_panel_schema_has_net_columns(self):
         """PANEL_COLUMNS includes cost and net-return columns."""
-        for col in ["adv_dollars", "est_cost_bps", "participation_pct",
-                     "fwd_ret_20d_net", "fwd_ret_60d_net"]:
+        for col in ["adv_dollars", "est_cost_bps", "participation_pct", "fwd_ret_20d_net", "fwd_ret_60d_net"]:
             assert col in PANEL_COLUMNS, f"Missing {col} in PANEL_COLUMNS"
 
     def test_panel_columns_has_drawdown_fields(self):
@@ -237,11 +262,13 @@ class TestPanelSchema:
 
     def test_build_all_dev_decisions_keys(self):
         """build_all_dev_decisions returns expected keys for each ticker."""
-        archive = _make_archive_data({
-            "TICK1": {"rec": _make_rec(), "archetype": "drug_developer", "opt": 0.70, "composite_rank": 1},
-            "TICK2": {"rec": _make_rec(), "archetype": "drug_developer", "opt": 0.30, "composite_rank": 2},
-            "COMM1": {"rec": _make_rec(), "archetype": "commercial_biotech", "opt": None, "composite_rank": 3},
-        })
+        archive = _make_archive_data(
+            {
+                "TICK1": {"rec": _make_rec(), "archetype": "drug_developer", "opt": 0.70, "composite_rank": 1},
+                "TICK2": {"rec": _make_rec(), "archetype": "drug_developer", "opt": 0.30, "composite_rank": 2},
+                "COMM1": {"rec": _make_rec(), "archetype": "commercial_biotech", "opt": None, "composite_rank": 3},
+            }
+        )
         results = build_all_dev_decisions(archive, DecisionRuleset())
         # Should only include drug_developer tickers
         assert len(results) == 2
@@ -249,18 +276,34 @@ class TestPanelSchema:
         assert tickers == {"TICK1", "TICK2"}
         # Check keys
         expected_keys = {
-            "ticker", "tier_dev", "band", "eligible",
-            "ineligible_reasons", "first_failed_gate",
+            "ticker",
+            "tier_dev",
+            "band",
+            "eligible",
+            "ineligible_reasons",
+            "first_failed_gate",
             "tier_reason",
-            "risk_flags", "catalyst_mode", "catalyst_strength", "catalyst_days", "mom_state",
+            "risk_flags",
+            "catalyst_mode",
+            "catalyst_strength",
+            "catalyst_days",
+            "mom_state",
             "optionality",
-            "drawdown_abs", "drawdown_xbi", "drawdown_rel_xbi",
-            "dd_abs_margin", "dd_rel_margin", "rescued_by_rel",
+            "drawdown_abs",
+            "drawdown_xbi",
+            "drawdown_rel_xbi",
+            "dd_abs_margin",
+            "dd_rel_margin",
+            "rescued_by_rel",
             "dd_rel_margin_rescued",
-            "optionality_margin_a", "actionable_catalyst",
-            "catalyst_tilt_mult", "catalyst_tilt_applied",
-            "mom_state_tilt_mult", "mom_state_tilt_applied",
-            "catalyst_source", "catalyst_event_type",
+            "optionality_margin_a",
+            "actionable_catalyst",
+            "catalyst_tilt_mult",
+            "catalyst_tilt_applied",
+            "mom_state_tilt_mult",
+            "mom_state_tilt_applied",
+            "catalyst_source",
+            "catalyst_event_type",
             "cat_priority",
         }
         for r in results:
@@ -268,10 +311,12 @@ class TestPanelSchema:
 
     def test_build_all_dev_decisions_includes_ineligible(self):
         """Ineligible tickers (e.g. deep drawdown) are included in output."""
-        archive = _make_archive_data({
-            "GOOD": {"rec": _make_rec(drawdown=-0.10), "opt": 0.70, "composite_rank": 1},
-            "BAD": {"rec": _make_rec(drawdown=-0.50), "opt": 0.70, "composite_rank": 2},
-        })
+        archive = _make_archive_data(
+            {
+                "GOOD": {"rec": _make_rec(drawdown=-0.10), "opt": 0.70, "composite_rank": 1},
+                "BAD": {"rec": _make_rec(drawdown=-0.50), "opt": 0.70, "composite_rank": 2},
+            }
+        )
         results = build_all_dev_decisions(archive, DecisionRuleset())
         assert len(results) == 2
         by_ticker = {r["ticker"]: r for r in results}
@@ -282,6 +327,7 @@ class TestPanelSchema:
 # =============================================================================
 # TEST: Tier Separation Metrics
 # =============================================================================
+
 
 class TestTierSeparationMetrics:
     """Tests for tier separation computation."""

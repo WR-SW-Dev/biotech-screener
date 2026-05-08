@@ -31,11 +31,10 @@ import ssl
 import urllib.request
 import zipfile
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from decimal import ROUND_HALF_UP, Decimal
 from html.parser import HTMLParser
-
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -66,23 +65,24 @@ class FINRACatalogParser(HTMLParser):
         self.current_href = None
 
     def handle_starttag(self, tag, attrs):
-        if tag == 'a':
+        if tag == "a":
             for name, value in attrs:
-                if name == 'href' and value and ('short' in value.lower() or '.zip' in value.lower() or '.txt' in value.lower()):
+                if (
+                    name == "href"
+                    and value
+                    and ("short" in value.lower() or ".zip" in value.lower() or ".txt" in value.lower())
+                ):
                     self.current_href = value
                     self.in_link = True
 
     def handle_endtag(self, tag):
-        if tag == 'a':
+        if tag == "a":
             self.in_link = False
             self.current_href = None
 
     def handle_data(self, data):
         if self.in_link and self.current_href:
-            self.files.append({
-                'url': self.current_href,
-                'text': data.strip()
-            })
+            self.files.append({"url": self.current_href, "text": data.strip()})
 
 
 def compute_sha256(data: bytes) -> str:
@@ -190,9 +190,9 @@ def fetch_url(url: str, timeout: int = 30) -> bytes:
     request = urllib.request.Request(
         url,
         headers={
-            'User-Agent': 'Mozilla/5.0 (compatible; WakeRobinDataFeed/1.0)',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        }
+            "User-Agent": "Mozilla/5.0 (compatible; WakeRobinDataFeed/1.0)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
     )
 
     with urllib.request.urlopen(request, timeout=timeout, context=ctx) as response:
@@ -200,9 +200,7 @@ def fetch_url(url: str, timeout: int = 30) -> bytes:
 
 
 def download_finra_si_file(
-    settlement_date: date,
-    output_dir: Optional[Path] = None,
-    as_of_date: Optional[date] = None
+    settlement_date: date, output_dir: Optional[Path] = None, as_of_date: Optional[date] = None
 ) -> Dict[str, Any]:
     """
     Download FINRA short interest file for a specific settlement date.
@@ -246,7 +244,7 @@ def download_finra_si_file(
 
             # Save raw file
             output_file = output_dir / f"{settlement_date.isoformat()}.txt"
-            with open(output_file, 'wb') as f:
+            with open(output_file, "wb") as f:
                 f.write(data)
 
             # Compute hash
@@ -267,7 +265,7 @@ def download_finra_si_file(
                 "download_version": __version__,
             }
 
-            with open(meta_file, 'w') as f:
+            with open(meta_file, "w") as f:
                 json.dump(meta, f, indent=2)
 
             return {
@@ -276,7 +274,7 @@ def download_finra_si_file(
                 "file_path": str(output_file),
                 "sha256": data_hash,
                 "source_url": url,
-                "records_hint": data.count(b'\n'),
+                "records_hint": data.count(b"\n"),
             }
 
         except urllib.error.HTTPError as e:
@@ -298,10 +296,7 @@ def download_finra_si_file(
     }
 
 
-def parse_finra_si_file(
-    file_path: Path,
-    settlement_date: date
-) -> List[Dict[str, Any]]:
+def parse_finra_si_file(file_path: Path, settlement_date: date) -> List[Dict[str, Any]]:
     """
     Parse a FINRA short interest file into records.
 
@@ -313,21 +308,21 @@ def parse_finra_si_file(
     """
     records = []
 
-    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
     # Detect delimiter (pipe or comma)
-    if '|' in content[:500]:
-        delimiter = '|'
+    if "|" in content[:500]:
+        delimiter = "|"
     else:
-        delimiter = ','
+        delimiter = ","
 
-    lines = content.strip().split('\n')
+    lines = content.strip().split("\n")
 
     # Find header row
     header_idx = 0
     for i, line in enumerate(lines):
-        if 'SYMBOL' in line.upper() or 'TICKER' in line.upper():
+        if "SYMBOL" in line.upper() or "TICKER" in line.upper():
             header_idx = i
             break
 
@@ -339,14 +334,14 @@ def parse_finra_si_file(
 
     # Map common column names
     col_map = {
-        'SYMBOL': ['SYMBOL', 'TICKER', 'ISSUESYMBOL'],
-        'NAME': ['SECURITY_NAME', 'ISSUENAME', 'NAME', 'SECURITYNAME'],
-        'MARKET': ['MARKET', 'MARKETCATEGORY', 'EXCHANGE'],
-        'CURRENT_SI': ['CURRENT_SHORT_POSITION', 'CURRENTSHORTPOSITION', 'SHORTINTEREST', 'SI'],
-        'PREV_SI': ['PREVIOUS_SHORT_POSITION', 'PREVIOUSSHORTPOSITION', 'PREVSI'],
-        'CHANGE': ['CHANGE', 'CHANGE_PCT', 'CHANGEINSHORTINTEREST'],
-        'ADV': ['AVG_DAILY_VOLUME', 'AVGDAILYVOLUME', 'ADV'],
-        'DTC': ['DAYS_TO_COVER', 'DAYSTOCOVER', 'DTC'],
+        "SYMBOL": ["SYMBOL", "TICKER", "ISSUESYMBOL"],
+        "NAME": ["SECURITY_NAME", "ISSUENAME", "NAME", "SECURITYNAME"],
+        "MARKET": ["MARKET", "MARKETCATEGORY", "EXCHANGE"],
+        "CURRENT_SI": ["CURRENT_SHORT_POSITION", "CURRENTSHORTPOSITION", "SHORTINTEREST", "SI"],
+        "PREV_SI": ["PREVIOUS_SHORT_POSITION", "PREVIOUSSHORTPOSITION", "PREVSI"],
+        "CHANGE": ["CHANGE", "CHANGE_PCT", "CHANGEINSHORTINTEREST"],
+        "ADV": ["AVG_DAILY_VOLUME", "AVGDAILYVOLUME", "ADV"],
+        "DTC": ["DAYS_TO_COVER", "DAYSTOCOVER", "DTC"],
     }
 
     def find_col_idx(target_names):
@@ -355,17 +350,17 @@ def parse_finra_si_file(
                 return header.index(name)
         return -1
 
-    idx_symbol = find_col_idx(col_map['SYMBOL'])
-    idx_name = find_col_idx(col_map['NAME'])
-    idx_market = find_col_idx(col_map['MARKET'])
-    idx_current = find_col_idx(col_map['CURRENT_SI'])
-    idx_prev = find_col_idx(col_map['PREV_SI'])
-    idx_change = find_col_idx(col_map['CHANGE'])
-    idx_adv = find_col_idx(col_map['ADV'])
-    idx_dtc = find_col_idx(col_map['DTC'])
+    idx_symbol = find_col_idx(col_map["SYMBOL"])
+    idx_name = find_col_idx(col_map["NAME"])
+    idx_market = find_col_idx(col_map["MARKET"])
+    idx_current = find_col_idx(col_map["CURRENT_SI"])
+    idx_prev = find_col_idx(col_map["PREV_SI"])
+    idx_change = find_col_idx(col_map["CHANGE"])
+    idx_adv = find_col_idx(col_map["ADV"])
+    idx_dtc = find_col_idx(col_map["DTC"])
 
     # Parse data rows
-    for line in lines[header_idx + 1:]:
+    for line in lines[header_idx + 1 :]:
         if not line.strip():
             continue
 
@@ -382,8 +377,8 @@ def parse_finra_si_file(
             def parse_num(idx, default=None):
                 if idx < 0 or idx >= len(parts):
                     return default
-                val = parts[idx].strip().replace(',', '')
-                if not val or val == '-' or val.upper() == 'NA':
+                val = parts[idx].strip().replace(",", "")
+                if not val or val == "-" or val.upper() == "NA":
                     return default
                 try:
                     return float(val)
@@ -409,8 +404,9 @@ def parse_finra_si_file(
 
             # Compute change percentage if we have previous
             if record["previous_si_shares"] and record["previous_si_shares"] > 0:
-                change_pct = ((record["short_interest_shares"] - record["previous_si_shares"])
-                              / record["previous_si_shares"]) * 100
+                change_pct = (
+                    (record["short_interest_shares"] - record["previous_si_shares"]) / record["previous_si_shares"]
+                ) * 100
                 record["si_change_pct"] = round(change_pct, 2)
             else:
                 record["si_change_pct"] = None

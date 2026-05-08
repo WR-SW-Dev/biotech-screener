@@ -16,11 +16,11 @@ import json
 import re
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
-from pathlib import Path
 from http.cookiejar import CookieJar
+from pathlib import Path
 
 
 class YahooFinanceSession:
@@ -28,14 +28,12 @@ class YahooFinanceSession:
 
     def __init__(self):
         self.cookie_jar = CookieJar()
-        self.opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cookie_jar)
-        )
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie_jar))
         self.crumb = None
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
         }
 
     def _get_crumb(self):
@@ -45,22 +43,16 @@ class YahooFinanceSession:
 
         # First, visit the main page to get cookies
         try:
-            request = urllib.request.Request(
-                'https://finance.yahoo.com',
-                headers=self.headers
-            )
+            request = urllib.request.Request("https://finance.yahoo.com", headers=self.headers)
             self.opener.open(request, timeout=30)
         except Exception:
             pass
 
         # Then fetch the crumb
         try:
-            request = urllib.request.Request(
-                'https://query1.finance.yahoo.com/v1/test/getcrumb',
-                headers=self.headers
-            )
+            request = urllib.request.Request("https://query1.finance.yahoo.com/v1/test/getcrumb", headers=self.headers)
             with self.opener.open(request, timeout=30) as response:
-                self.crumb = response.read().decode('utf-8').strip()
+                self.crumb = response.read().decode("utf-8").strip()
                 return self.crumb
         except Exception:
             return None
@@ -89,16 +81,16 @@ class YahooFinanceSession:
         try:
             request = urllib.request.Request(url, headers=self.headers)
             with self.opener.open(request, timeout=30) as response:
-                content = response.read().decode('utf-8')
+                content = response.read().decode("utf-8")
 
             # Parse CSV
-            lines = content.strip().split('\n')
+            lines = content.strip().split("\n")
             if len(lines) < 2:
                 return []
 
             prices = []
             for line in lines[1:]:  # Skip header
-                parts = line.split(',')
+                parts = line.split(",")
                 if len(parts) >= 6:
                     date_str = parts[0]
                     adj_close = parts[5]  # Adj Close column
@@ -123,7 +115,7 @@ class YahooFinanceSession:
             return []
 
 
-def load_universe_tickers(universe_file='production_data/universe.json', include_xbi=True):
+def load_universe_tickers(universe_file="production_data/universe.json", include_xbi=True):
     """Load tickers from universe file, excluding benchmark placeholders.
 
     Args:
@@ -135,14 +127,14 @@ def load_universe_tickers(universe_file='production_data/universe.json', include
 
     tickers = []
     for item in data:
-        ticker = item.get('ticker', '')
+        ticker = item.get("ticker", "")
         # Skip benchmark placeholders and invalid tickers
-        if ticker and not ticker.startswith('_') and not ticker.endswith('_'):
+        if ticker and not ticker.startswith("_") and not ticker.endswith("_"):
             tickers.append(ticker)
 
     # Add XBI benchmark ETF for relative performance analysis
     if include_xbi:
-        tickers.append('XBI')
+        tickers.append("XBI")
 
     return sorted(set(tickers))
 
@@ -182,18 +174,14 @@ def fetch_all_prices(tickers, start_date, end_date, output_file, delay=0.3):
         else:
             eta = "calculating..."
 
-        print(f"[{i:3d}/{len(tickers)}] {ticker:8s} (ETA: {eta})...", end='', flush=True)
+        print(f"[{i:3d}/{len(tickers)}] {ticker:8s} (ETA: {eta})...", end="", flush=True)
 
         try:
             prices = session.fetch_prices(ticker, start_date, end_date)
 
             if prices:
                 for date_str, close in prices:
-                    all_prices.append({
-                        'date': date_str,
-                        'ticker': ticker,
-                        'close': close
-                    })
+                    all_prices.append({"date": date_str, "ticker": ticker, "close": close})
                 print(f" {len(prices)} days")
                 success_count += 1
             else:
@@ -209,15 +197,15 @@ def fetch_all_prices(tickers, start_date, end_date, output_file, delay=0.3):
             time.sleep(delay)
 
     # Sort by date then ticker
-    all_prices.sort(key=lambda x: (x['date'], x['ticker']))
+    all_prices.sort(key=lambda x: (x["date"], x["ticker"]))
 
     # Save to CSV
     if all_prices:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=['date', 'ticker', 'close'])
+        with open(output_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["date", "ticker", "close"])
             writer.writeheader()
             writer.writerows(all_prices)
 
@@ -250,34 +238,23 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Fetch historical prices for biotech universe (no external dependencies)'
+        description="Fetch historical prices for biotech universe (no external dependencies)"
     )
     parser.add_argument(
-        '--universe',
-        default='production_data/universe.json',
-        help='Universe JSON file (default: production_data/universe.json)'
+        "--universe",
+        default="production_data/universe.json",
+        help="Universe JSON file (default: production_data/universe.json)",
+    )
+    parser.add_argument("--start-date", default="2020-01-01", help="Start date YYYY-MM-DD (default: 2020-01-01)")
+    parser.add_argument(
+        "--end-date", default=datetime.now().strftime("%Y-%m-%d"), help="End date YYYY-MM-DD (default: today)"
     )
     parser.add_argument(
-        '--start-date',
-        default='2020-01-01',
-        help='Start date YYYY-MM-DD (default: 2020-01-01)'
+        "--output",
+        default="production_data/price_history.csv",
+        help="Output CSV file (default: production_data/price_history.csv)",
     )
-    parser.add_argument(
-        '--end-date',
-        default=datetime.now().strftime('%Y-%m-%d'),
-        help='End date YYYY-MM-DD (default: today)'
-    )
-    parser.add_argument(
-        '--output',
-        default='production_data/price_history.csv',
-        help='Output CSV file (default: production_data/price_history.csv)'
-    )
-    parser.add_argument(
-        '--delay',
-        type=float,
-        default=0.3,
-        help='Delay between requests in seconds (default: 0.3)'
-    )
+    parser.add_argument("--delay", type=float, default=0.3, help="Delay between requests in seconds (default: 0.3)")
 
     args = parser.parse_args()
 
@@ -287,8 +264,8 @@ def main():
 
     # Parse dates
     try:
-        start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
-        end_date = datetime.strptime(args.end_date, '%Y-%m-%d')
+        start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(args.end_date, "%Y-%m-%d")
     except ValueError as e:
         print(f"Error: Invalid date format. Use YYYY-MM-DD. {e}")
         sys.exit(1)
@@ -311,13 +288,7 @@ def main():
         sys.exit(1)
 
     # Fetch prices
-    success = fetch_all_prices(
-        tickers,
-        start_date,
-        end_date,
-        args.output,
-        delay=args.delay
-    )
+    success = fetch_all_prices(tickers, start_date, end_date, args.output, delay=args.delay)
 
     if success:
         print()
@@ -331,5 +302,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

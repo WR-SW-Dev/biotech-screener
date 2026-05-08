@@ -20,13 +20,13 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from dataclasses import dataclass, field
-from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
 import logging
 import math
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 
@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 class RegimeState(str, Enum):
     """Market regime states."""
+
     BULL = "BULL"
     BEAR = "BEAR"
     VOLATILITY_SPIKE = "VOLATILITY_SPIKE"
@@ -44,28 +45,30 @@ class RegimeState(str, Enum):
 
 class EventCategory(str, Enum):
     """Categories of catalyst events for decay purposes."""
+
     CRITICAL_POSITIVE = "CRITICAL_POSITIVE"  # FDA approvals, major readouts
-    POSITIVE = "POSITIVE"                     # Upgrades, timeline pulls
-    NEUTRAL = "NEUTRAL"                       # Activity signals
-    NEGATIVE = "NEGATIVE"                     # Downgrades, pushouts
-    SEVERE_NEGATIVE = "SEVERE_NEGATIVE"       # Trial stops, failures
+    POSITIVE = "POSITIVE"  # Upgrades, timeline pulls
+    NEUTRAL = "NEUTRAL"  # Activity signals
+    NEGATIVE = "NEGATIVE"  # Downgrades, pushouts
+    SEVERE_NEGATIVE = "SEVERE_NEGATIVE"  # Trial stops, failures
 
 
 @dataclass(frozen=True)
 class DecayParameters:
     """Parameters for exponential decay calculation."""
+
     half_life_days: int
     decay_floor: Decimal  # Minimum weight (never decays below this)
-    decay_cap: Decimal    # Maximum weight
+    decay_cap: Decimal  # Maximum weight
 
 
 # Base half-lives by event category (days until signal halves)
 BASE_HALF_LIVES: Dict[EventCategory, int] = {
-    EventCategory.CRITICAL_POSITIVE: 60,    # Major events decay slowly
+    EventCategory.CRITICAL_POSITIVE: 60,  # Major events decay slowly
     EventCategory.POSITIVE: 30,
     EventCategory.NEUTRAL: 14,
-    EventCategory.NEGATIVE: 21,             # Negative events remembered longer
-    EventCategory.SEVERE_NEGATIVE: 90,      # Major negatives very sticky
+    EventCategory.NEGATIVE: 21,  # Negative events remembered longer
+    EventCategory.SEVERE_NEGATIVE: 90,  # Major negatives very sticky
 }
 
 
@@ -73,21 +76,21 @@ BASE_HALF_LIVES: Dict[EventCategory, int] = {
 # >1.0 = slower decay (longer half-life), <1.0 = faster decay
 REGIME_DECAY_MULTIPLIERS: Dict[RegimeState, Dict[EventCategory, Decimal]] = {
     RegimeState.BULL: {
-        EventCategory.CRITICAL_POSITIVE: Decimal("1.2"),   # Positive events last longer
+        EventCategory.CRITICAL_POSITIVE: Decimal("1.2"),  # Positive events last longer
         EventCategory.POSITIVE: Decimal("1.3"),
         EventCategory.NEUTRAL: Decimal("1.0"),
-        EventCategory.NEGATIVE: Decimal("0.7"),            # Negatives forgotten faster
+        EventCategory.NEGATIVE: Decimal("0.7"),  # Negatives forgotten faster
         EventCategory.SEVERE_NEGATIVE: Decimal("0.8"),
     },
     RegimeState.BEAR: {
-        EventCategory.CRITICAL_POSITIVE: Decimal("0.8"),   # Positive events forgotten faster
+        EventCategory.CRITICAL_POSITIVE: Decimal("0.8"),  # Positive events forgotten faster
         EventCategory.POSITIVE: Decimal("0.7"),
         EventCategory.NEUTRAL: Decimal("0.8"),
-        EventCategory.NEGATIVE: Decimal("1.3"),            # Negatives remembered longer
+        EventCategory.NEGATIVE: Decimal("1.3"),  # Negatives remembered longer
         EventCategory.SEVERE_NEGATIVE: Decimal("1.5"),
     },
     RegimeState.VOLATILITY_SPIKE: {
-        EventCategory.CRITICAL_POSITIVE: Decimal("0.6"),   # Everything decays faster
+        EventCategory.CRITICAL_POSITIVE: Decimal("0.6"),  # Everything decays faster
         EventCategory.POSITIVE: Decimal("0.5"),
         EventCategory.NEUTRAL: Decimal("0.4"),
         EventCategory.NEGATIVE: Decimal("0.6"),
@@ -113,6 +116,7 @@ REGIME_DECAY_MULTIPLIERS: Dict[RegimeState, Dict[EventCategory, Decimal]] = {
 @dataclass
 class DecayResult:
     """Result of decay calculation."""
+
     event_age_days: int
     base_half_life: int
     adjusted_half_life: int
@@ -330,17 +334,20 @@ class RegimeAdaptiveDecayEngine:
                 f"Future event detected: event_date={event_date}, as_of_date={as_of_date}. "
                 "This may indicate a PIT discipline violation."
             )
-            return (base_score, DecayResult(
-                event_age_days=age_days,
-                base_half_life=0,
-                adjusted_half_life=0,
-                regime=regime,
-                event_category=event_category,
-                decay_weight=Decimal("1.0"),
-                decay_multiplier=Decimal("1.0"),
-                volatility_adjustment=None,
-                explanation=f"Future event (age={age_days}d) - no decay applied, possible PIT violation",
-            ))
+            return (
+                base_score,
+                DecayResult(
+                    event_age_days=age_days,
+                    base_half_life=0,
+                    adjusted_half_life=0,
+                    regime=regime,
+                    event_category=event_category,
+                    decay_weight=Decimal("1.0"),
+                    decay_multiplier=Decimal("1.0"),
+                    volatility_adjustment=None,
+                    explanation=f"Future event (age={age_days}d) - no decay applied, possible PIT violation",
+                ),
+            )
 
         decay_result = self.compute_decay(
             event_age_days=age_days,
@@ -349,9 +356,7 @@ class RegimeAdaptiveDecayEngine:
             vix_level=vix_level,
         )
 
-        decayed_score = (base_score * decay_result.decay_weight).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        decayed_score = (base_score * decay_result.decay_weight).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         return (decayed_score, decay_result)
 
@@ -446,8 +451,7 @@ def integrate_with_time_decay_scoring(
         "total_raw_score": str(total_raw_score),
         "total_decayed_score": str(total_decayed_score),
         "decay_ratio": str(
-            (total_decayed_score / total_raw_score).quantize(Decimal("0.01"))
-            if total_raw_score > 0 else Decimal("1.0")
+            (total_decayed_score / total_raw_score).quantize(Decimal("0.01")) if total_raw_score > 0 else Decimal("1.0")
         ),
     }
 
@@ -477,7 +481,9 @@ if __name__ == "__main__":
 
     for regime, category, vix, age in test_cases:
         result = engine.compute_decay(age, category, regime, vix)
-        print(f"{regime.value:<20} {category.value:<20} {vix:<8} {result.decay_weight:<10} {result.adjusted_half_life}d")
+        print(
+            f"{regime.value:<20} {category.value:<20} {vix:<8} {result.decay_weight:<10} {result.adjusted_half_life}d"
+        )
 
     # Test decay curve
     print("\n\nDecay curve for POSITIVE event in BULL market:\n")

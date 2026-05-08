@@ -40,13 +40,7 @@ from typing import Any, Dict, List, Optional
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import (
-    DECISION_COLUMNS,
-    DecisionRuleset,
-    DEFAULT_RULESET,
-    compute_decision_fields,
-)
-
+from decision_engine import DECISION_COLUMNS, DEFAULT_RULESET, DecisionRuleset, compute_decision_fields
 
 ARCHIVE_DIR = PROJECT_ROOT / "data" / "archives"
 
@@ -54,6 +48,7 @@ ARCHIVE_DIR = PROJECT_ROOT / "data" / "archives"
 # =============================================================================
 # ENRICHMENT: Build rec dicts from archive inputs
 # =============================================================================
+
 
 def _load_catalyst_map(inputs_dir: Path) -> Dict[str, Dict[str, Any]]:
     """Build {ticker: {days_to_catalyst, in_optimal_window}} from catalyst_events JSON."""
@@ -164,7 +159,6 @@ def _load_decision_inputs(inputs_dir: Path) -> Dict[str, Dict[str, Any]]:
         return json.load(f)
 
 
-
 def build_rec(
     row: Dict[str, str],
     catalyst_map: Dict[str, Dict[str, Any]],
@@ -228,11 +222,7 @@ def build_rec(
 
     # Momentum: use enriched alpha_60d if available
     if "alpha_60d" in enriched:
-        rec["score_breakdown"] = {
-            "enhancements": {
-                "momentum": {"alpha_60d": enriched["alpha_60d"]}
-            }
-        }
+        rec["score_breakdown"] = {"enhancements": {"momentum": {"alpha_60d": enriched["alpha_60d"]}}}
     else:
         rec["score_breakdown"] = {}
     rec["momentum_signal"] = {}
@@ -243,6 +233,7 @@ def build_rec(
 # =============================================================================
 # CORE: Process a single archive
 # =============================================================================
+
 
 def process_archive(
     tar_path: Path,
@@ -376,23 +367,19 @@ def process_archive(
 # MAIN
 # =============================================================================
 
+
 def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Backfill decision engine columns into archives")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Parse and compute but don't modify archives")
-    parser.add_argument("--archive", type=str, default=None,
-                        help="Process a single archive date (e.g. 2026-02-07)")
-    parser.add_argument("--ruleset", type=str, default=None,
-                        help="Path to decision engine ruleset JSON (default: built-in defaults)")
+    parser.add_argument("--dry-run", action="store_true", help="Parse and compute but don't modify archives")
+    parser.add_argument("--archive", type=str, default=None, help="Process a single archive date (e.g. 2026-02-07)")
+    parser.add_argument(
+        "--ruleset", type=str, default=None, help="Path to decision engine ruleset JSON (default: built-in defaults)"
+    )
     args = parser.parse_args()
 
-    ruleset = (
-        DecisionRuleset.from_json(args.ruleset)
-        if args.ruleset
-        else DEFAULT_RULESET
-    )
+    ruleset = DecisionRuleset.from_json(args.ruleset) if args.ruleset else DEFAULT_RULESET
 
     if not ARCHIVE_DIR.exists():
         print(f"ERROR: Archive directory not found: {ARCHIVE_DIR}")
@@ -430,8 +417,10 @@ def main():
     err_count = sum(1 for r in results if r["status"] == "error")
     total_enriched = sum(r.get("n_enriched", 0) for r in results)
     print()
-    print(f"Done: {ok_count}/{len(results)} archives processed, "
-          f"{err_count} errors, {total_enriched} total dev-tiered rows")
+    print(
+        f"Done: {ok_count}/{len(results)} archives processed, "
+        f"{err_count} errors, {total_enriched} total dev-tiered rows"
+    )
 
 
 if __name__ == "__main__":

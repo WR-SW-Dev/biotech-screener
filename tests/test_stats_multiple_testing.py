@@ -1,4 +1,5 @@
 """Tests for common.stats.multiple_testing module."""
+
 import sys
 from pathlib import Path
 
@@ -64,10 +65,7 @@ class TestWhitesRealityCheck:
         """All noise strategies should not be significant."""
         np.random.seed(42)
         T = 60
-        stats = {
-            f"noise_{i}": list(np.random.randn(T) * 0.05)
-            for i in range(10)
-        }
+        stats = {f"noise_{i}": list(np.random.randn(T) * 0.05) for i in range(10)}
         result = whites_reality_check(stats, n_bootstrap=5000, seed=42)
         # With all noise, best may or may not be significant
         # but p-value should be > 0.05 most of the time

@@ -1,4 +1,5 @@
 """Tests for common.stats.cross_sectional module."""
+
 import math
 import sys
 from pathlib import Path
@@ -8,12 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from common.stats.cross_sectional import (
-    fama_macbeth,
-    newey_west_se,
-    ols_regression,
-    run_incremental_test,
-)
+from common.stats.cross_sectional import fama_macbeth, newey_west_se, ols_regression, run_incremental_test
 
 
 class TestOLSRegression:
@@ -87,12 +83,14 @@ class TestFamaMacBeth:
             for i in range(n_stocks):
                 signal = np.random.randn()
                 fwd = beta_true * signal + np.random.randn() * 2.0
-                rows.append({
-                    "ticker": f"T{i}",
-                    "eligible": "1.0",
-                    "signal_a": str(signal),
-                    "fwd_excess_xbi_63d": str(fwd),
-                })
+                rows.append(
+                    {
+                        "ticker": f"T{i}",
+                        "eligible": "1.0",
+                        "signal_a": str(signal),
+                        "fwd_excess_xbi_63d": str(fwd),
+                    }
+                )
             snapshots[date] = rows
         return snapshots
 
@@ -100,8 +98,11 @@ class TestFamaMacBeth:
         """FM should find a significant coefficient for a real signal."""
         snapshots = self._make_snapshots(beta_true=0.5)
         result = fama_macbeth(
-            snapshots, "fwd_excess_xbi_63d", ["signal_a"],
-            nw_lags=3, zscore_x=True,
+            snapshots,
+            "fwd_excess_xbi_63d",
+            ["signal_a"],
+            nw_lags=3,
+            zscore_x=True,
         )
         assert "error" not in result
         sig = result["signals"]["signal_a"]
@@ -112,8 +113,11 @@ class TestFamaMacBeth:
         """FM should NOT find significance for pure noise."""
         snapshots = self._make_snapshots(beta_true=0.0)
         result = fama_macbeth(
-            snapshots, "fwd_excess_xbi_63d", ["signal_a"],
-            nw_lags=3, zscore_x=True,
+            snapshots,
+            "fwd_excess_xbi_63d",
+            ["signal_a"],
+            nw_lags=3,
+            zscore_x=True,
         )
         sig = result["signals"]["signal_a"]
         assert abs(sig["newey_west_t"]) < 2.0
@@ -129,16 +133,20 @@ class TestFamaMacBeth:
                 ctrl = np.random.randn()
                 cand = np.random.randn()
                 fwd = 0.3 * ctrl + 0.5 * cand + np.random.randn() * 2
-                rows.append({
-                    "ticker": f"T{i}",
-                    "eligible": "1.0",
-                    "control_signal": str(ctrl),
-                    "candidate_signal": str(cand),
-                    "fwd_excess_xbi_63d": str(fwd),
-                })
+                rows.append(
+                    {
+                        "ticker": f"T{i}",
+                        "eligible": "1.0",
+                        "control_signal": str(ctrl),
+                        "candidate_signal": str(cand),
+                        "fwd_excess_xbi_63d": str(fwd),
+                    }
+                )
             snapshots[date] = rows
 
         result = run_incremental_test(
-            snapshots, "candidate_signal", ["control_signal"],
+            snapshots,
+            "candidate_signal",
+            ["control_signal"],
         )
         assert result["verdict"] == "INCREMENTAL"

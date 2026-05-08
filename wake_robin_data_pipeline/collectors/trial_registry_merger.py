@@ -61,7 +61,10 @@ def merge_trial_registries(
 
     logger.info(
         "Merged %d total -> %d deduplicated -> %d PIT-filtered (cutoff=%s)",
-        len(all_records), len(merged), len(pit_filtered), cutoff,
+        len(all_records),
+        len(merged),
+        len(pit_filtered),
+        cutoff,
     )
     return pit_filtered
 
@@ -103,9 +106,7 @@ def _deduplicate(records: List[dict]) -> List[dict]:
                 if other_id != target_id:
                     if other_id in clusters:
                         # Merge other cluster into target too
-                        clusters[target_id] = _merge_records(
-                            clusters[target_id], clusters[other_id]
-                        )
+                        clusters[target_id] = _merge_records(clusters[target_id], clusters[other_id])
                         del clusters[other_id]
 
             # Update ID index
@@ -154,9 +155,18 @@ def _merge_records(base: dict, overlay: dict) -> dict:
     merged = dict(base)
 
     # Fill missing fields from overlay
-    for key in ("title", "phase", "status", "study_type", "start_date",
-                "primary_completion_date", "completion_date", "results_posted_date",
-                "first_posted", "last_update_posted"):
+    for key in (
+        "title",
+        "phase",
+        "status",
+        "study_type",
+        "start_date",
+        "primary_completion_date",
+        "completion_date",
+        "results_posted_date",
+        "first_posted",
+        "last_update_posted",
+    ):
         base_val = merged.get(key)
         overlay_val = overlay.get(key)
         if (not base_val or base_val == "NA" or base_val == "UNKNOWN") and overlay_val:
@@ -250,6 +260,8 @@ def write_merged_cache(
 
     logger.info(
         "Merged trials: %d records -> %s (by registry: %s)",
-        len(records), live_path, registry_counts,
+        len(records),
+        live_path,
+        registry_counts,
     )
     return live_path

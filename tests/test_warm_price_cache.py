@@ -35,10 +35,10 @@ from warm_price_cache import (
     validate_price_pit_index,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_price_csv(path: Path, rows: List[Dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,20 +59,40 @@ def _write_rankings_csv(path: Path, tickers: List[str]) -> None:
 
 def _make_price_rows(*tickers_dates_closes):
     """Build price CSV rows from (ticker, date, close) tuples."""
-    return [
-        {"ticker": t, "date": d, "close": str(c)}
-        for t, d, c in tickers_dates_closes
-    ]
+    return [{"ticker": t, "date": d, "close": str(c)} for t, d, c in tickers_dates_closes]
 
 
 # Trading dates for tests: 10 consecutive weekdays
 TRADING_DATES = [
-    "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06",
-    "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13",
-    "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-23",
-    "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-02",
-    "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06",
-    "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13",
+    "2026-02-02",
+    "2026-02-03",
+    "2026-02-04",
+    "2026-02-05",
+    "2026-02-06",
+    "2026-02-09",
+    "2026-02-10",
+    "2026-02-11",
+    "2026-02-12",
+    "2026-02-13",
+    "2026-02-17",
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-02-25",
+    "2026-02-26",
+    "2026-02-27",
+    "2026-03-02",
+    "2026-03-03",
+    "2026-03-04",
+    "2026-03-05",
+    "2026-03-06",
+    "2026-03-09",
+    "2026-03-10",
+    "2026-03-11",
+    "2026-03-12",
+    "2026-03-13",
 ]
 
 
@@ -89,6 +109,7 @@ def _make_full_price_rows(tickers, dates=None, base_price=10.0):
 # ---------------------------------------------------------------------------
 # TestSnapshotPriceCache
 # ---------------------------------------------------------------------------
+
 
 class TestSnapshotPriceCache:
 
@@ -180,7 +201,9 @@ class TestSnapshotPriceCache:
         _write_rankings_csv(tmp_path / "rankings.csv", ["ACRS"])
 
         out = tmp_path / "cache"
-        index = snapshot_price_cache("2026-02-19", tmp_path / "prices.csv", tmp_path / "rankings.csv", out, horizons=[5, 20])
+        index = snapshot_price_cache(
+            "2026-02-19", tmp_path / "prices.csv", tmp_path / "rankings.csv", out, horizons=[5, 20]
+        )
 
         assert index["horizons_filled"] == []
         assert index["horizons_pending"] == [5, 20]
@@ -218,6 +241,7 @@ class TestSnapshotPriceCache:
 # ---------------------------------------------------------------------------
 # TestBackfillForwardPrices
 # ---------------------------------------------------------------------------
+
 
 class TestBackfillForwardPrices:
 
@@ -389,6 +413,7 @@ class TestBackfillForwardPrices:
 # TestValidateSchema
 # ---------------------------------------------------------------------------
 
+
 class TestValidateSchema:
 
     def _make_valid_index(self, as_of="2026-02-19"):
@@ -482,6 +507,7 @@ class TestValidateSchema:
 # TestBackfillAll
 # ---------------------------------------------------------------------------
 
+
 class TestBackfillAll:
 
     def test_iterates_all_cache_dirs(self, tmp_path):
@@ -529,7 +555,9 @@ class TestBackfillAll:
         _write_rankings_csv(tmp_path / "rankings.csv", tickers)
 
         base = tmp_path / "caches"
-        snapshot_price_cache("2026-02-19", tmp_path / "prices.csv", tmp_path / "rankings.csv", base / "2026-02-19", horizons=[5])
+        snapshot_price_cache(
+            "2026-02-19", tmp_path / "prices.csv", tmp_path / "rankings.csv", base / "2026-02-19", horizons=[5]
+        )
 
         # Through date only 3 days ahead — h5 not matured
         result = backfill_all_caches(base, tmp_path / "prices.csv", "2026-02-23", horizons=[5])
@@ -539,6 +567,7 @@ class TestBackfillAll:
 # ---------------------------------------------------------------------------
 # TestDetectSplitWarnings
 # ---------------------------------------------------------------------------
+
 
 class TestDetectSplitWarnings:
 
@@ -578,6 +607,7 @@ class TestDetectSplitWarnings:
 # TestHelpers
 # ---------------------------------------------------------------------------
 
+
 class TestHelpers:
 
     def test_find_anchor_date_exact_match(self):
@@ -606,7 +636,11 @@ class TestHelpers:
     def test_horizon_cols(self):
         cols = _horizon_cols([5, 20])
         assert cols == [
-            "ticker", "anchor_date", "anchor_close",
-            "h5_date", "h5_close",
-            "h20_date", "h20_close",
+            "ticker",
+            "anchor_date",
+            "anchor_close",
+            "h5_date",
+            "h5_close",
+            "h20_date",
+            "h20_close",
         ]

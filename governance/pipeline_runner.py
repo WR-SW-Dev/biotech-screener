@@ -11,35 +11,16 @@ Orchestrates pipeline execution with:
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from governance.hashing import hash_file, compute_input_hashes
+from governance.audit_log import AuditErrorCode, AuditLog, AuditStage, AuditStatus, StageIO
 from governance.canonical_json import canonical_dumps
+from governance.hashing import compute_input_hashes, hash_file
+from governance.mapping_loader import MappingLoadError, SchemaMismatchError, load_mapping, validate_source_schema
+from governance.output_writer import build_input_lineage, get_environment_fingerprint, write_canonical_output
+from governance.params_loader import ParamsLoadError, load_params
 from governance.run_id import compute_run_id
-from governance.audit_log import (
-    AuditLog,
-    AuditStage,
-    AuditStatus,
-    AuditErrorCode,
-    StageIO,
-)
-from governance.params_loader import load_params, ParamsLoadError
-from governance.mapping_loader import (
-    load_mapping,
-    validate_source_schema,
-    MappingLoadError,
-    SchemaMismatchError,
-)
-from governance.schema_registry import (
-    PIPELINE_VERSION,
-    SCHEMA_VERSION,
-    validate_score_version,
-)
-from governance.output_writer import (
-    write_canonical_output,
-    build_input_lineage,
-    get_environment_fingerprint,
-)
+from governance.schema_registry import PIPELINE_VERSION, SCHEMA_VERSION, validate_score_version
 
 
 class PipelineError(Exception):
@@ -133,10 +114,7 @@ class GovernedPipeline:
         # Compute input hashes
         for path in self.input_files:
             if not path.exists():
-                raise PipelineError(
-                    AuditErrorCode.MISSING_INPUT,
-                    f"Input file not found: {path}"
-                )
+                raise PipelineError(AuditErrorCode.MISSING_INPUT, f"Input file not found: {path}")
 
         self.input_hashes = compute_input_hashes(self.input_files)
 
@@ -171,10 +149,7 @@ class GovernedPipeline:
         )
 
         # Log init stage
-        init_inputs = [
-            StageIO(path=h["path"], sha256=h["sha256"], role="input")
-            for h in self.input_hashes
-        ]
+        init_inputs = [StageIO(path=h["path"], sha256=h["sha256"], role="input") for h in self.input_hashes]
         self.audit_log.log_stage(
             stage=AuditStage.INIT,
             status=AuditStatus.OK,
@@ -213,15 +188,13 @@ class GovernedPipeline:
         sample = data[0] if isinstance(data, list) and data else data
         if not isinstance(sample, dict):
             raise PipelineError(
-                AuditErrorCode.SCHEMA_MISMATCH,
-                f"Expected dict for {source_type}, got {type(sample).__name__}"
+                AuditErrorCode.SCHEMA_MISMATCH, f"Expected dict for {source_type}, got {type(sample).__name__}"
             )
 
         missing = [f for f in required if f not in sample]
         if missing:
             raise PipelineError(
-                AuditErrorCode.SCHEMA_MISMATCH,
-                f"Source '{source_type}' missing required fields: {missing}"
+                AuditErrorCode.SCHEMA_MISMATCH, f"Source '{source_type}' missing required fields: {missing}"
             )
 
     def log_stage(
@@ -304,10 +277,7 @@ class GovernedPipeline:
         if not self.audit_log:
             raise RuntimeError("Pipeline not initialized")
 
-        output_ios = [
-            StageIO(path=Path(o["path"]).name, sha256=o["sha256"], role="output")
-            for o in self.outputs
-        ]
+        output_ios = [StageIO(path=Path(o["path"]).name, sha256=o["sha256"], role="output") for o in self.outputs]
 
         status = AuditStatus.OK if success else AuditStatus.FAIL
         self.audit_log.log_final(status=status, all_outputs=output_ios)

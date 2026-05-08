@@ -23,18 +23,18 @@ import argparse
 import json
 import math
 import sys
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from statistics import mean, stdev, median
-from typing import Dict, Any, List, Optional, Tuple, Set
+from statistics import mean, median, stdev
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from backtest.metrics import HORIZON_TRADING_DAYS, compute_spearman_ic
 from backtest.returns_provider import CSVReturnsProvider
-from backtest.metrics import compute_spearman_ic, HORIZON_TRADING_DAYS
 
 # Import Module 5 versions
 from module_5_composite_v2 import compute_module_5_composite_v2
@@ -45,9 +45,30 @@ from module_5_composite_v3 import compute_module_5_composite_v3
 # =============================================================================
 
 DEFAULT_UNIVERSE = [
-    "ACAD", "ALNY", "AMGN", "ARWR", "BEAM", "BIIB", "BLUE", "BMRN",
-    "BNTX", "EDIT", "EXEL", "FOLD", "GILD", "HALO", "IMVT", "INCY",
-    "IONS", "KRTX", "MRNA", "PCVX", "RARE", "REGN", "SRPT", "VRTX",
+    "ACAD",
+    "ALNY",
+    "AMGN",
+    "ARWR",
+    "BEAM",
+    "BIIB",
+    "BLUE",
+    "BMRN",
+    "BNTX",
+    "EDIT",
+    "EXEL",
+    "FOLD",
+    "GILD",
+    "HALO",
+    "IMVT",
+    "INCY",
+    "IONS",
+    "KRTX",
+    "MRNA",
+    "PCVX",
+    "RARE",
+    "REGN",
+    "SRPT",
+    "VRTX",
 ]
 
 # Static clinical data for testing
@@ -80,18 +101,37 @@ CLINICAL_DATA = {
 
 # Market cap data (millions USD)
 MARKET_CAP_DATA = {
-    "AMGN": 130000, "GILD": 95000, "VRTX": 85000, "REGN": 80000,
-    "BIIB": 35000, "ALNY": 25000, "BMRN": 15000, "INCY": 14000,
-    "EXEL": 6000, "MRNA": 45000, "BNTX": 25000, "IONS": 8000,
-    "SRPT": 12000, "RARE": 4000, "BLUE": 400, "FOLD": 3500,
-    "ACAD": 4500, "HALO": 6500, "KRTX": 5000, "IMVT": 2500,
-    "ARWR": 4000, "PCVX": 7000, "BEAM": 2000, "EDIT": 800,
+    "AMGN": 130000,
+    "GILD": 95000,
+    "VRTX": 85000,
+    "REGN": 80000,
+    "BIIB": 35000,
+    "ALNY": 25000,
+    "BMRN": 15000,
+    "INCY": 14000,
+    "EXEL": 6000,
+    "MRNA": 45000,
+    "BNTX": 25000,
+    "IONS": 8000,
+    "SRPT": 12000,
+    "RARE": 4000,
+    "BLUE": 400,
+    "FOLD": 3500,
+    "ACAD": 4500,
+    "HALO": 6500,
+    "KRTX": 5000,
+    "IMVT": 2500,
+    "ARWR": 4000,
+    "PCVX": 7000,
+    "BEAM": 2000,
+    "EDIT": 800,
 }
 
 
 # =============================================================================
 # DATA GENERATION
 # =============================================================================
+
 
 def generate_module_inputs(tickers: List[str], as_of_date: str, seed: int = 42) -> Dict[str, Any]:
     """
@@ -148,15 +188,17 @@ def generate_module_inputs(tickers: List[str], as_of_date: str, seed: int = 42) 
         else:
             severity = "sev3"
 
-        financial_scores.append({
-            "ticker": t,
-            "financial_score": str(Decimal(str(score)).quantize(Decimal("0.01"))),
-            "financial_normalized": str(Decimal(str(score)).quantize(Decimal("0.01"))),
-            "market_cap_mm": mcap,
-            "runway_months": vary(24, t, "runway"),
-            "severity": severity,
-            "flags": [],
-        })
+        financial_scores.append(
+            {
+                "ticker": t,
+                "financial_score": str(Decimal(str(score)).quantize(Decimal("0.01"))),
+                "financial_normalized": str(Decimal(str(score)).quantize(Decimal("0.01"))),
+                "market_cap_mm": mcap,
+                "runway_months": vary(24, t, "runway"),
+                "severity": severity,
+                "flags": [],
+            }
+        )
 
     financial_result = {
         "as_of_date": as_of_date,
@@ -208,13 +250,15 @@ def generate_module_inputs(tickers: List[str], as_of_date: str, seed: int = 42) 
         base_score = phase_scores.get(lead_phase, 40)
         score = vary(base_score, t, "clinical")
 
-        clinical_scores.append({
-            "ticker": t,
-            "clinical_score": str(Decimal(str(score)).quantize(Decimal("0.01"))),
-            "lead_phase": lead_phase,
-            "severity": "none" if score >= 40 else "sev1",
-            "flags": [],
-        })
+        clinical_scores.append(
+            {
+                "ticker": t,
+                "clinical_score": str(Decimal(str(score)).quantize(Decimal("0.01"))),
+                "lead_phase": lead_phase,
+                "severity": "none" if score >= 40 else "sev1",
+                "flags": [],
+            }
+        )
 
     clinical_result = {
         "as_of_date": as_of_date,
@@ -236,6 +280,7 @@ def generate_module_inputs(tickers: List[str], as_of_date: str, seed: int = 42) 
 # =============================================================================
 # BACKTEST CORE
 # =============================================================================
+
 
 def run_module5_v2(inputs: Dict[str, Any], as_of_date: str) -> Dict[str, Any]:
     """Run Module 5 v2 and return results."""
@@ -303,11 +348,12 @@ def bootstrap_ic_ci(ic_values: List[float], n_bootstrap: int = 1000, ci: float =
     Returns (lower, upper) bounds.
     """
     import random
+
     random.seed(42)  # Determinism
 
     n = len(ic_values)
     if n < 2:
-        return (float('nan'), float('nan'))
+        return (float("nan"), float("nan"))
 
     boot_means = []
     for _ in range(n_bootstrap):
@@ -448,11 +494,7 @@ def compute_concentration_metrics(
         - top1_ticker: Ticker of best performer
         - returns_by_ticker: Dict of returns for each top ticker
     """
-    common = sorted(
-        set(scores.keys()) & set(returns.keys()),
-        key=lambda t: scores[t],
-        reverse=True
-    )
+    common = sorted(set(scores.keys()) & set(returns.keys()), key=lambda t: scores[t], reverse=True)
 
     if len(common) < top_n:
         return {
@@ -497,6 +539,7 @@ def compute_concentration_metrics(
 # =============================================================================
 # MAIN BACKTEST
 # =============================================================================
+
 
 def run_comparison_backtest(
     start_date: str = "2023-01-01",
@@ -642,19 +685,23 @@ def run_comparison_backtest(
 
             if spread_result_v2[2] is not None:
                 spread_v2.append(spread_result_v2[2])
-                sanity_checks_v2.append((
-                    "+" if ic_v2 and float(ic_v2) >= 0 else "-",
-                    "+" if spread_result_v2[2] >= 0 else "-",
-                    spread_result_v2[3]
-                ))
+                sanity_checks_v2.append(
+                    (
+                        "+" if ic_v2 and float(ic_v2) >= 0 else "-",
+                        "+" if spread_result_v2[2] >= 0 else "-",
+                        spread_result_v2[3],
+                    )
+                )
 
             if spread_result_v3[2] is not None:
                 spread_v3.append(spread_result_v3[2])
-                sanity_checks_v3.append((
-                    "+" if ic_v3 and float(ic_v3) >= 0 else "-",
-                    "+" if spread_result_v3[2] >= 0 else "-",
-                    spread_result_v3[3]
-                ))
+                sanity_checks_v3.append(
+                    (
+                        "+" if ic_v3 and float(ic_v3) >= 0 else "-",
+                        "+" if spread_result_v3[2] >= 0 else "-",
+                        spread_result_v3[3],
+                    )
+                )
 
             # Compute turnover
             curr_top_v2 = set(sorted(scores_v2.keys(), key=lambda t: scores_v2[t], reverse=True)[:top_n])
@@ -717,19 +764,25 @@ def run_comparison_backtest(
         sane_v3 = "OK" if spread_result_v3[3] else "FAIL"
         sanity_str = f"v2:{sane_v2} v3:{sane_v3}"
 
-        print(f"{as_of_str:<12} | {ic_v2_str:>8} | {ic_v3_str:>8} | {sp_v2_str:>8} | {sp_v3_str:>8} | {corr_str:>6} | {sanity_str}")
+        print(
+            f"{as_of_str:<12} | {ic_v2_str:>8} | {ic_v3_str:>8} | {sp_v2_str:>8} | {sp_v3_str:>8} | {corr_str:>6} | {sanity_str}"
+        )
 
         # Store results
-        results_v2.append({
-            "date": as_of_str,
-            "scores": {k: str(v) for k, v in scores_v2.items()},
-            "n_ranked": len(result_v2.get("ranked_securities", [])),
-        })
-        results_v3.append({
-            "date": as_of_str,
-            "scores": {k: str(v) for k, v in scores_v3.items()},
-            "n_ranked": len(result_v3.get("ranked_securities", [])),
-        })
+        results_v2.append(
+            {
+                "date": as_of_str,
+                "scores": {k: str(v) for k, v in scores_v2.items()},
+                "n_ranked": len(result_v2.get("ranked_securities", [])),
+            }
+        )
+        results_v3.append(
+            {
+                "date": as_of_str,
+                "scores": {k: str(v) for k, v in scores_v3.items()},
+                "n_ranked": len(result_v3.get("ranked_securities", [])),
+            }
+        )
 
     print("-" * 70)
     print()
@@ -748,8 +801,8 @@ def run_comparison_backtest(
     ic_v3_mean = None
     ic_v2_tstat = None
     ic_v3_tstat = None
-    ic_v2_ci = (float('nan'), float('nan'))
-    ic_v3_ci = (float('nan'), float('nan'))
+    ic_v2_ci = (float("nan"), float("nan"))
+    ic_v3_ci = (float("nan"), float("nan"))
 
     if ic_v2_90d:
         ic_v2_mean = mean(ic_v2_90d)
@@ -803,11 +856,19 @@ def run_comparison_backtest(
     v2_total = len(sanity_checks_v2)
     v3_total = len(sanity_checks_v3)
 
-    print(f"  v2: {v2_consistent}/{v2_total} periods consistent ({100*v2_consistent/v2_total:.1f}%)" if v2_total else "  v2: N/A")
-    print(f"  v3: {v3_consistent}/{v3_total} periods consistent ({100*v3_consistent/v3_total:.1f}%)" if v3_total else "  v3: N/A")
+    print(
+        f"  v2: {v2_consistent}/{v2_total} periods consistent ({100*v2_consistent/v2_total:.1f}%)"
+        if v2_total
+        else "  v2: N/A"
+    )
+    print(
+        f"  v3: {v3_consistent}/{v3_total} periods consistent ({100*v3_consistent/v3_total:.1f}%)"
+        if v3_total
+        else "  v3: N/A"
+    )
 
     if v2_total and v3_total:
-        if v2_consistent/v2_total >= 0.9 and v3_consistent/v3_total >= 0.9:
+        if v2_consistent / v2_total >= 0.9 and v3_consistent / v3_total >= 0.9:
             print(f"  Status: PASS - IC and spread signs are consistent")
         else:
             print(f"  Status: WARNING - Some periods have inconsistent IC/spread signs")
@@ -997,8 +1058,8 @@ def run_comparison_backtest(
             "difference": ic_v3_mean - ic_v2_mean if (ic_v2_mean and ic_v3_mean) else None,
         },
         "sanity_check": {
-            "v2_consistent_pct": 100*v2_consistent/v2_total if v2_total else None,
-            "v3_consistent_pct": 100*v3_consistent/v3_total if v3_total else None,
+            "v2_consistent_pct": 100 * v2_consistent / v2_total if v2_total else None,
+            "v3_consistent_pct": 100 * v3_consistent / v3_total if v3_total else None,
         },
         "spread_comparison": {
             "v2": {
@@ -1059,9 +1120,7 @@ def run_comparison_backtest(
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Compare Module 5 v2 vs v3 backtest performance"
-    )
+    parser = argparse.ArgumentParser(description="Compare Module 5 v2 vs v3 backtest performance")
 
     parser.add_argument("--start-date", type=str, default="2023-01-01", help="Backtest start date")
     parser.add_argument("--end-date", type=str, default="2024-12-31", help="Backtest end date")
@@ -1089,6 +1148,7 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

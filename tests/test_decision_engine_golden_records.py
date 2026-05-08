@@ -24,28 +24,29 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from decision_engine import (
-    VERSION,
-    RULESET_ID,
-    DECISION_COLUMNS,
-    DecisionRuleset,
-    compute_decision_fields,
-)
-
+from decision_engine import DECISION_COLUMNS, RULESET_ID, VERSION, DecisionRuleset, compute_decision_fields
 
 # =============================================================================
 # SYNTHETIC REC FIXTURES
 # =============================================================================
+
 
 def _base_rec(ticker, **overrides):
     """Minimal rec dict with sane defaults. Override any field."""
     rec = {
         "ticker": ticker,
         "component_scores": [
-            {"name": "clinical", "normalized": "40.0", "raw": "60.0",
-             "weight_base": "0.26", "weight_effective": "0.29",
-             "confidence": "0.80", "contribution": "5.0",
-             "decay_factor": None, "notes": []},
+            {
+                "name": "clinical",
+                "normalized": "40.0",
+                "raw": "60.0",
+                "weight_base": "0.26",
+                "weight_effective": "0.29",
+                "confidence": "0.80",
+                "contribution": "5.0",
+                "decay_factor": None,
+                "notes": [],
+            },
         ],
         "score_breakdown": {
             "enhancements": {
@@ -158,6 +159,7 @@ SOFT_DRAWDOWN_RULESET = DecisionRuleset(drawdown_gate_mode="soft")
 # TESTS
 # =============================================================================
 
+
 def test_versioning():
     """Version and ruleset ID are present and stable."""
     result = compute_decision_fields(REC_SPECIFIC_DAYS, "drug_developer", 0.75)
@@ -237,7 +239,10 @@ def test_soft_drawdown_stays_eligible():
 
     # Under soft mode: eligible, good tier, but sizing penalized
     soft_result = compute_decision_fields(
-        REC_DRAWDOWN_SOFT, "drug_developer", 0.75, ruleset=SOFT_DRAWDOWN_RULESET,
+        REC_DRAWDOWN_SOFT,
+        "drug_developer",
+        0.75,
+        ruleset=SOFT_DRAWDOWN_RULESET,
     )
     assert soft_result["eligible"] == "1"
     assert soft_result["tier_dev"] in ("A", "B")
@@ -302,14 +307,12 @@ def test_sizing_orthogonal_to_tier():
 # RUNNER
 # =============================================================================
 
+
 def _run_all():
     """Run all test_ functions and report results."""
     import inspect
-    tests = [
-        (name, obj)
-        for name, obj in sorted(globals().items())
-        if name.startswith("test_") and callable(obj)
-    ]
+
+    tests = [(name, obj) for name, obj in sorted(globals().items()) if name.startswith("test_") and callable(obj)]
     passed = 0
     failed = 0
     for name, fn in tests:

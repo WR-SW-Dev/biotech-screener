@@ -14,10 +14,10 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -25,23 +25,24 @@ sys.path.insert(0, str(Path(__file__).parent))
 logger = logging.getLogger(__name__)
 
 from backtest_engine import PointInTimeBacktester, create_sample_scoring_function
-from backtest.returns_provider import CSVReturnsProvider
-from backtest.metrics import run_metrics_suite, HORIZON_DISPLAY_NAMES
 
+from backtest.metrics import HORIZON_DISPLAY_NAMES, run_metrics_suite
+from backtest.returns_provider import CSVReturnsProvider
 
 # =============================================================================
 # DIAGNOSTIC HELPERS (Deterministic)
 # =============================================================================
 
+
 def _bucket_mcap(mcap_mm: Optional[float]) -> str:
     """Classify market cap (in millions) into bucket."""
     if mcap_mm is None:
         return "UNKNOWN"
-    if mcap_mm < 500:      # < $0.5B
+    if mcap_mm < 500:  # < $0.5B
         return "SMALL"
-    if mcap_mm < 2000:     # $0.5B–$2B
+    if mcap_mm < 2000:  # $0.5B–$2B
         return "MID"
-    return "LARGE"         # >= $2B
+    return "LARGE"  # >= $2B
 
 
 def _bucket_adv(adv_usd: Optional[float]) -> str:
@@ -106,9 +107,21 @@ def _compute_bucket_ic(
 
 # Default universe for backtesting (tickers with complete real data + price history)
 DEFAULT_UNIVERSE = [
-    "ACAD", "BEAM", "BIIB", "BMRN", "EDIT",
-    "EXEL", "FOLD", "GILD", "HALO", "IMVT",
-    "IONS", "MRNA", "RARE", "REGN", "SRPT",
+    "ACAD",
+    "BEAM",
+    "BIIB",
+    "BMRN",
+    "EDIT",
+    "EXEL",
+    "FOLD",
+    "GILD",
+    "HALO",
+    "IMVT",
+    "IONS",
+    "MRNA",
+    "RARE",
+    "REGN",
+    "SRPT",
 ]
 
 # Sample data for production scorer
@@ -190,14 +203,14 @@ def load_real_data():
         with open(hist_file) as f:
             snapshots = json.load(f)
             for snap in snapshots:
-                ticker = snap.get('ticker')
+                ticker = snap.get("ticker")
                 if ticker:
                     if ticker not in historical_financials:
                         historical_financials[ticker] = []
                     historical_financials[ticker].append(snap)
             # Sort each ticker's snapshots by date
             for ticker in historical_financials:
-                historical_financials[ticker].sort(key=lambda x: x.get('date', ''))
+                historical_financials[ticker].sort(key=lambda x: x.get("date", ""))
         print(f"  Loaded historical financials for {len(historical_financials)} tickers")
 
     # Load trial records
@@ -239,7 +252,7 @@ def get_pit_financial_data(ticker: str, as_of_date: str, historical_financials: 
         as_of_dt = date.fromisoformat(as_of_date) if isinstance(as_of_date, str) else as_of_date
         valid_snapshots = []
         for s in snapshots:
-            snap_date_str = s.get('date', '')
+            snap_date_str = s.get("date", "")
             if snap_date_str:
                 try:
                     snap_dt = date.fromisoformat(snap_date_str[:10])
@@ -251,27 +264,27 @@ def get_pit_financial_data(ticker: str, as_of_date: str, historical_financials: 
             # Return the most recent valid snapshot
             latest = valid_snapshots[-1]
             return {
-                'ticker': ticker,
-                'Cash': latest.get('cash'),
-                'Debt': latest.get('debt'),
-                'Assets': latest.get('assets'),
-                'Liabilities': latest.get('liabilities'),
-                'R&D': latest.get('rd_expense'),
-                'source_date': latest.get('date'),
-                'pit_lookup': True
+                "ticker": ticker,
+                "Cash": latest.get("cash"),
+                "Debt": latest.get("debt"),
+                "Assets": latest.get("assets"),
+                "Liabilities": latest.get("liabilities"),
+                "R&D": latest.get("rd_expense"),
+                "source_date": latest.get("date"),
+                "pit_lookup": True,
             }
 
     # Fall back to current data if no historical data
     fallback = fallback_data.get(ticker, {})
     return {
-        'ticker': ticker,
-        'Cash': fallback.get('Cash'),
-        'Debt': fallback.get('Debt'),
-        'Assets': fallback.get('Assets'),
-        'Liabilities': fallback.get('Liabilities'),
-        'R&D': fallback.get('R&D'),
-        'source_date': as_of_date,
-        'pit_lookup': False
+        "ticker": ticker,
+        "Cash": fallback.get("Cash"),
+        "Debt": fallback.get("Debt"),
+        "Assets": fallback.get("Assets"),
+        "Liabilities": fallback.get("Liabilities"),
+        "R&D": fallback.get("R&D"),
+        "source_date": as_of_date,
+        "pit_lookup": False,
     }
 
 
@@ -300,7 +313,7 @@ def create_production_scorer():
     if historical_financials:
         sample_ticker = next(iter(historical_financials.keys()))
         sample_snaps = historical_financials[sample_ticker]
-        dates = [s.get('date', 'N/A') for s in sample_snaps]
+        dates = [s.get("date", "N/A") for s in sample_snaps]
         print(f"    Sample ({sample_ticker}): {len(sample_snaps)} snapshots, dates: {dates[0]} to {dates[-1]}")
     else:
         print(f"    ⚠️  WARNING: No historical financials - PIT will use static current data!")
@@ -333,12 +346,14 @@ def create_production_scorer():
         company_name = market_data.get("company_name", ticker)
 
         # Build universe record
-        universe_records = [{
-            "ticker": ticker,
-            "company_name": company_name,
-            "market_cap_mm": mcap_mm,
-            "status": "active",
-        }]
+        universe_records = [
+            {
+                "ticker": ticker,
+                "company_name": company_name,
+                "market_cap_mm": mcap_mm,
+                "status": "active",
+            }
+        ]
 
         # Get point-in-time financial data (uses historical snapshots if available)
         fin_record = get_pit_financial_data(ticker, as_of_str, historical_financials, financial_data)
@@ -360,14 +375,16 @@ def create_production_scorer():
         # Use the source_date from PIT lookup for proper filtering
         source_date = fin_record.get("source_date", as_of_str)
 
-        financial_records = [{
-            "ticker": ticker,
-            "cash_mm": cash_mm,
-            "debt_mm": debt_mm,
-            "burn_rate_mm": burn_mm,
-            "market_cap_mm": mcap_mm,
-            "source_date": source_date,
-        }]
+        financial_records = [
+            {
+                "ticker": ticker,
+                "cash_mm": cash_mm,
+                "debt_mm": debt_mm,
+                "burn_rate_mm": burn_mm,
+                "market_cap_mm": mcap_mm,
+                "source_date": source_date,
+            }
+        ]
 
         # Get real trial data with PIT filtering
         ticker_trials = trial_data.get(ticker, [])
@@ -411,29 +428,33 @@ def create_production_scorer():
             }
             phase = phase_map.get(phase_raw, phase_raw.lower().replace("phase", "phase ") if phase_raw else "phase 1")
 
-            trial_records.append({
-                "ticker": ticker,
-                "nct_id": trial.get("nct_id", ""),
-                "title": trial.get("title", ""),
-                "phase": phase,
-                "primary_completion_date": trial.get("primary_completion_date"),
-                "completion_date": trial.get("completion_date"),
-                "status": status,
-                "conditions": trial.get("conditions", []),
-                "interventions": trial.get("interventions", []),
-                "sponsor": trial.get("sponsor", ""),
-            })
+            trial_records.append(
+                {
+                    "ticker": ticker,
+                    "nct_id": trial.get("nct_id", ""),
+                    "title": trial.get("title", ""),
+                    "phase": phase,
+                    "primary_completion_date": trial.get("primary_completion_date"),
+                    "completion_date": trial.get("completion_date"),
+                    "status": status,
+                    "conditions": trial.get("conditions", []),
+                    "interventions": trial.get("interventions", []),
+                    "sponsor": trial.get("sponsor", ""),
+                }
+            )
 
         # If no trials found, use fallback
         if not trial_records:
             clinical = CLINICAL_DATA.get(ticker, {"phase": "phase 1", "trials": 1, "endpoint": "safety"})
-            trial_records = [{
-                "ticker": ticker,
-                "nct_id": f"NCT00000000",
-                "phase": clinical.get("phase", "phase 1"),
-                "primary_completion_date": "2025-12-31",
-                "status": "active",
-            }]
+            trial_records = [
+                {
+                    "ticker": ticker,
+                    "nct_id": f"NCT00000000",
+                    "phase": clinical.get("phase", "phase 1"),
+                    "primary_completion_date": "2025-12-31",
+                    "status": "active",
+                }
+            ]
 
         # Run Module 1-5 pipeline
         try:
@@ -442,17 +463,22 @@ def create_production_scorer():
 
             # Module 3 requires file-based API, create fallback for backtest
             # Calculate simple catalyst score based on trial activity
-            upcoming_trials = sum(1 for t in trial_records
-                                  if (t.get("primary_completion_date") or "9999") > as_of_str
-                                  and t.get("status") in ("recruiting", "active"))
+            upcoming_trials = sum(
+                1
+                for t in trial_records
+                if (t.get("primary_completion_date") or "9999") > as_of_str
+                and t.get("status") in ("recruiting", "active")
+            )
             catalyst_score = min(100, 50 + upcoming_trials * 5)  # Simple heuristic
             m3 = {
-                "scores": [{
-                    "ticker": ticker,
-                    "catalyst_normalized": catalyst_score,
-                    "catalyst_raw": catalyst_score,
-                    "upcoming_catalysts": upcoming_trials,
-                }],
+                "scores": [
+                    {
+                        "ticker": ticker,
+                        "catalyst_normalized": catalyst_score,
+                        "catalyst_raw": catalyst_score,
+                        "upcoming_catalysts": upcoming_trials,
+                    }
+                ],
                 "catalyst_events": [],
             }
 
@@ -629,7 +655,7 @@ def run_direct_backtest(
 
     # New diagnostic tracking
     spread_90d_values = []  # Top - Bottom decile returns
-    turnover_values = []    # Top decile turnover
+    turnover_values = []  # Top decile turnover
     prev_top_decile = None  # Previous period's top decile set
 
     # Bucket IC tracking (use 90d as primary horizon)
@@ -666,6 +692,7 @@ def run_direct_backtest(
 
     # Apply market cap filter if specified
     if mcap_filter:
+
         def passes_mcap_filter(ticker):
             mcap = mcap_by_ticker.get(ticker)
             if mcap is None:
@@ -730,21 +757,23 @@ def run_direct_backtest(
 
                     # Store PIT debug info for debug ticker
                     if ticker == debug_ticker:
-                        if not hasattr(run_direct_backtest, '_debug_pit_info'):
+                        if not hasattr(run_direct_backtest, "_debug_pit_info"):
                             run_direct_backtest._debug_pit_info = {}
                         run_direct_backtest._debug_pit_info[ticker] = {
-                            'pit_source_date': score_result.get('pit_source_date'),
-                            'pit_lookup': score_result.get('pit_lookup'),
-                            'raw_components': score_result.get('raw_components', {}),
+                            "pit_source_date": score_result.get("pit_source_date"),
+                            "pit_lookup": score_result.get("pit_lookup"),
+                            "raw_components": score_result.get("raw_components", {}),
                         }
 
                     # Calculate forward returns if price data available
                     if returns_provider:
                         start_str = (test_date + timedelta(days=1)).strftime("%Y-%m-%d")
-                        for horizon, ret_dict in [(30, period_returns_30d),
-                                                   (60, period_returns_60d),
-                                                   (90, period_returns_90d)]:
-                            end_str = (test_date + timedelta(days=horizon+1)).strftime("%Y-%m-%d")
+                        for horizon, ret_dict in [
+                            (30, period_returns_30d),
+                            (60, period_returns_60d),
+                            (90, period_returns_90d),
+                        ]:
+                            end_str = (test_date + timedelta(days=horizon + 1)).strftime("%Y-%m-%d")
                             ret = returns_provider.get_forward_total_return(ticker, start_str, end_str)
                             if ret is not None:
                                 ret_dict[ticker] = float(ret)
@@ -758,13 +787,17 @@ def run_direct_backtest(
             debug_scores.append((test_date.strftime("%Y-%m-%d"), period_scores[debug_ticker]))
 
         # Probe A: Log PIT details + raw components for debug ticker
-        if hasattr(run_direct_backtest, '_debug_pit_info') and debug_ticker:
+        if hasattr(run_direct_backtest, "_debug_pit_info") and debug_ticker:
             pit_info = run_direct_backtest._debug_pit_info.get(debug_ticker, {})
-            raw = pit_info.get('raw_components', {})
+            raw = pit_info.get("raw_components", {})
             if i == 0 or i == len(test_dates) - 1:  # First and last
                 print(f"    DEBUG {debug_ticker}: score={period_scores.get(debug_ticker, 0):.2f}")
-                print(f"      pit_date={pit_info.get('pit_source_date', 'N/A')} pit_lookup={pit_info.get('pit_lookup', 'N/A')}")
-                print(f"      clin_raw={raw.get('clinical_raw')} cat_raw={raw.get('catalyst_raw')} sev={raw.get('fin_severity')} state={raw.get('data_state')}")
+                print(
+                    f"      pit_date={pit_info.get('pit_source_date', 'N/A')} pit_lookup={pit_info.get('pit_lookup', 'N/A')}"
+                )
+                print(
+                    f"      clin_raw={raw.get('clinical_raw')} cat_raw={raw.get('catalyst_raw')} sev={raw.get('fin_severity')} state={raw.get('data_state')}"
+                )
 
         # Calculate IC for this period
         if len(period_scores) >= 5 and len(period_returns_30d) >= 5:
@@ -798,7 +831,7 @@ def run_direct_backtest(
                 # Build sorted list for decile computation (deterministic: by score desc, then ticker asc)
                 sorted_items = sorted(
                     [(t, period_scores[t]) for t in common_tickers],
-                    key=lambda x: (-x[1], x[0])  # High score first, then alphabetical
+                    key=lambda x: (-x[1], x[0]),  # High score first, then alphabetical
                 )
 
                 # Top/bottom decile spread
@@ -817,6 +850,7 @@ def run_direct_backtest(
 
                 # Probe B: Hash the entire score vector to detect any variation
                 import hashlib
+
                 scores_sorted = sorted((t, round(s, 4)) for t, s in period_scores.items())
                 blob = "|".join(f"{t}:{s}" for t, s in scores_sorted)
                 all_hash = hashlib.sha256(blob.encode()).hexdigest()[:8]
@@ -826,14 +860,24 @@ def run_direct_backtest(
 
                 # Bucket ICs: market cap
                 mcap_bucket = {t: _bucket_mcap(mcap_by_ticker.get(t)) for t in common_tickers}
-                for bucket, ic_list in [("SMALL", ic_mcap_small), ("MID", ic_mcap_mid), ("LARGE", ic_mcap_large), ("UNKNOWN", ic_mcap_unknown)]:
+                for bucket, ic_list in [
+                    ("SMALL", ic_mcap_small),
+                    ("MID", ic_mcap_mid),
+                    ("LARGE", ic_mcap_large),
+                    ("UNKNOWN", ic_mcap_unknown),
+                ]:
                     bucket_ic, n = _compute_bucket_ic(period_scores, period_returns_90d, mcap_bucket, bucket)
                     if bucket_ic is not None:
                         ic_list.append(bucket_ic)
 
                 # Bucket ICs: ADV$
                 adv_bucket = {t: _bucket_adv(adv_by_ticker.get(t)) for t in common_tickers}
-                for bucket, ic_list in [("ILLIQ", ic_adv_illiq), ("MID", ic_adv_mid), ("LIQ", ic_adv_liq), ("UNKNOWN", ic_adv_unknown)]:
+                for bucket, ic_list in [
+                    ("ILLIQ", ic_adv_illiq),
+                    ("MID", ic_adv_mid),
+                    ("LIQ", ic_adv_liq),
+                    ("UNKNOWN", ic_adv_unknown),
+                ]:
                     bucket_ic, n = _compute_bucket_ic(period_scores, period_returns_90d, adv_bucket, bucket)
                     if bucket_ic is not None:
                         ic_list.append(bucket_ic)
@@ -852,8 +896,11 @@ def run_direct_backtest(
 
                 # Intersection ICs: MID-cap ∩ ADV buckets
                 def compute_intersection_ic(mcap_target, adv_target):
-                    filtered = [t for t in common_tickers
-                                if mcap_bucket.get(t) == mcap_target and adv_bucket.get(t) == adv_target]
+                    filtered = [
+                        t
+                        for t in common_tickers
+                        if mcap_bucket.get(t) == mcap_target and adv_bucket.get(t) == adv_target
+                    ]
                     if len(filtered) < 3:  # Lower threshold for intersection
                         return None, len(filtered)
                     scores = [period_scores[t] for t in filtered]
@@ -861,19 +908,25 @@ def run_direct_backtest(
                     ic = _calculate_spearman_ic(scores, returns)
                     return ic, len(filtered)
 
-                for adv_target, ic_list in [("LIQ", ic_mid_liq), ("MID", ic_mid_mid_adv),
-                                             ("ILLIQ", ic_mid_illiq), ("UNKNOWN", ic_mid_unknown_adv)]:
+                for adv_target, ic_list in [
+                    ("LIQ", ic_mid_liq),
+                    ("MID", ic_mid_mid_adv),
+                    ("ILLIQ", ic_mid_illiq),
+                    ("UNKNOWN", ic_mid_unknown_adv),
+                ]:
                     ic_val, n = compute_intersection_ic("MID", adv_target)
                     if ic_val is not None:
                         ic_list.append(ic_val)
 
-        all_period_results.append({
-            "date": test_date.isoformat(),
-            "scores": period_scores,
-            "returns_30d": period_returns_30d,
-            "returns_60d": period_returns_60d,
-            "returns_90d": period_returns_90d,
-        })
+        all_period_results.append(
+            {
+                "date": test_date.isoformat(),
+                "scores": period_scores,
+                "returns_30d": period_returns_30d,
+                "returns_60d": period_returns_60d,
+                "returns_90d": period_returns_90d,
+            }
+        )
 
     # Compile results
     results = {
@@ -982,7 +1035,9 @@ def run_direct_backtest(
         spread_mean = sum(spread_90d_values) / len(spread_90d_values)
         spread_pos_pct = 100 * sum(1 for x in spread_90d_values if x > 0) / len(spread_90d_values)
         print(f"  Mean Spread:      {spread_mean:+.2%}")
-        print(f"  Positive Periods: {spread_pos_pct:.1f}% ({sum(1 for x in spread_90d_values if x > 0)}/{len(spread_90d_values)})")
+        print(
+            f"  Positive Periods: {spread_pos_pct:.1f}% ({sum(1 for x in spread_90d_values if x > 0)}/{len(spread_90d_values)})"
+        )
         results["spread_90d"] = {
             "mean": spread_mean,
             "positive_pct": spread_pos_pct,
@@ -1010,10 +1065,12 @@ def run_direct_backtest(
 
     print("IC by Market Cap Bucket (90d horizon):")
     print("-" * 50)
-    for label, ic_list in [("SMALL (<$0.5B)", ic_mcap_small),
-                           ("MID ($0.5-2B)", ic_mcap_mid),
-                           ("LARGE (>$2B)", ic_mcap_large),
-                           ("UNKNOWN", ic_mcap_unknown)]:
+    for label, ic_list in [
+        ("SMALL (<$0.5B)", ic_mcap_small),
+        ("MID ($0.5-2B)", ic_mcap_mid),
+        ("LARGE (>$2B)", ic_mcap_large),
+        ("UNKNOWN", ic_mcap_unknown),
+    ]:
         if ic_list:
             bucket_mean = sum(ic_list) / len(ic_list)
             bucket_pos = 100 * sum(1 for x in ic_list if x > 0) / len(ic_list)
@@ -1021,19 +1078,25 @@ def run_direct_backtest(
         else:
             print(f"  {label:16s}: Insufficient data")
     results["ic_by_mcap"] = {
-        "small": {"mean": sum(ic_mcap_small)/len(ic_mcap_small), "n": len(ic_mcap_small)} if ic_mcap_small else None,
-        "mid": {"mean": sum(ic_mcap_mid)/len(ic_mcap_mid), "n": len(ic_mcap_mid)} if ic_mcap_mid else None,
-        "large": {"mean": sum(ic_mcap_large)/len(ic_mcap_large), "n": len(ic_mcap_large)} if ic_mcap_large else None,
-        "unknown": {"mean": sum(ic_mcap_unknown)/len(ic_mcap_unknown), "n": len(ic_mcap_unknown)} if ic_mcap_unknown else None,
+        "small": {"mean": sum(ic_mcap_small) / len(ic_mcap_small), "n": len(ic_mcap_small)} if ic_mcap_small else None,
+        "mid": {"mean": sum(ic_mcap_mid) / len(ic_mcap_mid), "n": len(ic_mcap_mid)} if ic_mcap_mid else None,
+        "large": {"mean": sum(ic_mcap_large) / len(ic_mcap_large), "n": len(ic_mcap_large)} if ic_mcap_large else None,
+        "unknown": (
+            {"mean": sum(ic_mcap_unknown) / len(ic_mcap_unknown), "n": len(ic_mcap_unknown)}
+            if ic_mcap_unknown
+            else None
+        ),
     }
     print()
 
     print("IC by ADV$ Bucket (90d horizon):")
     print("-" * 50)
-    for label, ic_list in [("ILLIQ (<$250K)", ic_adv_illiq),
-                           ("MID ($250K-2M)", ic_adv_mid),
-                           ("LIQ (>$2M)", ic_adv_liq),
-                           ("UNKNOWN", ic_adv_unknown)]:
+    for label, ic_list in [
+        ("ILLIQ (<$250K)", ic_adv_illiq),
+        ("MID ($250K-2M)", ic_adv_mid),
+        ("LIQ (>$2M)", ic_adv_liq),
+        ("UNKNOWN", ic_adv_unknown),
+    ]:
         if ic_list:
             bucket_mean = sum(ic_list) / len(ic_list)
             bucket_pos = 100 * sum(1 for x in ic_list if x > 0) / len(ic_list)
@@ -1041,20 +1104,24 @@ def run_direct_backtest(
         else:
             print(f"  {label:16s}: Insufficient data")
     results["ic_by_adv"] = {
-        "illiq": {"mean": sum(ic_adv_illiq)/len(ic_adv_illiq), "n": len(ic_adv_illiq)} if ic_adv_illiq else None,
-        "mid": {"mean": sum(ic_adv_mid)/len(ic_adv_mid), "n": len(ic_adv_mid)} if ic_adv_mid else None,
-        "liq": {"mean": sum(ic_adv_liq)/len(ic_adv_liq), "n": len(ic_adv_liq)} if ic_adv_liq else None,
-        "unknown": {"mean": sum(ic_adv_unknown)/len(ic_adv_unknown), "n": len(ic_adv_unknown)} if ic_adv_unknown else None,
+        "illiq": {"mean": sum(ic_adv_illiq) / len(ic_adv_illiq), "n": len(ic_adv_illiq)} if ic_adv_illiq else None,
+        "mid": {"mean": sum(ic_adv_mid) / len(ic_adv_mid), "n": len(ic_adv_mid)} if ic_adv_mid else None,
+        "liq": {"mean": sum(ic_adv_liq) / len(ic_adv_liq), "n": len(ic_adv_liq)} if ic_adv_liq else None,
+        "unknown": (
+            {"mean": sum(ic_adv_unknown) / len(ic_adv_unknown), "n": len(ic_adv_unknown)} if ic_adv_unknown else None
+        ),
     }
     print()
 
     # Intersection ICs: MID-cap by ADV bucket
     print("IC for MID-cap by ADV$ Bucket (90d horizon):")
     print("-" * 50)
-    for label, ic_list in [("MID ∩ LIQ", ic_mid_liq),
-                           ("MID ∩ MID-ADV", ic_mid_mid_adv),
-                           ("MID ∩ ILLIQ", ic_mid_illiq),
-                           ("MID ∩ UNKNOWN", ic_mid_unknown_adv)]:
+    for label, ic_list in [
+        ("MID ∩ LIQ", ic_mid_liq),
+        ("MID ∩ MID-ADV", ic_mid_mid_adv),
+        ("MID ∩ ILLIQ", ic_mid_illiq),
+        ("MID ∩ UNKNOWN", ic_mid_unknown_adv),
+    ]:
         if ic_list:
             bucket_mean = sum(ic_list) / len(ic_list)
             bucket_pos = 100 * sum(1 for x in ic_list if x > 0) / len(ic_list)
@@ -1062,10 +1129,16 @@ def run_direct_backtest(
         else:
             print(f"  {label:16s}: Insufficient data")
     results["ic_mid_by_adv"] = {
-        "mid_liq": {"mean": sum(ic_mid_liq)/len(ic_mid_liq), "n": len(ic_mid_liq)} if ic_mid_liq else None,
-        "mid_mid_adv": {"mean": sum(ic_mid_mid_adv)/len(ic_mid_mid_adv), "n": len(ic_mid_mid_adv)} if ic_mid_mid_adv else None,
-        "mid_illiq": {"mean": sum(ic_mid_illiq)/len(ic_mid_illiq), "n": len(ic_mid_illiq)} if ic_mid_illiq else None,
-        "mid_unknown": {"mean": sum(ic_mid_unknown_adv)/len(ic_mid_unknown_adv), "n": len(ic_mid_unknown_adv)} if ic_mid_unknown_adv else None,
+        "mid_liq": {"mean": sum(ic_mid_liq) / len(ic_mid_liq), "n": len(ic_mid_liq)} if ic_mid_liq else None,
+        "mid_mid_adv": (
+            {"mean": sum(ic_mid_mid_adv) / len(ic_mid_mid_adv), "n": len(ic_mid_mid_adv)} if ic_mid_mid_adv else None
+        ),
+        "mid_illiq": {"mean": sum(ic_mid_illiq) / len(ic_mid_illiq), "n": len(ic_mid_illiq)} if ic_mid_illiq else None,
+        "mid_unknown": (
+            {"mean": sum(ic_mid_unknown_adv) / len(ic_mid_unknown_adv), "n": len(ic_mid_unknown_adv)}
+            if ic_mid_unknown_adv
+            else None
+        ),
     }
     print()
 
@@ -1074,7 +1147,7 @@ def run_direct_backtest(
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(results, f, indent=2, default=str)
         print(f"Results saved to: {output_file}")
 
@@ -1154,57 +1227,26 @@ Examples:
     python run_backtest.py --use-production-scorer
     python run_backtest.py --start-date 2022-01-01 --end-date 2024-12-31
     python run_backtest.py --use-production-scorer --output results/backtest_prod.json
-        """
+        """,
     )
 
     parser.add_argument(
         "--use-production-scorer",
         action="store_true",
-        help="Use production Module 1-5 composite scorer instead of sample scorer"
+        help="Use production Module 1-5 composite scorer instead of sample scorer",
     )
-    parser.add_argument(
-        "--start-date",
-        type=str,
-        default="2023-01-01",
-        help="Backtest start date (YYYY-MM-DD)"
-    )
-    parser.add_argument(
-        "--end-date",
-        type=str,
-        default="2024-12-31",
-        help="Backtest end date (YYYY-MM-DD)"
-    )
-    parser.add_argument(
-        "--price-file",
-        type=str,
-        default="data/daily_prices.csv",
-        help="Path to historical price CSV"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default=None,
-        help="Output file for results (JSON)"
-    )
-    parser.add_argument(
-        "--frequency",
-        type=int,
-        default=30,
-        help="Days between scoring dates"
-    )
-    parser.add_argument(
-        "--universe",
-        type=str,
-        nargs="+",
-        default=None,
-        help="Custom universe of tickers"
-    )
+    parser.add_argument("--start-date", type=str, default="2023-01-01", help="Backtest start date (YYYY-MM-DD)")
+    parser.add_argument("--end-date", type=str, default="2024-12-31", help="Backtest end date (YYYY-MM-DD)")
+    parser.add_argument("--price-file", type=str, default="data/daily_prices.csv", help="Path to historical price CSV")
+    parser.add_argument("--output", type=str, default=None, help="Output file for results (JSON)")
+    parser.add_argument("--frequency", type=int, default=30, help="Days between scoring dates")
+    parser.add_argument("--universe", type=str, nargs="+", default=None, help="Custom universe of tickers")
     parser.add_argument(
         "--mcap-filter",
         type=str,
         choices=["small", "mid", "large", "mid+large"],
         default=None,
-        help="Filter universe by market cap bucket (small=<$0.5B, mid=$0.5-2B, large=>$2B)"
+        help="Filter universe by market cap bucket (small=<$0.5B, mid=$0.5-2B, large=>$2B)",
     )
 
     args = parser.parse_args()
@@ -1234,6 +1276,7 @@ Examples:
     except Exception as e:
         print(f"\nError running backtest: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

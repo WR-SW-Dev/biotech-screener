@@ -3,6 +3,7 @@
 Covers: validate_cache_refresh, _dedup_events, _extract_pattern_version,
 _load_universe, source list parsing, and dispatcher routing.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,17 +16,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from warm_caches import (
-    validate_cache_refresh,
-    _dedup_events,
-    _extract_pattern_version,
-    _load_universe,
-)
-
+from warm_caches import _dedup_events, _extract_pattern_version, _load_universe, validate_cache_refresh
 
 # =============================================================================
 # validate_cache_refresh
 # =============================================================================
+
 
 class TestValidateCacheRefresh:
     # --- sec_8k ---
@@ -133,6 +129,7 @@ class TestValidateCacheRefresh:
 # _dedup_events
 # =============================================================================
 
+
 class TestDedupEvents:
     def test_empty_list(self):
         assert _dedup_events([]) == []
@@ -166,7 +163,7 @@ class TestDedupEvents:
         events = [
             {"ticker": "A", "event_type": "FDA", "event_date": "2026-01-01"},
             {"ticker": "A", "event_type": "FDA", "event_date": "2026-01-02"},  # different date
-            {"ticker": "A", "event_type": "8K", "event_date": "2026-01-01"},   # different type
+            {"ticker": "A", "event_type": "8K", "event_date": "2026-01-01"},  # different type
         ]
         assert len(_dedup_events(events)) == 3
 
@@ -174,6 +171,7 @@ class TestDedupEvents:
 # =============================================================================
 # _extract_pattern_version
 # =============================================================================
+
 
 class TestExtractPatternVersion:
     def test_valid_filename(self):
@@ -197,6 +195,7 @@ class TestExtractPatternVersion:
 # =============================================================================
 # _load_universe
 # =============================================================================
+
 
 class TestLoadUniverse:
     def test_list_format(self, tmp_path):
@@ -226,6 +225,7 @@ class TestLoadUniverse:
 # Source list parsing (pattern test)
 # =============================================================================
 
+
 class TestSourceParsing:
     """Tests for the source parsing pattern used in warm_caches.main()."""
 
@@ -246,9 +246,20 @@ class TestSourceParsing:
 
     def test_all_15_sources_recognized(self):
         all_sources = [
-            "fda_adcom", "sec_8k", "sec_13f", "ctgov", "event_ledger",
-            "price_pit", "ema_agenda", "ema_outcomes", "euctr", "ctis",
-            "isrctn", "merged_trials", "conference_calendar", "ir_events",
+            "fda_adcom",
+            "sec_8k",
+            "sec_13f",
+            "ctgov",
+            "event_ledger",
+            "price_pit",
+            "ema_agenda",
+            "ema_outcomes",
+            "euctr",
+            "ctis",
+            "isrctn",
+            "merged_trials",
+            "conference_calendar",
+            "ir_events",
             "press_releases",
         ]
         assert len(all_sources) == 15

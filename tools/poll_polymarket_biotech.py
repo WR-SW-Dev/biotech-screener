@@ -45,9 +45,28 @@ MAX_EVENTS_PER_TAG = 100
 RECENT_CLOSED_DAYS = 30
 
 COMPANY_STOPWORDS = {
-    "inc", "inc.", "corp", "corp.", "corporation", "co", "co.", "ltd", "plc",
-    "therapeutics", "biosciences", "pharmaceuticals", "pharma", "biotech",
-    "holdings", "labs", "laboratories", "sciences", "n.v.", "nv", "se", "ag",
+    "inc",
+    "inc.",
+    "corp",
+    "corp.",
+    "corporation",
+    "co",
+    "co.",
+    "ltd",
+    "plc",
+    "therapeutics",
+    "biosciences",
+    "pharmaceuticals",
+    "pharma",
+    "biotech",
+    "holdings",
+    "labs",
+    "laboratories",
+    "sciences",
+    "n.v.",
+    "nv",
+    "se",
+    "ag",
 }
 
 
@@ -142,8 +161,8 @@ def _classify_match(
 
 def _resolution_rule_hash(pm_market: Dict[str, Any], pm_event: Dict[str, Any]) -> str:
     """Hash question + description so PM-side rule changes are detectable."""
-    payload = (pm_market.get("question") or "") + "||" + (
-        pm_market.get("description") or pm_event.get("description") or ""
+    payload = (
+        (pm_market.get("question") or "") + "||" + (pm_market.get("description") or pm_event.get("description") or "")
     )
     return hashlib.sha256(payload.encode("utf-8", errors="replace")).hexdigest()[:16]
 
@@ -174,9 +193,9 @@ def _latest_snapshot_dir() -> Optional[Path]:
     if not SNAPSHOTS_DIR.exists():
         return None
     candidates = sorted(
-        d for d in SNAPSHOTS_DIR.iterdir()
-        if d.is_dir() and not d.name.startswith("_") and "__pre" not in d.name
-        and (d / "rankings.csv").exists()
+        d
+        for d in SNAPSHOTS_DIR.iterdir()
+        if d.is_dir() and not d.name.startswith("_") and "__pre" not in d.name and (d / "rankings.csv").exists()
     )
     return candidates[-1] if candidates else None
 
@@ -343,7 +362,9 @@ def main() -> int:
         return 0
 
     counts = _summarize(rows)
-    print(f"Polymarket biotech rows: {len(rows)}  HIGH={counts['HIGH']}  MEDIUM={counts['MEDIUM']}  LOW={counts['LOW']}  REJECT={counts['REJECT']}")
+    print(
+        f"Polymarket biotech rows: {len(rows)}  HIGH={counts['HIGH']}  MEDIUM={counts['MEDIUM']}  LOW={counts['LOW']}  REJECT={counts['REJECT']}"
+    )
     for r in rows:
         if r["polymarket_match_confidence"] in ("HIGH", "MEDIUM"):
             print(

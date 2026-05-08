@@ -25,6 +25,7 @@ from statistics import mean, stdev
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sanity_checks.types import (
+    DEFAULT_THRESHOLDS,
     CheckCategory,
     FlagSeverity,
     RankingSnapshot,
@@ -32,7 +33,6 @@ from sanity_checks.types import (
     SanityFlag,
     SecurityContext,
     ThresholdConfig,
-    DEFAULT_THRESHOLDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PeerGroup:
     """A group of peer securities for comparison."""
+
     primary_ticker: str
     peer_tickers: List[str]
     indication: str
@@ -50,6 +51,7 @@ class PeerGroup:
 @dataclass
 class SectorStats:
     """Statistics for a sector."""
+
     sector: str
     count: int
     mean_score: Decimal
@@ -143,60 +145,63 @@ class BenchmarkChecker:
         sector_counts = Counter(s.sector for s in top10 if s.sector)
         for sector, count in sector_counts.items():
             if count > self.config.max_same_sector_in_top10:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.HIGH,
-                    category=CheckCategory.BENCHMARK,
-                    ticker=None,
-                    check_name="sector_concentration_risk",
-                    message=f"Top 10 has {count} names from {sector} sector (max: {self.config.max_same_sector_in_top10})",
-                    details={
-                        "sector": sector,
-                        "count": count,
-                        "threshold": self.config.max_same_sector_in_top10,
-                        "tickers": [s.ticker for s in top10 if s.sector == sector],
-                    },
-                    recommendation="Insufficient diversification - sector concentration risk",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.HIGH,
+                        category=CheckCategory.BENCHMARK,
+                        ticker=None,
+                        check_name="sector_concentration_risk",
+                        message=f"Top 10 has {count} names from {sector} sector (max: {self.config.max_same_sector_in_top10})",
+                        details={
+                            "sector": sector,
+                            "count": count,
+                            "threshold": self.config.max_same_sector_in_top10,
+                            "tickers": [s.ticker for s in top10 if s.sector == sector],
+                        },
+                        recommendation="Insufficient diversification - sector concentration risk",
+                    )
+                )
 
         # Check 2: Indication concentration in top 10
         indication_counts = Counter(s.indication for s in top10 if s.indication)
         for indication, count in indication_counts.items():
             if count > 4:  # More than 4 in same indication is concerning
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.BENCHMARK,
-                    ticker=None,
-                    check_name="indication_concentration_risk",
-                    message=f"Top 10 has {count} names in {indication} indication",
-                    details={
-                        "indication": indication,
-                        "count": count,
-                        "tickers": [s.ticker for s in top10 if s.indication == indication],
-                    },
-                    recommendation="Regulatory/competitive risk correlation",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.BENCHMARK,
+                        ticker=None,
+                        check_name="indication_concentration_risk",
+                        message=f"Top 10 has {count} names in {indication} indication",
+                        details={
+                            "indication": indication,
+                            "count": count,
+                            "tickers": [s.ticker for s in top10 if s.indication == indication],
+                        },
+                        recommendation="Regulatory/competitive risk correlation",
+                    )
+                )
 
         # Check 3: Market cap distribution check
         micro_caps = [s for s in top10 if s.is_micro_cap]
         if len(micro_caps) >= 8:  # 80% micro-cap is concerning
             # Check if there are any large-caps in universe that were excluded
-            all_large_caps = [
-                s for s in securities
-                if s.market_cap_mm and s.market_cap_mm >= Decimal("1000")
-            ]
+            all_large_caps = [s for s in securities if s.market_cap_mm and s.market_cap_mm >= Decimal("1000")]
             if all_large_caps:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.BENCHMARK,
-                    ticker=None,
-                    check_name="liquidity_bias_not_reflected",
-                    message=f"Micro-cap ({len(micro_caps)}/10) dominates top 10, {len(all_large_caps)} large-caps in universe",
-                    details={
-                        "micro_cap_count": len(micro_caps),
-                        "large_cap_count": len(all_large_caps),
-                    },
-                    recommendation="Liquidity bias not reflected - small names may be uninvestable",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.BENCHMARK,
+                        ticker=None,
+                        check_name="liquidity_bias_not_reflected",
+                        message=f"Micro-cap ({len(micro_caps)}/10) dominates top 10, {len(all_large_caps)} large-caps in universe",
+                        details={
+                            "micro_cap_count": len(micro_caps),
+                            "large_cap_count": len(all_large_caps),
+                        },
+                        recommendation="Liquidity bias not reflected - small names may be uninvestable",
+                    )
+                )
 
         return flags
 
@@ -218,10 +223,7 @@ class BenchmarkChecker:
             return flags
 
         # Get current top 10
-        current_top10 = set(
-            s.ticker for s in securities
-            if s.rank is not None and s.rank <= 10
-        )
+        current_top10 = set(s.ticker for s in securities if s.rank is not None and s.rank <= 10)
 
         if not current_top10:
             return flags
@@ -229,10 +231,7 @@ class BenchmarkChecker:
         # Get top 10 from each historical snapshot
         weekly_top10s: List[Set[str]] = []
         for snap in sorted(historical_snapshots, key=lambda x: x.as_of_date)[-4:]:
-            top10 = set(
-                s.ticker for s in snap.securities
-                if s.rank is not None and s.rank <= 10
-            )
+            top10 = set(s.ticker for s in snap.securities if s.rank is not None and s.rank <= 10)
             weekly_top10s.append(top10)
 
         # Calculate turnover vs. each historical week
@@ -252,32 +251,36 @@ class BenchmarkChecker:
 
         # Check high churn
         if avg_turnover > 0.50:
-            flags.append(SanityFlag(
-                severity=FlagSeverity.HIGH,
-                category=CheckCategory.BENCHMARK,
-                ticker=None,
-                check_name="high_ranking_churn",
-                message=f"Top 10 turnover {avg_turnover:.0%} vs last 4 weeks (threshold: 50%)",
-                details={
-                    "avg_turnover": avg_turnover,
-                    "weekly_turnovers": turnovers,
-                },
-                recommendation="High churn - investigate volatility in signals",
-            ))
+            flags.append(
+                SanityFlag(
+                    severity=FlagSeverity.HIGH,
+                    category=CheckCategory.BENCHMARK,
+                    ticker=None,
+                    check_name="high_ranking_churn",
+                    message=f"Top 10 turnover {avg_turnover:.0%} vs last 4 weeks (threshold: 50%)",
+                    details={
+                        "avg_turnover": avg_turnover,
+                        "weekly_turnovers": turnovers,
+                    },
+                    recommendation="High churn - investigate volatility in signals",
+                )
+            )
         # Check stale signals
         elif avg_turnover < 0.10:
-            flags.append(SanityFlag(
-                severity=FlagSeverity.MEDIUM,
-                category=CheckCategory.BENCHMARK,
-                ticker=None,
-                check_name="stale_signals",
-                message=f"Top 10 turnover {avg_turnover:.0%} vs last 4 weeks (expected: >10%)",
-                details={
-                    "avg_turnover": avg_turnover,
-                    "weekly_turnovers": turnovers,
-                },
-                recommendation="Stale signals - check data freshness",
-            ))
+            flags.append(
+                SanityFlag(
+                    severity=FlagSeverity.MEDIUM,
+                    category=CheckCategory.BENCHMARK,
+                    ticker=None,
+                    check_name="stale_signals",
+                    message=f"Top 10 turnover {avg_turnover:.0%} vs last 4 weeks (expected: >10%)",
+                    details={
+                        "avg_turnover": avg_turnover,
+                        "weekly_turnovers": turnovers,
+                    },
+                    recommendation="Stale signals - check data freshness",
+                )
+            )
 
         return flags
 
@@ -316,22 +319,24 @@ class BenchmarkChecker:
 
             # Flag if >30 position difference from peer average
             if rank_diff > 30:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.BENCHMARK,
-                    ticker=primary.ticker,
-                    check_name="peer_rank_divergence",
-                    message=f"{primary.ticker} ranked #{primary_rank} but peer avg is #{avg_peer_rank:.0f}",
-                    details={
-                        "ticker": primary.ticker,
-                        "rank": primary_rank,
-                        "peer_avg_rank": avg_peer_rank,
-                        "peers": [(p.ticker, p.rank) for p in peers],
-                        "indication": group.indication,
-                        "stage": group.stage,
-                    },
-                    recommendation="Generate Differentiation Justification Report",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.BENCHMARK,
+                        ticker=primary.ticker,
+                        check_name="peer_rank_divergence",
+                        message=f"{primary.ticker} ranked #{primary_rank} but peer avg is #{avg_peer_rank:.0f}",
+                        details={
+                            "ticker": primary.ticker,
+                            "rank": primary_rank,
+                            "peer_avg_rank": avg_peer_rank,
+                            "peers": [(p.ticker, p.rank) for p in peers],
+                            "indication": group.indication,
+                            "stage": group.stage,
+                        },
+                        recommendation="Generate Differentiation Justification Report",
+                    )
+                )
 
         return flags
 
@@ -393,37 +398,41 @@ class BenchmarkChecker:
             # Top candidate with insufficient alpha
             if sec.rank <= 10:
                 if ratio < Decimal("1.2"):
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.MEDIUM,
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.MEDIUM,
+                            category=CheckCategory.BENCHMARK,
+                            ticker=sec.ticker,
+                            check_name="insufficient_alpha_vs_sector",
+                            message=f"Top {sec.rank} candidate score only {ratio:.2f}x sector median",
+                            details={
+                                "rank": sec.rank,
+                                "score": float(sec.composite_score),
+                                "sector_median": float(stats.median_score),
+                                "ratio": float(ratio),
+                            },
+                            recommendation="Insufficient alpha vs. sector average",
+                        )
+                    )
+
+            # Extreme outlier check
+            if ratio > Decimal("3.0"):
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.HIGH,
                         category=CheckCategory.BENCHMARK,
                         ticker=sec.ticker,
-                        check_name="insufficient_alpha_vs_sector",
-                        message=f"Top {sec.rank} candidate score only {ratio:.2f}x sector median",
+                        check_name="extreme_outlier_score",
+                        message=f"{sec.ticker} score {ratio:.2f}x sector median - extreme outlier",
                         details={
                             "rank": sec.rank,
                             "score": float(sec.composite_score),
                             "sector_median": float(stats.median_score),
                             "ratio": float(ratio),
                         },
-                        recommendation="Insufficient alpha vs. sector average",
-                    ))
-
-            # Extreme outlier check
-            if ratio > Decimal("3.0"):
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.HIGH,
-                    category=CheckCategory.BENCHMARK,
-                    ticker=sec.ticker,
-                    check_name="extreme_outlier_score",
-                    message=f"{sec.ticker} score {ratio:.2f}x sector median - extreme outlier",
-                    details={
-                        "rank": sec.rank,
-                        "score": float(sec.composite_score),
-                        "sector_median": float(stats.median_score),
-                        "ratio": float(ratio),
-                    },
-                    recommendation="Extreme outlier - verify data quality",
-                ))
+                        recommendation="Extreme outlier - verify data quality",
+                    )
+                )
 
         return flags
 

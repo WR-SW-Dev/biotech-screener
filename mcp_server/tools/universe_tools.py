@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from mcp_server.app import mcp
-from mcp_server.config import UNIVERSE_FILE, UNIVERSE_MAPPED_FILE, DATA_DIR
+from mcp_server.config import DATA_DIR, UNIVERSE_FILE, UNIVERSE_MAPPED_FILE
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +45,12 @@ def get_universe() -> str:
             }
             summary.append(rec)
 
-        return json.dumps({
-            "total_tickers": len(summary),
-            "tickers": summary,
-        })
+        return json.dumps(
+            {
+                "total_tickers": len(summary),
+                "tickers": summary,
+            }
+        )
     except Exception as e:
         logger.exception("get_universe failed")
         return json.dumps({"error": str(e)})
@@ -65,9 +67,8 @@ def check_data_availability() -> str:
 
     # Check Morningstar SDK
     try:
-        from wake_robin_data_pipeline.morningstar_data_provider import (
-            check_morningstar_availability,
-        )
+        from wake_robin_data_pipeline.morningstar_data_provider import check_morningstar_availability
+
         result["providers"] = check_morningstar_availability()
     except ImportError:
         result["providers"] = {

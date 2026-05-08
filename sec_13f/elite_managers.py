@@ -8,45 +8,40 @@ The canonical source is loaded by the root elite_managers.py module.
 """
 
 # Re-export everything from canonical source
-from elite_managers import (
-    # Manager lists
+from elite_managers import (  # Manager lists; Lookup functions; CIK lists; Weighting; Validation
     ELITE_MANAGERS,
-    get_elite_managers,
-    get_conditional_managers,
+    STYLE_CONVICTION_MULTIPLIER,
+    TIER_WEIGHTS,
+    get_all_ciks,
     get_all_managers,
-    # Lookup functions
+    get_ciks_by_tier,
+    get_conditional_ciks,
+    get_conditional_managers,
+    get_elite_ciks,
+    get_elite_managers,
     get_manager_by_cik,
     get_manager_by_short_name,
-    get_tier_1_managers,
-    # CIK lists
-    get_all_ciks,
-    get_elite_ciks,
-    get_conditional_ciks,
-    get_ciks_by_tier,
-    # Weighting
-    TIER_WEIGHTS,
-    STYLE_CONVICTION_MULTIPLIER,
     get_manager_weight,
-    # Validation
-    validate_registry,
     get_registry_info,
+    get_tier_1_managers,
+    validate_registry,
 )
 
 __all__ = [
-    'ELITE_MANAGERS',
-    'get_elite_managers',
-    'get_conditional_managers',
-    'get_all_managers',
-    'get_manager_by_cik',
-    'get_manager_by_short_name',
-    'get_tier_1_managers',
-    'get_all_ciks',
-    'get_elite_ciks',
-    'get_conditional_ciks',
-    'get_ciks_by_tier',
-    'TIER_WEIGHTS',
-    'STYLE_CONVICTION_MULTIPLIER',
-    'get_manager_weight',
-    'validate_registry',
-    'get_registry_info',
+    "ELITE_MANAGERS",
+    "get_elite_managers",
+    "get_conditional_managers",
+    "get_all_managers",
+    "get_manager_by_cik",
+    "get_manager_by_short_name",
+    "get_tier_1_managers",
+    "get_all_ciks",
+    "get_elite_ciks",
+    "get_conditional_ciks",
+    "get_ciks_by_tier",
+    "TIER_WEIGHTS",
+    "STYLE_CONVICTION_MULTIPLIER",
+    "get_manager_weight",
+    "validate_registry",
+    "get_registry_info",
 ]

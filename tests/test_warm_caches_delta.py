@@ -1,22 +1,23 @@
 """Tests for SEC 8-K delta warming in warm_caches.py."""
+
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from warm_caches import (
-    warm_sec_8k_delta,
-    _extract_pattern_version,
-    _dedup_events,
     _DELTA_LOOKBACK_DAYS,
     _EXPIRE_WINDOW_DAYS,
+    _dedup_events,
+    _extract_pattern_version,
+    warm_sec_8k_delta,
 )
 
 # ── fixtures ──────────────────────────────────────────────────────────
@@ -88,7 +89,9 @@ def test_delta_missing_seed_falls_back(mock_full, tmp_path):
     _write_universe(data_dir)
 
     result = warm_sec_8k_delta(
-        date(2026, 2, 15), data_dir, cache_dir,
+        date(2026, 2, 15),
+        data_dir,
+        cache_dir,
         seed_cache_path=tmp_path / "nonexistent.json",
     )
     assert result == 100
@@ -115,7 +118,10 @@ def test_delta_pattern_mismatch_falls_back(mock_full, tmp_path):
         FAKE_PATTERN_VERSION,  # abcd1234 != deadbeef → mismatch
     ):
         result = warm_sec_8k_delta(
-            date(2026, 2, 15), data_dir, cache_dir, seed_cache_path=seed,
+            date(2026, 2, 15),
+            data_dir,
+            cache_dir,
+            seed_cache_path=seed,
         )
     assert result == 100
     mock_full.assert_called_once()
@@ -130,10 +136,7 @@ def test_delta_merges_seed_and_new(tmp_path):
 
     as_of = date(2026, 2, 15)
 
-    seed_events = [
-        _make_event(f"T{i}", "DATA_READOUT", f"2026-03-0{i}", "2026-02-10")
-        for i in range(1, 6)
-    ]
+    seed_events = [_make_event(f"T{i}", "DATA_READOUT", f"2026-03-0{i}", "2026-02-10") for i in range(1, 6)]
     delta_events = [
         _make_event("NEW1", "DATA_READOUT", "2026-04-01", "2026-02-14"),
         _make_event("NEW2", "FDA_PDUFA_DATE", "2026-05-01", "2026-02-14"),
@@ -144,9 +147,8 @@ def test_delta_merges_seed_and_new(tmp_path):
         "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
         FAKE_PATTERN_VERSION,
     ):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _versioned_cache_path,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _versioned_cache_path
+
         seed_path = cache_dir / f"8k_catalysts_2026-02-14_{FAKE_PATTERN_VERSION}.json"
         _write_seed(seed_path, seed_events)
 
@@ -178,12 +180,15 @@ def test_delta_dedup_by_key(tmp_path):
     seed_path = cache_dir / f"8k_catalysts_2026-02-14_{FAKE_PATTERN_VERSION}.json"
     _write_seed(seed_path, seed_events)
 
-    with patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
-        FAKE_PATTERN_VERSION,
-    ), patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
-        return_value=delta_events,
+    with (
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
+            FAKE_PATTERN_VERSION,
+        ),
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
+            return_value=delta_events,
+        ),
     ):
         result = warm_sec_8k_delta(as_of, data_dir, cache_dir, seed_path)
 
@@ -206,21 +211,23 @@ def test_delta_expires_old_events(tmp_path):
     seed_path = cache_dir / f"8k_catalysts_2026-02-14_{FAKE_PATTERN_VERSION}.json"
     _write_seed(seed_path, seed_events)
 
-    with patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
-        FAKE_PATTERN_VERSION,
-    ), patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
-        return_value=[],
+    with (
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
+            FAKE_PATTERN_VERSION,
+        ),
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
+            return_value=[],
+        ),
     ):
         result = warm_sec_8k_delta(as_of, data_dir, cache_dir, seed_path)
 
     assert result == 1  # only recent survives
 
     # Verify cache file contents
-    from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-        _versioned_cache_path,
-    )
+    from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _versioned_cache_path
+
     with patch(
         "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
         FAKE_PATTERN_VERSION,
@@ -247,12 +254,15 @@ def test_delta_empty_seed(tmp_path):
     seed_path = cache_dir / f"8k_catalysts_2026-02-14_{FAKE_PATTERN_VERSION}.json"
     _write_seed(seed_path, [])
 
-    with patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
-        FAKE_PATTERN_VERSION,
-    ), patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
-        return_value=delta_events,
+    with (
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
+            FAKE_PATTERN_VERSION,
+        ),
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
+            return_value=delta_events,
+        ),
     ):
         result = warm_sec_8k_delta(as_of, data_dir, cache_dir, seed_path)
 
@@ -270,13 +280,16 @@ def test_delta_lookback_is_narrow(tmp_path):
     seed_path = cache_dir / f"8k_catalysts_2026-02-14_{FAKE_PATTERN_VERSION}.json"
     _write_seed(seed_path, [])
 
-    with patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
-        FAKE_PATTERN_VERSION,
-    ), patch(
-        "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
-        return_value=[],
-    ) as mock_collect:
+    with (
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.PATTERN_VERSION",
+            FAKE_PATTERN_VERSION,
+        ),
+        patch(
+            "wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector.collect_8k_timing_events",
+            return_value=[],
+        ) as mock_collect,
+    ):
         warm_sec_8k_delta(as_of, data_dir, cache_dir, seed_path)
 
     assert mock_collect.call_args.kwargs["lookback_days"] == 7
@@ -290,28 +303,44 @@ def test_delta_cli_flag_wired(tmp_path):
     data_dir = tmp_path / "data"
     _write_universe(data_dir)
 
-    with patch(
-        "warm_caches.warm_sec_8k_delta", return_value=42,
-    ) as mock_delta, patch(
-        "warm_caches.warm_fda_adcom", return_value=0,
+    with (
+        patch(
+            "warm_caches.warm_sec_8k_delta",
+            return_value=42,
+        ) as mock_delta,
+        patch(
+            "warm_caches.warm_fda_adcom",
+            return_value=0,
+        ),
     ):
-        from warm_caches import main as warm_main
         import warm_caches
+        from warm_caches import main as warm_main
+
         # We need to call main with argv
-        warm_caches.main.__wrapped__ if hasattr(warm_caches.main, '__wrapped__') else None
+        warm_caches.main.__wrapped__ if hasattr(warm_caches.main, "__wrapped__") else None
 
         # Patch sys.argv via argparse
         rc = 0
         import argparse
-        with patch("sys.argv", [
-            "warm_caches.py",
-            "--as-of-date", "2026-02-15",
-            "--sources", "sec_8k",
-            "--data-dir", str(data_dir),
-            "--sec-cache-dir", str(tmp_path),
-            "--seed-cache", str(seed_path),
-        ]):
+
+        with patch(
+            "sys.argv",
+            [
+                "warm_caches.py",
+                "--as-of-date",
+                "2026-02-15",
+                "--sources",
+                "sec_8k",
+                "--data-dir",
+                str(data_dir),
+                "--sec-cache-dir",
+                str(tmp_path),
+                "--seed-cache",
+                str(seed_path),
+            ],
+        ):
             from warm_caches import main
+
             rc = main()
 
     mock_delta.assert_called_once()

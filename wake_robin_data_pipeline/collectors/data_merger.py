@@ -6,11 +6,12 @@ Prioritization strategy:
 2. For same freshness, prefer SEC (authoritative) over Yahoo
 3. Fill gaps with any available source
 """
+
 import json
 import logging
-from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def parse_date(date_str: str) -> Optional[datetime]:
     if not date_str:
         return None
     try:
-        return datetime.fromisoformat(date_str.replace('Z', '+00:00').split('+')[0])
+        return datetime.fromisoformat(date_str.replace("Z", "+00:00").split("+")[0])
     except (ValueError, AttributeError):
         return None
 
@@ -60,12 +61,16 @@ def is_fresh(date_str: str, max_age_days: int = MAX_DATA_AGE_DAYS, as_of_date: d
     if not dt:
         return False
     if as_of_date is not None:
-        ref = datetime.combine(as_of_date, datetime.min.time()) if isinstance(as_of_date, date) and not isinstance(as_of_date, datetime) else as_of_date
+        ref = (
+            datetime.combine(as_of_date, datetime.min.time())
+            if isinstance(as_of_date, date) and not isinstance(as_of_date, datetime)
+            else as_of_date
+        )
     else:
         import logging
+
         logging.getLogger(__name__).warning(
-            "is_fresh called without as_of_date; using datetime.now(). "
-            "Pass as_of_date for determinism."
+            "is_fresh called without as_of_date; using datetime.now(). " "Pass as_of_date for determinism."
         )
         ref = datetime.now()
     age = ref - dt
@@ -93,95 +98,113 @@ def merge_financial_data(ticker: str) -> Dict[str, Any]:
         "provenance": {
             "merged_at": "deterministic",  # No wall-clock timestamp for reproducibility
             "sec_available": sec_data is not None and sec_data.get("success", False),
-            "yahoo_available": yahoo_data is not None and yahoo_data.get("success", False)
-        }
+            "yahoo_available": yahoo_data is not None and yahoo_data.get("success", False),
+        },
     }
 
     # Define field mappings: (result_field, sec_path, yahoo_path, sec_date_path, yahoo_date_path)
     field_mappings = [
         # Cash and liquidity
-        ("cash",
-         ("financials", "cash"),
-         ("balance_sheet", "cash"),
-         ("data_dates", "cash"),
-         ("balance_sheet", "period_date")),
-        ("marketable_securities",
-         ("financials", "marketable_securities"),
-         ("balance_sheet", "marketable_securities"),
-         ("data_dates", "marketable_securities"),
-         ("balance_sheet", "period_date")),
-        ("total_liquidity",
-         ("financials", "total_liquidity"),
-         ("balance_sheet", "total_liquidity"),
-         ("data_dates", "cash"),  # Use cash date for SEC total_liquidity
-         ("balance_sheet", "period_date")),
+        (
+            "cash",
+            ("financials", "cash"),
+            ("balance_sheet", "cash"),
+            ("data_dates", "cash"),
+            ("balance_sheet", "period_date"),
+        ),
+        (
+            "marketable_securities",
+            ("financials", "marketable_securities"),
+            ("balance_sheet", "marketable_securities"),
+            ("data_dates", "marketable_securities"),
+            ("balance_sheet", "period_date"),
+        ),
+        (
+            "total_liquidity",
+            ("financials", "total_liquidity"),
+            ("balance_sheet", "total_liquidity"),
+            ("data_dates", "cash"),  # Use cash date for SEC total_liquidity
+            ("balance_sheet", "period_date"),
+        ),
         # Debt
-        ("total_debt",
-         ("financials", "debt"),
-         ("balance_sheet", "total_debt"),
-         ("data_dates", "debt"),
-         ("balance_sheet", "period_date")),
-        ("long_term_debt",
-         None,  # SEC doesn't have separate long-term debt in our extraction
-         ("balance_sheet", "long_term_debt"),
-         None,
-         ("balance_sheet", "period_date")),
+        (
+            "total_debt",
+            ("financials", "debt"),
+            ("balance_sheet", "total_debt"),
+            ("data_dates", "debt"),
+            ("balance_sheet", "period_date"),
+        ),
+        (
+            "long_term_debt",
+            None,  # SEC doesn't have separate long-term debt in our extraction
+            ("balance_sheet", "long_term_debt"),
+            None,
+            ("balance_sheet", "period_date"),
+        ),
         # Balance sheet
-        ("total_assets",
-         ("financials", "assets"),
-         ("balance_sheet", "total_assets"),
-         ("data_dates", "assets"),
-         ("balance_sheet", "period_date")),
-        ("total_liabilities",
-         ("financials", "liabilities"),
-         ("balance_sheet", "total_liabilities"),
-         ("data_dates", "liabilities"),
-         ("balance_sheet", "period_date")),
-        ("stockholders_equity",
-         ("financials", "equity"),
-         ("balance_sheet", "stockholders_equity"),
-         ("data_dates", "assets"),  # Use assets date for equity
-         ("balance_sheet", "period_date")),
+        (
+            "total_assets",
+            ("financials", "assets"),
+            ("balance_sheet", "total_assets"),
+            ("data_dates", "assets"),
+            ("balance_sheet", "period_date"),
+        ),
+        (
+            "total_liabilities",
+            ("financials", "liabilities"),
+            ("balance_sheet", "total_liabilities"),
+            ("data_dates", "liabilities"),
+            ("balance_sheet", "period_date"),
+        ),
+        (
+            "stockholders_equity",
+            ("financials", "equity"),
+            ("balance_sheet", "stockholders_equity"),
+            ("data_dates", "assets"),  # Use assets date for equity
+            ("balance_sheet", "period_date"),
+        ),
         # Revenue
-        ("revenue_ttm",
-         ("financials", "revenue_ttm"),
-         ("income_statement", "revenue"),
-         ("data_dates", "revenue"),
-         ("income_statement", "period_date")),
+        (
+            "revenue_ttm",
+            ("financials", "revenue_ttm"),
+            ("income_statement", "revenue"),
+            ("data_dates", "revenue"),
+            ("income_statement", "period_date"),
+        ),
         # Burn rate / Cash flow metrics
-        ("operating_cash_flow",
-         None,  # SEC collector doesn't extract CFO yet
-         ("cash_flow", "operating_cash_flow"),
-         None,
-         ("cash_flow", "period_date")),
-        ("free_cash_flow",
-         None,
-         ("cash_flow", "free_cash_flow"),
-         None,
-         ("cash_flow", "period_date")),
+        (
+            "operating_cash_flow",
+            None,  # SEC collector doesn't extract CFO yet
+            ("cash_flow", "operating_cash_flow"),
+            None,
+            ("cash_flow", "period_date"),
+        ),
+        ("free_cash_flow", None, ("cash_flow", "free_cash_flow"), None, ("cash_flow", "period_date")),
         # Operating expenses
-        ("operating_expense",
-         None,  # SEC collector doesn't extract OpEx yet
-         ("income_statement", "operating_expense"),
-         None,
-         ("income_statement", "period_date")),
-        ("research_and_development",
-         None,  # SEC collector doesn't extract R&D yet
-         ("income_statement", "research_and_development"),
-         None,
-         ("income_statement", "period_date")),
+        (
+            "operating_expense",
+            None,  # SEC collector doesn't extract OpEx yet
+            ("income_statement", "operating_expense"),
+            None,
+            ("income_statement", "period_date"),
+        ),
+        (
+            "research_and_development",
+            None,  # SEC collector doesn't extract R&D yet
+            ("income_statement", "research_and_development"),
+            None,
+            ("income_statement", "period_date"),
+        ),
         # Interest expense
-        ("interest_expense",
-         None,  # SEC collector doesn't extract InterestExpense yet
-         ("income_statement", "interest_expense"),
-         None,
-         ("income_statement", "period_date")),
+        (
+            "interest_expense",
+            None,  # SEC collector doesn't extract InterestExpense yet
+            ("income_statement", "interest_expense"),
+            None,
+            ("income_statement", "period_date"),
+        ),
         # Net income
-        ("net_income",
-         None,
-         ("income_statement", "net_income"),
-         None,
-         ("income_statement", "period_date")),
+        ("net_income", None, ("income_statement", "net_income"), None, ("income_statement", "period_date")),
     ]
 
     def get_nested(data: dict, path: tuple) -> Any:
@@ -299,7 +322,7 @@ def analyze_data_coverage(tickers: list) -> dict:
         "yahoo_only": 0,
         "both_sources": 0,
         "neither_source": 0,
-        "by_field": {}
+        "by_field": {},
     }
 
     fields = ["cash", "total_liquidity", "total_debt", "total_assets", "total_liabilities", "stockholders_equity"]
@@ -345,8 +368,8 @@ if __name__ == "__main__":
         print(f"SEC available: {merged['provenance']['sec_available']}")
         print(f"Yahoo available: {merged['provenance']['yahoo_available']}")
         print(f"Financials:")
-        for k, v in merged['financials'].items():
-            source = merged['data_sources'].get(k, '?')
-            date = merged['data_dates'].get(k, '?')
+        for k, v in merged["financials"].items():
+            source = merged["data_sources"].get(k, "?")
+            date = merged["data_dates"].get(k, "?")
             if v is not None:
                 print(f"  {k}: {v:,.0f} (source: {source}, date: {date})")

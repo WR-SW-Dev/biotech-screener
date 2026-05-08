@@ -1,5 +1,6 @@
-﻿import yfinance as yf
-from datetime import date, timedelta
+﻿from datetime import date, timedelta
+
+import yfinance as yf
 
 ticker = "VRTX"
 as_of = date(2024, 12, 31)

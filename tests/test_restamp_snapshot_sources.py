@@ -1,4 +1,5 @@
 """Tests for tools/restamp_snapshot_sources.py."""
+
 from __future__ import annotations
 
 import json
@@ -7,10 +8,10 @@ from pathlib import Path
 import pytest
 
 from tools.restamp_snapshot_sources import (
+    _detect_active_families,
     _discover_13f_dates,
     _discover_ctgov_dates,
     _find_latest_cache_date,
-    _detect_active_families,
     reconstruct_data_sources,
     restamp_batch,
 )
@@ -62,6 +63,7 @@ def _make_ctgov_cache(ctgov_dir: Path, dates: list[str]) -> None:
 
 # ── TestDiscoverCacheDates ────────────────────────────────────────────────
 
+
 class TestDiscoverCacheDates:
     def test_discover_13f_dirs(self, tmp_path: Path) -> None:
         pit_base = tmp_path / "PIT"
@@ -86,6 +88,7 @@ class TestDiscoverCacheDates:
 
 # ── TestFindLatestCacheDate ───────────────────────────────────────────────
 
+
 class TestFindLatestCacheDate:
     def test_exact_match(self) -> None:
         dates = ["2020-03-31", "2020-06-30", "2020-09-30"]
@@ -101,6 +104,7 @@ class TestFindLatestCacheDate:
 
 
 # ── TestReconstructDataSources ────────────────────────────────────────────
+
 
 class TestReconstructDataSources:
     def test_all_families_present(self, tmp_path: Path) -> None:
@@ -178,6 +182,7 @@ class TestReconstructDataSources:
 
 # ── TestRestampBatch ──────────────────────────────────────────────────────
 
+
 class TestRestampBatch:
     def _setup_snapshots(
         self, tmp_path: Path, dates: list[str], *, with_data_sources: bool = False
@@ -232,9 +237,7 @@ class TestRestampBatch:
 
     def test_skip_existing_idempotent(self, tmp_path: Path) -> None:
         dates = ["2020-04-15"]
-        snap_root, pit_base, ctgov_dir = self._setup_snapshots(
-            tmp_path, dates, with_data_sources=True
-        )
+        snap_root, pit_base, ctgov_dir = self._setup_snapshots(tmp_path, dates, with_data_sources=True)
 
         summary = restamp_batch(
             snap_root,
@@ -250,9 +253,7 @@ class TestRestampBatch:
 
     def test_force_overwrites(self, tmp_path: Path) -> None:
         dates = ["2020-04-15"]
-        snap_root, pit_base, ctgov_dir = self._setup_snapshots(
-            tmp_path, dates, with_data_sources=True
-        )
+        snap_root, pit_base, ctgov_dir = self._setup_snapshots(tmp_path, dates, with_data_sources=True)
 
         summary = restamp_batch(
             snap_root,

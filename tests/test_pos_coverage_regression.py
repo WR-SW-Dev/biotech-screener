@@ -29,10 +29,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from indication_mapper import IndicationMapper, MappingValidationError
 from pos_engine import ProbabilityOfSuccessEngine
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mapper():
@@ -57,23 +57,51 @@ def sample_ticker_universe() -> List[str]:
     """Representative sample of biotech tickers for coverage testing."""
     return [
         # Large cap
-        "MRNA", "BNTX", "VRTX", "REGN", "BIIB", "GILD", "AMGN",
+        "MRNA",
+        "BNTX",
+        "VRTX",
+        "REGN",
+        "BIIB",
+        "GILD",
+        "AMGN",
         # Oncology focus
-        "SGEN", "INCY", "EXEL", "JAZZ", "ARVN", "NUVL", "RVMD",
+        "SGEN",
+        "INCY",
+        "EXEL",
+        "JAZZ",
+        "ARVN",
+        "NUVL",
+        "RVMD",
         # Rare disease
-        "ALNY", "BMRN", "SRPT", "CRSP", "BEAM", "EDIT", "NTLA",
+        "ALNY",
+        "BMRN",
+        "SRPT",
+        "CRSP",
+        "BEAM",
+        "EDIT",
+        "NTLA",
         # CNS
-        "NBIX", "AXSM", "ACAD", "BHVN", "PRTA",
+        "NBIX",
+        "AXSM",
+        "ACAD",
+        "BHVN",
+        "PRTA",
         # Autoimmune
-        "ARGX", "AUPH", "ARQT",
+        "ARGX",
+        "AUPH",
+        "ARQT",
         # Other
-        "CYTK", "URGN", "MDGL", "INSM",
+        "CYTK",
+        "URGN",
+        "MDGL",
+        "INSM",
     ]
 
 
 # ============================================================================
 # 1. COVERAGE REGRESSION TESTS
 # ============================================================================
+
 
 class TestCoverageRegression:
     """Tests to ensure PoS indication coverage doesn't regress."""
@@ -104,25 +132,31 @@ class TestCoverageRegression:
         MIN_V3_OVERRIDES = 5  # Minimum v3 overrides expected
 
         v3_count = len(mapper.ticker_overrides_v3)
-        assert v3_count >= MIN_V3_OVERRIDES, (
-            f"Only {v3_count} v3 overrides found, expected at least {MIN_V3_OVERRIDES}"
-        )
+        assert v3_count >= MIN_V3_OVERRIDES, f"Only {v3_count} v3 overrides found, expected at least {MIN_V3_OVERRIDES}"
 
     def test_legacy_overrides_count(self, mapper):
         """Assert legacy overrides are still available for backwards compatibility."""
         MIN_LEGACY_OVERRIDES = 100  # Minimum legacy overrides expected
 
         legacy_count = len(mapper.ticker_overrides)
-        assert legacy_count >= MIN_LEGACY_OVERRIDES, (
-            f"Only {legacy_count} legacy overrides found, expected at least {MIN_LEGACY_OVERRIDES}"
-        )
+        assert (
+            legacy_count >= MIN_LEGACY_OVERRIDES
+        ), f"Only {legacy_count} legacy overrides found, expected at least {MIN_LEGACY_OVERRIDES}"
 
     def test_all_categories_represented_in_patterns(self, mapper):
         """Ensure all expected indication categories have patterns."""
         expected_categories = {
-            "oncology", "rare_disease", "infectious_disease",
-            "cardiovascular", "cns", "autoimmune", "metabolic",
-            "respiratory", "ophthalmology", "gi_hepatology", "urology"
+            "oncology",
+            "rare_disease",
+            "infectious_disease",
+            "cardiovascular",
+            "cns",
+            "autoimmune",
+            "metabolic",
+            "respiratory",
+            "ophthalmology",
+            "gi_hepatology",
+            "urology",
         }
 
         actual_categories = set(mapper.condition_patterns.keys())
@@ -136,9 +170,16 @@ class TestCoverageRegression:
         phase_3_benchmarks = pos_engine.benchmarks.get("phase_3", {})
 
         expected_indications = {
-            "oncology", "rare_disease", "infectious_disease", "neurology",
-            "cardiovascular", "immunology", "metabolic", "respiratory",
-            "ophthalmology", "urology"  # urology was added
+            "oncology",
+            "rare_disease",
+            "infectious_disease",
+            "neurology",
+            "cardiovascular",
+            "immunology",
+            "metabolic",
+            "respiratory",
+            "ophthalmology",
+            "urology",  # urology was added
         }
 
         actual_indications = set(phase_3_benchmarks.keys()) - {"_description", "all_indications"}
@@ -151,14 +192,13 @@ class TestCoverageRegression:
 # 2. NO-OVERLAP / NO-CONTRADICTION TESTS
 # ============================================================================
 
+
 class TestNoOverlapContradiction:
     """Tests to ensure mapping rules don't conflict."""
 
     def test_mapper_validation_passes(self, mapper):
         """Mapper should pass internal validation without errors."""
-        assert mapper.is_valid(), (
-            f"Mapper validation failed with errors: {mapper.get_validation_errors()}"
-        )
+        assert mapper.is_valid(), f"Mapper validation failed with errors: {mapper.get_validation_errors()}"
 
     def test_no_duplicate_patterns_across_categories(self, mapper):
         """No pattern should appear in multiple categories."""
@@ -189,21 +229,27 @@ class TestNoOverlapContradiction:
                     v3_alias_resolved = mapper.category_aliases.get(v3_indication, v3_indication)
 
                     if v3_indication != legacy_indication and alias_resolved != v3_alias_resolved:
-                        contradictions.append({
-                            "ticker": ticker,
-                            "v3": v3_indication,
-                            "legacy": legacy_indication
-                        })
+                        contradictions.append({"ticker": ticker, "v3": v3_indication, "legacy": legacy_indication})
 
         assert not contradictions, f"V3/legacy contradictions found: {contradictions}"
 
     def test_category_aliases_are_consistent(self, mapper):
         """Category aliases should point to valid PoS benchmark categories."""
         valid_pos_categories = {
-            "oncology", "rare_disease", "infectious_disease", "neurology",
-            "cardiovascular", "immunology", "metabolic", "respiratory",
-            "dermatology", "ophthalmology", "gastroenterology", "hematology",
-            "urology", "all_indications"
+            "oncology",
+            "rare_disease",
+            "infectious_disease",
+            "neurology",
+            "cardiovascular",
+            "immunology",
+            "metabolic",
+            "respiratory",
+            "dermatology",
+            "ophthalmology",
+            "gastroenterology",
+            "hematology",
+            "urology",
+            "all_indications",
         }
 
         invalid_aliases = {}
@@ -234,22 +280,20 @@ class TestNoOverlapContradiction:
 
         for category, conditions in test_conditions.items():
             # Get indication from mapper
-            mapper_result = mapper.map_ticker(
-                ticker="TEST",
-                conditions=conditions,
-                as_of_date=as_of_date
-            )
+            mapper_result = mapper.map_ticker(ticker="TEST", conditions=conditions, as_of_date=as_of_date)
             mapper_indication = mapper_result.get("indication")
 
             if mapper_indication:
                 # Check if PoS engine recognizes it
                 pos_normalized = pos_engine._normalize_indication(mapper_indication)
                 if pos_normalized == "all_indications" and mapper_indication != "other":
-                    alignment_issues.append({
-                        "mapper_category": category,
-                        "mapper_indication": mapper_indication,
-                        "pos_normalized": pos_normalized
-                    })
+                    alignment_issues.append(
+                        {
+                            "mapper_category": category,
+                            "mapper_indication": mapper_indication,
+                            "pos_normalized": pos_normalized,
+                        }
+                    )
 
         assert not alignment_issues, f"Mapper/PoS alignment issues: {alignment_issues}"
 
@@ -257,6 +301,7 @@ class TestNoOverlapContradiction:
 # ============================================================================
 # 3. PIT SANITY TESTS
 # ============================================================================
+
 
 class TestPITSanity:
     """Tests for Point-in-Time safety of ticker overrides."""
@@ -270,10 +315,7 @@ class TestPITSanity:
         for ticker, override in mapper.ticker_overrides_v3.items():
             missing = required_fields - set(override.keys())
             if missing:
-                missing_fields.append({
-                    "ticker": ticker,
-                    "missing": list(missing)
-                })
+                missing_fields.append({"ticker": ticker, "missing": list(missing)})
 
         assert not missing_fields, f"V3 overrides missing required fields: {missing_fields}"
 
@@ -286,10 +328,7 @@ class TestPITSanity:
             try:
                 date.fromisoformat(effective_from)
             except (ValueError, TypeError):
-                invalid_dates.append({
-                    "ticker": ticker,
-                    "effective_from": effective_from
-                })
+                invalid_dates.append({"ticker": ticker, "effective_from": effective_from})
 
         assert not invalid_dates, f"Invalid effective_from dates: {invalid_dates}"
 
@@ -303,10 +342,7 @@ class TestPITSanity:
             try:
                 eff_date = date.fromisoformat(effective_from)
                 if eff_date > today:
-                    future_overrides.append({
-                        "ticker": ticker,
-                        "effective_from": effective_from
-                    })
+                    future_overrides.append({"ticker": ticker, "effective_from": effective_from})
             except (ValueError, TypeError):
                 pass  # Already caught in other test
 
@@ -330,12 +366,14 @@ class TestPITSanity:
                 is_admissible_after = mapper._is_v3_override_pit_admissible(override, after_date)
 
                 if is_admissible_before or not is_admissible_after:
-                    test_cases.append({
-                        "ticker": ticker,
-                        "effective_from": effective_from,
-                        "admissible_before": is_admissible_before,
-                        "admissible_after": is_admissible_after
-                    })
+                    test_cases.append(
+                        {
+                            "ticker": ticker,
+                            "effective_from": effective_from,
+                            "admissible_before": is_admissible_before,
+                            "admissible_after": is_admissible_after,
+                        }
+                    )
 
             except (ValueError, TypeError):
                 pass  # Skip invalid dates
@@ -346,6 +384,7 @@ class TestPITSanity:
         """V3 override evidence should be NCT ID or documented source."""
         # NCT IDs start with "NCT" followed by 8 digits
         import re
+
         nct_pattern = re.compile(r"^NCT\d{8}$")
 
         suspicious_evidence = []
@@ -358,20 +397,17 @@ class TestPITSanity:
             has_source_type = override.get("source_type") is not None
 
             if not has_nct and not has_source_type:
-                suspicious_evidence.append({
-                    "ticker": ticker,
-                    "evidence": evidence
-                })
+                suspicious_evidence.append({"ticker": ticker, "evidence": evidence})
 
         assert not suspicious_evidence, (
-            f"V3 overrides with suspicious evidence (no NCT ID or source_type): "
-            f"{suspicious_evidence}"
+            f"V3 overrides with suspicious evidence (no NCT ID or source_type): " f"{suspicious_evidence}"
         )
 
 
 # ============================================================================
 # 4. DETERMINISM AND REPRODUCIBILITY TESTS
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests for deterministic behavior."""
@@ -381,26 +417,18 @@ class TestDeterminism:
         tickers = ["MRNA", "VRTX", "UNKNOWN"]
         conditions = {"MRNA": ["covid vaccine"], "VRTX": ["cystic fibrosis"], "UNKNOWN": ["cancer"]}
 
-        results1 = {
-            t: mapper.map_ticker(t, conditions.get(t, []), as_of_date)
-            for t in tickers
-        }
+        results1 = {t: mapper.map_ticker(t, conditions.get(t, []), as_of_date) for t in tickers}
 
         # Clear audit trail and run again
         mapper.clear_audit_trail()
 
-        results2 = {
-            t: mapper.map_ticker(t, conditions.get(t, []), as_of_date)
-            for t in tickers
-        }
+        results2 = {t: mapper.map_ticker(t, conditions.get(t, []), as_of_date) for t in tickers}
 
         for ticker in tickers:
-            assert results1[ticker]["indication"] == results2[ticker]["indication"], (
-                f"Non-deterministic indication for {ticker}"
-            )
-            assert results1[ticker]["source"] == results2[ticker]["source"], (
-                f"Non-deterministic source for {ticker}"
-            )
+            assert (
+                results1[ticker]["indication"] == results2[ticker]["indication"]
+            ), f"Non-deterministic indication for {ticker}"
+            assert results1[ticker]["source"] == results2[ticker]["source"], f"Non-deterministic source for {ticker}"
 
     def test_precedence_is_deterministic(self, mapper, as_of_date):
         """Precedence rules should produce consistent results."""
@@ -408,14 +436,15 @@ class TestDeterminism:
         result = mapper.map_ticker("MRNA", conditions=["vaccine"], as_of_date=as_of_date)
 
         # Should use v3 since as_of_date is after effective_from
-        assert result["source"] == "ticker_override_v3", (
-            f"Expected ticker_override_v3 precedence, got {result['source']}"
-        )
+        assert (
+            result["source"] == "ticker_override_v3"
+        ), f"Expected ticker_override_v3 precedence, got {result['source']}"
 
 
 # ============================================================================
 # 5. CATEGORY ALIAS RESOLUTION TESTS
 # ============================================================================
+
 
 class TestCategoryAliasResolution:
     """Tests for category alias resolution between mapper and PoS engine."""
@@ -423,114 +452,91 @@ class TestCategoryAliasResolution:
     def test_cns_maps_to_neurology(self, mapper, pos_engine, as_of_date):
         """CNS category should map to neurology for PoS engine."""
         # Get a ticker with CNS indication from mapper
-        result = mapper.map_ticker(
-            "BIIB",
-            conditions=["alzheimer disease"],
-            as_of_date=as_of_date
-        )
+        result = mapper.map_ticker("BIIB", conditions=["alzheimer disease"], as_of_date=as_of_date)
 
         indication = result.get("indication")
 
         # PoS engine should recognize it
         pos_normalized = pos_engine._normalize_indication(indication)
-        assert pos_normalized == "neurology", (
-            f"Expected 'neurology', got '{pos_normalized}' for CNS indication"
-        )
+        assert pos_normalized == "neurology", f"Expected 'neurology', got '{pos_normalized}' for CNS indication"
 
     def test_autoimmune_maps_to_immunology(self, mapper, pos_engine, as_of_date):
         """Autoimmune category should map to immunology for PoS engine."""
-        result = mapper.map_ticker(
-            "ARGX",
-            conditions=["autoimmune disease"],
-            as_of_date=as_of_date
-        )
+        result = mapper.map_ticker("ARGX", conditions=["autoimmune disease"], as_of_date=as_of_date)
 
         indication = result.get("indication")
         pos_normalized = pos_engine._normalize_indication(indication)
 
-        assert pos_normalized == "immunology", (
-            f"Expected 'immunology', got '{pos_normalized}' for autoimmune indication"
-        )
+        assert (
+            pos_normalized == "immunology"
+        ), f"Expected 'immunology', got '{pos_normalized}' for autoimmune indication"
 
     def test_gi_hepatology_maps_to_gastroenterology(self, mapper, pos_engine, as_of_date):
         """gi_hepatology category should map to gastroenterology for PoS engine."""
-        result = mapper.map_ticker(
-            "TEST",
-            conditions=["liver disease", "hepatic disorder"],
-            as_of_date=as_of_date
-        )
+        result = mapper.map_ticker("TEST", conditions=["liver disease", "hepatic disorder"], as_of_date=as_of_date)
 
         indication = result.get("indication")
         pos_normalized = pos_engine._normalize_indication(indication)
 
-        assert pos_normalized == "gastroenterology", (
-            f"Expected 'gastroenterology', got '{pos_normalized}' for gi_hepatology indication"
-        )
+        assert (
+            pos_normalized == "gastroenterology"
+        ), f"Expected 'gastroenterology', got '{pos_normalized}' for gi_hepatology indication"
 
     def test_urology_passes_through(self, mapper, pos_engine, as_of_date):
         """Urology category should be recognized by both mapper and PoS engine."""
-        result = mapper.map_ticker(
-            "URGN",
-            conditions=["bladder dysfunction"],
-            as_of_date=as_of_date
-        )
+        result = mapper.map_ticker("URGN", conditions=["bladder dysfunction"], as_of_date=as_of_date)
 
         indication = result.get("indication")
         assert indication == "urology", f"Expected 'urology', got '{indication}'"
 
         pos_normalized = pos_engine._normalize_indication(indication)
-        assert pos_normalized == "urology", (
-            f"Expected 'urology', got '{pos_normalized}' from PoS engine"
-        )
+        assert pos_normalized == "urology", f"Expected 'urology', got '{pos_normalized}' from PoS engine"
 
 
 # ============================================================================
 # 6. INTEGRATION TESTS
 # ============================================================================
 
+
 class TestMapperPosEngineIntegration:
     """Integration tests for mapper and PoS engine working together."""
 
-    def test_full_pipeline_for_sample_tickers(
-        self, mapper, pos_engine, sample_ticker_universe, as_of_date
-    ):
+    def test_full_pipeline_for_sample_tickers(self, mapper, pos_engine, sample_ticker_universe, as_of_date):
         """Test full pipeline from mapper to PoS engine for sample universe."""
         results = []
         failures = []
 
         for ticker in sample_ticker_universe:
             # Step 1: Map indication
-            mapper_result = mapper.map_ticker(
-                ticker=ticker,
-                conditions=[],
-                as_of_date=as_of_date
-            )
+            mapper_result = mapper.map_ticker(ticker=ticker, conditions=[], as_of_date=as_of_date)
             indication = mapper_result.get("indication")
 
             # Step 2: Calculate PoS score
             pos_result = pos_engine.calculate_pos_score(
-                base_stage="phase_2",
-                indication=indication,
-                as_of_date=as_of_date
+                base_stage="phase_2", indication=indication, as_of_date=as_of_date
             )
 
             # Step 3: Verify PoS engine recognized the indication
             if indication and pos_result["indication_normalized"] == "all_indications":
-                failures.append({
-                    "ticker": ticker,
-                    "mapper_indication": indication,
-                    "pos_normalized": pos_result["indication_normalized"]
-                })
+                failures.append(
+                    {
+                        "ticker": ticker,
+                        "mapper_indication": indication,
+                        "pos_normalized": pos_result["indication_normalized"],
+                    }
+                )
 
-            results.append({
-                "ticker": ticker,
-                "indication": indication,
-                "pos_score": pos_result["pos_score"],
-                "loa_provenance": pos_result["loa_provenance"]
-            })
+            results.append(
+                {
+                    "ticker": ticker,
+                    "indication": indication,
+                    "pos_score": pos_result["pos_score"],
+                    "loa_provenance": pos_result["loa_provenance"],
+                }
+            )
 
         # Allow some failures but not too many
         MAX_ALLOWED_FAILURES = 3
-        assert len(failures) <= MAX_ALLOWED_FAILURES, (
-            f"Too many mapper->PoS integration failures ({len(failures)}): {failures}"
-        )
+        assert (
+            len(failures) <= MAX_ALLOWED_FAILURES
+        ), f"Too many mapper->PoS integration failures ({len(failures)}): {failures}"

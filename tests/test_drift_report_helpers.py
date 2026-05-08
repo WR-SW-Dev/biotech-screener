@@ -4,6 +4,7 @@ Covers: _optionality_std, _composite_iqr, _catalyst_missing_pct_eligible,
 _drawdown_coverage_pct, _parse_pipe_separated, _compute_gate_counts,
 _compute_strength_counts.
 """
+
 from __future__ import annotations
 
 import sys
@@ -16,14 +17,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from run_drift_report import (
-    _optionality_std,
-    _composite_iqr,
     _catalyst_missing_pct_eligible,
-    _drawdown_coverage_pct,
-    _drawdown_rel_coverage_pct,
-    _parse_pipe_separated,
+    _composite_iqr,
     _compute_gate_counts,
     _compute_strength_counts,
+    _drawdown_coverage_pct,
+    _drawdown_rel_coverage_pct,
+    _optionality_std,
+    _parse_pipe_separated,
 )
 
 try:
@@ -62,6 +63,7 @@ def _make_rankings(rows: list[dict]) -> pd.DataFrame:
 # _optionality_std
 # =============================================================================
 
+
 class TestOptionalityStd:
     def test_normal_case(self):
         rows = [_dev_row(clinical_optionality_pct_dev=v) for v in [0.3, 0.5, 0.7]]
@@ -83,6 +85,7 @@ class TestOptionalityStd:
 # =============================================================================
 # _composite_iqr
 # =============================================================================
+
 
 class TestCompositeIqr:
     def test_normal_case(self):
@@ -106,6 +109,7 @@ class TestCompositeIqr:
 # =============================================================================
 # _catalyst_missing_pct_eligible
 # =============================================================================
+
 
 class TestCatalystMissingPctEligible:
     def test_all_have_catalyst(self):
@@ -145,6 +149,7 @@ class TestCatalystMissingPctEligible:
 # _drawdown_coverage_pct
 # =============================================================================
 
+
 class TestDrawdownCoveragePct:
     def test_all_covered(self):
         rows = [
@@ -180,6 +185,7 @@ class TestDrawdownCoveragePct:
 # _drawdown_rel_coverage_pct
 # =============================================================================
 
+
 class TestDrawdownRelCoveragePct:
     def test_all_covered(self):
         rows = [
@@ -193,6 +199,7 @@ class TestDrawdownRelCoveragePct:
 # =============================================================================
 # _parse_pipe_separated
 # =============================================================================
+
 
 class TestParsePipeSeparated:
     def test_single_value(self):
@@ -210,6 +217,7 @@ class TestParsePipeSeparated:
 # _compute_gate_counts
 # =============================================================================
 
+
 class TestComputeGateCounts:
     def test_normal_gates(self):
         rows = [
@@ -223,6 +231,7 @@ class TestComputeGateCounts:
 # =============================================================================
 # _compute_strength_counts
 # =============================================================================
+
 
 class TestComputeStrengthCounts:
     def test_tier_distribution(self):

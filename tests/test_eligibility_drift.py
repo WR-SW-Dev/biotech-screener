@@ -6,6 +6,7 @@ Unit tests for eligibility drift scripts:
 
 Run: pytest tests/test_eligibility_drift.py -v
 """
+
 import csv
 import json
 import sys
@@ -18,20 +19,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from scripts.build_eligibility_delta import (
     NormSummary,
-    normalize_summary,
     build_delta,
-    render_delta_md,
     list_snapshot_dates,
+    normalize_summary,
     pick_prior_date,
+    render_delta_md,
 )
 from scripts.eval_eligibility_gate import evaluate_eligibility_gate
-from scripts.triage_eligibility_drift import (
-    find_movers,
-    render_triage_md,
-    _split_reasons,
-    _safe_bool01,
-)
-
+from scripts.triage_eligibility_drift import _safe_bool01, _split_reasons, find_movers, render_triage_md
 
 # =============================================================================
 # normalize_summary
@@ -107,10 +102,18 @@ class TestBuildDelta:
     """Tests for delta computation."""
 
     def test_basic_delta(self):
-        cur = {"n_total": 300, "n_eligible": 250, "n_ineligible": 50,
-               "counts_by_reason": {"deep_drawdown": 30, "adv_fail": 20}}
-        pri = {"n_total": 300, "n_eligible": 260, "n_ineligible": 40,
-               "counts_by_reason": {"deep_drawdown": 25, "adv_fail": 15}}
+        cur = {
+            "n_total": 300,
+            "n_eligible": 250,
+            "n_ineligible": 50,
+            "counts_by_reason": {"deep_drawdown": 30, "adv_fail": 20},
+        }
+        pri = {
+            "n_total": 300,
+            "n_eligible": 260,
+            "n_ineligible": 40,
+            "counts_by_reason": {"deep_drawdown": 25, "adv_fail": 15},
+        }
         out = build_delta(cur, pri, "2026-02-27", "2026-02-26")
         assert out["schema"] == "eligibility_delta.v1"
         assert out["delta"]["eligible"] == -10
@@ -119,34 +122,26 @@ class TestBuildDelta:
         assert out["delta"]["reasons"]["adv_fail"] == 5
 
     def test_new_reason_appears(self):
-        cur = {"n_total": 100, "n_eligible": 90, "n_ineligible": 10,
-               "counts_by_reason": {"sev3": 10}}
-        pri = {"n_total": 100, "n_eligible": 100, "n_ineligible": 0,
-               "counts_by_reason": {}}
+        cur = {"n_total": 100, "n_eligible": 90, "n_ineligible": 10, "counts_by_reason": {"sev3": 10}}
+        pri = {"n_total": 100, "n_eligible": 100, "n_ineligible": 0, "counts_by_reason": {}}
         out = build_delta(cur, pri, "2026-02-27", "2026-02-26")
         assert out["delta"]["reasons"]["sev3"] == 10
 
     def test_reason_disappears(self):
-        cur = {"n_total": 100, "n_eligible": 100, "n_ineligible": 0,
-               "counts_by_reason": {}}
-        pri = {"n_total": 100, "n_eligible": 95, "n_ineligible": 5,
-               "counts_by_reason": {"adv_fail": 5}}
+        cur = {"n_total": 100, "n_eligible": 100, "n_ineligible": 0, "counts_by_reason": {}}
+        pri = {"n_total": 100, "n_eligible": 95, "n_ineligible": 5, "counts_by_reason": {"adv_fail": 5}}
         out = build_delta(cur, pri, "2026-02-27", "2026-02-26")
         assert out["delta"]["reasons"]["adv_fail"] == -5
 
     def test_total_change_noted(self):
-        cur = {"n_total": 310, "n_eligible": 260, "n_ineligible": 50,
-               "counts_by_reason": {}}
-        pri = {"n_total": 300, "n_eligible": 260, "n_ineligible": 40,
-               "counts_by_reason": {}}
+        cur = {"n_total": 310, "n_eligible": 260, "n_ineligible": 50, "counts_by_reason": {}}
+        pri = {"n_total": 300, "n_eligible": 260, "n_ineligible": 40, "counts_by_reason": {}}
         out = build_delta(cur, pri, "2026-02-27", "2026-02-26")
         assert any("total changed" in n for n in out["notes"])
 
     def test_md_rendering(self):
-        cur = {"n_total": 100, "n_eligible": 90, "n_ineligible": 10,
-               "counts_by_reason": {"deep_drawdown": 10}}
-        pri = {"n_total": 100, "n_eligible": 95, "n_ineligible": 5,
-               "counts_by_reason": {"deep_drawdown": 5}}
+        cur = {"n_total": 100, "n_eligible": 90, "n_ineligible": 10, "counts_by_reason": {"deep_drawdown": 10}}
+        pri = {"n_total": 100, "n_eligible": 95, "n_ineligible": 5, "counts_by_reason": {"deep_drawdown": 5}}
         out = build_delta(cur, pri, "2026-02-27", "2026-02-26")
         md = render_delta_md(out)
         assert "Eligibility Delta" in md
@@ -178,32 +173,42 @@ class TestEvaluateGate:
 
     def test_warn_pct_threshold(self):
         verdict, _ = evaluate_eligibility_gate(
-            self._make_delta(pct=0.04), warn_pct=0.03, fail_pct=0.06,
+            self._make_delta(pct=0.04),
+            warn_pct=0.03,
+            fail_pct=0.06,
         )
         assert verdict == "WARN"
 
     def test_fail_pct_threshold(self):
         verdict, _ = evaluate_eligibility_gate(
-            self._make_delta(pct=0.07), warn_pct=0.03, fail_pct=0.06,
+            self._make_delta(pct=0.07),
+            warn_pct=0.03,
+            fail_pct=0.06,
         )
         assert verdict == "FAIL"
 
     def test_warn_abs_threshold(self):
         verdict, _ = evaluate_eligibility_gate(
-            self._make_delta(inel=12), warn_abs=10, fail_abs=25,
+            self._make_delta(inel=12),
+            warn_abs=10,
+            fail_abs=25,
         )
         assert verdict == "WARN"
 
     def test_fail_abs_threshold(self):
         verdict, _ = evaluate_eligibility_gate(
-            self._make_delta(inel=30), warn_abs=10, fail_abs=25,
+            self._make_delta(inel=30),
+            warn_abs=10,
+            fail_abs=25,
         )
         assert verdict == "FAIL"
 
     def test_negative_delta_also_triggers(self):
         """Large drop in ineligible is also suspicious."""
         verdict, _ = evaluate_eligibility_gate(
-            self._make_delta(inel=-15), warn_abs=10, fail_abs=25,
+            self._make_delta(inel=-15),
+            warn_abs=10,
+            fail_abs=25,
         )
         assert verdict == "WARN"
 
@@ -218,7 +223,10 @@ class TestEvaluateGate:
         """Both pct and abs can fire simultaneously."""
         verdict, triggers = evaluate_eligibility_gate(
             self._make_delta(pct=0.08, inel=30),
-            warn_pct=0.03, fail_pct=0.06, warn_abs=10, fail_abs=25,
+            warn_pct=0.03,
+            fail_pct=0.06,
+            warn_abs=10,
+            fail_abs=25,
         )
         assert verdict == "FAIL"
         assert len([t for t in triggers if t.startswith("pct_ineligible_delta")]) == 1
@@ -319,8 +327,14 @@ class TestFindMovers:
         assert len(movers) == 0  # prior_eligible is None, no flip
 
     def test_md_rendering(self):
-        cur = {"AAA": {"eligible": "0", "ineligible_reasons": "deep_drawdown",
-                        "archetype": "drug_developer", "tier_any": "B"}}
+        cur = {
+            "AAA": {
+                "eligible": "0",
+                "ineligible_reasons": "deep_drawdown",
+                "archetype": "drug_developer",
+                "tier_any": "B",
+            }
+        }
         pri = {"AAA": {"eligible": "1", "ineligible_reasons": ""}}
         movers = find_movers(cur, pri)
         md = render_triage_md({"as_of_date": "2026-02-27", "prior_date": "2026-02-26"}, movers)
@@ -359,9 +373,7 @@ class TestSnapshotDiscovery:
             sd.mkdir()
             (sd / "eligibility_summary.json").write_text("{}")
         # Mark 2026-02-26 as degraded
-        (tmp_path / "2026-02-26" / "cache_health.json").write_text(
-            json.dumps({"degraded_run": True})
-        )
+        (tmp_path / "2026-02-26" / "cache_health.json").write_text(json.dumps({"degraded_run": True}))
         prior = pick_prior_date(tmp_path, "2026-02-27", include_degraded=False)
         assert prior == "2026-02-25"
 

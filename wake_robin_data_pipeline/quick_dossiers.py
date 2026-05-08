@@ -1,13 +1,13 @@
 ﻿import json
 from pathlib import Path
 
-Path('dossiers/top5').mkdir(parents=True, exist_ok=True)
-companies = json.load(open('outputs/universe_snapshot_latest.json'))
+Path("dossiers/top5").mkdir(parents=True, exist_ok=True)
+companies = json.load(open("outputs/universe_snapshot_latest.json"))
 
 for i, c in enumerate(companies[:5], 1):
-    cash = c['financials'].get('cash')
+    cash = c["financials"].get("cash")
     cash_str = f"${cash/1e6:.0f}M" if cash else "N/A"
-    
+
     content = f"""# {c['ticker']} - Rank #{i}
 
 Price: ${c['market_data']['price']:.2f}
@@ -25,8 +25,8 @@ Volume: {c['market_data'].get('volume_avg_30d', 0):,} shares/day
 Overall: {c['data_quality']['overall_coverage']:.0f}%
 Financial: {c['data_quality']['financial_coverage']:.0f}%
 """
-    
+
     Path(f'dossiers/top5/{i}_{c["ticker"]}.md').write_text(content)
     print(f'{i}. {c["ticker"]} - {cash_str}')
 
-print('\nDossiers created in dossiers/top5/')
+print("\nDossiers created in dossiers/top5/")

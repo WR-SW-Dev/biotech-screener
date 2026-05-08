@@ -9,11 +9,10 @@ Fail-closed: missing required fields trigger SCHEMA_MISMATCH.
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union, Set
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from governance.hashing import hash_canonical_json_short
 from governance.canonical_json import canonical_dumps
-
+from governance.hashing import hash_canonical_json_short
 
 # Default adapters directory (relative to repo root)
 DEFAULT_ADAPTERS_DIR = "adapters"
@@ -21,6 +20,7 @@ DEFAULT_ADAPTERS_DIR = "adapters"
 
 class MappingLoadError(Exception):
     """Error loading mapping from file."""
+
     pass
 
 
@@ -30,9 +30,7 @@ class SchemaMismatchError(Exception):
     def __init__(self, missing_fields: List[str], source: str):
         self.missing_fields = missing_fields
         self.source = source
-        super().__init__(
-            f"SCHEMA_MISMATCH: Source '{source}' missing required fields: {missing_fields}"
-        )
+        super().__init__(f"SCHEMA_MISMATCH: Source '{source}' missing required fields: {missing_fields}")
 
 
 def get_mapping_path(
@@ -87,7 +85,7 @@ def load_mapping(
         )
 
     try:
-        with open(mapping_path, 'r', encoding='utf-8') as f:
+        with open(mapping_path, "r", encoding="utf-8") as f:
             mapping = json.load(f)
     except json.JSONDecodeError as e:
         raise MappingLoadError(f"Invalid JSON in {mapping_path}: {e}")
@@ -139,7 +137,7 @@ def save_mapping(
     mapping_path = get_mapping_path(source_name, mapping_version, adapters_dir)
     mapping_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(mapping_path, 'w', encoding='utf-8') as f:
+    with open(mapping_path, "w", encoding="utf-8") as f:
         f.write(canonical_dumps(mapping))
 
     mapping_hash = compute_mapping_hash(mapping)

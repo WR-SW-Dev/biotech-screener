@@ -13,29 +13,25 @@ Tests cover:
 
 import json
 import logging
-import pytest
 from unittest.mock import MagicMock, patch
 
-from common.logging_config import (
-    # Run ID management
-    generate_run_id,
-    set_run_id,
-    get_run_id,
-    run_id_context,
-    LogContext,
-    # Filters
-    RunIdFilter,
-    SanitizingFilter,
-    # Formatter
-    StructuredFormatter,
-    # Setup functions
-    setup_logging,
-    setup_structured_logging,
-    # Constants
+import pytest
+
+from common.logging_config import (  # Run ID management; Filters; Formatter; Setup functions; Constants
+    DEFAULT_BACKUP_COUNT,
     DEFAULT_LOG_FORMAT,
     DEFAULT_MAX_BYTES,
-    DEFAULT_BACKUP_COUNT,
     SENSITIVE_PATTERNS,
+    LogContext,
+    RunIdFilter,
+    SanitizingFilter,
+    StructuredFormatter,
+    generate_run_id,
+    get_run_id,
+    run_id_context,
+    set_run_id,
+    setup_logging,
+    setup_structured_logging,
 )
 
 
@@ -158,8 +154,7 @@ class TestRunIdFilter:
         filter_obj = RunIdFilter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test message", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test message", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -172,8 +167,7 @@ class TestRunIdFilter:
         filter_obj = RunIdFilter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test message", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test message", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -183,8 +177,7 @@ class TestRunIdFilter:
         """Filter should always return True (allow record)."""
         filter_obj = RunIdFilter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test message", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test message", args=(), exc_info=None
         )
         assert filter_obj.filter(record) is True
 
@@ -197,8 +190,7 @@ class TestSanitizingFilter:
         filter_obj = SanitizingFilter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="api_key=secret123", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="api_key=secret123", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -210,8 +202,7 @@ class TestSanitizingFilter:
         filter_obj = SanitizingFilter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="password: mypass123", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="password: mypass123", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -223,8 +214,7 @@ class TestSanitizingFilter:
         filter_obj = SanitizingFilter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="token='abc123xyz'", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="token='abc123xyz'", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -237,8 +227,7 @@ class TestSanitizingFilter:
 
         original_msg = "Processing ticker AMGN with score 85.5"
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg=original_msg, args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg=original_msg, args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -249,8 +238,7 @@ class TestSanitizingFilter:
         filter_obj = SanitizingFilter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="API_KEY=SECRET", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="API_KEY=SECRET", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -262,8 +250,7 @@ class TestSanitizingFilter:
         filter_obj = SanitizingFilter(patterns=frozenset({"custom_secret"}))
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="custom_secret=myvalue", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="custom_secret=myvalue", args=(), exc_info=None
         )
 
         filter_obj.filter(record)
@@ -274,8 +261,7 @@ class TestSanitizingFilter:
         """Filter should always return True (allow record)."""
         filter_obj = SanitizingFilter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
         assert filter_obj.filter(record) is True
 
@@ -298,8 +284,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter()
 
         record = logging.LogRecord(
-            name="test.logger", level=logging.INFO, pathname="",
-            lineno=0, msg="test message", args=(), exc_info=None
+            name="test.logger", level=logging.INFO, pathname="", lineno=0, msg="test message", args=(), exc_info=None
         )
         record.run_id = "test-run"
 
@@ -313,8 +298,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter(include_timestamp=True)
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
 
         output = formatter.format(record)
@@ -328,8 +312,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter(include_timestamp=False)
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
 
         output = formatter.format(record)
@@ -342,8 +325,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter(include_level=True)
 
         record = logging.LogRecord(
-            name="test", level=logging.WARNING, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="test", level=logging.WARNING, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
 
         output = formatter.format(record)
@@ -356,8 +338,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter(include_name=True)
 
         record = logging.LogRecord(
-            name="my.logger.name", level=logging.INFO, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="my.logger.name", level=logging.INFO, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
 
         output = formatter.format(record)
@@ -370,8 +351,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter(include_run_id=True)
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
         record.run_id = "struct-test"
 
@@ -385,8 +365,7 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter()
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="Hello %s", args=("World",), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="Hello %s", args=("World",), exc_info=None
         )
 
         output = formatter.format(record)
@@ -396,13 +375,10 @@ class TestStructuredFormatter:
 
     def test_includes_extra_fields(self):
         """Should include extra fields if provided."""
-        formatter = StructuredFormatter(
-            extra_fields={"service": "screener", "version": "1.0"}
-        )
+        formatter = StructuredFormatter(extra_fields={"service": "screener", "version": "1.0"})
 
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="",
-            lineno=0, msg="test", args=(), exc_info=None
+            name="test", level=logging.INFO, pathname="", lineno=0, msg="test", args=(), exc_info=None
         )
 
         output = formatter.format(record)

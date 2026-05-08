@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 
-def diagnose_checkpoints(checkpoint_dir='checkpoints'):
+def diagnose_checkpoints(checkpoint_dir="checkpoints"):
     """Examine checkpoint file structure and extract tickers."""
     checkpoint_path = Path(checkpoint_dir)
 
@@ -30,7 +30,7 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
         return False
 
     # Find checkpoint files
-    checkpoint_files = sorted(checkpoint_path.glob('module_5_*.json'))
+    checkpoint_files = sorted(checkpoint_path.glob("module_5_*.json"))
 
     if not checkpoint_files:
         print(f"ERROR: No checkpoint files found in '{checkpoint_dir}'")
@@ -78,14 +78,14 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
     extraction_method = None
 
     # Method 1: data.ranked_securities
-    if 'data' in data and isinstance(data['data'], dict):
-        securities = data['data'].get('ranked_securities', [])
+    if "data" in data and isinstance(data["data"], dict):
+        securities = data["data"].get("ranked_securities", [])
         if securities:
             print(f"Found 'data.ranked_securities' with {len(securities)} items")
             if securities and isinstance(securities[0], dict):
                 print(f"  Sample keys: {list(securities[0].keys())[:5]}")
             for sec in securities:
-                ticker = sec.get('ticker')
+                ticker = sec.get("ticker")
                 if ticker:
                     all_tickers.add(ticker)
             if all_tickers:
@@ -93,14 +93,14 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
                 print(f"  Found 'ticker' field")
 
     # Method 2: ranked_securities (top level)
-    if not all_tickers and 'ranked_securities' in data:
-        securities = data['ranked_securities']
+    if not all_tickers and "ranked_securities" in data:
+        securities = data["ranked_securities"]
         if securities:
             print(f"Found 'ranked_securities' with {len(securities)} items")
             if securities and isinstance(securities[0], dict):
                 print(f"  Sample keys: {list(securities[0].keys())[:5]}")
             for sec in securities:
-                ticker = sec.get('ticker')
+                ticker = sec.get("ticker")
                 if ticker:
                     all_tickers.add(ticker)
             if all_tickers:
@@ -108,14 +108,14 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
                 print(f"  Found 'ticker' field")
 
     # Method 3: results
-    if not all_tickers and 'results' in data:
-        securities = data['results']
+    if not all_tickers and "results" in data:
+        securities = data["results"]
         if securities:
             print(f"Found 'results' with {len(securities)} items")
             if securities and isinstance(securities[0], dict):
                 print(f"  Sample keys: {list(securities[0].keys())[:5]}")
             for sec in securities:
-                ticker = sec.get('ticker')
+                ticker = sec.get("ticker")
                 if ticker:
                     all_tickers.add(ticker)
             if all_tickers:
@@ -123,14 +123,14 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
                 print(f"  Found 'ticker' field")
 
     # Method 4: securities
-    if not all_tickers and 'securities' in data:
-        securities = data['securities']
+    if not all_tickers and "securities" in data:
+        securities = data["securities"]
         if securities:
             print(f"Found 'securities' with {len(securities)} items")
             if securities and isinstance(securities[0], dict):
                 print(f"  Sample keys: {list(securities[0].keys())[:5]}")
             for sec in securities:
-                ticker = sec.get('ticker')
+                ticker = sec.get("ticker")
                 if ticker:
                     all_tickers.add(ticker)
             if all_tickers:
@@ -158,23 +158,23 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
 
                 # Extract using the method that worked
                 if extraction_method == "data.ranked_securities":
-                    securities = file_data.get('data', {}).get('ranked_securities', [])
+                    securities = file_data.get("data", {}).get("ranked_securities", [])
                 elif extraction_method == "ranked_securities":
-                    securities = file_data.get('ranked_securities', [])
+                    securities = file_data.get("ranked_securities", [])
                 elif extraction_method == "results":
-                    securities = file_data.get('results', [])
+                    securities = file_data.get("results", [])
                 elif extraction_method == "securities":
-                    securities = file_data.get('securities', [])
+                    securities = file_data.get("securities", [])
                 else:
                     securities = []
 
                 for sec in securities:
-                    ticker = sec.get('ticker')
+                    ticker = sec.get("ticker")
                     if ticker:
                         all_tickers_full.add(ticker)
 
                 # Extract date from filename
-                date_str = filepath.stem.replace('module_5_', '')
+                date_str = filepath.stem.replace("module_5_", "")
                 dates.append(date_str)
 
             except Exception:
@@ -223,16 +223,12 @@ def diagnose_checkpoints(checkpoint_dir='checkpoints'):
         return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Diagnose checkpoint file structure for price fetching'
-    )
+    parser = argparse.ArgumentParser(description="Diagnose checkpoint file structure for price fetching")
     parser.add_argument(
-        '--checkpoint-dir',
-        default='checkpoints',
-        help='Directory containing checkpoint files (default: checkpoints)'
+        "--checkpoint-dir", default="checkpoints", help="Directory containing checkpoint files (default: checkpoints)"
     )
 
     args = parser.parse_args()

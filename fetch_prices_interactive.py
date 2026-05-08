@@ -10,22 +10,23 @@ This script will:
 Run with: python optimization/fetch_prices_interactive.py
 """
 
-import json
 import csv
-from pathlib import Path
-from datetime import datetime, timedelta
-from collections import defaultdict
+import json
 import sys
 import time
+from collections import defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
 
-print("="*70)
+print("=" * 70)
 print("BIOTECH SCREENER - HISTORICAL PRICE DATA FETCHER")
-print("="*70)
+print("=" * 70)
 print()
 
 # Check for yfinance
 try:
     import yfinance as yf
+
     print("✓ yfinance is installed")
 except ImportError:
     print("❌ yfinance is not installed")
@@ -36,8 +37,8 @@ except ImportError:
     sys.exit(1)
 
 # Configuration
-CHECKPOINT_DIR = Path('checkpoints')
-OUTPUT_FILE = Path('production_data/price_history.csv')
+CHECKPOINT_DIR = Path("checkpoints")
+OUTPUT_FILE = Path("production_data/price_history.csv")
 
 print()
 print("Configuration:")
@@ -58,7 +59,7 @@ if not CHECKPOINT_DIR.exists():
     print()
     sys.exit(1)
 
-checkpoint_files = list(CHECKPOINT_DIR.glob('module_5_*.json'))
+checkpoint_files = list(CHECKPOINT_DIR.glob("module_5_*.json"))
 
 if not checkpoint_files:
     print(f"❌ ERROR: No checkpoint files found in '{CHECKPOINT_DIR}'")
@@ -76,8 +77,8 @@ print(f"✓ Found {len(checkpoint_files)} checkpoint files")
 checkpoint_dates = []
 for filepath in checkpoint_files:
     try:
-        date_str = filepath.stem.replace('module_5_', '')
-        date = datetime.strptime(date_str, '%Y-%m-%d')
+        date_str = filepath.stem.replace("module_5_", "")
+        date = datetime.strptime(date_str, "%Y-%m-%d")
         checkpoint_dates.append(date)
     except ValueError:
         continue
@@ -104,19 +105,19 @@ for i, filepath in enumerate(checkpoint_files, 1):
     try:
         with open(filepath) as f:
             data = json.load(f)
-        
+
         # Try different possible structures
-        securities = data.get('ranked_securities', data.get('results', []))
-        
+        securities = data.get("ranked_securities", data.get("results", []))
+
         file_tickers = set()
         for security in securities:
-            ticker = security.get('ticker')
+            ticker = security.get("ticker")
             if ticker:
                 all_tickers.add(ticker)
                 file_tickers.add(ticker)
-        
+
         print(f"  [{i}/{len(checkpoint_files)}] {filepath.name}: {len(file_tickers)} tickers")
-        
+
     except Exception as e:
         print(f"  [{i}/{len(checkpoint_files)}] {filepath.name}: ❌ Error: {e}")
         continue
@@ -154,7 +155,7 @@ print()
 
 response = input("Proceed with download? (yes/no): ").strip().lower()
 
-if response not in ['yes', 'y']:
+if response not in ["yes", "y"]:
     print()
     print("Download cancelled.")
     sys.exit(0)
@@ -180,19 +181,19 @@ for i, ticker in enumerate(all_tickers, 1):
         eta = f"{int(remaining // 60)}m {int(remaining % 60)}s"
     else:
         eta = "calculating..."
-    
-    print(f"[{i}/{len(all_tickers)}] {ticker:8s} (ETA: {eta})...", end='', flush=True)
-    
+
+    print(f"[{i}/{len(all_tickers)}] {ticker:8s} (ETA: {eta})...", end="", flush=True)
+
     try:
         # Download with auto_adjust=True so Close is split+dividend adjusted.
         # This matches morningstar_data_provider.py and ensures price_history.csv
         # stores split-adjusted prices consistently.
         df = yf.download(
             ticker,
-            start=fetch_start.strftime('%Y-%m-%d'),
-            end=fetch_end.strftime('%Y-%m-%d'),
+            start=fetch_start.strftime("%Y-%m-%d"),
+            end=fetch_end.strftime("%Y-%m-%d"),
             progress=False,
-            auto_adjust=True
+            auto_adjust=True,
         )
 
         if df.empty:
@@ -203,29 +204,25 @@ for i, ticker in enumerate(all_tickers, 1):
         # With auto_adjust=True, Close is already split-adjusted.
         for date, row in df.iterrows():
             try:
-                if 'Close' in df.columns:
-                    close_price = float(row['Close'])
-                elif ('Close', ticker) in df.columns:
-                    close_price = float(row[('Close', ticker)])
+                if "Close" in df.columns:
+                    close_price = float(row["Close"])
+                elif ("Close", ticker) in df.columns:
+                    close_price = float(row[("Close", ticker)])
                 else:
                     close_price = float(row.iloc[-1])
-                
-                price_data.append({
-                    'date': date.strftime('%Y-%m-%d'),
-                    'ticker': ticker,
-                    'close': close_price
-                })
+
+                price_data.append({"date": date.strftime("%Y-%m-%d"), "ticker": ticker, "close": close_price})
             except (KeyError, ValueError, IndexError):
                 continue
-        
+
         success_count += 1
         print(f" ✓ {len(df)} days")
-        
+
     except Exception as e:
         print(f" ❌ Error: {str(e)[:30]}")
         failed_tickers.append(ticker)
         continue
-    
+
     # Small delay to avoid rate limiting
     time.sleep(0.5)
 
@@ -262,8 +259,8 @@ if not price_data:
 OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # Write CSV
-with open(OUTPUT_FILE, 'w', newline='') as f:
-    fieldnames = ['date', 'ticker', 'close']
+with open(OUTPUT_FILE, "w", newline="") as f:
+    fieldnames = ["date", "ticker", "close"]
     writer = csv.DictWriter(f, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(price_data)
@@ -273,8 +270,8 @@ print(f"  {OUTPUT_FILE.absolute()}")
 print()
 
 # Statistics
-tickers_with_data = len(set(p['ticker'] for p in price_data))
-dates_covered = len(set(p['date'] for p in price_data))
+tickers_with_data = len(set(p["ticker"] for p in price_data))
+dates_covered = len(set(p["date"] for p in price_data))
 
 print("Price data statistics:")
 print(f"  Tickers with data: {tickers_with_data}")
@@ -283,9 +280,9 @@ print(f"  Date range: {min(p['date'] for p in price_data)} to {max(p['date'] for
 print()
 
 # Next steps
-print("="*70)
+print("=" * 70)
 print("SUCCESS! Price data is ready.")
-print("="*70)
+print("=" * 70)
 print()
 print("Next steps:")
 print()

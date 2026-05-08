@@ -2,6 +2,7 @@
 
 All tests are offline; network calls are patched.
 """
+
 from __future__ import annotations
 
 import json
@@ -14,11 +15,11 @@ from unittest.mock import patch
 import pytest
 
 from ctgov_adapter import (
-    CTGovAdapter,
     AdapterConfig,
     CanonicalTrialRecord,
-    CTGovStatus,
     CompletionType,
+    CTGovAdapter,
+    CTGovStatus,
     FutureDataError,
     MissingRequiredFieldError,
     process_trial_records_batch,
@@ -30,6 +31,7 @@ AS_OF = date(2026, 2, 28)
 # ---------------------------------------------------------------------------
 # Minimal raw record fixture (flattened schema, as stored in trial_records.json)
 # ---------------------------------------------------------------------------
+
 
 def _make_raw_record(**overrides) -> dict:
     """Build a minimal raw CTGov trial record with optional overrides."""
@@ -219,10 +221,7 @@ class TestCtgovDedupSameNct:
             _make_raw_record(nct_id="NCT11111111", last_update_posted="2026-06-01"),  # future
         ]
         cutoff = AS_OF.isoformat()
-        filtered = [
-            r for r in records
-            if (r.get("last_update_posted") or "")[:10] <= cutoff
-        ]
+        filtered = [r for r in records if (r.get("last_update_posted") or "")[:10] <= cutoff]
         # Both pre-cutoff versions survive; the future one is dropped
         assert len(filtered) == 2
 
@@ -292,10 +291,7 @@ class TestCtgovCacheWriteAtomic:
         # Create a minimal trial_records.json
         source_dir = tmp_path / "data"
         source_dir.mkdir()
-        records = [
-            _make_raw_record(nct_id=f"NCT0000000{i}", last_update_posted="2025-06-01")
-            for i in range(5)
-        ]
+        records = [_make_raw_record(nct_id=f"NCT0000000{i}", last_update_posted="2025-06-01") for i in range(5)]
         (source_dir / "trial_records.json").write_text(json.dumps(records))
 
         cache_dir = tmp_path / "cache" / "ctgov"
@@ -343,9 +339,13 @@ class TestCtgovCacheWriteAtomic:
 
         source_dir = tmp_path / "data"
         source_dir.mkdir()
-        (source_dir / "trial_records.json").write_text(json.dumps([
-            _make_raw_record(nct_id="NCT00000099", last_update_posted="2025-01-01"),
-        ]))
+        (source_dir / "trial_records.json").write_text(
+            json.dumps(
+                [
+                    _make_raw_record(nct_id="NCT00000099", last_update_posted="2025-01-01"),
+                ]
+            )
+        )
 
         cache_dir = tmp_path / "cache" / "ctgov"
         cache_dir.mkdir(parents=True)

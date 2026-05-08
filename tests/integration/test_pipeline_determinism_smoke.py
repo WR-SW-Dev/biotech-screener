@@ -19,7 +19,6 @@ pytestmark = pytest.mark.slow
 from catalyst_diagnostics import PITViolationError
 from run_screen import run_screening_pipeline
 
-
 # ---------------------------------------------------------------------------
 # Common pipeline kwargs (disable optional features not present in fixtures)
 # ---------------------------------------------------------------------------
@@ -43,6 +42,7 @@ def _serialize(result: dict) -> str:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _patch_trial_records(data_dir: Path) -> None:
     """Patch trial records so they pass pipeline schema/adapter validation.
 
@@ -62,6 +62,7 @@ def _patch_trial_records(data_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def patched_data_dir(sample_data_dir: Path) -> Path:
@@ -103,6 +104,7 @@ def pit_data_dir(sample_data_dir: Path) -> Path:
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestPipelineDeterminism:
     """run_screening_pipeline must be deterministic for identical inputs."""
 
@@ -121,9 +123,7 @@ class TestPipelineDeterminism:
         hash_a = hashlib.sha256(_serialize(result_a).encode()).hexdigest()
         hash_b = hashlib.sha256(_serialize(result_b).encode()).hexdigest()
 
-        assert hash_a == hash_b, (
-            f"Non-deterministic output.\n  run 1: {hash_a}\n  run 2: {hash_b}"
-        )
+        assert hash_a == hash_b, f"Non-deterministic output.\n  run 1: {hash_a}\n  run 2: {hash_b}"
 
 
 class TestPITSafety:
@@ -144,6 +144,6 @@ class TestPITSafety:
 
         assert result is not None
         catalyst_mode = result["run_metadata"]["catalyst_mode"]
-        assert catalyst_mode == "corporate_only_due_to_pit_violation", (
-            f"Expected degraded catalyst_mode, got: {catalyst_mode!r}"
-        )
+        assert (
+            catalyst_mode == "corporate_only_due_to_pit_violation"
+        ), f"Expected degraded catalyst_mode, got: {catalyst_mode!r}"

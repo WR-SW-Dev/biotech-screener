@@ -21,13 +21,13 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from dataclasses import dataclass, field
-from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
 import logging
 import math
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 class RegimeState(str, Enum):
     """Market regime for momentum weight adaptation."""
+
     BULL = "BULL"
     BEAR = "BEAR"
     VOLATILITY = "VOLATILITY"
@@ -44,9 +45,10 @@ class RegimeState(str, Enum):
 
 class MomentumSignalQuality(str, Enum):
     """Quality classification of momentum signal."""
-    STRONG = "STRONG"       # All windows agree, high confidence
-    MODERATE = "MODERATE"   # Most windows agree
-    WEAK = "WEAK"           # Mixed signals
+
+    STRONG = "STRONG"  # All windows agree, high confidence
+    MODERATE = "MODERATE"  # Most windows agree
+    WEAK = "WEAK"  # Mixed signals
     CONFLICTING = "CONFLICTING"  # Windows disagree
     INSUFFICIENT = "INSUFFICIENT"  # Not enough data
 
@@ -54,6 +56,7 @@ class MomentumSignalQuality(str, Enum):
 @dataclass(frozen=True)
 class MomentumWindow:
     """Configuration for a single momentum lookback window."""
+
     name: str
     lookback_days: int
     min_observations: int  # Minimum data points required
@@ -63,22 +66,13 @@ class MomentumWindow:
 # Default momentum windows
 DEFAULT_MOMENTUM_WINDOWS: Tuple[MomentumWindow, ...] = (
     MomentumWindow(
-        name="short",
-        lookback_days=20,
-        min_observations=15,
-        description="Short-term momentum (20 trading days)"
+        name="short", lookback_days=20, min_observations=15, description="Short-term momentum (20 trading days)"
     ),
     MomentumWindow(
-        name="medium",
-        lookback_days=60,
-        min_observations=45,
-        description="Medium-term momentum (60 trading days)"
+        name="medium", lookback_days=60, min_observations=45, description="Medium-term momentum (60 trading days)"
     ),
     MomentumWindow(
-        name="long",
-        lookback_days=120,
-        min_observations=90,
-        description="Long-term momentum (120 trading days)"
+        name="long", lookback_days=120, min_observations=90, description="Long-term momentum (120 trading days)"
     ),
 )
 
@@ -86,22 +80,22 @@ DEFAULT_MOMENTUM_WINDOWS: Tuple[MomentumWindow, ...] = (
 # Regime-based window weights
 REGIME_WINDOW_WEIGHTS: Dict[RegimeState, Dict[str, Decimal]] = {
     RegimeState.BULL: {
-        "short": Decimal("0.40"),   # Favor recent momentum
+        "short": Decimal("0.40"),  # Favor recent momentum
         "medium": Decimal("0.40"),
         "long": Decimal("0.20"),
     },
     RegimeState.BEAR: {
-        "short": Decimal("0.20"),   # Favor trend/long-term
+        "short": Decimal("0.20"),  # Favor trend/long-term
         "medium": Decimal("0.30"),
         "long": Decimal("0.50"),
     },
     RegimeState.VOLATILITY: {
-        "short": Decimal("0.25"),   # Reduce short-term noise
+        "short": Decimal("0.25"),  # Reduce short-term noise
         "medium": Decimal("0.35"),
         "long": Decimal("0.40"),
     },
     RegimeState.NEUTRAL: {
-        "short": Decimal("0.33"),   # Equal weighting
+        "short": Decimal("0.33"),  # Equal weighting
         "medium": Decimal("0.34"),
         "long": Decimal("0.33"),
     },
@@ -111,6 +105,7 @@ REGIME_WINDOW_WEIGHTS: Dict[RegimeState, Dict[str, Decimal]] = {
 @dataclass
 class WindowMomentumResult:
     """Momentum result for a single window."""
+
     window_name: str
     lookback_days: int
     return_pct: Optional[Decimal]  # Raw return over period
@@ -138,6 +133,7 @@ class WindowMomentumResult:
 @dataclass
 class MultiWindowMomentumResult:
     """Complete multi-window momentum analysis result."""
+
     ticker: str
     as_of_date: str
     regime: RegimeState
@@ -276,7 +272,7 @@ class MultiWindowMomentumEngine:
             )
 
         # Get prices for window
-        window_prices = price_series[-window.lookback_days:]
+        window_prices = price_series[-window.lookback_days :]
         if len(window_prices) < window.min_observations:
             window_prices = price_series
 
@@ -311,8 +307,8 @@ class MultiWindowMomentumEngine:
         # Compute daily returns for volatility
         daily_returns = []
         for i in range(1, len(window_prices)):
-            if window_prices[i-1] > Decimal("0"):
-                daily_ret = (window_prices[i] - window_prices[i-1]) / window_prices[i-1]
+            if window_prices[i - 1] > Decimal("0"):
+                daily_ret = (window_prices[i] - window_prices[i - 1]) / window_prices[i - 1]
                 daily_returns.append(float(daily_ret))
 
         # Volatility (annualized)

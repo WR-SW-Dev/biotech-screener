@@ -11,15 +11,12 @@ Covers:
 - Score application helper
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
-from accuracy_enhancements_adapter import (
-    AccuracyEnhancementsAdapter,
-    AccuracyAdjustment,
-    apply_accuracy_to_scores,
-)
+import pytest
+
+from accuracy_enhancements_adapter import AccuracyAdjustment, AccuracyEnhancementsAdapter, apply_accuracy_to_scores
 
 
 class TestAccuracyEnhancementsAdapterInit:
@@ -375,7 +372,7 @@ class TestApplyAccuracyToScores:
         result = apply_accuracy_to_scores(
             base_clinical=Decimal("90"),  # 90 * 1.30 + 20 = 137 -> 100
             base_financial=Decimal("10"),  # 10 * 0.70 = 7
-            base_catalyst=Decimal("85"),   # 85 * 1.30 = 110.5 -> 100
+            base_catalyst=Decimal("85"),  # 85 * 1.30 = 110.5 -> 100
             adjustment=adjustment,
         )
 

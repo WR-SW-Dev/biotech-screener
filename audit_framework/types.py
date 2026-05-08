@@ -16,10 +16,10 @@ class AuditSeverity(Enum):
     """Severity levels for audit findings."""
 
     CRITICAL = "critical"  # Blocks institutional deployment
-    HIGH = "high"          # Requires remediation before production
-    MEDIUM = "medium"      # Should be addressed within sprint
-    LOW = "low"            # Improvement opportunity
-    INFO = "info"          # Informational finding
+    HIGH = "high"  # Requires remediation before production
+    MEDIUM = "medium"  # Should be addressed within sprint
+    LOW = "low"  # Improvement opportunity
+    INFO = "info"  # Informational finding
 
 
 class AuditTier(Enum):
@@ -128,8 +128,8 @@ class PassCriteria:
 
     # Tier 2: Data Integrity
     provenance_coverage_min: Decimal = Decimal("0.95")  # 95%
-    data_quality_score_min: Decimal = Decimal("0.90")   # 90%
-    pit_compliance_min: Decimal = Decimal("1.0")        # 100%
+    data_quality_score_min: Decimal = Decimal("0.90")  # 90%
+    pit_compliance_min: Decimal = Decimal("1.0")  # 100%
 
     # Tier 3: Performance
     runtime_320_tickers_max_seconds: int = 300  # 5 minutes
@@ -277,17 +277,19 @@ class AuditResult:
     ) -> None:
         """Add a finding to this result."""
         finding_id = f"{self.check_name}_{len(self.findings) + 1:03d}"
-        self.findings.append(ValidationFinding(
-            finding_id=finding_id,
-            severity=severity,
-            category=category,
-            title=title,
-            description=description,
-            location=location,
-            evidence=evidence,
-            remediation=remediation,
-            compliance_impact=compliance_impact,
-        ))
+        self.findings.append(
+            ValidationFinding(
+                finding_id=finding_id,
+                severity=severity,
+                category=category,
+                title=title,
+                description=description,
+                location=location,
+                evidence=evidence,
+                remediation=remediation,
+                compliance_impact=compliance_impact,
+            )
+        )
 
 
 @dataclass
@@ -377,48 +379,56 @@ class AuditReport:
 
         for tr in self.tier_results:
             status = "✅ PASSED" if tr.passed else "❌ FAILED"
-            lines.extend([
-                f"### {tr.tier.value.replace('_', ' ').title()} - Grade: {tr.grade.value} {status}",
-                f"",
-                tr.summary,
-                f"",
-                f"- Critical Findings: {tr.critical_count}",
-                f"- High Findings: {tr.high_count}",
-                f"",
-            ])
+            lines.extend(
+                [
+                    f"### {tr.tier.value.replace('_', ' ').title()} - Grade: {tr.grade.value} {status}",
+                    f"",
+                    tr.summary,
+                    f"",
+                    f"- Critical Findings: {tr.critical_count}",
+                    f"- High Findings: {tr.high_count}",
+                    f"",
+                ]
+            )
 
         if self.recommendations:
-            lines.extend([
-                f"## Recommendations",
-                f"",
-            ])
+            lines.extend(
+                [
+                    f"## Recommendations",
+                    f"",
+                ]
+            )
             for i, rec in enumerate(self.recommendations, 1):
                 lines.append(f"{i}. {rec}")
             lines.append("")
 
         if self.critical_findings:
-            lines.extend([
-                f"## Critical Findings Requiring Immediate Attention",
-                f"",
-            ])
+            lines.extend(
+                [
+                    f"## Critical Findings Requiring Immediate Attention",
+                    f"",
+                ]
+            )
             for f in self.critical_findings:
-                lines.extend([
-                    f"### {f.finding_id}: {f.title}",
-                    f"",
-                    f"**Location:** {f.location}",
-                    f"",
-                    f"{f.description}",
-                    f"",
-                    f"**Evidence:**",
-                    f"```",
-                    f.evidence,
-                    f"```",
-                    f"",
-                    f"**Remediation:** {f.remediation}",
-                    f"",
-                    f"**Compliance Impact:** {f.compliance_impact}",
-                    f"",
-                ])
+                lines.extend(
+                    [
+                        f"### {f.finding_id}: {f.title}",
+                        f"",
+                        f"**Location:** {f.location}",
+                        f"",
+                        f"{f.description}",
+                        f"",
+                        f"**Evidence:**",
+                        f"```",
+                        f.evidence,
+                        f"```",
+                        f"",
+                        f"**Remediation:** {f.remediation}",
+                        f"",
+                        f"**Compliance Impact:** {f.compliance_impact}",
+                        f"",
+                    ]
+                )
 
         return "\n".join(lines)
 

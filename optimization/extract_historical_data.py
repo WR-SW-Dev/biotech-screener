@@ -5,13 +5,13 @@ Scans checkpoint files, extracts component scores, and calculates forward return
 from price data to create training dataset for weight optimization.
 """
 
-import json
 import csv
-from pathlib import Path
+import json
+import sys
+from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
-from collections import defaultdict
-import sys
+from pathlib import Path
 
 try:
     import numpy as np
@@ -23,7 +23,7 @@ except ImportError:
 class HistoricalDataExtractor:
     """Extract historical screening data for optimization."""
 
-    def __init__(self, checkpoint_dir='checkpoints', price_file=None):
+    def __init__(self, checkpoint_dir="checkpoints", price_file=None):
         self.checkpoint_dir = Path(checkpoint_dir)
         self.price_file = price_file
         self.prices = None
@@ -40,11 +40,11 @@ class HistoricalDataExtractor:
         checkpoints = []
 
         # Look for module_5_*.json files
-        for filepath in self.checkpoint_dir.glob('module_5_*.json'):
+        for filepath in self.checkpoint_dir.glob("module_5_*.json"):
             # Extract date from filename: module_5_2024-01-15.json
             try:
-                date_str = filepath.stem.replace('module_5_', '')
-                date = datetime.strptime(date_str, '%Y-%m-%d')
+                date_str = filepath.stem.replace("module_5_", "")
+                date = datetime.strptime(date_str, "%Y-%m-%d")
                 checkpoints.append((date, filepath))
             except ValueError:
                 print(f"Warning: Could not parse date from {filepath.name}, skipping")
@@ -72,25 +72,25 @@ class HistoricalDataExtractor:
         securities = None
 
         # Format 1: Nested under 'data' key (module_5 checkpoints)
-        if 'data' in checkpoint_data:
-            data = checkpoint_data['data']
-            if 'ranked_securities' in data:
-                securities = data['ranked_securities']
+        if "data" in checkpoint_data:
+            data = checkpoint_data["data"]
+            if "ranked_securities" in data:
+                securities = data["ranked_securities"]
 
         # Format 2: Direct ranked_securities at top level
-        if securities is None and 'ranked_securities' in checkpoint_data:
-            securities = checkpoint_data['ranked_securities']
+        if securities is None and "ranked_securities" in checkpoint_data:
+            securities = checkpoint_data["ranked_securities"]
 
         # Format 3: Direct results at top level
-        if securities is None and 'results' in checkpoint_data:
-            securities = checkpoint_data['results']
+        if securities is None and "results" in checkpoint_data:
+            securities = checkpoint_data["results"]
 
         if securities is None:
             print(f"Warning: Unknown checkpoint structure for {date}, skipping")
             return scores
 
         for security in securities:
-            ticker = security.get('ticker')
+            ticker = security.get("ticker")
             if not ticker:
                 continue
 
@@ -98,63 +98,63 @@ class HistoricalDataExtractor:
             score_data = {}
 
             # Method 1: score_breakdown.components array (v2.0 format)
-            if 'score_breakdown' in security:
-                breakdown = security['score_breakdown']
-                components = breakdown.get('components', [])
+            if "score_breakdown" in security:
+                breakdown = security["score_breakdown"]
+                components = breakdown.get("components", [])
 
                 # Build dict from components array
                 comp_dict = {}
                 for comp in components:
-                    name = comp.get('name')
+                    name = comp.get("name")
                     # Use normalized score (0-100 scale)
-                    normalized = comp.get('normalized', '50.0')
+                    normalized = comp.get("normalized", "50.0")
                     try:
                         comp_dict[name] = float(normalized)
                     except (ValueError, TypeError):
                         comp_dict[name] = 50.0
 
                 score_data = {
-                    'clinical': comp_dict.get('clinical', 50.0),
-                    'financial': comp_dict.get('financial', 50.0),
-                    'catalyst': comp_dict.get('catalyst', 50.0),
-                    'pos': comp_dict.get('pos', 50.0),
-                    'momentum': comp_dict.get('momentum', 50.0),
-                    'valuation': comp_dict.get('valuation', 50.0)
+                    "clinical": comp_dict.get("clinical", 50.0),
+                    "financial": comp_dict.get("financial", 50.0),
+                    "catalyst": comp_dict.get("catalyst", 50.0),
+                    "pos": comp_dict.get("pos", 50.0),
+                    "momentum": comp_dict.get("momentum", 50.0),
+                    "valuation": comp_dict.get("valuation", 50.0),
                 }
 
             # Method 2: Direct score_components field
-            elif 'score_components' in security:
-                components = security['score_components']
+            elif "score_components" in security:
+                components = security["score_components"]
                 score_data = {
-                    'clinical': float(components.get('clinical', 50.0)),
-                    'financial': float(components.get('financial', 50.0)),
-                    'catalyst': float(components.get('catalyst', 50.0)),
-                    'pos': float(components.get('pos', 50.0)),
-                    'momentum': float(components.get('momentum', 50.0)),
-                    'valuation': float(components.get('valuation', 50.0))
+                    "clinical": float(components.get("clinical", 50.0)),
+                    "financial": float(components.get("financial", 50.0)),
+                    "catalyst": float(components.get("catalyst", 50.0)),
+                    "pos": float(components.get("pos", 50.0)),
+                    "momentum": float(components.get("momentum", 50.0)),
+                    "valuation": float(components.get("valuation", 50.0)),
                 }
 
             # Method 3: Individual score fields
-            elif 'clinical_score' in security:
+            elif "clinical_score" in security:
                 score_data = {
-                    'clinical': float(security.get('clinical_score', 50.0)),
-                    'financial': float(security.get('financial_score', 50.0)),
-                    'catalyst': float(security.get('catalyst_score', 50.0)),
-                    'pos': float(security.get('pos_score', 50.0)),
-                    'momentum': float(security.get('momentum_score', 50.0)),
-                    'valuation': float(security.get('valuation_score', 50.0))
+                    "clinical": float(security.get("clinical_score", 50.0)),
+                    "financial": float(security.get("financial_score", 50.0)),
+                    "catalyst": float(security.get("catalyst_score", 50.0)),
+                    "pos": float(security.get("pos_score", 50.0)),
+                    "momentum": float(security.get("momentum_score", 50.0)),
+                    "valuation": float(security.get("valuation_score", 50.0)),
                 }
 
             # Method 4: From module scores
-            elif 'module_2_score' in security:
+            elif "module_2_score" in security:
                 # Module 2 = financial, Module 4 = clinical
                 score_data = {
-                    'clinical': float(security.get('module_4_score', 50.0)),
-                    'financial': float(security.get('module_2_score', 50.0)),
-                    'catalyst': float(security.get('module_3_score', 50.0)),
-                    'pos': float(security.get('pos_score', 50.0)),
-                    'momentum': float(security.get('momentum_score', 50.0)),
-                    'valuation': float(security.get('valuation_score', 50.0))
+                    "clinical": float(security.get("module_4_score", 50.0)),
+                    "financial": float(security.get("module_2_score", 50.0)),
+                    "catalyst": float(security.get("module_3_score", 50.0)),
+                    "pos": float(security.get("pos_score", 50.0)),
+                    "momentum": float(security.get("momentum_score", 50.0)),
+                    "valuation": float(security.get("valuation_score", 50.0)),
                 }
 
             if score_data:
@@ -182,23 +182,23 @@ class HistoricalDataExtractor:
             # Load from specified file
             price_path = Path(self.price_file)
 
-            if price_path.suffix == '.csv':
+            if price_path.suffix == ".csv":
                 prices = self._load_csv_prices(price_path)
-            elif price_path.suffix == '.json':
+            elif price_path.suffix == ".json":
                 prices = self._load_json_prices(price_path)
         else:
             # Try to find price data in common locations
             search_paths = [
-                'production_data/price_history.csv',
-                'production_data/yahoo_cache.json',
-                'data/prices.csv',
-                'backtest/price_data.csv'
+                "production_data/price_history.csv",
+                "production_data/yahoo_cache.json",
+                "data/prices.csv",
+                "backtest/price_data.csv",
             ]
 
             for path in search_paths:
                 if Path(path).exists():
                     print(f"Found price data: {path}")
-                    if path.endswith('.csv'):
+                    if path.endswith(".csv"):
                         prices = self._load_csv_prices(Path(path))
                     else:
                         prices = self._load_json_prices(Path(path))
@@ -219,13 +219,13 @@ class HistoricalDataExtractor:
             with open(filepath) as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    ticker = row.get('ticker') or row.get('symbol')
-                    date_str = row.get('date')
-                    close = row.get('close') or row.get('adj_close')
+                    ticker = row.get("ticker") or row.get("symbol")
+                    date_str = row.get("date")
+                    close = row.get("close") or row.get("adj_close")
 
                     if ticker and date_str and close:
                         try:
-                            date = datetime.strptime(date_str, '%Y-%m-%d')
+                            date = datetime.strptime(date_str, "%Y-%m-%d")
                             prices[ticker][date] = float(close)
                         except (ValueError, TypeError):
                             continue
@@ -250,18 +250,18 @@ class HistoricalDataExtractor:
                     # Format 1: {ticker: {date: price}}
                     for date_str, price in ticker_data.items():
                         try:
-                            date = datetime.strptime(date_str, '%Y-%m-%d')
+                            date = datetime.strptime(date_str, "%Y-%m-%d")
                             prices[ticker][date] = float(price)
                         except (ValueError, TypeError):
                             continue
                 elif isinstance(ticker_data, list):
                     # Format 2: {ticker: [{date: ..., close: ...}]}
                     for entry in ticker_data:
-                        date_str = entry.get('date')
-                        close = entry.get('close')
+                        date_str = entry.get("date")
+                        close = entry.get("close")
                         if date_str and close:
                             try:
-                                date = datetime.strptime(date_str, '%Y-%m-%d')
+                                date = datetime.strptime(date_str, "%Y-%m-%d")
                                 prices[ticker][date] = float(close)
                             except (ValueError, TypeError):
                                 continue
@@ -325,9 +325,9 @@ class HistoricalDataExtractor:
 
         Returns: List of dicts with training data
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("EXTRACTING HISTORICAL TRAINING DATA")
-        print("="*60)
+        print("=" * 60)
 
         # Load checkpoints
         checkpoints = self.load_checkpoint_files()
@@ -343,10 +343,10 @@ class HistoricalDataExtractor:
         # Extract data
         training_data = []
         stats = {
-            'checkpoints_processed': 0,
-            'tickers_with_scores': 0,
-            'forward_returns_calculated': 0,
-            'missing_prices': 0
+            "checkpoints_processed": 0,
+            "tickers_with_scores": 0,
+            "forward_returns_calculated": 0,
+            "missing_prices": 0,
         }
 
         for date, filepath in checkpoints:
@@ -363,11 +363,11 @@ class HistoricalDataExtractor:
             if not scores:
                 continue
 
-            stats['checkpoints_processed'] += 1
+            stats["checkpoints_processed"] += 1
 
             # Process each ticker
             for ticker, score_data in scores.items():
-                stats['tickers_with_scores'] += 1
+                stats["tickers_with_scores"] += 1
 
                 # Calculate forward return (if not skipping)
                 fwd_return = None
@@ -375,24 +375,24 @@ class HistoricalDataExtractor:
                     fwd_return = self.calculate_forward_return(ticker, date, horizon_days)
 
                     if fwd_return is None:
-                        stats['missing_prices'] += 1
+                        stats["missing_prices"] += 1
                         continue  # Skip observations without returns (when returns required)
 
-                    stats['forward_returns_calculated'] += 1
+                    stats["forward_returns_calculated"] += 1
 
                 # Add to training data
                 observation = {
-                    'date': date.strftime('%Y-%m-%d'),
-                    'ticker': ticker,
-                    'clinical': score_data['clinical'],
-                    'financial': score_data['financial'],
-                    'catalyst': score_data['catalyst'],
-                    'pos': score_data['pos'],
-                    'momentum': score_data['momentum'],
-                    'valuation': score_data['valuation'],
+                    "date": date.strftime("%Y-%m-%d"),
+                    "ticker": ticker,
+                    "clinical": score_data["clinical"],
+                    "financial": score_data["financial"],
+                    "catalyst": score_data["catalyst"],
+                    "pos": score_data["pos"],
+                    "momentum": score_data["momentum"],
+                    "valuation": score_data["valuation"],
                 }
                 if not skip_returns:
-                    observation['fwd_return'] = fwd_return
+                    observation["fwd_return"] = fwd_return
 
                 training_data.append(observation)
 
@@ -414,7 +414,9 @@ class HistoricalDataExtractor:
 
         return training_data
 
-    def save_training_data(self, training_data, output_file='optimization/optimization_data/training_dataset.csv', include_returns=True):
+    def save_training_data(
+        self, training_data, output_file="optimization/optimization_data/training_dataset.csv", include_returns=True
+    ):
         """Save training data to CSV."""
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -424,15 +426,14 @@ class HistoricalDataExtractor:
             return
 
         # Check if we have returns data
-        has_returns = 'fwd_return' in training_data[0] if training_data else False
+        has_returns = "fwd_return" in training_data[0] if training_data else False
 
-        fieldnames = ['date', 'ticker', 'clinical', 'financial', 'catalyst',
-                      'pos', 'momentum', 'valuation']
+        fieldnames = ["date", "ticker", "clinical", "financial", "catalyst", "pos", "momentum", "valuation"]
         if has_returns and include_returns:
-            fieldnames.append('fwd_return')
+            fieldnames.append("fwd_return")
 
-        with open(output_path, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+        with open(output_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(training_data)
 
@@ -440,7 +441,7 @@ class HistoricalDataExtractor:
 
         # Print sample statistics
         if np and has_returns and include_returns:
-            returns = [d['fwd_return'] for d in training_data if d.get('fwd_return') is not None]
+            returns = [d["fwd_return"] for d in training_data if d.get("fwd_return") is not None]
             if returns:
                 print(f"\nForward return statistics:")
                 print(f"  Mean: {np.mean(returns):.4f} ({np.mean(returns)*100:.2f}%)")
@@ -449,13 +450,13 @@ class HistoricalDataExtractor:
                 print(f"  Max: {np.max(returns):.4f} ({np.max(returns)*100:.2f}%)")
 
         # Print date range
-        dates = [d['date'] for d in training_data]
+        dates = [d["date"] for d in training_data]
         print(f"\nDate range:")
         print(f"  First: {min(dates)}")
         print(f"  Last: {max(dates)}")
 
         # Print ticker coverage
-        unique_tickers = len(set(d['ticker'] for d in training_data))
+        unique_tickers = len(set(d["ticker"] for d in training_data))
         print(f"\nTicker coverage:")
         print(f"  Unique tickers: {unique_tickers}")
         print(f"  Avg observations per ticker: {len(training_data) / unique_tickers:.1f}")
@@ -465,54 +466,30 @@ def main():
     """Main extraction workflow."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Extract historical screening data for weight optimization'
+    parser = argparse.ArgumentParser(description="Extract historical screening data for weight optimization")
+    parser.add_argument(
+        "--checkpoint-dir", default="checkpoints", help="Directory containing module_5_*.json checkpoint files"
     )
     parser.add_argument(
-        '--checkpoint-dir',
-        default='checkpoints',
-        help='Directory containing module_5_*.json checkpoint files'
+        "--price-file", help="Price data file (CSV or JSON). If not provided, will search common locations."
+    )
+    parser.add_argument("--horizon", type=int, default=28, help="Forward return period in days (default: 28 = 4 weeks)")
+    parser.add_argument(
+        "--output", default="optimization/optimization_data/training_dataset.csv", help="Output file path"
     )
     parser.add_argument(
-        '--price-file',
-        help='Price data file (CSV or JSON). If not provided, will search common locations.'
+        "--min-observations", type=int, default=100, help="Minimum observations required (default: 100)"
     )
-    parser.add_argument(
-        '--horizon',
-        type=int,
-        default=28,
-        help='Forward return period in days (default: 28 = 4 weeks)'
-    )
-    parser.add_argument(
-        '--output',
-        default='optimization/optimization_data/training_dataset.csv',
-        help='Output file path'
-    )
-    parser.add_argument(
-        '--min-observations',
-        type=int,
-        default=100,
-        help='Minimum observations required (default: 100)'
-    )
-    parser.add_argument(
-        '--no-returns',
-        action='store_true',
-        help='Extract scores only (no forward returns required)'
-    )
+    parser.add_argument("--no-returns", action="store_true", help="Extract scores only (no forward returns required)")
 
     args = parser.parse_args()
 
     # Create extractor
-    extractor = HistoricalDataExtractor(
-        checkpoint_dir=args.checkpoint_dir,
-        price_file=args.price_file
-    )
+    extractor = HistoricalDataExtractor(checkpoint_dir=args.checkpoint_dir, price_file=args.price_file)
 
     # Extract data
     training_data = extractor.extract_training_data(
-        horizon_days=args.horizon,
-        min_observations=args.min_observations,
-        skip_returns=args.no_returns
+        horizon_days=args.horizon, min_observations=args.min_observations, skip_returns=args.no_returns
     )
 
     if not training_data:
@@ -526,9 +503,9 @@ def main():
     # Save
     extractor.save_training_data(training_data, args.output, include_returns=not args.no_returns)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("EXTRACTION COMPLETE")
-    print("="*60)
+    print("=" * 60)
     if args.no_returns:
         print("\nScores extracted (no forward returns).")
         print("To run optimization, you'll need price data for forward returns.")
@@ -537,5 +514,5 @@ def main():
         print("  python -m optimization.optimize_weights_scipy")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

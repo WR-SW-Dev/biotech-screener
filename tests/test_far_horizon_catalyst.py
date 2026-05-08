@@ -1,4 +1,5 @@
 """Tests for _hydrate_far_horizon_catalysts() — far-horizon catalyst hydration."""
+
 from __future__ import annotations
 
 import pytest
@@ -22,8 +23,7 @@ def _make_row(ticker, catalyst_mode="no_upcoming", **extra):
     return row
 
 
-def _make_trial(ticker, study_type="INTERVENTIONAL", status="RECRUITING",
-                pcd=None):
+def _make_trial(ticker, study_type="INTERVENTIONAL", status="RECRUITING", pcd=None):
     """Build a minimal trial_record dict."""
     t = {"ticker": ticker, "study_type": study_type, "status": status}
     if pcd:
@@ -153,7 +153,7 @@ class TestHydrateFarHorizonCatalysts:
             _make_row("A", catalyst_mode="no_upcoming"),
             _make_row("B", catalyst_mode="specific_days"),  # not touched
             _make_row("C", catalyst_mode="missing"),
-            _make_row("D", catalyst_mode="no_upcoming"),    # no trial
+            _make_row("D", catalyst_mode="no_upcoming"),  # no trial
         ]
         trials = [
             _make_trial("A", pcd="2027-01-30"),

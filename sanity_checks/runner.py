@@ -35,7 +35,23 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from sanity_checks.benchmark_checks import BenchmarkChecker, PeerGroup
+from sanity_checks.cross_validation import CrossValidationChecker
+from sanity_checks.domain_expert_checks import CompetitiveLandscape, DomainExpertChecker, PartnershipInfo, TrialDetails
+from sanity_checks.executive_dashboard import ExecutiveDashboardValidator, OnePagerContent
+from sanity_checks.market_microstructure_checks import (
+    AnalystRating,
+    ConferencePresentation,
+    InsiderTransaction,
+    MarketMicrostructureChecker,
+    OptionsFlow,
+)
+from sanity_checks.portfolio_construction_checks import FundMandate, PortfolioConstructionChecker
+from sanity_checks.regression_tests import GoldenTestCase, RegressionTestRunner
+from sanity_checks.review_triggers import ICDocumentation, ReviewTriggerChecker
+from sanity_checks.time_series_checks import CatalystEvent, TimeSeriesChecker
 from sanity_checks.types import (
+    DEFAULT_THRESHOLDS,
     CheckCategory,
     FlagSeverity,
     RankingSnapshot,
@@ -44,33 +60,6 @@ from sanity_checks.types import (
     SecurityContext,
     ThresholdConfig,
     ValidationReport,
-    DEFAULT_THRESHOLDS,
-)
-from sanity_checks.cross_validation import CrossValidationChecker
-from sanity_checks.benchmark_checks import BenchmarkChecker, PeerGroup
-from sanity_checks.time_series_checks import TimeSeriesChecker, CatalystEvent
-from sanity_checks.domain_expert_checks import (
-    DomainExpertChecker,
-    TrialDetails,
-    PartnershipInfo,
-    CompetitiveLandscape,
-)
-from sanity_checks.market_microstructure_checks import (
-    MarketMicrostructureChecker,
-    OptionsFlow,
-    InsiderTransaction,
-    ConferencePresentation,
-    AnalystRating,
-)
-from sanity_checks.portfolio_construction_checks import (
-    PortfolioConstructionChecker,
-    FundMandate,
-)
-from sanity_checks.regression_tests import RegressionTestRunner, GoldenTestCase
-from sanity_checks.review_triggers import ReviewTriggerChecker, ICDocumentation
-from sanity_checks.executive_dashboard import (
-    ExecutiveDashboardValidator,
-    OnePagerContent,
 )
 
 logger = logging.getLogger(__name__)
@@ -282,17 +271,20 @@ class SanityCheckRunner:
 
             # Extract review requirements from result metrics
             if "review_requirements" in result.metrics:
-                from sanity_checks.types import ReviewRequirement, ReviewLevel
+                from sanity_checks.types import ReviewLevel, ReviewRequirement
+
                 for req_dict in result.metrics["review_requirements"]:
-                    report.review_requirements.append(ReviewRequirement(
-                        ticker=req_dict["ticker"],
-                        rank=req_dict["rank"],
-                        level=ReviewLevel(req_dict["level"]),
-                        reasons=req_dict["reasons"],
-                        requires_memo=req_dict["requires_memo"],
-                        requires_sign_off=req_dict["requires_sign_off"],
-                        blocking=req_dict["blocking"],
-                    ))
+                    report.review_requirements.append(
+                        ReviewRequirement(
+                            ticker=req_dict["ticker"],
+                            rank=req_dict["rank"],
+                            level=ReviewLevel(req_dict["level"]),
+                            reasons=req_dict["reasons"],
+                            requires_memo=req_dict["requires_memo"],
+                            requires_sign_off=req_dict["requires_sign_off"],
+                            blocking=req_dict["blocking"],
+                        )
+                    )
 
         if "dashboard" in self.enabled_checks:
             logger.info("Running executive dashboard validation...")
@@ -422,23 +414,23 @@ def generate_battle_tested_report(
     criteria = {
         "zero_critical_flags": len(report.critical_flags) == 0,
         "regression_tests_pass": (
-            regression_result and
-            regression_result.metrics.get("all_passed", False)
-        ) if regression_result else None,
+            (regression_result and regression_result.metrics.get("all_passed", False)) if regression_result else None
+        ),
         "rank_changes_documented": None,  # Would need time series data
         "override_rate_low": None,  # Would need historical override data
         "ic_coverage_high": (
-            dashboard_result and
-            dashboard_result.metrics.get("one_pager_quality", {}).get("completeness_pct", 0) >= 0.8
-        ) if dashboard_result else None,
+            (
+                dashboard_result
+                and dashboard_result.metrics.get("one_pager_quality", {}).get("completeness_pct", 0) >= 0.8
+            )
+            if dashboard_result
+            else None
+        ),
     }
 
     # Determine overall status
     critical_criteria = ["zero_critical_flags", "regression_tests_pass"]
-    critical_passed = all(
-        criteria.get(c, False) for c in critical_criteria
-        if criteria.get(c) is not None
-    )
+    critical_passed = all(criteria.get(c, False) for c in critical_criteria if criteria.get(c) is not None)
 
     return {
         "battle_tested": critical_passed,
@@ -449,11 +441,7 @@ def generate_battle_tested_report(
             "total_flags": report.total_flags,
             "verdict": report.verdict,
         },
-        "recommendation": (
-            "READY for IC presentation"
-            if critical_passed
-            else "NOT READY - address critical issues"
-        ),
+        "recommendation": ("READY for IC presentation" if critical_passed else "NOT READY - address critical issues"),
     }
 
 

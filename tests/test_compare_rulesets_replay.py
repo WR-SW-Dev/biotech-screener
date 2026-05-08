@@ -1,4 +1,5 @@
 """Tests for scripts/compare_rulesets_replay.py."""
+
 from __future__ import annotations
 
 import sys
@@ -11,10 +12,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from compare_rulesets_replay import compare, format_report, rank_portfolio
+
 from decision_engine import DecisionRuleset
 
-PROD_BASELINE = Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets" / "v1.3.2_candidate.json"
-PROD_CANDIDATE = Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets" / "v1.3.3_missing_sort_only_candidate.json"
+PROD_BASELINE = (
+    Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets" / "v1.3.2_candidate.json"
+)
+PROD_CANDIDATE = (
+    Path(__file__).resolve().parent.parent
+    / "production_data"
+    / "decision_rulesets"
+    / "v1.3.3_missing_sort_only_candidate.json"
+)
 
 
 def _make_rankings(n=30, n_missing=0):
@@ -98,9 +107,9 @@ class TestCompare:
 
         for t in missing_tickers:
             if t in base_ranks and t in cand_ranks:
-                assert cand_ranks[t] >= base_ranks[t], (
-                    f"{t}: candidate rank {cand_ranks[t]} should be >= baseline {base_ranks[t]}"
-                )
+                assert (
+                    cand_ranks[t] >= base_ranks[t]
+                ), f"{t}: candidate rank {cand_ranks[t]} should be >= baseline {base_ranks[t]}"
 
 
 class TestFormatReport:
@@ -146,12 +155,18 @@ class TestCLI:
         snap.mkdir()
         df.to_csv(snap / "rankings.csv", index=False)
 
-        rc = main([
-            "--as-of-date", "2026-02-16",
-            "--baseline-ruleset", str(PROD_BASELINE),
-            "--candidate-ruleset", str(PROD_CANDIDATE),
-            "--snapshot-dir", str(snap),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-02-16",
+                "--baseline-ruleset",
+                str(PROD_BASELINE),
+                "--candidate-ruleset",
+                str(PROD_CANDIDATE),
+                "--snapshot-dir",
+                str(snap),
+            ]
+        )
         assert rc == 0
         report_path = snap / "ruleset_compare.md"
         assert report_path.exists()

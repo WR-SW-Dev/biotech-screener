@@ -33,10 +33,9 @@ Version: 1.0.0
 import hashlib
 import json
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Set
-
+from typing import Any, Dict, List, Optional, Set
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -44,29 +43,31 @@ __author__ = "Wake Robin Capital Management"
 
 # Import feed modules
 try:
+    from finra_short_interest_feed import RAW_DATA_DIR as SI_RAW_DIR
     from finra_short_interest_feed import (
         download_finra_si_file,
-        parse_finra_si_file,
-        load_cached_si_data,
-        get_latest_available_settlement_date,
         get_available_settlement_dates,
+        get_latest_available_settlement_date,
         is_data_available,
-        RAW_DATA_DIR as SI_RAW_DIR,
+        load_cached_si_data,
+        parse_finra_si_file,
     )
+
     HAS_SI_FEED = True
 except ImportError:
     HAS_SI_FEED = False
 
 try:
+    from finra_short_volume_feed import RAW_DATA_DIR as SV_RAW_DIR
     from finra_short_volume_feed import (
-        download_finra_short_volume,
-        load_cached_short_volume,
         compute_short_volume_stats,
+        download_finra_short_volume,
         get_available_trade_date,
         get_available_trade_dates,
+        load_cached_short_volume,
         prev_business_day,
-        RAW_DATA_DIR as SV_RAW_DIR,
     )
+
     HAS_SV_FEED = True
 except ImportError:
     HAS_SV_FEED = False
@@ -75,9 +76,10 @@ try:
     from threshold_list_feed import (
         download_nasdaq_threshold_list,
         download_nyse_threshold_list,
-        load_threshold_securities,
         get_threshold_flags_for_universe,
+        load_threshold_securities,
     )
+
     HAS_THRESHOLD_FEED = True
 except ImportError:
     HAS_THRESHOLD_FEED = False
@@ -110,7 +112,7 @@ class SymbolNormalizer:
 
             # Add variants
             # Remove dots: BRKA -> BRK.A
-            no_dot = upper.replace('.', '')
+            no_dot = upper.replace(".", "")
             self.lookup[no_dot] = upper
 
             # Add dot variant: BRKA -> BRK.A might be stored as BRKA
@@ -139,14 +141,14 @@ class SymbolNormalizer:
 
         # Try without common suffixes
         clean = upper
-        for suffix in ['.A', '.B', '-A', '-B', '-W', '-WI', '-U']:
+        for suffix in [".A", ".B", "-A", "-B", "-W", "-WI", "-U"]:
             if clean.endswith(suffix):
-                clean = clean[:-len(suffix)]
+                clean = clean[: -len(suffix)]
                 if clean in self.lookup:
                     return self.lookup[clean]
 
         # Try removing dots and dashes
-        clean = upper.replace('.', '').replace('-', '')
+        clean = upper.replace(".", "").replace("-", "")
         if clean in self.lookup:
             return self.lookup[clean]
 
@@ -179,7 +181,7 @@ def load_market_data(market_data_path: Path) -> Dict[str, Dict[str, Any]]:
     Returns:
         Dict mapping ticker -> market data record
     """
-    with open(market_data_path, 'r') as f:
+    with open(market_data_path, "r") as f:
         records = json.load(f)
 
     return {r["ticker"].upper(): r for r in records if r.get("ticker")}
@@ -187,7 +189,7 @@ def load_market_data(market_data_path: Path) -> Dict[str, Dict[str, Any]]:
 
 def load_universe_tickers(universe_path: Path) -> List[str]:
     """Load tickers from universe file."""
-    with open(universe_path, 'r') as f:
+    with open(universe_path, "r") as f:
         data = json.load(f)
 
     if isinstance(data, list):
@@ -309,23 +311,27 @@ def generate_short_interest_data(
         si_data = load_cached_si_data(si_settlement_date)
         if si_data:
             finra_si_records = si_data
-            sources_used.append({
-                "type": "FINRA_SI",
-                "settlement_date": si_settlement_date.isoformat(),
-                "records": len(finra_si_records),
-            })
+            sources_used.append(
+                {
+                    "type": "FINRA_SI",
+                    "settlement_date": si_settlement_date.isoformat(),
+                    "records": len(finra_si_records),
+                }
+            )
 
             # Match to universe
             for rec in finra_si_records:
                 matched_ticker = normalizer.normalize(rec["symbol"])
                 if matched_ticker and matched_ticker in si_by_ticker:
-                    si_by_ticker[matched_ticker].update({
-                        "has_finra_si": True,
-                        "short_interest_shares": rec.get("short_interest_shares"),
-                        "si_change_pct_finra": rec.get("si_change_pct"),
-                        "finra_days_to_cover": rec.get("days_to_cover"),
-                        "si_settlement_date": si_settlement_date.isoformat(),
-                    })
+                    si_by_ticker[matched_ticker].update(
+                        {
+                            "has_finra_si": True,
+                            "short_interest_shares": rec.get("short_interest_shares"),
+                            "si_change_pct_finra": rec.get("si_change_pct"),
+                            "finra_days_to_cover": rec.get("days_to_cover"),
+                            "si_settlement_date": si_settlement_date.isoformat(),
+                        }
+                    )
                     diagnostics["finra_si_matches"] += 1
 
     # Step 2: Load FINRA Daily Short Volume
@@ -340,24 +346,26 @@ def generate_short_interest_data(
                 sv_records_by_date[td] = sv_data
 
         if sv_records_by_date:
-            sources_used.append({
-                "type": "FINRA_SV",
-                "trade_dates": [d.isoformat() for d in sorted(sv_records_by_date.keys(), reverse=True)[:5]],
-                "total_dates": len(sv_records_by_date),
-            })
+            sources_used.append(
+                {
+                    "type": "FINRA_SV",
+                    "trade_dates": [d.isoformat() for d in sorted(sv_records_by_date.keys(), reverse=True)[:5]],
+                    "total_dates": len(sv_records_by_date),
+                }
+            )
 
             # Compute stats for each ticker
             for ticker in universe_tickers:
-                stats = compute_short_volume_stats(
-                    sv_records_by_date, ticker, as_of_date, lookback_days=20
-                )
+                stats = compute_short_volume_stats(sv_records_by_date, ticker, as_of_date, lookback_days=20)
                 if stats["data_points"] > 0:
-                    si_by_ticker[ticker.upper()].update({
-                        "has_finra_sv": True,
-                        "short_vol_ratio_latest": stats["short_vol_ratio_latest"],
-                        "short_vol_ratio_avg_20d": stats["short_vol_ratio_avg"],
-                        "short_vol_ratio_zscore": stats["short_vol_ratio_zscore"],
-                    })
+                    si_by_ticker[ticker.upper()].update(
+                        {
+                            "has_finra_sv": True,
+                            "short_vol_ratio_latest": stats["short_vol_ratio_latest"],
+                            "short_vol_ratio_avg_20d": stats["short_vol_ratio_avg"],
+                            "short_vol_ratio_zscore": stats["short_vol_ratio_zscore"],
+                        }
+                    )
                     diagnostics["finra_sv_matches"] += 1
 
     # Step 3: Load Threshold Flags
@@ -366,10 +374,12 @@ def generate_short_interest_data(
         threshold_count = sum(1 for v in threshold_flags.values() if v)
 
         if threshold_count > 0:
-            sources_used.append({
-                "type": "THRESHOLD_LIST",
-                "count": threshold_count,
-            })
+            sources_used.append(
+                {
+                    "type": "THRESHOLD_LIST",
+                    "count": threshold_count,
+                }
+            )
 
         for ticker, is_threshold in threshold_flags.items():
             if ticker in si_by_ticker:
@@ -390,12 +400,7 @@ def generate_short_interest_data(
 
         # If we have FINRA SI shares, compute our own metrics
         if record.get("short_interest_shares"):
-            metrics = compute_si_metrics(
-                record["short_interest_shares"],
-                float_shares,
-                avg_volume,
-                price
-            )
+            metrics = compute_si_metrics(record["short_interest_shares"], float_shares, avg_volume, price)
             record.update(metrics)
 
         # Fallback to market_data.json fields if no FINRA data
@@ -493,54 +498,16 @@ def generate_short_interest_data(
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Real Short Interest Data Feed (FINRA + Threshold Lists)"
-    )
-    parser.add_argument(
-        "--universe",
-        type=Path,
-        help="Path to universe.json file"
-    )
-    parser.add_argument(
-        "--market-data",
-        type=Path,
-        help="Path to market_data.json file"
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Output path for short_interest.json"
-    )
-    parser.add_argument(
-        "--as-of-date",
-        required=True,
-        help="As-of date (YYYY-MM-DD)"
-    )
-    parser.add_argument(
-        "--download",
-        action="store_true",
-        help="Download fresh FINRA data before generating"
-    )
-    parser.add_argument(
-        "--no-finra-si",
-        action="store_true",
-        help="Skip FINRA short interest"
-    )
-    parser.add_argument(
-        "--no-finra-sv",
-        action="store_true",
-        help="Skip FINRA short volume"
-    )
-    parser.add_argument(
-        "--no-threshold",
-        action="store_true",
-        help="Skip threshold lists"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print summary without writing file"
-    )
+    parser = argparse.ArgumentParser(description="Real Short Interest Data Feed (FINRA + Threshold Lists)")
+    parser.add_argument("--universe", type=Path, help="Path to universe.json file")
+    parser.add_argument("--market-data", type=Path, help="Path to market_data.json file")
+    parser.add_argument("--output", type=Path, help="Output path for short_interest.json")
+    parser.add_argument("--as-of-date", required=True, help="As-of date (YYYY-MM-DD)")
+    parser.add_argument("--download", action="store_true", help="Download fresh FINRA data before generating")
+    parser.add_argument("--no-finra-si", action="store_true", help="Skip FINRA short interest")
+    parser.add_argument("--no-finra-sv", action="store_true", help="Skip FINRA short volume")
+    parser.add_argument("--no-threshold", action="store_true", help="Skip threshold lists")
+    parser.add_argument("--dry-run", action="store_true", help="Print summary without writing file")
 
     args = parser.parse_args()
 
@@ -578,8 +545,7 @@ def main():
         if HAS_THRESHOLD_FEED:
             list_date = prev_business_day(as_of_date)
             print(f"  Downloading threshold lists for {list_date}...")
-            for func, name in [(download_nasdaq_threshold_list, "Nasdaq"),
-                               (download_nyse_threshold_list, "NYSE")]:
+            for func, name in [(download_nasdaq_threshold_list, "Nasdaq"), (download_nyse_threshold_list, "NYSE")]:
                 result = func(list_date)
                 if result["success"]:
                     print(f"    {name}: {result['file_path']}")
@@ -622,11 +588,7 @@ def main():
         # Show sample high-SI tickers
         records_with_si = [r for r in result["records"] if r.get("short_interest_pct")]
         if records_with_si:
-            sorted_by_si = sorted(
-                records_with_si,
-                key=lambda x: float(x["short_interest_pct"] or 0),
-                reverse=True
-            )
+            sorted_by_si = sorted(records_with_si, key=lambda x: float(x["short_interest_pct"] or 0), reverse=True)
             print()
             print("Top 10 by SI%:")
             for r in sorted_by_si[:10]:
@@ -644,9 +606,9 @@ def main():
         elif args.output:
             # Write output (just the records list for compatibility)
             args.output.parent.mkdir(parents=True, exist_ok=True)
-            with open(args.output, 'w') as f:
+            with open(args.output, "w") as f:
                 json.dump(result["records"], f, indent=2)
-                f.write('\n')
+                f.write("\n")
 
             print()
             print(f"Wrote {len(result['records'])} records to {args.output}")

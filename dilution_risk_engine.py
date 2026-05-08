@@ -26,10 +26,10 @@ Version: 1.0.0
 
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
-from typing import Dict, List, Optional, Any, Union
 from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 # Module metadata
 __version__ = "1.0.0"
@@ -38,19 +38,21 @@ __author__ = "Wake Robin Capital Management"
 
 class DataQualityState(Enum):
     """Data quality classification for dilution risk analysis."""
-    FULL = "FULL"          # All required + optional fields present
-    PARTIAL = "PARTIAL"    # Required fields + some optional
-    MINIMAL = "MINIMAL"    # Minimum viable data only
-    NONE = "NONE"          # Insufficient data to score
+
+    FULL = "FULL"  # All required + optional fields present
+    PARTIAL = "PARTIAL"  # Required fields + some optional
+    MINIMAL = "MINIMAL"  # Minimum viable data only
+    NONE = "NONE"  # Insufficient data to score
 
 
 class RiskBucket(Enum):
     """Risk classification buckets."""
-    NO_RISK = "NO_RISK"           # Cash gap <= 0, fully funded through catalyst
-    LOW_RISK = "LOW_RISK"         # Cash gap exists but raise is feasible
-    MEDIUM_RISK = "MEDIUM_RISK"   # Moderate raise difficulty
-    HIGH_RISK = "HIGH_RISK"       # Significant execution risk on raise
-    UNKNOWN = "UNKNOWN"           # Insufficient data
+
+    NO_RISK = "NO_RISK"  # Cash gap <= 0, fully funded through catalyst
+    LOW_RISK = "LOW_RISK"  # Cash gap exists but raise is feasible
+    MEDIUM_RISK = "MEDIUM_RISK"  # Moderate raise difficulty
+    HIGH_RISK = "HIGH_RISK"  # Significant execution risk on raise
+    UNKNOWN = "UNKNOWN"  # Insufficient data
 
 
 class DilutionRiskEngine:
@@ -159,10 +161,7 @@ class DilutionRiskEngine:
 
         # Validate as_of_date (required for determinism)
         if as_of_date is None:
-            raise ValueError(
-                "as_of_date is REQUIRED for determinism. "
-                "Do not use date.today() - pass explicit date."
-            )
+            raise ValueError("as_of_date is REQUIRED for determinism. " "Do not use date.today() - pass explicit date.")
 
         # Deterministic timestamp from as_of_date
         deterministic_timestamp = f"{as_of_date.isoformat()}T00:00:00Z"
@@ -325,19 +324,17 @@ class DilutionRiskEngine:
             risk_bucket = RiskBucket.NO_RISK
         elif raise_feasibility > Decimal("0.70"):
             # Easy raise = lower risk
-            risk_score = min(self.LOW_RISK_THRESHOLD, cash_gap / total_available) if total_available > 0 else Decimal("0.30")
+            risk_score = (
+                min(self.LOW_RISK_THRESHOLD, cash_gap / total_available) if total_available > 0 else Decimal("0.30")
+            )
             risk_bucket = RiskBucket.LOW_RISK
         elif raise_feasibility > Decimal("0.40"):
             # Moderate difficulty
-            risk_score = self.LOW_RISK_THRESHOLD + (
-                Decimal("0.30") * (Decimal("1.0") - raise_feasibility)
-            )
+            risk_score = self.LOW_RISK_THRESHOLD + (Decimal("0.30") * (Decimal("1.0") - raise_feasibility))
             risk_bucket = RiskBucket.MEDIUM_RISK
         else:
             # Difficult raise
-            risk_score = self.MEDIUM_RISK_THRESHOLD + (
-                Decimal("0.30") * (Decimal("1.0") - raise_feasibility)
-            )
+            risk_score = self.MEDIUM_RISK_THRESHOLD + (Decimal("0.30") * (Decimal("1.0") - raise_feasibility))
             risk_bucket = RiskBucket.HIGH_RISK
 
         # Clamp and quantize risk score
@@ -390,9 +387,9 @@ class DilutionRiskEngine:
             "timestamp": deterministic_timestamp,
             "as_of_date": as_of_date.isoformat(),
             "ticker": ticker,
-            "inputs_hash": hashlib.sha256(
-                json.dumps(inputs_used, sort_keys=True, default=str).encode()
-            ).hexdigest()[:16],
+            "inputs_hash": hashlib.sha256(json.dumps(inputs_used, sort_keys=True, default=str).encode()).hexdigest()[
+                :16
+            ],
             "inputs_used": inputs_used,
             "missing_fields": missing_fields,
             "data_quality_state": data_quality_state.value,
@@ -449,12 +446,13 @@ class DilutionRiskEngine:
 
         scores: List[Dict[str, Any]] = []
         risk_distribution: Dict[str, int] = {
-            "NO_RISK": 0, "LOW_RISK": 0, "MEDIUM_RISK": 0,
-            "HIGH_RISK": 0, "UNKNOWN": 0
+            "NO_RISK": 0,
+            "LOW_RISK": 0,
+            "MEDIUM_RISK": 0,
+            "HIGH_RISK": 0,
+            "UNKNOWN": 0,
         }
-        quality_distribution: Dict[str, int] = {
-            "FULL": 0, "PARTIAL": 0, "MINIMAL": 0, "NONE": 0
-        }
+        quality_distribution: Dict[str, int] = {"FULL": 0, "PARTIAL": 0, "MINIMAL": 0, "NONE": 0}
         high_risk_tickers: List[str] = []
 
         for company in universe:
@@ -476,16 +474,18 @@ class DilutionRiskEngine:
                 provenance=company.get("provenance"),
             )
 
-            scores.append({
-                "ticker": ticker,
-                "dilution_risk_score": result["dilution_risk_score"],
-                "confidence": result["confidence"],
-                "risk_bucket": result["risk_bucket"],
-                "reason_code": result["reason_code"],
-                "data_quality_state": result["data_quality_state"],
-                "components": result.get("components", {}),
-                "flags": [],
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "dilution_risk_score": result["dilution_risk_score"],
+                    "confidence": result["confidence"],
+                    "risk_bucket": result["risk_bucket"],
+                    "reason_code": result["reason_code"],
+                    "data_quality_state": result["data_quality_state"],
+                    "components": result.get("components", {}),
+                    "flags": [],
+                }
+            )
 
             # Track distributions
             risk_bucket = result["risk_bucket"]
@@ -502,9 +502,8 @@ class DilutionRiskEngine:
 
         # Deterministic content hash
         scores_json = json.dumps(
-            [{"t": s["ticker"], "r": str(s["dilution_risk_score"]), "b": s["risk_bucket"]}
-             for s in scores],
-            sort_keys=True
+            [{"t": s["ticker"], "r": str(s["dilution_risk_score"]), "b": s["risk_bucket"]} for s in scores],
+            sort_keys=True,
         )
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
@@ -680,8 +679,8 @@ def demonstration() -> None:
         ticker="FUNDED",
         quarterly_cash=Decimal("500000000"),  # $500M cash
         quarterly_burn=Decimal("-30000000"),  # $30M quarterly burn ($10M/month)
-        next_catalyst_date="2026-07-15",      # 6 months away
-        market_cap=Decimal("2000000000"),     # $2B market cap
+        next_catalyst_date="2026-07-15",  # 6 months away
+        market_cap=Decimal("2000000000"),  # $2B market cap
         avg_daily_volume_90d=2_000_000,
         as_of_date=as_of,
     )
@@ -699,10 +698,10 @@ def demonstration() -> None:
 
     high_risk = engine.calculate_dilution_risk(
         ticker="BURNING",
-        quarterly_cash=Decimal("30000000"),   # $30M cash
+        quarterly_cash=Decimal("30000000"),  # $30M cash
         quarterly_burn=Decimal("-45000000"),  # $45M quarterly burn ($15M/month)
-        next_catalyst_date="2026-12-15",      # 11 months away
-        market_cap=Decimal("100000000"),      # $100M market cap
+        next_catalyst_date="2026-12-15",  # 11 months away
+        market_cap=Decimal("100000000"),  # $100M market cap
         avg_daily_volume_90d=500_000,
         shelf_capacity=Decimal("0"),
         atm_remaining=Decimal("0"),
@@ -723,11 +722,11 @@ def demonstration() -> None:
 
     medium_risk = engine.calculate_dilution_risk(
         ticker="ATMUSER",
-        quarterly_cash=Decimal("40000000"),   # $40M cash
+        quarterly_cash=Decimal("40000000"),  # $40M cash
         quarterly_burn=Decimal("-36000000"),  # $36M quarterly burn ($12M/month)
-        next_catalyst_date="2026-09-15",      # 8 months away
-        market_cap=Decimal("300000000"),      # $300M market cap
-        atm_remaining=Decimal("50000000"),    # $50M ATM capacity
+        next_catalyst_date="2026-09-15",  # 8 months away
+        market_cap=Decimal("300000000"),  # $300M market cap
+        atm_remaining=Decimal("50000000"),  # $50M ATM capacity
         atm_active=True,
         avg_daily_volume_90d=1_000_000,
         as_of_date=as_of,

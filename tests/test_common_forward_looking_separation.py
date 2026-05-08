@@ -10,29 +10,30 @@ Tests forward-looking signal separation for PIT safety:
 - Batch signal separation
 """
 
-import pytest
+import sys
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
-import sys
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common.forward_looking_separation import (
-    SignalSourceType,
-    LookaheadRiskLevel,
-    SignalContribution,
-    SeparatedCatalystResult,
     BatchSeparationResult,
     ForwardLookingSeparator,
-    separate_batch_signals,
+    LookaheadRiskLevel,
+    SeparatedCatalystResult,
+    SignalContribution,
+    SignalSourceType,
     __version__,
+    separate_batch_signals,
 )
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -68,6 +69,7 @@ def sample_calendar_events():
 # ENUM TESTS
 # ============================================================================
 
+
 class TestSignalSourceType:
     """Tests for SignalSourceType enum."""
 
@@ -92,6 +94,7 @@ class TestLookaheadRiskLevel:
 # ============================================================================
 # SIGNAL CONTRIBUTION TESTS
 # ============================================================================
+
 
 class TestSignalContribution:
     """Tests for SignalContribution dataclass."""
@@ -138,6 +141,7 @@ class TestSignalContribution:
 # ============================================================================
 # SEPARATED CATALYST RESULT TESTS
 # ============================================================================
+
 
 class TestSeparatedCatalystResult:
     """Tests for SeparatedCatalystResult dataclass."""
@@ -234,6 +238,7 @@ class TestSeparatedCatalystResult:
 # FORWARD LOOKING SEPARATOR TESTS
 # ============================================================================
 
+
 class TestForwardLookingSeparator:
     """Tests for ForwardLookingSeparator class."""
 
@@ -307,6 +312,7 @@ class TestForwardLookingSeparator:
 # ============================================================================
 # SEPARATE SIGNALS TESTS
 # ============================================================================
+
 
 class TestSeparateSignals:
     """Tests for separate_signals method."""
@@ -435,6 +441,7 @@ class TestSeparateSignals:
 # BATCH SEPARATION TESTS
 # ============================================================================
 
+
 class TestBatchSeparation:
     """Tests for separate_batch_signals function."""
 
@@ -530,6 +537,7 @@ class TestBatchSeparation:
 # BATCH SEPARATION RESULT TESTS
 # ============================================================================
 
+
 class TestBatchSeparationResult:
     """Tests for BatchSeparationResult dataclass."""
 
@@ -554,6 +562,7 @@ class TestBatchSeparationResult:
 # ============================================================================
 # EDGE CASE TESTS
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests for forward-looking separation."""
@@ -608,10 +617,13 @@ class TestEdgeCases:
 # DETERMINISM TESTS
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests verifying deterministic behavior."""
 
-    def test_separate_signals_deterministic(self, separator, as_of_date, sample_detected_events, sample_calendar_events):
+    def test_separate_signals_deterministic(
+        self, separator, as_of_date, sample_detected_events, sample_calendar_events
+    ):
         """separate_signals should be deterministic."""
         results = [
             separator.separate_signals(
@@ -650,6 +662,7 @@ class TestDeterminism:
 # ============================================================================
 # VERSION TESTS
 # ============================================================================
+
 
 class TestVersion:
     """Tests for module version."""

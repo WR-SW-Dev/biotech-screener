@@ -1,25 +1,26 @@
 """Tests for press release collector (offline, deterministic)."""
+
 from __future__ import annotations
 
 import json
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from wake_robin_data_pipeline.collectors.press_release_collector import (
-    collect_press_release_events,
-    normalize_company,
-    extract_future_dates_from_text,
     _build_universe_map,
     _classify_event_kind,
-    _parse_rss_items,
-    _parse_pub_date,
-    _parse_month_day_infer_year,
-    _stable_id,
     _has_future_intent_near,
     _is_historical_context,
+    _parse_month_day_infer_year,
+    _parse_pub_date,
+    _parse_rss_items,
+    _stable_id,
+    collect_press_release_events,
+    extract_future_dates_from_text,
+    normalize_company,
 )
 
 AS_OF = date(2026, 3, 1)
@@ -75,6 +76,7 @@ RSS_XML = """\
 # Tests: normalize_company
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeCompany:
     def test_basic(self):
         assert normalize_company("Acme Therapeutics, Inc.") == "acme"
@@ -86,6 +88,7 @@ class TestNormalizeCompany:
 # ---------------------------------------------------------------------------
 # Tests: _parse_rss_items
 # ---------------------------------------------------------------------------
+
 
 class TestParseRssItems:
     def test_rss_items(self):
@@ -107,6 +110,7 @@ class TestParseRssItems:
 # Tests: _parse_pub_date
 # ---------------------------------------------------------------------------
 
+
 class TestParsePubDate:
     def test_rfc2822(self):
         d = _parse_pub_date("Mon, 24 Feb 2026 12:00:00 GMT")
@@ -126,6 +130,7 @@ class TestParsePubDate:
 # ---------------------------------------------------------------------------
 # Tests: extract_future_dates_from_text
 # ---------------------------------------------------------------------------
+
 
 class TestExtractFutureDates:
     def test_future_with_intent(self):
@@ -169,10 +174,7 @@ class TestExtractFutureDates:
         assert results[0]["event_date"] == "2027-01-10"
 
     def test_multiple_dates_in_text(self):
-        text = (
-            "Acme will present at ASCO on June 5, 2026 "
-            "and will host an investor day on July 10, 2026"
-        )
+        text = "Acme will present at ASCO on June 5, 2026 " "and will host an investor day on July 10, 2026"
         results = extract_future_dates_from_text(text, date(2026, 3, 1), AS_OF)
         assert len(results) == 2
         dates = {r["event_date"] for r in results}
@@ -195,6 +197,7 @@ class TestExtractFutureDates:
 # ---------------------------------------------------------------------------
 # Tests: _has_future_intent_near / _is_historical_context
 # ---------------------------------------------------------------------------
+
 
 class TestIntentDetection:
     def test_future_intent(self):
@@ -222,6 +225,7 @@ class TestIntentDetection:
 # Tests: _classify_event_kind
 # ---------------------------------------------------------------------------
 
+
 class TestClassifyEventKind:
     def test_data_readout(self):
         assert _classify_event_kind("Phase 3 top-line data readout") == "data_readout"
@@ -246,6 +250,7 @@ class TestClassifyEventKind:
 # Tests: _stable_id
 # ---------------------------------------------------------------------------
 
+
 class TestStableId:
     def test_deterministic(self):
         id1 = _stable_id("ACME", "2026-03-15", "Title", "http://x.com")
@@ -262,6 +267,7 @@ class TestStableId:
 # ---------------------------------------------------------------------------
 # Tests: _parse_month_day_infer_year
 # ---------------------------------------------------------------------------
+
 
 class TestParseMonthDayInferYear:
     def test_future_date(self):
@@ -284,6 +290,7 @@ class TestParseMonthDayInferYear:
 # ---------------------------------------------------------------------------
 # Tests: collect_press_release_events (integration, no network)
 # ---------------------------------------------------------------------------
+
 
 class TestCollectPressReleaseEvents:
     def test_cache_only_no_cache(self, tmp_path):

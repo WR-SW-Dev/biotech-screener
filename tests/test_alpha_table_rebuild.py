@@ -1,28 +1,29 @@
 """Tests for adaptive alpha cohort table building and rebuild policy."""
+
 import hashlib
 import json
 import math
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.build_alpha_cohort_table_oos import (
+    ALL_KEYS,
+    _build_equal_weight_table,
+    _build_weighted_table,
     build_oos_table,
     parse_train_mode,
     write_table_with_marker,
-    _build_equal_weight_table,
-    _build_weighted_table,
-    ALL_KEYS,
 )
-
 
 # =============================================================================
 # parse_train_mode
 # =============================================================================
+
 
 class TestParseTrainMode:
 
@@ -67,6 +68,7 @@ class TestParseTrainMode:
 # _build_equal_weight_table
 # =============================================================================
 
+
 class TestBuildEqualWeightTable:
 
     def _make_entry(self, date, rows, excess):
@@ -108,6 +110,7 @@ class TestBuildEqualWeightTable:
 # =============================================================================
 # _build_weighted_table
 # =============================================================================
+
 
 class TestBuildWeightedTable:
 
@@ -159,11 +162,13 @@ class TestBuildWeightedTable:
 # _resolve_alpha_table_path (run_screen.py integration)
 # =============================================================================
 
+
 class TestCheckArtifactMarker:
     """Tests for _check_artifact_marker (provenance validation)."""
 
     def test_no_marker_file(self, tmp_path):
         from run_screen import _check_artifact_marker
+
         table = tmp_path / "v1_2026-02-25.json"
         table.write_text('{"cells": {}}')
         present, valid, data = _check_artifact_marker(table)
@@ -173,6 +178,7 @@ class TestCheckArtifactMarker:
 
     def test_valid_marker_matches(self, tmp_path):
         from run_screen import _check_artifact_marker
+
         table = tmp_path / "v1_2026-02-25.json"
         content = b'{"cells": {}}'
         table.write_bytes(content)
@@ -187,6 +193,7 @@ class TestCheckArtifactMarker:
 
     def test_marker_sha_mismatch(self, tmp_path):
         from run_screen import _check_artifact_marker
+
         table = tmp_path / "v1_2026-02-25.json"
         table.write_bytes(b'{"cells": {}}')
         marker = {"sha256": "0000bad0000", "artifact_id": 99}
@@ -198,6 +205,7 @@ class TestCheckArtifactMarker:
 
     def test_corrupt_marker_json(self, tmp_path):
         from run_screen import _check_artifact_marker
+
         table = tmp_path / "v1_2026-02-25.json"
         table.write_bytes(b'{"cells": {}}')
         table.with_suffix(".artifact.json").write_text("NOT JSON {{{")
@@ -209,6 +217,7 @@ class TestCheckArtifactMarker:
 
     def test_marker_missing_sha_field(self, tmp_path):
         from run_screen import _check_artifact_marker
+
         table = tmp_path / "v1_2026-02-25.json"
         table.write_bytes(b'{"cells": {}}')
         marker = {"artifact_id": 1}  # no sha256 key
@@ -222,9 +231,10 @@ class TestCheckArtifactMarker:
 class TestResolveAlphaTablePath:
 
     def test_never_policy_returns_static(self):
-        from run_screen import _resolve_alpha_table_path
-        from decision_engine import DecisionRuleset
         import logging
+
+        from decision_engine import DecisionRuleset
+        from run_screen import _resolve_alpha_table_path
 
         rs = DecisionRuleset(alpha_table_rebuild_policy="never")
         logger = logging.getLogger("test")
@@ -235,8 +245,10 @@ class TestResolveAlphaTablePath:
 
     def test_if_missing_artifact_source(self, tmp_path, monkeypatch):
         """Dated file + valid marker → source='artifact'."""
+        import logging
+
+        import run_screen
         from decision_engine import DecisionRuleset
-        import logging, run_screen
 
         # Set up fake project root
         daily_dir = tmp_path / "production_data" / "alpha_cohort_tables" / "daily"
@@ -245,9 +257,7 @@ class TestResolveAlphaTablePath:
         content = b'{"cells": {}}'
         dated_file.write_bytes(content)
         sha = hashlib.sha256(content).hexdigest()
-        dated_file.with_suffix(".artifact.json").write_text(
-            json.dumps({"sha256": sha, "artifact_id": 1})
-        )
+        dated_file.with_suffix(".artifact.json").write_text(json.dumps({"sha256": sha, "artifact_id": 1}))
 
         monkeypatch.setattr(run_screen, "__file__", str(tmp_path / "run_screen.py"))
 
@@ -259,8 +269,10 @@ class TestResolveAlphaTablePath:
 
     def test_if_missing_preexisting_local(self, tmp_path, monkeypatch):
         """Dated file exists but no marker → source='preexisting_local'."""
+        import logging
+
+        import run_screen
         from decision_engine import DecisionRuleset
-        import logging, run_screen
 
         daily_dir = tmp_path / "production_data" / "alpha_cohort_tables" / "daily"
         daily_dir.mkdir(parents=True)
@@ -278,8 +290,10 @@ class TestResolveAlphaTablePath:
 
     def test_if_missing_rebuilds_in_run(self, tmp_path, monkeypatch):
         """Dated file missing + build succeeds → source='rebuilt_in_run'."""
+        import logging
+
+        import run_screen
         from decision_engine import DecisionRuleset
-        import logging, run_screen
 
         # daily dir exists but no dated file
         daily_dir = tmp_path / "production_data" / "alpha_cohort_tables" / "daily"
@@ -300,8 +314,10 @@ class TestResolveAlphaTablePath:
 
     def test_if_missing_fallback_static(self, tmp_path, monkeypatch):
         """Dated file missing + build returns None → source='static_fallback'."""
+        import logging
+
+        import run_screen
         from decision_engine import DecisionRuleset
-        import logging, run_screen
 
         monkeypatch.setattr(run_screen, "__file__", str(tmp_path / "run_screen.py"))
         # Create static fallback path
@@ -322,6 +338,7 @@ class TestResolveAlphaTablePath:
 # build_oos_table with mocked archives
 # =============================================================================
 
+
 class TestBuildOosTableMocked:
     """Test build_oos_table with mocked archive discovery and providers."""
 
@@ -337,11 +354,12 @@ class TestBuildOosTableMocked:
     def test_returns_none_below_min_dates(self):
         """If only 1 archive available but min_train_dates=2, returns None."""
         fake_path = Path("/fake/archive.tar.gz")
-        with patch("scripts.build_alpha_cohort_table_oos.discover_archives",
-                    return_value=[("2025-06-30", fake_path)]), \
-             patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain:
+        with (
+            patch("scripts.build_alpha_cohort_table_oos.discover_archives", return_value=[("2025-06-30", fake_path)]),
+            patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain,
+        ):
             mock_provider = MagicMock()
             mock_provider.get_last_date.return_value = None  # no last date check
             mock_chain.return_value = mock_provider
@@ -359,11 +377,12 @@ class TestBuildOosTableMocked:
             ("2026-01-01", Path("/fake/a2.tar.gz")),  # same as as_of_date
             ("2026-02-01", Path("/fake/a3.tar.gz")),  # after as_of_date
         ]
-        with patch("scripts.build_alpha_cohort_table_oos.discover_archives",
-                    return_value=archives), \
-             patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain:
+        with (
+            patch("scripts.build_alpha_cohort_table_oos.discover_archives", return_value=archives),
+            patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain,
+        ):
             mock_provider = MagicMock()
             mock_provider.get_last_date.return_value = None
             mock_chain.return_value = mock_provider
@@ -387,8 +406,7 @@ class TestBuildOosTableMocked:
 
         def fake_load_rankings(tar_path):
             return [
-                {"ticker": f"T{i}", "archetype": "drug_developer",
-                 "tier_dev": "A", "clinical_score": "0.5"}
+                {"ticker": f"T{i}", "archetype": "drug_developer", "tier_dev": "A", "clinical_score": "0.5"}
                 for i in range(6)
             ]
 
@@ -396,20 +414,17 @@ class TestBuildOosTableMocked:
             loaded_dates.append(date_str)
             return {f"T{i}": 0.01 * i for i in range(6)}
 
-        with patch("scripts.build_alpha_cohort_table_oos.discover_archives",
-                    return_value=fake_archives), \
-             patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain, \
-             patch("scripts.build_alpha_cohort_table_oos.add_trading_days",
-                   return_value="2025-12-31"), \
-             patch("scripts.build_alpha_cohort_table_oos.load_rankings_dicts",
-                   side_effect=fake_load_rankings), \
-             patch("scripts.build_alpha_cohort_table_oos.compute_forward_returns",
-                   side_effect=fake_fwd_returns), \
-             patch("scripts.build_alpha_cohort_table_oos.backfill_clinical_z_tier"), \
-             patch("scripts.build_alpha_cohort_table_oos.compute_alpha_cohort_key",
-                   return_value="early|none|pos"):
+        with (
+            patch("scripts.build_alpha_cohort_table_oos.discover_archives", return_value=fake_archives),
+            patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain,
+            patch("scripts.build_alpha_cohort_table_oos.add_trading_days", return_value="2025-12-31"),
+            patch("scripts.build_alpha_cohort_table_oos.load_rankings_dicts", side_effect=fake_load_rankings),
+            patch("scripts.build_alpha_cohort_table_oos.compute_forward_returns", side_effect=fake_fwd_returns),
+            patch("scripts.build_alpha_cohort_table_oos.backfill_clinical_z_tier"),
+            patch("scripts.build_alpha_cohort_table_oos.compute_alpha_cohort_key", return_value="early|none|pos"),
+        ):
             mock_provider = MagicMock()
             mock_provider.get_last_date.return_value = None
             mock_chain.return_value = mock_provider
@@ -433,25 +448,24 @@ class TestBuildOosTableMocked:
 
         def fake_load_rankings(tar_path):
             return [
-                {"ticker": f"T{i}", "archetype": "drug_developer",
-                 "tier_dev": "A", "clinical_score": "0.5"}
+                {"ticker": f"T{i}", "archetype": "drug_developer", "tier_dev": "A", "clinical_score": "0.5"}
                 for i in range(6)
             ]
 
-        with patch("scripts.build_alpha_cohort_table_oos.discover_archives",
-                    return_value=fake_archives), \
-             patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"), \
-             patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain, \
-             patch("scripts.build_alpha_cohort_table_oos.add_trading_days",
-                   return_value="2025-12-31"), \
-             patch("scripts.build_alpha_cohort_table_oos.load_rankings_dicts",
-                   side_effect=fake_load_rankings), \
-             patch("scripts.build_alpha_cohort_table_oos.compute_forward_returns",
-                   return_value={f"T{i}": 0.01 * i for i in range(6)}), \
-             patch("scripts.build_alpha_cohort_table_oos.backfill_clinical_z_tier"), \
-             patch("scripts.build_alpha_cohort_table_oos.compute_alpha_cohort_key",
-                   return_value="early|none|pos"):
+        with (
+            patch("scripts.build_alpha_cohort_table_oos.discover_archives", return_value=fake_archives),
+            patch("scripts.build_alpha_cohort_table_oos.MorningstarReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.CSVReturnsProvider"),
+            patch("scripts.build_alpha_cohort_table_oos.ChainedReturnsProvider") as mock_chain,
+            patch("scripts.build_alpha_cohort_table_oos.add_trading_days", return_value="2025-12-31"),
+            patch("scripts.build_alpha_cohort_table_oos.load_rankings_dicts", side_effect=fake_load_rankings),
+            patch(
+                "scripts.build_alpha_cohort_table_oos.compute_forward_returns",
+                return_value={f"T{i}": 0.01 * i for i in range(6)},
+            ),
+            patch("scripts.build_alpha_cohort_table_oos.backfill_clinical_z_tier"),
+            patch("scripts.build_alpha_cohort_table_oos.compute_alpha_cohort_key", return_value="early|none|pos"),
+        ):
             mock_provider = MagicMock()
             mock_provider.get_last_date.return_value = None
             mock_chain.return_value = mock_provider
@@ -477,6 +491,7 @@ class TestBuildOosTableMocked:
 # =============================================================================
 # write_table_with_marker
 # =============================================================================
+
 
 class TestWriteTableWithMarker:
     """Tests for artifact marker write alongside table JSON."""
@@ -531,8 +546,10 @@ class TestWriteTableWithMarker:
     def test_custom_source_tag(self, tmp_path):
         dest = tmp_path / "v1_2026-03-01.json"
         write_table_with_marker(
-            self._sample_table(), dest,
-            as_of_date="2026-03-01", source="rebuilt_in_run",
+            self._sample_table(),
+            dest,
+            as_of_date="2026-03-01",
+            source="rebuilt_in_run",
         )
         marker = json.loads(dest.with_suffix(".artifact.json").read_text())
         assert marker["source"] == "rebuilt_in_run"
@@ -545,6 +562,7 @@ class TestWriteTableWithMarker:
     def test_validated_by_check_artifact_marker(self, tmp_path):
         """Marker written by write_table_with_marker passes _check_artifact_marker."""
         from run_screen import _check_artifact_marker
+
         dest = tmp_path / "v1_2026-03-01.json"
         write_table_with_marker(self._sample_table(), dest, as_of_date="2026-03-01")
         present, valid, data = _check_artifact_marker(dest)
@@ -554,10 +572,13 @@ class TestWriteTableWithMarker:
     def test_rebuilt_in_run_gets_artifact_source(self, tmp_path, monkeypatch):
         """When _resolve_alpha_table_path rebuilds, the marker lets reload detect 'artifact'."""
         from run_screen import _check_artifact_marker
+
         dest = tmp_path / "v1_2026-03-01.json"
         write_table_with_marker(
-            self._sample_table(), dest,
-            as_of_date="2026-03-01", source="rebuilt_in_run",
+            self._sample_table(),
+            dest,
+            as_of_date="2026-03-01",
+            source="rebuilt_in_run",
         )
         # On next load, _check_artifact_marker will find valid marker
         present, valid, _ = _check_artifact_marker(dest)

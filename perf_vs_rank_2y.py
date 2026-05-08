@@ -174,14 +174,16 @@ def main():
             missing_end += 1
             continue
         ret = (p_end - p_start) / p_start
-        results.append({
-            "ticker": ticker,
-            "composite_rank": r["composite_rank"],
-            "composite_score": r["composite_score"],
-            "price_start": round(p_start, 4),
-            "price_end": round(p_end, 4),
-            "return_2y": round(ret, 4),
-        })
+        results.append(
+            {
+                "ticker": ticker,
+                "composite_rank": r["composite_rank"],
+                "composite_score": r["composite_score"],
+                "price_start": round(p_start, 4),
+                "price_end": round(p_end, 4),
+                "return_2y": round(ret, 4),
+            }
+        )
 
     print(f"\nReturn coverage: {len(results)}/{len(ranks)} tickers")
     if missing_start:
@@ -240,15 +242,19 @@ def main():
         rank_lo = chunk[0]["composite_rank"]
         rank_hi = chunk[-1]["composite_rank"]
 
-        decile_stats.append({
-            "decile": d + 1,
-            "rank_range": f"{rank_lo}-{rank_hi}",
-            "n": len(chunk),
-            "avg_return": round(avg_ret, 4),
-            "median_return": round(median_ret, 4),
-            "win_rate": round(win_rate, 4),
-        })
-        print(f"D{d+1:<7} {rank_lo:>3}-{rank_hi:<10} {len(chunk):<5} {avg_ret:>+10.2%}   {median_ret:>+10.2%}   {win_rate:>8.1%}")
+        decile_stats.append(
+            {
+                "decile": d + 1,
+                "rank_range": f"{rank_lo}-{rank_hi}",
+                "n": len(chunk),
+                "avg_return": round(avg_ret, 4),
+                "median_return": round(median_ret, 4),
+                "win_rate": round(win_rate, 4),
+            }
+        )
+        print(
+            f"D{d+1:<7} {rank_lo:>3}-{rank_hi:<10} {len(chunk):<5} {avg_ret:>+10.2%}   {median_ret:>+10.2%}   {win_rate:>8.1%}"
+        )
 
     # Top-1 decile vs bottom-1 decile spread
     d1_avg = decile_stats[0]["avg_return"]
@@ -290,11 +296,19 @@ def main():
     if args.out_csv:
         results_sorted = sorted(results, key=lambda r: r["composite_rank"])
         with open(args.out_csv, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=[
-                "ticker", "composite_rank", "composite_score",
-                "price_start", "price_end", "return_2y",
-                "return_rank_2y", "rank_delta",
-            ])
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "ticker",
+                    "composite_rank",
+                    "composite_score",
+                    "price_start",
+                    "price_end",
+                    "return_2y",
+                    "return_rank_2y",
+                    "rank_delta",
+                ],
+            )
             writer.writeheader()
             writer.writerows(results_sorted)
         print(f"\nWrote per-ticker results to {args.out_csv}")

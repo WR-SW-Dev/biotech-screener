@@ -34,15 +34,16 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 Created: 2026-01-18
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Callable, Set, TypeVar, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, TypeVar, Union
 
 # Type variable for coalesce function
 T = TypeVar("T")
@@ -101,8 +102,10 @@ V3_PRODUCTION_WEIGHTS: Dict[str, Decimal] = {
 # ENUMS
 # =============================================================================
 
+
 class OptimizationMethod(str, Enum):
     """Weight optimization methods."""
+
     SHARPE_RATIO = "sharpe_ratio"
     IC_WEIGHTED = "ic_weighted"
     EQUAL_WEIGHT = "equal_weight"
@@ -112,6 +115,7 @@ class OptimizationMethod(str, Enum):
 
 class InteractionType(str, Enum):
     """Types of factor interactions."""
+
     SYNERGY = "synergy"  # Factors reinforce each other
     CONFLICT = "conflict"  # Factors work against each other
     AMPLIFICATION = "amplification"  # One factor amplifies another
@@ -120,6 +124,7 @@ class InteractionType(str, Enum):
 
 class RankingMethod(str, Enum):
     """Ensemble ranking methodologies."""
+
     COMPOSITE = "composite"  # Weighted factor combination
     MOMENTUM = "momentum"  # Pure momentum + institutional
     VALUE = "value"  # Financials + catalyst PoS
@@ -130,9 +135,11 @@ class RankingMethod(str, Enum):
 # DATACLASSES
 # =============================================================================
 
+
 @dataclass
 class SharpeOptimizationResult:
     """Result of Sharpe-ratio weight optimization."""
+
     optimized_weights: Dict[str, Decimal]
     base_weights: Dict[str, Decimal]
     historical_sharpe: Decimal
@@ -155,6 +162,7 @@ class SharpeOptimizationResult:
 @dataclass
 class InteractionEffect:
     """A single interaction effect between factors."""
+
     name: str
     interaction_type: InteractionType
     factors_involved: List[str]
@@ -167,6 +175,7 @@ class InteractionEffect:
 @dataclass
 class InteractionEffectsResult:
     """Aggregated interaction effects for a ticker."""
+
     ticker: str
     effects: List[InteractionEffect]
     total_adjustment: Decimal
@@ -179,6 +188,7 @@ class InteractionEffectsResult:
 @dataclass
 class EnsembleRank:
     """Ensemble ranking result for a ticker."""
+
     ticker: str
 
     # Individual method ranks
@@ -201,6 +211,7 @@ class EnsembleRank:
 @dataclass
 class IntelligentGovernanceResult:
     """Complete result from the intelligent governance layer."""
+
     ticker: str
 
     # Optimized scoring
@@ -228,10 +239,8 @@ class IntelligentGovernanceResult:
 # HELPER FUNCTIONS
 # =============================================================================
 
-def _to_decimal(
-    value: Union[Decimal, int, float, str, None],
-    default: Optional[Decimal] = None
-) -> Optional[Decimal]:
+
+def _to_decimal(value: Union[Decimal, int, float, str, None], default: Optional[Decimal] = None) -> Optional[Decimal]:
     """Convert various types to Decimal with safe handling."""
     if value is None:
         return default
@@ -294,6 +303,7 @@ def _normalize_weights(weights: Dict[str, Decimal]) -> Dict[str, Decimal]:
 
 def _compute_audit_hash(data: Dict[str, Union[str, int, float, Dict[str, str], None]]) -> str:
     """Compute deterministic audit hash."""
+
     def serialize(obj: Union[Decimal, date, Enum]) -> str:
         if isinstance(obj, Decimal):
             return str(obj)
@@ -310,6 +320,7 @@ def _compute_audit_hash(data: Dict[str, Union[str, int, float, Dict[str, str], N
 # =============================================================================
 # SHARPE-RATIO WEIGHT OPTIMIZER
 # =============================================================================
+
 
 class SharpeWeightOptimizer:
     """
@@ -379,15 +390,11 @@ class SharpeWeightOptimizer:
         components = list(base_weights.keys())
 
         # Validate data sufficiency
-        valid_periods = self._count_valid_periods(
-            historical_scores, forward_returns, as_of_date, lookback_months
-        )
+        valid_periods = self._count_valid_periods(historical_scores, forward_returns, as_of_date, lookback_months)
 
         if valid_periods < self.min_periods:
             return self._fallback_result(
-                base_weights,
-                reason=f"insufficient_periods_{valid_periods}",
-                training_periods=valid_periods
+                base_weights, reason=f"insufficient_periods_{valid_periods}", training_periods=valid_periods
             )
 
         # Build period-by-period data matrix
@@ -396,27 +403,17 @@ class SharpeWeightOptimizer:
         )
 
         if not period_data:
-            return self._fallback_result(
-                base_weights,
-                reason="no_valid_period_data",
-                training_periods=0
-            )
+            return self._fallback_result(base_weights, reason="no_valid_period_data", training_periods=0)
 
         # Coordinate descent optimization
-        optimized_weights, sharpe, contributions = self._coordinate_descent(
-            period_data, components, base_weights
-        )
+        optimized_weights, sharpe, contributions = self._coordinate_descent(period_data, components, base_weights)
 
         # Apply shrinkage toward base weights
-        shrunk_weights = self._apply_shrinkage(
-            optimized_weights, base_weights, self.shrinkage_lambda
-        )
+        shrunk_weights = self._apply_shrinkage(optimized_weights, base_weights, self.shrinkage_lambda)
 
         # Apply smoothing toward previous weights
         if prev_weights:
-            smoothed_weights = self._apply_smoothing(
-                shrunk_weights, prev_weights, self.smooth_gamma
-            )
+            smoothed_weights = self._apply_smoothing(shrunk_weights, prev_weights, self.smooth_gamma)
             smoothing_applied = self.smooth_gamma
         else:
             smoothed_weights = shrunk_weights
@@ -432,9 +429,7 @@ class SharpeWeightOptimizer:
         l1_change = _compute_l1_distance(final_weights, base_weights)
 
         # Compute confidence based on sample size and optimization quality
-        confidence = self._compute_confidence(
-            valid_periods, sharpe, l1_change
-        )
+        confidence = self._compute_confidence(valid_periods, sharpe, l1_change)
 
         # Build provenance
         provenance = {
@@ -536,27 +531,33 @@ class SharpeWeightOptimizer:
                 # Extract component scores (use _coalesce to avoid 0-as-falsy bug)
                 comp_scores = {}
                 for comp in components:
-                    score = _to_decimal(_coalesce(
-                        rec.get(f"{comp}_normalized"),
-                        rec.get(comp),
-                        rec.get(f"{comp}_score"),
-                    ))
+                    score = _to_decimal(
+                        _coalesce(
+                            rec.get(f"{comp}_normalized"),
+                            rec.get(comp),
+                            rec.get(f"{comp}_score"),
+                        )
+                    )
                     if score is not None:
                         comp_scores[comp] = score
 
                 if len(comp_scores) >= len(components) * 0.5:  # At least 50% coverage
-                    period_scores.append({
-                        "ticker": ticker,
-                        "scores": comp_scores,
-                    })
+                    period_scores.append(
+                        {
+                            "ticker": ticker,
+                            "scores": comp_scores,
+                        }
+                    )
                     period_returns.append(forward_returns[ret_key])
 
             if len(period_scores) >= 10:  # Minimum cross-section
-                period_data.append({
-                    "date": score_date,
-                    "scores": period_scores,
-                    "returns": period_returns,
-                })
+                period_data.append(
+                    {
+                        "date": score_date,
+                        "scores": period_scores,
+                        "returns": period_returns,
+                    }
+                )
 
         return period_data
 
@@ -831,6 +832,7 @@ class SharpeWeightOptimizer:
 # BUSINESS LOGIC INTERACTION EFFECTS
 # =============================================================================
 
+
 class InteractionEffectsEngine:
     """
     Non-linear interaction effects with explicit business logic.
@@ -895,26 +897,24 @@ class InteractionEffectsEngine:
         # =====================================================================
         if institutional > Decimal("70") and days_to_catalyst is not None:
             if 0 < days_to_catalyst <= 60:  # Within 60 days
-                proximity_factor = self._smooth_ramp(
-                    Decimal(60 - days_to_catalyst), Decimal("0"), Decimal("60")
-                )
-                inst_factor = self._smooth_ramp(
-                    institutional, Decimal("60"), Decimal("80")
-                )
+                proximity_factor = self._smooth_ramp(Decimal(60 - days_to_catalyst), Decimal("0"), Decimal("60"))
+                inst_factor = self._smooth_ramp(institutional, Decimal("60"), Decimal("80"))
                 adjustment = proximity_factor * inst_factor * Decimal("1.5")
 
-                effects.append(InteractionEffect(
-                    name="institutional_catalyst_amplification",
-                    interaction_type=InteractionType.AMPLIFICATION,
-                    factors_involved=["institutional", "catalyst"],
-                    adjustment=_quantize_score(adjustment),
-                    triggered=adjustment > Decimal("0.1"),
-                    trigger_conditions={
-                        "institutional": f">{institutional}",
-                        "days_to_catalyst": f"{days_to_catalyst}d"
-                    },
-                    business_logic="Smart money positioning for imminent catalyst event"
-                ))
+                effects.append(
+                    InteractionEffect(
+                        name="institutional_catalyst_amplification",
+                        interaction_type=InteractionType.AMPLIFICATION,
+                        factors_involved=["institutional", "catalyst"],
+                        adjustment=_quantize_score(adjustment),
+                        triggered=adjustment > Decimal("0.1"),
+                        trigger_conditions={
+                            "institutional": f">{institutional}",
+                            "days_to_catalyst": f"{days_to_catalyst}d",
+                        },
+                        business_logic="Smart money positioning for imminent catalyst event",
+                    )
+                )
                 if adjustment > Decimal("0.5"):
                     flags.append("institutional_catalyst_synergy")
 
@@ -922,26 +922,21 @@ class InteractionEffectsEngine:
         # SYNERGY 2: Clinical + Runway = Quality Conviction
         # =====================================================================
         if runway_months is not None and clinical > Decimal("65") and runway_months > Decimal("18"):
-            clinical_factor = self._smooth_ramp(
-                clinical, Decimal("60"), Decimal("80")
-            )
-            runway_factor = self._smooth_ramp(
-                runway_months, Decimal("12"), Decimal("36")
-            )
+            clinical_factor = self._smooth_ramp(clinical, Decimal("60"), Decimal("80"))
+            runway_factor = self._smooth_ramp(runway_months, Decimal("12"), Decimal("36"))
             adjustment = clinical_factor * runway_factor * Decimal("1.2")
 
-            effects.append(InteractionEffect(
-                name="clinical_runway_conviction",
-                interaction_type=InteractionType.SYNERGY,
-                factors_involved=["clinical", "runway_months"],
-                adjustment=_quantize_score(adjustment),
-                triggered=adjustment > Decimal("0.1"),
-                trigger_conditions={
-                    "clinical": f">{clinical}",
-                    "runway_months": f"{runway_months}mo"
-                },
-                business_logic="Strong clinical progress with runway to execute"
-            ))
+            effects.append(
+                InteractionEffect(
+                    name="clinical_runway_conviction",
+                    interaction_type=InteractionType.SYNERGY,
+                    factors_involved=["clinical", "runway_months"],
+                    adjustment=_quantize_score(adjustment),
+                    triggered=adjustment > Decimal("0.1"),
+                    trigger_conditions={"clinical": f">{clinical}", "runway_months": f"{runway_months}mo"},
+                    business_logic="Strong clinical progress with runway to execute",
+                )
+            )
             if adjustment > Decimal("0.5"):
                 flags.append("quality_conviction")
 
@@ -950,24 +945,21 @@ class InteractionEffectsEngine:
         # =====================================================================
         inst_buying = metadata.get("institutional_net_change", Decimal("0"))
         if momentum > Decimal("60") and inst_buying > Decimal("0"):
-            momentum_factor = self._smooth_ramp(
-                momentum, Decimal("55"), Decimal("75")
-            )
+            momentum_factor = self._smooth_ramp(momentum, Decimal("55"), Decimal("75"))
             buying_factor = min(inst_buying / Decimal("10"), Decimal("1.0"))
             adjustment = momentum_factor * buying_factor * Decimal("1.0")
 
-            effects.append(InteractionEffect(
-                name="momentum_institutional_confirmation",
-                interaction_type=InteractionType.SYNERGY,
-                factors_involved=["momentum", "institutional"],
-                adjustment=_quantize_score(adjustment),
-                triggered=adjustment > Decimal("0.1"),
-                trigger_conditions={
-                    "momentum": f">{momentum}",
-                    "inst_net_change": f"+{inst_buying}%"
-                },
-                business_logic="Price momentum confirmed by smart money accumulation"
-            ))
+            effects.append(
+                InteractionEffect(
+                    name="momentum_institutional_confirmation",
+                    interaction_type=InteractionType.SYNERGY,
+                    factors_involved=["momentum", "institutional"],
+                    adjustment=_quantize_score(adjustment),
+                    triggered=adjustment > Decimal("0.1"),
+                    trigger_conditions={"momentum": f">{momentum}", "inst_net_change": f"+{inst_buying}%"},
+                    business_logic="Price momentum confirmed by smart money accumulation",
+                )
+            )
             if adjustment > Decimal("0.5"):
                 flags.append("momentum_confirmed")
 
@@ -975,26 +967,21 @@ class InteractionEffectsEngine:
         # CONFLICT 1: Momentum + Weak Fundamentals = Fade Signal
         # =====================================================================
         if momentum > Decimal("70") and financial < Decimal("40"):
-            momentum_excess = self._smooth_ramp(
-                momentum, Decimal("65"), Decimal("85")
-            )
-            financial_weakness = self._smooth_ramp_inverted(
-                financial, Decimal("30"), Decimal("50")
-            )
+            momentum_excess = self._smooth_ramp(momentum, Decimal("65"), Decimal("85"))
+            financial_weakness = self._smooth_ramp_inverted(financial, Decimal("30"), Decimal("50"))
             adjustment = -(momentum_excess * financial_weakness * Decimal("1.5"))
 
-            effects.append(InteractionEffect(
-                name="momentum_fundamental_conflict",
-                interaction_type=InteractionType.CONFLICT,
-                factors_involved=["momentum", "financial"],
-                adjustment=_quantize_score(adjustment),
-                triggered=abs(adjustment) > Decimal("0.1"),
-                trigger_conditions={
-                    "momentum": f">{momentum}",
-                    "financial": f"<{financial}"
-                },
-                business_logic="Strong momentum without fundamental support - mean reversion risk"
-            ))
+            effects.append(
+                InteractionEffect(
+                    name="momentum_fundamental_conflict",
+                    interaction_type=InteractionType.CONFLICT,
+                    factors_involved=["momentum", "financial"],
+                    adjustment=_quantize_score(adjustment),
+                    triggered=abs(adjustment) > Decimal("0.1"),
+                    trigger_conditions={"momentum": f">{momentum}", "financial": f"<{financial}"},
+                    business_logic="Strong momentum without fundamental support - mean reversion risk",
+                )
+            )
             if adjustment < Decimal("-0.5"):
                 flags.append("fade_momentum_signal")
 
@@ -1002,26 +989,21 @@ class InteractionEffectsEngine:
         # CONFLICT 2: Institutional + Deteriorating Financials = Warning
         # =====================================================================
         if institutional > Decimal("65") and financial < Decimal("35"):
-            inst_factor = self._smooth_ramp(
-                institutional, Decimal("60"), Decimal("80")
-            )
-            financial_distress = self._smooth_ramp_inverted(
-                financial, Decimal("25"), Decimal("45")
-            )
+            inst_factor = self._smooth_ramp(institutional, Decimal("60"), Decimal("80"))
+            financial_distress = self._smooth_ramp_inverted(financial, Decimal("25"), Decimal("45"))
             adjustment = -(inst_factor * financial_distress * Decimal("1.2"))
 
-            effects.append(InteractionEffect(
-                name="institutional_financial_warning",
-                interaction_type=InteractionType.CONFLICT,
-                factors_involved=["institutional", "financial"],
-                adjustment=_quantize_score(adjustment),
-                triggered=abs(adjustment) > Decimal("0.1"),
-                trigger_conditions={
-                    "institutional": f">{institutional}",
-                    "financial": f"<{financial}"
-                },
-                business_logic="High institutional ownership with deteriorating runway - trapped capital risk"
-            ))
+            effects.append(
+                InteractionEffect(
+                    name="institutional_financial_warning",
+                    interaction_type=InteractionType.CONFLICT,
+                    factors_involved=["institutional", "financial"],
+                    adjustment=_quantize_score(adjustment),
+                    triggered=abs(adjustment) > Decimal("0.1"),
+                    trigger_conditions={"institutional": f">{institutional}", "financial": f"<{financial}"},
+                    business_logic="High institutional ownership with deteriorating runway - trapped capital risk",
+                )
+            )
             if adjustment < Decimal("-0.5"):
                 flags.append("institutional_trapped_warning")
 
@@ -1030,26 +1012,24 @@ class InteractionEffectsEngine:
         # =====================================================================
         if days_to_catalyst is not None and short_interest_pct > Decimal("15"):
             if days_to_catalyst <= 30:
-                proximity = self._smooth_ramp(
-                    Decimal(30 - days_to_catalyst), Decimal("0"), Decimal("30")
-                )
-                short_factor = self._smooth_ramp(
-                    short_interest_pct, Decimal("10"), Decimal("30")
-                )
+                proximity = self._smooth_ramp(Decimal(30 - days_to_catalyst), Decimal("0"), Decimal("30"))
+                short_factor = self._smooth_ramp(short_interest_pct, Decimal("10"), Decimal("30"))
                 adjustment = -(proximity * short_factor * Decimal("1.0"))
 
-                effects.append(InteractionEffect(
-                    name="catalyst_short_interest_risk",
-                    interaction_type=InteractionType.CONFLICT,
-                    factors_involved=["catalyst", "short_interest"],
-                    adjustment=_quantize_score(adjustment),
-                    triggered=abs(adjustment) > Decimal("0.1"),
-                    trigger_conditions={
-                        "days_to_catalyst": f"{days_to_catalyst}d",
-                        "short_interest": f"{short_interest_pct}%"
-                    },
-                    business_logic="Near-term catalyst with crowded short positioning - binary outcome risk"
-                ))
+                effects.append(
+                    InteractionEffect(
+                        name="catalyst_short_interest_risk",
+                        interaction_type=InteractionType.CONFLICT,
+                        factors_involved=["catalyst", "short_interest"],
+                        adjustment=_quantize_score(adjustment),
+                        triggered=abs(adjustment) > Decimal("0.1"),
+                        trigger_conditions={
+                            "days_to_catalyst": f"{days_to_catalyst}d",
+                            "short_interest": f"{short_interest_pct}%",
+                        },
+                        business_logic="Near-term catalyst with crowded short positioning - binary outcome risk",
+                    )
+                )
                 if adjustment < Decimal("-0.5"):
                     flags.append("binary_event_risk")
 
@@ -1063,18 +1043,17 @@ class InteractionEffectsEngine:
             dampening = vol_excess * catalyst_excess * Decimal("0.20") * catalyst
             adjustment = -dampening
 
-            effects.append(InteractionEffect(
-                name="volatility_catalyst_dampening",
-                interaction_type=InteractionType.DAMPENING,
-                factors_involved=["volatility", "catalyst"],
-                adjustment=_quantize_score(adjustment),
-                triggered=abs(adjustment) > Decimal("0.1"),
-                trigger_conditions={
-                    "annualized_vol": f"{vol:.0%}",
-                    "catalyst": f"{catalyst}"
-                },
-                business_logic="High volatility reduces reliability of catalyst signal"
-            ))
+            effects.append(
+                InteractionEffect(
+                    name="volatility_catalyst_dampening",
+                    interaction_type=InteractionType.DAMPENING,
+                    factors_involved=["volatility", "catalyst"],
+                    adjustment=_quantize_score(adjustment),
+                    triggered=abs(adjustment) > Decimal("0.1"),
+                    trigger_conditions={"annualized_vol": f"{vol:.0%}", "catalyst": f"{catalyst}"},
+                    business_logic="High volatility reduces reliability of catalyst signal",
+                )
+            )
             if abs(adjustment) > Decimal("0.5"):
                 flags.append("vol_dampened_catalyst")
 
@@ -1087,14 +1066,20 @@ class InteractionEffectsEngine:
 
         # Compute net synergy vs conflict
         net_synergy = sum(
-            (e.adjustment for e in triggered_effects
-             if e.interaction_type in (InteractionType.SYNERGY, InteractionType.AMPLIFICATION)),
-            Decimal("0")
+            (
+                e.adjustment
+                for e in triggered_effects
+                if e.interaction_type in (InteractionType.SYNERGY, InteractionType.AMPLIFICATION)
+            ),
+            Decimal("0"),
         )
         net_conflict = sum(
-            (e.adjustment for e in triggered_effects
-             if e.interaction_type in (InteractionType.CONFLICT, InteractionType.DAMPENING)),
-            Decimal("0")
+            (
+                e.adjustment
+                for e in triggered_effects
+                if e.interaction_type in (InteractionType.CONFLICT, InteractionType.DAMPENING)
+            ),
+            Decimal("0"),
         )
 
         # Confidence based on number and agreement of effects
@@ -1115,9 +1100,7 @@ class InteractionEffectsEngine:
             confidence=confidence,
         )
 
-    def _smooth_ramp(
-        self, value: Decimal, low: Decimal, high: Decimal
-    ) -> Decimal:
+    def _smooth_ramp(self, value: Decimal, low: Decimal, high: Decimal) -> Decimal:
         """Compute smooth ramp from 0 at low to 1 at high."""
         if value <= low:
             return Decimal("0")
@@ -1125,9 +1108,7 @@ class InteractionEffectsEngine:
             return Decimal("1")
         return (value - low) / (high - low)
 
-    def _smooth_ramp_inverted(
-        self, value: Decimal, low: Decimal, high: Decimal
-    ) -> Decimal:
+    def _smooth_ramp_inverted(self, value: Decimal, low: Decimal, high: Decimal) -> Decimal:
         """Compute inverted smooth ramp from 1 at low to 0 at high."""
         if value <= low:
             return Decimal("1")
@@ -1139,6 +1120,7 @@ class InteractionEffectsEngine:
 # =============================================================================
 # ENSEMBLE RANKING
 # =============================================================================
+
 
 class EnsembleRanker:
     """
@@ -1203,9 +1185,9 @@ class EnsembleRanker:
             v_rank = value_ranks[i]
 
             ensemble_rank = (
-                Decimal(c_rank) * self.composite_weight +
-                Decimal(m_rank) * self.momentum_weight +
-                Decimal(v_rank) * self.value_weight
+                Decimal(c_rank) * self.composite_weight
+                + Decimal(m_rank) * self.momentum_weight
+                + Decimal(v_rank) * self.value_weight
             )
 
             # Compute agreement metrics
@@ -1220,21 +1202,23 @@ class EnsembleRanker:
             agreement = Decimal("1") - (std_rank / Decimal(len(tickers)))
             agreement = _clamp(agreement, Decimal("0"), Decimal("1"))
 
-            results.append(EnsembleRank(
-                ticker=ticker,
-                composite_rank=c_rank,
-                momentum_rank=m_rank,
-                value_rank=v_rank,
-                ensemble_rank=_quantize_score(ensemble_rank),
-                final_rank=0,  # Will be assigned after sorting
-                rank_agreement=_quantize_weight(agreement),
-                max_rank_divergence=max_div,
-                method_contributions={
-                    "composite": self.composite_weight,
-                    "momentum": self.momentum_weight,
-                    "value": self.value_weight,
-                },
-            ))
+            results.append(
+                EnsembleRank(
+                    ticker=ticker,
+                    composite_rank=c_rank,
+                    momentum_rank=m_rank,
+                    value_rank=v_rank,
+                    ensemble_rank=_quantize_score(ensemble_rank),
+                    final_rank=0,  # Will be assigned after sorting
+                    rank_agreement=_quantize_weight(agreement),
+                    max_rank_divergence=max_div,
+                    method_contributions={
+                        "composite": self.composite_weight,
+                        "momentum": self.momentum_weight,
+                        "value": self.value_weight,
+                    },
+                )
+            )
 
         # Sort by ensemble rank and assign final ranks
         results.sort(key=lambda x: (x.ensemble_rank, x.ticker))
@@ -1243,9 +1227,7 @@ class EnsembleRanker:
 
         return results
 
-    def _compute_composite_scores(
-        self, ticker_data: List[Dict[str, Any]]
-    ) -> List[Decimal]:
+    def _compute_composite_scores(self, ticker_data: List[Dict[str, Any]]) -> List[Decimal]:
         """Compute standard composite scores."""
         scores = []
         for d in ticker_data:
@@ -1258,9 +1240,7 @@ class EnsembleRanker:
             scores.append(score)
         return scores
 
-    def _compute_momentum_scores(
-        self, ticker_data: List[Dict[str, Any]]
-    ) -> List[Decimal]:
+    def _compute_momentum_scores(self, ticker_data: List[Dict[str, Any]]) -> List[Decimal]:
         """Compute momentum-focused scores."""
         scores = []
         for d in ticker_data:
@@ -1272,9 +1252,7 @@ class EnsembleRanker:
             scores.append(score)
         return scores
 
-    def _compute_value_scores(
-        self, ticker_data: List[Dict[str, Any]]
-    ) -> List[Decimal]:
+    def _compute_value_scores(self, ticker_data: List[Dict[str, Any]]) -> List[Decimal]:
         """Compute value-focused scores."""
         scores = []
         for d in ticker_data:
@@ -1306,6 +1284,7 @@ class EnsembleRanker:
 # =============================================================================
 # REGIME-ADAPTIVE WEIGHT ORCHESTRATOR
 # =============================================================================
+
 
 class RegimeAdaptiveOrchestrator:
     """
@@ -1444,6 +1423,7 @@ class RegimeAdaptiveOrchestrator:
 # MAIN ORCHESTRATOR
 # =============================================================================
 
+
 class IntelligentGovernanceLayer:
     """
     Main orchestrator for the intelligent governance layer.
@@ -1559,8 +1539,7 @@ class IntelligentGovernanceLayer:
         governance_flags: List[str] = []
 
         # Step 1: Sharpe weight optimization
-        if (self.enable_sharpe_optimization and
-            historical_scores and forward_returns and as_of_date):
+        if self.enable_sharpe_optimization and historical_scores and forward_returns and as_of_date:
             sharpe_result = self.sharpe_optimizer.optimize(
                 historical_scores=historical_scores,
                 forward_returns=forward_returns,
@@ -1571,9 +1550,7 @@ class IntelligentGovernanceLayer:
             if sharpe_result.optimization_method == OptimizationMethod.SHARPE_RATIO:
                 governance_flags.append("sharpe_optimized")
         else:
-            sharpe_result = self.sharpe_optimizer._fallback_result(
-                base_weights, "optimization_disabled", 0
-            )
+            sharpe_result = self.sharpe_optimizer._fallback_result(base_weights, "optimization_disabled", 0)
 
         # Step 2: Regime-adaptive weight orchestration
         if self.enable_regime_adaptation:
@@ -1690,8 +1667,7 @@ class IntelligentGovernanceLayer:
         # Compute individual results
         for data in ticker_data:
             ticker = data.get("ticker", "")
-            scores = {k: _to_decimal(v, Decimal("50")) for k, v in data.items()
-                     if k not in ("ticker", "metadata")}
+            scores = {k: _to_decimal(v, Decimal("50")) for k, v in data.items() if k not in ("ticker", "metadata")}
             metadata = data.get("metadata", {})
 
             result = self.compute(
@@ -1730,6 +1706,7 @@ class IntelligentGovernanceLayer:
 # DEMONSTRATION
 # =============================================================================
 
+
 def demonstration() -> None:
     """Demonstrate the intelligent governance layer."""
     print("=" * 70)
@@ -1757,7 +1734,7 @@ def demonstration() -> None:
                 "runway_months": Decimal("30"),
                 "days_to_catalyst": 25,
                 "short_interest_pct": Decimal("8"),
-            }
+            },
         },
         {
             "ticker": "BETA",
@@ -1769,7 +1746,7 @@ def demonstration() -> None:
             "metadata": {
                 "runway_months": Decimal("8"),
                 "short_interest_pct": Decimal("22"),
-            }
+            },
         },
         {
             "ticker": "GAMMA",
@@ -1781,7 +1758,7 @@ def demonstration() -> None:
             "metadata": {
                 "runway_months": Decimal("36"),
                 "institutional_net_change": Decimal("5"),
-            }
+            },
         },
     ]
 
@@ -1826,10 +1803,12 @@ def demonstration() -> None:
     print("Ensemble Rankings (Final)")
     print("-" * 70)
     for rank in sorted(ensemble_ranks, key=lambda x: x.final_rank):
-        print(f"#{rank.final_rank} {rank.ticker}: "
-              f"Ensemble={rank.ensemble_rank:.2f}, "
-              f"Agreement={rank.rank_agreement:.2f}, "
-              f"MaxDiv={rank.max_rank_divergence}")
+        print(
+            f"#{rank.final_rank} {rank.ticker}: "
+            f"Ensemble={rank.ensemble_rank:.2f}, "
+            f"Agreement={rank.rank_agreement:.2f}, "
+            f"MaxDiv={rank.max_rank_divergence}"
+        )
 
     print()
 

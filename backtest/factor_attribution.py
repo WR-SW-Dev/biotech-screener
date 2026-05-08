@@ -21,12 +21,12 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from statistics import mean, median
 from typing import Any, Callable, Dict, List, Optional, Tuple
-import logging
 
 __version__ = "1.0.0"
 
@@ -39,6 +39,7 @@ ReturnProvider = Callable[[str, str, str], Optional[str]]
 @dataclass
 class FactorIC:
     """Information Coefficient for a single factor."""
+
     factor_name: str
     ic_value: Optional[Decimal]
     t_statistic: Optional[Decimal]
@@ -60,6 +61,7 @@ class FactorIC:
 @dataclass
 class FactorContribution:
     """Marginal contribution of a factor to overall IC."""
+
     factor_name: str
     standalone_ic: Optional[Decimal]
     marginal_ic: Optional[Decimal]  # Improvement over baseline
@@ -79,6 +81,7 @@ class FactorContribution:
 @dataclass
 class DecayPoint:
     """IC at a specific signal age."""
+
     age_days: int
     ic_value: Optional[Decimal]
     n_observations: int
@@ -87,6 +90,7 @@ class DecayPoint:
 @dataclass
 class FactorDecayCurve:
     """IC decay over signal age."""
+
     factor_name: str
     decay_points: List[DecayPoint]
     half_life_days: Optional[int]  # Days until IC halves
@@ -98,8 +102,7 @@ class FactorDecayCurve:
             "half_life_days": self.half_life_days,
             "decay_rate": str(self.decay_rate) if self.decay_rate else None,
             "decay_points": [
-                {"age_days": p.age_days, "ic": str(p.ic_value) if p.ic_value else None}
-                for p in self.decay_points
+                {"age_days": p.age_days, "ic": str(p.ic_value) if p.ic_value else None} for p in self.decay_points
             ],
         }
 
@@ -107,6 +110,7 @@ class FactorDecayCurve:
 @dataclass
 class RegimePerformance:
     """Performance metrics for a specific regime."""
+
     regime: str
     ic_mean: Optional[Decimal]
     ic_median: Optional[Decimal]
@@ -128,6 +132,7 @@ class RegimePerformance:
 @dataclass
 class FactorAttributionResult:
     """Complete factor attribution analysis result."""
+
     as_of_date: str
     horizon: str
     factor_ics: Dict[str, FactorIC]
@@ -243,8 +248,9 @@ def compute_t_statistic(
         return None
 
     import math
+
     try:
-        t = ic_float * math.sqrt(n - 2) / math.sqrt(1 - ic_float ** 2)
+        t = ic_float * math.sqrt(n - 2) / math.sqrt(1 - ic_float**2)
         return _quantize(Decimal(str(t)), "0.01")
     except (ValueError, ZeroDivisionError):
         return None
@@ -376,8 +382,7 @@ class FactorAttributionEngine:
             )
 
         # Compute average IC of other factors
-        other_ics = [ic for name, ic in all_factor_ics.items()
-                     if name != factor_name and ic is not None]
+        other_ics = [ic for name, ic in all_factor_ics.items() if name != factor_name and ic is not None]
 
         if not other_ics:
             return FactorContribution(
@@ -447,24 +452,29 @@ class FactorAttributionEngine:
             ics = buckets[age]
             if ics:
                 avg_ic = _quantize(Decimal(str(mean([float(ic) for ic in ics]))))
-                decay_points.append(DecayPoint(
-                    age_days=age,
-                    ic_value=avg_ic,
-                    n_observations=len(ics),
-                ))
+                decay_points.append(
+                    DecayPoint(
+                        age_days=age,
+                        ic_value=avg_ic,
+                        n_observations=len(ics),
+                    )
+                )
             else:
-                decay_points.append(DecayPoint(
-                    age_days=age,
-                    ic_value=None,
-                    n_observations=0,
-                ))
+                decay_points.append(
+                    DecayPoint(
+                        age_days=age,
+                        ic_value=None,
+                        n_observations=0,
+                    )
+                )
 
         # Estimate half-life
         half_life = None
         decay_rate = None
 
-        valid_points = [(p.age_days, p.ic_value) for p in decay_points
-                        if p.ic_value is not None and p.ic_value > Decimal("0")]
+        valid_points = [
+            (p.age_days, p.ic_value) for p in decay_points if p.ic_value is not None and p.ic_value > Decimal("0")
+        ]
 
         if len(valid_points) >= 2:
             first_age, first_ic = valid_points[0]
@@ -473,6 +483,7 @@ class FactorAttributionEngine:
             if first_ic > last_ic and last_ic > Decimal("0"):
                 # Simple exponential decay estimate
                 import math
+
                 try:
                     # IC(t) = IC(0) * exp(-decay_rate * t)
                     # decay_rate = -ln(IC(t)/IC(0)) / t
@@ -588,8 +599,7 @@ class FactorAttributionEngine:
             )
 
         # Find best and worst factors
-        valid_ics = [(name, ic.ic_value) for name, ic in factor_ics.items()
-                     if ic.ic_value is not None]
+        valid_ics = [(name, ic.ic_value) for name, ic in factor_ics.items() if ic.ic_value is not None]
 
         if valid_ics:
             best_factor = max(valid_ics, key=lambda x: x[1])[0]
@@ -602,10 +612,15 @@ class FactorAttributionEngine:
         diagnostics = {
             "total_tickers_scored": len(composite_scores),
             "total_tickers_with_returns": len(returns),
-            "coverage_pct": str(_quantize(
-                Decimal(str(len(set(composite_scores.keys()) & set(returns.keys())) / max(1, len(composite_scores)))) * 100,
-                "0.1"
-            )),
+            "coverage_pct": str(
+                _quantize(
+                    Decimal(
+                        str(len(set(composite_scores.keys()) & set(returns.keys())) / max(1, len(composite_scores)))
+                    )
+                    * 100,
+                    "0.1",
+                )
+            ),
             "factors_analyzed": list(scores_by_factor.keys()),
             "regime": regime,
         }
@@ -645,9 +660,11 @@ if __name__ == "__main__":
 
     # Composite scores
     composite_scores = {
-        t: (clinical_scores[t] * Decimal("0.4") +
-            financial_scores[t] * Decimal("0.35") +
-            catalyst_scores[t] * Decimal("0.25"))
+        t: (
+            clinical_scores[t] * Decimal("0.4")
+            + financial_scores[t] * Decimal("0.35")
+            + catalyst_scores[t] * Decimal("0.25")
+        )
         for t in tickers
     }
 
@@ -676,4 +693,6 @@ if __name__ == "__main__":
 
     print("\nFactor Contributions:")
     for name, contrib in result.factor_contributions.items():
-        print(f"  {name}: standalone={contrib.standalone_ic}, marginal={contrib.marginal_ic}, additive={contrib.is_additive}")
+        print(
+            f"  {name}: standalone={contrib.standalone_ic}, marginal={contrib.marginal_ic}, additive={contrib.is_additive}"
+        )

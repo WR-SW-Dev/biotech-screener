@@ -51,6 +51,7 @@ def _serialize(result: dict) -> str:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def fresh_data_dir(tmp_path):
     """Copy MINI_DATA to an isolated tmp dir so side-effects don't leak."""
@@ -74,6 +75,7 @@ def pipeline_result(tmp_path_factory):
 # Class 1: Determinism
 # ---------------------------------------------------------------------------
 
+
 class TestDeterminism:
     """Pipeline must produce identical output for identical inputs."""
 
@@ -89,14 +91,13 @@ class TestDeterminism:
         hash_a = hashlib.sha256(_serialize(result_a).encode()).hexdigest()
         hash_b = hashlib.sha256(_serialize(result_b).encode()).hexdigest()
 
-        assert hash_a == hash_b, (
-            f"Non-deterministic output.\n  run 1: {hash_a}\n  run 2: {hash_b}"
-        )
+        assert hash_a == hash_b, f"Non-deterministic output.\n  run 1: {hash_a}\n  run 2: {hash_b}"
 
 
 # ---------------------------------------------------------------------------
 # Class 2: PIT Safety
 # ---------------------------------------------------------------------------
+
 
 def _inject_future_dates(data_dir: Path, future_date: str = "2026-02-01") -> None:
     """Patch trial records with future-dated metadata for PIT testing."""
@@ -132,9 +133,9 @@ class TestPITSafety:
         )
         assert result is not None
         catalyst_mode = result["run_metadata"]["catalyst_mode"]
-        assert catalyst_mode == "corporate_only_due_to_pit_violation", (
-            f"Expected degraded catalyst_mode, got: {catalyst_mode!r}"
-        )
+        assert (
+            catalyst_mode == "corporate_only_due_to_pit_violation"
+        ), f"Expected degraded catalyst_mode, got: {catalyst_mode!r}"
 
     def test_pit_degrade_catalyst_gated(self, fresh_data_dir):
         _inject_future_dates(fresh_data_dir)
@@ -146,9 +147,7 @@ class TestPITSafety:
         # Catalyst component should be gated across all tickers
         composite = result["module_5_composite"]
         gated = composite.get("gated_component_counts", {})
-        assert gated.get("catalyst", 0) > 0, (
-            "Expected catalyst to appear in gated_component_counts"
-        )
+        assert gated.get("catalyst", 0) > 0, "Expected catalyst to appear in gated_component_counts"
 
         # Every ranked security should have catalyst effective weight soft-gated
         # (significantly reduced from base weight of ~0.25 due to low confidence)
@@ -163,6 +162,7 @@ class TestPITSafety:
 # ---------------------------------------------------------------------------
 # Class 3: Output Contracts
 # ---------------------------------------------------------------------------
+
 
 class TestOutputContracts:
     """Validate the shape and invariants of pipeline output."""
@@ -182,9 +182,7 @@ class TestOutputContracts:
             "clinical_exemptions",
             "company_archetypes",
         }
-        assert expected.issubset(pipeline_result.keys()), (
-            f"Missing keys: {expected - pipeline_result.keys()}"
-        )
+        assert expected.issubset(pipeline_result.keys()), f"Missing keys: {expected - pipeline_result.keys()}"
 
     def test_run_metadata_keys(self, pipeline_result):
         meta = pipeline_result["run_metadata"]
@@ -208,9 +206,7 @@ class TestOutputContracts:
             "pit_violation_sources",
             "catalyst_mode",
         }
-        assert expected.issubset(meta.keys()), (
-            f"Missing run_metadata keys: {expected - meta.keys()}"
-        )
+        assert expected.issubset(meta.keys()), f"Missing run_metadata keys: {expected - meta.keys()}"
 
     # --- Module 5 ranked securities ---
 
@@ -231,10 +227,7 @@ class TestOutputContracts:
 
         for entry in ranked:
             for field, expected_type in required_fields.items():
-                assert field in entry, (
-                    f"Missing field '{field}' in ranked entry for "
-                    f"{entry.get('ticker', '???')}"
-                )
+                assert field in entry, f"Missing field '{field}' in ranked entry for " f"{entry.get('ticker', '???')}"
                 assert isinstance(entry[field], expected_type), (
                     f"Field '{field}' for {entry.get('ticker', '???')}: "
                     f"expected {expected_type.__name__}, "
@@ -245,9 +238,9 @@ class TestOutputContracts:
         ranked = pipeline_result["module_5_composite"]["ranked_securities"]
         for entry in ranked:
             score = Decimal(entry["composite_score"])
-            assert Decimal("0") <= score <= Decimal("100"), (
-                f"{entry['ticker']}: composite_score {score} out of [0, 100]"
-            )
+            assert (
+                Decimal("0") <= score <= Decimal("100")
+            ), f"{entry['ticker']}: composite_score {score} out of [0, 100]"
 
     # --- Summary ---
 
@@ -262,9 +255,7 @@ class TestOutputContracts:
             "catalyst_events",
             "severe_negatives",
         }
-        assert expected.issubset(summary.keys()), (
-            f"Missing summary keys: {expected - summary.keys()}"
-        )
+        assert expected.issubset(summary.keys()), f"Missing summary keys: {expected - summary.keys()}"
 
     # --- Diagnostic counts ---
 
@@ -277,6 +268,4 @@ class TestOutputContracts:
         ]
         for mod_key in modules_with_diagnostics:
             mod = pipeline_result[mod_key]
-            assert "diagnostic_counts" in mod, (
-                f"{mod_key} missing 'diagnostic_counts'"
-            )
+            assert "diagnostic_counts" in mod, f"{mod_key} missing 'diagnostic_counts'"

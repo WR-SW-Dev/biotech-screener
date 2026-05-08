@@ -1,4 +1,5 @@
 """Tests for cache_health sentinel (SEC 8-K / CTGov anomaly detection)."""
+
 from __future__ import annotations
 
 import json
@@ -10,15 +11,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cache_health import (
-    compute_cache_health,
-    load_prior_cache_health,
-    SEC8K_MIN_RATIO_VS_PRIOR,
     CTGOV_BAD_RATIO_HIGH,
     CTGOV_BAD_RATIO_LOW,
     CTGOV_WARN_RATIO_HIGH,
     CTGOV_WARN_RATIO_LOW,
+    SEC8K_MIN_RATIO_VS_PRIOR,
+    compute_cache_health,
+    load_prior_cache_health,
 )
-
 
 # =============================================================================
 # compute_cache_health — unit tests
@@ -50,7 +50,8 @@ class TestSec8kCollapse:
 
     def test_collapse_below_threshold(self):
         h = compute_cache_health(
-            sec8k_count=5, ctgov_count=1000,
+            sec8k_count=5,
+            ctgov_count=1000,
             prior_sec8k_count=100,
         )
         assert h["sec8k"]["status"] == "warning"
@@ -60,7 +61,8 @@ class TestSec8kCollapse:
     def test_moderate_drop_is_ok(self):
         """50% drop (0.50 > 0.30) should be ok."""
         h = compute_cache_health(
-            sec8k_count=50, ctgov_count=1000,
+            sec8k_count=50,
+            ctgov_count=1000,
             prior_sec8k_count=100,
         )
         assert h["sec8k"]["status"] == "ok"
@@ -68,7 +70,8 @@ class TestSec8kCollapse:
     def test_prior_zero_no_ratio(self):
         """Prior sec8k=0 should not produce a ratio (avoid div by zero)."""
         h = compute_cache_health(
-            sec8k_count=10, ctgov_count=1000,
+            sec8k_count=10,
+            ctgov_count=1000,
             prior_sec8k_count=0,
         )
         assert h["sec8k"]["status"] == "ok"
@@ -81,7 +84,8 @@ class TestCtgovBand:
     def test_extreme_jump_is_bad(self):
         """Ratio > 1.50 is bad."""
         h = compute_cache_health(
-            sec8k_count=100, ctgov_count=1600,
+            sec8k_count=100,
+            ctgov_count=1600,
             prior_ctgov_count=1000,
         )
         assert h["ctgov"]["status"] == "bad"
@@ -90,7 +94,8 @@ class TestCtgovBand:
     def test_extreme_drop_is_bad(self):
         """Ratio < 0.60 is bad."""
         h = compute_cache_health(
-            sec8k_count=100, ctgov_count=500,
+            sec8k_count=100,
+            ctgov_count=500,
             prior_ctgov_count=1000,
         )
         assert h["ctgov"]["status"] == "bad"
@@ -98,7 +103,8 @@ class TestCtgovBand:
     def test_moderate_jump_is_warning(self):
         """Ratio 1.30 (between 1.25 and 1.50) is warning."""
         h = compute_cache_health(
-            sec8k_count=100, ctgov_count=1300,
+            sec8k_count=100,
+            ctgov_count=1300,
             prior_ctgov_count=1000,
         )
         assert h["ctgov"]["status"] == "warning"
@@ -107,7 +113,8 @@ class TestCtgovBand:
     def test_moderate_drop_is_warning(self):
         """Ratio 0.75 (between 0.60 and 0.80) is warning."""
         h = compute_cache_health(
-            sec8k_count=100, ctgov_count=750,
+            sec8k_count=100,
+            ctgov_count=750,
             prior_ctgov_count=1000,
         )
         assert h["ctgov"]["status"] == "warning"
@@ -115,7 +122,8 @@ class TestCtgovBand:
     def test_within_band_is_ok(self):
         """Ratio 1.05 is within [0.80, 1.25]."""
         h = compute_cache_health(
-            sec8k_count=100, ctgov_count=1050,
+            sec8k_count=100,
+            ctgov_count=1050,
             prior_ctgov_count=1000,
         )
         assert h["ctgov"]["status"] == "ok"
@@ -144,8 +152,10 @@ class TestAllOk:
 
     def test_healthy_run(self):
         h = compute_cache_health(
-            sec8k_count=200, ctgov_count=1050,
-            prior_sec8k_count=180, prior_ctgov_count=1000,
+            sec8k_count=200,
+            ctgov_count=1050,
+            prior_sec8k_count=180,
+            prior_ctgov_count=1000,
             as_of_date="2026-02-25",
         )
         assert h["overall_status"] == "ok"
@@ -166,7 +176,8 @@ class TestWorstStatus:
 
     def test_bad_plus_ok(self):
         h = compute_cache_health(
-            sec8k_count=0, ctgov_count=1000,
+            sec8k_count=0,
+            ctgov_count=1000,
             prior_ctgov_count=1000,
         )
         assert h["sec8k"]["status"] == "bad"
@@ -175,8 +186,10 @@ class TestWorstStatus:
 
     def test_warning_plus_ok(self):
         h = compute_cache_health(
-            sec8k_count=10, ctgov_count=1050,
-            prior_sec8k_count=100, prior_ctgov_count=1000,
+            sec8k_count=10,
+            ctgov_count=1050,
+            prior_sec8k_count=100,
+            prior_ctgov_count=1000,
         )
         assert h["sec8k"]["status"] == "warning"
         assert h["ctgov"]["status"] == "ok"
@@ -226,6 +239,7 @@ class TestCacheHealthGate:
     def test_gate_pass_when_ok(self, tmp_path):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
         from run_daily_production import check_cache_health
+
         health = compute_cache_health(sec8k_count=100, ctgov_count=1000)
         (tmp_path / "cache_health.json").write_text(json.dumps(health))
         gate = check_cache_health(tmp_path)
@@ -234,6 +248,7 @@ class TestCacheHealthGate:
     def test_gate_warn_when_degraded(self, tmp_path):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
         from run_daily_production import check_cache_health
+
         health = compute_cache_health(sec8k_count=0, ctgov_count=1000)
         (tmp_path / "cache_health.json").write_text(json.dumps(health))
         gate = check_cache_health(tmp_path)
@@ -242,6 +257,7 @@ class TestCacheHealthGate:
     def test_gate_fail_when_bad_and_fail_flag(self, tmp_path):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
         from run_daily_production import check_cache_health
+
         health = compute_cache_health(sec8k_count=0, ctgov_count=1000)
         (tmp_path / "cache_health.json").write_text(json.dumps(health))
         gate = check_cache_health(tmp_path, fail_on_bad=True)
@@ -250,6 +266,7 @@ class TestCacheHealthGate:
     def test_gate_pass_when_no_sidecar(self, tmp_path):
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
         from run_daily_production import check_cache_health
+
         gate = check_cache_health(tmp_path)
         assert gate.status == "PASS"
 
@@ -270,22 +287,16 @@ class TestIsSnapshotDegraded:
     def test_ok_status_not_degraded(self, tmp_path):
         """overall_status=ok, degraded_run=False -> False."""
         health = {"overall_status": "ok", "degraded_run": False}
-        (tmp_path / "cache_health.json").write_text(
-            json.dumps(health), encoding="utf-8"
-        )
+        (tmp_path / "cache_health.json").write_text(json.dumps(health), encoding="utf-8")
         assert is_snapshot_degraded(tmp_path) is False
 
     def test_bad_status_is_degraded(self, tmp_path):
         """degraded_run=True -> True."""
         health = {"overall_status": "degraded", "degraded_run": True}
-        (tmp_path / "cache_health.json").write_text(
-            json.dumps(health), encoding="utf-8"
-        )
+        (tmp_path / "cache_health.json").write_text(json.dumps(health), encoding="utf-8")
         assert is_snapshot_degraded(tmp_path) is True
 
     def test_corrupt_json_not_degraded(self, tmp_path):
         """Malformed JSON -> False (graceful)."""
-        (tmp_path / "cache_health.json").write_text(
-            "{bad json", encoding="utf-8"
-        )
+        (tmp_path / "cache_health.json").write_text("{bad json", encoding="utf-8")
         assert is_snapshot_degraded(tmp_path) is False

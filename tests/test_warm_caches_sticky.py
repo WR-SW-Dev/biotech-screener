@@ -1,26 +1,26 @@
 """Tests for sticky cache refresh — staging + validation logic in warm_caches.py."""
+
 from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from warm_caches import (
-    validate_cache_refresh,
-    warm_sec_8k,
-    warm_ctgov,
-    _find_prior_sec8k_count,
     _find_prior_ctgov_count,
     _find_prior_ema_count,
+    _find_prior_sec8k_count,
+    validate_cache_refresh,
+    warm_ctgov,
+    warm_sec_8k,
 )
-
 
 # ── validate_cache_refresh: SEC 8-K ─────────────────────────────────
 
@@ -160,9 +160,7 @@ def _make_events(n: int) -> list[dict]:
 
 def _write_universe(data_dir: Path) -> None:
     data_dir.mkdir(parents=True, exist_ok=True)
-    (data_dir / "universe.json").write_text(
-        json.dumps([{"ticker": "ACME", "cik": "12345"}])
-    )
+    (data_dir / "universe.json").write_text(json.dumps([{"ticker": "ACME", "cik": "12345"}]))
 
 
 @patch(
@@ -285,10 +283,7 @@ def test_sec_8k_existing_cache_no_refetch(tmp_path):
 def _write_trial_records(data_dir: Path, n: int, lup_date: str = "2026-02-01") -> None:
     """Write n trial records with given last_update_posted date."""
     data_dir.mkdir(parents=True, exist_ok=True)
-    records = [
-        {"nct_id": f"NCT{i:06d}", "last_update_posted": lup_date}
-        for i in range(n)
-    ]
+    records = [{"nct_id": f"NCT{i:06d}", "last_update_posted": lup_date} for i in range(n)]
     (data_dir / "trial_records.json").write_text(json.dumps(records))
 
 
@@ -509,17 +504,32 @@ from run_screen import load_cache_refresh_sidecar
 def test_sidecar_with_rejection(tmp_path):
     """Sidecar with one rejected source → had_rejections=True, banner formatted."""
     sidecar = tmp_path / "cache_refresh_2026-02-25.json"
-    sidecar.write_text(json.dumps({
-        "schema": "cache_refresh.v1",
-        "as_of_date": "2026-02-25",
-        "results": [
-            {"source": "sec_8k", "count": 10, "prior_count": 100,
-             "accepted": False, "committed": False,
-             "reason": "collapse (ratio=0.10 < 0.3)"},
-            {"source": "ctgov", "count": 18000, "prior_count": 18000,
-             "accepted": True, "committed": True, "reason": ""},
-        ],
-    }))
+    sidecar.write_text(
+        json.dumps(
+            {
+                "schema": "cache_refresh.v1",
+                "as_of_date": "2026-02-25",
+                "results": [
+                    {
+                        "source": "sec_8k",
+                        "count": 10,
+                        "prior_count": 100,
+                        "accepted": False,
+                        "committed": False,
+                        "reason": "collapse (ratio=0.10 < 0.3)",
+                    },
+                    {
+                        "source": "ctgov",
+                        "count": 18000,
+                        "prior_count": 18000,
+                        "accepted": True,
+                        "committed": True,
+                        "reason": "",
+                    },
+                ],
+            }
+        )
+    )
 
     cr = load_cache_refresh_sidecar(sidecar)
     assert cr["sidecar"] == sidecar.name
@@ -537,14 +547,24 @@ def test_sidecar_with_rejection(tmp_path):
 def test_sidecar_all_accepted(tmp_path):
     """Sidecar with all accepted → had_rejections=False."""
     sidecar = tmp_path / "cache_refresh_2026-02-25.json"
-    sidecar.write_text(json.dumps({
-        "schema": "cache_refresh.v1",
-        "as_of_date": "2026-02-25",
-        "results": [
-            {"source": "sec_8k", "count": 220, "prior_count": 219,
-             "accepted": True, "committed": True, "reason": ""},
-        ],
-    }))
+    sidecar.write_text(
+        json.dumps(
+            {
+                "schema": "cache_refresh.v1",
+                "as_of_date": "2026-02-25",
+                "results": [
+                    {
+                        "source": "sec_8k",
+                        "count": 220,
+                        "prior_count": 219,
+                        "accepted": True,
+                        "committed": True,
+                        "reason": "",
+                    },
+                ],
+            }
+        )
+    )
 
     cr = load_cache_refresh_sidecar(sidecar)
     assert cr["had_rejections"] is False
@@ -563,17 +583,32 @@ def test_sidecar_missing_file(tmp_path):
 def test_sidecar_multiple_rejections(tmp_path):
     """Two rejected sources → both in banner, semicolon-separated."""
     sidecar = tmp_path / "cache_refresh_2026-02-25.json"
-    sidecar.write_text(json.dumps({
-        "schema": "cache_refresh.v1",
-        "as_of_date": "2026-02-25",
-        "results": [
-            {"source": "sec_8k", "count": 0, "prior_count": 200,
-             "accepted": False, "committed": False, "reason": "empty_refresh"},
-            {"source": "ctgov", "count": 500, "prior_count": 1000,
-             "accepted": False, "committed": False,
-             "reason": "out_of_band (ratio=0.50, band=[0.6, 1.5])"},
-        ],
-    }))
+    sidecar.write_text(
+        json.dumps(
+            {
+                "schema": "cache_refresh.v1",
+                "as_of_date": "2026-02-25",
+                "results": [
+                    {
+                        "source": "sec_8k",
+                        "count": 0,
+                        "prior_count": 200,
+                        "accepted": False,
+                        "committed": False,
+                        "reason": "empty_refresh",
+                    },
+                    {
+                        "source": "ctgov",
+                        "count": 500,
+                        "prior_count": 1000,
+                        "accepted": False,
+                        "committed": False,
+                        "reason": "out_of_band (ratio=0.50, band=[0.6, 1.5])",
+                    },
+                ],
+            }
+        )
+    )
 
     cr = load_cache_refresh_sidecar(sidecar)
     assert cr["had_rejections"] is True

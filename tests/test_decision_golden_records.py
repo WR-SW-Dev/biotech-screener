@@ -10,6 +10,7 @@ Tests 7 scenarios using synthetic recs to verify:
   6. SEV3 → ineligible
   7. Non-drug_developer archetype → blank tier_dev
 """
+
 import sys
 from pathlib import Path
 
@@ -21,10 +22,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from decision_engine import compute_decision_fields
 
-
 # =============================================================================
 # HELPER: Build a minimal rec dict for testing
 # =============================================================================
+
 
 def _make_rec(
     severity="",
@@ -87,9 +88,7 @@ def _make_rec(
 
     # Momentum
     if alpha_60d is not None:
-        rec["score_breakdown"] = {
-            "enhancements": {"momentum": {"alpha_60d": alpha_60d}}
-        }
+        rec["score_breakdown"] = {"enhancements": {"momentum": {"alpha_60d": alpha_60d}}}
     else:
         rec["score_breakdown"] = {}
     rec["momentum_signal"] = {}
@@ -101,6 +100,7 @@ def _make_rec(
 # TEST 1: specific_days catalyst → Tier A
 # =============================================================================
 
+
 class TestSpecificDaysCatalyst:
     """Ticker with specific days_to_catalyst=45, in_window=True, high optionality."""
 
@@ -111,9 +111,7 @@ class TestSpecificDaysCatalyst:
             alpha_60d=0.08,
             tier1_count=3,
         )
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.75
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.75)
 
     def test_eligible(self):
         assert self.fields["eligible"] == "1"
@@ -145,14 +143,13 @@ class TestSpecificDaysCatalyst:
 # TEST 2: blended_window catalyst mode
 # =============================================================================
 
+
 class TestBlendedWindowCatalyst:
     """days=0, in_window=True → blended_window mode."""
 
     def setup_method(self):
         self.rec = _make_rec(catalyst_days=0, catalyst_in_window=True)
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.65
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.65)
 
     def test_catalyst_mode(self):
         assert self.fields["catalyst_mode"] == "blended_window"
@@ -169,14 +166,13 @@ class TestBlendedWindowCatalyst:
 # TEST 3: no_upcoming catalyst mode
 # =============================================================================
 
+
 class TestNoUpcomingCatalyst:
     """days=0, in_window=False → no_upcoming mode."""
 
     def setup_method(self):
         self.rec = _make_rec(catalyst_days=0, catalyst_in_window=False)
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.50
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.50)
 
     def test_catalyst_mode(self):
         assert self.fields["catalyst_mode"] == "no_upcoming"
@@ -189,14 +185,13 @@ class TestNoUpcomingCatalyst:
 # TEST 4: missing catalyst mode
 # =============================================================================
 
+
 class TestMissingCatalyst:
     """No catalyst data at all → missing mode."""
 
     def setup_method(self):
         self.rec = _make_rec()  # No catalyst_days, no in_window
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.70
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.70)
 
     def test_catalyst_mode(self):
         assert self.fields["catalyst_mode"] == "missing"
@@ -213,20 +208,19 @@ class TestMissingCatalyst:
 # TEST 5: High risk → flags + size demotion
 # =============================================================================
 
+
 class TestHighRiskFlags:
     """High vol + deep drawdown → risk flags and size band demotion."""
 
     def setup_method(self):
         self.rec = _make_rec(
-            vol_60d=1.50,        # > 1.20 threshold
-            beta_xbi_60d=2.0,   # > 1.80 threshold
-            drawdown=-0.38,     # worse than -0.35 flag threshold
-            rsi_14d=75,         # > 70 overbought
-            alpha_60d=-0.10,    # headwind
+            vol_60d=1.50,  # > 1.20 threshold
+            beta_xbi_60d=2.0,  # > 1.80 threshold
+            drawdown=-0.38,  # worse than -0.35 flag threshold
+            rsi_14d=75,  # > 70 overbought
+            alpha_60d=-0.10,  # headwind
         )
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.40
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.40)
 
     def test_eligible(self):
         # drawdown=-0.38 is above -0.40 gate, so still eligible
@@ -251,6 +245,7 @@ class TestHighRiskFlags:
 # TEST 6: SEV3 → ineligible
 # =============================================================================
 
+
 class TestSev3Ineligible:
     """SEV3 severity triggers ineligibility gate."""
 
@@ -260,9 +255,7 @@ class TestSev3Ineligible:
             catalyst_days=30,
             catalyst_in_window=True,
         )
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.80
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.80)
 
     def test_ineligible(self):
         assert self.fields["eligible"] == "0"
@@ -284,6 +277,7 @@ class TestSev3Ineligible:
 # TEST 7: Non-drug_developer → blank tier_dev
 # =============================================================================
 
+
 class TestNonDrugDeveloper:
     """Commercial archetype should have blank tier_dev."""
 
@@ -293,9 +287,7 @@ class TestNonDrugDeveloper:
             catalyst_in_window=True,
             alpha_60d=0.06,
         )
-        self.fields = compute_decision_fields(
-            self.rec, archetype="commercial_biotech", optionality_pct_dev=0.80
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="commercial_biotech", optionality_pct_dev=0.80)
 
     def test_tier_dev_blank(self):
         assert self.fields["tier_dev"] == ""
@@ -315,14 +307,13 @@ class TestNonDrugDeveloper:
 # TEST: Deep drawdown gate (below -40%)
 # =============================================================================
 
+
 class TestDeepDrawdownGate:
     """Drawdown worse than -40% triggers eligibility gate."""
 
     def setup_method(self):
         self.rec = _make_rec(drawdown=-0.45)
-        self.fields = compute_decision_fields(
-            self.rec, archetype="drug_developer", optionality_pct_dev=0.80
-        )
+        self.fields = compute_decision_fields(self.rec, archetype="drug_developer", optionality_pct_dev=0.80)
 
     def test_ineligible(self):
         assert self.fields["eligible"] == "0"

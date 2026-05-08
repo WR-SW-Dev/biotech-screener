@@ -5,14 +5,14 @@ Tests for schema validation utilities.
 import pytest
 
 from common.schema_validation import (
-    SchemaType,
+    MODULE5_PARAMS_SCHEMA,
     FieldSchema,
+    SchemaType,
+    SchemaValidator,
     ValidationError,
     ValidationResult,
-    SchemaValidator,
     validate_params,
     validate_weights_sum,
-    MODULE5_PARAMS_SCHEMA,
 )
 
 
@@ -257,9 +257,7 @@ class TestValidateWeightsSum:
             "w2": 0.33,
             "w3": 0.33,  # Sum = 0.99
         }
-        result = validate_weights_sum(
-            params, ["w1", "w2", "w3"], expected_sum=1.0, tolerance=0.02
-        )
+        result = validate_weights_sum(params, ["w1", "w2", "w3"], expected_sum=1.0, tolerance=0.02)
         assert result.valid
 
     def test_weights_sum_skips_none(self):

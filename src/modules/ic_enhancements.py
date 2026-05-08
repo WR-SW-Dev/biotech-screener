@@ -25,15 +25,16 @@ Design Philosophy:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 __version__ = "1.2.0"  # V3 smart money signal with canonical manager registry
 
@@ -114,12 +115,12 @@ CATALYST_OPTIMAL_HALF_WIDTH = 30
 # Decay rates - RELAXED by ~40% to keep signals stronger for longer
 # Original values were: PDUFA=0.05, DATA_READOUT=0.08, PHASE_COMPLETION=0.10, etc.
 CATALYST_DECAY_RATES = {
-    "PDUFA": Decimal("0.03"),       # Slowest decay - high anticipation events
+    "PDUFA": Decimal("0.03"),  # Slowest decay - high anticipation events
     "DATA_READOUT": Decimal("0.05"),
     "PHASE_COMPLETION": Decimal("0.06"),
     "ENROLLMENT_COMPLETE": Decimal("0.04"),
     "CT_PRIMARY_COMPLETION": Decimal("0.04"),  # Clinical trial primary completion
-    "CT_STUDY_COMPLETION": Decimal("0.05"),    # Clinical trial study completion
+    "CT_STUDY_COMPLETION": Decimal("0.05"),  # Clinical trial study completion
     "DEFAULT": Decimal("0.04"),
 }
 # Post-event decay multiplier: tau_effective = tau * POST_EVENT_DECAY_MULT
@@ -157,9 +158,9 @@ SMART_MONEY_POSITION_CHANGE_WEIGHTS = {
 
 # Tier weights: Tier1 pure biotech specialists, Tier2 diversified healthcare
 SMART_MONEY_TIER_WEIGHTS = {
-    1: Decimal("1.0"),   # Elite Core biotech specialists
-    2: Decimal("0.6"),   # Elite Core diversified healthcare
-    3: Decimal("0.4"),   # Elite Core smaller/narrower focus
+    1: Decimal("1.0"),  # Elite Core biotech specialists
+    2: Decimal("0.6"),  # Elite Core diversified healthcare
+    3: Decimal("0.4"),  # Elite Core smaller/narrower focus
 }
 SMART_MONEY_UNKNOWN_TIER_WEIGHT = Decimal("0.2")
 
@@ -176,6 +177,7 @@ SMART_MONEY_CONDITIONAL_SIGNAL_CAP = Decimal("0.30")  # Max 30% of total signal
 # Elite Core (Tier 1) = Primary biotech specialists
 # Conditional (Tier 2) = Multi-strategy/quant platforms with healthcare exposure
 # =============================================================================
+
 
 def _load_manager_registry() -> Dict[str, Any]:
     """
@@ -194,7 +196,7 @@ def _load_manager_registry() -> Dict[str, Any]:
     for path in search_paths:
         if path.exists():
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
                 continue
@@ -331,7 +333,7 @@ INTERACTION_SYNERGY_MAX_BONUS = Decimal("1.5")  # Max +1.5 points (was 3.0)
 
 # Distress ramp: penalty ramps from 0 at runway=12 to max at runway=6
 INTERACTION_DISTRESS_RUNWAY_HIGH = Decimal("12")  # months - no penalty above
-INTERACTION_DISTRESS_RUNWAY_LOW = Decimal("6")    # months - max penalty below
+INTERACTION_DISTRESS_RUNWAY_LOW = Decimal("6")  # months - max penalty below
 INTERACTION_DISTRESS_MAX_PENALTY = Decimal("2.0")  # Max -2.0 points (was 5.0)
 
 # Catalyst dampening in high-vol: multiplicative factor [0.7, 1.0]
@@ -340,9 +342,9 @@ INTERACTION_CATALYST_VOL_DAMPENING_MIN = Decimal("0.7")  # Floor multiplier
 
 # Peer-relative valuation parameters
 # Winsorization bounds to prevent extreme values from dominating
-VALUATION_TRIAL_COUNT_MIN = 1      # Minimum trials (avoid divide-by-zero)
-VALUATION_TRIAL_COUNT_MAX = 30     # Cap trials to reduce denominator gaming
-VALUATION_MCAP_MIN_MM = Decimal("50")     # Floor at $50M
+VALUATION_TRIAL_COUNT_MIN = 1  # Minimum trials (avoid divide-by-zero)
+VALUATION_TRIAL_COUNT_MAX = 30  # Cap trials to reduce denominator gaming
+VALUATION_MCAP_MIN_MM = Decimal("50")  # Floor at $50M
 VALUATION_MCAP_MAX_MM = Decimal("50000")  # Cap at $50B
 # Minimum peers for reliable signal
 VALUATION_MIN_PEERS = 5
@@ -366,18 +368,20 @@ VALUATION_DEV_MIN_TRIALS = 3
 
 # Commercial valuation parameters (EV/CFO or MCAP/Revenue)
 VALUATION_COMMERCIAL_MIN_PEERS = 5
-VALUATION_COMMERCIAL_EV_CFO_MIN = Decimal("2")    # Floor EV/CFO at 2x
-VALUATION_COMMERCIAL_EV_CFO_MAX = Decimal("50")   # Cap EV/CFO at 50x
+VALUATION_COMMERCIAL_EV_CFO_MIN = Decimal("2")  # Floor EV/CFO at 2x
+VALUATION_COMMERCIAL_EV_CFO_MAX = Decimal("50")  # Cap EV/CFO at 50x
 VALUATION_COMMERCIAL_EV_REV_MIN = Decimal("0.5")  # Floor EV/Revenue at 0.5x
-VALUATION_COMMERCIAL_EV_REV_MAX = Decimal("20")   # Cap EV/Revenue at 20x
+VALUATION_COMMERCIAL_EV_REV_MAX = Decimal("20")  # Cap EV/Revenue at 20x
 
 
 # =============================================================================
 # ENUMS
 # =============================================================================
 
+
 class RegimeType(str, Enum):
     """Market regime classification."""
+
     BULL = "BULL"
     BEAR = "BEAR"
     NEUTRAL = "NEUTRAL"
@@ -386,6 +390,7 @@ class RegimeType(str, Enum):
 
 class VolatilityBucket(str, Enum):
     """Volatility classification."""
+
     LOW = "low"
     NORMAL = "normal"
     HIGH = "high"
@@ -394,6 +399,7 @@ class VolatilityBucket(str, Enum):
 
 class PositionChangeType(str, Enum):
     """13F position change classification."""
+
     NEW = "NEW"
     INCREASE = "INCREASE"
     HOLD = "HOLD"
@@ -408,6 +414,7 @@ class ValuationRegime(str, Enum):
     DEVELOPMENT: Pipeline companies where mcap/trial_count is meaningful
     UNKNOWN: Insufficient data to classify
     """
+
     COMMERCIAL = "commercial"
     DEVELOPMENT = "development"
     UNKNOWN = "unknown"
@@ -417,9 +424,11 @@ class ValuationRegime(str, Enum):
 # DATACLASSES
 # =============================================================================
 
+
 @dataclass
 class VolatilityAdjustment:
     """Result of volatility-based adjustment calculation."""
+
     annualized_vol: Optional[Decimal]
     vol_bucket: VolatilityBucket
     weight_adjustment_factor: Decimal  # Multiplier for weights (0.75 - 1.25)
@@ -451,6 +460,7 @@ class MomentumSignal:
         return_clipped: Set True when return was clipped due to outlier
         guardrail_flags: List of any guardrail events that affected the signal
     """
+
     momentum_score: Decimal  # 0-100 normalized score
     alpha_60d: Optional[Decimal]  # Excess return vs benchmark
     alpha_vol_adjusted: Optional[Decimal]  # Vol-adjusted alpha (alpha/vol)
@@ -478,6 +488,7 @@ class MultiWindowMomentumInput:
     V3 Fields (guardrails):
         return_clipped_20d, etc.: Set True if corresponding return was clipped
     """
+
     # Stock returns by window (trading days)
     return_20d: Optional[Decimal] = None
     return_60d: Optional[Decimal] = None
@@ -508,6 +519,7 @@ class ValuationSignal:
     - DEVELOPMENT: Uses mcap/trial_count vs stage-matched peers
     - COMMERCIAL: Uses EV/CFO or MCAP/Revenue vs commercial peers
     """
+
     valuation_score: Decimal  # 0-100 (higher = cheaper)
     mcap_per_asset: Optional[Decimal]  # For dev-stage only
     peer_median_mcap_per_asset: Optional[Decimal]  # For dev-stage only
@@ -520,16 +532,17 @@ class ValuationSignal:
     peer_median_ev_multiple: Optional[Decimal] = None  # Commercial peer median
     flags: List[str] = field(default_factory=list)  # Diagnostic flags
     # Debug/audit fields (ranking-neutral)
-    mcap_used_mm: Optional[Decimal] = None          # Exact market cap fed in
-    trial_count_raw: int = 0                         # Raw trial count before winsorization
-    trial_count_winsorized: int = 0                  # After winsorization
-    stage_bucket: str = ""                           # early/mid/late
-    percentile_overall: Optional[Decimal] = None     # Percentile vs ALL dev peers (not just same-stage)
+    mcap_used_mm: Optional[Decimal] = None  # Exact market cap fed in
+    trial_count_raw: int = 0  # Raw trial count before winsorization
+    trial_count_winsorized: int = 0  # After winsorization
+    stage_bucket: str = ""  # early/mid/late
+    percentile_overall: Optional[Decimal] = None  # Percentile vs ALL dev peers (not just same-stage)
 
 
 @dataclass
 class CatalystDecayResult:
     """Catalyst signal decay calculation result."""
+
     decay_factor: Decimal  # 0-1 multiplier
     days_to_catalyst: Optional[int]
     event_type: str
@@ -550,6 +563,7 @@ class SmartMoneySignal:
     - Elite Core vs Conditional separation
     - Conditional signal capped at 30% to prevent AUM dominance
     """
+
     smart_money_score: Decimal  # 20-80 range
     overlap_count: int  # Raw holder count (for backwards compat)
     overlap_bonus: Decimal  # Now tier-weighted
@@ -576,6 +590,7 @@ class InteractionTerms:
     All adjustments use smooth ramps to avoid rank churn from discontinuities.
     Magnitudes are bounded to ±3 points to prevent leaderboard rewrites.
     """
+
     clinical_financial_synergy: Decimal  # [0, +1.5] smooth ramp
     stage_financial_interaction: Decimal  # [-2.0, 0] smooth ramp
     catalyst_volatility_dampening: Decimal  # Dampening applied (informational)
@@ -592,6 +607,7 @@ class InteractionTerms:
 @dataclass
 class AdaptiveWeights:
     """Result of adaptive weight optimization."""
+
     weights: Dict[str, Decimal]
     historical_ic_by_component: Dict[str, Decimal]
     optimization_method: str
@@ -607,6 +623,7 @@ class AdaptiveWeights:
 @dataclass
 class RegimeSignalImportance:
     """Regime-specific signal importance multipliers."""
+
     clinical: Decimal
     financial: Decimal
     catalyst: Decimal
@@ -618,6 +635,7 @@ class RegimeSignalImportance:
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def _to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """Convert various types to Decimal with safe handling."""
@@ -681,6 +699,7 @@ def _log_dampen_alpha(alpha: Decimal) -> Decimal:
         Dampened alpha with same sign as input
     """
     import math
+
     threshold = MOMENTUM_LOG_DAMPEN_THRESHOLD
 
     if abs(alpha) <= threshold:
@@ -701,6 +720,7 @@ def _log_dampen_alpha(alpha: Decimal) -> Decimal:
 # =============================================================================
 # VOLATILITY-ADJUSTED SCORING
 # =============================================================================
+
 
 def compute_volatility_adjustment(
     annualized_vol: Optional[Decimal],
@@ -795,9 +815,7 @@ def compute_volatility_adjustment(
         # Low vol = more reliable signal = boost weights
         vol_bucket = VolatilityBucket.LOW
         # Linear interpolation: at 0% vol -> +max_adjustment, at threshold -> 0%
-        weight_adj = Decimal("1.0") + max_adjustment * (
-            (low_threshold - vol) / low_threshold
-        )
+        weight_adj = Decimal("1.0") + max_adjustment * ((low_threshold - vol) / low_threshold)
         confidence_penalty = Decimal("0")
 
     elif vol <= high_threshold:
@@ -813,10 +831,7 @@ def compute_volatility_adjustment(
         vol_bucket = VolatilityBucket.HIGH
         # Reduce weight influence
         excess_vol = vol - high_threshold
-        weight_adj = Decimal("1.0") - min(
-            max_adjustment,
-            max_adjustment * (excess_vol / target_vol)
-        )
+        weight_adj = Decimal("1.0") - min(max_adjustment, max_adjustment * (excess_vol / target_vol))
         confidence_penalty = Decimal("0.15")
 
     return VolatilityAdjustment(
@@ -849,6 +864,7 @@ def apply_volatility_to_score(
 # =============================================================================
 # MOMENTUM SIGNAL
 # =============================================================================
+
 
 def compute_momentum_signal(
     return_60d: Optional[Decimal],
@@ -1164,8 +1180,8 @@ def compute_momentum_signal_with_fallback(
 # Multi-window blending weights (research-based)
 # 60d is primary signal, 120d confirms trend, 20d captures recent moves
 MULTIWINDOW_WEIGHTS = {
-    20: Decimal("0.20"),   # Short-term: 20%
-    60: Decimal("0.50"),   # Medium-term (primary): 50%
+    20: Decimal("0.20"),  # Short-term: 20%
+    60: Decimal("0.50"),  # Medium-term (primary): 50%
     120: Decimal("0.30"),  # Long-term (trend): 30%
 }
 
@@ -1227,13 +1243,15 @@ def compute_momentum_signal_multiwindow(
 
         if ret_dec is not None and bench_dec is not None:
             alpha = ret_dec - bench_dec
-            available_windows.append({
-                "window": window_days,
-                "alpha": alpha,
-                "return": ret_dec,
-                "benchmark": bench_dec,
-                "was_clipped": was_clipped,
-            })
+            available_windows.append(
+                {
+                    "window": window_days,
+                    "alpha": alpha,
+                    "return": ret_dec,
+                    "benchmark": bench_dec,
+                    "was_clipped": was_clipped,
+                }
+            )
             if was_clipped:
                 guardrail_flags.append(f"return_clipped_{window_days}d")
 
@@ -1294,19 +1312,13 @@ def compute_momentum_signal_multiwindow(
 
     # Multiple windows - compute weighted blend
     # Normalize weights to sum to 1.0 based on available windows
-    available_weight_sum = sum(
-        MULTIWINDOW_WEIGHTS[w["window"]] for w in available_windows
-    )
+    available_weight_sum = sum(MULTIWINDOW_WEIGHTS[w["window"]] for w in available_windows)
     normalized_weights = {
-        w["window"]: MULTIWINDOW_WEIGHTS[w["window"]] / available_weight_sum
-        for w in available_windows
+        w["window"]: MULTIWINDOW_WEIGHTS[w["window"]] / available_weight_sum for w in available_windows
     }
 
     # Compute weighted alpha blend
-    blended_alpha = sum(
-        w["alpha"] * normalized_weights[w["window"]]
-        for w in available_windows
-    )
+    blended_alpha = sum(w["alpha"] * normalized_weights[w["window"]] for w in available_windows)
 
     # Track which windows were used
     windows_used = sorted([w["window"] for w in available_windows])
@@ -1371,6 +1383,7 @@ def compute_momentum_signal_multiwindow(
 # =============================================================================
 # PEER-RELATIVE VALUATION
 # =============================================================================
+
 
 def _classify_valuation_regime(
     revenue_mm: Optional[Decimal],
@@ -1447,11 +1460,13 @@ def _compute_commercial_valuation(
 
     # Filter to commercial peers
     commercial_peers = [
-        p for p in peer_valuations
-        if (_to_decimal(p.get("revenue_mm")) is not None and
-            _to_decimal(p.get("revenue_mm")) >= VALUATION_COMMERCIAL_REVENUE_THRESHOLD_MM) or
-           (_to_decimal(p.get("cfo_mm")) is not None and
-            _to_decimal(p.get("cfo_mm")) > Decimal("0"))
+        p
+        for p in peer_valuations
+        if (
+            _to_decimal(p.get("revenue_mm")) is not None
+            and _to_decimal(p.get("revenue_mm")) >= VALUATION_COMMERCIAL_REVENUE_THRESHOLD_MM
+        )
+        or (_to_decimal(p.get("cfo_mm")) is not None and _to_decimal(p.get("cfo_mm")) > Decimal("0"))
     ]
 
     # Determine which metric to use: EV/CFO (preferred) or EV/Revenue
@@ -1533,11 +1548,7 @@ def _compute_commercial_valuation(
     lt_count = sum(1 for p in peer_multiples if p < ev_multiple_clamped)
     eq_count = sum(1 for p in peer_multiples if p == ev_multiple_clamped)
 
-    percentile = (
-        (Decimal(lt_count) + Decimal("0.5") * Decimal(eq_count))
-        / Decimal(n_peers)
-        * Decimal("100")
-    )
+    percentile = (Decimal(lt_count) + Decimal("0.5") * Decimal(eq_count)) / Decimal(n_peers) * Decimal("100")
 
     # Invert: lower multiple = higher score (cheaper is better)
     raw_valuation_score = Decimal("100") - percentile
@@ -1565,10 +1576,7 @@ def _compute_commercial_valuation(
             shrink_factor = VALUATION_SHRINKAGE_MAX * (Decimal("1") - progress)
         else:
             shrink_factor = VALUATION_SHRINKAGE_MAX
-        raw_valuation_score = (
-            raw_valuation_score * (Decimal("1") - shrink_factor)
-            + Decimal("50") * shrink_factor
-        )
+        raw_valuation_score = raw_valuation_score * (Decimal("1") - shrink_factor) + Decimal("50") * shrink_factor
 
     # Clamp final score
     valuation_score = _clamp(raw_valuation_score, Decimal("10"), Decimal("90"))
@@ -1645,7 +1653,8 @@ def _compute_development_valuation(
 
     # Filter to same-stage development peers with valid trial data
     same_stage_peers = [
-        p for p in peer_valuations
+        p
+        for p in peer_valuations
         if p.get("stage_bucket") == stage and p.get("trial_count", 0) >= VALUATION_DEV_MIN_TRIALS
     ]
 
@@ -1703,11 +1712,7 @@ def _compute_development_valuation(
     lt_count = sum(1 for p in peer_mcap_per_asset if p < mcap_per_asset)
     eq_count = sum(1 for p in peer_mcap_per_asset if p == mcap_per_asset)
 
-    percentile = (
-        (Decimal(lt_count) + Decimal("0.5") * Decimal(eq_count))
-        / Decimal(n_peers)
-        * Decimal("100")
-    )
+    percentile = (Decimal(lt_count) + Decimal("0.5") * Decimal(eq_count)) / Decimal(n_peers) * Decimal("100")
 
     raw_valuation_score = Decimal("100") - percentile
 
@@ -1745,10 +1750,7 @@ def _compute_development_valuation(
             shrink_factor = VALUATION_SHRINKAGE_MAX * (Decimal("1") - progress)
         else:
             shrink_factor = VALUATION_SHRINKAGE_MAX
-        raw_valuation_score = (
-            raw_valuation_score * (Decimal("1") - shrink_factor)
-            + Decimal("50") * shrink_factor
-        )
+        raw_valuation_score = raw_valuation_score * (Decimal("1") - shrink_factor) + Decimal("50") * shrink_factor
 
     # Clamp
     valuation_score = _clamp(raw_valuation_score, Decimal("10"), Decimal("90"))
@@ -1756,10 +1758,7 @@ def _compute_development_valuation(
     flags.append("valuation_mcap_per_trial")
 
     # Compute percentile vs ALL dev peers (cross-check, ranking-neutral)
-    all_dev_peers = [
-        p for p in peer_valuations
-        if p.get("trial_count", 0) >= VALUATION_DEV_MIN_TRIALS
-    ]
+    all_dev_peers = [p for p in peer_valuations if p.get("trial_count", 0) >= VALUATION_DEV_MIN_TRIALS]
     all_dev_mcpa: List[Decimal] = []
     for p in all_dev_peers:
         p_mcap = _to_decimal(p.get("market_cap_mm"))
@@ -1774,9 +1773,7 @@ def _compute_development_valuation(
         lt_all = sum(1 for p in all_dev_mcpa if p < mcap_per_asset)
         eq_all = sum(1 for p in all_dev_mcpa if p == mcap_per_asset)
         percentile_overall = _quantize_score(
-            (Decimal(lt_all) + Decimal("0.5") * Decimal(eq_all))
-            / Decimal(len(all_dev_mcpa))
-            * Decimal("100")
+            (Decimal(lt_all) + Decimal("0.5") * Decimal(eq_all)) / Decimal(len(all_dev_mcpa)) * Decimal("100")
         )
 
     return ValuationSignal(
@@ -1859,17 +1856,13 @@ def compute_valuation_signal(
 
     # Step 2: Route to appropriate valuation model
     if regime == ValuationRegime.COMMERCIAL:
-        result = _compute_commercial_valuation(
-            mcap, enterprise_value_mm, cfo_mm, revenue_mm, peer_valuations
-        )
+        result = _compute_commercial_valuation(mcap, enterprise_value_mm, cfo_mm, revenue_mm, peer_valuations)
         # Add regime classification flags
         result.flags = regime_flags + result.flags
 
     else:
         # DEVELOPMENT or UNKNOWN -> use development model
-        result = _compute_development_valuation(
-            mcap, trial_count, lead_phase, peer_valuations
-        )
+        result = _compute_development_valuation(mcap, trial_count, lead_phase, peer_valuations)
         # Add regime classification flags
         result.flags = regime_flags + result.flags
 
@@ -1889,7 +1882,9 @@ def compute_valuation_signal(
             # Quantize to avoid floating precision drift
             blended = blended.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             result.valuation_score = blended
-            result.flags.append(f"morningstar_fv_blended_w={ms_weight.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)}")
+            result.flags.append(
+                f"morningstar_fv_blended_w={ms_weight.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)}"
+            )
         else:
             result.flags.append("morningstar_fv_skipped_zero_conf")
 
@@ -1937,6 +1932,7 @@ def _stage_bucket(lead_phase: Optional[str]) -> str:
 # =============================================================================
 # CATALYST SIGNAL DECAY
 # =============================================================================
+
 
 def compute_catalyst_decay(
     days_to_catalyst: Optional[int],
@@ -2066,12 +2062,13 @@ def apply_catalyst_decay(
 @dataclass
 class _NormalizedHolderId:
     """Normalized holder identifier for consistent lookup."""
-    raw: str           # Original input, whitespace-stripped
-    name_lower: str    # Lowercase for name matching
-    is_cik: bool       # True if input is numeric (CIK)
-    cik_raw: str       # Original CIK string (if is_cik)
-    cik_clean: str     # CIK without leading zeros (if is_cik)
-    is_invalid: bool   # True if empty or malformed
+
+    raw: str  # Original input, whitespace-stripped
+    name_lower: str  # Lowercase for name matching
+    is_cik: bool  # True if input is numeric (CIK)
+    cik_raw: str  # Original CIK string (if is_cik)
+    cik_clean: str  # CIK without leading zeros (if is_cik)
+    is_invalid: bool  # True if empty or malformed
 
 
 def _normalize_holder_id(holder_name: str) -> _NormalizedHolderId:
@@ -2096,27 +2093,20 @@ def _normalize_holder_id(holder_name: str) -> _NormalizedHolderId:
 
     # Handle empty/invalid input
     if not raw:
-        return _NormalizedHolderId(
-            raw="", name_lower="", is_cik=False,
-            cik_raw="", cik_clean="", is_invalid=True
-        )
+        return _NormalizedHolderId(raw="", name_lower="", is_cik=False, cik_raw="", cik_clean="", is_invalid=True)
 
     name_lower = raw.lower()
 
     # Check if it's a CIK (all digits)
     if raw.isdigit():
         # Handle edge case: "0000000000" → "0", not ""
-        cik_clean = raw.lstrip('0') or "0"
+        cik_clean = raw.lstrip("0") or "0"
         return _NormalizedHolderId(
-            raw=raw, name_lower=name_lower, is_cik=True,
-            cik_raw=raw, cik_clean=cik_clean, is_invalid=False
+            raw=raw, name_lower=name_lower, is_cik=True, cik_raw=raw, cik_clean=cik_clean, is_invalid=False
         )
 
     # It's a name, not a CIK
-    return _NormalizedHolderId(
-        raw=raw, name_lower=name_lower, is_cik=False,
-        cik_raw="", cik_clean="", is_invalid=False
-    )
+    return _NormalizedHolderId(raw=raw, name_lower=name_lower, is_cik=False, cik_raw="", cik_clean="", is_invalid=False)
 
 
 def _get_holder_tier(holder_name: str, holder_tiers: Optional[Dict[str, int]] = None) -> int:
@@ -2374,11 +2364,7 @@ def compute_smart_money_signal(
             holder_contribution = tier_weight * base_change_weight
 
             # Apply per-holder cap to prevent one noisy filing from dominating
-            holder_contribution = _clamp(
-                holder_contribution,
-                -SMART_MONEY_PER_HOLDER_CAP,
-                SMART_MONEY_PER_HOLDER_CAP
-            )
+            holder_contribution = _clamp(holder_contribution, -SMART_MONEY_PER_HOLDER_CAP, SMART_MONEY_PER_HOLDER_CAP)
 
             # V3: Track by category
             if is_conditional:
@@ -2401,11 +2387,7 @@ def compute_smart_money_signal(
                 holders_decreasing.append(holder)
 
     # Clamp total change bonus
-    change_bonus = _clamp(
-        change_bonus,
-        SMART_MONEY_CHANGE_MIN_PENALTY,
-        SMART_MONEY_CHANGE_MAX_BONUS
-    )
+    change_bonus = _clamp(change_bonus, SMART_MONEY_CHANGE_MIN_PENALTY, SMART_MONEY_CHANGE_MAX_BONUS)
 
     # =========================================================================
     # STEP 3: Compute Elite Core vs Conditional contributions
@@ -2514,6 +2496,7 @@ def compute_smart_money_signal(
 # =============================================================================
 # NON-LINEAR INTERACTION TERMS
 # =============================================================================
+
 
 def compute_interaction_terms(
     clinical_normalized: Decimal,
@@ -2630,9 +2613,7 @@ def compute_interaction_terms(
         # Double-counting adjustment: if gate already failed, halve the penalty
         gate_mult = Decimal("0.5") if runway_gate_applied else Decimal("1.0")
 
-        stage_financial_interaction = -(
-            distress_factor * stage_mult * gate_mult * INTERACTION_DISTRESS_MAX_PENALTY
-        )
+        stage_financial_interaction = -(distress_factor * stage_mult * gate_mult * INTERACTION_DISTRESS_MAX_PENALTY)
 
         if stage_financial_interaction <= Decimal("-0.5"):
             flags.append("late_stage_distress" if stage_bucket == "late" else "mid_stage_runway_warning")
@@ -2704,9 +2685,7 @@ def compute_interaction_terms(
         flags.append("unvalidated_crowded_penalty")
 
     # Clamp CI+partnership interaction to ±3
-    competitive_partnership_interaction = _clamp(
-        competitive_partnership_interaction, Decimal("-3.0"), Decimal("3.0")
-    )
+    competitive_partnership_interaction = _clamp(competitive_partnership_interaction, Decimal("-3.0"), Decimal("3.0"))
 
     # =========================================================================
     # 5. Cash Burn Trajectory Interaction (bounded ±1.5)
@@ -2797,10 +2776,7 @@ def compute_interaction_terms(
                 # Rule B: Double jeopardy for development-stage stagnation
                 # Conditions: strong_neg AND (high/critical burn OR short runway) AND no near-term catalyst
                 burn_risk_lower = cash_burn_risk.lower() if cash_burn_risk else "unknown"
-                has_funding_pressure = (
-                    burn_risk_lower in ("high", "critical")
-                    or runway_months_local < Decimal("12")
-                )
+                has_funding_pressure = burn_risk_lower in ("high", "critical") or runway_months_local < Decimal("12")
                 has_near_catalyst = days_to_nearest_catalyst is not None and days_to_nearest_catalyst <= 90
 
                 if has_funding_pressure and not has_near_catalyst:
@@ -2879,6 +2855,7 @@ def _smooth_ramp_inverted(value: Decimal, low: Decimal, high: Decimal) -> Decima
 # SHRINKAGE NORMALIZATION
 # =============================================================================
 
+
 def shrinkage_normalize(
     values: List[Decimal],
     global_mean: Decimal,
@@ -2917,20 +2894,14 @@ def shrinkage_normalize(
     shrinkage_factor = prior_strength / (prior_strength + Decimal(n))
 
     # Shrink mean toward global
-    adjusted_mean = (
-        cohort_mean * (Decimal("1") - shrinkage_factor) +
-        global_mean * shrinkage_factor
-    )
+    adjusted_mean = cohort_mean * (Decimal("1") - shrinkage_factor) + global_mean * shrinkage_factor
 
     # Shrink std toward global with SAME weight as mean
     # This is critical: small cohorts have unstable std estimates
     # Using same shrinkage weight stabilizes percentile ranks significantly
     cohort_variance = sum((v - cohort_mean) ** 2 for v in values) / Decimal(n)
     cohort_std = cohort_variance.sqrt() if cohort_variance > 0 else Decimal("1")
-    adjusted_std = (
-        cohort_std * (Decimal("1") - shrinkage_factor) +
-        global_std * shrinkage_factor
-    )
+    adjusted_std = cohort_std * (Decimal("1") - shrinkage_factor) + global_std * shrinkage_factor
     adjusted_std = max(adjusted_std, Decimal("0.01"))  # Prevent division by zero
 
     # Normalize with shrunk parameters and convert to percentile-like scale
@@ -2956,19 +2927,19 @@ def shrinkage_normalize(
 REGIME_SIGNAL_IMPORTANCE: Dict[RegimeType, RegimeSignalImportance] = {
     RegimeType.BULL: RegimeSignalImportance(
         clinical=Decimal("1.0"),
-        financial=Decimal("0.8"),   # Less important in bull
-        catalyst=Decimal("1.2"),    # Catalysts drive in bull
-        momentum=Decimal("1.3"),    # Momentum works well
-        valuation=Decimal("0.7"),   # Valuation less important
+        financial=Decimal("0.8"),  # Less important in bull
+        catalyst=Decimal("1.2"),  # Catalysts drive in bull
+        momentum=Decimal("1.3"),  # Momentum works well
+        valuation=Decimal("0.7"),  # Valuation less important
         smart_money=Decimal("1.0"),
     ),
     RegimeType.BEAR: RegimeSignalImportance(
         clinical=Decimal("1.0"),
-        financial=Decimal("1.4"),   # Cash is king
-        catalyst=Decimal("0.7"),    # Catalysts less reliable
-        momentum=Decimal("0.5"),    # Momentum reverses
-        valuation=Decimal("1.2"),   # Value matters more
-        smart_money=Decimal("1.1"), # Follow smart money
+        financial=Decimal("1.4"),  # Cash is king
+        catalyst=Decimal("0.7"),  # Catalysts less reliable
+        momentum=Decimal("0.5"),  # Momentum reverses
+        valuation=Decimal("1.2"),  # Value matters more
+        smart_money=Decimal("1.1"),  # Follow smart money
     ),
     RegimeType.NEUTRAL: RegimeSignalImportance(
         clinical=Decimal("1.0"),
@@ -2982,7 +2953,7 @@ REGIME_SIGNAL_IMPORTANCE: Dict[RegimeType, RegimeSignalImportance] = {
         clinical=Decimal("1.0"),
         financial=Decimal("1.0"),
         catalyst=Decimal("1.0"),
-        momentum=Decimal("0.8"),    # Reduce momentum when uncertain
+        momentum=Decimal("0.8"),  # Reduce momentum when uncertain
         valuation=Decimal("1.0"),
         smart_money=Decimal("1.0"),
     ),
@@ -3054,6 +3025,7 @@ def apply_regime_to_weights(
 # =============================================================================
 # ADAPTIVE WEIGHT LEARNING (PIT-SAFE)
 # =============================================================================
+
 
 def compute_adaptive_weights(
     historical_scores: List[Dict[str, Any]],
@@ -3165,8 +3137,7 @@ def compute_adaptive_weights(
     for score_date, records in sorted(scores_by_date.items()):
         # Get all tickers that have both scores and returns for this date
         tickers_with_returns = [
-            rec.get("ticker") for rec in records
-            if (score_date, rec.get("ticker")) in forward_returns
+            rec.get("ticker") for rec in records if (score_date, rec.get("ticker")) in forward_returns
         ]
 
         if len(tickers_with_returns) < 10:
@@ -3309,9 +3280,7 @@ def _parse_date(value: Any) -> Optional[date]:
     return None
 
 
-def _compute_rank_correlation_with_tiebreak(
-    pairs: List[Tuple[str, Decimal, Decimal]]
-) -> Decimal:
+def _compute_rank_correlation_with_tiebreak(pairs: List[Tuple[str, Decimal, Decimal]]) -> Decimal:
     """
     Compute Spearman rank correlation with deterministic tie-breaking.
 
@@ -3339,10 +3308,7 @@ def _compute_rank_correlation_with_tiebreak(
 
     # Compute Spearman correlation
     # rho = 1 - (6 * sum(d^2)) / (n * (n^2 - 1))
-    d_squared_sum = sum(
-        (sr - rr) ** 2
-        for sr, rr in zip(score_ranks, return_ranks)
-    )
+    d_squared_sum = sum((sr - rr) ** 2 for sr, rr in zip(score_ranks, return_ranks))
 
     denominator = Decimal(n) * (Decimal(n) ** 2 - Decimal("1"))
     if denominator == 0:
@@ -3415,10 +3381,7 @@ def _compute_rank_correlation(pairs: List[Tuple[Decimal, Decimal]]) -> Decimal:
 
     # Compute Spearman correlation
     # rho = 1 - (6 * sum(d^2)) / (n * (n^2 - 1))
-    d_squared_sum = sum(
-        (sr - rr) ** 2
-        for sr, rr in zip(score_ranks, return_ranks)
-    )
+    d_squared_sum = sum((sr - rr) ** 2 for sr, rr in zip(score_ranks, return_ranks))
 
     denominator = Decimal(n) * (Decimal(n) ** 2 - Decimal("1"))
     if denominator == 0:
@@ -3457,9 +3420,11 @@ def _compute_ranks(values: List[Decimal]) -> List[Decimal]:
 # COMPOSITE ENHANCEMENT ORCHESTRATOR
 # =============================================================================
 
+
 @dataclass
 class EnhancedScoringResult:
     """Complete enhanced scoring result for a single ticker."""
+
     ticker: str
 
     # Core scores (normalized)
@@ -3555,12 +3520,7 @@ def compute_enhanced_score(
         flags.append("momentum_data_incomplete")
 
     # 3. Compute valuation signal
-    valuation = compute_valuation_signal(
-        market_cap_mm,
-        trial_count,
-        lead_phase,
-        peer_valuations or []
-    )
+    valuation = compute_valuation_signal(market_cap_mm, trial_count, lead_phase, peer_valuations or [])
     if valuation.valuation_score >= Decimal("70"):
         flags.append("undervalued")
     elif valuation.valuation_score <= Decimal("30"):
@@ -3572,11 +3532,7 @@ def compute_enhanced_score(
         flags.append("catalyst_optimal_window")
 
     # 5. Compute smart money signal
-    smart_money = compute_smart_money_signal(
-        coinvest_overlap_count,
-        coinvest_holders or [],
-        position_changes
-    )
+    smart_money = compute_smart_money_signal(coinvest_overlap_count, coinvest_holders or [], position_changes)
     if smart_money.holders_increasing:
         flags.append("smart_money_buying")
     if smart_money.holders_decreasing:
@@ -3584,11 +3540,7 @@ def compute_enhanced_score(
 
     # 6. Compute interaction terms
     interactions = compute_interaction_terms(
-        clinical_normalized,
-        financial_data,
-        catalyst_normalized,
-        stage_bucket,
-        vol_adj
+        clinical_normalized, financial_data, catalyst_normalized, stage_bucket, vol_adj
     )
     flags.extend(interactions.interaction_flags)
 
@@ -3596,10 +3548,7 @@ def compute_enhanced_score(
     regime_weights = apply_regime_to_weights(base_weights, regime)
 
     # 8. Apply volatility adjustment to weights
-    vol_adjusted_weights = {
-        k: v * vol_adj.weight_adjustment_factor
-        for k, v in regime_weights.items()
-    }
+    vol_adjusted_weights = {k: v * vol_adj.weight_adjustment_factor for k, v in regime_weights.items()}
 
     # Renormalize
     total = sum(vol_adjusted_weights.values())
@@ -3610,9 +3559,9 @@ def compute_enhanced_score(
 
     # 9. Compute base composite (without enhancements)
     base_composite = (
-        clinical_normalized * effective_weights.get("clinical", effective_weights.get("clinical_dev", Decimal("0.40"))) +
-        financial_normalized * effective_weights.get("financial", Decimal("0.35")) +
-        catalyst_normalized * effective_weights.get("catalyst", Decimal("0.25"))
+        clinical_normalized * effective_weights.get("clinical", effective_weights.get("clinical_dev", Decimal("0.40")))
+        + financial_normalized * effective_weights.get("financial", Decimal("0.35"))
+        + catalyst_normalized * effective_weights.get("catalyst", Decimal("0.25"))
     )
     base_composite = _quantize_score(base_composite)
 
@@ -3626,23 +3575,21 @@ def compute_enhanced_score(
 
     # Core with decayed catalyst
     core_composite = (
-        clinical_normalized * effective_weights.get("clinical", effective_weights.get("clinical_dev", Decimal("0.40"))) +
-        financial_normalized * effective_weights.get("financial", Decimal("0.35")) +
-        decayed_catalyst * effective_weights.get("catalyst", Decimal("0.25"))
+        clinical_normalized * effective_weights.get("clinical", effective_weights.get("clinical_dev", Decimal("0.40")))
+        + financial_normalized * effective_weights.get("financial", Decimal("0.35"))
+        + decayed_catalyst * effective_weights.get("catalyst", Decimal("0.25"))
     )
 
     # Enhancement contributions
     enhancement_composite = (
-        momentum.momentum_score * Decimal("0.05") +
-        valuation.valuation_score * Decimal("0.05") +
-        smart_money.smart_money_score * Decimal("0.05")
+        momentum.momentum_score * Decimal("0.05")
+        + valuation.valuation_score * Decimal("0.05")
+        + smart_money.smart_money_score * Decimal("0.05")
     )
 
     # Combine with interaction adjustment
     enhanced_composite = (
-        core_composite * core_weight +
-        enhancement_composite +
-        interactions.total_interaction_adjustment
+        core_composite * core_weight + enhancement_composite + interactions.total_interaction_adjustment
     )
 
     # Apply volatility score adjustment
@@ -3656,10 +3603,10 @@ def compute_enhanced_score(
 
     # Compute overall confidence (weighted average)
     confidence_overall = (
-        momentum.confidence * Decimal("0.2") +
-        valuation.confidence * Decimal("0.2") +
-        smart_money.confidence * Decimal("0.2") +
-        (Decimal("1.0") - vol_adj.confidence_penalty) * Decimal("0.4")
+        momentum.confidence * Decimal("0.2")
+        + valuation.confidence * Decimal("0.2")
+        + smart_money.confidence * Decimal("0.2")
+        + (Decimal("1.0") - vol_adj.confidence_penalty) * Decimal("0.4")
     )
     confidence_overall = _clamp(confidence_overall, Decimal("0.1"), Decimal("0.9"))
 
@@ -3687,6 +3634,7 @@ def compute_enhanced_score(
 # ENHANCEMENT 6: CONTRADICTION DETECTOR
 # =============================================================================
 
+
 @dataclass
 class ContradictionResult:
     """Result of contradiction detection between signals.
@@ -3700,6 +3648,7 @@ class ContradictionResult:
     - High valuation score but short runway (cheap for a reason)
     - Strong clinical score but severe dilution (market doesn't believe the data)
     """
+
     contradictions: List[str]
     confidence_penalty: Decimal
     score_penalty: Decimal
@@ -3797,8 +3746,12 @@ def detect_contradictions(data: Dict[str, Any]) -> ContradictionResult:
     # Rule 2: valuation_financing_conflict
     # High valuation score (>70) but short runway (<12 months)
     diagnostics["rules_checked"] += 1
-    if (valuation_score is not None and valuation_score > Decimal("70") and
-            runway_months is not None and runway_months < Decimal("12")):
+    if (
+        valuation_score is not None
+        and valuation_score > Decimal("70")
+        and runway_months is not None
+        and runway_months < Decimal("12")
+    ):
         rule = CONTRADICTION_RULES[1]
         contradictions.append(rule["name"])
         total_conf_penalty += rule["confidence_penalty"]
@@ -3808,8 +3761,7 @@ def detect_contradictions(data: Dict[str, Any]) -> ContradictionResult:
     # Rule 3: clinical_dilution_conflict
     # Strong clinical score (>70) but severe dilution
     diagnostics["rules_checked"] += 1
-    if (clinical_score is not None and clinical_score > Decimal("70") and
-            dilution_bucket in ("HIGH", "SEVERE")):
+    if clinical_score is not None and clinical_score > Decimal("70") and dilution_bucket in ("HIGH", "SEVERE"):
         rule = CONTRADICTION_RULES[2]
         contradictions.append(rule["name"])
         total_conf_penalty += rule["confidence_penalty"]
@@ -3819,8 +3771,12 @@ def detect_contradictions(data: Dict[str, Any]) -> ContradictionResult:
     # Rule 4: momentum_fundamental_divergence
     # Strong momentum (>70) but poor financial health (<40)
     diagnostics["rules_checked"] += 1
-    if (momentum_score is not None and momentum_score > Decimal("70") and
-            financial_score is not None and financial_score < Decimal("40")):
+    if (
+        momentum_score is not None
+        and momentum_score > Decimal("70")
+        and financial_score is not None
+        and financial_score < Decimal("40")
+    ):
         rule = CONTRADICTION_RULES[3]
         contradictions.append(rule["name"])
         total_conf_penalty += rule["confidence_penalty"]

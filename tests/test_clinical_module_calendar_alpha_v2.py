@@ -9,6 +9,7 @@ Tests for Clinical Calendar Alpha v2 — common/clinical_calendar_alpha.py
   5. Competitive intensity modifier
   6. Determinism (full pipeline reproducibility)
 """
+
 import json
 import sys
 from pathlib import Path
@@ -32,7 +33,6 @@ from common.clinical_calendar_alpha import (
     normalize_intervention,
     z_score_dict,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -139,9 +139,9 @@ class TestReadoutDensity:
         """Known future dates yield correct density_30/90/180 counts."""
         trials = [
             _trial(nct_id="NCT001", pcd="2025-12-15"),  # 14 days → in 30
-            _trial(nct_id="NCT002", pcd="2026-02-01"),   # 62 days → in 90
-            _trial(nct_id="NCT003", pcd="2026-04-01"),   # 121 days → in 180
-            _trial(nct_id="NCT004", pcd="2026-09-01"),   # 274 days → outside 180
+            _trial(nct_id="NCT002", pcd="2026-02-01"),  # 62 days → in 90
+            _trial(nct_id="NCT003", pcd="2026-04-01"),  # 121 days → in 180
+            _trial(nct_id="NCT004", pcd="2026-09-01"),  # 274 days → outside 180
         ]
         result = compute_readout_density(trials, AS_OF)
         rd = result["ACME"]
@@ -154,10 +154,7 @@ class TestReadoutDensity:
     def test_k_cap(self):
         """Only top K=8 events contribute to curve score."""
         # Create 10 events, all within 180 days
-        trials = [
-            _trial(nct_id=f"NCT{i:03d}", pcd=f"2026-0{(i % 5) + 1}-15")
-            for i in range(1, 11)
-        ]
+        trials = [_trial(nct_id=f"NCT{i:03d}", pcd=f"2026-0{(i % 5) + 1}-15") for i in range(1, 11)]
         result_k8 = compute_readout_density(trials, AS_OF, K=8)
         result_k4 = compute_readout_density(trials, AS_OF, K=4)
         # K=8 should have higher (or equal) curve score than K=4
@@ -328,21 +325,37 @@ class TestDeterminism:
     def test_full_pipeline_deterministic(self):
         """Two runs with identical inputs produce byte-identical JSON output."""
         trials = [
-            _trial(nct_id="NCT001", ticker="ACME", pcd="2026-03-01",
-                   interventions=["Drug X 50mg", "Placebo"],
-                   conditions=["Non-Small Cell Lung Cancer"],
-                   title="Randomized Double-Blind Phase 2 Study"),
-            _trial(nct_id="NCT002", ticker="ACME", pcd="2026-06-01",
-                   interventions=["Drug X 100mg"],
-                   conditions=["Non-Small Cell Lung Cancer"]),
-            _trial(nct_id="NCT003", ticker="BETA", pcd="2026-02-15",
-                   interventions=["Drug Y"],
-                   conditions=["Breast Cancer"],
-                   title="Open-Label Phase 3 Study"),
-            _trial(nct_id="NCT004", ticker="BETA", pcd="2027-01-01",
-                   interventions=["Drug Z"],
-                   conditions=["Melanoma"],
-                   phase="PHASE1"),
+            _trial(
+                nct_id="NCT001",
+                ticker="ACME",
+                pcd="2026-03-01",
+                interventions=["Drug X 50mg", "Placebo"],
+                conditions=["Non-Small Cell Lung Cancer"],
+                title="Randomized Double-Blind Phase 2 Study",
+            ),
+            _trial(
+                nct_id="NCT002",
+                ticker="ACME",
+                pcd="2026-06-01",
+                interventions=["Drug X 100mg"],
+                conditions=["Non-Small Cell Lung Cancer"],
+            ),
+            _trial(
+                nct_id="NCT003",
+                ticker="BETA",
+                pcd="2026-02-15",
+                interventions=["Drug Y"],
+                conditions=["Breast Cancer"],
+                title="Open-Label Phase 3 Study",
+            ),
+            _trial(
+                nct_id="NCT004",
+                ticker="BETA",
+                pcd="2027-01-01",
+                interventions=["Drug Z"],
+                conditions=["Melanoma"],
+                phase="PHASE1",
+            ),
         ]
 
         def _run():
@@ -405,8 +418,12 @@ class TestComposeScoreV2:
         """Score stays in [0, 100] even with extreme adjustments."""
         config = CalendarAlphaConfig()
         v2, _, _ = compose_clinical_score_v2(
-            98.0, {}, config,
-            z_readout_curve=3.0, z_design=3.0, z_endpoint=3.0,
+            98.0,
+            {},
+            config,
+            z_readout_curve=3.0,
+            z_design=3.0,
+            z_endpoint=3.0,
         )
         assert v2 is not None
         assert 0.0 <= v2 <= 100.0
@@ -416,7 +433,9 @@ class TestComposeScoreV2:
         config = CalendarAlphaConfig(enable_sizing=True, sizing_max_deviation=0.10)
         features = {"design_quality_score": 0.1, "readout_curve_score": 0.0, "endpoint_strength_score": 0.3}
         _, sizing, _ = compose_clinical_score_v2(
-            50.0, features, config,
+            50.0,
+            features,
+            config,
             z_competition=3.0,  # extreme
         )
         assert sizing >= 0.90
@@ -497,7 +516,7 @@ class TestCalendarAlphaSortIntegration:
     def test_sort_tilt_nonzero_when_enabled(self):
         """With enable_calendar_alpha_sort=True, a ticker with high v2 z-score
         gets a different sort key than one with low v2 z-score."""
-        from decision_engine import compute_actionable_sort_key, DecisionRuleset
+        from decision_engine import DecisionRuleset, compute_actionable_sort_key
 
         rs = DecisionRuleset(
             enable_calendar_alpha_sort=True,
@@ -519,12 +538,20 @@ class TestCalendarAlphaSortIntegration:
         low_fields = {**base_fields, "clinical_score_v2_z": 0.0}
 
         key_high = compute_actionable_sort_key(
-            high_fields, "drug_developer", 0.8, 10, "HIGH", ruleset=rs,
+            high_fields,
+            "drug_developer",
+            0.8,
+            10,
+            "HIGH",
+            ruleset=rs,
         )
         key_low = compute_actionable_sort_key(
-            low_fields, "drug_developer", 0.8, 10, "LOW", ruleset=rs,
+            low_fields,
+            "drug_developer",
+            0.8,
+            10,
+            "LOW",
+            ruleset=rs,
         )
         # Higher v2 z → lower effective_comp_rank → sorts first
-        assert key_high < key_low, (
-            f"Sort tilt should boost high v2 z-score ticker: {key_high} vs {key_low}"
-        )
+        assert key_high < key_low, f"Sort tilt should boost high v2 z-score ticker: {key_high} vs {key_low}"

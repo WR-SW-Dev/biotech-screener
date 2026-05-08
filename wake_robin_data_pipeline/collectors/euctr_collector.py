@@ -23,10 +23,7 @@ from urllib.parse import quote_plus
 import requests
 
 from common.robustness import create_resilient_session
-from wake_robin_data_pipeline.collectors.trials_collector import (
-    SPONSOR_ALIASES,
-    _clean_company_name,
-)
+from wake_robin_data_pipeline.collectors.trials_collector import SPONSOR_ALIASES, _clean_company_name
 
 _session: requests.Session | None = None
 
@@ -36,6 +33,7 @@ def _get_session() -> requests.Session:
     if _session is None:
         _session = create_resilient_session()
     return _session
+
 
 logger = logging.getLogger(__name__)
 
@@ -139,9 +137,7 @@ def collect_euctr_trials(
                     continue
 
                 # Match sponsor to ticker
-                matched_ticker = _match_ticker(
-                    raw_item.get("sponsor", ""), universe_map
-                )
+                matched_ticker = _match_ticker(raw_item.get("sponsor", ""), universe_map)
                 if matched_ticker is None:
                     matched_ticker = ticker  # searched by this ticker's alias
 
@@ -271,11 +267,11 @@ def _parse_description(desc: str) -> dict:
     fields: dict = {}
 
     # Strip HTML tags like <p>, </p>, <a ...>...</a> but preserve text content
-    clean = re.sub(r'<a [^>]*>.*?</a>', '', desc)  # remove anchor tags entirely
-    clean = re.sub(r'<[^>]+>', '\n', clean)  # replace remaining tags with newlines
+    clean = re.sub(r"<a [^>]*>.*?</a>", "", desc)  # remove anchor tags entirely
+    clean = re.sub(r"<[^>]+>", "\n", clean)  # replace remaining tags with newlines
 
     # Also split on <br/> variants that may have been entity-encoded
-    clean = clean.replace('&lt;br/&gt;', '\n').replace('&lt;br&gt;', '\n')
+    clean = clean.replace("&lt;br/&gt;", "\n").replace("&lt;br&gt;", "\n")
 
     for line in clean.split("\n"):
         line = line.strip()

@@ -37,10 +37,7 @@ SEC_SEARCH_URL = "https://efts.sec.gov/LATEST/search-index"
 SEC_ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/data"
 
 # User-Agent for requests
-USER_AGENT = os.environ.get(
-    "FDA_USER_AGENT",
-    "Wake Robin Research contact@wakerobincapital.com"
-)
+USER_AGENT = os.environ.get("FDA_USER_AGENT", "Wake Robin Research contact@wakerobincapital.com")
 
 _session = None
 
@@ -67,26 +64,38 @@ _FR_MEETING_DATE = re.compile(
 
 # Extract drug/product names from Federal Register title
 # Pattern 1: "...NDA/BLA 761440 for Belantamab Mafodotin" or "...for REXULTI (brexpiprazole) Tablets"
-_FR_DRUG_AFTER_NDA = re.compile(
-    r"(?:NDA|BLA|sNDA|sBLA)\s*\)?\s*[\d/S-]+,?\s+for\s+([A-Z][A-Za-z]+(?:\s+[A-Za-z]+)*)"
-)
+_FR_DRUG_AFTER_NDA = re.compile(r"(?:NDA|BLA|sNDA|sBLA)\s*\)?\s*[\d/S-]+,?\s+for\s+([A-Z][A-Za-z]+(?:\s+[A-Za-z]+)*)")
 # Pattern 2: "BRANDNAME (generic)" e.g. "COLUMVI (glofitamab)"
-_FR_BRAND_GENERIC = re.compile(
-    r"([A-Z]{3,})\s+\(([a-z][a-z\s]+)\)"
-)
+_FR_BRAND_GENERIC = re.compile(r"([A-Z]{3,})\s+\(([a-z][a-z\s]+)\)")
 # Pattern 3: "Comments-Midomafetamine Capsules" (drug name right after Comments-)
 _FR_DRUG_AFTER_COMMENTS = re.compile(
     r"Comments-([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Capsules?|Tablets?|Injection|Solution))?)"
 )
 
 # Generic/non-drug intervention names to exclude from product map
-_GENERIC_INTERVENTION_NAMES = frozenset({
-    "placebo", "standard of care", "soc", "observation", "no intervention",
-    "best supportive care", "bsc", "control", "active comparator",
-    "investigational drug", "experimental drug", "study drug",
-    "matching placebo", "saline", "normal saline", "vehicle",
-    "sham procedure", "sham", "usual care",
-})
+_GENERIC_INTERVENTION_NAMES = frozenset(
+    {
+        "placebo",
+        "standard of care",
+        "soc",
+        "observation",
+        "no intervention",
+        "best supportive care",
+        "bsc",
+        "control",
+        "active comparator",
+        "investigational drug",
+        "experimental drug",
+        "study drug",
+        "matching placebo",
+        "saline",
+        "normal saline",
+        "vehicle",
+        "sham procedure",
+        "sham",
+        "usual care",
+    }
+)
 
 # Minimum character length for product map entries from trial interventions.
 # Short strings (e.g. "1", "2", "ai") cause false-positive substring matches
@@ -96,12 +105,34 @@ _MIN_PRODUCT_NAME_LENGTH = 4
 # Common English words that appear in FR titles but are not drug names.
 # Checked against trial-intervention entries only (PDUFA/designation names are
 # assumed to be curated).
-_GENERIC_INTERVENTION_WORDS = frozenset({
-    "application", "protocol", "study", "trial", "treatment", "procedure",
-    "therapy", "dose", "drug", "agent", "regimen", "infusion", "injection",
-    "tablet", "capsule", "solution", "device", "comparator", "combination",
-    "diet", "exercise", "surgery", "radiation", "chemotherapy",
-})
+_GENERIC_INTERVENTION_WORDS = frozenset(
+    {
+        "application",
+        "protocol",
+        "study",
+        "trial",
+        "treatment",
+        "procedure",
+        "therapy",
+        "dose",
+        "drug",
+        "agent",
+        "regimen",
+        "infusion",
+        "injection",
+        "tablet",
+        "capsule",
+        "solution",
+        "device",
+        "comparator",
+        "combination",
+        "diet",
+        "exercise",
+        "surgery",
+        "radiation",
+        "chemotherapy",
+    }
+)
 
 # ADCOM date patterns in SEC 8-K filings
 _ADCOM_DATE_PATTERNS = [
@@ -343,24 +374,23 @@ def _collect_adcom_from_federal_register(
                 if not ticker:
                     # Log extracted drugs for debugging
                     if extracted_drugs:
-                        logger.debug(
-                            f"Federal Register ADCOM: unmatched drugs {extracted_drugs} "
-                            f"in '{title[:80]}'"
-                        )
+                        logger.debug(f"Federal Register ADCOM: unmatched drugs {extracted_drugs} " f"in '{title[:80]}'")
                     continue
 
-            events.append({
-                "ticker": ticker,
-                "event_type": "FDA_ADCOM",
-                "event_date": meeting_date.isoformat(),
-                "event_name": f"ADCOM: {drug_name} ({committee})",
-                "drug_name": drug_name,
-                "confidence": "HIGH",
-                "source": "FEDERAL_REGISTER",
-                "disclosed_at": pub_date,
-                "committee": committee,
-                "tags": ["adcom", "federal_register"],
-            })
+            events.append(
+                {
+                    "ticker": ticker,
+                    "event_type": "FDA_ADCOM",
+                    "event_date": meeting_date.isoformat(),
+                    "event_name": f"ADCOM: {drug_name} ({committee})",
+                    "drug_name": drug_name,
+                    "confidence": "HIGH",
+                    "source": "FEDERAL_REGISTER",
+                    "disclosed_at": pub_date,
+                    "committee": committee,
+                    "tags": ["adcom", "federal_register"],
+                }
+            )
 
         if page >= total:
             break
@@ -520,18 +550,20 @@ def _collect_adcom_from_edgar(
                 for m in re.finditer(pattern, text):
                     adcom_date = _parse_date_str(m.group(1))
                     if adcom_date and adcom_date >= as_of_date - timedelta(days=30):
-                        events.append({
-                            "ticker": ticker,
-                            "event_type": "FDA_ADCOM",
-                            "event_date": adcom_date.isoformat(),
-                            "event_name": f"ADCOM: {m.group(0)[:60]}",
-                            "drug_name": "",
-                            "confidence": "HIGH",
-                            "source": "SEC_8K_ADCOM",
-                            "disclosed_at": file_date,
-                            "committee": "",
-                            "tags": ["adcom", "sec_8k"],
-                        })
+                        events.append(
+                            {
+                                "ticker": ticker,
+                                "event_type": "FDA_ADCOM",
+                                "event_date": adcom_date.isoformat(),
+                                "event_name": f"ADCOM: {m.group(0)[:60]}",
+                                "drug_name": "",
+                                "confidence": "HIGH",
+                                "source": "SEC_8K_ADCOM",
+                                "disclosed_at": file_date,
+                                "committee": "",
+                                "tags": ["adcom", "sec_8k"],
+                            }
+                        )
 
     # Dedup by (ticker, event_date)
     seen: Set[tuple] = set()
@@ -627,8 +659,7 @@ def collect_fda_regulatory_notices(
                 "conditions[term]": term,
                 "conditions[publication_date][gte]": start_date,
                 "conditions[publication_date][lte]": end_date,
-                "fields[]": ["title", "dates", "abstract", "publication_date",
-                             "html_url", "document_number"],
+                "fields[]": ["title", "dates", "abstract", "publication_date", "html_url", "document_number"],
                 "per_page": 100,
                 "page": page,
             }
@@ -691,18 +722,20 @@ def collect_fda_regulatory_notices(
                 ticker = match["ticker"]
                 drug_name = match["drug_name"]
 
-                events.append({
-                    "ticker": ticker,
-                    "event_type": event_type,
-                    "event_date": pub_date,
-                    "event_name": f"{event_type}: {drug_name} ({title[:60]})",
-                    "drug_name": drug_name,
-                    "confidence": "HIGH",
-                    "source": "FEDERAL_REGISTER",
-                    "disclosed_at": pub_date,
-                    "fr_document_number": doc_number,
-                    "tags": ["fda_regulatory", "federal_register"],
-                })
+                events.append(
+                    {
+                        "ticker": ticker,
+                        "event_type": event_type,
+                        "event_date": pub_date,
+                        "event_name": f"{event_type}: {drug_name} ({title[:60]})",
+                        "drug_name": drug_name,
+                        "confidence": "HIGH",
+                        "source": "FEDERAL_REGISTER",
+                        "disclosed_at": pub_date,
+                        "fr_document_number": doc_number,
+                        "tags": ["fda_regulatory", "federal_register"],
+                    }
+                )
 
             if page >= total_pages:
                 break

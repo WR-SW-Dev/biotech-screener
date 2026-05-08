@@ -154,6 +154,7 @@ SNAPSHOT_COLUMNS = (
         "calendar_confidence",
         "has_catalyst_signal",
         "has_tradeable_calendar",
+        "catalyst_quality",  # Spec 078: binary_alpha / registry_only / low_confidence / corporate_update
         # --- Institutional flow diagnostics ---
         "inst_delta_regime",
         "inst_flow_abs_positive",

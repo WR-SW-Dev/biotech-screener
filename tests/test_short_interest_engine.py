@@ -25,10 +25,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from short_interest_engine import ShortInterestSignalEngine
 
-
 # ============================================================================
 # ENGINE INITIALIZATION TESTS
 # ============================================================================
+
 
 class TestEngineInitialization:
     """Tests for engine initialization."""
@@ -53,6 +53,7 @@ class TestEngineInitialization:
 # SQUEEZE POTENTIAL TESTS
 # ============================================================================
 
+
 class TestSqueezePotenial:
     """Tests for squeeze potential assessment."""
 
@@ -66,7 +67,7 @@ class TestSqueezePotenial:
             ticker="SQUEEZE",
             short_interest_pct=Decimal("45"),
             days_to_cover=Decimal("12"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert result["squeeze_potential"] == "EXTREME"
@@ -74,10 +75,7 @@ class TestSqueezePotenial:
     def test_high_squeeze_potential(self, engine):
         """Moderate-high SI% and DTC should trigger HIGH."""
         result = engine.calculate_short_signal(
-            ticker="HIGH",
-            short_interest_pct=Decimal("25"),
-            days_to_cover=Decimal("8"),
-            as_of_date=date(2026, 1, 15)
+            ticker="HIGH", short_interest_pct=Decimal("25"), days_to_cover=Decimal("8"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["squeeze_potential"] == "HIGH"
@@ -85,10 +83,7 @@ class TestSqueezePotenial:
     def test_moderate_squeeze_potential(self, engine):
         """Moderate SI% and DTC should trigger MODERATE."""
         result = engine.calculate_short_signal(
-            ticker="MOD",
-            short_interest_pct=Decimal("12"),
-            days_to_cover=Decimal("6"),
-            as_of_date=date(2026, 1, 15)
+            ticker="MOD", short_interest_pct=Decimal("12"), days_to_cover=Decimal("6"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["squeeze_potential"] == "MODERATE"
@@ -96,10 +91,7 @@ class TestSqueezePotenial:
     def test_low_squeeze_potential(self, engine):
         """Low SI% or DTC should trigger LOW."""
         result = engine.calculate_short_signal(
-            ticker="LOW",
-            short_interest_pct=Decimal("5"),
-            days_to_cover=Decimal("2"),
-            as_of_date=date(2026, 1, 15)
+            ticker="LOW", short_interest_pct=Decimal("5"), days_to_cover=Decimal("2"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["squeeze_potential"] == "LOW"
@@ -111,7 +103,7 @@ class TestSqueezePotenial:
             ticker="TEST1",
             short_interest_pct=Decimal("50"),
             days_to_cover=Decimal("2"),  # Low DTC
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
         assert result1["squeeze_potential"] != "EXTREME"
 
@@ -120,7 +112,7 @@ class TestSqueezePotenial:
             ticker="TEST2",
             short_interest_pct=Decimal("5"),  # Low SI
             days_to_cover=Decimal("15"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
         assert result2["squeeze_potential"] != "EXTREME"
 
@@ -128,6 +120,7 @@ class TestSqueezePotenial:
 # ============================================================================
 # CROWDING RISK TESTS
 # ============================================================================
+
 
 class TestCrowdingRisk:
     """Tests for crowding risk assessment."""
@@ -139,10 +132,7 @@ class TestCrowdingRisk:
     def test_high_crowding_risk(self, engine):
         """SI% >= 30% should trigger HIGH crowding."""
         result = engine.calculate_short_signal(
-            ticker="CROWD",
-            short_interest_pct=Decimal("35"),
-            days_to_cover=Decimal("5"),
-            as_of_date=date(2026, 1, 15)
+            ticker="CROWD", short_interest_pct=Decimal("35"), days_to_cover=Decimal("5"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["crowding_risk"] == "HIGH"
@@ -150,10 +140,7 @@ class TestCrowdingRisk:
     def test_medium_crowding_risk(self, engine):
         """SI% 15-30% should trigger MEDIUM crowding."""
         result = engine.calculate_short_signal(
-            ticker="MED",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("5"),
-            as_of_date=date(2026, 1, 15)
+            ticker="MED", short_interest_pct=Decimal("20"), days_to_cover=Decimal("5"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["crowding_risk"] == "MEDIUM"
@@ -161,10 +148,7 @@ class TestCrowdingRisk:
     def test_low_crowding_risk(self, engine):
         """SI% < 15% should trigger LOW crowding."""
         result = engine.calculate_short_signal(
-            ticker="LOW",
-            short_interest_pct=Decimal("10"),
-            days_to_cover=Decimal("5"),
-            as_of_date=date(2026, 1, 15)
+            ticker="LOW", short_interest_pct=Decimal("10"), days_to_cover=Decimal("5"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["crowding_risk"] == "LOW"
@@ -173,6 +157,7 @@ class TestCrowdingRisk:
 # ============================================================================
 # TREND CONTRIBUTION TESTS
 # ============================================================================
+
 
 class TestTrendContribution:
     """Tests for short interest trend contribution."""
@@ -188,7 +173,7 @@ class TestTrendContribution:
             short_interest_pct=Decimal("20"),
             days_to_cover=Decimal("8"),
             short_interest_change_pct=Decimal("-25"),  # Strong covering
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert result["trend_direction"] == "COVERING"
@@ -201,7 +186,7 @@ class TestTrendContribution:
             short_interest_pct=Decimal("20"),
             days_to_cover=Decimal("8"),
             short_interest_change_pct=Decimal("25"),  # Strong buildup
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert result["trend_direction"] == "BUILDING"
@@ -214,7 +199,7 @@ class TestTrendContribution:
             short_interest_pct=Decimal("20"),
             days_to_cover=Decimal("8"),
             short_interest_change_pct=Decimal("0"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert result["trend_direction"] == "STABLE"
@@ -224,6 +209,7 @@ class TestTrendContribution:
 # ============================================================================
 # SIGNAL DIRECTION TESTS
 # ============================================================================
+
 
 class TestSignalDirection:
     """Tests for overall signal direction determination."""
@@ -241,7 +227,7 @@ class TestSignalDirection:
             days_to_cover=Decimal("12"),
             short_interest_change_pct=Decimal("-20"),
             institutional_long_pct=Decimal("60"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert result["signal_direction"] == "BULLISH"
@@ -256,7 +242,7 @@ class TestSignalDirection:
             days_to_cover=Decimal("1"),
             short_interest_change_pct=Decimal("25"),
             institutional_long_pct=Decimal("10"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert result["signal_direction"] == "BEARISH"
@@ -265,10 +251,7 @@ class TestSignalDirection:
     def test_neutral_signal_from_middle_score(self, engine):
         """Score 40-60 should generate NEUTRAL signal."""
         result = engine.calculate_short_signal(
-            ticker="NEUTRAL",
-            short_interest_pct=Decimal("15"),
-            days_to_cover=Decimal("5"),
-            as_of_date=date(2026, 1, 15)
+            ticker="NEUTRAL", short_interest_pct=Decimal("15"), days_to_cover=Decimal("5"), as_of_date=date(2026, 1, 15)
         )
 
         assert result["signal_direction"] == "NEUTRAL"
@@ -278,6 +261,7 @@ class TestSignalDirection:
 # ============================================================================
 # INSUFFICIENT DATA TESTS
 # ============================================================================
+
 
 class TestInsufficientData:
     """Tests for insufficient data handling."""
@@ -289,10 +273,7 @@ class TestInsufficientData:
     def test_both_none_returns_insufficient(self, engine):
         """Both SI% and DTC as None should return INSUFFICIENT_DATA."""
         result = engine.calculate_short_signal(
-            ticker="MISSING",
-            short_interest_pct=None,
-            days_to_cover=None,
-            as_of_date=date(2026, 1, 15)
+            ticker="MISSING", short_interest_pct=None, days_to_cover=None, as_of_date=date(2026, 1, 15)
         )
 
         assert result["status"] == "INSUFFICIENT_DATA"
@@ -303,10 +284,7 @@ class TestInsufficientData:
     def test_insufficient_data_returns_neutral_score(self, engine):
         """Insufficient data should return neutral score of 50."""
         result = engine.calculate_short_signal(
-            ticker="MISSING",
-            short_interest_pct=None,
-            days_to_cover=None,
-            as_of_date=date(2026, 1, 15)
+            ticker="MISSING", short_interest_pct=None, days_to_cover=None, as_of_date=date(2026, 1, 15)
         )
 
         assert result["short_signal_score"] == Decimal("50")
@@ -315,10 +293,7 @@ class TestInsufficientData:
     def test_only_si_pct_provided(self, engine):
         """Only SI% provided should still calculate (DTC defaults to 0)."""
         result = engine.calculate_short_signal(
-            ticker="PARTIAL",
-            short_interest_pct=Decimal("25"),
-            days_to_cover=None,
-            as_of_date=date(2026, 1, 15)
+            ticker="PARTIAL", short_interest_pct=Decimal("25"), days_to_cover=None, as_of_date=date(2026, 1, 15)
         )
 
         assert result["status"] == "SUCCESS"
@@ -329,6 +304,7 @@ class TestInsufficientData:
 # ============================================================================
 # SCORE BOUNDING TESTS
 # ============================================================================
+
 
 class TestScoreBounding:
     """Tests for score value bounding."""
@@ -346,7 +322,7 @@ class TestScoreBounding:
             days_to_cover=Decimal("30"),
             short_interest_change_pct=Decimal("-50"),
             institutional_long_pct=Decimal("90"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
         assert Decimal("0") <= result_high["short_signal_score"] <= Decimal("100")
 
@@ -357,7 +333,7 @@ class TestScoreBounding:
             days_to_cover=Decimal("0"),
             short_interest_change_pct=Decimal("50"),
             institutional_long_pct=Decimal("0"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
         assert Decimal("0") <= result_low["short_signal_score"] <= Decimal("100")
 
@@ -365,6 +341,7 @@ class TestScoreBounding:
 # ============================================================================
 # INSTITUTIONAL SUPPORT TESTS
 # ============================================================================
+
 
 class TestInstitutionalSupport:
     """Tests for institutional support contribution."""
@@ -376,10 +353,7 @@ class TestInstitutionalSupport:
     def test_high_institutional_support_bullish(self, engine):
         """High institutional ownership should add positive contribution."""
         base = engine.calculate_short_signal(
-            ticker="BASE",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("8"),
-            as_of_date=date(2026, 1, 15)
+            ticker="BASE", short_interest_pct=Decimal("20"), days_to_cover=Decimal("8"), as_of_date=date(2026, 1, 15)
         )
 
         with_inst = engine.calculate_short_signal(
@@ -387,7 +361,7 @@ class TestInstitutionalSupport:
             short_interest_pct=Decimal("20"),
             days_to_cover=Decimal("8"),
             institutional_long_pct=Decimal("75"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         assert with_inst["short_signal_score"] > base["short_signal_score"]
@@ -397,6 +371,7 @@ class TestInstitutionalSupport:
 # ============================================================================
 # DAYS TO COVER CONTRIBUTION TESTS
 # ============================================================================
+
 
 class TestDaysTooCoverContribution:
     """Tests for days-to-cover contribution."""
@@ -408,26 +383,22 @@ class TestDaysTooCoverContribution:
     def test_high_dtc_adds_contribution(self, engine):
         """High DTC should add positive contribution (squeeze pressure)."""
         low_dtc = engine.calculate_short_signal(
-            ticker="LOW",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("2"),
-            as_of_date=date(2026, 1, 15)
+            ticker="LOW", short_interest_pct=Decimal("20"), days_to_cover=Decimal("2"), as_of_date=date(2026, 1, 15)
         )
 
         high_dtc = engine.calculate_short_signal(
-            ticker="HIGH",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("15"),
-            as_of_date=date(2026, 1, 15)
+            ticker="HIGH", short_interest_pct=Decimal("20"), days_to_cover=Decimal("15"), as_of_date=date(2026, 1, 15)
         )
 
-        assert high_dtc["component_contributions"]["days_to_cover"] > \
-               low_dtc["component_contributions"]["days_to_cover"]
+        assert (
+            high_dtc["component_contributions"]["days_to_cover"] > low_dtc["component_contributions"]["days_to_cover"]
+        )
 
 
 # ============================================================================
 # UNIVERSE SCORING TESTS
 # ============================================================================
+
 
 class TestUniverseScoring:
     """Tests for scoring an entire universe."""
@@ -489,6 +460,7 @@ class TestUniverseScoring:
 # AUDIT TRAIL TESTS
 # ============================================================================
 
+
 class TestAuditTrail:
     """Tests for audit trail functionality."""
 
@@ -499,16 +471,10 @@ class TestAuditTrail:
     def test_audit_trail_populated(self, engine):
         """Calculating scores should add entries to audit trail."""
         engine.calculate_short_signal(
-            ticker="TEST1",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("8"),
-            as_of_date=date(2026, 1, 15)
+            ticker="TEST1", short_interest_pct=Decimal("20"), days_to_cover=Decimal("8"), as_of_date=date(2026, 1, 15)
         )
         engine.calculate_short_signal(
-            ticker="TEST2",
-            short_interest_pct=Decimal("10"),
-            days_to_cover=Decimal("4"),
-            as_of_date=date(2026, 1, 15)
+            ticker="TEST2", short_interest_pct=Decimal("10"), days_to_cover=Decimal("4"), as_of_date=date(2026, 1, 15)
         )
 
         assert len(engine.audit_trail) == 2
@@ -516,10 +482,7 @@ class TestAuditTrail:
     def test_audit_contains_deterministic_timestamp(self, engine):
         """Audit entry should have deterministic timestamp."""
         result = engine.calculate_short_signal(
-            ticker="TEST",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("8"),
-            as_of_date=date(2026, 1, 15)
+            ticker="TEST", short_interest_pct=Decimal("20"), days_to_cover=Decimal("8"), as_of_date=date(2026, 1, 15)
         )
 
         audit = result["audit_entry"]
@@ -528,10 +491,7 @@ class TestAuditTrail:
     def test_audit_contains_calculation_details(self, engine):
         """Audit entry should contain calculation breakdown."""
         result = engine.calculate_short_signal(
-            ticker="TEST",
-            short_interest_pct=Decimal("20"),
-            days_to_cover=Decimal("8"),
-            as_of_date=date(2026, 1, 15)
+            ticker="TEST", short_interest_pct=Decimal("20"), days_to_cover=Decimal("8"), as_of_date=date(2026, 1, 15)
         )
 
         audit = result["audit_entry"]
@@ -544,6 +504,7 @@ class TestAuditTrail:
 # ============================================================================
 # COMPONENT CONTRIBUTION TESTS
 # ============================================================================
+
 
 class TestComponentContributions:
     """Tests for component contribution tracking."""
@@ -560,7 +521,7 @@ class TestComponentContributions:
             days_to_cover=Decimal("10"),
             short_interest_change_pct=Decimal("-10"),
             institutional_long_pct=Decimal("50"),
-            as_of_date=date(2026, 1, 15)
+            as_of_date=date(2026, 1, 15),
         )
 
         contribs = result["component_contributions"]
@@ -572,10 +533,7 @@ class TestComponentContributions:
     def test_contributions_are_decimals(self, engine):
         """All contributions should be Decimal values."""
         result = engine.calculate_short_signal(
-            ticker="TEST",
-            short_interest_pct=Decimal("30"),
-            days_to_cover=Decimal("10"),
-            as_of_date=date(2026, 1, 15)
+            ticker="TEST", short_interest_pct=Decimal("30"), days_to_cover=Decimal("10"), as_of_date=date(2026, 1, 15)
         )
 
         for key, value in result["component_contributions"].items():

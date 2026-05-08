@@ -13,15 +13,16 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
 
-# Import the FastMCP instance
-from mcp_server.app import mcp  # noqa: E402
+import mcp_server.tools.fundamentals_tools  # noqa: F401, E402
+import mcp_server.tools.morningstar_tools  # noqa: F401, E402
+import mcp_server.tools.price_tools  # noqa: F401, E402
+import mcp_server.tools.screening_tools  # noqa: F401, E402
 
 # Import tool modules so their @mcp.tool() decorators register
 import mcp_server.tools.universe_tools  # noqa: F401, E402
-import mcp_server.tools.price_tools  # noqa: F401, E402
-import mcp_server.tools.screening_tools  # noqa: F401, E402
-import mcp_server.tools.fundamentals_tools  # noqa: F401, E402
-import mcp_server.tools.morningstar_tools  # noqa: F401, E402
+
+# Import the FastMCP instance
+from mcp_server.app import mcp  # noqa: E402
 
 
 def main():

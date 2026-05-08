@@ -41,48 +41,39 @@ from typing import Any, Dict, List, Optional, Set
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.data_integration_contracts import (
-    # Schema validators
-    validate_market_data_schema,
-    validate_financial_records_schema,
-    validate_trial_records_schema,
-    validate_holdings_schema,
-    validate_short_interest_schema,
-    # Join validation
-    validate_join_invariants,
-    normalize_ticker_set,
-    check_ticker_uniqueness,
-    check_ticker_case_consistency,
-    # PIT validation
-    validate_pit_admissibility,
-    validate_dataset_pit,
-    PITValidationResult,
-    # Coverage guardrails
-    validate_coverage_guardrails,
+from common.data_integration_contracts import (  # Schema validators; Join validation; PIT validation; Coverage guardrails; Determinism; Numeric safety; Exceptions
     CoverageConfig,
-    CoverageReport,
-    # Determinism
-    compute_deterministic_hash,
-    # Numeric safety
-    safe_numeric_check,
-    # Exceptions
-    DataIntegrationError,
-    SchemaValidationError,
-    JoinInvariantError,
-    PITViolationError,
     CoverageGuardrailError,
+    CoverageReport,
+    DataIntegrationError,
+    JoinInvariantError,
+    PITValidationResult,
+    PITViolationError,
+    SchemaValidationError,
+    check_ticker_case_consistency,
+    check_ticker_uniqueness,
+    compute_deterministic_hash,
+    normalize_ticker_set,
+    safe_numeric_check,
+    validate_coverage_guardrails,
+    validate_dataset_pit,
+    validate_financial_records_schema,
+    validate_holdings_schema,
+    validate_join_invariants,
+    validate_market_data_schema,
+    validate_pit_admissibility,
+    validate_short_interest_schema,
+    validate_trial_records_schema,
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 # =============================================================================
 # FIXTURE DATA FOR TESTING
 # =============================================================================
+
 
 def create_fixture_data() -> Dict[str, Any]:
     """
@@ -110,20 +101,86 @@ def create_fixture_data() -> Dict[str, Any]:
             {"ticker": "ZERO", "Cash": 0, "NetIncome": 0, "source_date": "2025-12-20"},  # Zero values
         ],
         "market_data": [
-            {"ticker": "ACME", "price": 25.50, "market_cap": 1000000000, "return_60d": 0.15, "source_date": "2026-01-14"},
-            {"ticker": "BETA", "price": 12.00, "market_cap": 500000000, "return_60d": -0.05, "source_date": "2026-01-14"},
-            {"ticker": "GAMMA", "price": 45.00, "market_cap": 2000000000, "return_60d": 0.0, "source_date": "2026-01-14"},  # Zero return
-            {"ticker": "Delta", "price": 18.75, "market_cap": 750000000, "return_60d": 0.08, "source_date": "2026-01-14"},  # Mixed case
-            {"ticker": "ZERO", "price": 5.00, "market_cap": 100000000, "return_60d": 0, "source_date": "2026-01-14"},  # Zero as int
+            {
+                "ticker": "ACME",
+                "price": 25.50,
+                "market_cap": 1000000000,
+                "return_60d": 0.15,
+                "source_date": "2026-01-14",
+            },
+            {
+                "ticker": "BETA",
+                "price": 12.00,
+                "market_cap": 500000000,
+                "return_60d": -0.05,
+                "source_date": "2026-01-14",
+            },
+            {
+                "ticker": "GAMMA",
+                "price": 45.00,
+                "market_cap": 2000000000,
+                "return_60d": 0.0,
+                "source_date": "2026-01-14",
+            },  # Zero return
+            {
+                "ticker": "Delta",
+                "price": 18.75,
+                "market_cap": 750000000,
+                "return_60d": 0.08,
+                "source_date": "2026-01-14",
+            },  # Mixed case
+            {
+                "ticker": "ZERO",
+                "price": 5.00,
+                "market_cap": 100000000,
+                "return_60d": 0,
+                "source_date": "2026-01-14",
+            },  # Zero as int
         ],
         "trial_records": [
-            {"ticker": "ACME", "nct_id": "NCT12345678", "phase": "Phase 2", "status": "Recruiting", "first_posted": "2024-06-15"},
-            {"ticker": "ACME", "nct_id": "NCT12345679", "phase": "Phase 3", "status": "Active", "first_posted": "2025-01-10"},
-            {"ticker": "BETA", "nct_id": "NCT23456789", "phase": "Phase 1", "status": "Recruiting", "first_posted": "2025-09-01"},
-            {"ticker": "GAMMA", "nct_id": "NCT34567890", "phase": "Phase 3", "status": "Completed", "first_posted": "2023-03-20"},
-            {"ticker": "DELTA", "nct_id": "NCT45678901", "phase": "Phase 2", "status": "Recruiting", "first_posted": "2025-06-01"},
+            {
+                "ticker": "ACME",
+                "nct_id": "NCT12345678",
+                "phase": "Phase 2",
+                "status": "Recruiting",
+                "first_posted": "2024-06-15",
+            },
+            {
+                "ticker": "ACME",
+                "nct_id": "NCT12345679",
+                "phase": "Phase 3",
+                "status": "Active",
+                "first_posted": "2025-01-10",
+            },
+            {
+                "ticker": "BETA",
+                "nct_id": "NCT23456789",
+                "phase": "Phase 1",
+                "status": "Recruiting",
+                "first_posted": "2025-09-01",
+            },
+            {
+                "ticker": "GAMMA",
+                "nct_id": "NCT34567890",
+                "phase": "Phase 3",
+                "status": "Completed",
+                "first_posted": "2023-03-20",
+            },
+            {
+                "ticker": "DELTA",
+                "nct_id": "NCT45678901",
+                "phase": "Phase 2",
+                "status": "Recruiting",
+                "first_posted": "2025-06-01",
+            },
             # Future record (should be PIT-filtered)
-            {"ticker": "ACME", "nct_id": "NCT99999999", "phase": "Phase 1", "status": "Not yet recruiting", "first_posted": "2026-02-01"},
+            {
+                "ticker": "ACME",
+                "nct_id": "NCT99999999",
+                "phase": "Phase 1",
+                "status": "Not yet recruiting",
+                "first_posted": "2026-02-01",
+            },
         ],
         "holdings_snapshots": {
             "ACME": {
@@ -156,7 +213,7 @@ def create_fixture_data() -> Dict[str, Any]:
             "summary": {
                 "coordinated_buys": ["ACME"],
                 "coordinated_sells": ["DELTA"],
-            }
+            },
         },
         "as_of_date": "2026-01-15",
     }
@@ -166,9 +223,11 @@ def create_fixture_data() -> Dict[str, Any]:
 # VALIDATION HARNESS
 # =============================================================================
 
+
 @dataclass
 class ValidationCheck:
     """Result of a single validation check."""
+
     name: str
     passed: bool
     severity: str  # "critical", "high", "medium", "low"
@@ -179,6 +238,7 @@ class ValidationCheck:
 @dataclass
 class ValidationReport:
     """Complete validation report."""
+
     passed: bool
     checks: List[ValidationCheck] = field(default_factory=list)
     critical_failures: int = 0
@@ -280,84 +340,104 @@ class DataIntegrationValidator:
 
         # Market data
         try:
-            is_valid, invalid = validate_market_data_schema(
-                self.market_data, strict=False, raise_on_error=False
+            is_valid, invalid = validate_market_data_schema(self.market_data, strict=False, raise_on_error=False)
+            self.report.add_check(
+                ValidationCheck(
+                    name="market_data_schema",
+                    passed=is_valid,
+                    severity="high" if not is_valid else "low",
+                    message=(
+                        f"Market data schema: {len(invalid)} invalid records" if invalid else "Market data schema valid"
+                    ),
+                    details={"invalid_count": len(invalid), "sample": invalid[:3]},
+                )
             )
-            self.report.add_check(ValidationCheck(
-                name="market_data_schema",
-                passed=is_valid,
-                severity="high" if not is_valid else "low",
-                message=f"Market data schema: {len(invalid)} invalid records" if invalid else "Market data schema valid",
-                details={"invalid_count": len(invalid), "sample": invalid[:3]},
-            ))
         except Exception as e:
-            self.report.add_check(ValidationCheck(
-                name="market_data_schema",
-                passed=False,
-                severity="critical",
-                message=f"Market data schema validation failed: {e}",
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name="market_data_schema",
+                    passed=False,
+                    severity="critical",
+                    message=f"Market data schema validation failed: {e}",
+                )
+            )
 
         # Financial records
         try:
             is_valid, invalid = validate_financial_records_schema(
                 self.financial_records, strict=False, raise_on_error=False
             )
-            self.report.add_check(ValidationCheck(
-                name="financial_records_schema",
-                passed=is_valid,
-                severity="high" if not is_valid else "low",
-                message=f"Financial records schema: {len(invalid)} invalid records" if invalid else "Financial records schema valid",
-                details={"invalid_count": len(invalid), "sample": invalid[:3]},
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name="financial_records_schema",
+                    passed=is_valid,
+                    severity="high" if not is_valid else "low",
+                    message=(
+                        f"Financial records schema: {len(invalid)} invalid records"
+                        if invalid
+                        else "Financial records schema valid"
+                    ),
+                    details={"invalid_count": len(invalid), "sample": invalid[:3]},
+                )
+            )
         except Exception as e:
-            self.report.add_check(ValidationCheck(
-                name="financial_records_schema",
-                passed=False,
-                severity="critical",
-                message=f"Financial records schema validation failed: {e}",
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name="financial_records_schema",
+                    passed=False,
+                    severity="critical",
+                    message=f"Financial records schema validation failed: {e}",
+                )
+            )
 
         # Trial records
         try:
-            is_valid, invalid = validate_trial_records_schema(
-                self.trial_records, strict=False, raise_on_error=False
+            is_valid, invalid = validate_trial_records_schema(self.trial_records, strict=False, raise_on_error=False)
+            self.report.add_check(
+                ValidationCheck(
+                    name="trial_records_schema",
+                    passed=is_valid,
+                    severity="high" if not is_valid else "low",
+                    message=(
+                        f"Trial records schema: {len(invalid)} invalid records"
+                        if invalid
+                        else "Trial records schema valid"
+                    ),
+                    details={"invalid_count": len(invalid), "sample": invalid[:3]},
+                )
             )
-            self.report.add_check(ValidationCheck(
-                name="trial_records_schema",
-                passed=is_valid,
-                severity="high" if not is_valid else "low",
-                message=f"Trial records schema: {len(invalid)} invalid records" if invalid else "Trial records schema valid",
-                details={"invalid_count": len(invalid), "sample": invalid[:3]},
-            ))
         except Exception as e:
-            self.report.add_check(ValidationCheck(
-                name="trial_records_schema",
-                passed=False,
-                severity="critical",
-                message=f"Trial records schema validation failed: {e}",
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name="trial_records_schema",
+                    passed=False,
+                    severity="critical",
+                    message=f"Trial records schema validation failed: {e}",
+                )
+            )
 
         # Holdings (optional)
         if self.holdings_snapshots:
             try:
-                is_valid, errors = validate_holdings_schema(
-                    self.holdings_snapshots, raise_on_error=False
+                is_valid, errors = validate_holdings_schema(self.holdings_snapshots, raise_on_error=False)
+                self.report.add_check(
+                    ValidationCheck(
+                        name="holdings_schema",
+                        passed=is_valid,
+                        severity="medium" if not is_valid else "low",
+                        message=f"Holdings schema: {len(errors)} errors" if errors else "Holdings schema valid",
+                        details={"errors": errors[:5]},
+                    )
                 )
-                self.report.add_check(ValidationCheck(
-                    name="holdings_schema",
-                    passed=is_valid,
-                    severity="medium" if not is_valid else "low",
-                    message=f"Holdings schema: {len(errors)} errors" if errors else "Holdings schema valid",
-                    details={"errors": errors[:5]},
-                ))
             except Exception as e:
-                self.report.add_check(ValidationCheck(
-                    name="holdings_schema",
-                    passed=False,
-                    severity="medium",
-                    message=f"Holdings schema validation failed: {e}",
-                ))
+                self.report.add_check(
+                    ValidationCheck(
+                        name="holdings_schema",
+                        passed=False,
+                        severity="medium",
+                        message=f"Holdings schema validation failed: {e}",
+                    )
+                )
 
     def _validate_ticker_consistency(self):
         """Validate ticker normalization and uniqueness."""
@@ -369,13 +449,19 @@ class DataIntegrationValidator:
             ("market", self.market_data),
         ]:
             is_unique, duplicates = check_ticker_uniqueness(records)
-            self.report.add_check(ValidationCheck(
-                name=f"{name}_ticker_uniqueness",
-                passed=is_unique,
-                severity="high" if not is_unique else "low",
-                message=f"{name.title()} ticker uniqueness: {len(duplicates)} duplicates" if duplicates else f"{name.title()} tickers are unique",
-                details={"duplicates": list(duplicates)[:5]},
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name=f"{name}_ticker_uniqueness",
+                    passed=is_unique,
+                    severity="high" if not is_unique else "low",
+                    message=(
+                        f"{name.title()} ticker uniqueness: {len(duplicates)} duplicates"
+                        if duplicates
+                        else f"{name.title()} tickers are unique"
+                    ),
+                    details={"duplicates": list(duplicates)[:5]},
+                )
+            )
 
         # Check case consistency
         for name, records in [
@@ -383,13 +469,19 @@ class DataIntegrationValidator:
             ("market", self.market_data),
         ]:
             is_consistent, variants = check_ticker_case_consistency(records)
-            self.report.add_check(ValidationCheck(
-                name=f"{name}_ticker_case",
-                passed=is_consistent,
-                severity="medium" if not is_consistent else "low",
-                message=f"{name.title()} ticker case: {len(variants)} inconsistencies" if variants else f"{name.title()} ticker case is consistent",
-                details={"variants": {k: list(v) for k, v in list(variants.items())[:5]}},
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name=f"{name}_ticker_case",
+                    passed=is_consistent,
+                    severity="medium" if not is_consistent else "low",
+                    message=(
+                        f"{name.title()} ticker case: {len(variants)} inconsistencies"
+                        if variants
+                        else f"{name.title()} ticker case is consistent"
+                    ),
+                    details={"variants": {k: list(v) for k, v in list(variants.items())[:5]}},
+                )
+            )
 
     def _validate_joins(self):
         """Validate join invariants."""
@@ -410,67 +502,85 @@ class DataIntegrationValidator:
             min_market_coverage_pct=50.0,
         )
 
-        self.report.add_check(ValidationCheck(
-            name="join_invariants",
-            passed=result["is_valid"],
-            severity="high" if not result["is_valid"] else "low",
-            message=f"Join invariants: {result['coverage_failures']}" if result["coverage_failures"] else "Join invariants valid",
-            details=result,
-        ))
+        self.report.add_check(
+            ValidationCheck(
+                name="join_invariants",
+                passed=result["is_valid"],
+                severity="high" if not result["is_valid"] else "low",
+                message=(
+                    f"Join invariants: {result['coverage_failures']}"
+                    if result["coverage_failures"]
+                    else "Join invariants valid"
+                ),
+                details=result,
+            )
+        )
 
     def _validate_pit(self):
         """Validate PIT admissibility for all datasets."""
         logger.info("[4/7] Validating PIT admissibility...")
 
         # Market data
-        pit_result = validate_dataset_pit(
-            "market", self.market_data, self.as_of_date
+        pit_result = validate_dataset_pit("market", self.market_data, self.as_of_date)
+        self.report.add_check(
+            ValidationCheck(
+                name="market_data_pit",
+                passed=pit_result.is_valid,
+                severity="critical" if not pit_result.is_valid else "low",
+                message=(
+                    f"Market data PIT: {pit_result.pit_violated} future records"
+                    if pit_result.pit_violated
+                    else "Market data PIT valid"
+                ),
+                details={
+                    "total": pit_result.total_records,
+                    "compliant": pit_result.pit_compliant,
+                    "violated": pit_result.pit_violated,
+                    "cutoff": pit_result.pit_cutoff,
+                },
+            )
         )
-        self.report.add_check(ValidationCheck(
-            name="market_data_pit",
-            passed=pit_result.is_valid,
-            severity="critical" if not pit_result.is_valid else "low",
-            message=f"Market data PIT: {pit_result.pit_violated} future records" if pit_result.pit_violated else "Market data PIT valid",
-            details={
-                "total": pit_result.total_records,
-                "compliant": pit_result.pit_compliant,
-                "violated": pit_result.pit_violated,
-                "cutoff": pit_result.pit_cutoff,
-            },
-        ))
 
         # Financial records
-        pit_result = validate_dataset_pit(
-            "financial", self.financial_records, self.as_of_date
+        pit_result = validate_dataset_pit("financial", self.financial_records, self.as_of_date)
+        self.report.add_check(
+            ValidationCheck(
+                name="financial_records_pit",
+                passed=pit_result.is_valid,
+                severity="critical" if not pit_result.is_valid else "low",
+                message=(
+                    f"Financial records PIT: {pit_result.pit_violated} future records"
+                    if pit_result.pit_violated
+                    else "Financial records PIT valid"
+                ),
+                details={
+                    "total": pit_result.total_records,
+                    "compliant": pit_result.pit_compliant,
+                    "violated": pit_result.pit_violated,
+                },
+            )
         )
-        self.report.add_check(ValidationCheck(
-            name="financial_records_pit",
-            passed=pit_result.is_valid,
-            severity="critical" if not pit_result.is_valid else "low",
-            message=f"Financial records PIT: {pit_result.pit_violated} future records" if pit_result.pit_violated else "Financial records PIT valid",
-            details={
-                "total": pit_result.total_records,
-                "compliant": pit_result.pit_compliant,
-                "violated": pit_result.pit_violated,
-            },
-        ))
 
         # Trial records
-        pit_result = validate_dataset_pit(
-            "trial", self.trial_records, self.as_of_date
+        pit_result = validate_dataset_pit("trial", self.trial_records, self.as_of_date)
+        self.report.add_check(
+            ValidationCheck(
+                name="trial_records_pit",
+                passed=pit_result.is_valid,
+                severity="high" if not pit_result.is_valid else "low",
+                message=(
+                    f"Trial records PIT: {pit_result.pit_violated} future records"
+                    if pit_result.pit_violated
+                    else "Trial records PIT valid"
+                ),
+                details={
+                    "total": pit_result.total_records,
+                    "compliant": pit_result.pit_compliant,
+                    "violated": pit_result.pit_violated,
+                    "future_sample": pit_result.future_records[:3],
+                },
+            )
         )
-        self.report.add_check(ValidationCheck(
-            name="trial_records_pit",
-            passed=pit_result.is_valid,
-            severity="high" if not pit_result.is_valid else "low",
-            message=f"Trial records PIT: {pit_result.pit_violated} future records" if pit_result.pit_violated else "Trial records PIT valid",
-            details={
-                "total": pit_result.total_records,
-                "compliant": pit_result.pit_compliant,
-                "violated": pit_result.pit_violated,
-                "future_sample": pit_result.future_records[:3],
-            },
-        ))
 
     def _validate_coverage(self):
         """Validate coverage guardrails."""
@@ -488,17 +598,19 @@ class DataIntegrationValidator:
             market_count=len(market_tickers & universe_tickers),
         )
 
-        self.report.add_check(ValidationCheck(
-            name="coverage_guardrails",
-            passed=report.is_valid,
-            severity="high" if not report.is_valid else "low",
-            message=f"Coverage guardrails: {report.failures}" if report.failures else "Coverage guardrails passed",
-            details={
-                "coverage": report.component_coverage,
-                "failures": report.failures,
-                "warnings": report.warnings,
-            },
-        ))
+        self.report.add_check(
+            ValidationCheck(
+                name="coverage_guardrails",
+                passed=report.is_valid,
+                severity="high" if not report.is_valid else "low",
+                message=f"Coverage guardrails: {report.failures}" if report.failures else "Coverage guardrails passed",
+                details={
+                    "coverage": report.component_coverage,
+                    "failures": report.failures,
+                    "warnings": report.warnings,
+                },
+            )
+        )
 
     def _validate_numeric_handling(self):
         """Validate numeric falsy value handling."""
@@ -522,22 +634,30 @@ class DataIntegrationValidator:
                 # The bug: `if ticker and momentum_score` would skip score=0
                 if ticker and not score:  # This would incorrectly trigger for score=0
                     if safe_numeric_check(score):  # But safe_numeric_check knows it's valid
-                        falsy_issues.append({
-                            "ticker": ticker,
-                            "score": score,
-                            "issue": "score=0 would be skipped by `if score` check",
-                        })
+                        falsy_issues.append(
+                            {
+                                "ticker": ticker,
+                                "score": score,
+                                "issue": "score=0 would be skipped by `if score` check",
+                            }
+                        )
 
-            self.report.add_check(ValidationCheck(
-                name="numeric_falsy_handling",
-                passed=len(falsy_issues) == 0,
-                severity="critical" if falsy_issues else "low",
-                message=f"Numeric falsy handling: {len(falsy_issues)} zero scores that could be skipped" if falsy_issues else "Numeric falsy handling OK",
-                details={
-                    "zero_scores": zero_scores,
-                    "falsy_issues": falsy_issues,
-                },
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name="numeric_falsy_handling",
+                    passed=len(falsy_issues) == 0,
+                    severity="critical" if falsy_issues else "low",
+                    message=(
+                        f"Numeric falsy handling: {len(falsy_issues)} zero scores that could be skipped"
+                        if falsy_issues
+                        else "Numeric falsy handling OK"
+                    ),
+                    details={
+                        "zero_scores": zero_scores,
+                        "falsy_issues": falsy_issues,
+                    },
+                )
+            )
 
         # Check market data for zero returns
         zero_returns = []
@@ -547,13 +667,15 @@ class DataIntegrationValidator:
                 zero_returns.append(record.get("ticker"))
 
         if zero_returns:
-            self.report.add_check(ValidationCheck(
-                name="zero_returns_handling",
-                passed=True,  # Just informational
-                severity="low",
-                message=f"Found {len(zero_returns)} tickers with return_60d=0 (valid but requires careful handling)",
-                details={"tickers": zero_returns},
-            ))
+            self.report.add_check(
+                ValidationCheck(
+                    name="zero_returns_handling",
+                    passed=True,  # Just informational
+                    severity="low",
+                    message=f"Found {len(zero_returns)} tickers with return_60d=0 (valid but requires careful handling)",
+                    details={"tickers": zero_returns},
+                )
+            )
 
     def _compute_data_hash(self):
         """Compute deterministic hash of all input data."""
@@ -569,13 +691,15 @@ class DataIntegrationValidator:
 
         self.report.data_hash = compute_deterministic_hash(all_data)
 
-        self.report.add_check(ValidationCheck(
-            name="deterministic_hash",
-            passed=True,
-            severity="low",
-            message=f"Data hash computed: {self.report.data_hash[:40]}...",
-            details={"hash": self.report.data_hash},
-        ))
+        self.report.add_check(
+            ValidationCheck(
+                name="deterministic_hash",
+                passed=True,
+                severity="low",
+                message=f"Data hash computed: {self.report.data_hash[:40]}...",
+                details={"hash": self.report.data_hash},
+            )
+        )
 
     def _print_summary(self):
         """Print validation summary."""
@@ -651,9 +775,7 @@ def load_data_from_dir(data_dir: Path, as_of_date: str) -> Dict[str, Any]:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Validate data integration in biotech screening pipeline"
-    )
+    parser = argparse.ArgumentParser(description="Validate data integration in biotech screening pipeline")
     parser.add_argument(
         "--data-dir",
         type=Path,

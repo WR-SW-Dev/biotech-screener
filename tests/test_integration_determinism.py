@@ -7,38 +7,35 @@ Tests that verify:
 3. Checkpointing produces consistent results
 4. Parameter hashes are stable
 """
+
 import json
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 
+from liquidity_scoring import LIQUIDITY_SCORING_VERSION, compute_liquidity_score
+from liquidity_scoring import compute_parameters_hash as liq_params_hash
+from liquidity_scoring import get_parameters_snapshot as get_liq_params
+from liquidity_scoring import score_all_tickers
 from risk_gates import (
+    FLAG_ADV_UNKNOWN,
+    FLAG_CASH_RISK,
+    FLAG_LOW_LIQUIDITY,
+    FLAG_MICRO_CAP,
+    FLAG_PENNY_STOCK,
     apply_all_gates,
     calculate_adv,
     calculate_runway_months,
-    get_parameters_snapshot as get_risk_params,
-    compute_parameters_hash as risk_params_hash,
-    FLAG_ADV_UNKNOWN,
-    FLAG_LOW_LIQUIDITY,
-    FLAG_PENNY_STOCK,
-    FLAG_MICRO_CAP,
-    FLAG_CASH_RISK,
 )
-
-from liquidity_scoring import (
-    compute_liquidity_score,
-    score_all_tickers,
-    get_parameters_snapshot as get_liq_params,
-    compute_parameters_hash as liq_params_hash,
-    LIQUIDITY_SCORING_VERSION,
-)
-
+from risk_gates import compute_parameters_hash as risk_params_hash
+from risk_gates import get_parameters_snapshot as get_risk_params
 
 # =============================================================================
 # TEST FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_market_data():
@@ -98,6 +95,7 @@ def sample_financial_data():
 # DETERMINISM TESTS
 # =============================================================================
 
+
 class TestDeterminism:
     """Tests that verify deterministic behavior."""
 
@@ -152,9 +150,7 @@ class TestDeterminism:
             audit_path = f.name
 
         try:
-            results = score_all_tickers(
-                tickers, sample_market_data, "2024-01-15", audit_path
-            )
+            results = score_all_tickers(tickers, sample_market_data, "2024-01-15", audit_path)
 
             # Results should be sorted by ticker
             result_tickers = [r["ticker"] for r in results]
@@ -164,7 +160,7 @@ class TestDeterminism:
             audit_path_obj = Path(audit_path)
             assert audit_path_obj.exists()
 
-            lines = audit_path_obj.read_text().strip().split('\n')
+            lines = audit_path_obj.read_text().strip().split("\n")
             assert len(lines) == len(tickers)
 
             # Each audit entry should be valid JSON with sorted keys
@@ -179,6 +175,7 @@ class TestDeterminism:
 # =============================================================================
 # RISK GATE INTEGRATION TESTS
 # =============================================================================
+
 
 class TestRiskGateIntegration:
     """Tests for risk gate integration."""
@@ -243,6 +240,7 @@ class TestRiskGateIntegration:
 # LIQUIDITY SCORING INTEGRATION TESTS
 # =============================================================================
 
+
 class TestLiquidityScoringIntegration:
     """Tests for liquidity scoring integration."""
 
@@ -288,6 +286,7 @@ class TestLiquidityScoringIntegration:
 # =============================================================================
 # PARAMETER SNAPSHOT TESTS
 # =============================================================================
+
 
 class TestParameterSnapshots:
     """Tests for parameter snapshot functionality."""
@@ -337,7 +336,7 @@ class TestParameterSnapshots:
         """Parameter hashes are valid hex strings."""
         import re
 
-        hex_pattern = re.compile(r'^[0-9a-f]{16}$')
+        hex_pattern = re.compile(r"^[0-9a-f]{16}$")
 
         assert hex_pattern.match(risk_params_hash())
         assert hex_pattern.match(liq_params_hash())
@@ -346,6 +345,7 @@ class TestParameterSnapshots:
 # =============================================================================
 # AUDIT TRAIL TESTS
 # =============================================================================
+
 
 class TestAuditTrail:
     """Tests for audit trail functionality."""
@@ -380,14 +380,9 @@ class TestAuditTrail:
             audit_path = f.name
 
         try:
-            score_all_tickers(
-                ["GOOD", "LOW_LIQ"],
-                sample_market_data,
-                "2024-01-15",
-                audit_path
-            )
+            score_all_tickers(["GOOD", "LOW_LIQ"], sample_market_data, "2024-01-15", audit_path)
 
-            with open(audit_path, 'r') as f:
+            with open(audit_path, "r") as f:
                 lines = f.readlines()
 
             assert len(lines) == 2
@@ -411,7 +406,7 @@ class TestAuditTrail:
             record = {"z_field": 1, "a_field": 2, "m_field": 3}
             append_audit_log(audit_path, record)
 
-            with open(audit_path, 'r') as f:
+            with open(audit_path, "r") as f:
                 line = f.read().strip()
 
             # Keys should appear in sorted order in the JSON string
@@ -423,6 +418,7 @@ class TestAuditTrail:
 # =============================================================================
 # EDGE CASE TESTS
 # =============================================================================
+
 
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""

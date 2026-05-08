@@ -27,12 +27,11 @@ Version: 1.1.0
 import hashlib
 import json
 import re
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any
 from datetime import date
-from pathlib import Path
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Module metadata
 __version__ = "1.2.0"
@@ -41,10 +40,11 @@ __author__ = "Wake Robin Capital Management"
 
 class DataQualityState(Enum):
     """Data quality classification."""
-    FULL = "FULL"          # All required fields present
-    PARTIAL = "PARTIAL"    # Some fields missing but scoreable
-    MINIMAL = "MINIMAL"    # Minimum viable data only
-    NONE = "NONE"          # Insufficient data to score
+
+    FULL = "FULL"  # All required fields present
+    PARTIAL = "PARTIAL"  # Some fields missing but scoreable
+    MINIMAL = "MINIMAL"  # Minimum viable data only
+    NONE = "NONE"  # Insufficient data to score
 
 
 class ProbabilityOfSuccessEngine:
@@ -93,49 +93,49 @@ class ProbabilityOfSuccessEngine:
     # Stage-specific base confidence (reflects LOA estimate uncertainty)
     # These values are calibrated to historical variance in success rates
     STAGE_BASE_CONFIDENCE: Dict[str, Decimal] = {
-        "preclinical": Decimal("0.35"),   # Very high uncertainty, limited data
-        "phase_1": Decimal("0.45"),       # High uncertainty, safety focus
-        "phase_1_2": Decimal("0.50"),     # Transitional, moderate uncertainty
-        "phase_2": Decimal("0.58"),       # Efficacy signal, moderate uncertainty
-        "phase_2_3": Decimal("0.65"),     # Late efficacy, lower uncertainty
-        "phase_3": Decimal("0.75"),       # Pivotal data, lower uncertainty
-        "nda_bla": Decimal("0.88"),       # Regulatory review, low uncertainty
-        "commercial": Decimal("0.92"),    # Approved, minimal uncertainty
+        "preclinical": Decimal("0.35"),  # Very high uncertainty, limited data
+        "phase_1": Decimal("0.45"),  # High uncertainty, safety focus
+        "phase_1_2": Decimal("0.50"),  # Transitional, moderate uncertainty
+        "phase_2": Decimal("0.58"),  # Efficacy signal, moderate uncertainty
+        "phase_2_3": Decimal("0.65"),  # Late efficacy, lower uncertainty
+        "phase_3": Decimal("0.75"),  # Pivotal data, lower uncertainty
+        "nda_bla": Decimal("0.88"),  # Regulatory review, low uncertainty
+        "commercial": Decimal("0.92"),  # Approved, minimal uncertainty
     }
 
     # Indication-specific confidence modifiers
     # Some therapeutic areas have more variable outcomes (wider LOA distributions)
     # Negative values = more uncertainty, positive = less uncertainty
     INDICATION_CONFIDENCE_MODIFIER: Dict[str, Decimal] = {
-        "rare_disease": Decimal("0.05"),      # More predictable (smaller trials, clear endpoints)
-        "oncology": Decimal("-0.05"),         # High variance (heterogeneous diseases)
-        "neurology": Decimal("-0.08"),        # High variance (CNS complexity, endpoint challenges)
-        "infectious_disease": Decimal("0.03"), # More predictable (clear endpoints)
-        "cardiovascular": Decimal("-0.03"),   # Moderate variance (large trials needed)
-        "immunology": Decimal("0.02"),        # Moderately predictable
-        "metabolic": Decimal("0.00"),         # Average variance
-        "respiratory": Decimal("-0.02"),      # Moderate variance
-        "dermatology": Decimal("0.04"),       # More predictable (visible endpoints)
-        "ophthalmology": Decimal("0.03"),     # More predictable (clear endpoints)
-        "gastroenterology": Decimal("0.00"), # Average variance
-        "hematology": Decimal("0.02"),        # Moderately predictable
-        "urology": Decimal("0.00"),           # Average variance
-        "all_indications": Decimal("-0.03"), # Unknown = assume higher variance
+        "rare_disease": Decimal("0.05"),  # More predictable (smaller trials, clear endpoints)
+        "oncology": Decimal("-0.05"),  # High variance (heterogeneous diseases)
+        "neurology": Decimal("-0.08"),  # High variance (CNS complexity, endpoint challenges)
+        "infectious_disease": Decimal("0.03"),  # More predictable (clear endpoints)
+        "cardiovascular": Decimal("-0.03"),  # Moderate variance (large trials needed)
+        "immunology": Decimal("0.02"),  # Moderately predictable
+        "metabolic": Decimal("0.00"),  # Average variance
+        "respiratory": Decimal("-0.02"),  # Moderate variance
+        "dermatology": Decimal("0.04"),  # More predictable (visible endpoints)
+        "ophthalmology": Decimal("0.03"),  # More predictable (clear endpoints)
+        "gastroenterology": Decimal("0.00"),  # Average variance
+        "hematology": Decimal("0.02"),  # Moderately predictable
+        "urology": Decimal("0.00"),  # Average variance
+        "all_indications": Decimal("-0.03"),  # Unknown = assume higher variance
     }
 
     # Data quality confidence adjustments
     DATA_QUALITY_CONFIDENCE_MODIFIER: Dict[str, Decimal] = {
-        "FULL": Decimal("0.05"),      # All data present, boost confidence
-        "PARTIAL": Decimal("0.00"),   # Missing optional fields, no adjustment
+        "FULL": Decimal("0.05"),  # All data present, boost confidence
+        "PARTIAL": Decimal("0.00"),  # Missing optional fields, no adjustment
         "MINIMAL": Decimal("-0.05"),  # Limited data, reduce confidence
-        "NONE": Decimal("-0.15"),     # Insufficient data, significant reduction
+        "NONE": Decimal("-0.15"),  # Insufficient data, significant reduction
     }
 
     # Legacy confidence levels (for backward compatibility)
     # These are now derived from stage-adjusted system but kept for API compatibility
-    CONFIDENCE_HIGH = Decimal("0.70")      # Known stage + indication
-    CONFIDENCE_MEDIUM = Decimal("0.55")    # Known stage, unknown indication
-    CONFIDENCE_LOW = Decimal("0.30")       # Defaulted/unknown stage (below gating threshold)
+    CONFIDENCE_HIGH = Decimal("0.70")  # Known stage + indication
+    CONFIDENCE_MEDIUM = Decimal("0.55")  # Known stage, unknown indication
+    CONFIDENCE_LOW = Decimal("0.30")  # Defaulted/unknown stage (below gating threshold)
 
     # Confidence bounds (prevent extreme values)
     CONFIDENCE_MIN = Decimal("0.20")
@@ -151,36 +151,36 @@ class ProbabilityOfSuccessEngine:
         "phase_2_3": Decimal("52"),
         "phase_3": Decimal("65"),
         "nda_bla": Decimal("80"),
-        "commercial": Decimal("90")
+        "commercial": Decimal("90"),
     }
 
     # Commercial-stage differentiation factors
     # Pipeline depth scoring (number of active trials -> score bonus)
     COMMERCIAL_PIPELINE_TIERS: Dict[str, Dict[str, Any]] = {
-        "exceptional": {"min_trials": 100, "bonus": Decimal("0.00")},   # LOA stays 1.0
-        "strong": {"min_trials": 30, "bonus": Decimal("-0.02")},       # LOA = 0.98
-        "moderate": {"min_trials": 10, "bonus": Decimal("-0.05")},     # LOA = 0.95
-        "limited": {"min_trials": 3, "bonus": Decimal("-0.10")},       # LOA = 0.90
-        "minimal": {"min_trials": 0, "bonus": Decimal("-0.15")}        # LOA = 0.85
+        "exceptional": {"min_trials": 100, "bonus": Decimal("0.00")},  # LOA stays 1.0
+        "strong": {"min_trials": 30, "bonus": Decimal("-0.02")},  # LOA = 0.98
+        "moderate": {"min_trials": 10, "bonus": Decimal("-0.05")},  # LOA = 0.95
+        "limited": {"min_trials": 3, "bonus": Decimal("-0.10")},  # LOA = 0.90
+        "minimal": {"min_trials": 0, "bonus": Decimal("-0.15")},  # LOA = 0.85
     }
 
     # Indication-specific commercial risk adjustments
     # Higher risk indications face more competition/pricing pressure
     COMMERCIAL_INDICATION_RISK: Dict[str, Decimal] = {
-        "rare_disease": Decimal("0.00"),      # Protected pricing, orphan exclusivity
-        "oncology": Decimal("-0.03"),         # High competition but strong pricing
-        "neurology": Decimal("-0.02"),        # Moderate competition
+        "rare_disease": Decimal("0.00"),  # Protected pricing, orphan exclusivity
+        "oncology": Decimal("-0.03"),  # High competition but strong pricing
+        "neurology": Decimal("-0.02"),  # Moderate competition
         "infectious_disease": Decimal("-0.05"),  # Pricing pressure, generic competition
-        "cardiovascular": Decimal("-0.05"),   # Generic competition
-        "immunology": Decimal("-0.03"),       # Biosimilar pressure
-        "metabolic": Decimal("-0.04"),        # Generic/biosimilar competition
-        "respiratory": Decimal("-0.04"),      # Generic competition
-        "dermatology": Decimal("-0.02"),      # Moderate competition
-        "ophthalmology": Decimal("-0.02"),    # Specialty pricing
-        "gastroenterology": Decimal("-0.04"), # Generic competition
-        "hematology": Decimal("-0.02"),       # Specialty protected
-        "urology": Decimal("-0.04"),          # Generic competition
-        "all_indications": Decimal("-0.05")   # Unknown = higher risk
+        "cardiovascular": Decimal("-0.05"),  # Generic competition
+        "immunology": Decimal("-0.03"),  # Biosimilar pressure
+        "metabolic": Decimal("-0.04"),  # Generic/biosimilar competition
+        "respiratory": Decimal("-0.04"),  # Generic competition
+        "dermatology": Decimal("-0.02"),  # Moderate competition
+        "ophthalmology": Decimal("-0.02"),  # Specialty pricing
+        "gastroenterology": Decimal("-0.04"),  # Generic competition
+        "hematology": Decimal("-0.02"),  # Specialty protected
+        "urology": Decimal("-0.04"),  # Generic competition
+        "all_indications": Decimal("-0.05"),  # Unknown = higher risk
     }
 
     # Required fields for full data quality
@@ -215,10 +215,7 @@ class ProbabilityOfSuccessEngine:
             ValueError: If strict=True and benchmark file is invalid/corrupt
         """
         # Try relative to module, then absolute
-        paths_to_try = [
-            Path(__file__).parent / self.benchmarks_path,
-            Path(self.benchmarks_path)
-        ]
+        paths_to_try = [Path(__file__).parent / self.benchmarks_path, Path(self.benchmarks_path)]
 
         file_found = False
         load_error = None
@@ -234,7 +231,7 @@ class ProbabilityOfSuccessEngine:
                         "phase_1": data.get("phase_1_loa", {}),
                         "phase_2": data.get("phase_2_loa", {}),
                         "phase_3": data.get("phase_3_loa", {}),
-                        "nda_bla": data.get("nda_bla_loa", {})
+                        "nda_bla": data.get("nda_bla_loa", {}),
                     }
                     return
                 except json.JSONDecodeError as e:
@@ -260,16 +257,13 @@ class ProbabilityOfSuccessEngine:
 
     def _use_fallback_benchmarks(self) -> None:
         """Use hardcoded fallback benchmarks when file unavailable."""
-        self.benchmarks_metadata = {
-            "source": "FALLBACK_HARDCODED",
-            "warning": "External benchmarks file not loaded"
-        }
+        self.benchmarks_metadata = {"source": "FALLBACK_HARDCODED", "warning": "External benchmarks file not loaded"}
         # Conservative fallback values
         self.benchmarks = {
             "phase_1": {"all_indications": "0.079"},
             "phase_2": {"all_indications": "0.152"},
             "phase_3": {"all_indications": "0.579"},
-            "nda_bla": {"all_indications": "0.903"}
+            "nda_bla": {"all_indications": "0.903"},
         }
 
     def calculate_pos_score(
@@ -280,7 +274,7 @@ class ProbabilityOfSuccessEngine:
         competitive_intensity: Optional[Decimal] = None,
         as_of_date: Optional[date] = None,
         pipeline_trial_count: Optional[int] = None,
-        pipeline_phase_diversity: Optional[int] = None
+        pipeline_phase_diversity: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Calculate PoS score and stage score (SEPARATELY).
@@ -369,9 +363,10 @@ class ProbabilityOfSuccessEngine:
 
         # Calculate PoS (Likelihood of Approval)
         loa_probability, provenance = self._get_loa_probability(
-            stage_normalized, indication_normalized,
+            stage_normalized,
+            indication_normalized,
             pipeline_trial_count=pipeline_trial_count,
-            pipeline_phase_diversity=pipeline_phase_diversity
+            pipeline_phase_diversity=pipeline_phase_diversity,
         )
 
         # Convert LOA probability (0-1) to score (0-100)
@@ -406,18 +401,12 @@ class ProbabilityOfSuccessEngine:
             stage_normalized=stage_normalized,
             stage_was_defaulted=stage_was_defaulted,
             indication_normalized=indication_normalized,
-            data_quality_state=data_quality_state
+            data_quality_state=data_quality_state,
         )
 
         # Generate deterministic audit hash
-        audit_inputs = {
-            "stage": stage_normalized,
-            "indication": indication_normalized,
-            "as_of": as_of_date.isoformat()
-        }
-        inputs_hash = hashlib.sha256(
-            json.dumps(audit_inputs, sort_keys=True).encode()
-        ).hexdigest()[:16]
+        audit_inputs = {"stage": stage_normalized, "indication": indication_normalized, "as_of": as_of_date.isoformat()}
+        inputs_hash = hashlib.sha256(json.dumps(audit_inputs, sort_keys=True).encode()).hexdigest()[:16]
 
         # Audit entry (deterministic timestamp!)
         audit_entry = {
@@ -439,10 +428,10 @@ class ProbabilityOfSuccessEngine:
                 "pos_confidence": str(pos_confidence),
                 "confidence_reason": confidence_reason,
                 "confidence_components": confidence_components,
-                "adjustments_applied": adjustments_applied
+                "adjustments_applied": adjustments_applied,
             },
             "benchmarks_source": self.benchmarks_metadata.get("source", "UNKNOWN"),
-            "module_version": self.VERSION
+            "module_version": self.VERSION,
         }
 
         self.audit_trail.append(audit_entry)
@@ -461,14 +450,10 @@ class ProbabilityOfSuccessEngine:
             "data_quality_state": data_quality_state.value,
             "missing_fields": missing_fields,
             "inputs_used": inputs_used,
-            "audit_entry": audit_entry
+            "audit_entry": audit_entry,
         }
 
-    def score_universe(
-        self,
-        universe: List[Dict[str, Any]],
-        as_of_date: date
-    ) -> Dict[str, Any]:
+    def score_universe(self, universe: List[Dict[str, Any]], as_of_date: date) -> Dict[str, Any]:
         """
         Score an entire universe of companies.
 
@@ -492,12 +477,8 @@ class ProbabilityOfSuccessEngine:
         effective_coverage = 0  # Tickers with pos_confidence >= gating threshold
         stage_defaulted_count = 0
         stage_distribution: Dict[str, int] = {}
-        confidence_distribution: Dict[str, int] = {
-            "high": 0, "medium": 0, "low": 0
-        }
-        quality_distribution: Dict[str, int] = {
-            "FULL": 0, "PARTIAL": 0, "MINIMAL": 0, "NONE": 0
-        }
+        confidence_distribution: Dict[str, int] = {"high": 0, "medium": 0, "low": 0}
+        quality_distribution: Dict[str, int] = {"FULL": 0, "PARTIAL": 0, "MINIMAL": 0, "NONE": 0}
 
         # Gating threshold - below this, PoS contributes 0 weight
         GATING_THRESHOLD = Decimal("0.40")
@@ -523,7 +504,7 @@ class ProbabilityOfSuccessEngine:
                 competitive_intensity=ci,
                 as_of_date=as_of_date,
                 pipeline_trial_count=pipeline_trial_count,
-                pipeline_phase_diversity=pipeline_phase_diversity
+                pipeline_phase_diversity=pipeline_phase_diversity,
             )
 
             pos_confidence = result["pos_confidence"]
@@ -535,22 +516,24 @@ class ProbabilityOfSuccessEngine:
             if pos_confidence < GATING_THRESHOLD:
                 flags.append("below_confidence_gate")
 
-            scores.append({
-                "ticker": ticker,
-                "pos_score": result["pos_score"],
-                "pos_confidence": pos_confidence,
-                "confidence_reason": result["confidence_reason"],
-                "confidence_components": result.get("confidence_components", {}),
-                "stage_score": result["stage_score"],
-                "stage_was_defaulted": result["stage_was_defaulted"],
-                "loa_probability": result["loa_probability"],
-                "loa_provenance": result["loa_provenance"],
-                "stage_normalized": result["stage_normalized"],
-                "indication_normalized": result["indication_normalized"],
-                "data_quality_state": result["data_quality_state"],
-                "missing_fields": result["missing_fields"],
-                "flags": flags
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "pos_score": result["pos_score"],
+                    "pos_confidence": pos_confidence,
+                    "confidence_reason": result["confidence_reason"],
+                    "confidence_components": result.get("confidence_components", {}),
+                    "stage_score": result["stage_score"],
+                    "stage_was_defaulted": result["stage_was_defaulted"],
+                    "loa_probability": result["loa_probability"],
+                    "loa_provenance": result["loa_provenance"],
+                    "stage_normalized": result["stage_normalized"],
+                    "indication_normalized": result["indication_normalized"],
+                    "data_quality_state": result["data_quality_state"],
+                    "missing_fields": result["missing_fields"],
+                    "flags": flags,
+                }
+            )
 
             # Track metrics
             if result["indication_normalized"] and result["indication_normalized"] != "all_indications":
@@ -577,9 +560,7 @@ class ProbabilityOfSuccessEngine:
 
         # Deterministic content hash
         scores_json = json.dumps(
-            [{"t": s["ticker"], "p": str(s["pos_score"]), "s": str(s["stage_score"])}
-             for s in scores],
-            sort_keys=True
+            [{"t": s["ticker"], "p": str(s["pos_score"]), "s": str(s["stage_score"])} for s in scores], sort_keys=True
         )
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
@@ -595,7 +576,7 @@ class ProbabilityOfSuccessEngine:
                 "stage_defaulted_count": stage_defaulted_count,
                 "stage_distribution": stage_distribution,
                 "confidence_distribution": confidence_distribution,
-                "data_quality_distribution": quality_distribution
+                "data_quality_distribution": quality_distribution,
             },
             "provenance": {
                 "module": "pos_engine",
@@ -603,8 +584,8 @@ class ProbabilityOfSuccessEngine:
                 "content_hash": content_hash,
                 "pit_cutoff": as_of_date.isoformat(),
                 "benchmarks_source": self.benchmarks_metadata.get("source", "UNKNOWN"),
-                "benchmarks_version": self.benchmarks_metadata.get("report_version", "UNKNOWN")
-            }
+                "benchmarks_version": self.benchmarks_metadata.get("report_version", "UNKNOWN"),
+            },
         }
 
     def _get_loa_probability(
@@ -612,7 +593,7 @@ class ProbabilityOfSuccessEngine:
         stage: str,
         indication: Optional[str],
         pipeline_trial_count: Optional[int] = None,
-        pipeline_phase_diversity: Optional[int] = None
+        pipeline_phase_diversity: Optional[int] = None,
     ) -> tuple:
         """Get Likelihood of Approval probability from benchmarks.
 
@@ -629,7 +610,7 @@ class ProbabilityOfSuccessEngine:
             interpolation_map = {
                 "preclinical": ("phase_1", Decimal("0.5")),
                 "phase_1_2": ("phase_1", Decimal("1.3")),
-                "phase_2_3": ("phase_2", Decimal("1.5"))
+                "phase_2_3": ("phase_2", Decimal("1.5")),
             }
             base_stage, multiplier = interpolation_map.get(stage, ("phase_2", Decimal("1.0")))
             stage_key = base_stage
@@ -662,7 +643,7 @@ class ProbabilityOfSuccessEngine:
             _, multiplier = {
                 "preclinical": ("phase_1", Decimal("0.5")),
                 "phase_1_2": ("phase_1", Decimal("1.3")),
-                "phase_2_3": ("phase_2", Decimal("1.5"))
+                "phase_2_3": ("phase_2", Decimal("1.5")),
             }.get(stage, ("phase_2", Decimal("1.0")))
             loa = loa * multiplier
             provenance = f"{provenance}_interpolated"
@@ -673,10 +654,7 @@ class ProbabilityOfSuccessEngine:
         return loa, provenance
 
     def _get_commercial_loa(
-        self,
-        indication: Optional[str],
-        pipeline_trial_count: Optional[int],
-        pipeline_phase_diversity: Optional[int]
+        self, indication: Optional[str], pipeline_trial_count: Optional[int], pipeline_phase_diversity: Optional[int]
     ) -> tuple:
         """
         Calculate differentiated LOA for commercial-stage companies.
@@ -712,8 +690,7 @@ class ProbabilityOfSuccessEngine:
         # 2. Indication-specific commercial risk
         indication_normalized = indication or "all_indications"
         indication_risk = self.COMMERCIAL_INDICATION_RISK.get(
-            indication_normalized,
-            self.COMMERCIAL_INDICATION_RISK["all_indications"]
+            indication_normalized, self.COMMERCIAL_INDICATION_RISK["all_indications"]
         )
         provenance_parts.append(f"ind_{indication_normalized}")
 
@@ -784,7 +761,7 @@ class ProbabilityOfSuccessEngine:
             "filed": "nda_bla",
             "approved": "commercial",
             "commercial": "commercial",
-            "marketed": "commercial"
+            "marketed": "commercial",
         }
 
         if stage_lower in stage_map:
@@ -811,11 +788,7 @@ class ProbabilityOfSuccessEngine:
 
         # First, handle direct category aliases from indication_mapper
         # These map mapper categories to PoS benchmark categories
-        category_aliases = {
-            "cns": "neurology",
-            "autoimmune": "immunology",
-            "gi_hepatology": "gastroenterology"
-        }
+        category_aliases = {"cns": "neurology", "autoimmune": "immunology", "gi_hepatology": "gastroenterology"}
 
         # Check if indication is a direct category name (from mapper)
         if indication_lower in category_aliases:
@@ -823,10 +796,19 @@ class ProbabilityOfSuccessEngine:
 
         # Check if indication is already a valid benchmark category
         valid_categories = {
-            "oncology", "rare_disease", "infectious_disease", "neurology",
-            "cardiovascular", "immunology", "metabolic", "respiratory",
-            "dermatology", "ophthalmology", "gastroenterology", "hematology",
-            "urology"
+            "oncology",
+            "rare_disease",
+            "infectious_disease",
+            "neurology",
+            "cardiovascular",
+            "immunology",
+            "metabolic",
+            "respiratory",
+            "dermatology",
+            "ophthalmology",
+            "gastroenterology",
+            "hematology",
+            "urology",
         }
         if indication_lower in valid_categories:
             return indication_lower
@@ -835,62 +817,121 @@ class ProbabilityOfSuccessEngine:
         # Using regex \b for word boundaries to avoid matching "os" in "dose"
         indication_patterns: Dict[str, List[str]] = {
             "oncology": [
-                r"\boncology\b", r"\bcancer\b", r"\btumor\b", r"\btumour\b",
-                r"\bleukemia\b", r"\blymphoma\b", r"\bcarcinoma\b", r"\bmelanoma\b",
-                r"\bsarcoma\b", r"\bmyeloma\b", r"\bneoplasm\b", r"\bsolid tumor\b",
-                r"\bhematologic malignancy\b", r"\bimmuno-oncology\b"
+                r"\boncology\b",
+                r"\bcancer\b",
+                r"\btumor\b",
+                r"\btumour\b",
+                r"\bleukemia\b",
+                r"\blymphoma\b",
+                r"\bcarcinoma\b",
+                r"\bmelanoma\b",
+                r"\bsarcoma\b",
+                r"\bmyeloma\b",
+                r"\bneoplasm\b",
+                r"\bsolid tumor\b",
+                r"\bhematologic malignancy\b",
+                r"\bimmuno-oncology\b",
             ],
-            "rare_disease": [
-                r"\brare\b", r"\borphan\b", r"\bultra-rare\b", r"\bultra rare\b"
-            ],
+            "rare_disease": [r"\brare\b", r"\borphan\b", r"\bultra-rare\b", r"\bultra rare\b"],
             "infectious_disease": [
-                r"\binfectious\b", r"\bhiv\b", r"\bhepatitis\b", r"\bantibiotic\b",
-                r"\bantiviral\b", r"\bantimicrobial\b", r"\bcovid\b", r"\bbacterial\b",
-                r"\bviral\b", r"\bfungal\b", r"\bparasitic\b"
+                r"\binfectious\b",
+                r"\bhiv\b",
+                r"\bhepatitis\b",
+                r"\bantibiotic\b",
+                r"\bantiviral\b",
+                r"\bantimicrobial\b",
+                r"\bcovid\b",
+                r"\bbacterial\b",
+                r"\bviral\b",
+                r"\bfungal\b",
+                r"\bparasitic\b",
             ],
             "neurology": [
-                r"\bneurology\b", r"\bcns\b", r"\balzheimer\b", r"\bparkinson\b",
-                r"\bals\b", r"\bepilepsy\b", r"\bmultiple sclerosis\b",
-                r"\bhuntington\b", r"\bneuropathy\b", r"\bneurodegeneration\b"
+                r"\bneurology\b",
+                r"\bcns\b",
+                r"\balzheimer\b",
+                r"\bparkinson\b",
+                r"\bals\b",
+                r"\bepilepsy\b",
+                r"\bmultiple sclerosis\b",
+                r"\bhuntington\b",
+                r"\bneuropathy\b",
+                r"\bneurodegeneration\b",
             ],
             "cardiovascular": [
-                r"\bcardiovascular\b", r"\bcardio\b", r"\bheart\b", r"\bcardiac\b",
-                r"\bhypertension\b", r"\barrhythmia\b", r"\batherosclerosis\b"
+                r"\bcardiovascular\b",
+                r"\bcardio\b",
+                r"\bheart\b",
+                r"\bcardiac\b",
+                r"\bhypertension\b",
+                r"\barrhythmia\b",
+                r"\batherosclerosis\b",
             ],
             "immunology": [
-                r"\bimmunology\b", r"\bautoimmune\b", r"\brheumatoid\b", r"\blupus\b",
-                r"\bpsoriasis\b", r"\bcrohn\b", r"\bcolitis\b", r"\binflammation\b"
+                r"\bimmunology\b",
+                r"\bautoimmune\b",
+                r"\brheumatoid\b",
+                r"\blupus\b",
+                r"\bpsoriasis\b",
+                r"\bcrohn\b",
+                r"\bcolitis\b",
+                r"\binflammation\b",
             ],
             "metabolic": [
-                r"\bmetabolic\b", r"\bdiabetes\b", r"\bobesity\b", r"\bnafld\b",
-                r"\bnash\b", r"\blipid\b", r"\bcholesterol\b"
+                r"\bmetabolic\b",
+                r"\bdiabetes\b",
+                r"\bobesity\b",
+                r"\bnafld\b",
+                r"\bnash\b",
+                r"\blipid\b",
+                r"\bcholesterol\b",
             ],
-            "respiratory": [
-                r"\brespiratory\b", r"\bcopd\b", r"\basthma\b", r"\bpulmonary\b",
-                r"\bcystic fibrosis\b"
-            ],
+            "respiratory": [r"\brespiratory\b", r"\bcopd\b", r"\basthma\b", r"\bpulmonary\b", r"\bcystic fibrosis\b"],
             "dermatology": [
-                r"\bdermatology\b", r"\bskin\b", r"\batopic dermatitis\b",
-                r"\beczema\b", r"\bacne\b", r"\bvitiligo\b"
+                r"\bdermatology\b",
+                r"\bskin\b",
+                r"\batopic dermatitis\b",
+                r"\beczema\b",
+                r"\bacne\b",
+                r"\bvitiligo\b",
             ],
             "ophthalmology": [
-                r"\bophthalmology\b", r"\bophthalmic\b", r"\beye\b", r"\bretina\b",
-                r"\bmacular\b", r"\bglaucoma\b", r"\buveitis\b"
+                r"\bophthalmology\b",
+                r"\bophthalmic\b",
+                r"\beye\b",
+                r"\bretina\b",
+                r"\bmacular\b",
+                r"\bglaucoma\b",
+                r"\buveitis\b",
             ],
             "gastroenterology": [
-                r"\bgastroenterology\b", r"\bgastrointestinal\b",
-                r"\bibd\b", r"\birritable bowel\b", r"\bliver\b", r"\bhepatic\b",
-                r"\bgi_hepatology\b"
+                r"\bgastroenterology\b",
+                r"\bgastrointestinal\b",
+                r"\bibd\b",
+                r"\birritable bowel\b",
+                r"\bliver\b",
+                r"\bhepatic\b",
+                r"\bgi_hepatology\b",
             ],
             "hematology": [
-                r"\bhematology\b", r"\bblood\b", r"\bhemophilia\b", r"\bsickle cell\b",
-                r"\bthalassemia\b", r"\banemia\b"
+                r"\bhematology\b",
+                r"\bblood\b",
+                r"\bhemophilia\b",
+                r"\bsickle cell\b",
+                r"\bthalassemia\b",
+                r"\banemia\b",
             ],
             "urology": [
-                r"\burology\b", r"\burolog\b", r"\bbladder\b", r"\bkidney\b",
-                r"\brenal\b", r"\bprostate\b", r"\burinary\b", r"\bincontinence\b",
-                r"\berectile\b"
-            ]
+                r"\burology\b",
+                r"\burolog\b",
+                r"\bbladder\b",
+                r"\bkidney\b",
+                r"\brenal\b",
+                r"\bprostate\b",
+                r"\burinary\b",
+                r"\bincontinence\b",
+                r"\berectile\b",
+            ],
         }
 
         for category, patterns in indication_patterns.items():
@@ -923,7 +964,7 @@ class ProbabilityOfSuccessEngine:
         stage_normalized: str,
         stage_was_defaulted: bool,
         indication_normalized: Optional[str],
-        data_quality_state: DataQualityState
+        data_quality_state: DataQualityState,
     ) -> tuple:
         """
         Calculate stage-adjusted confidence for PoS score.
@@ -946,13 +987,12 @@ class ProbabilityOfSuccessEngine:
             return (
                 self.CONFIDENCE_LOW,
                 "stage_defaulted",
-                {"base": str(self.CONFIDENCE_LOW), "reason": "unknown_stage_penalized"}
+                {"base": str(self.CONFIDENCE_LOW), "reason": "unknown_stage_penalized"},
             )
 
         # 1. Get stage-specific base confidence
         base_confidence = self.STAGE_BASE_CONFIDENCE.get(
-            stage_normalized,
-            Decimal("0.50")  # Default for unknown stages
+            stage_normalized, Decimal("0.50")  # Default for unknown stages
         )
         components["stage_base"] = str(base_confidence)
         components["stage"] = stage_normalized
@@ -960,17 +1000,13 @@ class ProbabilityOfSuccessEngine:
         # 2. Apply indication-specific modifier
         indication_key = indication_normalized or "all_indications"
         indication_modifier = self.INDICATION_CONFIDENCE_MODIFIER.get(
-            indication_key,
-            self.INDICATION_CONFIDENCE_MODIFIER["all_indications"]
+            indication_key, self.INDICATION_CONFIDENCE_MODIFIER["all_indications"]
         )
         components["indication_modifier"] = str(indication_modifier)
         components["indication"] = indication_key
 
         # 3. Apply data quality modifier
-        quality_modifier = self.DATA_QUALITY_CONFIDENCE_MODIFIER.get(
-            data_quality_state.value,
-            Decimal("0.00")
-        )
+        quality_modifier = self.DATA_QUALITY_CONFIDENCE_MODIFIER.get(data_quality_state.value, Decimal("0.00"))
         components["quality_modifier"] = str(quality_modifier)
         components["data_quality"] = data_quality_state.value
 
@@ -1005,9 +1041,7 @@ class ProbabilityOfSuccessEngine:
         return {
             "metadata": self.benchmarks_metadata,
             "stages_available": list(self.benchmarks.keys()),
-            "indications_available": list(
-                self.benchmarks.get("phase_3", {}).keys()
-            )
+            "indications_available": list(self.benchmarks.get("phase_3", {}).keys()),
         }
 
     def get_audit_trail(self) -> List[Dict[str, Any]]:
@@ -1038,16 +1072,8 @@ def demonstration() -> None:
 
     as_of = date(2026, 1, 11)
 
-    oncology = engine.calculate_pos_score(
-        base_stage="phase_3",
-        indication="oncology",
-        as_of_date=as_of
-    )
-    rare = engine.calculate_pos_score(
-        base_stage="phase_3",
-        indication="rare disease",
-        as_of_date=as_of
-    )
+    oncology = engine.calculate_pos_score(base_stage="phase_3", indication="oncology", as_of_date=as_of)
+    rare = engine.calculate_pos_score(base_stage="phase_3", indication="rare disease", as_of_date=as_of)
 
     print("Oncology:")
     print(f"  PoS Score: {oncology['pos_score']}")

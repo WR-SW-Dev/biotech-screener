@@ -11,31 +11,32 @@ Tests:
 """
 
 import json
+
+# Add project root to path
+import sys
 import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 
-# Add project root to path
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.backtest_institutional_signal import (
-    load_prices,
-    get_all_dates,
-    find_price_on_or_after,
     compute_forward_return,
-    compute_signal_score,
-    rank_tickers,
     compute_horizon_metrics,
+    compute_signal_score,
+    find_price_on_or_after,
+    get_all_dates,
+    load_prices,
+    rank_tickers,
 )
 from src.history.snapshots import SNAPSHOT_SCHEMA_VERSION
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_prices(tmp_path):
@@ -191,6 +192,7 @@ def sample_snapshot():
 # PRICE LOADING TESTS
 # =============================================================================
 
+
 class TestPriceLoading:
     """Tests for price data loading."""
 
@@ -252,6 +254,7 @@ class TestPriceLoading:
 # FORWARD RETURN TESTS
 # =============================================================================
 
+
 class TestForwardReturn:
     """Tests for forward return calculation."""
 
@@ -291,6 +294,7 @@ class TestForwardReturn:
 # =============================================================================
 # SIGNAL SCORING TESTS
 # =============================================================================
+
 
 class TestSignalScoring:
     """Tests for signal scoring logic."""
@@ -355,6 +359,7 @@ class TestSignalScoring:
 # HORIZON METRICS TESTS
 # =============================================================================
 
+
 class TestHorizonMetrics:
     """Tests for horizon metrics calculation."""
 
@@ -400,6 +405,7 @@ class TestHorizonMetrics:
 # PIT SAFETY TESTS
 # =============================================================================
 
+
 class TestPITSafety:
     """Tests for point-in-time safety."""
 
@@ -434,6 +440,7 @@ class TestPITSafety:
 # =============================================================================
 # DETERMINISM TESTS
 # =============================================================================
+
 
 class TestDeterminism:
     """Tests for deterministic behavior."""
@@ -479,6 +486,7 @@ class TestDeterminism:
 # =============================================================================
 # TIE-BREAKING TESTS
 # =============================================================================
+
 
 class TestTieBreaking:
     """Tests for deterministic tie-breaking in rankings."""

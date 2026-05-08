@@ -23,12 +23,12 @@ import json
 import logging
 import socket
 import time
-from pathlib import Path
-from typing import Dict, Optional, List, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-import urllib.request
 import urllib.error
+import urllib.request
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +56,11 @@ CACHE_TTL_DAYS = 90  # Refresh mappings quarterly
 # DATA MODELS
 # ==============================================================================
 
+
 @dataclass
 class CUSIPMapping:
     """Single CUSIP→Ticker mapping with metadata"""
+
     cusip: str
     ticker: str
     name: str
@@ -66,12 +68,12 @@ class CUSIPMapping:
     security_type: str
     mapped_at: str  # ISO datetime
     source: str  # 'static', 'cache', 'openfigi'
-    
+
     def to_dict(self) -> dict:
         return asdict(self)
-    
+
     @classmethod
-    def from_dict(cls, data: dict) -> 'CUSIPMapping':
+    def from_dict(cls, data: dict) -> "CUSIPMapping":
         return cls(**data)
 
 
@@ -79,32 +81,28 @@ class CUSIPMapping:
 # TIER 0: STATIC MAP (BIOTECH UNIVERSE)
 # ==============================================================================
 
+
 def load_static_cusip_map(static_map_path: Path) -> Dict[str, CUSIPMapping]:
     """
     Load Tier 0 static CUSIP map.
-    
+
     This is hand-curated or extracted from reliable sources.
     Never expires - acts as fallback.
-    
+
     Returns:
         {cusip: CUSIPMapping}
     """
     if not static_map_path.exists():
         return {}
-    
+
     with open(static_map_path) as f:
         data = json.load(f)
-    
-    return {
-        cusip: CUSIPMapping.from_dict(mapping)
-        for cusip, mapping in data.items()
-    }
+
+    return {cusip: CUSIPMapping.from_dict(mapping) for cusip, mapping in data.items()}
 
 
 def build_static_map_from_universe(
-    universe_path: Path,
-    output_path: Path,
-    reference_time: Optional[datetime] = None
+    universe_path: Path, output_path: Path, reference_time: Optional[datetime] = None
 ) -> None:
     """
     Bootstrap static map from universe.json with known CUSIPs.
@@ -135,26 +133,26 @@ def build_static_map_from_universe(
 
     # Example structure - you'll need to populate with real CUSIPs
     for security in universe:
-        ticker = security.get('ticker')
-        if ticker == '_XBI_BENCHMARK_':
+        ticker = security.get("ticker")
+        if ticker == "_XBI_BENCHMARK_":
             continue
 
         # PLACEHOLDER: You need to add actual CUSIPs
         # Sources: Bloomberg, SEC filings, Yahoo Finance, etc.
-        cusip = security.get('cusip')  # If you have this in universe
+        cusip = security.get("cusip")  # If you have this in universe
 
         if cusip:
             static_map[cusip] = {
-                'cusip': cusip,
-                'ticker': ticker,
-                'name': security.get('name', ''),
-                'exchange': security.get('exchange', 'NASDAQ'),
-                'security_type': 'Common Stock',
-                'mapped_at': reference_time.isoformat(),
-                'source': 'static'
+                "cusip": cusip,
+                "ticker": ticker,
+                "name": security.get("name", ""),
+                "exchange": security.get("exchange", "NASDAQ"),
+                "security_type": "Common Stock",
+                "mapped_at": reference_time.isoformat(),
+                "source": "static",
             }
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(static_map, f, indent=2)
 
     print(f"Static map created: {len(static_map)} mappings")
@@ -165,10 +163,8 @@ def build_static_map_from_universe(
 # TIER 1: PERSISTENT CACHE
 # ==============================================================================
 
-def load_cache(
-    cache_path: Path,
-    reference_time: Optional[datetime] = None
-) -> Dict[str, CUSIPMapping]:
+
+def load_cache(cache_path: Path, reference_time: Optional[datetime] = None) -> Dict[str, CUSIPMapping]:
     """
     Load Tier 1 persistent cache.
 
@@ -192,8 +188,7 @@ def load_cache(
         # This ensures reproducible behavior when no reference time is provided
         reference_time = datetime(2099, 12, 31, 23, 59, 59)
         logger.warning(
-            "load_cache: No reference_time provided. "
-            "Using deterministic default that includes all cache entries."
+            "load_cache: No reference_time provided. " "Using deterministic default that includes all cache entries."
         )
 
     with open(cache_path) as f:
@@ -213,19 +208,13 @@ def load_cache(
     return valid_mappings
 
 
-def save_cache(
-    cache_path: Path,
-    mappings: Dict[str, CUSIPMapping]
-) -> None:
+def save_cache(cache_path: Path, mappings: Dict[str, CUSIPMapping]) -> None:
     """
     Save Tier 1 persistent cache.
     """
-    cache_dict = {
-        cusip: mapping.to_dict()
-        for cusip, mapping in mappings.items()
-    }
-    
-    with open(cache_path, 'w') as f:
+    cache_dict = {cusip: mapping.to_dict() for cusip, mapping in mappings.items()}
+
+    with open(cache_path, "w") as f:
         json.dump(cache_dict, f, indent=2)
 
 
@@ -233,19 +222,19 @@ def save_cache(
 # TIER 2: OPENFIGI API
 # ==============================================================================
 
+
 def _calculate_backoff(attempt: int) -> float:
     """Calculate exponential backoff with jitter."""
     import random
-    backoff = min(INITIAL_BACKOFF_SEC * (2 ** attempt), MAX_BACKOFF_SEC)
+
+    backoff = min(INITIAL_BACKOFF_SEC * (2**attempt), MAX_BACKOFF_SEC)
     # Add jitter (±25%)
     jitter = backoff * 0.25 * (2 * random.random() - 1)
     return backoff + jitter
 
 
 def query_openfigi_batch(
-    cusips: List[str],
-    api_key: Optional[str] = None,
-    reference_time: Optional[datetime] = None
+    cusips: List[str], api_key: Optional[str] = None, reference_time: Optional[datetime] = None
 ) -> Dict[str, Optional[CUSIPMapping]]:
     """
     Query OpenFIGI API for batch of CUSIPs with retry logic.
@@ -276,35 +265,21 @@ def query_openfigi_batch(
         raise ValueError(f"Batch size {len(cusips)} exceeds max {OPENFIGI_BATCH_SIZE}")
 
     # Build request payload
-    payload = [
-        {
-            "idType": "ID_CUSIP",
-            "idValue": cusip,
-            "exchCode": "US"  # Prefer US exchanges
-        }
-        for cusip in cusips
-    ]
+    payload = [{"idType": "ID_CUSIP", "idValue": cusip, "exchCode": "US"} for cusip in cusips]  # Prefer US exchanges
 
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
     if api_key:
-        headers['X-OPENFIGI-APIKEY'] = api_key
+        headers["X-OPENFIGI-APIKEY"] = api_key
 
     # Make request with retry logic
-    req = urllib.request.Request(
-        OPENFIGI_API_URL,
-        data=json.dumps(payload).encode('utf-8'),
-        headers=headers
-    )
+    req = urllib.request.Request(OPENFIGI_API_URL, data=json.dumps(payload).encode("utf-8"), headers=headers)
 
     last_error = None
     for attempt in range(MAX_RETRIES):
         try:
             with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SEC) as response:
-                results = json.loads(response.read().decode('utf-8'))
+                results = json.loads(response.read().decode("utf-8"))
 
             # Rate limiting
             time.sleep(OPENFIGI_REQUEST_DELAY)
@@ -315,12 +290,16 @@ def query_openfigi_batch(
             if e.code == 429:
                 # Rate limit - wait longer
                 wait_time = 60 if attempt == 0 else _calculate_backoff(attempt + 2)
-                logger.warning(f"OpenFIGI rate limit hit (attempt {attempt + 1}/{MAX_RETRIES}) - waiting {wait_time:.1f}s...")
+                logger.warning(
+                    f"OpenFIGI rate limit hit (attempt {attempt + 1}/{MAX_RETRIES}) - waiting {wait_time:.1f}s..."
+                )
                 time.sleep(wait_time)
             elif e.code >= 500:
                 # Server error - retry with backoff
                 wait_time = _calculate_backoff(attempt)
-                logger.warning(f"OpenFIGI server error {e.code} (attempt {attempt + 1}/{MAX_RETRIES}) - retrying in {wait_time:.1f}s...")
+                logger.warning(
+                    f"OpenFIGI server error {e.code} (attempt {attempt + 1}/{MAX_RETRIES}) - retrying in {wait_time:.1f}s..."
+                )
                 time.sleep(wait_time)
             else:
                 # Client error (4xx except 429) - don't retry
@@ -336,7 +315,9 @@ def query_openfigi_batch(
         except urllib.error.URLError as e:
             last_error = e
             wait_time = _calculate_backoff(attempt)
-            logger.warning(f"OpenFIGI network error: {e.reason} (attempt {attempt + 1}/{MAX_RETRIES}) - retrying in {wait_time:.1f}s...")
+            logger.warning(
+                f"OpenFIGI network error: {e.reason} (attempt {attempt + 1}/{MAX_RETRIES}) - retrying in {wait_time:.1f}s..."
+            )
             time.sleep(wait_time)
 
         except Exception as e:
@@ -354,27 +335,27 @@ def query_openfigi_batch(
     for i, cusip in enumerate(cusips):
         result = results[i]
 
-        if 'error' in result:
+        if "error" in result:
             logger.debug(f"  {cusip}: {result['error']}")
             mappings[cusip] = None
             continue
 
-        if 'data' not in result or not result['data']:
+        if "data" not in result or not result["data"]:
             logger.debug(f"  {cusip}: No mapping found")
             mappings[cusip] = None
             continue
 
         # Take first result (usually most liquid)
-        figi_data = result['data'][0]
+        figi_data = result["data"][0]
 
         mappings[cusip] = CUSIPMapping(
             cusip=cusip,
-            ticker=figi_data.get('ticker', ''),
-            name=figi_data.get('name', ''),
-            exchange=figi_data.get('exchCode', ''),
-            security_type=figi_data.get('securityType', ''),
+            ticker=figi_data.get("ticker", ""),
+            name=figi_data.get("name", ""),
+            exchange=figi_data.get("exchCode", ""),
+            security_type=figi_data.get("securityType", ""),
             mapped_at=reference_time.isoformat(),
-            source='openfigi'
+            source="openfigi",
         )
 
         logger.info(f"  {cusip} → {figi_data.get('ticker', 'N/A')}")
@@ -383,9 +364,7 @@ def query_openfigi_batch(
 
 
 def query_openfigi_all(
-    cusips: List[str],
-    api_key: Optional[str] = None,
-    reference_time: Optional[datetime] = None
+    cusips: List[str], api_key: Optional[str] = None, reference_time: Optional[datetime] = None
 ) -> Dict[str, Optional[CUSIPMapping]]:
     """
     Query OpenFIGI for all CUSIPs in batches.
@@ -401,10 +380,9 @@ def query_openfigi_all(
 
     # Process in batches
     for i in range(0, len(cusips), OPENFIGI_BATCH_SIZE):
-        batch = cusips[i:i + OPENFIGI_BATCH_SIZE]
+        batch = cusips[i : i + OPENFIGI_BATCH_SIZE]
 
-        logger.info(f"Querying OpenFIGI batch {i//OPENFIGI_BATCH_SIZE + 1} "
-                    f"({len(batch)} CUSIPs)...")
+        logger.info(f"Querying OpenFIGI batch {i//OPENFIGI_BATCH_SIZE + 1} " f"({len(batch)} CUSIPs)...")
 
         batch_results = query_openfigi_batch(batch, api_key, reference_time)
         all_mappings.update(batch_results)
@@ -415,6 +393,7 @@ def query_openfigi_all(
 # ==============================================================================
 # INTEGRATED MAPPER (THREE-TIER STRATEGY)
 # ==============================================================================
+
 
 class CUSIPMapper:
     """
@@ -434,7 +413,7 @@ class CUSIPMapper:
         static_map_path: Path,
         cache_path: Path,
         openfigi_api_key: Optional[str] = None,
-        reference_time: Optional[datetime] = None
+        reference_time: Optional[datetime] = None,
     ):
         self.static_map_path = static_map_path
         self.cache_path = cache_path
@@ -453,17 +432,17 @@ class CUSIPMapper:
 
         # Track new mappings for cache update
         self.new_mappings = {}
-    
+
     def get(self, cusip: str) -> Optional[str]:
         """
         Get ticker for CUSIP.
-        
+
         Returns:
             Ticker string or None if not found
         """
         mapping = self.get_mapping(cusip)
         return mapping.ticker if mapping else None
-    
+
     def get_mapping(self, cusip: str) -> Optional[CUSIPMapping]:
         """
         Get full mapping for CUSIP with fallback strategy.
@@ -491,7 +470,7 @@ class CUSIPMapper:
             self.new_mappings[cusip] = mapping
 
         return mapping
-    
+
     def get_batch(self, cusips: List[str]) -> Dict[str, Optional[str]]:
         """
         Get tickers for batch of CUSIPs.
@@ -516,9 +495,7 @@ class CUSIPMapper:
         # Query OpenFIGI for unknowns
         if unknown_cusips:
             logger.info(f"Querying OpenFIGI for {len(unknown_cusips)} unknown CUSIPs...")
-            openfigi_results = query_openfigi_all(
-                unknown_cusips, self.openfigi_api_key, self.reference_time
-            )
+            openfigi_results = query_openfigi_all(unknown_cusips, self.openfigi_api_key, self.reference_time)
 
             for cusip, mapping in openfigi_results.items():
                 if mapping:
@@ -529,27 +506,27 @@ class CUSIPMapper:
                     results[cusip] = None
 
         return results
-    
+
     def save(self) -> None:
         """
         Save updated cache to disk.
-        
+
         Call this after batch operations to persist new mappings.
         """
         if self.new_mappings:
             save_cache(self.cache_path, self.cache)
             logger.info(f"Saved {len(self.new_mappings)} new mappings to cache")
             self.new_mappings.clear()
-    
+
     def stats(self) -> dict:
         """
         Get mapper statistics.
         """
         return {
-            'static_map_size': len(self.static_map),
-            'cache_size': len(self.cache),
-            'new_mappings_pending': len(self.new_mappings),
-            'total_known': len(self.static_map) + len(self.cache)
+            "static_map_size": len(self.static_map),
+            "cache_size": len(self.cache),
+            "new_mappings_pending": len(self.new_mappings),
+            "total_known": len(self.static_map) + len(self.cache),
         }
 
 
@@ -557,10 +534,11 @@ class CUSIPMapper:
 # UTILITY FUNCTIONS
 # ==============================================================================
 
+
 def extract_cusips_from_holdings_json(holdings_path: Path) -> List[str]:
     """
     Extract all unique CUSIPs from holdings_snapshots.json.
-    
+
     Useful for batch pre-warming the cache.
     """
     # This would be implemented after you have real holdings data
@@ -571,7 +549,7 @@ def extract_cusips_from_holdings_json(holdings_path: Path) -> List[str]:
 def validate_cusip(cusip: str) -> bool:
     """
     Validate CUSIP format.
-    
+
     CUSIP = 9 alphanumeric characters
     - First 6: Issuer
     - Next 2: Issue
@@ -579,13 +557,13 @@ def validate_cusip(cusip: str) -> bool:
     """
     if len(cusip) != 9:
         return False
-    
+
     if not cusip.isalnum():
         return False
-    
+
     # Optional: Validate check digit
     # (Complex algorithm, skip for now)
-    
+
     return True
 
 
@@ -593,10 +571,11 @@ def validate_cusip(cusip: str) -> bool:
 # BOOTSTRAP UTILITIES
 # ==============================================================================
 
+
 def create_empty_static_map(output_path: Path) -> None:
     """
     Create empty static map file.
-    
+
     You'll manually populate this with known CUSIP→Ticker mappings.
     """
     static_map = {
@@ -611,10 +590,10 @@ def create_empty_static_map(output_path: Path) -> None:
         #     "source": "static"
         # }
     }
-    
-    with open(output_path, 'w') as f:
+
+    with open(output_path, "w") as f:
         json.dump(static_map, f, indent=2)
-    
+
     print(f"Empty static map created: {output_path}")
     print("Populate with known CUSIP→Ticker mappings before first run")
 
@@ -622,12 +601,12 @@ def create_empty_static_map(output_path: Path) -> None:
 def create_empty_cache(output_path: Path) -> None:
     """
     Create empty cache file.
-    
+
     This will be populated automatically by OpenFIGI queries.
     """
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump({}, f)
-    
+
     print(f"Empty cache created: {output_path}")
 
 
@@ -637,46 +616,44 @@ def create_empty_cache(output_path: Path) -> None:
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(
-        description="CUSIP→Ticker mapper with OpenFIGI integration"
-    )
-    
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
-    
+
+    parser = argparse.ArgumentParser(description="CUSIP→Ticker mapper with OpenFIGI integration")
+
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
     # Initialize command
-    init_parser = subparsers.add_parser('init', help='Initialize mapper files')
-    init_parser.add_argument('--data-dir', type=Path, required=True)
-    
+    init_parser = subparsers.add_parser("init", help="Initialize mapper files")
+    init_parser.add_argument("--data-dir", type=Path, required=True)
+
     # Query command
-    query_parser = subparsers.add_parser('query', help='Query single CUSIP')
-    query_parser.add_argument('cusip', type=str, help='9-character CUSIP')
-    query_parser.add_argument('--data-dir', type=Path, required=True)
-    query_parser.add_argument('--api-key', type=str, help='OpenFIGI API key')
-    
+    query_parser = subparsers.add_parser("query", help="Query single CUSIP")
+    query_parser.add_argument("cusip", type=str, help="9-character CUSIP")
+    query_parser.add_argument("--data-dir", type=Path, required=True)
+    query_parser.add_argument("--api-key", type=str, help="OpenFIGI API key")
+
     # Batch command
-    batch_parser = subparsers.add_parser('batch', help='Query batch of CUSIPs')
-    batch_parser.add_argument('cusips_file', type=Path, help='Text file with CUSIPs (one per line)')
-    batch_parser.add_argument('--data-dir', type=Path, required=True)
-    batch_parser.add_argument('--api-key', type=str, help='OpenFIGI API key')
-    
+    batch_parser = subparsers.add_parser("batch", help="Query batch of CUSIPs")
+    batch_parser.add_argument("cusips_file", type=Path, help="Text file with CUSIPs (one per line)")
+    batch_parser.add_argument("--data-dir", type=Path, required=True)
+    batch_parser.add_argument("--api-key", type=str, help="OpenFIGI API key")
+
     # Stats command
-    stats_parser = subparsers.add_parser('stats', help='Show mapper statistics')
-    stats_parser.add_argument('--data-dir', type=Path, required=True)
-    
+    stats_parser = subparsers.add_parser("stats", help="Show mapper statistics")
+    stats_parser.add_argument("--data-dir", type=Path, required=True)
+
     args = parser.parse_args()
-    
-    if args.command == 'init':
+
+    if args.command == "init":
         # Initialize files
-        static_map_path = args.data_dir / 'cusip_static_map.json'
-        cache_path = args.data_dir / 'cusip_cache.json'
-        
+        static_map_path = args.data_dir / "cusip_static_map.json"
+        cache_path = args.data_dir / "cusip_cache.json"
+
         if not static_map_path.exists():
             create_empty_static_map(static_map_path)
-        
+
         if not cache_path.exists():
             create_empty_cache(cache_path)
-        
+
         print("\nMapper initialized!")
         print(f"Static map: {static_map_path}")
         print(f"Cache: {cache_path}")
@@ -684,23 +661,23 @@ if __name__ == "__main__":
         print("1. Populate static map with known CUSIP→Ticker mappings")
         print("2. Get OpenFIGI API key (free): https://www.openfigi.com/api")
         print("3. Run 'cusip_mapper.py query <CUSIP>' to test")
-    
-    elif args.command == 'query':
+
+    elif args.command == "query":
         # Query single CUSIP
         mapper = CUSIPMapper(
-            static_map_path=args.data_dir / 'cusip_static_map.json',
-            cache_path=args.data_dir / 'cusip_cache.json',
-            openfigi_api_key=args.api_key
+            static_map_path=args.data_dir / "cusip_static_map.json",
+            cache_path=args.data_dir / "cusip_cache.json",
+            openfigi_api_key=args.api_key,
         )
-        
+
         cusip = args.cusip.upper()
-        
+
         if not validate_cusip(cusip):
             print(f"Invalid CUSIP format: {cusip}")
             exit(1)
-        
+
         mapping = mapper.get_mapping(cusip)
-        
+
         if mapping:
             print(f"\n{cusip} → {mapping.ticker}")
             print(f"  Name: {mapping.name}")
@@ -709,63 +686,62 @@ if __name__ == "__main__":
             print(f"  Source: {mapping.source}")
         else:
             print(f"\n{cusip}: Not found")
-        
+
         mapper.save()
-    
-    elif args.command == 'batch':
+
+    elif args.command == "batch":
         # Query batch of CUSIPs
         with open(args.cusips_file) as f:
             cusips = [line.strip().upper() for line in f if line.strip()]
-        
+
         print(f"Loading {len(cusips)} CUSIPs from {args.cusips_file}")
-        
+
         mapper = CUSIPMapper(
-            static_map_path=args.data_dir / 'cusip_static_map.json',
-            cache_path=args.data_dir / 'cusip_cache.json',
-            openfigi_api_key=args.api_key
+            static_map_path=args.data_dir / "cusip_static_map.json",
+            cache_path=args.data_dir / "cusip_cache.json",
+            openfigi_api_key=args.api_key,
         )
-        
+
         results = mapper.get_batch(cusips)
-        
+
         # Print results
         print(f"\n{'CUSIP':<12} {'Ticker':<8} {'Source'}")
         print("-" * 40)
-        
+
         for cusip in cusips:
-            ticker = results.get(cusip, 'NOT FOUND')
-            
+            ticker = results.get(cusip, "NOT FOUND")
+
             # Determine source
             if cusip in mapper.static_map:
-                source = 'static'
+                source = "static"
             elif cusip in mapper.cache:
-                source = 'cache'
+                source = "cache"
             else:
-                source = 'openfigi'
-            
+                source = "openfigi"
+
             print(f"{cusip:<12} {ticker:<8} {source}")
-        
+
         # Save new mappings
         mapper.save()
-        
+
         # Statistics
         found = sum(1 for v in results.values() if v is not None)
         print(f"\nFound: {found}/{len(cusips)} ({found/len(cusips)*100:.1f}%)")
-    
-    elif args.command == 'stats':
+
+    elif args.command == "stats":
         # Show statistics
         mapper = CUSIPMapper(
-            static_map_path=args.data_dir / 'cusip_static_map.json',
-            cache_path=args.data_dir / 'cusip_cache.json'
+            static_map_path=args.data_dir / "cusip_static_map.json", cache_path=args.data_dir / "cusip_cache.json"
         )
-        
+
         stats = mapper.stats()
-        
+
         print("\nCUSIP Mapper Statistics")
         print("=" * 40)
         print(f"Static map entries:  {stats['static_map_size']}")
         print(f"Cache entries:       {stats['cache_size']}")
         print(f"Pending updates:     {stats['new_mappings_pending']}")
         print(f"Total known CUSIPs:  {stats['total_known']}")
-    
+
     else:
         parser.print_help()

@@ -53,11 +53,12 @@ _DATE_PATTERNS = [
     # ISO format: 2026-03-15
     re.compile(r"\b(\d{4}-\d{2}-\d{2})\b"),
     # Month DD, YYYY: March 15, 2026
-    re.compile(r"\b(January|February|March|April|May|June|July|August|September|"
-               r"October|November|December)\s+(\d{1,2}),?\s+(\d{4})\b"),
+    re.compile(
+        r"\b(January|February|March|April|May|June|July|August|September|"
+        r"October|November|December)\s+(\d{1,2}),?\s+(\d{4})\b"
+    ),
     # Mon DD, YYYY: Mar 15, 2026
-    re.compile(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
-               r"\s+(\d{1,2}),?\s+(\d{4})\b"),
+    re.compile(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)" r"\s+(\d{1,2}),?\s+(\d{4})\b"),
     # MM/DD/YYYY
     re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b"),
 ]
@@ -164,9 +165,7 @@ def _parse_date_from_text(text: str) -> Optional[date]:
     m = _DATE_PATTERNS[1].search(text)
     if m:
         try:
-            return datetime.strptime(
-                f"{m.group(1)} {m.group(2)} {m.group(3)}", "%B %d %Y"
-            ).date()
+            return datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%B %d %Y").date()
         except ValueError:
             pass
 
@@ -174,9 +173,7 @@ def _parse_date_from_text(text: str) -> Optional[date]:
     m = _DATE_PATTERNS[2].search(text)
     if m:
         try:
-            return datetime.strptime(
-                f"{m.group(1)} {m.group(2)} {m.group(3)}", "%b %d %Y"
-            ).date()
+            return datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%b %d %Y").date()
         except ValueError:
             pass
 
@@ -218,7 +215,7 @@ def _extract_events_from_html(
     # We look for the time tag and then grab nearby text
     block_pattern = re.compile(
         r'(?:<[^>]*(?:datetime|data-date)\s*=\s*["\'](\d{4}-\d{2}-\d{2})["\'][^>]*>)'
-        r'(.*?)(?=<(?:time|tr|li|div\s+class)|$)',
+        r"(.*?)(?=<(?:time|tr|li|div\s+class)|$)",
         re.IGNORECASE | re.DOTALL,
     )
 
@@ -245,24 +242,26 @@ def _extract_events_from_html(
             continue
         seen_ids.add(record_id)
 
-        events.append({
-            "schema": "ir_event.v1",
-            "id": record_id,
-            "ticker": ticker,
-            "jurisdiction": "US",
-            "event_date": date_str,
-            "disclosed_at": as_of_date.isoformat(),
-            "event_kind": _classify_event_kind(title),
-            "title": title,
-            "url": source_url,
-            "source": "IR_EVENTS",
-            "confidence": "MED",
-            "raw": {
-                "company": ticker,
-                "source_url": source_url,
-                "date_text": date_str,
-            },
-        })
+        events.append(
+            {
+                "schema": "ir_event.v1",
+                "id": record_id,
+                "ticker": ticker,
+                "jurisdiction": "US",
+                "event_date": date_str,
+                "disclosed_at": as_of_date.isoformat(),
+                "event_kind": _classify_event_kind(title),
+                "title": title,
+                "url": source_url,
+                "source": "IR_EVENTS",
+                "confidence": "MED",
+                "raw": {
+                    "company": ticker,
+                    "source_url": source_url,
+                    "date_text": date_str,
+                },
+            }
+        )
 
     # Strategy 2: Scan for date patterns in text blocks
     # Strip HTML to plain text for broad date scanning
@@ -286,24 +285,26 @@ def _extract_events_from_html(
             continue
         seen_ids.add(record_id)
 
-        events.append({
-            "schema": "ir_event.v1",
-            "id": record_id,
-            "ticker": ticker,
-            "jurisdiction": "US",
-            "event_date": date_str,
-            "disclosed_at": as_of_date.isoformat(),
-            "event_kind": _classify_event_kind(title),
-            "title": title,
-            "url": source_url,
-            "source": "IR_EVENTS",
-            "confidence": "MED",
-            "raw": {
-                "company": ticker,
-                "source_url": source_url,
-                "date_text": date_str,
-            },
-        })
+        events.append(
+            {
+                "schema": "ir_event.v1",
+                "id": record_id,
+                "ticker": ticker,
+                "jurisdiction": "US",
+                "event_date": date_str,
+                "disclosed_at": as_of_date.isoformat(),
+                "event_kind": _classify_event_kind(title),
+                "title": title,
+                "url": source_url,
+                "source": "IR_EVENTS",
+                "confidence": "MED",
+                "raw": {
+                    "company": ticker,
+                    "source_url": source_url,
+                    "date_text": date_str,
+                },
+            }
+        )
 
     return events
 
@@ -377,9 +378,7 @@ def collect_ir_events(
             continue
 
         try:
-            events = _extract_events_from_html(
-                resp.text, ticker, ir_url, as_of_date
-            )
+            events = _extract_events_from_html(resp.text, ticker, ir_url, as_of_date)
             stats["parsed_items"] += len(events)
             stats["matched"] += len(events)
             all_events.extend(events)
@@ -388,12 +387,14 @@ def collect_ir_events(
             continue
 
     # Stable sort
-    all_events.sort(key=lambda e: (
-        e.get("event_date", ""),
-        e.get("ticker", ""),
-        e.get("source", ""),
-        e.get("id", ""),
-    ))
+    all_events.sort(
+        key=lambda e: (
+            e.get("event_date", ""),
+            e.get("ticker", ""),
+            e.get("source", ""),
+            e.get("id", ""),
+        )
+    )
 
     # Write cache wrapper
     wrapper = {

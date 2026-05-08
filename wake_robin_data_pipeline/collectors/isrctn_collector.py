@@ -22,10 +22,7 @@ from typing import Dict, List, Optional
 import requests
 
 from common.robustness import create_resilient_session
-from wake_robin_data_pipeline.collectors.trials_collector import (
-    SPONSOR_ALIASES,
-    _clean_company_name,
-)
+from wake_robin_data_pipeline.collectors.trials_collector import SPONSOR_ALIASES, _clean_company_name
 
 _session: requests.Session | None = None
 
@@ -35,6 +32,7 @@ def _get_session() -> requests.Session:
     if _session is None:
         _session = create_resilient_session()
     return _session
+
 
 logger = logging.getLogger(__name__)
 
@@ -146,9 +144,7 @@ def collect_isrctn_trials(
                 if not detail:
                     continue
 
-                matched_ticker = _match_ticker(
-                    detail.get("sponsor", ""), universe_map
-                )
+                matched_ticker = _match_ticker(detail.get("sponsor", ""), universe_map)
                 if matched_ticker is None:
                     matched_ticker = ticker
 
@@ -378,18 +374,18 @@ def _parse_html_detail(html: str, isrctn_id: str) -> Optional[dict]:
     }
 
     # Extract title from <h1>
-    title_match = re.search(r'<h1[^>]*>(.*?)</h1>', html, re.DOTALL)
+    title_match = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.DOTALL)
     if title_match:
-        detail["title"] = re.sub(r'<[^>]+>', '', title_match.group(1)).strip()
+        detail["title"] = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
 
     # Extract table rows: <dt>Label</dt><dd>Value</dd> or <th>Label</th><td>Value</td>
     for pattern in [
-        r'<dt[^>]*>(.*?)</dt>\s*<dd[^>]*>(.*?)</dd>',
-        r'<th[^>]*>(.*?)</th>\s*<td[^>]*>(.*?)</td>',
+        r"<dt[^>]*>(.*?)</dt>\s*<dd[^>]*>(.*?)</dd>",
+        r"<th[^>]*>(.*?)</th>\s*<td[^>]*>(.*?)</td>",
     ]:
         for match in re.finditer(pattern, html, re.DOTALL):
-            label = re.sub(r'<[^>]+>', '', match.group(1)).strip().lower()
-            value = re.sub(r'<[^>]+>', '', match.group(2)).strip()
+            label = re.sub(r"<[^>]+>", "", match.group(1)).strip().lower()
+            value = re.sub(r"<[^>]+>", "", match.group(2)).strip()
 
             if "sponsor" in label:
                 detail["sponsor"] = value
@@ -411,8 +407,8 @@ def _parse_html_detail(html: str, isrctn_id: str) -> Optional[dict]:
                 detail["end_date"] = value
 
     # Extract NCT or EudraCT IDs from page text
-    nct_matches = re.findall(r'(NCT\d{8})', html)
-    eudract_matches = re.findall(r'(\d{4}-\d{6}-\d{2})', html)
+    nct_matches = re.findall(r"(NCT\d{8})", html)
+    eudract_matches = re.findall(r"(\d{4}-\d{6}-\d{2})", html)
     detail["secondary_ids"] = list(set(nct_matches + eudract_matches))
 
     return detail if detail["title"] else None
@@ -493,10 +489,9 @@ def _normalize_date(raw: str) -> Optional[str]:
     if not raw:
         return None
     raw = raw.strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d %B %Y", "%B %d, %Y",
-                "%Y-%m-%dT%H:%M:%S"):
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d %B %Y", "%B %d, %Y", "%Y-%m-%dT%H:%M:%S"):
         try:
-            return datetime.strptime(raw[:max(10, len(raw))], fmt).strftime("%Y-%m-%d")
+            return datetime.strptime(raw[: max(10, len(raw))], fmt).strftime("%Y-%m-%d")
         except ValueError:
             continue
     if re.match(r"\d{4}-\d{2}-\d{2}", raw):

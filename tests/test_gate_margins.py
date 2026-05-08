@@ -4,6 +4,7 @@ These functions are panel-only analytics that compute how far each ticker is
 from each gate threshold (margin), whether it was rescued by the relative gate,
 and what minimal change would flip eligibility (counterfactual).
 """
+
 from __future__ import annotations
 
 import sys
@@ -15,12 +16,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import (
-    DECISION_COLUMNS,
-    DecisionRuleset,
-    compute_gate_margins,
-    compute_tier_margins,
-)
+from decision_engine import DECISION_COLUMNS, DecisionRuleset, compute_gate_margins, compute_tier_margins
 from run_decision_strategy_backtest import PANEL_COLUMNS
 
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
@@ -302,8 +298,11 @@ class TestPanelSchema:
     """Verify margin columns are panel-only (NOT in DECISION_COLUMNS)."""
 
     MARGIN_COLS = [
-        "dd_abs_margin", "dd_rel_margin", "rescued_by_rel",
-        "optionality_margin_a", "actionable_catalyst",
+        "dd_abs_margin",
+        "dd_rel_margin",
+        "rescued_by_rel",
+        "optionality_margin_a",
+        "actionable_catalyst",
     ]
 
     def test_margin_columns_in_panel_columns(self):
@@ -324,14 +323,34 @@ class TestGatePressure:
     def test_known_pressure_values(self):
         """Verify pressure percentages with known data."""
         rows = [
-            {"dd_abs_margin": "0.03", "dd_rel_margin": "0.10",
-             "optionality_margin_a": "0.02", "rescued_by_rel": "0", "eligible": "1"},
-            {"dd_abs_margin": "-0.04", "dd_rel_margin": "-0.03",
-             "optionality_margin_a": "0.20", "rescued_by_rel": "1", "eligible": "1"},
-            {"dd_abs_margin": "0.25", "dd_rel_margin": "0.15",
-             "optionality_margin_a": "-0.01", "rescued_by_rel": "0", "eligible": "1"},
-            {"dd_abs_margin": "-0.15", "dd_rel_margin": "-0.20",
-             "optionality_margin_a": "-0.10", "rescued_by_rel": "0", "eligible": "0"},
+            {
+                "dd_abs_margin": "0.03",
+                "dd_rel_margin": "0.10",
+                "optionality_margin_a": "0.02",
+                "rescued_by_rel": "0",
+                "eligible": "1",
+            },
+            {
+                "dd_abs_margin": "-0.04",
+                "dd_rel_margin": "-0.03",
+                "optionality_margin_a": "0.20",
+                "rescued_by_rel": "1",
+                "eligible": "1",
+            },
+            {
+                "dd_abs_margin": "0.25",
+                "dd_rel_margin": "0.15",
+                "optionality_margin_a": "-0.01",
+                "rescued_by_rel": "0",
+                "eligible": "1",
+            },
+            {
+                "dd_abs_margin": "-0.15",
+                "dd_rel_margin": "-0.20",
+                "optionality_margin_a": "-0.10",
+                "rescued_by_rel": "0",
+                "eligible": "0",
+            },
         ]
         result = compute_gate_pressure(rows)
         # dd_abs: 2/4 near (0.03, -0.04) = 50%

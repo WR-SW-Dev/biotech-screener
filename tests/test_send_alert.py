@@ -11,6 +11,7 @@ Tests for tools/send_alert.py
   - Dry-run mode (no HTTP call)
   - Missing health packet (empty dict → graceful)
 """
+
 from __future__ import annotations
 
 import json
@@ -25,18 +26,18 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from tools.send_alert import (
+    LEVEL_COLOR,
+    _extract_action_items,
+    _extract_gate_summary,
+    _extract_live_perf,
     build_payload,
     send_alert,
-    _extract_gate_summary,
-    _extract_action_items,
-    _extract_live_perf,
-    LEVEL_COLOR,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_packet(
     level: str = "FAIL",
@@ -75,6 +76,7 @@ def _make_live_summary(mean_net: float = 0.02, n: int = 10) -> dict:
 # 1. Payload format
 # ---------------------------------------------------------------------------
 
+
 class TestPayloadFormat:
 
     def test_required_fields_present(self):
@@ -103,6 +105,7 @@ class TestPayloadFormat:
 # 2. FAIL vs WARN level differences
 # ---------------------------------------------------------------------------
 
+
 class TestLevelDifferences:
 
     def test_fail_level_in_title(self):
@@ -127,6 +130,7 @@ class TestLevelDifferences:
 # 3. No-webhook graceful exit
 # ---------------------------------------------------------------------------
 
+
 class TestNoWebhook:
 
     def test_no_webhook_no_exception(self):
@@ -144,6 +148,7 @@ class TestNoWebhook:
 # 4. Health packet field extraction
 # ---------------------------------------------------------------------------
 
+
 class TestPacketExtraction:
 
     def test_gate_summary_extracted(self):
@@ -154,9 +159,11 @@ class TestPacketExtraction:
         assert "gate_a" in summary["fail_names"]
 
     def test_action_items_extracted(self):
-        packet = _make_packet(action_items=[
-            {"severity": "FAIL", "type": "gate_fail", "detail": "ctgov_cache: stale"},
-        ])
+        packet = _make_packet(
+            action_items=[
+                {"severity": "FAIL", "type": "gate_fail", "detail": "ctgov_cache: stale"},
+            ]
+        )
         items = _extract_action_items(packet)
         assert len(items) == 1
         assert "ctgov_cache" in items[0]
@@ -176,6 +183,7 @@ class TestPacketExtraction:
 # ---------------------------------------------------------------------------
 # 5. Live performance field
 # ---------------------------------------------------------------------------
+
 
 class TestLivePerformanceField:
 

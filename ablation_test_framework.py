@@ -16,12 +16,12 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from datetime import date, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass, field
 import json
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 __version__ = "1.0.0"
 
@@ -29,6 +29,7 @@ __version__ = "1.0.0"
 @dataclass
 class AblationResult:
     """Result of ablation test for a single enhancement."""
+
     enhancement_name: str
     ic_without: Decimal
     ic_with: Decimal
@@ -42,6 +43,7 @@ class AblationResult:
 @dataclass
 class AblationTestSuite:
     """Complete ablation test results."""
+
     as_of_date: str
     results: Dict[str, AblationResult]
     total_ic_improvement: Decimal
@@ -94,7 +96,7 @@ def calculate_ic(
     d_squared_sum = sum((sr - rr) ** 2 for sr, rr in zip(score_ranks, return_ranks))
 
     # rho = 1 - (6 * sum(d^2)) / (n * (n^2 - 1))
-    rho = Decimal("1") - (Decimal("6") * Decimal(str(d_squared_sum))) / (Decimal(str(n)) * (Decimal(str(n ** 2 - 1))))
+    rho = Decimal("1") - (Decimal("6") * Decimal(str(d_squared_sum))) / (Decimal(str(n)) * (Decimal(str(n**2 - 1))))
 
     return rho.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
@@ -220,14 +222,16 @@ class AblationTestFramework:
             total_improvement += result.ic_improvement
 
             # Add to audit trail
-            self.audit_trail.append({
-                "enhancement": enhancement_name,
-                "as_of_date": as_of_dt.isoformat(),
-                "ic_without": str(result.ic_without),
-                "ic_with": str(result.ic_with),
-                "ic_improvement": str(result.ic_improvement),
-                "passed": result.passed,
-            })
+            self.audit_trail.append(
+                {
+                    "enhancement": enhancement_name,
+                    "as_of_date": as_of_dt.isoformat(),
+                    "ic_without": str(result.ic_without),
+                    "ic_with": str(result.ic_with),
+                    "ic_improvement": str(result.ic_improvement),
+                    "passed": result.passed,
+                }
+            )
 
         all_passed = all(r.passed for r in results.values())
         sample_size = len(set(base_scores.keys()) & set(forward_returns.keys()))
@@ -323,6 +327,7 @@ def create_mock_ablation_data(
 # =============================================================================
 # SELF-CHECKS
 # =============================================================================
+
 
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify framework correctness."""

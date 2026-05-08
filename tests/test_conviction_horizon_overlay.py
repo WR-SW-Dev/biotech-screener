@@ -2,11 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from module_5_scoring_v3 import (
-    _apply_conviction_horizon_overlay,
-    _conviction_horizon_weight_boost,
-)
-
+from module_5_scoring_v3 import _apply_conviction_horizon_overlay, _conviction_horizon_weight_boost
 
 COHORT = {"mean": 0.0, "std": 1.0}
 
@@ -25,14 +21,17 @@ def test_days_none_no_boost():
     assert diag.get("skip_reason") == "no_catalyst_date"
 
 
-@pytest.mark.parametrize("days, expect_positive", [
-    (90, False),   # At boundary - blocked by days check
-    (91, True),    # Just inside window
-    (150, True),   # Peak of horizon curve
-    (239, True),   # Just before horizon reaches 0
-    (240, False),  # Horizon = 0 at this point
-    (241, False),  # Outside window
-])
+@pytest.mark.parametrize(
+    "days, expect_positive",
+    [
+        (90, False),  # At boundary - blocked by days check
+        (91, True),  # Just inside window
+        (150, True),  # Peak of horizon curve
+        (239, True),  # Just before horizon reaches 0
+        (240, False),  # Horizon = 0 at this point
+        (241, False),  # Outside window
+    ],
+)
 def test_window_edges(days, expect_positive):
     """Test window boundaries: 91-239 valid, 90/240/241 blocked"""
     boost, diag = _conviction_horizon_weight_boost(
@@ -99,7 +98,7 @@ def test_insufficient_conviction_skips():
         weight_base=Decimal("0.0700"),
         weight_effective=Decimal("0.0300"),
         conviction_overlap=0.5,  # Low z-score
-        tier1_count=3,           # Low tier1
+        tier1_count=3,  # Low tier1
         days_to_catalyst=150,
         cohort_conviction_stats=COHORT,
     )

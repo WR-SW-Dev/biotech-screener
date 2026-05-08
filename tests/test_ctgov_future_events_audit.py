@@ -1,4 +1,5 @@
 """Tests for CTGov future events audit script (offline, deterministic)."""
+
 from __future__ import annotations
 
 import json
@@ -12,11 +13,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from scripts.audit_ctgov_future_events import (
-    audit_future_events,
-    format_markdown,
-    _parse_date_safe,
-)
+from scripts.audit_ctgov_future_events import _parse_date_safe, audit_future_events, format_markdown
 
 AS_OF = date(2026, 2, 28)
 
@@ -114,10 +111,7 @@ class TestAuditFlagsMalformed:
 
     def test_malformed_samples_bounded(self):
         """Malformed flag list is bounded to 50."""
-        records = [
-            _rec(f"NCT{i:08d}", primary_completion_date="bad-date")
-            for i in range(100)
-        ]
+        records = [_rec(f"NCT{i:08d}", primary_completion_date="bad-date") for i in range(100)]
         audit = audit_future_events(records, AS_OF)
         assert len(audit["flags"]["malformed_dates"]) <= 50
         assert audit["flag_summary"]["malformed_count"] == 100
@@ -192,18 +186,16 @@ class TestAuditPcdAfterCd:
 
     def test_pcd_after_cd_flagged(self):
         records = [
-            _rec("NCT001",
-                 primary_completion_date="2027-06-01",
-                 completion_date="2027-03-01"),  # PCD 92 days after CD
+            _rec("NCT001", primary_completion_date="2027-06-01", completion_date="2027-03-01"),  # PCD 92 days after CD
         ]
         audit = audit_future_events(records, AS_OF)
         assert audit["flag_summary"]["pcd_after_cd_count"] == 1
 
     def test_small_gap_not_flagged(self):
         records = [
-            _rec("NCT001",
-                 primary_completion_date="2027-06-15",
-                 completion_date="2027-06-01"),  # 14 days, within tolerance
+            _rec(
+                "NCT001", primary_completion_date="2027-06-15", completion_date="2027-06-01"
+            ),  # 14 days, within tolerance
         ]
         audit = audit_future_events(records, AS_OF)
         assert audit["flag_summary"]["pcd_after_cd_count"] == 0

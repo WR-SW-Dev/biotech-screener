@@ -30,10 +30,10 @@ Version: 1.0.0
 import hashlib
 import json
 import logging
-from decimal import Decimal, ROUND_HALF_UP
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -93,11 +93,11 @@ class MorningstarSignalEngine:
     # Datapoint IDs used per sub-signal
     DATAPOINTS = {
         "fair_value_discount": ["QV009", "ST202"],  # Quant FV + Analyst FV
-        "capital_efficiency": ["STA4Z", "HS08F"],    # ROIC, ROE
-        "leverage_health": ["ST389", "HS06U"],       # D/E, D/Capital
-        "growth_quality": ["HS035", "HS08D"],        # Sales Growth, Net Margin
+        "capital_efficiency": ["STA4Z", "HS08F"],  # ROIC, ROE
+        "leverage_health": ["ST389", "HS06U"],  # D/E, D/Capital
+        "growth_quality": ["HS035", "HS08D"],  # Sales Growth, Net Margin
         "momentum": ["ST569", "PM006", "PM008", "PD00D"],  # 52wk High %, Returns
-        "moat_quality": ["LT181"],                   # Economic Moat
+        "moat_quality": ["LT181"],  # Economic Moat
     }
 
     # ST201 Fair Value Uncertainty → confidence multiplier for FV sub-signal
@@ -129,11 +129,11 @@ class MorningstarSignalEngine:
     # Higher discount = more undervalued = higher score
     FV_DISCOUNT_BREAKPOINTS: List[Tuple[Decimal, Decimal]] = [
         # (discount_pct_threshold, score)
-        (Decimal("50"), Decimal("95")),   # 50%+ discount → 95
-        (Decimal("30"), Decimal("80")),   # 30%+ → 80
-        (Decimal("15"), Decimal("65")),   # 15%+ → 65
-        (Decimal("5"), Decimal("55")),    # 5%+ → 55
-        (Decimal("0"), Decimal("50")),    # At fair value → 50
+        (Decimal("50"), Decimal("95")),  # 50%+ discount → 95
+        (Decimal("30"), Decimal("80")),  # 30%+ → 80
+        (Decimal("15"), Decimal("65")),  # 15%+ → 65
+        (Decimal("5"), Decimal("55")),  # 5%+ → 55
+        (Decimal("0"), Decimal("50")),  # At fair value → 50
         (Decimal("-15"), Decimal("35")),  # 15% premium → 35
         (Decimal("-30"), Decimal("20")),  # 30% premium → 20
         (Decimal("-50"), Decimal("10")),  # 50%+ premium → 10
@@ -161,12 +161,12 @@ class MorningstarSignalEngine:
 
     # D/E scoring breakpoints (lower = better for health)
     DE_BREAKPOINTS: List[Tuple[Decimal, Decimal]] = [
-        (Decimal("0"), Decimal("85")),     # No debt
-        (Decimal("0.3"), Decimal("70")),   # Low leverage
-        (Decimal("0.7"), Decimal("55")),   # Moderate
-        (Decimal("1.0"), Decimal("45")),   # At equity
-        (Decimal("2.0"), Decimal("30")),   # High leverage
-        (Decimal("5.0"), Decimal("15")),   # Very high
+        (Decimal("0"), Decimal("85")),  # No debt
+        (Decimal("0.3"), Decimal("70")),  # Low leverage
+        (Decimal("0.7"), Decimal("55")),  # Moderate
+        (Decimal("1.0"), Decimal("45")),  # At equity
+        (Decimal("2.0"), Decimal("30")),  # High leverage
+        (Decimal("5.0"), Decimal("15")),  # Very high
     ]
 
     # D/Capital scoring breakpoints (lower = better, expressed as %)
@@ -239,10 +239,10 @@ class MorningstarSignalEngine:
 
     # Internal component weights within the momentum sub-signal
     MOMENTUM_COMPONENT_WEIGHTS: Dict[str, Decimal] = {
-        "proximity": Decimal("0.30"),    # ST569 — stability
-        "return_3m": Decimal("0.35"),    # PM006 — most actionable
-        "return_6m": Decimal("0.20"),    # PM008 — confirmation
-        "return_1y": Decimal("0.15"),    # PD00D — long-term trend
+        "proximity": Decimal("0.30"),  # ST569 — stability
+        "return_3m": Decimal("0.35"),  # PM006 — most actionable
+        "return_6m": Decimal("0.20"),  # PM008 — confirmation
+        "return_1y": Decimal("0.15"),  # PD00D — long-term trend
     }
 
     # Dev-stage regime: metrics that require commercial operations
@@ -283,8 +283,7 @@ class MorningstarSignalEngine:
         self._snapshot_date = self._metadata.get("pull_date")
 
         count = len(self._data)
-        logger.info("Loaded Morningstar MCP data: %d tickers (snapshot: %s)",
-                     count, self._snapshot_date)
+        logger.info("Loaded Morningstar MCP data: %d tickers (snapshot: %s)", count, self._snapshot_date)
 
         # Load price history for FV discount fallback
         price_file = data_dir / "morningstar_price_history.json"
@@ -293,8 +292,7 @@ class MorningstarSignalEngine:
                 with open(price_file) as f:
                     price_raw = json.load(f)
                 self._price_history = price_raw.get("records", {})
-                logger.info("Loaded Morningstar price history: %d tickers",
-                            len(self._price_history))
+                logger.info("Loaded Morningstar price history: %d tickers", len(self._price_history))
             except (json.JSONDecodeError, OSError) as e:
                 logger.warning("Failed to load Morningstar price history: %s", e)
 
@@ -342,12 +340,10 @@ class MorningstarSignalEngine:
 
         # Resolve current_price: caller-provided > MS price history > None
         effective_price = current_price
-        price_source = "caller"
         if effective_price is None:
             ms_price = self._get_latest_price(ticker_upper, as_of_date)
             if ms_price is not None:
                 effective_price = ms_price
-                price_source = "ms_price_history"
                 flags.append("ms_price_from_history")
 
         # Score each sub-signal
@@ -392,21 +388,16 @@ class MorningstarSignalEngine:
 
         # Confidence-gated composite: redistribute weight from missing sub-signals
         # Pass FV uncertainty multiplier to adjust FV sub-signal confidence
-        fv_uncertainty_mult = _to_decimal(
-            fv_result.get("uncertainty_multiplier", "1.00")
-        ) or Decimal("1.00")
+        fv_uncertainty_mult = _to_decimal(fv_result.get("uncertainty_multiplier", "1.00")) or Decimal("1.00")
         composite, confidence, available_count = self._compute_composite(
-            sub_scores, fv_uncertainty_multiplier=fv_uncertainty_mult,
+            sub_scores,
+            fv_uncertainty_multiplier=fv_uncertainty_mult,
         )
 
         # Data coverage
-        total_datapoints = sum(
-            len(dps) for dps in self.DATAPOINTS.values()
-        )
+        total_datapoints = sum(len(dps) for dps in self.DATAPOINTS.values())
         available_datapoints = sum(
-            1 for signal, dps in self.DATAPOINTS.items()
-            for dp in dps
-            if record.get(dp) is not None
+            1 for signal, dps in self.DATAPOINTS.items() for dp in dps if record.get(dp) is not None
         )
         data_coverage = Decimal(str(available_datapoints)) / Decimal(str(total_datapoints))
         data_coverage = _quantize(data_coverage * Decimal("100"))
@@ -479,9 +470,7 @@ class MorningstarSignalEngine:
             Dict with scores_by_ticker, diagnostic_counts, and provenance.
         """
         scores_by_ticker: Dict[str, Dict[str, Any]] = {}
-        regime_distribution: Dict[str, int] = {
-            "commercial": 0, "development": 0, "unknown": 0
-        }
+        regime_distribution: Dict[str, int] = {"commercial": 0, "development": 0, "unknown": 0}
         total_scored = 0
         total_with_fv = 0
 
@@ -509,8 +498,7 @@ class MorningstarSignalEngine:
 
         # Content hash for provenance
         hash_input = json.dumps(
-            [{"t": t, "s": str(s.get("morningstar_score", ""))}
-             for t, s in sorted(scores_by_ticker.items())],
+            [{"t": t, "s": str(s.get("morningstar_score", ""))} for t, s in sorted(scores_by_ticker.items())],
             sort_keys=True,
         )
         content_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
@@ -569,10 +557,7 @@ class MorningstarSignalEngine:
         fv_divergence_pct = None
 
         if analyst_fv is not None and analyst_fv > Decimal("0"):
-            effective_fv = (
-                self.ANALYST_FV_BLEND_WEIGHT * analyst_fv
-                + self.QUANT_FV_BLEND_WEIGHT * qv_raw
-            )
+            effective_fv = self.ANALYST_FV_BLEND_WEIGHT * analyst_fv + self.QUANT_FV_BLEND_WEIGHT * qv_raw
             fv_source = "analyst_quant_blend"
             flags.append("ms_fv_analyst_blend")
 
@@ -604,9 +589,7 @@ class MorningstarSignalEngine:
         # Uncertainty gating: adjust confidence via multiplier
         uncertainty_multiplier = Decimal("1.00")
         if uncertainty is not None:
-            uncertainty_multiplier = self.FV_UNCERTAINTY_MULTIPLIERS.get(
-                uncertainty, Decimal("1.00")
-            )
+            uncertainty_multiplier = self.FV_UNCERTAINTY_MULTIPLIERS.get(uncertainty, Decimal("1.00"))
             if uncertainty in self.FV_UNCERTAINTY_MULTIPLIERS:
                 flags.append(f"ms_fv_uncertainty_{uncertainty.lower().replace(' ', '_')}")
 
@@ -815,7 +798,8 @@ class MorningstarSignalEngine:
         if proximity_raw is not None:
             component_scores["proximity"] = _clamp(
                 self._interpolate_breakpoints(proximity_raw, self.PROXIMITY_BREAKPOINTS, ascending=False),
-                Decimal("5"), Decimal("95"),
+                Decimal("5"),
+                Decimal("95"),
             )
         else:
             component_scores["proximity"] = None
@@ -826,7 +810,8 @@ class MorningstarSignalEngine:
         if ret_3m is not None:
             component_scores["return_3m"] = _clamp(
                 self._interpolate_breakpoints(ret_3m, self.RETURN_3M_BREAKPOINTS),
-                Decimal("5"), Decimal("95"),
+                Decimal("5"),
+                Decimal("95"),
             )
         else:
             component_scores["return_3m"] = None
@@ -837,7 +822,8 @@ class MorningstarSignalEngine:
         if ret_6m is not None:
             component_scores["return_6m"] = _clamp(
                 self._interpolate_breakpoints(ret_6m, self.RETURN_6M_BREAKPOINTS),
-                Decimal("5"), Decimal("95"),
+                Decimal("5"),
+                Decimal("95"),
             )
         else:
             component_scores["return_6m"] = None
@@ -848,15 +834,14 @@ class MorningstarSignalEngine:
         if ret_1y is not None:
             component_scores["return_1y"] = _clamp(
                 self._interpolate_breakpoints(ret_1y, self.RETURN_1Y_BREAKPOINTS),
-                Decimal("5"), Decimal("95"),
+                Decimal("5"),
+                Decimal("95"),
             )
         else:
             component_scores["return_1y"] = None
 
         # Weighted average of available components (redistribute missing weight)
-        available: Dict[str, Decimal] = {
-            k: v for k, v in component_scores.items() if v is not None
-        }
+        available: Dict[str, Decimal] = {k: v for k, v in component_scores.items() if v is not None}
 
         if not available:
             return {
@@ -868,9 +853,7 @@ class MorningstarSignalEngine:
                 "flags": ["ms_momentum_no_data"],
             }
 
-        total_weight = sum(
-            self.MOMENTUM_COMPONENT_WEIGHTS[k] for k in available
-        )
+        total_weight = sum(self.MOMENTUM_COMPONENT_WEIGHTS[k] for k in available)
         score = Decimal("0")
         for k, s in available.items():
             w = self.MOMENTUM_COMPONENT_WEIGHTS[k] / total_weight
@@ -1059,7 +1042,9 @@ class MorningstarSignalEngine:
                 self._data[recipient] = self._data[donor].copy()
                 logger.info(
                     "ID collision broadcast: %s → %s (ms_id=%s, fundamentals)",
-                    donor, recipient, ms_id,
+                    donor,
+                    recipient,
+                    ms_id,
                 )
                 broadcasts += 1
 
@@ -1068,7 +1053,9 @@ class MorningstarSignalEngine:
                     self._price_history[recipient] = self._price_history[donor].copy()
                     logger.info(
                         "ID collision broadcast: %s → %s (ms_id=%s, price_history)",
-                        donor, recipient, ms_id,
+                        donor,
+                        recipient,
+                        ms_id,
                     )
 
         if broadcasts > 0:
@@ -1291,6 +1278,7 @@ class MorningstarSignalEngine:
 # STANDALONE DEMONSTRATION
 # =============================================================================
 
+
 def demonstration() -> None:
     """Demonstrate the Morningstar signal engine against production data."""
     import sys
@@ -1319,14 +1307,16 @@ def demonstration() -> None:
     for ticker in test_tickers:
         result = engine.score_ticker(ticker, as_of_date=as_of)
         if result["status"] == "SUCCESS":
-            print(f"{ticker}: score={result['morningstar_score']}  "
-                  f"conf={result['confidence']}  regime={result['regime']}  "
-                  f"FV={result['fair_value_discount_score']}  "
-                  f"CE={result['capital_efficiency_score']}  "
-                  f"LH={result['leverage_health_score']}  "
-                  f"GQ={result['growth_quality_score']}  "
-                  f"MOM={result['momentum_score']}  "
-                  f"MQ={result['moat_quality_score']}")
+            print(
+                f"{ticker}: score={result['morningstar_score']}  "
+                f"conf={result['confidence']}  regime={result['regime']}  "
+                f"FV={result['fair_value_discount_score']}  "
+                f"CE={result['capital_efficiency_score']}  "
+                f"LH={result['leverage_health_score']}  "
+                f"GQ={result['growth_quality_score']}  "
+                f"MOM={result['momentum_score']}  "
+                f"MQ={result['moat_quality_score']}"
+            )
         else:
             print(f"{ticker}: {result['status']}")
 

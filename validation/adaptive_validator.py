@@ -160,9 +160,7 @@ class AdaptiveValidator:
                 coverage_pct = Decimal("0")
 
             # Get confidence multiplier from tier
-            confidence, tier_name = self.coverage_config.get_confidence_for_coverage(
-                category, coverage_pct
-            )
+            confidence, tier_name = self.coverage_config.get_confidence_for_coverage(category, coverage_pct)
 
             # Check against mode threshold
             threshold = thresholds.get(category, Decimal("0.50"))
@@ -173,15 +171,17 @@ class AdaptiveValidator:
             if isinstance(cat_data, dict):
                 missing_tickers = cat_data.get("missing_tickers", [])
 
-            reports.append(CoverageReport(
-                category=category,
-                coverage_pct=coverage_pct,
-                confidence_multiplier=confidence,
-                tier_name=tier_name,
-                meets_threshold=meets_threshold,
-                threshold_used=threshold,
-                missing_tickers=missing_tickers[:20],  # Limit for reporting
-            ))
+            reports.append(
+                CoverageReport(
+                    category=category,
+                    coverage_pct=coverage_pct,
+                    confidence_multiplier=confidence,
+                    tier_name=tier_name,
+                    meets_threshold=meets_threshold,
+                    threshold_used=threshold,
+                    missing_tickers=missing_tickers[:20],  # Limit for reporting
+                )
+            )
 
         # Overall pass if all meet thresholds OR if we can apply fallbacks
         all_meet = all(r.meets_threshold for r in reports)
@@ -207,9 +207,7 @@ class AdaptiveValidator:
             strategy, params = self.fallback_config.get_fallback_for_component(component)
 
             # Check if fallback is needed based on component-specific criteria
-            needs_fallback, reason = self._check_fallback_needed(
-                component, metrics, params
-            )
+            needs_fallback, reason = self._check_fallback_needed(component, metrics, params)
 
             if needs_fallback:
                 # Activate fallback
@@ -217,9 +215,7 @@ class AdaptiveValidator:
                 self.active_fallbacks.append(activation)
 
                 # Update metrics with fallback values
-                updated_metrics[component] = self._get_fallback_metrics(
-                    component, strategy, metrics
-                )
+                updated_metrics[component] = self._get_fallback_metrics(component, strategy, metrics)
             else:
                 updated_metrics[component] = metrics
 
@@ -343,50 +339,58 @@ class AdaptiveValidator:
         # IC validation
         ic = Decimal(str(backtest_results.get("ic_mean", "0")))
         ic_outcome = self.criteria_config.evaluate_metric("ic", ic, higher_is_better=True)
-        results.append(ValidationResult(
-            metric_name="ic",
-            value=ic,
-            outcome=ic_outcome,
-            threshold_used=self.criteria_config.ic_threshold_pass,
-            limitations=self._get_limitations("ic", ic_outcome),
-            recommendations=self._get_recommendations("ic", ic_outcome, ic),
-        ))
+        results.append(
+            ValidationResult(
+                metric_name="ic",
+                value=ic,
+                outcome=ic_outcome,
+                threshold_used=self.criteria_config.ic_threshold_pass,
+                limitations=self._get_limitations("ic", ic_outcome),
+                recommendations=self._get_recommendations("ic", ic_outcome, ic),
+            )
+        )
 
         # Hit rate validation
         hit_rate = Decimal(str(backtest_results.get("hit_rate_top_quintile", "0.5")))
         hr_outcome = self.criteria_config.evaluate_metric("hit_rate", hit_rate, higher_is_better=True)
-        results.append(ValidationResult(
-            metric_name="hit_rate",
-            value=hit_rate,
-            outcome=hr_outcome,
-            threshold_used=self.criteria_config.hit_rate_pass,
-            limitations=self._get_limitations("hit_rate", hr_outcome),
-            recommendations=self._get_recommendations("hit_rate", hr_outcome, hit_rate),
-        ))
+        results.append(
+            ValidationResult(
+                metric_name="hit_rate",
+                value=hit_rate,
+                outcome=hr_outcome,
+                threshold_used=self.criteria_config.hit_rate_pass,
+                limitations=self._get_limitations("hit_rate", hr_outcome),
+                recommendations=self._get_recommendations("hit_rate", hr_outcome, hit_rate),
+            )
+        )
 
         # Max drawdown validation
         max_dd = Decimal(str(backtest_results.get("max_drawdown", "0")))
         dd_outcome = self.criteria_config.evaluate_metric("max_drawdown", max_dd, higher_is_better=False)
-        results.append(ValidationResult(
-            metric_name="max_drawdown",
-            value=max_dd,
-            outcome=dd_outcome,
-            threshold_used=self.criteria_config.max_drawdown_pass,
-            limitations=self._get_limitations("max_drawdown", dd_outcome),
-            recommendations=self._get_recommendations("max_drawdown", dd_outcome, max_dd),
-        ))
+        results.append(
+            ValidationResult(
+                metric_name="max_drawdown",
+                value=max_dd,
+                outcome=dd_outcome,
+                threshold_used=self.criteria_config.max_drawdown_pass,
+                limitations=self._get_limitations("max_drawdown", dd_outcome),
+                recommendations=self._get_recommendations("max_drawdown", dd_outcome, max_dd),
+            )
+        )
 
         # Turnover validation
         turnover = Decimal(str(backtest_results.get("turnover_annualized", "0")))
         to_outcome = self.criteria_config.evaluate_metric("turnover", turnover, higher_is_better=False)
-        results.append(ValidationResult(
-            metric_name="turnover",
-            value=turnover,
-            outcome=to_outcome,
-            threshold_used=self.criteria_config.turnover_pass,
-            limitations=self._get_limitations("turnover", to_outcome),
-            recommendations=self._get_recommendations("turnover", to_outcome, turnover),
-        ))
+        results.append(
+            ValidationResult(
+                metric_name="turnover",
+                value=turnover,
+                outcome=to_outcome,
+                threshold_used=self.criteria_config.turnover_pass,
+                limitations=self._get_limitations("turnover", to_outcome),
+                recommendations=self._get_recommendations("turnover", to_outcome, turnover),
+            )
+        )
 
         return results
 
@@ -506,14 +510,16 @@ class AdaptiveValidator:
 
         # Add coverage as additional check if not ok
         if not coverage_ok:
-            summary.results.append(ValidationResult(
-                metric_name="coverage",
-                value=Decimal("0"),
-                outcome=ValidationOutcome.WARN,
-                threshold_used=Decimal("0"),
-                limitations=["Coverage below thresholds for some categories"],
-                recommendations=["Improve data collection for missing categories"],
-            ))
+            summary.results.append(
+                ValidationResult(
+                    metric_name="coverage",
+                    value=Decimal("0"),
+                    outcome=ValidationOutcome.WARN,
+                    threshold_used=Decimal("0"),
+                    limitations=["Coverage below thresholds for some categories"],
+                    recommendations=["Improve data collection for missing categories"],
+                )
+            )
             if summary.overall_outcome == ValidationOutcome.PASS:
                 summary.overall_outcome = ValidationOutcome.QUALIFIED_PASS
 

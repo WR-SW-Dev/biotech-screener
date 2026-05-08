@@ -29,10 +29,10 @@ from calibrate_ruleset_from_panel import (
     score_candidate,
 )
 
-
 # =============================================================================
 # HELPERS
 # =============================================================================
+
 
 def _row(
     eligible: str = "1",
@@ -73,6 +73,7 @@ def _row(
 # =============================================================================
 # TEST: retier_row
 # =============================================================================
+
 
 class TestRetierRow:
     """Tests for the lightweight re-tier function."""
@@ -142,6 +143,7 @@ class TestRetierRow:
 # TEST: evaluate_candidate
 # =============================================================================
 
+
 class TestEvaluateCandidate:
     """Tests for candidate evaluation logic."""
 
@@ -179,9 +181,27 @@ class TestEvaluateCandidate:
     def test_mean_a_count(self):
         """Mean A-count computed across dates."""
         rows = [
-            _row(ticker="A1", optionality=0.70, catalyst_mode="specific_days", catalyst_days_raw=30, as_of_date="2025-06-30"),
-            _row(ticker="A2", optionality=0.80, catalyst_mode="specific_days", catalyst_days_raw=30, as_of_date="2025-06-30"),
-            _row(ticker="A3", optionality=0.70, catalyst_mode="specific_days", catalyst_days_raw=30, as_of_date="2025-07-31"),
+            _row(
+                ticker="A1",
+                optionality=0.70,
+                catalyst_mode="specific_days",
+                catalyst_days_raw=30,
+                as_of_date="2025-06-30",
+            ),
+            _row(
+                ticker="A2",
+                optionality=0.80,
+                catalyst_mode="specific_days",
+                catalyst_days_raw=30,
+                as_of_date="2025-06-30",
+            ),
+            _row(
+                ticker="A3",
+                optionality=0.70,
+                catalyst_mode="specific_days",
+                catalyst_days_raw=30,
+                as_of_date="2025-07-31",
+            ),
         ]
         result = evaluate_candidate(rows, a_floor=0.55, b_floor=0.30, catalyst_near_days=90)
         # Date 1: 2 A's, Date 2: 1 A → mean = 1.5
@@ -191,6 +211,7 @@ class TestEvaluateCandidate:
 # =============================================================================
 # TEST: score_candidate
 # =============================================================================
+
 
 class TestScoreCandidate:
     """Tests for scoring and constraint checking."""
@@ -271,6 +292,7 @@ class TestScoreCandidate:
 # TEST: Panel reading round-trip
 # =============================================================================
 
+
 class TestPanelRoundTrip:
     """Test that read_panel correctly parses numeric columns."""
 
@@ -290,12 +312,7 @@ class TestPanelRoundTrip:
                 "0.70,30,abc123,"
                 "2.5,8.3,-3.2,-5.1,\n"
             )
-            f.write(
-                "2025-06-30,BBB,C,S,1,0,"
-                "low_opt,,no_upcoming,headwind,"
-                ",,abc123,"
-                ",,,,no_price_series\n"
-            )
+            f.write("2025-06-30,BBB,C,S,1,0," "low_opt,,no_upcoming,headwind," ",,abc123," ",,,,no_price_series\n")
 
         rows = read_panel(csv_path)
         assert len(rows) == 2
@@ -316,6 +333,7 @@ class TestPanelRoundTrip:
 # TEST: Determinism
 # =============================================================================
 
+
 class TestDeterminism:
     """Verify same inputs produce same outputs."""
 
@@ -332,6 +350,7 @@ class TestDeterminism:
 # =============================================================================
 # TEST: Data-quality gate
 # =============================================================================
+
 
 class TestDataQualityGate:
     """Tests for the catalyst coverage pre-check."""
@@ -414,6 +433,7 @@ class TestDataQualityGate:
 # TEST: Date filtering
 # =============================================================================
 
+
 class TestDateFiltering:
     """Tests for panel row date filtering (integration-level)."""
 
@@ -451,6 +471,7 @@ class TestDateFiltering:
 # TEST: 2D Sweep
 # =============================================================================
 
+
 class Test2DSweep:
     """Tests for the 2D (a_floor × catalyst_near_days) sweep."""
 
@@ -459,32 +480,51 @@ class Test2DSweep:
         rows = []
         # A-tier candidates: high opt, near catalyst
         for i in range(5):
-            rows.append(_row(
-                ticker=f"AN{i}", optionality=0.70,
-                catalyst_mode="specific_days", catalyst_days_raw=20,
-                fwd_ret_60d=15.0, as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"AN{i}",
+                    optionality=0.70,
+                    catalyst_mode="specific_days",
+                    catalyst_days_raw=20,
+                    fwd_ret_60d=15.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         # B-tier: high opt, far catalyst (depends on catalyst_near threshold)
         for i in range(5):
-            rows.append(_row(
-                ticker=f"BF{i}", optionality=0.65,
-                catalyst_mode="specific_days", catalyst_days_raw=50,
-                fwd_ret_60d=8.0, as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"BF{i}",
+                    optionality=0.65,
+                    catalyst_mode="specific_days",
+                    catalyst_days_raw=50,
+                    fwd_ret_60d=8.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         # C-tier: low opt
         for i in range(5):
-            rows.append(_row(
-                ticker=f"CL{i}", optionality=0.20,
-                catalyst_mode="specific_days", catalyst_days_raw=20,
-                fwd_ret_60d=-5.0, as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"CL{i}",
+                    optionality=0.20,
+                    catalyst_mode="specific_days",
+                    catalyst_days_raw=20,
+                    fwd_ret_60d=-5.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         # D-tier: ineligible
         for i in range(5):
-            rows.append(_row(
-                ticker=f"DI{i}", eligible="0",
-                catalyst_mode="missing", fwd_ret_60d=-10.0,
-                as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"DI{i}",
+                    eligible="0",
+                    catalyst_mode="missing",
+                    fwd_ret_60d=-10.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         return rows
 
     def test_grid_size(self):
@@ -492,15 +532,13 @@ class Test2DSweep:
         rows = self._make_rows()
         a_floors = [0.50, 0.55, 0.60]
         cat_nears = [30, 60, 90]
-        candidates = run_2d_sweep(rows, a_floors, cat_nears, b_floor=0.30,
-                                  min_a_pct=3.0, max_turnover=50.0)
+        candidates = run_2d_sweep(rows, a_floors, cat_nears, b_floor=0.30, min_a_pct=3.0, max_turnover=50.0)
         assert len(candidates) == 9  # 3 × 3
 
     def test_each_candidate_has_catalyst_near_days(self):
         """Every candidate dict includes the catalyst_near_days it was evaluated with."""
         rows = self._make_rows()
-        candidates = run_2d_sweep(rows, [0.55], [30, 90], b_floor=0.30,
-                                  min_a_pct=0, max_turnover=100)
+        candidates = run_2d_sweep(rows, [0.55], [30, 90], b_floor=0.30, min_a_pct=0, max_turnover=100)
         assert all("catalyst_near_days" in c for c in candidates)
         assert candidates[0]["catalyst_near_days"] == 30
         assert candidates[1]["catalyst_near_days"] == 90
@@ -519,10 +557,8 @@ class Test2DSweep:
     def test_determinism(self):
         """Same inputs produce identical results."""
         rows = self._make_rows()
-        r1 = run_2d_sweep(rows, [0.50, 0.55], [30, 90], b_floor=0.30,
-                          min_a_pct=3.0, max_turnover=50.0)
-        r2 = run_2d_sweep(rows, [0.50, 0.55], [30, 90], b_floor=0.30,
-                          min_a_pct=3.0, max_turnover=50.0)
+        r1 = run_2d_sweep(rows, [0.50, 0.55], [30, 90], b_floor=0.30, min_a_pct=3.0, max_turnover=50.0)
+        r2 = run_2d_sweep(rows, [0.50, 0.55], [30, 90], b_floor=0.30, min_a_pct=3.0, max_turnover=50.0)
         assert r1 == r2
 
 
@@ -532,15 +568,36 @@ class TestRidgeSummary:
     def test_one_entry_per_catalyst_near(self):
         """Ridge has one entry per unique sweep_val value."""
         candidates = [
-            {"a_floor": 0.50, "sweep_val": 30, "score": 1.0, "passed": True,
-             "separation_60d": 2.0, "eligible_tier_distribution": {"A": 10.0},
-             "ab_median_dd_60d": -5.0, "mean_a_count_per_date": 3.0},
-            {"a_floor": 0.55, "sweep_val": 30, "score": 0.5, "passed": True,
-             "separation_60d": 1.0, "eligible_tier_distribution": {"A": 8.0},
-             "ab_median_dd_60d": -6.0, "mean_a_count_per_date": 2.0},
-            {"a_floor": 0.50, "sweep_val": 90, "score": 0.8, "passed": True,
-             "separation_60d": 1.5, "eligible_tier_distribution": {"A": 7.0},
-             "ab_median_dd_60d": -4.0, "mean_a_count_per_date": 2.5},
+            {
+                "a_floor": 0.50,
+                "sweep_val": 30,
+                "score": 1.0,
+                "passed": True,
+                "separation_60d": 2.0,
+                "eligible_tier_distribution": {"A": 10.0},
+                "ab_median_dd_60d": -5.0,
+                "mean_a_count_per_date": 3.0,
+            },
+            {
+                "a_floor": 0.55,
+                "sweep_val": 30,
+                "score": 0.5,
+                "passed": True,
+                "separation_60d": 1.0,
+                "eligible_tier_distribution": {"A": 8.0},
+                "ab_median_dd_60d": -6.0,
+                "mean_a_count_per_date": 2.0,
+            },
+            {
+                "a_floor": 0.50,
+                "sweep_val": 90,
+                "score": 0.8,
+                "passed": True,
+                "separation_60d": 1.5,
+                "eligible_tier_distribution": {"A": 7.0},
+                "ab_median_dd_60d": -4.0,
+                "mean_a_count_per_date": 2.5,
+            },
         ]
         ridge = compute_ridge_summary(candidates)
         assert len(ridge) == 2  # sweep_val 30 and 90
@@ -548,12 +605,26 @@ class TestRidgeSummary:
     def test_picks_best_a_floor_per_catalyst_near(self):
         """Ridge picks highest-score a_floor for each sweep_val."""
         candidates = [
-            {"a_floor": 0.50, "sweep_val": 30, "score": 1.0, "passed": True,
-             "separation_60d": 2.0, "eligible_tier_distribution": {"A": 10.0},
-             "ab_median_dd_60d": -5.0, "mean_a_count_per_date": 3.0},
-            {"a_floor": 0.55, "sweep_val": 30, "score": 2.0, "passed": True,
-             "separation_60d": 3.0, "eligible_tier_distribution": {"A": 12.0},
-             "ab_median_dd_60d": -4.0, "mean_a_count_per_date": 4.0},
+            {
+                "a_floor": 0.50,
+                "sweep_val": 30,
+                "score": 1.0,
+                "passed": True,
+                "separation_60d": 2.0,
+                "eligible_tier_distribution": {"A": 10.0},
+                "ab_median_dd_60d": -5.0,
+                "mean_a_count_per_date": 3.0,
+            },
+            {
+                "a_floor": 0.55,
+                "sweep_val": 30,
+                "score": 2.0,
+                "passed": True,
+                "separation_60d": 3.0,
+                "eligible_tier_distribution": {"A": 12.0},
+                "ab_median_dd_60d": -4.0,
+                "mean_a_count_per_date": 4.0,
+            },
         ]
         ridge = compute_ridge_summary(candidates)
         assert ridge[0]["best_a_floor"] == 0.55  # higher score
@@ -569,7 +640,8 @@ class TestNeighborStability:
         best = {"a_floor": 0.50, "sweep_val": 60}
         candidates = [
             {"a_floor": af, "sweep_val": cn, "score": 0, "passed": True, "separation_60d": 0}
-            for af in a_floors for cn in cat_nears
+            for af in a_floors
+            for cn in cat_nears
         ]
         neighbors = check_neighbor_stability(best, candidates, a_floors, cat_nears)
         # Center (0.50, 60) excluded. Neighbors are all (±1, ±1) combos.
@@ -583,7 +655,8 @@ class TestNeighborStability:
         best = {"a_floor": 0.40, "sweep_val": 30}
         candidates = [
             {"a_floor": af, "sweep_val": cn, "score": 0, "passed": True, "separation_60d": 0}
-            for af in a_floors for cn in cat_nears
+            for af in a_floors
+            for cn in cat_nears
         ]
         neighbors = check_neighbor_stability(best, candidates, a_floors, cat_nears)
         # (0.40, 30) → neighbors are (0.40,60), (0.50,30), (0.50,60) = 3
@@ -607,25 +680,40 @@ class TestSweepCatalystMidDays:
         rows = []
         # Near catalyst (days=50, always within near_days=120)
         for i in range(5):
-            rows.append(_row(
-                ticker=f"NR{i}", optionality=0.70,
-                catalyst_mode="specific_days", catalyst_days_raw=50,
-                fwd_ret_60d=15.0, as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"NR{i}",
+                    optionality=0.70,
+                    catalyst_mode="specific_days",
+                    catalyst_days_raw=50,
+                    fwd_ret_60d=15.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         # Boundary catalyst (days=170, mid at 180 → mid; mid at 150 → far)
         for i in range(5):
-            rows.append(_row(
-                ticker=f"BD{i}", optionality=0.70,
-                catalyst_mode="specific_days", catalyst_days_raw=170,
-                fwd_ret_60d=8.0, as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"BD{i}",
+                    optionality=0.70,
+                    catalyst_mode="specific_days",
+                    catalyst_days_raw=170,
+                    fwd_ret_60d=8.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         # Low opt (always C)
         for i in range(5):
-            rows.append(_row(
-                ticker=f"CL{i}", optionality=0.20,
-                catalyst_mode="specific_days", catalyst_days_raw=50,
-                fwd_ret_60d=-5.0, as_of_date="2025-06-30",
-            ))
+            rows.append(
+                _row(
+                    ticker=f"CL{i}",
+                    optionality=0.20,
+                    catalyst_mode="specific_days",
+                    catalyst_days_raw=50,
+                    fwd_ret_60d=-5.0,
+                    as_of_date="2025-06-30",
+                )
+            )
         return rows
 
     def test_mid_sweep_grid_size(self):
@@ -634,9 +722,15 @@ class TestSweepCatalystMidDays:
         a_floors = [0.55, 0.60]
         mid_values = [150, 180]
         candidates = run_2d_sweep(
-            rows, a_floors, mid_values, b_floor=0.30,
-            min_a_pct=0, max_turnover=100,
-            sweep_dim="cat_mid", base_near_days=120, base_mid_days=180,
+            rows,
+            a_floors,
+            mid_values,
+            b_floor=0.30,
+            min_a_pct=0,
+            max_turnover=100,
+            sweep_dim="cat_mid",
+            base_near_days=120,
+            base_mid_days=180,
         )
         assert len(candidates) == 4  # 2 × 2
         # All should have the correct catalyst_near_days (held fixed)
@@ -649,15 +743,25 @@ class TestSweepCatalystMidDays:
         rows = self._make_rows()
         # mid_days=180: 170 <= 180 → mid → actionable → A (for high opt)
         r180 = run_2d_sweep(
-            rows, [0.60], [180], b_floor=0.30,
-            min_a_pct=0, max_turnover=100,
-            sweep_dim="cat_mid", base_near_days=120,
+            rows,
+            [0.60],
+            [180],
+            b_floor=0.30,
+            min_a_pct=0,
+            max_turnover=100,
+            sweep_dim="cat_mid",
+            base_near_days=120,
         )
         # mid_days=150: 170 > 150 → far → NOT actionable → B (for high opt)
         r150 = run_2d_sweep(
-            rows, [0.60], [150], b_floor=0.30,
-            min_a_pct=0, max_turnover=100,
-            sweep_dim="cat_mid", base_near_days=120,
+            rows,
+            [0.60],
+            [150],
+            b_floor=0.30,
+            min_a_pct=0,
+            max_turnover=100,
+            sweep_dim="cat_mid",
+            base_near_days=120,
         )
         a_at_180 = r180[0]["eligible_tier_distribution"]["A"]
         a_at_150 = r150[0]["eligible_tier_distribution"]["A"]

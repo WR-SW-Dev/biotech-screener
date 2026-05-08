@@ -8,20 +8,9 @@ Queries Implemented:
     5.2 - Security & Access Control
 """
 
-from audit_framework.tier5_architecture.maintainability import (
-    MaintainabilityValidator,
-    validate_maintainability,
-)
-
-from audit_framework.tier5_architecture.security import (
-    SecurityValidator,
-    validate_security,
-)
-
-from audit_framework.tier5_architecture.runner import (
-    run_tier5_audit,
-    Tier5Result,
-)
+from audit_framework.tier5_architecture.maintainability import MaintainabilityValidator, validate_maintainability
+from audit_framework.tier5_architecture.runner import Tier5Result, run_tier5_audit
+from audit_framework.tier5_architecture.security import SecurityValidator, validate_security
 
 __all__ = [
     "MaintainabilityValidator",

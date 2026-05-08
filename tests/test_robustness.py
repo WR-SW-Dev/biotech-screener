@@ -1,46 +1,42 @@
 """
 Tests for robustness utilities.
 """
-import pytest
+
 import time
 from datetime import date, timedelta
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from common.robustness import (
-    # Data staleness
+import pytest
+
+from common.robustness import (  # Data staleness; Cross-module consistency; Retry logic; Memory guards; Structured logging; Graceful degradation
+    ConsistencyReport,
+    CorrelatedLogger,
+    CorrelationContext,
     DataFreshnessConfig,
     DataFreshnessResult,
-    validate_data_freshness,
-    validate_record_freshness,
-    # Cross-module consistency
-    ConsistencyReport,
-    validate_ticker_coverage,
-    validate_module_handoff,
-    # Retry logic
-    RetryConfig,
-    retry_with_backoff,
-    RetryExhaustedError,
-    # Memory guards
-    MemoryGuardConfig,
-    chunk_universe,
-    estimate_memory_usage,
-    # Structured logging
-    CorrelationContext,
-    get_correlation_id,
-    set_correlation_id,
-    with_correlation_id,
-    CorrelatedLogger,
-    # Graceful degradation
     DegradationReport,
     GracefulDegradationConfig,
+    MemoryGuardConfig,
+    RetryConfig,
+    RetryExhaustedError,
+    chunk_universe,
     compute_with_degradation,
+    estimate_memory_usage,
+    get_correlation_id,
+    retry_with_backoff,
+    set_correlation_id,
+    validate_data_freshness,
+    validate_module_handoff,
+    validate_record_freshness,
+    validate_ticker_coverage,
+    with_correlation_id,
 )
-
 
 # ============================================================================
 # DATA STALENESS TESTS
 # ============================================================================
+
 
 class TestDataFreshness:
     """Tests for data freshness validation."""
@@ -136,9 +132,7 @@ class TestRecordFreshness:
             {"ticker": "AAPL", "source_date": "2026-01-10"},
             {"ticker": "GOOG", "source_date": "2026-01-12"},
         ]
-        result = validate_record_freshness(
-            records, "2026-01-15", data_type="financial"
-        )
+        result = validate_record_freshness(records, "2026-01-15", data_type="financial")
         assert result["fresh_count"] == 2
         assert result["stale_count"] == 0
 
@@ -148,9 +142,7 @@ class TestRecordFreshness:
             {"ticker": "FRESH", "source_date": "2026-01-10"},
             {"ticker": "STALE", "source_date": "2025-06-01"},
         ]
-        result = validate_record_freshness(
-            records, "2026-01-15", data_type="financial"
-        )
+        result = validate_record_freshness(records, "2026-01-15", data_type="financial")
         assert result["fresh_count"] == 1
         assert result["stale_count"] == 1
         assert "STALE" in result["stale_records"]
@@ -160,9 +152,7 @@ class TestRecordFreshness:
         records = [
             {"ticker": "NODATE"},
         ]
-        result = validate_record_freshness(
-            records, "2026-01-15", data_type="financial"
-        )
+        result = validate_record_freshness(records, "2026-01-15", data_type="financial")
         assert result["stale_count"] == 1
 
     def test_empty_records(self):
@@ -175,6 +165,7 @@ class TestRecordFreshness:
 # ============================================================================
 # CROSS-MODULE CONSISTENCY TESTS
 # ============================================================================
+
 
 class TestTickerCoverage:
     """Tests for cross-module ticker coverage validation."""
@@ -244,7 +235,8 @@ class TestModuleHandoff:
             "as_of_date": "2026-01-15",
         }
         result = validate_module_handoff(
-            "module_2", "module_5",
+            "module_2",
+            "module_5",
             output,
             ["scores", "diagnostic_counts", "as_of_date"],
         )
@@ -257,7 +249,8 @@ class TestModuleHandoff:
             # Missing diagnostic_counts
         }
         result = validate_module_handoff(
-            "module_2", "module_5",
+            "module_2",
+            "module_5",
             output,
             ["scores", "diagnostic_counts"],
         )
@@ -268,6 +261,7 @@ class TestModuleHandoff:
 # ============================================================================
 # RETRY LOGIC TESTS
 # ============================================================================
+
 
 class TestRetryWithBackoff:
     """Tests for retry with exponential backoff."""
@@ -290,11 +284,13 @@ class TestRetryWithBackoff:
         """Function should retry on retryable exception."""
         call_count = 0
 
-        @retry_with_backoff(RetryConfig(
-            max_attempts=3,
-            base_delay_seconds=0.01,  # Fast for testing
-            retryable_exceptions=(IOError,),
-        ))
+        @retry_with_backoff(
+            RetryConfig(
+                max_attempts=3,
+                base_delay_seconds=0.01,  # Fast for testing
+                retryable_exceptions=(IOError,),
+            )
+        )
         def fail_twice():
             nonlocal call_count
             call_count += 1
@@ -308,11 +304,14 @@ class TestRetryWithBackoff:
 
     def test_exhausted_retries(self):
         """Should raise RetryExhaustedError when all attempts fail."""
-        @retry_with_backoff(RetryConfig(
-            max_attempts=2,
-            base_delay_seconds=0.01,
-            retryable_exceptions=(IOError,),
-        ))
+
+        @retry_with_backoff(
+            RetryConfig(
+                max_attempts=2,
+                base_delay_seconds=0.01,
+                retryable_exceptions=(IOError,),
+            )
+        )
         def always_fail():
             raise IOError("persistent failure")
 
@@ -323,10 +322,12 @@ class TestRetryWithBackoff:
         """Non-retryable exceptions should not trigger retry."""
         call_count = 0
 
-        @retry_with_backoff(RetryConfig(
-            max_attempts=3,
-            retryable_exceptions=(IOError,),  # ValueError not included
-        ))
+        @retry_with_backoff(
+            RetryConfig(
+                max_attempts=3,
+                retryable_exceptions=(IOError,),  # ValueError not included
+            )
+        )
         def raise_value_error():
             nonlocal call_count
             call_count += 1
@@ -340,6 +341,7 @@ class TestRetryWithBackoff:
 # ============================================================================
 # MEMORY GUARDS TESTS
 # ============================================================================
+
 
 class TestMemoryGuards:
     """Tests for memory guard utilities."""
@@ -386,6 +388,7 @@ class TestMemoryGuards:
 # STRUCTURED LOGGING TESTS
 # ============================================================================
 
+
 class TestCorrelationId:
     """Tests for correlation ID management."""
 
@@ -393,8 +396,9 @@ class TestCorrelationId:
         """get_correlation_id should generate ID if not set."""
         # Clear any existing ID
         import common.robustness as robustness
-        if hasattr(robustness._correlation_context, 'id'):
-            delattr(robustness._correlation_context, 'id')
+
+        if hasattr(robustness._correlation_context, "id"):
+            delattr(robustness._correlation_context, "id")
 
         cid = get_correlation_id()
         assert cid is not None
@@ -435,6 +439,7 @@ class TestCorrelatedLogger:
 # ============================================================================
 # GRACEFUL DEGRADATION TESTS
 # ============================================================================
+
 
 class TestGracefulDegradation:
     """Tests for graceful degradation."""

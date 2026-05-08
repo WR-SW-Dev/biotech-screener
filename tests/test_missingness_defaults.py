@@ -1,5 +1,6 @@
 """Tests for output hygiene: _ensure_defaults, applicability flags,
 catalyst_days semantics, and coinvest_recency_state."""
+
 from __future__ import annotations
 
 import sys
@@ -10,12 +11,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from run_screen import _ensure_defaults, _ALWAYS_NUMERIC_DEFAULTS
-
+from run_screen import _ALWAYS_NUMERIC_DEFAULTS, _ensure_defaults
 
 # ---------------------------------------------------------------------------
 # _ensure_defaults
 # ---------------------------------------------------------------------------
+
 
 class TestEnsureDefaults:
     def test_fills_missing_clinical_z_tier_with_zero(self):
@@ -39,9 +40,15 @@ class TestEnsureDefaults:
         assert rows[0]["inst_delta_z"] == 0.0
 
     def test_preserves_existing_values(self):
-        rows = [{"ticker": "AAA", "clinical_score_z_tier": 1.23,
-                 "coinvest_score_z": -0.5, "inst_delta_z": 0.8,
-                 "catalyst_decay_w": 0.42}]
+        rows = [
+            {
+                "ticker": "AAA",
+                "clinical_score_z_tier": 1.23,
+                "coinvest_score_z": -0.5,
+                "inst_delta_z": 0.8,
+                "catalyst_decay_w": 0.42,
+            }
+        ]
         _ensure_defaults(rows)
         assert rows[0]["clinical_score_z_tier"] == 1.23
         assert rows[0]["coinvest_score_z"] == -0.5
@@ -82,6 +89,7 @@ class TestEnsureDefaults:
 # Applicability flags
 # ---------------------------------------------------------------------------
 
+
 class TestApplicabilityFlags:
     """Test the flag columns populated in save_validation_snapshot."""
 
@@ -121,6 +129,7 @@ class TestApplicabilityFlags:
 # Catalyst days semantics
 # ---------------------------------------------------------------------------
 
+
 class TestCatalystDaysSemantics:
     """Verify that catalyst_days is set correctly based on catalyst_mode."""
 
@@ -148,6 +157,7 @@ class TestCatalystDaysSemantics:
 # ---------------------------------------------------------------------------
 # Coinvest recency state (decision_engine.py)
 # ---------------------------------------------------------------------------
+
 
 class TestCoinvestRecencyState:
     """Test coinvest_recency_state logic from decision_engine overlay."""

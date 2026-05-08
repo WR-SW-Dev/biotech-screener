@@ -18,60 +18,64 @@ Tests cover:
 
 Author: Wake Robin Capital Management
 """
-import pytest
+
 from datetime import date
 from decimal import Decimal
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-# Import IC enhancement utilities
-from src.modules.ic_enhancements import (
-    compute_volatility_adjustment,
-    apply_volatility_to_score,
-    compute_momentum_signal,
-    compute_valuation_signal,
-    compute_catalyst_decay,
-    apply_catalyst_decay,
-    compute_smart_money_signal,
-    compute_interaction_terms,
-    shrinkage_normalize,
-    apply_regime_to_weights,
-    compute_adaptive_weights,
-    compute_enhanced_score,
-    get_regime_signal_importance,
-    VolatilityBucket,
-    RegimeType,
-    _to_decimal,
-    _quantize_score,
-    _clamp,
-)
+import pytest
+
+from common.types import Severity
 
 # Import main composite function
 from module_5_composite_v3 import (
-    compute_module_5_composite_v3,
-    _market_cap_bucket,
-    _stage_bucket,
-    _get_worst_severity,
-    _rank_normalize_winsorized,
+    V3_DEFAULT_WEIGHTS,
+    V3_ENHANCED_WEIGHTS,
+    V3_PARTIAL_WEIGHTS,
+    MonotonicCap,
+    NormalizationMethod,
+    ScoringMode,
     _apply_monotonic_caps,
     _compute_global_stats,
-    V3_ENHANCED_WEIGHTS,
-    V3_DEFAULT_WEIGHTS,
-    V3_PARTIAL_WEIGHTS,
-    ScoringMode,
-    NormalizationMethod,
-    MonotonicCap,
+    _get_worst_severity,
+    _market_cap_bucket,
+    _rank_normalize_winsorized,
+    _stage_bucket,
+    compute_module_5_composite_v3,
 )
-from common.types import Severity
 
+# Import IC enhancement utilities
+from src.modules.ic_enhancements import (
+    RegimeType,
+    VolatilityBucket,
+    _clamp,
+    _quantize_score,
+    _to_decimal,
+    apply_catalyst_decay,
+    apply_regime_to_weights,
+    apply_volatility_to_score,
+    compute_adaptive_weights,
+    compute_catalyst_decay,
+    compute_enhanced_score,
+    compute_interaction_terms,
+    compute_momentum_signal,
+    compute_smart_money_signal,
+    compute_valuation_signal,
+    compute_volatility_adjustment,
+    get_regime_signal_importance,
+    shrinkage_normalize,
+)
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
 
+
 @pytest.fixture(autouse=True)
 def set_validation_mode_warn():
     """Disable strict schema validation for test fixtures."""
     import os
+
     old_mode = os.environ.get("IC_VALIDATION_MODE")
     os.environ["IC_VALIDATION_MODE"] = "warn"
     yield
@@ -113,16 +117,126 @@ def sample_financial_result():
     """Sample Module 2 output."""
     return {
         "scores": [
-            {"ticker": "AAPL", "financial_score": 95, "financial_normalized": 95, "market_cap_mm": 3000000, "runway_months": 999, "severity": "none", "flags": [], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "LOW", "financial_data_state": "FULL"},
-            {"ticker": "BIIB", "financial_score": 78, "financial_normalized": 78, "market_cap_mm": 25000, "runway_months": 48, "severity": "none", "flags": [], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "LOW", "financial_data_state": "FULL"},
-            {"ticker": "MRNA", "financial_score": 82, "financial_normalized": 82, "market_cap_mm": 45000, "runway_months": 36, "severity": "none", "flags": [], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "LOW", "financial_data_state": "FULL"},
-            {"ticker": "SGEN", "financial_score": 70, "financial_normalized": 70, "market_cap_mm": 18000, "runway_months": 24, "severity": "none", "flags": [], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "MEDIUM", "financial_data_state": "FULL"},
-            {"ticker": "ALNY", "financial_score": 65, "financial_normalized": 65, "market_cap_mm": 22000, "runway_months": 18, "severity": "sev1", "flags": ["runway_warning"], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "MEDIUM", "financial_data_state": "FULL"},
-            {"ticker": "BMRN", "financial_score": 55, "financial_normalized": 55, "market_cap_mm": 12000, "runway_months": 15, "severity": "sev1", "flags": ["runway_warning"], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "MEDIUM", "financial_data_state": "FULL"},
-            {"ticker": "EXEL", "financial_score": 60, "financial_normalized": 60, "market_cap_mm": 8000, "runway_months": 20, "severity": "none", "flags": [], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "MEDIUM", "financial_data_state": "FULL"},
-            {"ticker": "RARE", "financial_score": 45, "financial_normalized": 45, "market_cap_mm": 5000, "runway_months": 12, "severity": "sev1", "flags": ["runway_warning"], "liquidity_gate_status": "WARN", "dilution_risk_bucket": "HIGH", "financial_data_state": "FULL"},
-            {"ticker": "FOLD", "financial_score": 35, "financial_normalized": 35, "market_cap_mm": 2500, "runway_months": 9, "severity": "sev2", "flags": ["runway_critical"], "liquidity_gate_status": "WARN", "dilution_risk_bucket": "HIGH", "financial_data_state": "FULL"},
-            {"ticker": "BLUE", "financial_score": 20, "financial_normalized": 20, "market_cap_mm": 800, "runway_months": 6, "severity": "sev2", "flags": ["runway_critical", "dilution_severe"], "liquidity_gate_status": "FAIL", "dilution_risk_bucket": "SEVERE", "financial_data_state": "FULL"},
+            {
+                "ticker": "AAPL",
+                "financial_score": 95,
+                "financial_normalized": 95,
+                "market_cap_mm": 3000000,
+                "runway_months": 999,
+                "severity": "none",
+                "flags": [],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "LOW",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "BIIB",
+                "financial_score": 78,
+                "financial_normalized": 78,
+                "market_cap_mm": 25000,
+                "runway_months": 48,
+                "severity": "none",
+                "flags": [],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "LOW",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "MRNA",
+                "financial_score": 82,
+                "financial_normalized": 82,
+                "market_cap_mm": 45000,
+                "runway_months": 36,
+                "severity": "none",
+                "flags": [],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "LOW",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "SGEN",
+                "financial_score": 70,
+                "financial_normalized": 70,
+                "market_cap_mm": 18000,
+                "runway_months": 24,
+                "severity": "none",
+                "flags": [],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "MEDIUM",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "ALNY",
+                "financial_score": 65,
+                "financial_normalized": 65,
+                "market_cap_mm": 22000,
+                "runway_months": 18,
+                "severity": "sev1",
+                "flags": ["runway_warning"],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "MEDIUM",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "BMRN",
+                "financial_score": 55,
+                "financial_normalized": 55,
+                "market_cap_mm": 12000,
+                "runway_months": 15,
+                "severity": "sev1",
+                "flags": ["runway_warning"],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "MEDIUM",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "EXEL",
+                "financial_score": 60,
+                "financial_normalized": 60,
+                "market_cap_mm": 8000,
+                "runway_months": 20,
+                "severity": "none",
+                "flags": [],
+                "liquidity_gate_status": "PASS",
+                "dilution_risk_bucket": "MEDIUM",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "RARE",
+                "financial_score": 45,
+                "financial_normalized": 45,
+                "market_cap_mm": 5000,
+                "runway_months": 12,
+                "severity": "sev1",
+                "flags": ["runway_warning"],
+                "liquidity_gate_status": "WARN",
+                "dilution_risk_bucket": "HIGH",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "FOLD",
+                "financial_score": 35,
+                "financial_normalized": 35,
+                "market_cap_mm": 2500,
+                "runway_months": 9,
+                "severity": "sev2",
+                "flags": ["runway_critical"],
+                "liquidity_gate_status": "WARN",
+                "dilution_risk_bucket": "HIGH",
+                "financial_data_state": "FULL",
+            },
+            {
+                "ticker": "BLUE",
+                "financial_score": 20,
+                "financial_normalized": 20,
+                "market_cap_mm": 800,
+                "runway_months": 6,
+                "severity": "sev2",
+                "flags": ["runway_critical", "dilution_severe"],
+                "liquidity_gate_status": "FAIL",
+                "dilution_risk_bucket": "SEVERE",
+                "financial_data_state": "FULL",
+            },
         ],
         "diagnostic_counts": {"scored": 10, "missing": 0},
     }
@@ -133,16 +247,69 @@ def sample_catalyst_result():
     """Sample Module 3 output."""
     return {
         "summaries": {
-            "AAPL": {"scores": {"score_blended": 50, "catalyst_proximity_score": 0, "catalyst_delta_score": 0}, "integration": {"catalyst_confidence": "MED"}},
-            "BIIB": {"scores": {"score_blended": 75, "catalyst_proximity_score": 80, "catalyst_delta_score": 10, "days_to_nearest_catalyst": 25, "nearest_catalyst_type": "DATA_READOUT"}, "integration": {"catalyst_confidence": "HIGH"}},
-            "MRNA": {"scores": {"score_blended": 85, "catalyst_proximity_score": 90, "catalyst_delta_score": 15, "days_to_nearest_catalyst": 15, "nearest_catalyst_type": "PDUFA"}, "integration": {"catalyst_confidence": "HIGH"}},
-            "SGEN": {"scores": {"score_blended": 65, "catalyst_proximity_score": 40, "catalyst_delta_score": 5}, "integration": {"catalyst_confidence": "MED"}},
-            "ALNY": {"scores": {"score_blended": 70, "catalyst_proximity_score": 60, "catalyst_delta_score": 8, "days_to_nearest_catalyst": 45}, "integration": {"catalyst_confidence": "HIGH"}},
-            "BMRN": {"scores": {"score_blended": 55, "catalyst_proximity_score": 30, "catalyst_delta_score": -5}, "integration": {"catalyst_confidence": "MED"}},
-            "EXEL": {"scores": {"score_blended": 60, "catalyst_proximity_score": 50, "catalyst_delta_score": 0}, "integration": {"catalyst_confidence": "MED"}},
-            "RARE": {"scores": {"score_blended": 72, "catalyst_proximity_score": 70, "catalyst_delta_score": 12, "days_to_nearest_catalyst": 30}, "integration": {"catalyst_confidence": "HIGH"}},
-            "FOLD": {"scores": {"score_blended": 40, "catalyst_proximity_score": 20, "catalyst_delta_score": -10}, "integration": {"catalyst_confidence": "MED"}},
-            "BLUE": {"scores": {"score_blended": 30, "catalyst_proximity_score": 10, "catalyst_delta_score": -15}, "flags": {"severe_negative_flag": True}, "integration": {"catalyst_confidence": "LOW"}},
+            "AAPL": {
+                "scores": {"score_blended": 50, "catalyst_proximity_score": 0, "catalyst_delta_score": 0},
+                "integration": {"catalyst_confidence": "MED"},
+            },
+            "BIIB": {
+                "scores": {
+                    "score_blended": 75,
+                    "catalyst_proximity_score": 80,
+                    "catalyst_delta_score": 10,
+                    "days_to_nearest_catalyst": 25,
+                    "nearest_catalyst_type": "DATA_READOUT",
+                },
+                "integration": {"catalyst_confidence": "HIGH"},
+            },
+            "MRNA": {
+                "scores": {
+                    "score_blended": 85,
+                    "catalyst_proximity_score": 90,
+                    "catalyst_delta_score": 15,
+                    "days_to_nearest_catalyst": 15,
+                    "nearest_catalyst_type": "PDUFA",
+                },
+                "integration": {"catalyst_confidence": "HIGH"},
+            },
+            "SGEN": {
+                "scores": {"score_blended": 65, "catalyst_proximity_score": 40, "catalyst_delta_score": 5},
+                "integration": {"catalyst_confidence": "MED"},
+            },
+            "ALNY": {
+                "scores": {
+                    "score_blended": 70,
+                    "catalyst_proximity_score": 60,
+                    "catalyst_delta_score": 8,
+                    "days_to_nearest_catalyst": 45,
+                },
+                "integration": {"catalyst_confidence": "HIGH"},
+            },
+            "BMRN": {
+                "scores": {"score_blended": 55, "catalyst_proximity_score": 30, "catalyst_delta_score": -5},
+                "integration": {"catalyst_confidence": "MED"},
+            },
+            "EXEL": {
+                "scores": {"score_blended": 60, "catalyst_proximity_score": 50, "catalyst_delta_score": 0},
+                "integration": {"catalyst_confidence": "MED"},
+            },
+            "RARE": {
+                "scores": {
+                    "score_blended": 72,
+                    "catalyst_proximity_score": 70,
+                    "catalyst_delta_score": 12,
+                    "days_to_nearest_catalyst": 30,
+                },
+                "integration": {"catalyst_confidence": "HIGH"},
+            },
+            "FOLD": {
+                "scores": {"score_blended": 40, "catalyst_proximity_score": 20, "catalyst_delta_score": -10},
+                "integration": {"catalyst_confidence": "MED"},
+            },
+            "BLUE": {
+                "scores": {"score_blended": 30, "catalyst_proximity_score": 10, "catalyst_delta_score": -15},
+                "flags": {"severe_negative_flag": True},
+                "integration": {"catalyst_confidence": "LOW"},
+            },
         },
         "as_of_date": "2026-01-15",
         "schema_version": "2.0",
@@ -157,16 +324,86 @@ def sample_clinical_result():
     return {
         "as_of_date": "2026-01-15",
         "scores": [
-            {"ticker": "AAPL", "clinical_score": "40", "lead_phase": "Approved", "severity": "none", "flags": [], "trial_count": 5},
-            {"ticker": "BIIB", "clinical_score": "85", "lead_phase": "Phase 3", "severity": "none", "flags": [], "trial_count": 12},
-            {"ticker": "MRNA", "clinical_score": "90", "lead_phase": "Phase 3", "severity": "none", "flags": [], "trial_count": 15},
-            {"ticker": "SGEN", "clinical_score": "75", "lead_phase": "Phase 3", "severity": "none", "flags": [], "trial_count": 8},
-            {"ticker": "ALNY", "clinical_score": "70", "lead_phase": "Phase 2", "severity": "none", "flags": [], "trial_count": 6},
-            {"ticker": "BMRN", "clinical_score": "65", "lead_phase": "Phase 2", "severity": "none", "flags": [], "trial_count": 7},
-            {"ticker": "EXEL", "clinical_score": "60", "lead_phase": "Phase 2", "severity": "none", "flags": [], "trial_count": 4},
-            {"ticker": "RARE", "clinical_score": "55", "lead_phase": "Phase 2", "severity": "sev1", "flags": ["enrollment_slow"], "trial_count": 3},
-            {"ticker": "FOLD", "clinical_score": "45", "lead_phase": "Phase 1", "severity": "none", "flags": [], "trial_count": 2},
-            {"ticker": "BLUE", "clinical_score": "35", "lead_phase": "Phase 1", "severity": "sev2", "flags": ["trial_stopped"], "trial_count": 1},
+            {
+                "ticker": "AAPL",
+                "clinical_score": "40",
+                "lead_phase": "Approved",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 5,
+            },
+            {
+                "ticker": "BIIB",
+                "clinical_score": "85",
+                "lead_phase": "Phase 3",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 12,
+            },
+            {
+                "ticker": "MRNA",
+                "clinical_score": "90",
+                "lead_phase": "Phase 3",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 15,
+            },
+            {
+                "ticker": "SGEN",
+                "clinical_score": "75",
+                "lead_phase": "Phase 3",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 8,
+            },
+            {
+                "ticker": "ALNY",
+                "clinical_score": "70",
+                "lead_phase": "Phase 2",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 6,
+            },
+            {
+                "ticker": "BMRN",
+                "clinical_score": "65",
+                "lead_phase": "Phase 2",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 7,
+            },
+            {
+                "ticker": "EXEL",
+                "clinical_score": "60",
+                "lead_phase": "Phase 2",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 4,
+            },
+            {
+                "ticker": "RARE",
+                "clinical_score": "55",
+                "lead_phase": "Phase 2",
+                "severity": "sev1",
+                "flags": ["enrollment_slow"],
+                "trial_count": 3,
+            },
+            {
+                "ticker": "FOLD",
+                "clinical_score": "45",
+                "lead_phase": "Phase 1",
+                "severity": "none",
+                "flags": [],
+                "trial_count": 2,
+            },
+            {
+                "ticker": "BLUE",
+                "clinical_score": "35",
+                "lead_phase": "Phase 1",
+                "severity": "sev2",
+                "flags": ["trial_stopped"],
+                "trial_count": 1,
+            },
         ],
         "diagnostic_counts": {"scored": 10, "missing": 0},
     }
@@ -218,6 +455,7 @@ def sample_enhancement_result():
 # =============================================================================
 # VOLATILITY ADJUSTMENT TESTS
 # =============================================================================
+
 
 class TestVolatilityAdjustment:
     """Tests for volatility-adjusted scoring.
@@ -327,6 +565,7 @@ class TestVolatilityAdjustment:
 # MOMENTUM SIGNAL TESTS
 # =============================================================================
 
+
 class TestMomentumSignal:
     """Tests for price momentum signal."""
 
@@ -363,6 +602,7 @@ class TestMomentumSignal:
 # VALUATION SIGNAL TESTS
 # =============================================================================
 
+
 class TestValuationSignal:
     """Tests for peer-relative valuation signal."""
 
@@ -377,9 +617,7 @@ class TestValuationSignal:
             {"market_cap_mm": 10000, "trial_count": 5, "stage_bucket": "mid"},
         ]
         # Cheapest stock
-        result = compute_valuation_signal(
-            Decimal("4000"), 5, "Phase 2", peers
-        )
+        result = compute_valuation_signal(Decimal("4000"), 5, "Phase 2", peers)
         assert result.valuation_score > Decimal("70")
 
     def test_expensive_vs_peers(self):
@@ -393,9 +631,7 @@ class TestValuationSignal:
             {"market_cap_mm": 10000, "trial_count": 5, "stage_bucket": "mid"},
         ]
         # Most expensive
-        result = compute_valuation_signal(
-            Decimal("15000"), 5, "Phase 2", peers
-        )
+        result = compute_valuation_signal(Decimal("15000"), 5, "Phase 2", peers)
         assert result.valuation_score < Decimal("30")
 
     def test_insufficient_peers(self):
@@ -404,9 +640,7 @@ class TestValuationSignal:
             {"market_cap_mm": 5000, "trial_count": 5, "stage_bucket": "mid"},
             {"market_cap_mm": 6000, "trial_count": 5, "stage_bucket": "mid"},
         ]
-        result = compute_valuation_signal(
-            Decimal("5500"), 5, "Phase 2", peers
-        )
+        result = compute_valuation_signal(Decimal("5500"), 5, "Phase 2", peers)
         assert result.valuation_score == Decimal("50")
         assert result.confidence <= Decimal("0.3")
 
@@ -510,8 +744,7 @@ class TestValuationSignal:
 
         # Create large peer set where stock is also cheapest
         peers_large = peers_small + [
-            {"market_cap_mm": 15000 + i * 1000, "trial_count": 5, "stage_bucket": "mid"}
-            for i in range(20)
+            {"market_cap_mm": 15000 + i * 1000, "trial_count": 5, "stage_bucket": "mid"} for i in range(20)
         ]
         result_large = compute_valuation_signal(Decimal("1000"), 5, "Phase 2", peers_large)
 
@@ -543,6 +776,7 @@ class TestValuationSignal:
 # =============================================================================
 # CATALYST DECAY TESTS
 # =============================================================================
+
 
 class TestCatalystDecay:
     """Tests for catalyst signal decay."""
@@ -612,8 +846,9 @@ class TestCatalystDecay:
         after_peak = compute_catalyst_decay(-10, "PDUFA")  # d = -10 - 30 = -40
 
         # Both are same distance (40 days) from optimal, but post-peak should be lower
-        assert after_peak.decay_factor < before_peak.decay_factor, \
-            f"Post-peak decay ({after_peak.decay_factor}) should be < pre-peak ({before_peak.decay_factor})"
+        assert (
+            after_peak.decay_factor < before_peak.decay_factor
+        ), f"Post-peak decay ({after_peak.decay_factor}) should be < pre-peak ({before_peak.decay_factor})"
 
     def test_asymmetric_decay_past_event(self):
         """Events that already happened should decay very fast."""
@@ -625,8 +860,9 @@ class TestCatalystDecay:
 
         # Past should decay faster (post-event decay mult = 2x)
         # Both are 35 days from optimal, but past uses 2x tau
-        assert past_event.decay_factor < future_event.decay_factor, \
-            f"Past event ({past_event.decay_factor}) should decay faster than future ({future_event.decay_factor})"
+        assert (
+            past_event.decay_factor < future_event.decay_factor
+        ), f"Past event ({past_event.decay_factor}) should decay faster than future ({future_event.decay_factor})"
 
     def test_event_type_normalization(self):
         """Event type should be case-insensitive with whitespace stripped."""
@@ -662,13 +898,15 @@ class TestCatalystDecay:
 
         # Each step closer should have >= decay factor (monotonically increasing)
         for i in range(len(factors) - 1):
-            assert factors[i][1] <= factors[i + 1][1], \
-                f"Monotonicity violated: {factors[i]} should have <= decay than {factors[i + 1]}"
+            assert (
+                factors[i][1] <= factors[i + 1][1]
+            ), f"Monotonicity violated: {factors[i]} should have <= decay than {factors[i + 1]}"
 
 
 # =============================================================================
 # SMART MONEY SIGNAL TESTS
 # =============================================================================
+
 
 class TestSmartMoneySignal:
     """Tests for smart money (13F) signal.
@@ -741,6 +979,7 @@ class TestSmartMoneySignal:
 # =============================================================================
 # INTERACTION TERMS TESTS
 # =============================================================================
+
 
 class TestInteractionTerms:
     """Tests for non-linear interaction terms with smooth ramps."""
@@ -898,14 +1137,16 @@ class TestInteractionTerms:
 
         # Penalties should be non-increasing (less negative) as runway increases
         for i in range(len(penalties) - 1):
-            assert penalties[i][1] <= penalties[i + 1][1], \
-                f"Monotonicity violated: runway {penalties[i][0]} has penalty {penalties[i][1]}, " \
+            assert penalties[i][1] <= penalties[i + 1][1], (
+                f"Monotonicity violated: runway {penalties[i][0]} has penalty {penalties[i][1]}, "
                 f"but runway {penalties[i + 1][0]} has penalty {penalties[i + 1][1]}"
+            )
 
 
 # =============================================================================
 # SHRINKAGE NORMALIZATION TESTS
 # =============================================================================
+
 
 class TestShrinkageNormalization:
     """Tests for Bayesian shrinkage normalization."""
@@ -1013,6 +1254,7 @@ class TestShrinkageNormalization:
 # REGIME-ADAPTIVE TESTS
 # =============================================================================
 
+
 class TestRegimeAdaptive:
     """Tests for regime-adaptive components."""
 
@@ -1054,12 +1296,14 @@ class TestRegimeAdaptive:
 # ADAPTIVE WEIGHT LEARNING TESTS
 # =============================================================================
 
+
 class TestAdaptiveWeights:
     """Tests for adaptive weight learning with PIT-safe signature."""
 
     def test_no_data_fallback(self):
         """No historical data should return base weights."""
         from datetime import date
+
         base_weights = {"clinical": Decimal("0.40"), "financial": Decimal("0.35"), "catalyst": Decimal("0.25")}
         result = compute_adaptive_weights(
             historical_scores=[],
@@ -1074,6 +1318,7 @@ class TestAdaptiveWeights:
     def test_with_historical_data(self):
         """Historical data should produce adjusted weights based on IC."""
         from datetime import date, timedelta
+
         base_weights = {"clinical": Decimal("0.40"), "financial": Decimal("0.35"), "catalyst": Decimal("0.25")}
 
         asof_date = date(2026, 1, 15)
@@ -1088,13 +1333,15 @@ class TestAdaptiveWeights:
             score_date = asof_date - timedelta(days=30 * month_offset)
             for i in range(20):  # 20 tickers per month
                 ticker = f"T{i}"
-                historical_scores.append({
-                    "ticker": ticker,
-                    "as_of_date": score_date.isoformat(),
-                    "clinical": Decimal(str(50 + i)),  # Clinical varies by ticker
-                    "financial": Decimal("50"),
-                    "catalyst": Decimal("50"),
-                })
+                historical_scores.append(
+                    {
+                        "ticker": ticker,
+                        "as_of_date": score_date.isoformat(),
+                        "clinical": Decimal(str(50 + i)),  # Clinical varies by ticker
+                        "financial": Decimal("50"),
+                        "catalyst": Decimal("50"),
+                    }
+                )
                 # Returns correlated with clinical score (higher ticker # = higher return)
                 forward_returns[(score_date, ticker)] = Decimal(str(0.01 * i))
 
@@ -1119,13 +1366,19 @@ class TestAdaptiveWeights:
     def test_embargo_enforcement(self):
         """Data within embargo period should be excluded."""
         from datetime import date, timedelta
+
         base_weights = {"clinical": Decimal("0.40"), "financial": Decimal("0.35")}
         asof_date = date(2026, 1, 15)
 
         # Create data that's too recent (within embargo)
         recent_date = asof_date - timedelta(days=15)  # Only 15 days ago
         historical_scores = [
-            {"ticker": f"T{i}", "as_of_date": recent_date.isoformat(), "clinical": Decimal("60"), "financial": Decimal("50")}
+            {
+                "ticker": f"T{i}",
+                "as_of_date": recent_date.isoformat(),
+                "clinical": Decimal("60"),
+                "financial": Decimal("50"),
+            }
             for i in range(20)
         ]
         forward_returns = {(recent_date, f"T{i}"): Decimal("0.05") for i in range(20)}
@@ -1145,6 +1398,7 @@ class TestAdaptiveWeights:
     def test_deterministic_tiebreaking(self):
         """Tickers with same scores should have deterministic ranking."""
         from datetime import date, timedelta
+
         base_weights = {"clinical": Decimal("0.50"), "financial": Decimal("0.50")}
         asof_date = date(2026, 1, 15)
 
@@ -1156,12 +1410,14 @@ class TestAdaptiveWeights:
             score_date = asof_date - timedelta(days=30 * month_offset)
             for i in range(15):
                 ticker = f"TICK{i:03d}"  # Zero-padded for consistent sorting
-                historical_scores.append({
-                    "ticker": ticker,
-                    "as_of_date": score_date.isoformat(),
-                    "clinical": Decimal("50"),  # Same score for all
-                    "financial": Decimal("50"),
-                })
+                historical_scores.append(
+                    {
+                        "ticker": ticker,
+                        "as_of_date": score_date.isoformat(),
+                        "clinical": Decimal("50"),  # Same score for all
+                        "financial": Decimal("50"),
+                    }
+                )
                 # Different returns for each ticker
                 forward_returns[(score_date, ticker)] = Decimal(str(0.02 * i))
 
@@ -1187,6 +1443,7 @@ class TestAdaptiveWeights:
 # =============================================================================
 # HELPER FUNCTION TESTS
 # =============================================================================
+
 
 class TestHelperFunctions:
     """Tests for helper functions."""
@@ -1239,6 +1496,7 @@ class TestHelperFunctions:
 # =============================================================================
 # FULL PIPELINE TESTS
 # =============================================================================
+
 
 class TestFullPipeline:
     """Tests for the full v3 composite pipeline."""
@@ -1338,25 +1596,29 @@ class TestFullPipeline:
     ):
         """Sev3 securities should be excluded."""
         # Add a sev3 security
-        sample_financial_result["scores"].append({
-            "ticker": "FAIL",
-            "financial_score": 10,
-            "financial_normalized": 10,
-            "market_cap_mm": 100,
-            "runway_months": 2,
-            "severity": "sev3",
-            "flags": ["delisting_imminent"],
-            "liquidity_gate_status": "FAIL",
-            "dilution_risk_bucket": "SEVERE",
-        })
-        sample_clinical_result["scores"].append({
-            "ticker": "FAIL",
-            "clinical_score": "20",
-            "lead_phase": "Phase 1",
-            "severity": "sev3",
-            "flags": ["trial_terminated"],
-            "trial_count": 0,
-        })
+        sample_financial_result["scores"].append(
+            {
+                "ticker": "FAIL",
+                "financial_score": 10,
+                "financial_normalized": 10,
+                "market_cap_mm": 100,
+                "runway_months": 2,
+                "severity": "sev3",
+                "flags": ["delisting_imminent"],
+                "liquidity_gate_status": "FAIL",
+                "dilution_risk_bucket": "SEVERE",
+            }
+        )
+        sample_clinical_result["scores"].append(
+            {
+                "ticker": "FAIL",
+                "clinical_score": "20",
+                "lead_phase": "Phase 1",
+                "severity": "sev3",
+                "flags": ["trial_terminated"],
+                "trial_count": 0,
+            }
+        )
         sample_catalyst_result["summaries"]["FAIL"] = {"scores": {"score_blended": 20}}
         sample_universe_result["active_securities"].append({"ticker": "FAIL", "status": "active", "market_cap_mm": 100})
 
@@ -1378,9 +1640,19 @@ class TestFullPipeline:
     def test_empty_universe(self, as_of_date):
         """Empty universe should return empty results gracefully."""
         result = compute_module_5_composite_v3(
-            universe_result={"active_securities": [], "excluded_securities": [], "diagnostic_counts": {"total_input": 0, "active": 0, "excluded": 0}},
+            universe_result={
+                "active_securities": [],
+                "excluded_securities": [],
+                "diagnostic_counts": {"total_input": 0, "active": 0, "excluded": 0},
+            },
             financial_result={"scores": [], "diagnostic_counts": {"scored": 0, "missing": 0}},
-            catalyst_result={"summaries": {}, "diagnostic_counts": {"total_input": 0, "scored": 0, "missing": 0}, "as_of_date": as_of_date, "schema_version": "2.0", "score_version": "v2.0"},
+            catalyst_result={
+                "summaries": {},
+                "diagnostic_counts": {"total_input": 0, "scored": 0, "missing": 0},
+                "as_of_date": as_of_date,
+                "schema_version": "2.0",
+                "score_version": "v2.0",
+            },
             clinical_result={"scores": [], "as_of_date": as_of_date, "diagnostic_counts": {"scored": 0, "missing": 0}},
             as_of_date=as_of_date,
         )
@@ -1419,6 +1691,7 @@ class TestFullPipeline:
 # =============================================================================
 # INTEGRATION TESTS
 # =============================================================================
+
 
 class TestIntegration:
     """Integration tests for v3 improvements."""
@@ -1486,8 +1759,7 @@ class TestIntegration:
 
         # At least some scores should be different
         different_scores = sum(
-            1 for t in scores_no_vol
-            if t in scores_with_vol and scores_no_vol[t] != scores_with_vol[t]
+            1 for t in scores_no_vol if t in scores_with_vol and scores_no_vol[t] != scores_with_vol[t]
         )
         assert different_scores > 0
 
@@ -1540,15 +1812,30 @@ class TestIntegration:
 # EDGE CASE TESTS
 # =============================================================================
 
+
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
 
     def test_missing_scores(self, as_of_date):
         """Pipeline should handle missing scores gracefully."""
-        universe = {"active_securities": [{"ticker": "TEST", "status": "active", "market_cap_mm": 1000}], "excluded_securities": [], "diagnostic_counts": {"total_input": 1, "active": 1, "excluded": 0}}
+        universe = {
+            "active_securities": [{"ticker": "TEST", "status": "active", "market_cap_mm": 1000}],
+            "excluded_securities": [],
+            "diagnostic_counts": {"total_input": 1, "active": 1, "excluded": 0},
+        }
         financial = {"scores": [], "diagnostic_counts": {"scored": 0, "missing": 1}}  # No financial score
-        catalyst = {"summaries": {}, "diagnostic_counts": {"total_input": 1, "scored": 0, "missing": 1}, "as_of_date": as_of_date, "schema_version": "2.0", "score_version": "v2.0"}  # No catalyst score
-        clinical = {"scores": [], "as_of_date": as_of_date, "diagnostic_counts": {"scored": 0, "missing": 1}}  # No clinical score
+        catalyst = {
+            "summaries": {},
+            "diagnostic_counts": {"total_input": 1, "scored": 0, "missing": 1},
+            "as_of_date": as_of_date,
+            "schema_version": "2.0",
+            "score_version": "v2.0",
+        }  # No catalyst score
+        clinical = {
+            "scores": [],
+            "as_of_date": as_of_date,
+            "diagnostic_counts": {"scored": 0, "missing": 1},
+        }  # No clinical score
 
         result = compute_module_5_composite_v3(
             universe_result=universe,
@@ -1564,10 +1851,48 @@ class TestEdgeCases:
 
     def test_single_security(self, as_of_date):
         """Single security should work."""
-        universe = {"active_securities": [{"ticker": "ONLY", "status": "active", "market_cap_mm": 5000}], "excluded_securities": [], "diagnostic_counts": {"total_input": 1, "active": 1, "excluded": 0}}
-        financial = {"scores": [{"ticker": "ONLY", "financial_score": 70, "financial_normalized": 70, "market_cap_mm": 5000, "runway_months": 24, "severity": "none", "flags": [], "liquidity_gate_status": "PASS", "dilution_risk_bucket": "MEDIUM"}], "diagnostic_counts": {"scored": 1, "missing": 0}}
-        catalyst = {"summaries": {"ONLY": {"scores": {"score_blended": 60}}}, "diagnostic_counts": {"total_input": 1, "scored": 1, "missing": 0}, "as_of_date": as_of_date, "schema_version": "2.0", "score_version": "v2.0"}
-        clinical = {"scores": [{"ticker": "ONLY", "clinical_score": "65", "lead_phase": "Phase 2", "severity": "none", "flags": [], "trial_count": 5}], "as_of_date": as_of_date, "diagnostic_counts": {"scored": 1, "missing": 0}}
+        universe = {
+            "active_securities": [{"ticker": "ONLY", "status": "active", "market_cap_mm": 5000}],
+            "excluded_securities": [],
+            "diagnostic_counts": {"total_input": 1, "active": 1, "excluded": 0},
+        }
+        financial = {
+            "scores": [
+                {
+                    "ticker": "ONLY",
+                    "financial_score": 70,
+                    "financial_normalized": 70,
+                    "market_cap_mm": 5000,
+                    "runway_months": 24,
+                    "severity": "none",
+                    "flags": [],
+                    "liquidity_gate_status": "PASS",
+                    "dilution_risk_bucket": "MEDIUM",
+                }
+            ],
+            "diagnostic_counts": {"scored": 1, "missing": 0},
+        }
+        catalyst = {
+            "summaries": {"ONLY": {"scores": {"score_blended": 60}}},
+            "diagnostic_counts": {"total_input": 1, "scored": 1, "missing": 0},
+            "as_of_date": as_of_date,
+            "schema_version": "2.0",
+            "score_version": "v2.0",
+        }
+        clinical = {
+            "scores": [
+                {
+                    "ticker": "ONLY",
+                    "clinical_score": "65",
+                    "lead_phase": "Phase 2",
+                    "severity": "none",
+                    "flags": [],
+                    "trial_count": 5,
+                }
+            ],
+            "as_of_date": as_of_date,
+            "diagnostic_counts": {"scored": 1, "missing": 0},
+        }
 
         result = compute_module_5_composite_v3(
             universe_result=universe,
@@ -1582,10 +1907,52 @@ class TestEdgeCases:
 
     def test_extreme_values(self, as_of_date):
         """Extreme values should be handled correctly."""
-        universe = {"active_securities": [{"ticker": "EXTREME", "status": "active", "market_cap_mm": 1}], "excluded_securities": [], "diagnostic_counts": {"total_input": 1, "active": 1, "excluded": 0}}
-        financial = {"scores": [{"ticker": "EXTREME", "financial_score": 100, "financial_normalized": 100, "market_cap_mm": 1, "runway_months": 0.5, "severity": "sev2", "flags": ["extreme"], "liquidity_gate_status": "FAIL", "dilution_risk_bucket": "SEVERE"}], "diagnostic_counts": {"scored": 1, "missing": 0}}
-        catalyst = {"summaries": {"EXTREME": {"scores": {"score_blended": 100, "catalyst_proximity_score": 100, "catalyst_delta_score": 50}}}, "diagnostic_counts": {"total_input": 1, "scored": 1, "missing": 0}, "as_of_date": as_of_date, "schema_version": "2.0", "score_version": "v2.0"}
-        clinical = {"scores": [{"ticker": "EXTREME", "clinical_score": "100", "lead_phase": "Phase 3", "severity": "sev2", "flags": ["extreme"], "trial_count": 100}], "as_of_date": as_of_date, "diagnostic_counts": {"scored": 1, "missing": 0}}
+        universe = {
+            "active_securities": [{"ticker": "EXTREME", "status": "active", "market_cap_mm": 1}],
+            "excluded_securities": [],
+            "diagnostic_counts": {"total_input": 1, "active": 1, "excluded": 0},
+        }
+        financial = {
+            "scores": [
+                {
+                    "ticker": "EXTREME",
+                    "financial_score": 100,
+                    "financial_normalized": 100,
+                    "market_cap_mm": 1,
+                    "runway_months": 0.5,
+                    "severity": "sev2",
+                    "flags": ["extreme"],
+                    "liquidity_gate_status": "FAIL",
+                    "dilution_risk_bucket": "SEVERE",
+                }
+            ],
+            "diagnostic_counts": {"scored": 1, "missing": 0},
+        }
+        catalyst = {
+            "summaries": {
+                "EXTREME": {
+                    "scores": {"score_blended": 100, "catalyst_proximity_score": 100, "catalyst_delta_score": 50}
+                }
+            },
+            "diagnostic_counts": {"total_input": 1, "scored": 1, "missing": 0},
+            "as_of_date": as_of_date,
+            "schema_version": "2.0",
+            "score_version": "v2.0",
+        }
+        clinical = {
+            "scores": [
+                {
+                    "ticker": "EXTREME",
+                    "clinical_score": "100",
+                    "lead_phase": "Phase 3",
+                    "severity": "sev2",
+                    "flags": ["extreme"],
+                    "trial_count": 100,
+                }
+            ],
+            "as_of_date": as_of_date,
+            "diagnostic_counts": {"scored": 1, "missing": 0},
+        }
 
         result = compute_module_5_composite_v3(
             universe_result=universe,
@@ -1604,6 +1971,7 @@ class TestEdgeCases:
 # =============================================================================
 # SMART MONEY SIGNAL V2 TESTS
 # =============================================================================
+
 
 class TestSmartMoneySignalV2:
     """Tests for tier-weighted smart money signal (V2 improvements)."""
@@ -1756,7 +2124,11 @@ class TestSmartMoneySignalV2:
         assert result_1.smart_money_score == result_2.smart_money_score == result_3.smart_money_score
         assert result_1.weighted_overlap == result_2.weighted_overlap == result_3.weighted_overlap
         assert result_1.overlap_bonus == result_2.overlap_bonus == result_3.overlap_bonus
-        assert result_1.position_change_adjustment == result_2.position_change_adjustment == result_3.position_change_adjustment
+        assert (
+            result_1.position_change_adjustment
+            == result_2.position_change_adjustment
+            == result_3.position_change_adjustment
+        )
         # Sorted lists should also be identical
         assert result_1.holders_increasing == result_2.holders_increasing == result_3.holders_increasing
         assert result_1.tier1_holders == result_2.tier1_holders == result_3.tier1_holders
@@ -1781,7 +2153,9 @@ class TestSmartMoneySignalV2:
 
         # 5x weighted overlap should NOT give 5x bonus (saturation)
         overlap_ratio = five_tier1.weighted_overlap / one_tier1.weighted_overlap
-        bonus_ratio = five_tier1.overlap_bonus / one_tier1.overlap_bonus if one_tier1.overlap_bonus > 0 else Decimal("1")
+        bonus_ratio = (
+            five_tier1.overlap_bonus / one_tier1.overlap_bonus if one_tier1.overlap_bonus > 0 else Decimal("1")
+        )
 
         # Bonus ratio should be less than overlap ratio (diminishing returns)
         assert bonus_ratio < overlap_ratio

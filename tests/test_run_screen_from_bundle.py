@@ -1,4 +1,5 @@
 """Tests for scripts/run_screen_from_bundle.py — PIT bundle screen pipeline."""
+
 from __future__ import annotations
 
 import csv
@@ -27,19 +28,19 @@ from scripts.run_screen_from_bundle import (
     _get_pit_quality,
     _safe_float,
     _winsorize,
+    _write_snapshot,
     _z_score_by_group,
     _z_score_sparse,
     classify_company_archetype,
     discover_bundle_dates,
     load_bundle,
     run_screen_for_date,
-    _write_snapshot,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -157,8 +158,9 @@ def _make_financial_records(tickers: List[str]) -> Dict[str, dict]:
     }
 
 
-def _setup_bundle(tmp_path: Path, as_of: str, tickers: List[str],
-                   pit_quality: dict = None, use_legacy: bool = False) -> Path:
+def _setup_bundle(
+    tmp_path: Path, as_of: str, tickers: List[str], pit_quality: dict = None, use_legacy: bool = False
+) -> Path:
     """Set up a complete bundle directory for testing."""
     bundle_dir = tmp_path / "bundles" / as_of
 
@@ -167,9 +169,7 @@ def _setup_bundle(tmp_path: Path, as_of: str, tickers: List[str],
     coinvest = _make_coinvest_data(tickers)
 
     components = {}
-    for name, data in [("clinical_features", clinical),
-                       ("catalyst_events", catalyst),
-                       ("coinvest_features", coinvest)]:
+    for name, data in [("clinical_features", clinical), ("catalyst_events", catalyst), ("coinvest_features", coinvest)]:
         fname = f"{name.replace('_features', '_features').replace('_events', '_events')}.json"
         _write_json(bundle_dir / fname, {"tickers": data, "schema_version": f"{name}_pit.v1"})
         components[name] = {
@@ -182,7 +182,8 @@ def _setup_bundle(tmp_path: Path, as_of: str, tickers: List[str],
     manifest = _make_manifest(
         as_of_date=as_of,
         components=components,
-        pit_quality=pit_quality or {
+        pit_quality=pit_quality
+        or {
             "ctgov_trials_filtered_future_posted": 0,
             "catalyst_tickers_missing_disclosed_at": 0,
             "catalyst_tickers_future_disclosed_at": 0,
@@ -196,6 +197,7 @@ def _setup_bundle(tmp_path: Path, as_of: str, tickers: List[str],
 # ===================================================================
 # Bundle loading (5 tests)
 # ===================================================================
+
 
 class TestLoadBundle:
     """Tests for bundle loading and validation."""
@@ -241,7 +243,9 @@ class TestLoadBundle:
         """Strict mode skips dates with catalyst_tickers_future_disclosed_at > 0."""
         tickers = ["ACAD"]
         bundle_dir = _setup_bundle(
-            tmp_path, "2025-03-31", tickers,
+            tmp_path,
+            "2025-03-31",
+            tickers,
             pit_quality={"catalyst_tickers_future_disclosed_at": 3},
         )
 
@@ -254,7 +258,9 @@ class TestLoadBundle:
         """Lenient mode does NOT skip on catalyst future violations."""
         tickers = ["ACAD"]
         bundle_dir = _setup_bundle(
-            tmp_path, "2025-03-31", tickers,
+            tmp_path,
+            "2025-03-31",
+            tickers,
             pit_quality={"catalyst_tickers_future_disclosed_at": 3},
         )
 
@@ -266,7 +272,9 @@ class TestLoadBundle:
         """Old pit_violations key still works via _get_pit_quality fallback."""
         tickers = ["ACAD"]
         bundle_dir = _setup_bundle(
-            tmp_path, "2025-03-31", tickers,
+            tmp_path,
+            "2025-03-31",
+            tickers,
             pit_quality={
                 "ctgov_first_posted": 0,
                 "catalyst_missing_disclosed_at": 0,
@@ -285,6 +293,7 @@ class TestLoadBundle:
 # Rec dict construction (8 tests)
 # ===================================================================
 
+
 class TestBuildRec:
     """Tests for per-ticker rec dict construction."""
 
@@ -297,21 +306,28 @@ class TestBuildRec:
 
     def test_build_rec_coinvest_fields(self):
         """Maps coinvest bundle → rec['coinvest']."""
-        coinvest = {"ACAD": {"tier1_count": 5, "conviction_overlap": 2.3,
-                             "tier1_conviction_overlap": 1.1,
-                             "max_tier1_position_pct": 4.5,
-                             "days_since_latest_filing": 30,
-                             "position_changes": {}}}
+        coinvest = {
+            "ACAD": {
+                "tier1_count": 5,
+                "conviction_overlap": 2.3,
+                "tier1_conviction_overlap": 1.1,
+                "max_tier1_position_pct": 4.5,
+                "days_since_latest_filing": 30,
+                "position_changes": {},
+            }
+        }
         rec = _build_rec("ACAD", {}, {}, coinvest, {}, {}, {})
         assert rec["coinvest"]["tier1_count"] == 5
         assert rec["coinvest"]["conviction_overlap"] == 2.3
 
     def test_build_rec_smart_money_from_position_changes(self):
         """INCREASE→buying, DECREASE→selling in smart_money_signal."""
-        coinvest = {"ACAD": {
-            "position_changes": {"MGR_A": "INCREASE", "MGR_B": "DECREASE", "MGR_C": "NEW"},
-            "sponsor_overlap_count": 3,
-        }}
+        coinvest = {
+            "ACAD": {
+                "position_changes": {"MGR_A": "INCREASE", "MGR_B": "DECREASE", "MGR_C": "NEW"},
+                "sponsor_overlap_count": 3,
+            }
+        }
         rec = _build_rec("ACAD", {}, {}, coinvest, {}, {}, {})
         sms = rec["smart_money_signal"]
         assert "MGR_A" in sms["holders_increasing"]
@@ -361,14 +377,15 @@ class TestBuildRec:
 # Price features (4 tests)
 # ===================================================================
 
+
 class TestPriceFeatures:
     """Tests for price-derived feature computation."""
 
     @pytest.fixture
     def price_df(self):
         """Build a simple price DataFrame for testing."""
-        import pandas as pd
         import numpy as np
+        import pandas as pd
 
         dates = pd.bdate_range("2024-01-02", periods=300)
         np.random.seed(42)
@@ -376,10 +393,13 @@ class TestPriceFeatures:
         ticker_prices = 50.0 * np.cumprod(1 + np.random.normal(0.0005, 0.02, 300))
         xbi_prices = 90.0 * np.cumprod(1 + np.random.normal(0.0003, 0.015, 300))
 
-        df = pd.DataFrame({
-            "ACAD": ticker_prices,
-            "XBI": xbi_prices,
-        }, index=dates)
+        df = pd.DataFrame(
+            {
+                "ACAD": ticker_prices,
+                "XBI": xbi_prices,
+            },
+            index=dates,
+        )
         df.index.name = "Date"
         return df
 
@@ -420,13 +440,37 @@ class TestPriceFeatures:
 # Scoring & ranking (8 tests)
 # ===================================================================
 
+
 class TestScoringRanking:
     """Tests for z-scores, ranking, and alpha cohort."""
 
     def test_clinical_alpha_z_winsorized(self):
         """Cross-sectional z-score with p5/p95 winsorization."""
-        rows = [{"clinical_alpha_raw": v} for v in [0.1, 0.3, 0.5, 0.7, 0.9, 0.2, 0.4, 0.6, 0.8, 1.0,
-                                                     0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 0.05]]
+        rows = [
+            {"clinical_alpha_raw": v}
+            for v in [
+                0.1,
+                0.3,
+                0.5,
+                0.7,
+                0.9,
+                0.2,
+                0.4,
+                0.6,
+                0.8,
+                1.0,
+                0.15,
+                0.25,
+                0.35,
+                0.45,
+                0.55,
+                0.65,
+                0.75,
+                0.85,
+                0.95,
+                0.05,
+            ]
+        ]
         _compute_clinical_alpha_z(rows)
         # All should have z-scores
         for r in rows:
@@ -514,15 +558,30 @@ class TestScoringRanking:
         fin = _make_financial_records(tickers)
 
         from decision_engine import DecisionRuleset
+
         ruleset = DecisionRuleset()
 
         rows1, _ = run_screen_for_date(
-            "2025-03-31", bundle["clinical"], bundle["catalyst"], bundle["coinvest"],
-            universe, fin, None, ruleset, bundle["manifest"],
+            "2025-03-31",
+            bundle["clinical"],
+            bundle["catalyst"],
+            bundle["coinvest"],
+            universe,
+            fin,
+            None,
+            ruleset,
+            bundle["manifest"],
         )
         rows2, _ = run_screen_for_date(
-            "2025-03-31", bundle["clinical"], bundle["catalyst"], bundle["coinvest"],
-            universe, fin, None, ruleset, bundle["manifest"],
+            "2025-03-31",
+            bundle["clinical"],
+            bundle["catalyst"],
+            bundle["coinvest"],
+            universe,
+            fin,
+            None,
+            ruleset,
+            bundle["manifest"],
         )
 
         for r1, r2 in zip(rows1, rows2):
@@ -539,11 +598,19 @@ class TestScoringRanking:
         fin = _make_financial_records(tickers)
 
         from decision_engine import DecisionRuleset
+
         ruleset = DecisionRuleset()
 
         rows, _ = run_screen_for_date(
-            "2025-03-31", bundle["clinical"], bundle["catalyst"], bundle["coinvest"],
-            universe, fin, None, ruleset, bundle["manifest"],
+            "2025-03-31",
+            bundle["clinical"],
+            bundle["catalyst"],
+            bundle["coinvest"],
+            universe,
+            fin,
+            None,
+            ruleset,
+            bundle["manifest"],
         )
 
         for r in rows:
@@ -555,6 +622,7 @@ class TestScoringRanking:
 # ===================================================================
 # Integration (4 tests)
 # ===================================================================
+
 
 class TestIntegration:
     """End-to-end integration tests."""
@@ -568,11 +636,19 @@ class TestIntegration:
         fin = _make_financial_records(tickers)
 
         from decision_engine import DecisionRuleset
+
         ruleset = DecisionRuleset()
 
         rows, metadata = run_screen_for_date(
-            "2025-03-31", bundle["clinical"], bundle["catalyst"], bundle["coinvest"],
-            universe, fin, None, ruleset, bundle["manifest"],
+            "2025-03-31",
+            bundle["clinical"],
+            bundle["catalyst"],
+            bundle["coinvest"],
+            universe,
+            fin,
+            None,
+            ruleset,
+            bundle["manifest"],
         )
 
         assert len(rows) == 10
@@ -600,11 +676,19 @@ class TestIntegration:
         fin = _make_financial_records(tickers)
 
         from decision_engine import DecisionRuleset
+
         ruleset = DecisionRuleset()
 
         rows, metadata = run_screen_for_date(
-            "2025-06-30", bundle["clinical"], bundle["catalyst"], bundle["coinvest"],
-            universe, fin, None, ruleset, bundle["manifest"],
+            "2025-06-30",
+            bundle["clinical"],
+            bundle["catalyst"],
+            bundle["coinvest"],
+            universe,
+            fin,
+            None,
+            ruleset,
+            bundle["manifest"],
         )
 
         out_root = tmp_path / "out"
@@ -625,11 +709,19 @@ class TestIntegration:
         fin = _make_financial_records(tickers)
 
         from decision_engine import DecisionRuleset
+
         ruleset = DecisionRuleset()
 
         rows, metadata = run_screen_for_date(
-            "2025-03-31", bundle["clinical"], bundle["catalyst"], bundle["coinvest"],
-            universe, fin, None, ruleset, bundle["manifest"],
+            "2025-03-31",
+            bundle["clinical"],
+            bundle["catalyst"],
+            bundle["coinvest"],
+            universe,
+            fin,
+            None,
+            ruleset,
+            bundle["manifest"],
         )
 
         out_root = tmp_path / "out"
@@ -637,6 +729,7 @@ class TestIntegration:
 
         # Verify eval can load it
         from scripts.eval_forward_returns import load_rankings
+
         loaded = load_rankings(snap_dir)
         assert len(loaded) == 3
         # Should have actionable_rank and ticker
@@ -656,6 +749,7 @@ class TestIntegration:
 
         from decision_engine import DecisionRuleset
         from scripts.run_screen_from_bundle import run_batch
+
         ruleset = DecisionRuleset()
 
         summary = run_batch(
@@ -676,6 +770,7 @@ class TestIntegration:
 # ===================================================================
 # Manifest semantics (3 tests)
 # ===================================================================
+
 
 class TestManifestSemantics:
     """Tests for pit_quality key naming."""
@@ -712,16 +807,21 @@ class TestManifestSemantics:
         from scripts.build_pit_bundle import build_single_bundle
 
         trial_path = tmp_path / "trials.json"
-        _write_json(trial_path, [{
-            "ticker": "ACAD",
-            "study_type": "INTERVENTIONAL",
-            "phase": "PHASE2",
-            "first_posted": "2025-01-15",
-            "last_update_posted": "2025-06-01",
-            "primary_completion_date": "2026-06-15",
-            "status": "RECRUITING",
-            "nct_id": "NCT12345678",
-        }])
+        _write_json(
+            trial_path,
+            [
+                {
+                    "ticker": "ACAD",
+                    "study_type": "INTERVENTIONAL",
+                    "phase": "PHASE2",
+                    "first_posted": "2025-01-15",
+                    "last_update_posted": "2025-06-01",
+                    "primary_completion_date": "2026-06-15",
+                    "status": "RECRUITING",
+                    "nct_id": "NCT12345678",
+                }
+            ],
+        )
 
         manifest = build_single_bundle(
             as_of_date="2026-01-15",
@@ -740,6 +840,7 @@ class TestManifestSemantics:
 # ===================================================================
 # Severity computation (additional edge cases)
 # ===================================================================
+
 
 class TestSeverity:
 
@@ -773,6 +874,7 @@ class TestSeverity:
 # Smart money derivation
 # ===================================================================
 
+
 class TestSmartMoney:
 
     def test_derive_from_position_changes(self):
@@ -795,6 +897,7 @@ class TestSmartMoney:
 # Bundle date discovery
 # ===================================================================
 
+
 class TestDiscoverDates:
 
     def test_discover_filters_by_range(self, tmp_path):
@@ -812,6 +915,7 @@ class TestDiscoverDates:
 # ===================================================================
 # Sparse signal z-score
 # ===================================================================
+
 
 class TestZScoreSparse:
     """Tests for _z_score_sparse with legacy vs exclude_missing modes."""
@@ -862,6 +966,7 @@ class TestZScoreSparse:
     def test_determinism(self):
         """Same input → same output for both modes."""
         import copy
+
         rows_a = [
             {"val": 5.0, "flag": "True"},
             {"val": 15.0, "flag": "True"},

@@ -8,13 +8,13 @@ Purpose: Figure out why clinical scores still have 42.53 clustering
 import json
 from collections import Counter
 
-print("="*80)
+print("=" * 80)
 print("CLINICAL SCORING DIAGNOSTIC")
-print("="*80)
+print("=" * 80)
 
 # Load trial records
 print("\n1. Loading trial records...")
-with open('production_data/trial_records.json', encoding='utf-8') as f:
+with open("production_data/trial_records.json", encoding="utf-8") as f:
     trials = json.load(f)
 print(f"   Loaded {len(trials)} trial records")
 
@@ -33,7 +33,7 @@ for field in sorted(all_fields):
 
 # Check enrollment specifically
 print("\n3. Enrollment field analysis:")
-enrollments = [t.get('enrollment') for t in trials if t.get('enrollment') is not None and t.get('enrollment') > 0]
+enrollments = [t.get("enrollment") for t in trials if t.get("enrollment") is not None and t.get("enrollment") > 0]
 if enrollments:
     print(f"   Non-null & >0: {len(enrollments)}/{len(trials)} ({len(enrollments)/len(trials)*100:.1f}%)")
     print(f"   Range: {min(enrollments)} - {max(enrollments)}")
@@ -43,7 +43,7 @@ else:
 
 # Check status field
 print("\n4. Status field analysis:")
-statuses = [t.get('status') for t in trials if t.get('status')]
+statuses = [t.get("status") for t in trials if t.get("status")]
 if statuses:
     status_counts = Counter(statuses)
     print(f"   Unique statuses: {len(status_counts)}")
@@ -54,7 +54,7 @@ else:
 
 # Check phase field
 print("\n5. Phase field analysis:")
-phases = [t.get('phase') for t in trials if t.get('phase')]
+phases = [t.get("phase") for t in trials if t.get("phase")]
 if phases:
     phase_counts = Counter(phases)
     print(f"   Unique phases: {len(phase_counts)}")
@@ -66,10 +66,11 @@ else:
 # Load clinical results to see actual scores
 print("\n6. Checking actual clinical scores from results:")
 try:
-    with open('results_continuous.json', encoding='utf-8') as f:
+    with open("results_continuous.json", encoding="utf-8") as f:
         results = json.load(f)
-    clinical_scores = [float(s.get('clinical_dev_normalized', 0))
-                      for s in results['module_5_composite']['ranked_securities']]
+    clinical_scores = [
+        float(s.get("clinical_dev_normalized", 0)) for s in results["module_5_composite"]["ranked_securities"]
+    ]
     score_counts = Counter(clinical_scores)
 
     print(f"   Total unique scores: {len(score_counts)}/322")
@@ -79,16 +80,16 @@ try:
 
     # THE SMOKING GUN: Check if bonuses were actually applied
     print("\n7. Checking if bonuses were applied:")
-    module_4_results = results.get('module_4_clinical_dev', {})
-    if 'scores' in module_4_results:
-        sample_scores = module_4_results['scores'][:10]
-        has_bonus_fields = any('phase_progress_bonus' in s for s in sample_scores)
+    module_4_results = results.get("module_4_clinical_dev", {})
+    if "scores" in module_4_results:
+        sample_scores = module_4_results["scores"][:10]
+        has_bonus_fields = any("phase_progress_bonus" in s for s in sample_scores)
 
         if has_bonus_fields:
             print("   Bonus fields present in output!")
             # Check if bonuses vary
-            progress_bonuses = [float(s.get('phase_progress_bonus', 0)) for s in module_4_results['scores']]
-            enrollment_bonuses = [float(s.get('enrollment_bonus', 0)) for s in module_4_results['scores']]
+            progress_bonuses = [float(s.get("phase_progress_bonus", 0)) for s in module_4_results["scores"]]
+            enrollment_bonuses = [float(s.get("enrollment_bonus", 0)) for s in module_4_results["scores"]]
 
             progress_unique = len(set(progress_bonuses))
             enrollment_unique = len(set(enrollment_bonuses))
@@ -114,6 +115,6 @@ except FileNotFoundError:
 except json.JSONDecodeError as e:
     print(f"   Failed to parse results_continuous.json: {e}")
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("DIAGNOSIS COMPLETE")
-print("="*80)
+print("=" * 80)

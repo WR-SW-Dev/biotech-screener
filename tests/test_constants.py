@@ -12,41 +12,33 @@ Tests cover:
 
 import pytest
 
-from common.constants import (
-    # Market cap thresholds (millions)
-    MCAP_SMALL_THRESHOLD_MM,
-    MCAP_MID_THRESHOLD_MM,
-    MCAP_LARGE_THRESHOLD_MM,
-    # Market cap thresholds (full USD)
-    MCAP_SMALL_THRESHOLD,
-    MCAP_MID_THRESHOLD,
-    MCAP_LARGE_THRESHOLD,
-    # Liquidity thresholds
+from common.constants import (  # Market cap thresholds (millions); Market cap thresholds (full USD); Liquidity thresholds; Scoring defaults; Data quality thresholds; File size limits; API rate limits; Helper functions
     ADV_ILLIQUID_THRESHOLD,
-    ADV_MINIMUM_THRESHOLD,
     ADV_LIQUID_THRESHOLD,
-    LIQUIDITY_TIER_THRESHOLDS,
-    # Scoring defaults
-    DEFAULT_FALLBACK_SCORE,
-    SCORE_MIN,
-    SCORE_MAX,
+    ADV_MINIMUM_THRESHOLD,
     DEFAULT_CATALYST_DECAY_DAYS,
-    # Data quality thresholds
-    MIN_FINANCIAL_COVERAGE_PCT,
-    MIN_CLINICAL_COVERAGE_PCT,
-    MIN_MARKET_COVERAGE_PCT,
-    MIN_CATALYST_COVERAGE_PCT,
+    DEFAULT_FALLBACK_SCORE,
+    LIQUIDITY_TIER_THRESHOLDS,
+    MAX_JSON_FILE_SIZE_BYTES,
     MAX_MISSING_DATE_PCT,
     MAX_ORPHAN_TICKER_PCT,
-    # File size limits
-    MAX_JSON_FILE_SIZE_BYTES,
     MAX_RECORDS_PER_BATCH,
-    # API rate limits
+    MCAP_LARGE_THRESHOLD,
+    MCAP_LARGE_THRESHOLD_MM,
+    MCAP_MID_THRESHOLD,
+    MCAP_MID_THRESHOLD_MM,
+    MCAP_SMALL_THRESHOLD,
+    MCAP_SMALL_THRESHOLD_MM,
+    MIN_CATALYST_COVERAGE_PCT,
+    MIN_CLINICAL_COVERAGE_PCT,
+    MIN_FINANCIAL_COVERAGE_PCT,
+    MIN_MARKET_COVERAGE_PCT,
     OPENFIGI_RATE_LIMIT_RPS,
+    SCORE_MAX,
+    SCORE_MIN,
     SEC_EDGAR_RATE_LIMIT_RPS,
-    # Helper functions
-    bucket_market_cap_mm,
     bucket_adv_usd,
+    bucket_market_cap_mm,
     is_liquid,
 )
 

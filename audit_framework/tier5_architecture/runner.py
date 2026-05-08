@@ -11,20 +11,9 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from audit_framework.types import (
-    AuditMetrics,
-    AuditTier,
-    ComplianceGrade,
-    PassCriteria,
-    TierResult,
-)
-
-from audit_framework.tier5_architecture.maintainability import (
-    validate_maintainability,
-)
-from audit_framework.tier5_architecture.security import (
-    validate_security,
-)
+from audit_framework.tier5_architecture.maintainability import validate_maintainability
+from audit_framework.tier5_architecture.security import validate_security
+from audit_framework.types import AuditMetrics, AuditTier, ComplianceGrade, PassCriteria, TierResult
 
 
 @dataclass
@@ -85,10 +74,7 @@ def run_tier5_audit(
     result.execution_time_seconds = execution_time.quantize(Decimal("0.001"))
 
     # Determine overall pass/fail
-    result.passed = (
-        result.maintainability_passed
-        and result.security_passed
-    )
+    result.passed = result.maintainability_passed and result.security_passed
 
     # Grade calculation
     critical_count = result.critical_count

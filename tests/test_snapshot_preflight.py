@@ -45,10 +45,10 @@ from snapshot_preflight import (
     write_preflight_summary_csv,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_rankings(
     snap_dir: Path,
@@ -124,6 +124,7 @@ def _write_pit_index(
 # Check 1: rankings exist
 # ---------------------------------------------------------------------------
 
+
 class TestCheckRankingsExist:
     def test_missing_file(self, tmp_path: Path) -> None:
         r = check_rankings_exist(tmp_path)
@@ -167,6 +168,7 @@ class TestCheckRankingsExist:
 # Check 2: eligible count
 # ---------------------------------------------------------------------------
 
+
 class TestCheckEligibleCount:
     def test_too_few(self, tmp_path: Path) -> None:
         rows = [_make_full_row(f"T{i}", eligible="1") for i in range(3)]
@@ -189,6 +191,7 @@ class TestCheckEligibleCount:
 # ---------------------------------------------------------------------------
 # Check 3: hydration coverage
 # ---------------------------------------------------------------------------
+
 
 class TestCheckHydrationCoverage:
     def test_no_source_cols(self, tmp_path: Path) -> None:
@@ -235,14 +238,24 @@ class TestCheckHydrationCoverage:
         """Tickers with series_too_short should not count against hydration."""
         rows = [_make_full_row(f"T{i}") for i in range(8)]  # 8 hydrated
         # 2 tickers that couldn't be hydrated (not enough trading bars)
-        rows.append(_make_full_row(
-            "NEW1", beta_src="", alpha_src="",
-            beta_reason="series_too_short", alpha_reason="series_too_short",
-        ))
-        rows.append(_make_full_row(
-            "NEW2", beta_src="", alpha_src="",
-            beta_reason="series_too_short", alpha_reason="series_too_short",
-        ))
+        rows.append(
+            _make_full_row(
+                "NEW1",
+                beta_src="",
+                alpha_src="",
+                beta_reason="series_too_short",
+                alpha_reason="series_too_short",
+            )
+        )
+        rows.append(
+            _make_full_row(
+                "NEW2",
+                beta_src="",
+                alpha_src="",
+                beta_reason="series_too_short",
+                alpha_reason="series_too_short",
+            )
+        )
         _write_rankings(tmp_path, rows)
         r = check_hydration_coverage(tmp_path, warn_threshold=0.80)
         # 8/8 hydratable = 100%, not 8/10 = 80%
@@ -272,6 +285,7 @@ class TestCheckHydrationCoverage:
 # ---------------------------------------------------------------------------
 # Check 4: PIT price cache
 # ---------------------------------------------------------------------------
+
 
 class TestCheckPitPriceCache:
     def test_missing_cache(self, tmp_path: Path) -> None:
@@ -303,6 +317,7 @@ class TestCheckPitPriceCache:
 # Check 5: split warnings
 # ---------------------------------------------------------------------------
 
+
 class TestCheckSplitWarnings:
     def test_no_cache(self, tmp_path: Path) -> None:
         r = check_split_warnings("2025-01-15", tmp_path)
@@ -328,6 +343,7 @@ class TestCheckSplitWarnings:
 # Check 6: dated-source provenance
 # ---------------------------------------------------------------------------
 
+
 def _write_metadata(snap_dir: Path, meta: Dict) -> None:
     snap_dir.mkdir(parents=True, exist_ok=True)
     with open(snap_dir / "metadata.json", "w", encoding="utf-8") as f:
@@ -343,8 +359,7 @@ class TestCheckDatedSources:
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({"ticker": "T0", "eligible": "1",
-                             "actionable_rank": "1", "clinical_score": "3"})
+            writer.writerow({"ticker": "T0", "eligible": "1", "actionable_rank": "1", "clinical_score": "3"})
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "WARN"
         assert "metadata.json missing" in r.detail
@@ -357,8 +372,7 @@ class TestCheckDatedSources:
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({"ticker": "T0", "eligible": "1",
-                             "actionable_rank": "1", "coinvest_score_z": "0.5"})
+            writer.writerow({"ticker": "T0", "eligible": "1", "actionable_rank": "1", "coinvest_score_z": "0.5"})
         _write_metadata(snap, {"as_of_date": "2025-06-15"})
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "WARN"
@@ -385,14 +399,16 @@ class TestCheckDatedSources:
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({"ticker": "T0", "eligible": "1",
-                             "actionable_rank": "1", "coinvest_score_z": "0.5"})
-        _write_metadata(snap, {
-            "as_of_date": "2025-06-15",
-            "data_sources": {
-                "sec_13f": {"effective_date": "2025-06-20", "lag_days": 45},
+            writer.writerow({"ticker": "T0", "eligible": "1", "actionable_rank": "1", "coinvest_score_z": "0.5"})
+        _write_metadata(
+            snap,
+            {
+                "as_of_date": "2025-06-15",
+                "data_sources": {
+                    "sec_13f": {"effective_date": "2025-06-20", "lag_days": 45},
+                },
             },
-        })
+        )
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "WARN"
         assert "sec_13f" in r.detail
@@ -404,25 +420,37 @@ class TestCheckDatedSources:
         snap.mkdir(parents=True, exist_ok=True)
         # Rankings with all signal families
         fieldnames = [
-            "ticker", "eligible", "actionable_rank",
-            "coinvest_score_z", "clinical_score", "catalyst_days",
+            "ticker",
+            "eligible",
+            "actionable_rank",
+            "coinvest_score_z",
+            "clinical_score",
+            "catalyst_days",
         ]
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({
-                "ticker": "T0", "eligible": "1", "actionable_rank": "1",
-                "coinvest_score_z": "0.5", "clinical_score": "3.0",
-                "catalyst_days": "30",
-            })
-        _write_metadata(snap, {
-            "as_of_date": "2025-06-15",
-            "data_sources": {
-                "sec_13f": {"effective_date": "2025-03-31", "lag_days": 45},
-                "ctgov": {"effective_date": "2025-06-14"},
-                "sec_8k": {"effective_date": "2025-06-10"},
+            writer.writerow(
+                {
+                    "ticker": "T0",
+                    "eligible": "1",
+                    "actionable_rank": "1",
+                    "coinvest_score_z": "0.5",
+                    "clinical_score": "3.0",
+                    "catalyst_days": "30",
+                }
+            )
+        _write_metadata(
+            snap,
+            {
+                "as_of_date": "2025-06-15",
+                "data_sources": {
+                    "sec_13f": {"effective_date": "2025-03-31", "lag_days": 45},
+                    "ctgov": {"effective_date": "2025-06-14"},
+                    "sec_8k": {"effective_date": "2025-06-10"},
+                },
             },
-        })
+        )
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "PASS"
         assert "3 families valid" in r.detail
@@ -435,14 +463,16 @@ class TestCheckDatedSources:
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({"ticker": "T0", "eligible": "1",
-                             "actionable_rank": "1", "clinical_score": "3"})
-        _write_metadata(snap, {
-            "as_of_date": "2025-06-15",
-            "data_sources": {
-                "ctgov": {"effective_date": "2025-06-20"},
+            writer.writerow({"ticker": "T0", "eligible": "1", "actionable_rank": "1", "clinical_score": "3"})
+        _write_metadata(
+            snap,
+            {
+                "as_of_date": "2025-06-15",
+                "data_sources": {
+                    "ctgov": {"effective_date": "2025-06-20"},
+                },
             },
-        })
+        )
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "WARN"
         assert "ctgov" in r.detail
@@ -455,12 +485,14 @@ class TestCheckDatedSources:
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({"ticker": "T0", "eligible": "1",
-                             "actionable_rank": "1", "catalyst_days": "30"})
-        _write_metadata(snap, {
-            "as_of_date": "2025-06-15",
-            "data_sources": {},  # sec_8k entry missing
-        })
+            writer.writerow({"ticker": "T0", "eligible": "1", "actionable_rank": "1", "catalyst_days": "30"})
+        _write_metadata(
+            snap,
+            {
+                "as_of_date": "2025-06-15",
+                "data_sources": {},  # sec_8k entry missing
+            },
+        )
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "WARN"
         assert "sec_8k: entry missing" in r.detail
@@ -473,14 +505,16 @@ class TestCheckDatedSources:
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({"ticker": "T0", "eligible": "1",
-                             "actionable_rank": "1", "coinvest_score_z": "0.5"})
-        _write_metadata(snap, {
-            "as_of_date": "2025-06-15",
-            "data_sources": {
-                "sec_13f": {"lag_days": 45},  # missing effective_date
+            writer.writerow({"ticker": "T0", "eligible": "1", "actionable_rank": "1", "coinvest_score_z": "0.5"})
+        _write_metadata(
+            snap,
+            {
+                "as_of_date": "2025-06-15",
+                "data_sources": {
+                    "sec_13f": {"lag_days": 45},  # missing effective_date
+                },
             },
-        })
+        )
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "WARN"
         assert "effective_date missing" in r.detail
@@ -489,6 +523,7 @@ class TestCheckDatedSources:
 # ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
+
 
 class TestRunPreflight:
     def test_all_pass(self, tmp_path: Path) -> None:
@@ -501,8 +536,7 @@ class TestRunPreflight:
 
     def test_one_warn(self, tmp_path: Path) -> None:
         snap = tmp_path / "2025-01-15"
-        rows = [_make_full_row(f"T{i}", beta_src="missing", alpha_src="missing")
-                for i in range(15)]
+        rows = [_make_full_row(f"T{i}", beta_src="missing", alpha_src="missing") for i in range(15)]
         _write_rankings(snap, rows)
         pf = run_preflight(snap, "2025-01-15", min_cols=5, warn_threshold=0.80)
         assert pf.status == "WARN"
@@ -525,8 +559,11 @@ class TestRunPreflight:
         assert len(pf_no_pit.checks) == 4  # rankings, eligible, hydration, dated_sources
 
         pf_pit = run_preflight(
-            snap, "2025-01-15", min_cols=5,
-            check_pit=True, pit_cache_base=pit_base,
+            snap,
+            "2025-01-15",
+            min_cols=5,
+            check_pit=True,
+            pit_cache_base=pit_base,
         )
         assert len(pf_pit.checks) == 6  # + pit_price_cache, split_warnings
 
@@ -534,6 +571,7 @@ class TestRunPreflight:
 # ---------------------------------------------------------------------------
 # Batch
 # ---------------------------------------------------------------------------
+
 
 class TestRunPreflightBatch:
     def test_multi_date_summary(self, tmp_path: Path) -> None:
@@ -554,7 +592,10 @@ class TestRunPreflightBatch:
             rows = [_make_full_row(f"T{i}") for i in range(15)]
             _write_rankings(tmp_path / d, rows)
         report = run_preflight_batch(
-            tmp_path, date_from="2025-01-12", date_to="2025-01-18", min_cols=5,
+            tmp_path,
+            date_from="2025-01-12",
+            date_to="2025-01-18",
+            min_cols=5,
         )
         assert report.n_total == 1
         assert report.results[0].date == "2025-01-15"
@@ -567,6 +608,7 @@ class TestRunPreflightBatch:
 # ---------------------------------------------------------------------------
 # Skip reason format
 # ---------------------------------------------------------------------------
+
 
 class TestSkipReasonFormat:
     def test_format_matches_eval_pattern(self, tmp_path: Path) -> None:
@@ -586,6 +628,7 @@ class TestSkipReasonFormat:
 # ---------------------------------------------------------------------------
 # Metrics extraction
 # ---------------------------------------------------------------------------
+
 
 class TestPreflightMetrics:
     def test_eligible_n_extracted(self, tmp_path: Path) -> None:
@@ -616,8 +659,11 @@ class TestPreflightMetrics:
         pit_base = tmp_path / "pit"
         _write_pit_index(pit_base / "2025-01-15", "2025-01-15")
         pf = run_preflight(
-            snap, "2025-01-15", min_cols=5,
-            check_pit=True, pit_cache_base=pit_base,
+            snap,
+            "2025-01-15",
+            min_cols=5,
+            check_pit=True,
+            pit_cache_base=pit_base,
         )
         assert pf.metrics["pit_cache_status"] == "OK"
         assert pf.metrics["split_warning_count"] == 0
@@ -636,6 +682,7 @@ class TestPreflightMetrics:
 # ---------------------------------------------------------------------------
 # Artifact writing
 # ---------------------------------------------------------------------------
+
 
 class TestPreflightArtifacts:
     def _make_report(self, tmp_path: Path) -> PreflightReport:
@@ -674,7 +721,8 @@ class TestPreflightArtifacts:
         report = self._make_report(tmp_path / "snaps")
         out_dir = tmp_path / "artifacts"
         manifest_path = write_preflight_manifest(
-            report, out_dir,
+            report,
+            out_dir,
             run_id="test_run_001",
             snapshot_root=tmp_path / "snaps",
             date_from="2025-01-10",
@@ -698,7 +746,8 @@ class TestPreflightArtifacts:
         report = self._make_report(tmp_path / "snaps")
         out_dir = tmp_path / "artifacts"
         csv_p, manifest_p = write_preflight_artifacts(
-            report, out_dir,
+            report,
+            out_dir,
             run_id="test_both",
             snapshot_root=tmp_path / "snaps",
         )
@@ -712,7 +761,9 @@ class TestPreflightArtifacts:
         report = PreflightReport()
         out_dir = tmp_path / "artifacts"
         manifest_path = write_preflight_manifest(
-            report, out_dir, run_id="empty_test",
+            report,
+            out_dir,
+            run_id="empty_test",
         )
         with open(manifest_path, encoding="utf-8") as f:
             manifest = json.load(f)
@@ -728,6 +779,7 @@ class TestPreflightArtifacts:
 # data_sources stamping integration
 # ---------------------------------------------------------------------------
 
+
 class TestDataSourcesStamping:
     """Verify that metadata.json with proper data_sources passes preflight."""
 
@@ -737,26 +789,38 @@ class TestDataSourcesStamping:
         snap.mkdir(parents=True, exist_ok=True)
         # Rankings with all signal families
         fieldnames = [
-            "ticker", "eligible", "actionable_rank",
-            "coinvest_score_z", "clinical_score", "catalyst_days",
+            "ticker",
+            "eligible",
+            "actionable_rank",
+            "coinvest_score_z",
+            "clinical_score",
+            "catalyst_days",
         ]
         with open(snap / "rankings.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow({
-                "ticker": "ACME", "eligible": "1", "actionable_rank": "1",
-                "coinvest_score_z": "0.3", "clinical_score": "5.0",
-                "catalyst_days": "45",
-            })
+            writer.writerow(
+                {
+                    "ticker": "ACME",
+                    "eligible": "1",
+                    "actionable_rank": "1",
+                    "coinvest_score_z": "0.3",
+                    "clinical_score": "5.0",
+                    "catalyst_days": "45",
+                }
+            )
         # Metadata matching production pipeline output
-        _write_metadata(snap, {
-            "as_of_date": "2025-06-15",
-            "data_sources": {
-                "sec_13f": {"effective_date": "2025-06-15", "lag_days": 45},
-                "ctgov": {"effective_date": "2025-06-15"},
-                "sec_8k": {"effective_date": "2025-06-15"},
+        _write_metadata(
+            snap,
+            {
+                "as_of_date": "2025-06-15",
+                "data_sources": {
+                    "sec_13f": {"effective_date": "2025-06-15", "lag_days": 45},
+                    "ctgov": {"effective_date": "2025-06-15"},
+                    "sec_8k": {"effective_date": "2025-06-15"},
+                },
             },
-        })
+        )
         r = check_dated_sources(snap, "2025-06-15")
         assert r.status == "PASS"
 

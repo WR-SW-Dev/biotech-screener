@@ -50,7 +50,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -82,7 +82,7 @@ EXIT_POSITION_SCORE = Decimal("-8")
 # Coordinated activity thresholds
 COORDINATED_ADD_MIN = 3  # At least 3 managers adding = coordinated
 COORDINATED_NEW_MIN = 2  # At least 2 managers initiating = strong signal
-CROWDING_THRESHOLD = 6   # 6+ managers holding = crowded
+CROWDING_THRESHOLD = 6  # 6+ managers holding = crowded
 
 # Manager tier weights
 ELITE_CORE_WEIGHT = Decimal("1.5")
@@ -91,28 +91,32 @@ CONDITIONAL_WEIGHT = Decimal("1.0")
 
 class ConvictionChange(str, Enum):
     """Position change classification."""
-    NEW = "NEW"           # Fresh position (wasn't held prior quarter)
-    ADD = "ADD"           # Increased position by >10%
-    HOLD = "HOLD"         # Position unchanged (+/- 10%)
-    TRIM = "TRIM"         # Decreased position by >10%
-    EXIT = "EXIT"         # Completely exited position
-    UNKNOWN = "UNKNOWN"   # Missing data
+
+    NEW = "NEW"  # Fresh position (wasn't held prior quarter)
+    ADD = "ADD"  # Increased position by >10%
+    HOLD = "HOLD"  # Position unchanged (+/- 10%)
+    TRIM = "TRIM"  # Decreased position by >10%
+    EXIT = "EXIT"  # Completely exited position
+    UNKNOWN = "UNKNOWN"  # Missing data
 
 
 class CrowdingLevel(str, Enum):
     """Position crowding classification."""
-    LOW = "LOW"           # 1-2 managers
-    MODERATE = "MODERATE" # 3-5 managers
-    HIGH = "HIGH"         # 6+ managers (crowded)
+
+    LOW = "LOW"  # 1-2 managers
+    MODERATE = "MODERATE"  # 3-5 managers
+    HIGH = "HIGH"  # 6+ managers (crowded)
 
 
 # ============================================================================
 # DATACLASSES
 # ============================================================================
 
+
 @dataclass
 class ManagerPosition:
     """Single manager's position in a ticker."""
+
     manager_cik: str
     manager_name: str
     manager_tier: str  # "elite_core" or "conditional"
@@ -144,6 +148,7 @@ class ManagerPosition:
 @dataclass
 class TickerMomentum:
     """Aggregated momentum signals for a ticker."""
+
     ticker: str
     total_managers: int
     elite_core_count: int
@@ -194,6 +199,7 @@ class TickerMomentum:
 # HELPERS
 # ============================================================================
 
+
 def _to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """Convert value to Decimal safely."""
     if value is None:
@@ -239,8 +245,7 @@ def _classify_change(
         (change_type, share_change_pct, value_change_pct)
     """
     # Determine if we should use value-based analysis (when shares are 0 but value exists)
-    use_value = (current_shares == 0 and current_value > 0) or \
-                (prior_shares == 0 and prior_value and prior_value > 0)
+    use_value = (current_shares == 0 and current_value > 0) or (prior_shares == 0 and prior_value and prior_value > 0)
 
     if use_value:
         # Value-based change detection
@@ -299,23 +304,27 @@ def _compute_determinism_hash(
     payload = {
         "ticker": ticker,
         "version": SCHEMA_VERSION,
-        "positions": sorted([
-            {
-                "cik": p.manager_cik,
-                "change": p.change.value,
-                "shares": p.shares,
-            }
-            for p in positions
-        ], key=lambda x: x["cik"]),
+        "positions": sorted(
+            [
+                {
+                    "cik": p.manager_cik,
+                    "change": p.change.value,
+                    "shares": p.shares,
+                }
+                for p in positions
+            ],
+            key=lambda x: x["cik"],
+        ),
         "momentum_score": str(momentum_score),
     }
-    canonical = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
 # ============================================================================
 # CORE ANALYSIS
 # ============================================================================
+
 
 def analyze_ticker_momentum(
     ticker: str,
@@ -364,23 +373,23 @@ def analyze_ticker_momentum(
         prior_value = prior.get("value_kusd") if prior else None
 
         # Classify change
-        change, share_pct, value_pct = _classify_change(
-            current_shares, prior_shares, current_value, prior_value
-        )
+        change, share_pct, value_pct = _classify_change(current_shares, prior_shares, current_value, prior_value)
 
-        positions.append(ManagerPosition(
-            manager_cik=cik,
-            manager_name=manager.get("name", "Unknown"),
-            manager_tier=tier,
-            quarter_end=quarter_end,
-            shares=current_shares,
-            value_kusd=current_value,
-            prior_shares=prior_shares,
-            prior_value_kusd=prior_value,
-            change=change,
-            share_change_pct=share_pct,
-            value_change_pct=value_pct,
-        ))
+        positions.append(
+            ManagerPosition(
+                manager_cik=cik,
+                manager_name=manager.get("name", "Unknown"),
+                manager_tier=tier,
+                quarter_end=quarter_end,
+                shares=current_shares,
+                value_kusd=current_value,
+                prior_shares=prior_shares,
+                prior_value_kusd=prior_value,
+                change=change,
+                share_change_pct=share_pct,
+                value_change_pct=value_pct,
+            )
+        )
 
     # Check for exits (managers who had position but now don't)
     for cik, prior in prior_holdings.items():
@@ -392,19 +401,21 @@ def analyze_ticker_momentum(
         manager = all_managers[cik]
         tier = "elite_core" if cik in elite_ciks else "conditional"
 
-        positions.append(ManagerPosition(
-            manager_cik=cik,
-            manager_name=manager.get("name", "Unknown"),
-            manager_tier=tier,
-            quarter_end=prior.get("quarter_end", ""),
-            shares=0,
-            value_kusd=0,
-            prior_shares=prior.get("shares", 0),
-            prior_value_kusd=prior.get("value_kusd", 0),
-            change=ConvictionChange.EXIT,
-            share_change_pct=Decimal("-100"),
-            value_change_pct=Decimal("-100"),
-        ))
+        positions.append(
+            ManagerPosition(
+                manager_cik=cik,
+                manager_name=manager.get("name", "Unknown"),
+                manager_tier=tier,
+                quarter_end=prior.get("quarter_end", ""),
+                shares=0,
+                value_kusd=0,
+                prior_shares=prior.get("shares", 0),
+                prior_value_kusd=prior.get("value_kusd", 0),
+                change=ConvictionChange.EXIT,
+                share_change_pct=Decimal("-100"),
+                value_change_pct=Decimal("-100"),
+            )
+        )
 
     # Aggregate counts
     elite_core_count = sum(1 for p in positions if p.manager_tier == "elite_core" and p.shares > 0)
@@ -478,6 +489,7 @@ def analyze_ticker_momentum(
 # MAIN COMPUTATION
 # ============================================================================
 
+
 def compute_manager_momentum(
     holdings_snapshots: Dict[str, Any],
     manager_registry: Dict[str, Any],
@@ -527,11 +539,7 @@ def compute_manager_momentum(
             summary["crowded_positions"].append(ticker)
 
     # Sort results by momentum score descending
-    sorted_tickers = sorted(
-        results.keys(),
-        key=lambda t: Decimal(results[t]["momentum_score"]),
-        reverse=True
-    )
+    sorted_tickers = sorted(results.keys(), key=lambda t: Decimal(results[t]["momentum_score"]), reverse=True)
 
     return {
         "as_of_date": as_of_date,
@@ -547,10 +555,7 @@ def compute_manager_momentum(
             "fresh_conviction_count": len(summary["fresh_convictions"]),
             "crowded_count": len(summary["crowded_positions"]),
         },
-        "rankings": [
-            {"ticker": t, "momentum_score": results[t]["momentum_score"]}
-            for t in sorted_tickers[:20]
-        ],
+        "rankings": [{"ticker": t, "momentum_score": results[t]["momentum_score"]} for t in sorted_tickers[:20]],
         "signals": results,
         "provenance": create_provenance(
             RULESET_VERSION,
@@ -563,6 +568,7 @@ def compute_manager_momentum(
 # ============================================================================
 # VALIDATION HELPERS (NOT USED FOR SCORING)
 # ============================================================================
+
 
 def get_momentum_validation(
     ticker: str,
@@ -652,14 +658,22 @@ if __name__ == "__main__":
     print("MANAGER MOMENTUM ANALYSIS")
     print("=" * 70)
     print(f"Tickers analyzed: {result['tickers_analyzed']}")
-    print(f"\nCoordinated buys ({result['summary']['coordinated_buy_count']}): "
-          f"{', '.join(result['summary']['coordinated_buys'][:10])}")
-    print(f"Coordinated sells ({result['summary']['coordinated_sell_count']}): "
-          f"{', '.join(result['summary']['coordinated_sells'][:10])}")
-    print(f"Fresh convictions ({result['summary']['fresh_conviction_count']}): "
-          f"{', '.join(result['summary']['fresh_convictions'][:10])}")
-    print(f"Crowded positions ({result['summary']['crowded_count']}): "
-          f"{', '.join(result['summary']['crowded_positions'][:10])}")
+    print(
+        f"\nCoordinated buys ({result['summary']['coordinated_buy_count']}): "
+        f"{', '.join(result['summary']['coordinated_buys'][:10])}"
+    )
+    print(
+        f"Coordinated sells ({result['summary']['coordinated_sell_count']}): "
+        f"{', '.join(result['summary']['coordinated_sells'][:10])}"
+    )
+    print(
+        f"Fresh convictions ({result['summary']['fresh_conviction_count']}): "
+        f"{', '.join(result['summary']['fresh_convictions'][:10])}"
+    )
+    print(
+        f"Crowded positions ({result['summary']['crowded_count']}): "
+        f"{', '.join(result['summary']['crowded_positions'][:10])}"
+    )
 
     print("\nTop 20 by momentum score:")
     for r in result["rankings"]:

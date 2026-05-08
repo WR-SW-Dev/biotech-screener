@@ -1,4 +1,5 @@
 """Tests for scripts/build_pit_bundle.py — PIT feature bundle builder."""
+
 from __future__ import annotations
 
 import json
@@ -21,10 +22,10 @@ from scripts.build_pit_bundle import (
     validate_bundle,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _write_json(path: Path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +60,7 @@ AS_OF = "2026-01-15"
 # ===================================================================
 # TestSingleBundle
 # ===================================================================
+
 
 class TestSingleBundle:
     """Single bundle creation tests."""
@@ -127,8 +129,7 @@ class TestSingleBundle:
         )
 
         if "clinical_features" in manifest["components"]:
-            assert (manifest["components"]["clinical_features"]["schema_version"]
-                    == "clinical_features_pit.v1")
+            assert manifest["components"]["clinical_features"]["schema_version"] == "clinical_features_pit.v1"
 
     def test_build_duration_recorded(self, tmp_path):
         """Build duration is recorded in manifest."""
@@ -149,6 +150,7 @@ class TestSingleBundle:
 # ===================================================================
 # TestValidation
 # ===================================================================
+
 
 class TestValidation:
     """Bundle validation tests."""
@@ -224,6 +226,7 @@ class TestValidation:
 # TestDiscoverDates
 # ===================================================================
 
+
 class TestDiscoverDates:
     """Date discovery tests."""
 
@@ -246,6 +249,7 @@ class TestDiscoverDates:
 # ===================================================================
 # TestEdgeCases
 # ===================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -283,12 +287,14 @@ class TestEdgeCases:
 # TestCarryForward
 # ===================================================================
 
+
 class TestCarryForward:
     """Coinvest carry-forward tests."""
 
     def test_find_latest_cache_date_exact(self, tmp_path):
         """Exact date exists → returns it."""
         from scripts.build_pit_bundle import _find_latest_cache_date
+
         cache = tmp_path / "13f"
         (cache / "2025-03-31").mkdir(parents=True)
         (cache / "2025-06-30").mkdir(parents=True)
@@ -297,6 +303,7 @@ class TestCarryForward:
     def test_find_latest_cache_date_carry(self, tmp_path):
         """No exact match → returns latest date <= as_of."""
         from scripts.build_pit_bundle import _find_latest_cache_date
+
         cache = tmp_path / "13f"
         (cache / "2025-03-31").mkdir(parents=True)
         (cache / "2025-06-30").mkdir(parents=True)
@@ -305,6 +312,7 @@ class TestCarryForward:
     def test_find_latest_cache_date_none(self, tmp_path):
         """All dates after as_of → None."""
         from scripts.build_pit_bundle import _find_latest_cache_date
+
         cache = tmp_path / "13f"
         (cache / "2025-06-30").mkdir(parents=True)
         assert _find_latest_cache_date(cache, "2025-01-01") is None
@@ -312,6 +320,7 @@ class TestCarryForward:
     def test_find_latest_cache_date_missing_root(self, tmp_path):
         """Root doesn't exist → None."""
         from scripts.build_pit_bundle import _find_latest_cache_date
+
         assert _find_latest_cache_date(tmp_path / "nope", "2025-06-30") is None
 
     def test_carry_forward_off_skips_coinvest(self, tmp_path):
@@ -333,6 +342,7 @@ class TestCarryForward:
         # building would need a real 13F cache. We verify the _find_latest_cache_date
         # selection picks the right date.
         from scripts.build_pit_bundle import _find_latest_cache_date
+
         cache = tmp_path / "13f"
         (cache / "2025-03-31").mkdir(parents=True)
         (cache / "2025-06-30").mkdir(parents=True)
@@ -350,6 +360,7 @@ class TestCarryForward:
 # ---------------------------------------------------------------------------
 # CTgov cache date discovery
 # ---------------------------------------------------------------------------
+
 
 class TestCtgovCacheDiscovery:
     def test_discover_from_ctgov_cache(self, tmp_path):
@@ -397,12 +408,12 @@ class TestCtgovCacheDiscovery:
 # Tests: Cadence filtering (Part 2B)
 # ---------------------------------------------------------------------------
 
+
 class TestCadenceFiltering:
 
     def test_filter_dates_quarterly(self):
         """Quarterly filter keeps only quarter-end dates."""
-        dates = ["2025-01-31", "2025-02-28", "2025-03-31",
-                 "2025-04-30", "2025-06-30", "2025-09-30"]
+        dates = ["2025-01-31", "2025-02-28", "2025-03-31", "2025-04-30", "2025-06-30", "2025-09-30"]
         result = filter_dates_by_cadence(dates, "quarterly")
         assert result == ["2025-03-31", "2025-06-30", "2025-09-30"]
 

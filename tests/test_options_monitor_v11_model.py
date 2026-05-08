@@ -17,15 +17,25 @@ from common.options_monitor_v11_model import (
 class TestTradeVerdict:
     def test_long_gamma_event_window(self):
         tv = compute_trade_verdict(
-            s_final=0.75, f_ep=0.70, f_sr=0.40, f_sk=0.30, f_dv=0.20,
-            chain_quality=0.8, event_window_flag=True, hard_catalyst_flag=True,
+            s_final=0.75,
+            f_ep=0.70,
+            f_sr=0.40,
+            f_sk=0.30,
+            f_dv=0.20,
+            chain_quality=0.8,
+            event_window_flag=True,
+            hard_catalyst_flag=True,
         )
         assert tv.bias == "LONG_GAMMA"
         assert tv.confidence > 0.5
 
     def test_no_action_weak_signal(self):
         tv = compute_trade_verdict(
-            s_final=0.30, f_ep=0.20, f_sr=0.10, f_sk=0.10, f_dv=0.10,
+            s_final=0.30,
+            f_ep=0.20,
+            f_sr=0.10,
+            f_sk=0.10,
+            f_dv=0.10,
             chain_quality=0.5,
         )
         assert tv.bias == "NO_ACTION"
@@ -33,51 +43,86 @@ class TestTradeVerdict:
 
     def test_short_premium_avoid_low_quality(self):
         tv = compute_trade_verdict(
-            s_final=0.60, f_ep=0.65, f_sr=0.30, f_sk=0.20, f_dv=0.10,
+            s_final=0.60,
+            f_ep=0.65,
+            f_sr=0.30,
+            f_sk=0.20,
+            f_dv=0.10,
             chain_quality=0.3,  # low quality
         )
         assert tv.bias == "SHORT_PREMIUM_AVOID"
 
     def test_short_premium_avoid_high_divergence(self):
         tv = compute_trade_verdict(
-            s_final=0.60, f_ep=0.65, f_sr=0.30, f_sk=0.20, f_dv=0.55,
+            s_final=0.60,
+            f_ep=0.65,
+            f_sr=0.30,
+            f_sk=0.20,
+            f_dv=0.55,
             chain_quality=0.7,
         )
         assert tv.bias == "SHORT_PREMIUM_AVOID"
 
     def test_short_premium_financing_skew(self):
         tv = compute_trade_verdict(
-            s_final=0.50, f_ep=0.20, f_sr=0.20, f_sk=0.65, f_dv=0.20,
-            chain_quality=0.6, catalyst_class="financing",
+            s_final=0.50,
+            f_ep=0.20,
+            f_sr=0.20,
+            f_sk=0.65,
+            f_dv=0.20,
+            chain_quality=0.6,
+            catalyst_class="financing",
         )
         assert tv.bias == "SHORT_PREMIUM_AVOID"
 
     def test_post_event_short_vol(self):
         tv = compute_trade_verdict(
-            s_final=0.50, f_ep=0.55, f_sr=0.20, f_sk=0.20, f_dv=0.10,
-            chain_quality=0.7, post_event=True,
+            s_final=0.50,
+            f_ep=0.55,
+            f_sr=0.20,
+            f_sk=0.20,
+            f_dv=0.10,
+            chain_quality=0.7,
+            post_event=True,
         )
         assert tv.bias == "POST_EVENT_SHORT_VOL"
 
     def test_probability_override_long_gamma(self):
         tv = compute_trade_verdict(
-            s_final=0.50, f_ep=0.30, f_sr=0.30, f_sk=0.20, f_dv=0.10,
+            s_final=0.50,
+            f_ep=0.30,
+            f_sr=0.30,
+            f_sk=0.20,
+            f_dv=0.10,
             chain_quality=0.5,
-            p_move_gt_implied=0.70, p_false_positive=0.20, p_iv_crush=None,
+            p_move_gt_implied=0.70,
+            p_false_positive=0.20,
+            p_iv_crush=None,
         )
         assert tv.bias == "LONG_GAMMA"
 
     def test_probability_override_post_event(self):
         tv = compute_trade_verdict(
-            s_final=0.40, f_ep=0.30, f_sr=0.20, f_sk=0.20, f_dv=0.10,
-            chain_quality=0.5, post_event=True,
-            p_move_gt_implied=0.30, p_false_positive=0.50, p_iv_crush=0.70,
+            s_final=0.40,
+            f_ep=0.30,
+            f_sr=0.20,
+            f_sk=0.20,
+            f_dv=0.10,
+            chain_quality=0.5,
+            post_event=True,
+            p_move_gt_implied=0.30,
+            p_false_positive=0.50,
+            p_iv_crush=0.70,
         )
         assert tv.bias == "POST_EVENT_SHORT_VOL"
 
     def test_primary_factor_identified(self):
         tv = compute_trade_verdict(
-            s_final=0.30, f_ep=0.10, f_sr=0.10, f_sk=0.80, f_dv=0.10,
+            s_final=0.30,
+            f_ep=0.10,
+            f_sr=0.10,
+            f_sk=0.80,
+            f_dv=0.10,
             chain_quality=0.5,
         )
         assert tv.primary_factor == "SK"
@@ -91,18 +136,16 @@ class TestStateTracking:
 
     def test_ongoing_tickers(self, tmp_path):
         prior_path = tmp_path / "prior_state.json"
-        prior_path.write_text(json.dumps({
-            "active": [{"ticker": "PVLA", "om11_monitor_verdict": "WATCH"}]
-        }))
+        prior_path.write_text(json.dumps({"active": [{"ticker": "PVLA", "om11_monitor_verdict": "WATCH"}]}))
         current = {"PVLA": {"om11_monitor_verdict": "HIGH"}}
         result = track_state(current, prior_state_path=prior_path)
         assert result["PVLA"]["state"] == "ONGOING"
 
     def test_resolved_tickers(self, tmp_path):
         prior_path = tmp_path / "prior_state.json"
-        prior_path.write_text(json.dumps({
-            "active": [{"ticker": "OLD", "om11_monitor_verdict": "HIGH", "om11_score_final": "0.75"}]
-        }))
+        prior_path.write_text(
+            json.dumps({"active": [{"ticker": "OLD", "om11_monitor_verdict": "HIGH", "om11_score_final": "0.75"}]})
+        )
         current = {"PVLA": {"om11_monitor_verdict": "HIGH"}}
         result = track_state(current, prior_state_path=prior_path)
         assert result["PVLA"]["state"] == "NEW"
@@ -163,9 +206,7 @@ class TestFullVerdict:
         assert "om11_trade_confidence" in result
         assert "om11_trade_reason" in result
         assert "om11_p_move_gt_implied" in result
-        assert result["om11_trade_bias"] in (
-            "LONG_GAMMA", "SHORT_PREMIUM_AVOID", "POST_EVENT_SHORT_VOL", "NO_ACTION"
-        )
+        assert result["om11_trade_bias"] in ("LONG_GAMMA", "SHORT_PREMIUM_AVOID", "POST_EVENT_SHORT_VOL", "NO_ACTION")
 
     def test_with_untrained_model(self):
         features = {

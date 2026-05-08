@@ -24,11 +24,11 @@ import os
 import re
 import tempfile
 import time
-import zipfile
 import xml.etree.ElementTree as ET
+import zipfile
 from collections import Counter
-from email.utils import parsedate_to_datetime
 from datetime import date, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -216,13 +216,15 @@ def _parse_rss_agenda_items(xml_text: str, committee: str) -> List[dict]:
         if not dates:
             continue
 
-        items.append({
-            "agenda_url": link,
-            "title": title,
-            "pub_date": pub_date,
-            "meeting_start": dates[0],
-            "meeting_end": dates[1],
-        })
+        items.append(
+            {
+                "agenda_url": link,
+                "title": title,
+                "pub_date": pub_date,
+                "meeting_start": dates[0],
+                "meeting_end": dates[1],
+            }
+        )
 
     return items
 
@@ -273,12 +275,14 @@ def _parse_rss_event_items(xml_text: str, committee: str) -> List[dict]:
         if not dates:
             continue
 
-        items.append({
-            "url": link,
-            "title": title,
-            "meeting_start": dates[0],
-            "meeting_end": dates[1],
-        })
+        items.append(
+            {
+                "url": link,
+                "title": title,
+                "meeting_start": dates[0],
+                "meeting_end": dates[1],
+            }
+        )
 
     return items
 
@@ -325,19 +329,57 @@ def _normalize_name(s: str) -> str:
 
 
 # Salt forms, counter-ions, and common pharmaceutical suffixes.
-_SALT_FORMS = frozenset({
-    "hydrochloride", "hcl", "sodium", "potassium", "calcium",
-    "succinate", "fumarate", "mesylate", "mesilate", "maleate",
-    "tartrate", "acetate", "phosphate", "sulfate", "sulphate",
-    "citrate", "besylate", "besilate", "tosylate", "tosylat",
-    "dihydrochloride", "disodium", "tromethamine", "meglumine",
-    "hemifumarate", "esylate", "edisylate", "xinafoate",
-    "bromide", "chloride", "iodide", "nitrate", "carbonate",
-    "gluconate", "lactate", "malate", "oxalate", "benzoate",
-    "pamoate", "stearate", "valerate", "propionate",
-    "dihydrate", "monohydrate", "trihydrate", "hemihydrate",
-    "anhydrous",
-})
+_SALT_FORMS = frozenset(
+    {
+        "hydrochloride",
+        "hcl",
+        "sodium",
+        "potassium",
+        "calcium",
+        "succinate",
+        "fumarate",
+        "mesylate",
+        "mesilate",
+        "maleate",
+        "tartrate",
+        "acetate",
+        "phosphate",
+        "sulfate",
+        "sulphate",
+        "citrate",
+        "besylate",
+        "besilate",
+        "tosylate",
+        "tosylat",
+        "dihydrochloride",
+        "disodium",
+        "tromethamine",
+        "meglumine",
+        "hemifumarate",
+        "esylate",
+        "edisylate",
+        "xinafoate",
+        "bromide",
+        "chloride",
+        "iodide",
+        "nitrate",
+        "carbonate",
+        "gluconate",
+        "lactate",
+        "malate",
+        "oxalate",
+        "benzoate",
+        "pamoate",
+        "stearate",
+        "valerate",
+        "propionate",
+        "dihydrate",
+        "monohydrate",
+        "trihydrate",
+        "hemihydrate",
+        "anhydrous",
+    }
+)
 
 # Dosage / formulation tokens to strip.
 _FORMULATION_RE = re.compile(
@@ -621,10 +663,10 @@ def _parse_annex_xlsx(xlsx_bytes: bytes) -> List[dict]:
     # Default column positions matching known EMA Annex layout:
     # E=process_type(4), F=invented_name(5), G=active_substance(6), H=customer(7)
     if "medicine_name" not in col_map:
-        col_map.setdefault("medicine_name", 5)      # F
-        col_map.setdefault("active_substance", 6)    # G
-        col_map.setdefault("process_type", 4)        # E
-        col_map.setdefault("sponsor", 7)             # H
+        col_map.setdefault("medicine_name", 5)  # F
+        col_map.setdefault("active_substance", 6)  # G
+        col_map.setdefault("process_type", 4)  # E
+        col_map.setdefault("sponsor", 7)  # H
 
     # 6. Extract data rows ------------------------------------------------
     items: List[dict] = []
@@ -665,12 +707,14 @@ def _parse_annex_xlsx(xlsx_bytes: bytes) -> List[dict]:
                     active_substance = line
                     break
 
-        items.append({
-            "medicine_name": medicine_name,
-            "active_substance": active_substance or None,
-            "process_type": cell_vals.get(col_map.get("process_type", -1), "").strip() or None,
-            "sponsor": cell_vals.get(col_map.get("sponsor", -1), "").strip() or None,
-        })
+        items.append(
+            {
+                "medicine_name": medicine_name,
+                "active_substance": active_substance or None,
+                "process_type": cell_vals.get(col_map.get("process_type", -1), "").strip() or None,
+                "sponsor": cell_vals.get(col_map.get("sponsor", -1), "").strip() or None,
+            }
+        )
 
     zf.close()
     return items
@@ -682,7 +726,9 @@ def _parse_annex_xlsx(xlsx_bytes: bytes) -> List[dict]:
 
 
 def _discover_meeting_event_pages(
-    html: str, base_url: str, committee: str,
+    html: str,
+    base_url: str,
+    committee: str,
 ) -> List[dict]:
     """Extract event page links from a committee landing page.
 
@@ -713,18 +759,21 @@ def _discover_meeting_event_pages(
         if not dates:
             continue
 
-        results.append({
-            "url": href,
-            "meeting_start": dates[0],
-            "meeting_end": dates[1],
-            "committee": committee,
-        })
+        results.append(
+            {
+                "url": href,
+                "meeting_start": dates[0],
+                "meeting_end": dates[1],
+                "committee": committee,
+            }
+        )
 
     return results
 
 
 def _discover_event_page_documents(
-    html: str, base_url: str,
+    html: str,
+    base_url: str,
 ) -> Dict[str, List[dict]]:
     """Extract agenda PDF + annex XLSX links from an event page.
 
@@ -760,7 +809,12 @@ def _discover_event_page_documents(
             if href in seen:
                 continue
             href_lower = href.lower()
-            if "/documents/agenda/" in href_lower or "/documents/annex/" in href_lower or "/agenda/" in href_lower or "/annex/" in href_lower:
+            if (
+                "/documents/agenda/" in href_lower
+                or "/documents/annex/" in href_lower
+                or "/agenda/" in href_lower
+                or "/annex/" in href_lower
+            ):
                 seen.add(href)
                 doc = _extract_from_block(block, a_tag, href)
                 if href_lower.endswith(".xlsx") or "annex" in href_lower:
@@ -776,7 +830,12 @@ def _discover_event_page_documents(
         if href in seen:
             continue
         href_lower = href.lower()
-        if "/documents/agenda/" in href_lower or "/documents/annex/" in href_lower or "/agenda/" in href_lower or "/annex/" in href_lower:
+        if (
+            "/documents/agenda/" in href_lower
+            or "/documents/annex/" in href_lower
+            or "/agenda/" in href_lower
+            or "/annex/" in href_lower
+        ):
             seen.add(href)
             doc = _extract_from_block(None, a_tag, href)
             if href_lower.endswith(".xlsx") or "annex" in href_lower:
@@ -792,13 +851,12 @@ def _discover_event_page_documents(
 # ---------------------------------------------------------------------------
 
 
-_FIRST_PUBLISHED_RE = re.compile(
-    r"[Ff]irst\s+published[:\s]*(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})"
-)
+_FIRST_PUBLISHED_RE = re.compile(r"[Ff]irst\s+published[:\s]*(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})")
 
 
 def _discover_links(
-    html: str, base_url: str,
+    html: str,
+    base_url: str,
 ) -> Dict[str, List[Dict[str, str]]]:
     """Discover agenda docs and meeting highlights links from a committee page.
 
@@ -957,34 +1015,40 @@ def _parse_agenda_page(
 
         event_id = _make_event_id(
             f"EMA_{committee}_AGENDA_{meeting_end}",
-            medicine_name, procedure_type, committee, meeting_start, meeting_end,
+            medicine_name,
+            procedure_type,
+            committee,
+            meeting_start,
+            meeting_end,
         )
         if event_id in seen_ids:
             continue
         seen_ids.add(event_id)
 
-        events.append({
-            "schema": "ema_committee_event.v1",
-            "id": event_id,
-            "ticker": ticker,
-            "jurisdiction": "EU",
-            "committee": committee,
-            "meeting_start": meeting_start,
-            "meeting_end": meeting_end,
-            "event_date": meeting_end,
-            "disclosed_at": None,
-            "item_type": "agenda_item",
-            "procedure_type": procedure_type,
-            "medicine_name": medicine_name,
-            "active_substance": None,
-            "sponsor": None,
-            "title": f"{committee} agenda: {procedure_type} — {medicine_name}",
-            "source": f"EMA_{committee}_AGENDA",
-            "url": url,
-            "confidence": "MED",
-            "tags": _make_tags(procedure_type, committee),
-            "raw": {"snippet": item_text[:300]},
-        })
+        events.append(
+            {
+                "schema": "ema_committee_event.v1",
+                "id": event_id,
+                "ticker": ticker,
+                "jurisdiction": "EU",
+                "committee": committee,
+                "meeting_start": meeting_start,
+                "meeting_end": meeting_end,
+                "event_date": meeting_end,
+                "disclosed_at": None,
+                "item_type": "agenda_item",
+                "procedure_type": procedure_type,
+                "medicine_name": medicine_name,
+                "active_substance": None,
+                "sponsor": None,
+                "title": f"{committee} agenda: {procedure_type} — {medicine_name}",
+                "source": f"EMA_{committee}_AGENDA",
+                "url": url,
+                "confidence": "MED",
+                "tags": _make_tags(procedure_type, committee),
+                "raw": {"snippet": item_text[:300]},
+            }
+        )
 
     return events, unmatched
 
@@ -1048,10 +1112,17 @@ def _parse_meeting_highlights(
     # Walk headings to find outcome sections.
     # Only emit outcomes under decision-grade sections — drop "other",
     # PSUR, administrative, etc. at the collector to keep signal clean.
-    _SIGNAL_CODES = frozenset({
-        "positive_opinion", "negative_opinion", "refusal",
-        "withdrawn", "referral_started", "referral_concluded", "safety_signal",
-    })
+    _SIGNAL_CODES = frozenset(
+        {
+            "positive_opinion",
+            "negative_opinion",
+            "refusal",
+            "withdrawn",
+            "referral_started",
+            "referral_concluded",
+            "safety_signal",
+        }
+    )
     current_outcome_code = None
     seen_ids = set()
 
@@ -1088,32 +1159,37 @@ def _parse_meeting_highlights(
 
         event_id = _make_event_id(
             f"EMA_{committee}_OUTCOME_{meeting_end}_{current_outcome_code}",
-            medicine_name, committee, meeting_start, meeting_end,
+            medicine_name,
+            committee,
+            meeting_start,
+            meeting_end,
         )
         if event_id in seen_ids:
             continue
         seen_ids.add(event_id)
 
-        outcomes.append({
-            "schema": "ema_meeting_outcome.v1",
-            "id": event_id,
-            "ticker": ticker,
-            "jurisdiction": "EU",
-            "committee": committee,
-            "meeting_start": meeting_start,
-            "meeting_end": meeting_end,
-            "event_date": meeting_end,
-            "disclosed_at": disclosed_at,
-            "outcome_code": current_outcome_code,
-            "medicine_name": medicine_name,
-            "active_substance": None,
-            "indication": None,
-            "title": f"{committee} meeting highlights: {current_outcome_code} — {medicine_name}",
-            "source": "EMA_MEETING_HIGHLIGHTS",
-            "url": url,
-            "confidence": "HIGH",
-            "raw": {"section": current_outcome_code, "snippet": text[:300]},
-        })
+        outcomes.append(
+            {
+                "schema": "ema_meeting_outcome.v1",
+                "id": event_id,
+                "ticker": ticker,
+                "jurisdiction": "EU",
+                "committee": committee,
+                "meeting_start": meeting_start,
+                "meeting_end": meeting_end,
+                "event_date": meeting_end,
+                "disclosed_at": disclosed_at,
+                "outcome_code": current_outcome_code,
+                "medicine_name": medicine_name,
+                "active_substance": None,
+                "indication": None,
+                "title": f"{committee} meeting highlights: {current_outcome_code} — {medicine_name}",
+                "source": "EMA_MEETING_HIGHLIGHTS",
+                "url": url,
+                "confidence": "HIGH",
+                "raw": {"section": current_outcome_code, "snippet": text[:300]},
+            }
+        )
 
     return outcomes, unmatched
 
@@ -1150,7 +1226,9 @@ def _process_annex_items(
         sponsor = item.get("sponsor")
 
         ticker = _match_medicine_to_ticker(
-            medicine_name, active_substance, product_ticker_map,
+            medicine_name,
+            active_substance,
+            product_ticker_map,
         )
         if ticker is None:
             stats["unmatched"] += 1
@@ -1162,35 +1240,41 @@ def _process_annex_items(
 
         event_id = _make_event_id(
             f"EMA_{committee}_AGENDA_{meeting_end}",
-            medicine_name, process_type, committee, meeting_start, meeting_end,
+            medicine_name,
+            process_type,
+            committee,
+            meeting_start,
+            meeting_end,
         )
         if event_id in seen_ids:
             continue
         seen_ids.add(event_id)
 
         classified_type = _classify_procedure_type(process_type)
-        events.append({
-            "schema": "ema_committee_event.v1",
-            "id": event_id,
-            "ticker": ticker,
-            "jurisdiction": "EU",
-            "committee": committee,
-            "meeting_start": meeting_start,
-            "meeting_end": meeting_end,
-            "event_date": meeting_end,
-            "disclosed_at": disclosed_at,
-            "item_type": "agenda_item",
-            "procedure_type": classified_type,
-            "medicine_name": medicine_name,
-            "active_substance": active_substance,
-            "sponsor": sponsor,
-            "title": f"{committee} agenda: {process_type} — {medicine_name}",
-            "source": f"EMA_{committee}_AGENDA",
-            "url": annex_url,
-            "confidence": "MED",
-            "tags": _make_tags(classified_type, committee),
-            "raw": {"process_type_raw": process_type},
-        })
+        events.append(
+            {
+                "schema": "ema_committee_event.v1",
+                "id": event_id,
+                "ticker": ticker,
+                "jurisdiction": "EU",
+                "committee": committee,
+                "meeting_start": meeting_start,
+                "meeting_end": meeting_end,
+                "event_date": meeting_end,
+                "disclosed_at": disclosed_at,
+                "item_type": "agenda_item",
+                "procedure_type": classified_type,
+                "medicine_name": medicine_name,
+                "active_substance": active_substance,
+                "sponsor": sponsor,
+                "title": f"{committee} agenda: {process_type} — {medicine_name}",
+                "source": f"EMA_{committee}_AGENDA",
+                "url": annex_url,
+                "confidence": "MED",
+                "tags": _make_tags(classified_type, committee),
+                "raw": {"process_type_raw": process_type},
+            }
+        )
 
     return events
 
@@ -1245,10 +1329,18 @@ def collect_ema_committee_events(
     all_events: List[dict] = []
     all_unmatched: List[str] = []
     stats: Dict[str, Any] = {
-        "fetched_pages": 0, "parsed_docs": 0, "matched_tickers": 0,
-        "unmatched_items": 0, "meeting_pages_found": 0, "docs_found": 0,
-        "items_parsed": 0, "matched": 0, "unmatched": 0,
-        "rss_agenda_items": 0, "rss_event_items": 0, "discovery_tier": {},
+        "fetched_pages": 0,
+        "parsed_docs": 0,
+        "matched_tickers": 0,
+        "unmatched_items": 0,
+        "meeting_pages_found": 0,
+        "docs_found": 0,
+        "items_parsed": 0,
+        "matched": 0,
+        "unmatched": 0,
+        "rss_agenda_items": 0,
+        "rss_event_items": 0,
+        "discovery_tier": {},
     }
 
     # Cache RSS XML once per run — shared across committees.
@@ -1274,10 +1366,7 @@ def collect_ema_committee_events(
                 logger.warning("EMA RSS agendas feed fetch failed: %s", e)
                 rss_agendas_xml = ""
 
-        rss_agenda_items = (
-            _parse_rss_agenda_items(rss_agendas_xml, committee)
-            if rss_agendas_xml else []
-        )
+        rss_agenda_items = _parse_rss_agenda_items(rss_agendas_xml, committee) if rss_agendas_xml else []
         stats["rss_agenda_items"] += len(rss_agenda_items)
 
         for rss_item in rss_agenda_items:
@@ -1305,12 +1394,17 @@ def collect_ema_committee_events(
                 continue
 
             stats["items_parsed"] += len(xlsx_items)
-            disclosed_at = (
-                _parse_rfc2822_date(rss_item.get("pub_date", "")) or as_of_iso
-            )
+            disclosed_at = _parse_rfc2822_date(rss_item.get("pub_date", "")) or as_of_iso
             new_events = _process_annex_items(
-                xlsx_items, committee, meeting_start, meeting_end,
-                disclosed_at, annex_url, product_ticker_map, stats, all_unmatched,
+                xlsx_items,
+                committee,
+                meeting_start,
+                meeting_end,
+                disclosed_at,
+                annex_url,
+                product_ticker_map,
+                stats,
+                all_unmatched,
             )
             all_events.extend(new_events)
             collected_meeting_keys.add(meeting_key)
@@ -1328,10 +1422,7 @@ def collect_ema_committee_events(
                 logger.warning("EMA RSS events feed fetch failed: %s", e)
                 rss_events_xml = ""
 
-        rss_event_items = (
-            _parse_rss_event_items(rss_events_xml, committee)
-            if rss_events_xml else []
-        )
+        rss_event_items = _parse_rss_event_items(rss_events_xml, committee) if rss_events_xml else []
         stats["rss_event_items"] += len(rss_event_items)
 
         for rss_item in rss_event_items:
@@ -1348,8 +1439,7 @@ def collect_ema_committee_events(
                 event_html = _fetch(rss_item["url"])
                 stats["fetched_pages"] += 1
             except Exception as e:
-                logger.warning("EMA tier-2 event page fetch failed for %s: %s",
-                               rss_item["url"], e)
+                logger.warning("EMA tier-2 event page fetch failed for %s: %s", rss_item["url"], e)
                 continue
 
             docs = _discover_event_page_documents(event_html, _BASE_URL)
@@ -1374,8 +1464,15 @@ def collect_ema_committee_events(
                 stats["items_parsed"] += len(xlsx_items)
                 disclosed_at = annex_doc.get("first_published") or as_of_iso
                 new_events = _process_annex_items(
-                    xlsx_items, committee, meeting_start, meeting_end,
-                    disclosed_at, aurl, product_ticker_map, stats, all_unmatched,
+                    xlsx_items,
+                    committee,
+                    meeting_start,
+                    meeting_end,
+                    disclosed_at,
+                    aurl,
+                    product_ticker_map,
+                    stats,
+                    all_unmatched,
                 )
                 all_events.extend(new_events)
                 stats["parsed_docs"] += 1
@@ -1440,14 +1537,22 @@ def collect_ema_committee_events(
                 stats["items_parsed"] += len(xlsx_items)
                 disclosed_at = annex_doc.get("first_published") or as_of_iso
                 new_events = _process_annex_items(
-                    xlsx_items, committee, meeting_start, meeting_end,
-                    disclosed_at, annex_url, product_ticker_map, stats, all_unmatched,
+                    xlsx_items,
+                    committee,
+                    meeting_start,
+                    meeting_end,
+                    disclosed_at,
+                    annex_url,
+                    product_ticker_map,
+                    stats,
+                    all_unmatched,
                 )
                 all_events.extend(new_events)
                 collected_meeting_keys.add(meeting_key)
                 stats["parsed_docs"] += 1
                 stats["discovery_tier"].setdefault(
-                    f"{committee}|{meeting_end}", "landing_page",
+                    f"{committee}|{meeting_end}",
+                    "landing_page",
                 )
                 break  # one annex per meeting
 
@@ -1456,38 +1561,43 @@ def collect_ema_committee_events(
                 used_event_pages = True
                 event_id = _make_event_id(
                     f"EMA_{committee}_AGENDA_{meeting_end}",
-                    committee, meeting_start, meeting_end,
+                    committee,
+                    meeting_start,
+                    meeting_end,
                 )
                 disclosed_at = as_of_iso
                 for d in docs.get("agenda", []) + docs.get("annex", []):
                     if d.get("first_published"):
                         disclosed_at = d["first_published"]
                         break
-                all_events.append({
-                    "schema": "ema_committee_event.v1",
-                    "id": event_id,
-                    "ticker": None,
-                    "jurisdiction": "EU",
-                    "committee": committee,
-                    "meeting_start": meeting_start,
-                    "meeting_end": meeting_end,
-                    "event_date": meeting_end,
-                    "disclosed_at": disclosed_at,
-                    "item_type": "meeting",
-                    "procedure_type": None,
-                    "medicine_name": None,
-                    "active_substance": None,
-                    "sponsor": None,
-                    "title": f"{committee} meeting {meeting_start} to {meeting_end}",
-                    "source": f"EMA_{committee}_AGENDA",
-                    "url": mp["url"],
-                    "confidence": "MED",
-                    "tags": _make_tags(None, committee),
-                    "raw": {},
-                })
+                all_events.append(
+                    {
+                        "schema": "ema_committee_event.v1",
+                        "id": event_id,
+                        "ticker": None,
+                        "jurisdiction": "EU",
+                        "committee": committee,
+                        "meeting_start": meeting_start,
+                        "meeting_end": meeting_end,
+                        "event_date": meeting_end,
+                        "disclosed_at": disclosed_at,
+                        "item_type": "meeting",
+                        "procedure_type": None,
+                        "medicine_name": None,
+                        "active_substance": None,
+                        "sponsor": None,
+                        "title": f"{committee} meeting {meeting_start} to {meeting_end}",
+                        "source": f"EMA_{committee}_AGENDA",
+                        "url": mp["url"],
+                        "confidence": "MED",
+                        "tags": _make_tags(None, committee),
+                        "raw": {},
+                    }
+                )
                 collected_meeting_keys.add(meeting_key)
                 stats["discovery_tier"].setdefault(
-                    f"{committee}|{meeting_end}", "landing_page",
+                    f"{committee}|{meeting_end}",
+                    "landing_page",
                 )
 
         # Tier 3b: landing page doc links fallback
@@ -1524,15 +1634,22 @@ def collect_ema_committee_events(
                         if xlsx_items:
                             stats["items_parsed"] += len(xlsx_items)
                             new_events = _process_annex_items(
-                                xlsx_items, committee, meeting_start, meeting_end,
-                                doc_disclosed, doc_url, product_ticker_map,
-                                stats, all_unmatched,
+                                xlsx_items,
+                                committee,
+                                meeting_start,
+                                meeting_end,
+                                doc_disclosed,
+                                doc_url,
+                                product_ticker_map,
+                                stats,
+                                all_unmatched,
                             )
                             all_events.extend(new_events)
                             collected_meeting_keys.add(meeting_key)
                             stats["parsed_docs"] += 1
                             stats["discovery_tier"].setdefault(
-                                f"{committee}|{meeting_end}", "landing_page",
+                                f"{committee}|{meeting_end}",
+                                "landing_page",
                             )
                             continue  # skip meeting-level placeholder
 
@@ -1540,38 +1657,43 @@ def collect_ema_committee_events(
                     collected_meeting_keys.add(meeting_key)
                     event_id = _make_event_id(
                         f"EMA_{committee}_AGENDA_{meeting_end}",
-                        committee, meeting_start, meeting_end,
+                        committee,
+                        meeting_start,
+                        meeting_end,
                     )
                     title = doc["title"]
                     title = re.sub(r"\s*\([\d.,]+\s*[KMG]B\s*-\s*\w+\)\s*$", "", title).strip()
                     title = re.sub(r"\s*Draft\s+Reference\s+Number:.*$", "", title).strip()
                     title = re.sub(r"\s*Reference\s+Number:.*$", "", title).strip()
 
-                    all_events.append({
-                        "schema": "ema_committee_event.v1",
-                        "id": event_id,
-                        "ticker": None,
-                        "jurisdiction": "EU",
-                        "committee": committee,
-                        "meeting_start": meeting_start,
-                        "meeting_end": meeting_end,
-                        "event_date": meeting_end,
-                        "disclosed_at": doc_disclosed,
-                        "item_type": "meeting",
-                        "procedure_type": None,
-                        "medicine_name": None,
-                        "active_substance": None,
-                        "sponsor": None,
-                        "title": title,
-                        "source": f"EMA_{committee}_AGENDA",
-                        "url": doc_url,
-                        "confidence": "MED",
-                        "tags": _make_tags(None, committee),
-                        "raw": {},
-                    })
+                    all_events.append(
+                        {
+                            "schema": "ema_committee_event.v1",
+                            "id": event_id,
+                            "ticker": None,
+                            "jurisdiction": "EU",
+                            "committee": committee,
+                            "meeting_start": meeting_start,
+                            "meeting_end": meeting_end,
+                            "event_date": meeting_end,
+                            "disclosed_at": doc_disclosed,
+                            "item_type": "meeting",
+                            "procedure_type": None,
+                            "medicine_name": None,
+                            "active_substance": None,
+                            "sponsor": None,
+                            "title": title,
+                            "source": f"EMA_{committee}_AGENDA",
+                            "url": doc_url,
+                            "confidence": "MED",
+                            "tags": _make_tags(None, committee),
+                            "raw": {},
+                        }
+                    )
                     stats["parsed_docs"] += 1
                     stats["discovery_tier"].setdefault(
-                        f"{committee}|{meeting_end}", "landing_page",
+                        f"{committee}|{meeting_end}",
+                        "landing_page",
                     )
                 else:
                     try:
@@ -1583,8 +1705,12 @@ def collect_ema_committee_events(
                         continue
 
                     events, unmatched = _parse_agenda_page(
-                        doc_html, doc_url, committee,
-                        meeting_start, meeting_end, product_ticker_map,
+                        doc_html,
+                        doc_url,
+                        committee,
+                        meeting_start,
+                        meeting_end,
+                        product_ticker_map,
                     )
                     for ev in events:
                         if ev["disclosed_at"] is None:
@@ -1594,7 +1720,8 @@ def collect_ema_committee_events(
                     all_unmatched.extend(unmatched)
                     collected_meeting_keys.add(meeting_key)
                     stats["discovery_tier"].setdefault(
-                        f"{committee}|{meeting_end}", "landing_page",
+                        f"{committee}|{meeting_end}",
+                        "landing_page",
                     )
 
     stats["matched_tickers"] = len(set(ev["ticker"] for ev in all_events if ev.get("ticker")))
@@ -1608,10 +1735,7 @@ def collect_ema_committee_events(
         key = raw.split(" (")[0].strip()[:60]
         if key:
             unmatched_counts[key] += 1
-    stats["unmatched_top"] = [
-        {"name": name, "count": count}
-        for name, count in unmatched_counts.most_common(25)
-    ]
+    stats["unmatched_top"] = [{"name": name, "count": count} for name, count in unmatched_counts.most_common(25)]
 
     # Deterministic sort
     all_events.sort(key=lambda e: (e["event_date"], e["committee"], e.get("ticker") or "", e["id"]))
@@ -1626,8 +1750,9 @@ def collect_ema_committee_events(
     }
     _write_cache(cache_path, payload)
 
-    logger.info("EMA committee events: %d events (%d product-level) cached -> %s",
-                len(all_events), stats["matched"], cache_path)
+    logger.info(
+        "EMA committee events: %d events (%d product-level) cached -> %s", len(all_events), stats["matched"], cache_path
+    )
     return all_events
 
 
@@ -1711,7 +1836,10 @@ def collect_ema_meeting_outcomes(
                 continue
 
             outcomes, unmatched = _parse_meeting_highlights(
-                hl_html, hl["url"], committee, product_ticker_map,
+                hl_html,
+                hl["url"],
+                committee,
+                product_ticker_map,
             )
             all_outcomes.extend(outcomes)
             all_unmatched.extend(unmatched)
@@ -1724,10 +1852,7 @@ def collect_ema_meeting_outcomes(
         key = raw.split(" (")[0].strip()[:60]
         if key:
             unmatched_counts[key] += 1
-    stats["unmatched_top"] = [
-        {"name": name, "count": count}
-        for name, count in unmatched_counts.most_common(25)
-    ]
+    stats["unmatched_top"] = [{"name": name, "count": count} for name, count in unmatched_counts.most_common(25)]
 
     # Deterministic sort
     all_outcomes.sort(key=lambda e: (e["event_date"], e["committee"], e["ticker"], e["id"]))

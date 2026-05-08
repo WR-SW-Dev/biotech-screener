@@ -1,4 +1,5 @@
 """Tests for scripts/backfill_clinical_cache.py"""
+
 from __future__ import annotations
 
 import json
@@ -14,18 +15,12 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from scripts.backfill_clinical_cache import (
-    _business_days,
-    _pit_filter_trials,
-    _serialize,
-    backfill_one_date,
-    main,
-)
-
+from scripts.backfill_clinical_cache import _business_days, _pit_filter_trials, _serialize, backfill_one_date, main
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _fake_m4_result(trial_records=None, active_tickers=None, as_of_date=None):
     """Deterministic stub for compute_module_4_clinical_dev."""
@@ -61,9 +56,7 @@ def _fake_m4_result(trial_records=None, active_tickers=None, as_of_date=None):
             "n_neutral_endpoints": 0,
             "phase_counts": {"phase_2": 1},
         }
-        for i, t in enumerate(
-            tickers if isinstance(tickers, list) else sorted(tickers)
-        )
+        for i, t in enumerate(tickers if isinstance(tickers, list) else sorted(tickers))
     ]
     return {
         "as_of_date": as_of_date,
@@ -98,10 +91,34 @@ def fake_env(tmp_path):
 
     # trial_records.json — 4 trials, 1 has future last_update_posted
     trials = [
-        {"ticker": "AAA", "nct_id": "NCT001", "last_update_posted": "2026-01-10", "phase": "PHASE2", "status": "RECRUITING"},
-        {"ticker": "BBB", "nct_id": "NCT002", "last_update_posted": "2026-01-14", "phase": "PHASE3", "status": "COMPLETED"},
-        {"ticker": "CCC", "nct_id": "NCT003", "last_update_posted": "2026-01-20", "phase": "PHASE1", "status": "RECRUITING"},
-        {"ticker": "AAA", "nct_id": "NCT004", "last_update_posted": "2099-12-31", "phase": "PHASE2", "status": "NOT_YET_RECRUITING"},
+        {
+            "ticker": "AAA",
+            "nct_id": "NCT001",
+            "last_update_posted": "2026-01-10",
+            "phase": "PHASE2",
+            "status": "RECRUITING",
+        },
+        {
+            "ticker": "BBB",
+            "nct_id": "NCT002",
+            "last_update_posted": "2026-01-14",
+            "phase": "PHASE3",
+            "status": "COMPLETED",
+        },
+        {
+            "ticker": "CCC",
+            "nct_id": "NCT003",
+            "last_update_posted": "2026-01-20",
+            "phase": "PHASE1",
+            "status": "RECRUITING",
+        },
+        {
+            "ticker": "AAA",
+            "nct_id": "NCT004",
+            "last_update_posted": "2099-12-31",
+            "phase": "PHASE2",
+            "status": "NOT_YET_RECRUITING",
+        },
     ]
     (data_dir / "trial_records.json").write_text(json.dumps(trials))
 
@@ -115,12 +132,12 @@ PATCH_TARGET = "scripts.backfill_clinical_cache.compute_module_4_clinical_dev"
 # Unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestBusinessDays:
     def test_weekdays_only(self):
         days = list(_business_days(date(2026, 1, 12), date(2026, 1, 18)))
         # Mon 12, Tue 13, Wed 14, Thu 15, Fri 16  (skip Sat 17, Sun 18)
-        assert days == [date(2026, 1, 12), date(2026, 1, 13), date(2026, 1, 14),
-                        date(2026, 1, 15), date(2026, 1, 16)]
+        assert days == [date(2026, 1, 12), date(2026, 1, 13), date(2026, 1, 14), date(2026, 1, 15), date(2026, 1, 16)]
 
     def test_single_weekend(self):
         days = list(_business_days(date(2026, 1, 17), date(2026, 1, 18)))
@@ -158,6 +175,7 @@ class TestSerialize:
 # Integration-ish tests (monkeypatched Module 4)
 # ---------------------------------------------------------------------------
 
+
 class TestBackfillOneDate:
     def test_writes_cache_file(self, fake_env):
         data_dir, cache_dir, _, _ = fake_env
@@ -172,9 +190,7 @@ class TestBackfillOneDate:
         data_dir, cache_dir, _, _ = fake_env
         with patch(PATCH_TARGET, side_effect=_fake_m4_result):
             backfill_one_date(date(2026, 1, 15), data_dir, cache_dir)
-        cached = json.loads(
-            (cache_dir / "clinical" / "clinical_features_2026-01-15.json").read_text()
-        )
+        cached = json.loads((cache_dir / "clinical" / "clinical_features_2026-01-15.json").read_text())
         assert "as_of_date" in cached
         assert "provenance" in cached
         assert "diagnostic_counts" in cached
@@ -206,16 +222,19 @@ class TestBackfillOneDate:
         ctgov_dir = cache_dir / "ctgov"
         ctgov_dir.mkdir(parents=True, exist_ok=True)
         ctgov_trials = [
-            {"ticker": "AAA", "nct_id": "NCT001", "last_update_posted": "2026-01-10",
-             "phase": "PHASE2", "status": "RECRUITING"},
+            {
+                "ticker": "AAA",
+                "nct_id": "NCT001",
+                "last_update_posted": "2026-01-10",
+                "phase": "PHASE2",
+                "status": "RECRUITING",
+            },
         ]
         (ctgov_dir / "trial_records_2026-01-15.json").write_text(json.dumps(ctgov_trials))
 
         with patch(PATCH_TARGET, side_effect=_fake_m4_result):
             backfill_one_date(date(2026, 1, 15), data_dir, cache_dir)
-        cached = json.loads(
-            (cache_dir / "clinical" / "clinical_features_2026-01-15.json").read_text()
-        )
+        cached = json.loads((cache_dir / "clinical" / "clinical_features_2026-01-15.json").read_text())
         assert "ctgov" in cached["provenance"]["trial_records_source"]
 
     def test_fallback_applies_pit_filter(self, fake_env):
@@ -241,8 +260,18 @@ class TestMainCLI:
         data_dir, cache_dir, _, _ = fake_env
         with patch(PATCH_TARGET, side_effect=_fake_m4_result):
             # Sat Jan 17 to Sun Jan 18 — 0 business days
-            main(["--from-date", "2026-01-17", "--to-date", "2026-01-18",
-                   "--data-dir", str(data_dir), "--cache-dir", str(cache_dir)])
+            main(
+                [
+                    "--from-date",
+                    "2026-01-17",
+                    "--to-date",
+                    "2026-01-18",
+                    "--data-dir",
+                    str(data_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                ]
+            )
         clinical_dir = cache_dir / "clinical"
         if clinical_dir.exists():
             assert list(clinical_dir.glob("*.json")) == []
@@ -250,8 +279,18 @@ class TestMainCLI:
     def test_two_weekdays(self, fake_env):
         data_dir, cache_dir, _, _ = fake_env
         with patch(PATCH_TARGET, side_effect=_fake_m4_result):
-            main(["--from-date", "2026-01-15", "--to-date", "2026-01-16",
-                   "--data-dir", str(data_dir), "--cache-dir", str(cache_dir)])
+            main(
+                [
+                    "--from-date",
+                    "2026-01-15",
+                    "--to-date",
+                    "2026-01-16",
+                    "--data-dir",
+                    str(data_dir),
+                    "--cache-dir",
+                    str(cache_dir),
+                ]
+            )
         files = sorted((cache_dir / "clinical").glob("*.json"))
         assert len(files) == 2
         assert files[0].name == "clinical_features_2026-01-15.json"

@@ -3,15 +3,12 @@
 Tests for Pipeline Diversity Engine
 """
 
-import pytest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
-from pipeline_diversity_engine import (
-    PipelineDiversityEngine,
-    PipelineRiskProfile,
-    PlatformType,
-)
+import pytest
+
+from pipeline_diversity_engine import PipelineDiversityEngine, PipelineRiskProfile, PlatformType
 
 
 class TestPipelineDiversityEngine:
@@ -81,8 +78,20 @@ class TestPipelineDiversityEngine:
         """Programs across multiple indications get diversity bonus."""
         trial_records = [
             {"ticker": "MULTI", "nct_id": "NCT001", "phase": "Phase 2", "conditions": ["Cancer"], "interventions": []},
-            {"ticker": "MULTI", "nct_id": "NCT002", "phase": "Phase 2", "conditions": ["Diabetes"], "interventions": []},
-            {"ticker": "MULTI", "nct_id": "NCT003", "phase": "Phase 2", "conditions": ["Alzheimer"], "interventions": []},
+            {
+                "ticker": "MULTI",
+                "nct_id": "NCT002",
+                "phase": "Phase 2",
+                "conditions": ["Diabetes"],
+                "interventions": [],
+            },
+            {
+                "ticker": "MULTI",
+                "nct_id": "NCT003",
+                "phase": "Phase 2",
+                "conditions": ["Alzheimer"],
+                "interventions": [],
+            },
         ]
         as_of = date(2026, 1, 26)
 
@@ -97,9 +106,27 @@ class TestPipelineDiversityEngine:
     def test_platform_validation(self, engine):
         """Platform with 3+ programs gets validation bonus."""
         trial_records = [
-            {"ticker": "PLAT", "nct_id": "NCT001", "phase": "Phase 1", "conditions": ["Cancer"], "interventions": ["mRNA vaccine"]},
-            {"ticker": "PLAT", "nct_id": "NCT002", "phase": "Phase 2", "conditions": ["Cancer"], "interventions": ["mRNA therapeutic"]},
-            {"ticker": "PLAT", "nct_id": "NCT003", "phase": "Phase 3", "conditions": ["Infectious"], "interventions": ["mRNA vaccine"]},
+            {
+                "ticker": "PLAT",
+                "nct_id": "NCT001",
+                "phase": "Phase 1",
+                "conditions": ["Cancer"],
+                "interventions": ["mRNA vaccine"],
+            },
+            {
+                "ticker": "PLAT",
+                "nct_id": "NCT002",
+                "phase": "Phase 2",
+                "conditions": ["Cancer"],
+                "interventions": ["mRNA therapeutic"],
+            },
+            {
+                "ticker": "PLAT",
+                "nct_id": "NCT003",
+                "phase": "Phase 3",
+                "conditions": ["Infectious"],
+                "interventions": ["mRNA vaccine"],
+            },
         ]
         as_of = date(2026, 1, 26)
 
@@ -208,8 +235,13 @@ class TestPlatformInference:
     def test_infer_mrna_platform(self, engine):
         """mRNA interventions detected as RNA platform."""
         trial_records = [
-            {"ticker": "RNA", "nct_id": "NCT001", "phase": "Phase 2",
-             "conditions": ["Cancer"], "interventions": ["mRNA-1234 vaccine"]},
+            {
+                "ticker": "RNA",
+                "nct_id": "NCT001",
+                "phase": "Phase 2",
+                "conditions": ["Cancer"],
+                "interventions": ["mRNA-1234 vaccine"],
+            },
         ]
         as_of = date(2026, 1, 26)
 
@@ -219,8 +251,13 @@ class TestPlatformInference:
     def test_infer_car_t_platform(self, engine):
         """CAR-T interventions detected correctly."""
         trial_records = [
-            {"ticker": "CART", "nct_id": "NCT001", "phase": "Phase 1",
-             "conditions": ["Leukemia"], "interventions": ["CAR-T cell therapy"]},
+            {
+                "ticker": "CART",
+                "nct_id": "NCT001",
+                "phase": "Phase 1",
+                "conditions": ["Leukemia"],
+                "interventions": ["CAR-T cell therapy"],
+            },
         ]
         as_of = date(2026, 1, 26)
 
@@ -230,8 +267,13 @@ class TestPlatformInference:
     def test_infer_antibody_platform(self, engine):
         """Antibody interventions detected correctly."""
         trial_records = [
-            {"ticker": "MAB", "nct_id": "NCT001", "phase": "Phase 3",
-             "conditions": ["Autoimmune"], "interventions": ["Anti-CD20 monoclonal antibody"]},
+            {
+                "ticker": "MAB",
+                "nct_id": "NCT001",
+                "phase": "Phase 3",
+                "conditions": ["Autoimmune"],
+                "interventions": ["Anti-CD20 monoclonal antibody"],
+            },
         ]
         as_of = date(2026, 1, 26)
 

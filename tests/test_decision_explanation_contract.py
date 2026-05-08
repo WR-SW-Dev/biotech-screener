@@ -10,6 +10,7 @@ Validates that:
 
 Uses the same golden fixtures and _rec() builder from test_decision_engine_contract.
 """
+
 from __future__ import annotations
 
 import sys
@@ -21,10 +22,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import (
-    DECISION_COLUMNS,
-    compute_decision_fields,
-)
+from decision_engine import DECISION_COLUMNS, compute_decision_fields
 from decision_engine_codes import (
     ELIGIBILITY_CODES,
     RISK_FLAG_CODES,
@@ -38,16 +36,12 @@ from decision_engine_codes import (
     describe_code,
     registry_fingerprint,
 )
-from tests.test_decision_engine_contract import (
-    ALL_GOLDEN,
-    _compute_golden,
-    _rec,
-)
-
+from tests.test_decision_engine_contract import ALL_GOLDEN, _compute_golden, _rec
 
 # =============================================================================
 # HELPERS
 # =============================================================================
+
 
 def _all_golden_fields() -> List[Dict[str, Any]]:
     """Compute decision fields for all 10 golden fixtures."""
@@ -64,6 +58,7 @@ def _parse_pipe(val: str) -> List[str]:
 # =============================================================================
 # 1. REGISTRY COMPLETENESS — every emitted code is in the registry
 # =============================================================================
+
 
 class TestRegistryCompleteness:
     """Every code emitted by golden fixtures must be in the canonical registry."""
@@ -88,8 +83,7 @@ class TestRegistryCompleteness:
             codes = _parse_pipe(fields.get("risk_flags", ""))
             for code in codes:
                 assert code in RISK_FLAG_CODES, (
-                    f"Risk flag '{code}' not in RISK_FLAG_CODES. "
-                    f"Update decision_engine_codes.py to add it."
+                    f"Risk flag '{code}' not in RISK_FLAG_CODES. " f"Update decision_engine_codes.py to add it."
                 )
 
     def test_all_size_reasons_in_registry(self, all_fields):
@@ -98,8 +92,7 @@ class TestRegistryCompleteness:
             codes = _parse_pipe(fields.get("size_reasons", ""))
             for code in codes:
                 assert code in SIZING_CODES, (
-                    f"Sizing reason '{code}' not in SIZING_CODES. "
-                    f"Update decision_engine_codes.py to add it."
+                    f"Sizing reason '{code}' not in SIZING_CODES. " f"Update decision_engine_codes.py to add it."
                 )
 
     def test_all_tier_reasons_in_registry(self, all_fields):
@@ -107,14 +100,14 @@ class TestRegistryCompleteness:
         for fields in all_fields:
             tr = fields.get("tier_reason", "")
             assert tr in VALID_TIER_REASONS, (
-                f"Tier reason '{tr}' not in VALID_TIER_REASONS. "
-                f"Update decision_engine_codes.py to add it."
+                f"Tier reason '{tr}' not in VALID_TIER_REASONS. " f"Update decision_engine_codes.py to add it."
             )
 
 
 # =============================================================================
 # 2. ENUM EXHAUSTIVENESS — overlay values are in valid sets
 # =============================================================================
+
 
 class TestEnumExhaustiveness:
     """All golden fixture overlay values belong to canonical enum sets."""
@@ -127,38 +120,31 @@ class TestEnumExhaustiveness:
         """All golden catalyst_mode values in VALID_CATALYST_MODES."""
         for fields in all_fields:
             val = fields.get("catalyst_mode", "")
-            assert val in VALID_CATALYST_MODES, (
-                f"catalyst_mode '{val}' not in VALID_CATALYST_MODES"
-            )
+            assert val in VALID_CATALYST_MODES, f"catalyst_mode '{val}' not in VALID_CATALYST_MODES"
 
     def test_catalyst_strength_in_valid_set(self, all_fields):
         """All golden catalyst_strength values in VALID_CATALYST_STRENGTHS."""
         for fields in all_fields:
             val = fields.get("catalyst_strength", "")
-            assert val in VALID_CATALYST_STRENGTHS, (
-                f"catalyst_strength '{val}' not in VALID_CATALYST_STRENGTHS"
-            )
+            assert val in VALID_CATALYST_STRENGTHS, f"catalyst_strength '{val}' not in VALID_CATALYST_STRENGTHS"
 
     def test_mom_state_in_valid_set(self, all_fields):
         """All golden mom_state values in VALID_MOM_STATES."""
         for fields in all_fields:
             val = fields.get("mom_state", "")
-            assert val in VALID_MOM_STATES, (
-                f"mom_state '{val}' not in VALID_MOM_STATES"
-            )
+            assert val in VALID_MOM_STATES, f"mom_state '{val}' not in VALID_MOM_STATES"
 
     def test_runway_bucket_in_valid_set(self, all_fields):
         """All golden runway_bucket values in VALID_RUNWAY_BUCKETS."""
         for fields in all_fields:
             val = fields.get("runway_bucket", "")
-            assert val in VALID_RUNWAY_BUCKETS, (
-                f"runway_bucket '{val}' not in VALID_RUNWAY_BUCKETS"
-            )
+            assert val in VALID_RUNWAY_BUCKETS, f"runway_bucket '{val}' not in VALID_RUNWAY_BUCKETS"
 
 
 # =============================================================================
 # 3. MUTUAL EXCLUSIVITY — certain codes never co-occur
 # =============================================================================
+
 
 class TestMutualExclusivity:
     """Structural invariants: certain codes are mutually exclusive."""
@@ -169,25 +155,25 @@ class TestMutualExclusivity:
         rec_missing = _rec("ME_MISS", drawdown=None)
         f1 = compute_decision_fields(rec_missing, "drug_developer", 0.65)
         flags1 = _parse_pipe(f1.get("risk_flags", ""))
-        assert not ("drawdown_data_missing" in flags1 and "deep_drawdown" in flags1), (
-            "drawdown_data_missing and deep_drawdown must be mutually exclusive"
-        )
+        assert not (
+            "drawdown_data_missing" in flags1 and "deep_drawdown" in flags1
+        ), "drawdown_data_missing and deep_drawdown must be mutually exclusive"
 
         # Test with deep drawdown
         rec_deep = _rec("ME_DEEP", drawdown=-0.55)
         f2 = compute_decision_fields(rec_deep, "drug_developer", 0.65)
         flags2 = _parse_pipe(f2.get("risk_flags", ""))
-        assert not ("drawdown_data_missing" in flags2 and "deep_drawdown" in flags2), (
-            "drawdown_data_missing and deep_drawdown must be mutually exclusive"
-        )
+        assert not (
+            "drawdown_data_missing" in flags2 and "deep_drawdown" in flags2
+        ), "drawdown_data_missing and deep_drawdown must be mutually exclusive"
 
     def test_ineligible_and_tier_a_dev_exclusive_in_sizing(self):
         """ineligible and tier_a_dev never co-occur in size_reasons."""
         for fields in _all_golden_fields():
             codes = _parse_pipe(fields.get("size_reasons", ""))
-            assert not ("ineligible" in codes and "tier_a_dev" in codes), (
-                "ineligible and tier_a_dev must be mutually exclusive in sizing"
-            )
+            assert not (
+                "ineligible" in codes and "tier_a_dev" in codes
+            ), "ineligible and tier_a_dev must be mutually exclusive in sizing"
 
     def test_eligible_zero_implies_tier_d_or_blank(self):
         """eligible='0' with drug_developer archetype → tier_dev='D'."""
@@ -208,14 +194,14 @@ class TestMutualExclusivity:
             if fields.get("tier_dev") == "A":
                 strength = fields.get("catalyst_strength", "")
                 assert strength in ("near", "mid"), (
-                    f"[{g['ticker']}] A-tier requires actionable catalyst "
-                    f"(near or mid), got '{strength}'"
+                    f"[{g['ticker']}] A-tier requires actionable catalyst " f"(near or mid), got '{strength}'"
                 )
 
 
 # =============================================================================
 # 4. BUILD EXPLANATION — structured output correctness
 # =============================================================================
+
 
 class TestBuildExplanation:
     """build_explanation() produces correct structured output."""
@@ -226,8 +212,7 @@ class TestBuildExplanation:
             explanation = build_explanation(fields)
             expected_domains = {"eligibility", "tier", "sizing", "risk", "overlays"}
             assert set(explanation.keys()) == expected_domains, (
-                f"Explanation missing domains: "
-                f"{expected_domains - set(explanation.keys())}"
+                f"Explanation missing domains: " f"{expected_domains - set(explanation.keys())}"
             )
 
             # Check sub-structure
@@ -263,11 +248,9 @@ class TestBuildExplanation:
         assert tier_block["tier"] == "A"
         assert "high_opt" in tier_block["primary_reasons"]
         # Should have a catalyst component
-        catalyst_reasons = [r for r in tier_block["primary_reasons"]
-                           if r.startswith("catalyst_")]
+        catalyst_reasons = [r for r in tier_block["primary_reasons"] if r.startswith("catalyst_")]
         assert len(catalyst_reasons) == 1, (
-            f"Expected exactly one catalyst tag in A-tier reasons, "
-            f"got {catalyst_reasons}"
+            f"Expected exactly one catalyst tag in A-tier reasons, " f"got {catalyst_reasons}"
         )
         assert tier_block["optionality_band"] == "high_opt"
         assert tier_block["catalyst_proximity"] != ""
@@ -276,6 +259,7 @@ class TestBuildExplanation:
 # =============================================================================
 # 5. REGISTRY FINGERPRINT — pinned value for drift detection
 # =============================================================================
+
 
 class TestRegistryFingerprint:
     """Registry fingerprint must match pinned value."""
@@ -338,7 +322,4 @@ class TestRegistryFingerprint:
                 return
         # If we reach here, the fingerprint wasn't in any section header —
         # the first test already catches this case.
-        pytest.fail(
-            f"Registry fingerprint {actual} not found in any ## section header "
-            f"of RULESET_CHANGELOG.md."
-        )
+        pytest.fail(f"Registry fingerprint {actual} not found in any ## section header " f"of RULESET_CHANGELOG.md.")

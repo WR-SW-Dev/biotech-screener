@@ -16,10 +16,10 @@ import json
 import logging
 import os
 import tempfile
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import List, Dict, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 from governance.canonical_json import canonical_dumps
 
@@ -28,11 +28,13 @@ logger = logging.getLogger(__name__)
 
 class AuditLogError(Exception):
     """Raised when audit log operations fail."""
+
     pass
 
 
 class AuditStage(str, Enum):
     """Pipeline stages for audit tracking."""
+
     INIT = "INIT"
     LOAD = "LOAD"
     ADAPT = "ADAPT"
@@ -45,6 +47,7 @@ class AuditStage(str, Enum):
 
 class AuditStatus(str, Enum):
     """Audit record status."""
+
     OK = "OK"
     FAIL = "FAIL"
     SKIP = "SKIP"
@@ -52,6 +55,7 @@ class AuditStatus(str, Enum):
 
 class AuditErrorCode(str, Enum):
     """Standard error codes for audit failures."""
+
     MISSING_INPUT = "MISSING_INPUT"
     SCHEMA_MISMATCH = "SCHEMA_MISMATCH"
     HASH_ERROR = "HASH_ERROR"
@@ -64,6 +68,7 @@ class AuditErrorCode(str, Enum):
 @dataclass
 class StageIO:
     """Input or output artifact reference."""
+
     path: str
     sha256: str
     role: str  # e.g., "market_data", "output", "parameters"
@@ -80,6 +85,7 @@ class StageIO:
 @dataclass
 class AuditRecord:
     """Single audit log record."""
+
     run_id: str
     stage_name: AuditStage
     status: AuditStatus
@@ -155,7 +161,7 @@ class AuditLog:
     def _serialize_record(self, record: AuditRecord) -> str:
         """Serialize record to canonical JSON line."""
         # Use compact canonical JSON (no indent)
-        return canonical_dumps(record.to_dict(), indent=None).rstrip('\n')
+        return canonical_dumps(record.to_dict(), indent=None).rstrip("\n")
 
     def log_stage(
         self,
@@ -275,15 +281,11 @@ class AuditLog:
         fd = None
         tmp_path = None
         try:
-            fd, tmp_path = tempfile.mkstemp(
-                dir=self.output_path.parent,
-                prefix='.audit_tmp_',
-                suffix='.jsonl'
-            )
-            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            fd, tmp_path = tempfile.mkstemp(dir=self.output_path.parent, prefix=".audit_tmp_", suffix=".jsonl")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
                 fd = None  # fd is now owned by the file object
                 for record in self.records:
-                    f.write(self._serialize_record(record) + '\n')
+                    f.write(self._serialize_record(record) + "\n")
 
             # Atomic rename
             Path(tmp_path).replace(self.output_path)
@@ -294,7 +296,7 @@ class AuditLog:
             logger.error(f"Permission denied writing audit log: {self.output_path}")
             raise AuditLogError(f"Cannot write audit log: {e}") from e
         except OSError as e:
-            if "No space left" in str(e) or getattr(e, 'errno', 0) == 28:
+            if "No space left" in str(e) or getattr(e, "errno", 0) == 28:
                 logger.error(f"Disk full writing audit log: {self.output_path}")
                 raise AuditLogError("Disk full - cannot write audit log") from e
             logger.error(f"Failed to write audit log: {e}")
@@ -335,13 +337,13 @@ class AuditLog:
             raise AuditLogError(f"Cannot create audit log directory: {e}") from e
 
         try:
-            with open(self.output_path, 'a', encoding='utf-8') as f:
-                f.write(self._serialize_record(record) + '\n')
+            with open(self.output_path, "a", encoding="utf-8") as f:
+                f.write(self._serialize_record(record) + "\n")
         except PermissionError as e:
             logger.error(f"Permission denied appending to audit log: {self.output_path}")
             raise AuditLogError(f"Cannot append to audit log: {e}") from e
         except OSError as e:
-            if "No space left" in str(e) or getattr(e, 'errno', 0) == 28:
+            if "No space left" in str(e) or getattr(e, "errno", 0) == 28:
                 logger.error(f"Disk full appending to audit log: {self.output_path}")
                 raise AuditLogError("Disk full - cannot append to audit log") from e
             logger.error(f"Failed to append to audit log: {e}")
@@ -368,7 +370,7 @@ def load_audit_log(path: Union[str, Path]) -> List[Dict[str, Any]]:
         raise AuditLogError(f"Audit log not found: {path}")
 
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             line_num = 0
             for line in f:
                 line_num += 1

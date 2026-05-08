@@ -32,16 +32,15 @@ Version: 1.0.0
 
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import asdict, dataclass, field
 from datetime import date
-from dataclasses import dataclass, field, asdict
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import enhancement modules
 from pos_engine import ProbabilityOfSuccessEngine
-from short_interest_engine import ShortInterestSignalEngine
 from regime_engine import RegimeDetectionEngine
-
+from short_interest_engine import ShortInterestSignalEngine
 
 # Module metadata
 __version__ = "1.0.0"
@@ -51,6 +50,7 @@ __author__ = "Wake Robin Capital Management"
 @dataclass
 class EnhancedCompanyScore:
     """Enhanced company score with all signal layers."""
+
     ticker: str
     composite_score: Decimal
     pos_score: Decimal
@@ -67,6 +67,7 @@ class EnhancedCompanyScore:
 @dataclass
 class EnhancedScreeningResult:
     """Complete enhanced screening result."""
+
     as_of_date: str
     regime: str
     regime_confidence: Decimal
@@ -112,7 +113,7 @@ class EnhancementOrchestrator:
         "financial": Decimal("0.25"),
         "catalyst": Decimal("0.15"),
         "pos": Decimal("0.15"),
-        "short_interest": Decimal("0.10")
+        "short_interest": Decimal("0.10"),
     }
 
     # Severity multipliers (aligned with existing system)
@@ -120,7 +121,7 @@ class EnhancementOrchestrator:
         "none": Decimal("1.00"),
         "sev1": Decimal("0.90"),
         "sev2": Decimal("0.50"),
-        "sev3": Decimal("0.00")
+        "sev3": Decimal("0.00"),
     }
 
     def __init__(self, enable_short_interest: bool = True):
@@ -143,7 +144,7 @@ class EnhancementOrchestrator:
         vix_current: Decimal,
         xbi_vs_spy_30d: Decimal,
         fed_rate_change_3m: Optional[Decimal] = None,
-        as_of_date: Optional[date] = None
+        as_of_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Detect current market regime.
@@ -157,7 +158,7 @@ class EnhancementOrchestrator:
             vix_current=vix_current,
             xbi_vs_spy_30d=xbi_vs_spy_30d,
             fed_rate_change_3m=fed_rate_change_3m,
-            as_of_date=as_of_date
+            as_of_date=as_of_date,
         )
 
     def score_company(
@@ -166,7 +167,7 @@ class EnhancementOrchestrator:
         company_data: Dict[str, Any],
         base_scores: Dict[str, Decimal],
         regime_result: Optional[Dict[str, Any]] = None,
-        as_of_date: Optional[date] = None
+        as_of_date: Optional[date] = None,
     ) -> EnhancedCompanyScore:
         """
         Score a single company through all enhancement layers.
@@ -202,7 +203,7 @@ class EnhancementOrchestrator:
             indication=company_data.get("indication"),
             trial_design_quality=self._to_decimal(company_data.get("trial_design_quality")),
             competitive_intensity=self._to_decimal(company_data.get("competitive_intensity")),
-            as_of_date=as_of_date
+            as_of_date=as_of_date,
         )
         pos_score = pos_result["stage_score"]
         pos_multiplier = pos_result["loa_probability"]  # Use LOA probability as multiplier
@@ -216,7 +217,7 @@ class EnhancementOrchestrator:
                 days_to_cover=self._to_decimal(company_data.get("days_to_cover")),
                 short_interest_change_pct=self._to_decimal(company_data.get("short_interest_change_pct")),
                 institutional_long_pct=self._to_decimal(company_data.get("institutional_long_pct")),
-                as_of_date=as_of_date
+                as_of_date=as_of_date,
             )
             short_score = short_result["short_signal_score"]
             squeeze_potential = short_result["squeeze_potential"]
@@ -237,8 +238,7 @@ class EnhancementOrchestrator:
         # Get weights (regime-adjusted if available)
         if regime_result:
             weights = self.regime_engine.get_composite_weight_adjustments(
-                regime=regime_result.get("regime", "UNKNOWN"),
-                base_weights=self.DEFAULT_WEIGHTS
+                regime=regime_result.get("regime", "UNKNOWN"), base_weights=self.DEFAULT_WEIGHTS
             )
         else:
             weights = self.DEFAULT_WEIGHTS.copy()
@@ -273,11 +273,9 @@ class EnhancementOrchestrator:
         audit_data = {
             "ticker": ticker,
             "composite": str(composite_score),
-            "layers": {k: str(v) for k, v in layer_scores.items()}
+            "layers": {k: str(v) for k, v in layer_scores.items()},
         }
-        audit_hash = hashlib.sha256(
-            json.dumps(audit_data, sort_keys=True).encode()
-        ).hexdigest()[:16]
+        audit_hash = hashlib.sha256(json.dumps(audit_data, sort_keys=True).encode()).hexdigest()[:16]
 
         return EnhancedCompanyScore(
             ticker=ticker,
@@ -290,7 +288,7 @@ class EnhancementOrchestrator:
             severity=severity,
             flags=flags,
             layer_scores={k: v for k, v in layer_scores.items()},
-            audit_hash=audit_hash
+            audit_hash=audit_hash,
         )
 
     def score_universe(
@@ -298,7 +296,7 @@ class EnhancementOrchestrator:
         universe: List[Dict[str, Any]],
         base_scores_map: Dict[str, Dict[str, Decimal]],
         regime_result: Optional[Dict[str, Any]] = None,
-        as_of_date: Optional[date] = None
+        as_of_date: Optional[date] = None,
     ) -> EnhancedScreeningResult:
         """
         Score an entire universe of companies.
@@ -315,6 +313,7 @@ class EnhancementOrchestrator:
 
         if as_of_date is None:
             import logging
+
             logging.getLogger(__name__).warning(
                 "EnhancementOrchestrator.score called without as_of_date; "
                 "defaulting to date.today(). Pass as_of_date explicitly for determinism."
@@ -335,11 +334,9 @@ class EnhancementOrchestrator:
             ticker = company.get("ticker", "UNKNOWN")
 
             # Get base scores for this ticker
-            base_scores = base_scores_map.get(ticker, {
-                "clinical": Decimal("50"),
-                "financial": Decimal("50"),
-                "catalyst": Decimal("50")
-            })
+            base_scores = base_scores_map.get(
+                ticker, {"clinical": Decimal("50"), "financial": Decimal("50"), "catalyst": Decimal("50")}
+            )
 
             # Score company
             score = self.score_company(
@@ -347,17 +344,14 @@ class EnhancementOrchestrator:
                 company_data=company,
                 base_scores=base_scores,
                 regime_result=regime_result,
-                as_of_date=as_of_date
+                as_of_date=as_of_date,
             )
             scores.append(score)
 
             # Track distributions
-            squeeze_distribution[score.squeeze_potential] = \
-                squeeze_distribution.get(score.squeeze_potential, 0) + 1
-            signal_distribution[score.signal_direction] = \
-                signal_distribution.get(score.signal_direction, 0) + 1
-            severity_distribution[score.severity] = \
-                severity_distribution.get(score.severity, 0) + 1
+            squeeze_distribution[score.squeeze_potential] = squeeze_distribution.get(score.squeeze_potential, 0) + 1
+            signal_distribution[score.signal_direction] = signal_distribution.get(score.signal_direction, 0) + 1
+            severity_distribution[score.severity] = severity_distribution.get(score.severity, 0) + 1
 
         # Sort by composite score (descending)
         scores.sort(key=lambda x: x.composite_score, reverse=True)
@@ -367,10 +361,7 @@ class EnhancementOrchestrator:
             score.flags.append(f"RANK_{i + 1}")
 
         # Calculate content hash for determinism verification
-        scores_json = json.dumps(
-            [{"t": s.ticker, "s": str(s.composite_score)} for s in scores],
-            sort_keys=True
-        )
+        scores_json = json.dumps([{"t": s.ticker, "s": str(s.composite_score)} for s in scores], sort_keys=True)
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
         # Deterministic timestamp
@@ -384,7 +375,7 @@ class EnhancementOrchestrator:
             "regime_confidence": str(regime_confidence),
             "universe_size": len(universe),
             "content_hash": content_hash,
-            "module_version": self.VERSION
+            "module_version": self.VERSION,
         }
         self.audit_trail.append(audit_entry)
 
@@ -400,7 +391,7 @@ class EnhancementOrchestrator:
                 "signal_distribution": signal_distribution,
                 "severity_distribution": severity_distribution,
                 "regime": regime,
-                "regime_confidence": str(regime_confidence)
+                "regime_confidence": str(regime_confidence),
             },
             provenance={
                 "module": "enhancement_orchestrator",
@@ -409,14 +400,12 @@ class EnhancementOrchestrator:
                 "pit_cutoff": as_of_date.isoformat(),
                 "pos_engine_version": self.pos_engine.VERSION,
                 "regime_engine_version": self.regime_engine.VERSION,
-                "short_interest_enabled": str(self.enable_short_interest)
-            }
+                "short_interest_enabled": str(self.enable_short_interest),
+            },
         )
 
     def integrate_with_module5(
-        self,
-        enhanced_scores: EnhancedScreeningResult,
-        module5_scores: List[Dict[str, Any]]
+        self, enhanced_scores: EnhancedScreeningResult, module5_scores: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
         Integrate enhanced scores with existing Module 5 composite scores.
@@ -433,9 +422,7 @@ class EnhancementOrchestrator:
         """
 
         # Create lookup for enhanced scores
-        enhanced_lookup = {
-            s.ticker: s for s in enhanced_scores.scores
-        }
+        enhanced_lookup = {s.ticker: s for s in enhanced_scores.scores}
 
         merged_scores = []
         for m5_score in module5_scores:
@@ -478,9 +465,8 @@ class EnhancementOrchestrator:
             "pos_engine": self.pos_engine.get_audit_trail(),
             "regime_engine": self.regime_engine.get_audit_trail(),
             "short_interest_engine": (
-                self.short_interest_engine.get_audit_trail()
-                if self.short_interest_engine else []
-            )
+                self.short_interest_engine.get_audit_trail() if self.short_interest_engine else []
+            ),
         }
 
     def clear_audit_trail(self) -> None:
@@ -509,7 +495,7 @@ def demonstration():
         vix_current=Decimal("18.5"),
         xbi_vs_spy_30d=Decimal("3.2"),
         fed_rate_change_3m=Decimal("-0.25"),
-        as_of_date=date(2026, 1, 11)
+        as_of_date=date(2026, 1, 11),
     )
 
     print(f"Regime: {regime_result['regime']}")
@@ -530,7 +516,7 @@ def demonstration():
             "days_to_cover": Decimal("8.2"),
             "short_interest_change_pct": Decimal("-12.0"),
             "institutional_long_pct": Decimal("55.0"),
-            "severity": "none"
+            "severity": "none",
         },
         {
             "ticker": "BIOTECH",
@@ -540,7 +526,7 @@ def demonstration():
             "days_to_cover": Decimal("3.1"),
             "short_interest_change_pct": Decimal("5.0"),
             "institutional_long_pct": Decimal("70.0"),
-            "severity": "none"
+            "severity": "none",
         },
         {
             "ticker": "PHARMA",
@@ -549,21 +535,18 @@ def demonstration():
             "short_interest_pct": Decimal("35.0"),
             "days_to_cover": Decimal("15.5"),
             "short_interest_change_pct": Decimal("-25.0"),
-            "severity": "sev1"
-        }
+            "severity": "sev1",
+        },
     ]
 
     base_scores_map = {
         "ACME": {"clinical": Decimal("75"), "financial": Decimal("65"), "catalyst": Decimal("80")},
         "BIOTECH": {"clinical": Decimal("85"), "financial": Decimal("70"), "catalyst": Decimal("60")},
-        "PHARMA": {"clinical": Decimal("55"), "financial": Decimal("40"), "catalyst": Decimal("70")}
+        "PHARMA": {"clinical": Decimal("55"), "financial": Decimal("40"), "catalyst": Decimal("70")},
     }
 
     results = orchestrator.score_universe(
-        universe=universe,
-        base_scores_map=base_scores_map,
-        regime_result=regime_result,
-        as_of_date=date(2026, 1, 11)
+        universe=universe, base_scores_map=base_scores_map, regime_result=regime_result, as_of_date=date(2026, 1, 11)
     )
 
     print(f"Regime: {results.regime}")

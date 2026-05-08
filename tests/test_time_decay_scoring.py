@@ -6,36 +6,37 @@ Tests the multi-window time-decay scoring system that weights catalyst
 events based on recency.
 """
 
-import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 
-from time_decay_scoring import (
-    TimeDecayConfig,
-    TimeDecayWindow,
-    WindowScoreResult,
-    TimeDecayScoreResult,
-    DEFAULT_TIME_DECAY_WINDOWS,
-    compute_event_score,
-    filter_events_for_window,
-    score_window,
-    compute_time_decay_score,
-    score_all_tickers_with_time_decay,
-    integrate_time_decay_into_summary,
-)
+import pytest
+
 from module_3_schema_v2 import (
     CatalystEventV2,
-    EventType,
-    EventSeverity,
     ConfidenceLevel,
-    SourceReliability,
     DateSpecificity,
+    EventSeverity,
+    EventType,
+    SourceReliability,
 )
-
+from time_decay_scoring import (
+    DEFAULT_TIME_DECAY_WINDOWS,
+    TimeDecayConfig,
+    TimeDecayScoreResult,
+    TimeDecayWindow,
+    WindowScoreResult,
+    compute_event_score,
+    compute_time_decay_score,
+    filter_events_for_window,
+    integrate_time_decay_into_summary,
+    score_all_tickers_with_time_decay,
+    score_window,
+)
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -116,6 +117,7 @@ def sample_event_old(as_of_date):
 # TEST TIME DECAY WINDOW
 # =============================================================================
 
+
 class TestTimeDecayWindow:
     """Tests for TimeDecayWindow configuration."""
 
@@ -156,7 +158,7 @@ class TestTimeDecayConfig:
             "windows": [
                 {"name": "14d", "lookback_days": 14, "weight": "0.8"},
                 {"name": "60d", "lookback_days": 60, "weight": "0.4"},
-            ]
+            ],
         }
         config = TimeDecayConfig.from_dict(config_dict)
         assert config.use_max_across_windows is False
@@ -169,6 +171,7 @@ class TestTimeDecayConfig:
 # =============================================================================
 # TEST EVENT SCORING
 # =============================================================================
+
 
 class TestEventScoring:
     """Tests for individual event scoring."""
@@ -189,6 +192,7 @@ class TestEventScoring:
 # =============================================================================
 # TEST WINDOW FILTERING
 # =============================================================================
+
 
 class TestWindowFiltering:
     """Tests for event filtering by time window."""
@@ -272,6 +276,7 @@ class TestWindowFiltering:
 # TEST WINDOW SCORING
 # =============================================================================
 
+
 class TestWindowScoring:
     """Tests for scoring events within a window."""
 
@@ -304,6 +309,7 @@ class TestWindowScoring:
 # =============================================================================
 # TEST TIME DECAY SCORING
 # =============================================================================
+
 
 class TestTimeDecayScoring:
     """Tests for complete time-decay scoring."""
@@ -375,6 +381,7 @@ class TestTimeDecayScoring:
 # TEST BATCH SCORING
 # =============================================================================
 
+
 class TestBatchScoring:
     """Tests for batch scoring all tickers."""
 
@@ -413,6 +420,7 @@ class TestBatchScoring:
 # TEST INTEGRATION HELPER
 # =============================================================================
 
+
 class TestIntegrationHelper:
     """Tests for integration with composite scoring."""
 
@@ -430,9 +438,7 @@ class TestIntegrationHelper:
         )
 
         base_score = Decimal("50.0")
-        adjusted, explanation = integrate_time_decay_into_summary(
-            td_result, base_score
-        )
+        adjusted, explanation = integrate_time_decay_into_summary(td_result, base_score)
 
         # Positive momentum should increase score
         assert adjusted > base_score
@@ -452,9 +458,7 @@ class TestIntegrationHelper:
         )
 
         base_score = Decimal("50.0")
-        adjusted, explanation = integrate_time_decay_into_summary(
-            td_result, base_score
-        )
+        adjusted, explanation = integrate_time_decay_into_summary(td_result, base_score)
 
         # Negative momentum should decrease score
         assert adjusted < base_score
@@ -474,9 +478,7 @@ class TestIntegrationHelper:
         )
 
         base_score = Decimal("50.0")
-        adjusted, explanation = integrate_time_decay_into_summary(
-            td_result, base_score
-        )
+        adjusted, explanation = integrate_time_decay_into_summary(td_result, base_score)
 
         assert "[cluster bonus]" in explanation
 
@@ -484,6 +486,7 @@ class TestIntegrationHelper:
 # =============================================================================
 # TEST DETERMINISM
 # =============================================================================
+
 
 class TestDeterminism:
     """Tests for deterministic behavior."""
@@ -513,12 +516,8 @@ class TestDeterminism:
         events_by_ticker = {"SIGA": [sample_event_positive]}
         active_tickers = ["SIGA", "TEST"]
 
-        results1, _ = score_all_tickers_with_time_decay(
-            events_by_ticker, active_tickers, as_of_date
-        )
-        results2, _ = score_all_tickers_with_time_decay(
-            events_by_ticker, active_tickers, as_of_date
-        )
+        results1, _ = score_all_tickers_with_time_decay(events_by_ticker, active_tickers, as_of_date)
+        results2, _ = score_all_tickers_with_time_decay(events_by_ticker, active_tickers, as_of_date)
 
         assert results1["SIGA"].final_score == results2["SIGA"].final_score
 
@@ -526,6 +525,7 @@ class TestDeterminism:
 # =============================================================================
 # TEST SERIALIZATION
 # =============================================================================
+
 
 class TestSerialization:
     """Tests for result serialization."""

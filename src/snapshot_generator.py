@@ -31,12 +31,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Optional, TypedDict, Union
 
-from common.hash_utils import (
-    compute_hash,
-    compute_snapshot_id,
-    compute_trial_facts_hash,
-    stable_json_dumps,
-)
+from common.hash_utils import compute_hash, compute_snapshot_id, compute_trial_facts_hash, stable_json_dumps
+
 from .providers import (
     AACTClinicalTrialsProvider,
     ClinicalTrialsProvider,
@@ -50,6 +46,7 @@ from .providers.aact_provider import load_trial_mapping
 # TypedDicts for structured data
 class ClinicalProviderProvenance(TypedDict):
     """Provenance info for clinical provider."""
+
     name: str
     snapshot_date_used: str
     snapshots_root: str
@@ -60,17 +57,20 @@ class ClinicalProviderProvenance(TypedDict):
 
 class ProvidersProvenance(TypedDict):
     """Provenance info for all providers."""
+
     clinical: ClinicalProviderProvenance
 
 
 class SnapshotProvenance(TypedDict):
     """Full provenance metadata."""
+
     pit_cutoff: str
     providers: ProvidersProvenance
 
 
 class CoverageStats(TypedDict):
     """Coverage statistics for a module."""
+
     tickers_total: int
     tickers_with_trials: int
     coverage_rate: float
@@ -78,6 +78,7 @@ class CoverageStats(TypedDict):
 
 class TickerData(TypedDict):
     """Per-ticker data in snapshot."""
+
     trials: list[dict[str, Union[str, int, bool, None, list[str]]]]
     trial_count: int
     module3_catalyst: Optional[float]
@@ -86,6 +87,7 @@ class TickerData(TypedDict):
 
 class SnapshotDict(TypedDict):
     """Full snapshot dictionary structure."""
+
     snapshot_id: str
     as_of_date: str
     generated_at: str
@@ -97,31 +99,29 @@ class SnapshotDict(TypedDict):
     tickers: dict[str, TickerData]
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SnapshotConfig:
     """Configuration for snapshot generation."""
+
     as_of_date: date
     pit_lag_days: int = 1  # Default: 1 day lag for PIT safety
-    
+
     # Paths
     universe_file: Path = field(default_factory=lambda: Path("data/universe/biotech_universe_v1.csv"))
     prices_file: Path = field(default_factory=lambda: Path("data/stooq_prices.csv"))
     output_dir: Path = field(default_factory=lambda: Path("snapshots"))
-    
+
     # Clinical provider config
     clinical_provider: str = "stub"  # "stub" or "aact"
     aact_snapshots_dir: Optional[Path] = None
     trial_mapping_file: Optional[Path] = None
     aact_cache_dir: Optional[Path] = None
     aact_enable_diffs: bool = False  # Enable PCD push / status flip computation
-    
+
     @property
     def pit_cutoff(self) -> date:
         """Compute PIT cutoff date."""
@@ -136,6 +136,7 @@ class Snapshot:
     Designed for JSON serialization with full provenance and
     deterministic reproducibility.
     """
+
     # Core metadata
     snapshot_id: str
     as_of_date: date
@@ -170,7 +171,7 @@ class Snapshot:
             "coverage": self.coverage,
             "tickers": self.tickers,
         }
-    
+
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
@@ -179,25 +180,25 @@ class Snapshot:
 def load_universe(universe_file: Path) -> list[str]:
     """
     Load ticker universe from CSV.
-    
+
     Expected columns: ticker (required), other columns optional
-    
+
     Returns:
         Sorted list of tickers
     """
     tickers = []
-    
+
     if not universe_file.exists():
         logger.warning(f"Universe file not found: {universe_file}")
         return tickers
-    
+
     with open(universe_file, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             ticker = row.get("ticker", "").strip().upper()
             if ticker:
                 tickers.append(ticker)
-    
+
     # Sort for determinism
     tickers = sorted(set(tickers))
     logger.info(f"Loaded universe: {len(tickers)} tickers")
@@ -207,26 +208,26 @@ def load_universe(universe_file: Path) -> list[str]:
 def create_clinical_provider(config: SnapshotConfig) -> ClinicalTrialsProvider:
     """
     Factory function to create clinical trials provider.
-    
+
     Args:
         config: Snapshot configuration
-    
+
     Returns:
         Configured provider instance
     """
     if config.clinical_provider == "stub":
         return StubClinicalTrialsProvider()
-    
+
     elif config.clinical_provider == "aact":
         if config.aact_snapshots_dir is None:
             raise ValueError("--aact-snapshots required when --clinical-provider=aact")
-        
+
         return AACTClinicalTrialsProvider(
             snapshots_root=config.aact_snapshots_dir,
             strict_pit=True,
             compute_diffs=config.aact_enable_diffs,
         )
-    
+
     else:
         raise ValueError(f"Unknown clinical provider: {config.clinical_provider}")
 
@@ -234,31 +235,31 @@ def create_clinical_provider(config: SnapshotConfig) -> ClinicalTrialsProvider:
 def generate_snapshot(config: SnapshotConfig) -> Snapshot:
     """
     Generate a complete snapshot.
-    
+
     Args:
         config: Snapshot configuration
-    
+
     Returns:
         Generated Snapshot object
     """
     from datetime import datetime, timezone
-    
+
     logger.info(f"Generating snapshot for {config.as_of_date} (pit_cutoff={config.pit_cutoff})")
-    
+
     # Load universe
     tickers = load_universe(config.universe_file)
-    
+
     if not tickers:
         raise ValueError("No tickers in universe")
-    
+
     # Load trial mapping if using AACT
     trial_mapping: dict[str, list[str]] = {}
     if config.clinical_provider == "aact" and config.trial_mapping_file:
         trial_mapping = load_trial_mapping(config.trial_mapping_file)
-    
+
     # Create clinical provider
     clinical_provider = create_clinical_provider(config)
-    
+
     # Get clinical trials data
     clinical_result = clinical_provider.get_trials_as_of(
         as_of_date=config.as_of_date,
@@ -266,16 +267,16 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
         tickers=tickers,
         trial_mapping=trial_mapping,
     )
-    
+
     # Compute input hashes
     trial_facts_hash = compute_trial_facts_hash(clinical_result.trials_by_ticker)
     universe_hash = compute_hash(tickers)
-    
+
     input_hashes = {
         "universe": universe_hash,
         "trial_facts": trial_facts_hash,
     }
-    
+
     # Build provenance
     provenance = {
         "pit_cutoff": config.pit_cutoff.isoformat(),
@@ -288,9 +289,9 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
                 "compute_diffs_available": clinical_result.compute_diffs_available,
                 "snapshots_available_count": clinical_result.snapshots_available_count,
             }
-        }
+        },
     }
-    
+
     # Build coverage statistics
     coverage = {
         "catalyst": {
@@ -302,15 +303,15 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
             "tickers_total": clinical_result.tickers_total,
             "tickers_with_trials": clinical_result.tickers_with_trials,
             "coverage_rate": float(clinical_result.coverage_rate),
-        }
+        },
     }
-    
+
     # Build per-ticker data
     tickers_data: dict[str, TickerData] = {}
-    
+
     for ticker in tickers:
         trials = clinical_result.trials_by_ticker.get(ticker, [])
-        
+
         tickers_data[ticker] = {
             "trials": [t.to_dict() for t in trials],
             "trial_count": len(trials),
@@ -318,7 +319,7 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
             "module3_catalyst": None,
             "module4_clinical": None,
         }
-    
+
     # Compute snapshot ID
     snapshot_id = compute_snapshot_id(
         as_of_date=config.as_of_date,
@@ -326,7 +327,7 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
         input_hashes=input_hashes,
         provider_metadata=provenance["providers"],
     )
-    
+
     snapshot = Snapshot(
         snapshot_id=snapshot_id,
         as_of_date=config.as_of_date,
@@ -338,28 +339,28 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
         coverage=coverage,
         tickers=tickers_data,
     )
-    
+
     return snapshot
 
 
 def save_snapshot(snapshot: Snapshot, output_dir: Path) -> Path:
     """
     Save snapshot to JSON file.
-    
+
     Args:
         snapshot: Snapshot to save
         output_dir: Output directory
-    
+
     Returns:
         Path to saved file
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     output_file = output_dir / f"{snapshot.as_of_date.isoformat()}.json"
-    
+
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(snapshot.to_json())
-    
+
     logger.info(f"Saved snapshot to {output_file}")
     return output_file
 
@@ -370,7 +371,7 @@ def main() -> None:
         description="Generate biotech alpha snapshots",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    
+
     # Required arguments
     parser.add_argument(
         "--as-of",
@@ -378,7 +379,7 @@ def main() -> None:
         required=True,
         help="Snapshot date (YYYY-MM-DD)",
     )
-    
+
     # Input paths
     parser.add_argument(
         "--universe",
@@ -392,7 +393,7 @@ def main() -> None:
         default=Path("data/stooq_prices.csv"),
         help="Path to prices CSV",
     )
-    
+
     # Output
     parser.add_argument(
         "--output",
@@ -400,7 +401,7 @@ def main() -> None:
         default=Path("snapshots"),
         help="Output directory for snapshots",
     )
-    
+
     # PIT configuration
     parser.add_argument(
         "--pit-lag-days",
@@ -408,7 +409,7 @@ def main() -> None:
         default=1,
         help="Days of lag for PIT safety (default: 1)",
     )
-    
+
     # Clinical provider configuration
     parser.add_argument(
         "--clinical-provider",
@@ -437,9 +438,9 @@ def main() -> None:
         default=False,
         help="Enable PCD push / status flip computation (requires multiple snapshots)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Build config
     config = SnapshotConfig(
         as_of_date=args.as_of,
@@ -453,11 +454,11 @@ def main() -> None:
         aact_cache_dir=args.aact_cache,
         aact_enable_diffs=args.aact_enable_diffs,
     )
-    
+
     # Generate and save
     snapshot = generate_snapshot(config)
     output_file = save_snapshot(snapshot, config.output_dir)
-    
+
     # Summary
     print(f"\nSnapshot generated successfully!")
     print(f"  Snapshot ID: {snapshot.snapshot_id}")

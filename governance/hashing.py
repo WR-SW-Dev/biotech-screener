@@ -62,7 +62,7 @@ def hash_canonical_json(obj: Any) -> str:
         TypeError: If obj contains non-serializable types
     """
     canonical = canonical_dumps(obj, indent=None)
-    return hash_bytes(canonical.encode('utf-8'))
+    return hash_bytes(canonical.encode("utf-8"))
 
 
 def hash_canonical_json_short(obj: Any, length: int = 16) -> str:
@@ -112,9 +112,11 @@ def compute_input_hashes(paths: list) -> list:
     results = []
     for path in paths:
         path = Path(path)
-        results.append({
-            "path": path.name,
-            "sha256": hash_file(path),
-        })
+        results.append(
+            {
+                "path": path.name,
+                "sha256": hash_file(path),
+            }
+        )
     # Sort by path for determinism
     return sorted(results, key=lambda x: x["path"])

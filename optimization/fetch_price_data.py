@@ -4,15 +4,16 @@ Fetch historical price data for tickers in screening history.
 Downloads price data from Yahoo Finance to enable forward return calculations.
 """
 
-import json
 import csv
-from pathlib import Path
-from datetime import datetime, timedelta
-from collections import defaultdict
+import json
 import sys
+from collections import defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
 
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
@@ -23,31 +24,31 @@ except ImportError:
 class PriceDataFetcher:
     """Fetch historical price data for optimization."""
 
-    def __init__(self, checkpoint_dir='checkpoints'):
+    def __init__(self, checkpoint_dir="checkpoints"):
         self.checkpoint_dir = Path(checkpoint_dir)
 
     def get_all_tickers(self):
         """Extract all tickers from checkpoint files."""
         tickers = set()
 
-        for filepath in self.checkpoint_dir.glob('module_5_*.json'):
+        for filepath in self.checkpoint_dir.glob("module_5_*.json"):
             try:
                 with open(filepath) as f:
                     checkpoint_data = json.load(f)
 
                 # Handle nested structure (data.ranked_securities)
                 securities = None
-                if 'data' in checkpoint_data:
-                    data = checkpoint_data['data']
-                    if 'ranked_securities' in data:
-                        securities = data['ranked_securities']
+                if "data" in checkpoint_data:
+                    data = checkpoint_data["data"]
+                    if "ranked_securities" in data:
+                        securities = data["ranked_securities"]
 
                 # Fallback to direct keys
                 if securities is None:
-                    securities = checkpoint_data.get('ranked_securities', checkpoint_data.get('results', []))
+                    securities = checkpoint_data.get("ranked_securities", checkpoint_data.get("results", []))
 
                 for security in securities:
-                    ticker = security.get('ticker')
+                    ticker = security.get("ticker")
                     if ticker:
                         tickers.add(ticker)
             except Exception as e:
@@ -60,10 +61,10 @@ class PriceDataFetcher:
         """Get date range from checkpoint files."""
         dates = []
 
-        for filepath in self.checkpoint_dir.glob('module_5_*.json'):
+        for filepath in self.checkpoint_dir.glob("module_5_*.json"):
             try:
-                date_str = filepath.stem.replace('module_5_', '')
-                date = datetime.strptime(date_str, '%Y-%m-%d')
+                date_str = filepath.stem.replace("module_5_", "")
+                date = datetime.strptime(date_str, "%Y-%m-%d")
                 dates.append(date)
             except ValueError:
                 continue
@@ -73,7 +74,7 @@ class PriceDataFetcher:
 
         return min(dates), max(dates)
 
-    def fetch_yahoo_prices(self, tickers, start_date, end_date, output_file='production_data/price_history.csv'):
+    def fetch_yahoo_prices(self, tickers, start_date, end_date, output_file="production_data/price_history.csv"):
         """
         Fetch historical prices from Yahoo Finance.
 
@@ -99,7 +100,7 @@ class PriceDataFetcher:
         failed_tickers = []
 
         for i, ticker in enumerate(tickers, 1):
-            print(f"  [{i}/{len(tickers)}] Fetching {ticker}...", end='', flush=True)
+            print(f"  [{i}/{len(tickers)}] Fetching {ticker}...", end="", flush=True)
 
             try:
                 # Download data
@@ -115,10 +116,10 @@ class PriceDataFetcher:
                 # Determine which column to use for adjusted close price
                 # - yfinance < 1.0 or auto_adjust=False: 'Adj Close'
                 # - yfinance >= 1.0 with auto_adjust=True: 'Close' (already adjusted)
-                if 'Adj Close' in df.columns:
-                    close_col = 'Adj Close'
-                elif 'Close' in df.columns:
-                    close_col = 'Close'
+                if "Adj Close" in df.columns:
+                    close_col = "Adj Close"
+                elif "Close" in df.columns:
+                    close_col = "Close"
                 else:
                     print(" ❌ No price column found")
                     failed_tickers.append(ticker)
@@ -126,11 +127,9 @@ class PriceDataFetcher:
 
                 # Extract data
                 for date, row in df.iterrows():
-                    price_data.append({
-                        'date': date.strftime('%Y-%m-%d'),
-                        'ticker': ticker,
-                        'close': float(row[close_col])
-                    })
+                    price_data.append(
+                        {"date": date.strftime("%Y-%m-%d"), "ticker": ticker, "close": float(row[close_col])}
+                    )
 
                 print(f" ✓ {len(df)} days")
 
@@ -144,8 +143,8 @@ class PriceDataFetcher:
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(output_path, 'w', newline='') as f:
-                fieldnames = ['date', 'ticker', 'close']
+            with open(output_path, "w", newline="") as f:
+                fieldnames = ["date", "ticker", "close"]
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(price_data)
@@ -160,17 +159,13 @@ class PriceDataFetcher:
         else:
             print("\n❌ No price data fetched")
 
-    def fetch_from_yahoo_cache(self, output_file='production_data/price_history.csv'):
+    def fetch_from_yahoo_cache(self, output_file="production_data/price_history.csv"):
         """
         Check for existing Yahoo Finance cache and convert to CSV.
 
         Some systems cache Yahoo data in JSON format. This converts it.
         """
-        cache_files = [
-            'production_data/yahoo_cache.json',
-            'production_data/yahoo_prices.json',
-            'data/yahoo_cache.json'
-        ]
+        cache_files = ["production_data/yahoo_cache.json", "production_data/yahoo_prices.json", "data/yahoo_cache.json"]
 
         for cache_file in cache_files:
             cache_path = Path(cache_file)
@@ -186,18 +181,14 @@ class PriceDataFetcher:
                     for ticker, ticker_data in cache_data.items():
                         if isinstance(ticker_data, dict):
                             for date_str, price in ticker_data.items():
-                                price_data.append({
-                                    'date': date_str,
-                                    'ticker': ticker,
-                                    'close': float(price)
-                                })
+                                price_data.append({"date": date_str, "ticker": ticker, "close": float(price)})
 
                     if price_data:
                         output_path = Path(output_file)
                         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-                        with open(output_path, 'w', newline='') as f:
-                            fieldnames = ['date', 'ticker', 'close']
+                        with open(output_path, "w", newline="") as f:
+                            fieldnames = ["date", "ticker", "close"]
                             writer = csv.DictWriter(f, fieldnames=fieldnames)
                             writer.writeheader()
                             writer.writerows(price_data)
@@ -216,30 +207,18 @@ def main():
     """Main price fetching workflow."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Fetch historical price data for optimization'
-    )
+    parser = argparse.ArgumentParser(description="Fetch historical price data for optimization")
     parser.add_argument(
-        '--checkpoint-dir',
-        default='checkpoints',
-        help='Directory containing module_5_*.json checkpoint files'
+        "--checkpoint-dir", default="checkpoints", help="Directory containing module_5_*.json checkpoint files"
     )
-    parser.add_argument(
-        '--output',
-        default='production_data/price_history.csv',
-        help='Output CSV file'
-    )
-    parser.add_argument(
-        '--check-cache',
-        action='store_true',
-        help='Check for existing Yahoo Finance cache first'
-    )
+    parser.add_argument("--output", default="production_data/price_history.csv", help="Output CSV file")
+    parser.add_argument("--check-cache", action="store_true", help="Check for existing Yahoo Finance cache first")
 
     args = parser.parse_args()
 
-    print("="*60)
+    print("=" * 60)
     print("HISTORICAL PRICE DATA FETCHER")
-    print("="*60)
+    print("=" * 60)
 
     fetcher = PriceDataFetcher(checkpoint_dir=args.checkpoint_dir)
 
@@ -270,12 +249,12 @@ def main():
     # Fetch prices
     fetcher.fetch_yahoo_prices(tickers, start_date, end_date, output_file=args.output)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("PRICE DATA READY")
-    print("="*60)
+    print("=" * 60)
     print("\nNext step: Extract training data")
     print("  python optimization/extract_historical_data.py")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

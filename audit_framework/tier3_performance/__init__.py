@@ -10,25 +10,10 @@ Queries Implemented:
     3.3 - Dependency & Supply Chain Security
 """
 
-from audit_framework.tier3_performance.profiling import (
-    PerformanceValidator,
-    validate_performance,
-)
-
-from audit_framework.tier3_performance.resilience import (
-    ResilienceValidator,
-    validate_resilience,
-)
-
-from audit_framework.tier3_performance.dependencies import (
-    DependencyValidator,
-    validate_dependencies,
-)
-
-from audit_framework.tier3_performance.runner import (
-    run_tier3_audit,
-    Tier3Result,
-)
+from audit_framework.tier3_performance.dependencies import DependencyValidator, validate_dependencies
+from audit_framework.tier3_performance.profiling import PerformanceValidator, validate_performance
+from audit_framework.tier3_performance.resilience import ResilienceValidator, validate_resilience
+from audit_framework.tier3_performance.runner import Tier3Result, run_tier3_audit
 
 __all__ = [
     "PerformanceValidator",

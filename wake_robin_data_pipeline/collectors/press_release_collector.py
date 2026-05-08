@@ -66,10 +66,7 @@ _MONTH_DAY_YEAR = re.compile(
     r"October|November|December)\s+(\d{1,2}),?\s+(\d{4})\b"
 )
 # Abbreviated month: "Mar 15, 2026"
-_ABBR_MONTH_DAY_YEAR = re.compile(
-    r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
-    r"\s+(\d{1,2}),?\s+(\d{4})\b"
-)
+_ABBR_MONTH_DAY_YEAR = re.compile(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)" r"\s+(\d{1,2}),?\s+(\d{4})\b")
 # Month + day without year: "March 15" or "Mar 15"
 _MONTH_DAY_NO_YEAR = re.compile(
     r"\b(January|February|March|April|May|June|July|August|September|"
@@ -211,9 +208,7 @@ def _parse_month_day_year(month_str: str, day_str: str, year_str: str) -> Option
     return None
 
 
-def _parse_month_day_infer_year(
-    month_str: str, day_str: str, disclosed_at: date
-) -> Optional[date]:
+def _parse_month_day_infer_year(month_str: str, day_str: str, disclosed_at: date) -> Optional[date]:
     """Parse month/day without year, inferring year from disclosed_at.
 
     If the resulting date would be in the past relative to disclosed_at,
@@ -295,12 +290,14 @@ def extract_future_dates_from_text(
             continue
 
         seen_dates.add(d.isoformat())
-        results.append({
-            "event_date": d.isoformat(),
-            "matched_phrases": phrases,
-            "date_text": m.group(0),
-            "position": m.start(),
-        })
+        results.append(
+            {
+                "event_date": d.isoformat(),
+                "matched_phrases": phrases,
+                "date_text": m.group(0),
+                "position": m.start(),
+            }
+        )
 
     # Abbreviated month + day + year
     for m in _ABBR_MONTH_DAY_YEAR.finditer(text):
@@ -318,17 +315,19 @@ def extract_future_dates_from_text(
             continue
 
         seen_dates.add(d.isoformat())
-        results.append({
-            "event_date": d.isoformat(),
-            "matched_phrases": phrases,
-            "date_text": m.group(0),
-            "position": m.start(),
-        })
+        results.append(
+            {
+                "event_date": d.isoformat(),
+                "matched_phrases": phrases,
+                "date_text": m.group(0),
+                "position": m.start(),
+            }
+        )
 
     # Month + day without year (infer year)
     for m in _MONTH_DAY_NO_YEAR.finditer(text):
         # Skip if this match is part of a longer "Month DD, YYYY" already captured
-        after_match = text[m.end():m.end() + 10].strip()
+        after_match = text[m.end() : m.end() + 10].strip()
         if re.match(r",?\s*\d{4}", after_match):
             continue
 
@@ -346,12 +345,14 @@ def extract_future_dates_from_text(
             continue
 
         seen_dates.add(d.isoformat())
-        results.append({
-            "event_date": d.isoformat(),
-            "matched_phrases": phrases,
-            "date_text": m.group(0),
-            "position": m.start(),
-        })
+        results.append(
+            {
+                "event_date": d.isoformat(),
+                "matched_phrases": phrases,
+                "date_text": m.group(0),
+                "position": m.start(),
+            }
+        )
 
     return results
 
@@ -376,12 +377,16 @@ def _parse_rss_items(xml_text: str) -> List[Dict[str, str]]:
     # Atom
     ns = {"atom": "http://www.w3.org/2005/Atom"}
     for entry in root.iter("{http://www.w3.org/2005/Atom}entry"):
-        title = (entry.findtext("atom:title", namespaces=ns) or
-                 entry.findtext("{http://www.w3.org/2005/Atom}title") or "").strip()
+        title = (
+            entry.findtext("atom:title", namespaces=ns) or entry.findtext("{http://www.w3.org/2005/Atom}title") or ""
+        ).strip()
         link_el = entry.find("{http://www.w3.org/2005/Atom}link")
         link = (link_el.get("href", "") if link_el is not None else "").strip()
-        pub_date = (entry.findtext("{http://www.w3.org/2005/Atom}published") or
-                    entry.findtext("{http://www.w3.org/2005/Atom}updated") or "").strip()
+        pub_date = (
+            entry.findtext("{http://www.w3.org/2005/Atom}published")
+            or entry.findtext("{http://www.w3.org/2005/Atom}updated")
+            or ""
+        ).strip()
         items.append({"title": title, "link": link, "pubDate": pub_date})
 
     return items
@@ -499,43 +504,45 @@ def collect_press_release_events(
             text = title  # Use title as primary text; HTML fetch is optional
 
             # Extract future dates from title text
-            future_dates = extract_future_dates_from_text(
-                text, disclosed_at, as_of_date
-            )
+            future_dates = extract_future_dates_from_text(text, disclosed_at, as_of_date)
 
             # Cap events per PR
             for fd in future_dates[:_MAX_EVENTS_PER_PR]:
                 record_id = f"PR_{ticker}_{_stable_id(ticker, fd['event_date'], title, link)}"
                 event_kind = _classify_event_kind(title)
 
-                all_events.append({
-                    "schema": "press_release_event.v1",
-                    "id": record_id,
-                    "ticker": ticker,
-                    "jurisdiction": "US",
-                    "event_date": fd["event_date"],
-                    "disclosed_at": disclosed_at.isoformat(),
-                    "event_kind": event_kind,
-                    "title": title[:200],
-                    "url": link,
-                    "source": "PRESS_RELEASE",
-                    "confidence": "MED",
-                    "raw": {
-                        "company": ticker,
-                        "matched_phrases": fd["matched_phrases"],
-                        "date_text": fd["date_text"],
-                        "source_url": link,
-                    },
-                })
+                all_events.append(
+                    {
+                        "schema": "press_release_event.v1",
+                        "id": record_id,
+                        "ticker": ticker,
+                        "jurisdiction": "US",
+                        "event_date": fd["event_date"],
+                        "disclosed_at": disclosed_at.isoformat(),
+                        "event_kind": event_kind,
+                        "title": title[:200],
+                        "url": link,
+                        "source": "PRESS_RELEASE",
+                        "confidence": "MED",
+                        "raw": {
+                            "company": ticker,
+                            "matched_phrases": fd["matched_phrases"],
+                            "date_text": fd["date_text"],
+                            "source_url": link,
+                        },
+                    }
+                )
                 stats["matched"] += 1
 
     # Stable sort
-    all_events.sort(key=lambda e: (
-        e.get("event_date", ""),
-        e.get("ticker", ""),
-        e.get("source", ""),
-        e.get("id", ""),
-    ))
+    all_events.sort(
+        key=lambda e: (
+            e.get("event_date", ""),
+            e.get("ticker", ""),
+            e.get("source", ""),
+            e.get("id", ""),
+        )
+    )
 
     # Write cache wrapper
     wrapper = {

@@ -4,12 +4,14 @@ Free, no API key required. Rate: reasonable (1 req/sec safe)
 
 Enhanced to include balance sheet data for supplementing SEC financials.
 """
+
+import hashlib
 import json
 import logging
 import time
-from pathlib import Path
 from datetime import datetime, timedelta
-import hashlib
+from pathlib import Path
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ def extract_balance_sheet_data(stock) -> dict:
         "long_term_debt": None,
         "current_debt": None,
         "period_date": None,
-        "error": None
+        "error": None,
     }
 
     try:
@@ -48,7 +50,7 @@ def extract_balance_sheet_data(stock) -> dict:
 
         # Get most recent column (most recent quarter)
         latest_col = bs.columns[0]
-        period_date = latest_col.strftime('%Y-%m-%d') if hasattr(latest_col, 'strftime') else str(latest_col)
+        period_date = latest_col.strftime("%Y-%m-%d") if hasattr(latest_col, "strftime") else str(latest_col)
         result["period_date"] = period_date
 
         # Helper to safely extract a value
@@ -64,24 +66,21 @@ def extract_balance_sheet_data(stock) -> dict:
             return None
 
         # Extract key balance sheet items (using exact yfinance field names)
-        result["total_assets"] = get_value(['Total Assets'])
+        result["total_assets"] = get_value(["Total Assets"])
 
-        result["total_liabilities"] = get_value([
-            'Total Liabilities Net Minority Interest',
-            'Current Liabilities'  # Fallback to current only
-        ])
+        result["total_liabilities"] = get_value(
+            ["Total Liabilities Net Minority Interest", "Current Liabilities"]  # Fallback to current only
+        )
 
-        result["stockholders_equity"] = get_value([
-            'Stockholders Equity',
-            'Common Stock Equity',
-            'Total Equity Gross Minority Interest'
-        ])
+        result["stockholders_equity"] = get_value(
+            ["Stockholders Equity", "Common Stock Equity", "Total Equity Gross Minority Interest"]
+        )
 
         # Cash only (not including short-term investments)
-        result["cash"] = get_value(['Cash And Cash Equivalents'])
+        result["cash"] = get_value(["Cash And Cash Equivalents"])
 
         # Total liquidity (cash + short-term investments combined field)
-        result["total_liquidity"] = get_value(['Cash Cash Equivalents And Short Term Investments'])
+        result["total_liquidity"] = get_value(["Cash Cash Equivalents And Short Term Investments"])
 
         # If no combined field, use cash as total liquidity
         if result["total_liquidity"] is None and result["cash"] is not None:
@@ -93,22 +92,13 @@ def extract_balance_sheet_data(stock) -> dict:
             if ms > 0:
                 result["marketable_securities"] = ms
 
-        result["total_debt"] = get_value([
-            'Total Debt',
-            'TotalDebt'
-        ])
+        result["total_debt"] = get_value(["Total Debt", "TotalDebt"])
 
-        result["long_term_debt"] = get_value([
-            'Long Term Debt',
-            'Long Term Debt And Capital Lease Obligation',
-            'LongTermDebt'
-        ])
+        result["long_term_debt"] = get_value(
+            ["Long Term Debt", "Long Term Debt And Capital Lease Obligation", "LongTermDebt"]
+        )
 
-        result["current_debt"] = get_value([
-            'Current Debt',
-            'Current Debt And Capital Lease Obligation',
-            'CurrentDebt'
-        ])
+        result["current_debt"] = get_value(["Current Debt", "Current Debt And Capital Lease Obligation", "CurrentDebt"])
 
         # Mark success if we got at least some core data
         if result["total_assets"] or result["total_liabilities"] or result["cash"]:
@@ -139,7 +129,7 @@ def extract_cash_flow_data(stock) -> dict:
         "investing_cash_flow": None,
         "financing_cash_flow": None,
         "period_date": None,
-        "error": None
+        "error": None,
     }
 
     try:
@@ -151,7 +141,7 @@ def extract_cash_flow_data(stock) -> dict:
 
         # Get most recent column
         latest_col = cf.columns[0]
-        period_date = latest_col.strftime('%Y-%m-%d') if hasattr(latest_col, 'strftime') else str(latest_col)
+        period_date = latest_col.strftime("%Y-%m-%d") if hasattr(latest_col, "strftime") else str(latest_col)
         result["period_date"] = period_date
 
         def get_value(keys):
@@ -164,22 +154,19 @@ def extract_cash_flow_data(stock) -> dict:
                         return float(val)
             return None
 
-        result["operating_cash_flow"] = get_value([
-            'Operating Cash Flow',
-            'Cash Flow From Continuing Operating Activities'
-        ])
+        result["operating_cash_flow"] = get_value(
+            ["Operating Cash Flow", "Cash Flow From Continuing Operating Activities"]
+        )
 
-        result["free_cash_flow"] = get_value(['Free Cash Flow'])
+        result["free_cash_flow"] = get_value(["Free Cash Flow"])
 
-        result["investing_cash_flow"] = get_value([
-            'Investing Cash Flow',
-            'Cash Flow From Continuing Investing Activities'
-        ])
+        result["investing_cash_flow"] = get_value(
+            ["Investing Cash Flow", "Cash Flow From Continuing Investing Activities"]
+        )
 
-        result["financing_cash_flow"] = get_value([
-            'Financing Cash Flow',
-            'Cash Flow From Continuing Financing Activities'
-        ])
+        result["financing_cash_flow"] = get_value(
+            ["Financing Cash Flow", "Cash Flow From Continuing Financing Activities"]
+        )
 
         if result["operating_cash_flow"] is not None:
             result["success"] = True
@@ -212,7 +199,7 @@ def extract_income_statement_data(stock) -> dict:
         "gross_profit": None,
         "ebitda": None,
         "period_date": None,
-        "error": None
+        "error": None,
     }
 
     try:
@@ -224,7 +211,7 @@ def extract_income_statement_data(stock) -> dict:
 
         # Get most recent column
         latest_col = income.columns[0]
-        period_date = latest_col.strftime('%Y-%m-%d') if hasattr(latest_col, 'strftime') else str(latest_col)
+        period_date = latest_col.strftime("%Y-%m-%d") if hasattr(latest_col, "strftime") else str(latest_col)
         result["period_date"] = period_date
 
         def get_value(keys):
@@ -237,37 +224,21 @@ def extract_income_statement_data(stock) -> dict:
                         return float(val)
             return None
 
-        result["operating_expense"] = get_value([
-            'Operating Expense',
-            'Total Expenses',
-            'Total Operating Expenses'
-        ])
+        result["operating_expense"] = get_value(["Operating Expense", "Total Expenses", "Total Operating Expenses"])
 
-        result["research_and_development"] = get_value([
-            'Research And Development',
-            'Research And Development Expense'
-        ])
+        result["research_and_development"] = get_value(["Research And Development", "Research And Development Expense"])
 
-        result["interest_expense"] = get_value([
-            'Interest Expense',
-            'Interest Expense Non Operating'
-        ])
+        result["interest_expense"] = get_value(["Interest Expense", "Interest Expense Non Operating"])
 
-        result["net_income"] = get_value([
-            'Net Income',
-            'Net Income Common Stockholders',
-            'Net Income From Continuing Operations'
-        ])
+        result["net_income"] = get_value(
+            ["Net Income", "Net Income Common Stockholders", "Net Income From Continuing Operations"]
+        )
 
-        result["revenue"] = get_value([
-            'Total Revenue',
-            'Operating Revenue',
-            'Revenue'
-        ])
+        result["revenue"] = get_value(["Total Revenue", "Operating Revenue", "Revenue"])
 
-        result["gross_profit"] = get_value(['Gross Profit'])
+        result["gross_profit"] = get_value(["Gross Profit"])
 
-        result["ebitda"] = get_value(['EBITDA', 'Normalized EBITDA'])
+        result["ebitda"] = get_value(["EBITDA", "Normalized EBITDA"])
 
         # Success if we got at least one key metric
         if any([result["operating_expense"], result["net_income"], result["revenue"]]):
@@ -287,6 +258,7 @@ def get_cache_path(ticker: str) -> Path:
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir / f"{ticker}.json"
 
+
 def is_cache_valid(cache_path: Path, max_age_hours: int = 24) -> bool:
     """Check if cache file exists.
 
@@ -294,17 +266,13 @@ def is_cache_valid(cache_path: Path, max_age_hours: int = 24) -> bool:
     """
     return cache_path.exists()
 
+
 def fetch_yahoo_data(ticker: str) -> dict:
     try:
         import yfinance as yf
     except ImportError:
         logger.error("yfinance not installed - run: pip install yfinance")
-        return {
-            "ticker": ticker,
-            "success": False,
-            "error": "yfinance not installed",
-            "timestamp": "cached"
-        }
+        return {"ticker": ticker, "success": False, "error": "yfinance not installed", "timestamp": "cached"}
 
     try:
         stock = yf.Ticker(ticker)
@@ -316,7 +284,7 @@ def fetch_yahoo_data(ticker: str) -> dict:
         try:
             hist = stock.history(period="1mo")
             if not hist.empty:
-                avg_volume = int(hist['Volume'].mean())
+                avg_volume = int(hist["Volume"].mean())
             else:
                 volume_error = "empty_history"
         except Exception as e:
@@ -333,9 +301,9 @@ def fetch_yahoo_data(ticker: str) -> dict:
         income_stmt = extract_income_statement_data(stock)
 
         # Extract data (prioritize info dict)
-        price = float(info.get('currentPrice') or info.get('regularMarketPrice') or 0)
-        market_cap = float(info.get('marketCap') or 0)
-        shares = float(info.get('sharesOutstanding') or 0)
+        price = float(info.get("currentPrice") or info.get("regularMarketPrice") or 0)
+        market_cap = float(info.get("marketCap") or 0)
+        shares = float(info.get("sharesOutstanding") or 0)
 
         # Build flags for data quality tracking
         flags = []
@@ -347,11 +315,11 @@ def fetch_yahoo_data(ticker: str) -> dict:
             flags.append("missing_volume")
         if volume_error:
             flags.append(f"volume_error:{volume_error}")
-        if not balance_sheet.get('success'):
+        if not balance_sheet.get("success"):
             flags.append(f"balance_sheet_error:{balance_sheet.get('error', 'unknown')}")
-        if not cash_flow.get('success'):
+        if not cash_flow.get("success"):
             flags.append(f"cash_flow_error:{cash_flow.get('error', 'unknown')}")
-        if not income_stmt.get('success'):
+        if not income_stmt.get("success"):
             flags.append(f"income_stmt_error:{income_stmt.get('error', 'unknown')}")
 
         data = {
@@ -360,113 +328,103 @@ def fetch_yahoo_data(ticker: str) -> dict:
             "price": {
                 "current": price,
                 "currency": "USD",
-                "day_high": float(info.get('dayHigh') or 0),
-                "day_low": float(info.get('dayLow') or 0),
-                "52_week_high": float(info.get('fiftyTwoWeekHigh') or 0),
-                "52_week_low": float(info.get('fiftyTwoWeekLow') or 0)
+                "day_high": float(info.get("dayHigh") or 0),
+                "day_low": float(info.get("dayLow") or 0),
+                "52_week_high": float(info.get("fiftyTwoWeekHigh") or 0),
+                "52_week_low": float(info.get("fiftyTwoWeekLow") or 0),
             },
-            "market_cap": {
-                "value": market_cap,
-                "currency": "USD"
-            },
+            "market_cap": {"value": market_cap, "currency": "USD"},
             "shares_outstanding": shares,
-            "volume": {
-                "last": int(info.get('volume') or 0),
-                "average_30d": avg_volume
-            },
+            "volume": {"last": int(info.get("volume") or 0), "average_30d": avg_volume},
             "valuation": {
-                "pe_ratio": float(info.get('trailingPE')) if info.get('trailingPE') else None,
-                "forward_pe": float(info.get('forwardPE')) if info.get('forwardPE') else None,
-                "price_to_book": float(info.get('priceToBook')) if info.get('priceToBook') else None
+                "pe_ratio": float(info.get("trailingPE")) if info.get("trailingPE") else None,
+                "forward_pe": float(info.get("forwardPE")) if info.get("forwardPE") else None,
+                "price_to_book": float(info.get("priceToBook")) if info.get("priceToBook") else None,
             },
             "company_info": {
-                "name": info.get('longName', info.get('shortName', '')),
-                "sector": info.get('sector', ''),
-                "industry": info.get('industry', '')
+                "name": info.get("longName", info.get("shortName", "")),
+                "sector": info.get("sector", ""),
+                "industry": info.get("industry", ""),
             },
             "balance_sheet": {
-                "success": balance_sheet.get('success', False),
-                "period_date": balance_sheet.get('period_date'),
-                "total_assets": balance_sheet.get('total_assets'),
-                "total_liabilities": balance_sheet.get('total_liabilities'),
-                "stockholders_equity": balance_sheet.get('stockholders_equity'),
-                "cash": balance_sheet.get('cash'),
-                "marketable_securities": balance_sheet.get('marketable_securities'),
-                "total_liquidity": balance_sheet.get('total_liquidity'),
-                "total_debt": balance_sheet.get('total_debt'),
-                "long_term_debt": balance_sheet.get('long_term_debt'),
-                "current_debt": balance_sheet.get('current_debt'),
-                "error": balance_sheet.get('error')
+                "success": balance_sheet.get("success", False),
+                "period_date": balance_sheet.get("period_date"),
+                "total_assets": balance_sheet.get("total_assets"),
+                "total_liabilities": balance_sheet.get("total_liabilities"),
+                "stockholders_equity": balance_sheet.get("stockholders_equity"),
+                "cash": balance_sheet.get("cash"),
+                "marketable_securities": balance_sheet.get("marketable_securities"),
+                "total_liquidity": balance_sheet.get("total_liquidity"),
+                "total_debt": balance_sheet.get("total_debt"),
+                "long_term_debt": balance_sheet.get("long_term_debt"),
+                "current_debt": balance_sheet.get("current_debt"),
+                "error": balance_sheet.get("error"),
             },
             "cash_flow": {
-                "success": cash_flow.get('success', False),
-                "period_date": cash_flow.get('period_date'),
-                "operating_cash_flow": cash_flow.get('operating_cash_flow'),
-                "free_cash_flow": cash_flow.get('free_cash_flow'),
-                "investing_cash_flow": cash_flow.get('investing_cash_flow'),
-                "financing_cash_flow": cash_flow.get('financing_cash_flow'),
-                "error": cash_flow.get('error')
+                "success": cash_flow.get("success", False),
+                "period_date": cash_flow.get("period_date"),
+                "operating_cash_flow": cash_flow.get("operating_cash_flow"),
+                "free_cash_flow": cash_flow.get("free_cash_flow"),
+                "investing_cash_flow": cash_flow.get("investing_cash_flow"),
+                "financing_cash_flow": cash_flow.get("financing_cash_flow"),
+                "error": cash_flow.get("error"),
             },
             "income_statement": {
-                "success": income_stmt.get('success', False),
-                "period_date": income_stmt.get('period_date'),
-                "operating_expense": income_stmt.get('operating_expense'),
-                "research_and_development": income_stmt.get('research_and_development'),
-                "interest_expense": income_stmt.get('interest_expense'),
-                "net_income": income_stmt.get('net_income'),
-                "revenue": income_stmt.get('revenue'),
-                "gross_profit": income_stmt.get('gross_profit'),
-                "ebitda": income_stmt.get('ebitda'),
-                "error": income_stmt.get('error')
+                "success": income_stmt.get("success", False),
+                "period_date": income_stmt.get("period_date"),
+                "operating_expense": income_stmt.get("operating_expense"),
+                "research_and_development": income_stmt.get("research_and_development"),
+                "interest_expense": income_stmt.get("interest_expense"),
+                "net_income": income_stmt.get("net_income"),
+                "revenue": income_stmt.get("revenue"),
+                "gross_profit": income_stmt.get("gross_profit"),
+                "ebitda": income_stmt.get("ebitda"),
+                "error": income_stmt.get("error"),
             },
             "data_quality": {
                 "flags": flags,
                 "has_price": price > 0,
                 "has_market_cap": market_cap > 0,
                 "has_volume": avg_volume > 0,
-                "has_balance_sheet": balance_sheet.get('success', False),
-                "has_cash_flow": cash_flow.get('success', False),
-                "has_income_statement": income_stmt.get('success', False),
+                "has_balance_sheet": balance_sheet.get("success", False),
+                "has_cash_flow": cash_flow.get("success", False),
+                "has_income_statement": income_stmt.get("success", False),
             },
             "provenance": {
                 "source": "Yahoo Finance via yfinance",
                 "timestamp": "cached",
                 "url": f"https://finance.yahoo.com/quote/{ticker}",
-                "data_hash": hashlib.sha256(json.dumps({
-                    "price": price,
-                    "market_cap": market_cap
-                }).encode()).hexdigest()[:16]
-            }
+                "data_hash": hashlib.sha256(
+                    json.dumps({"price": price, "market_cap": market_cap}).encode()
+                ).hexdigest()[:16],
+            },
         }
 
         return data
 
     except Exception as e:
         logger.error(f"Failed to fetch Yahoo data for {ticker}: {e}")
-        return {
-            "ticker": ticker,
-            "success": False,
-            "error": str(e),
-            "timestamp": "cached"
-        }
+        return {"ticker": ticker, "success": False, "error": str(e), "timestamp": "cached"}
+
 
 def collect_yahoo_data(ticker: str, force_refresh: bool = False) -> dict:
     cache_path = get_cache_path(ticker)
-    
+
     if not force_refresh and is_cache_valid(cache_path):
         with open(cache_path) as f:
             cached = json.load(f)
-            cached['from_cache'] = True
+            cached["from_cache"] = True
             return cached
-    
+
     data = fetch_yahoo_data(ticker)
-    
-    if data.get('success'):
-        with open(cache_path, 'w') as f:
+
+    if data.get("success"):
+        with open(cache_path, "w") as f:
             json.dump(data, f, indent=2)
-    
-    data['from_cache'] = False
+
+    data["from_cache"] = False
     return data
+
 
 def collect_batch(tickers: list, delay_seconds: float = 1.0, force_refresh: bool = False) -> dict:
     results = {}
@@ -483,25 +441,26 @@ def collect_batch(tickers: list, delay_seconds: float = 1.0, force_refresh: bool
         data = collect_yahoo_data(ticker, force_refresh=force_refresh)
         results[ticker] = data
 
-        if data.get('success'):
-            price = data['price']['current']
-            mcap = data['market_cap']['value'] / 1e9
-            cached = " (cached)" if data.get('from_cache') else ""
-            bs_ok = "✓BS" if data.get('balance_sheet', {}).get('success') else ""
-            if data.get('balance_sheet', {}).get('success'):
+        if data.get("success"):
+            price = data["price"]["current"]
+            mcap = data["market_cap"]["value"] / 1e9
+            cached = " (cached)" if data.get("from_cache") else ""
+            bs_ok = "✓BS" if data.get("balance_sheet", {}).get("success") else ""
+            if data.get("balance_sheet", {}).get("success"):
                 bs_success += 1
             print(f"✓ ${price:.2f}, MCap: ${mcap:.2f}B {bs_ok}{cached}")
         else:
             print(f"✗ {data.get('error', 'Unknown error')}")
 
-        if i < total and not data.get('from_cache'):
+        if i < total and not data.get("from_cache"):
             time.sleep(delay_seconds)
 
-    successful = sum(1 for d in results.values() if d.get('success'))
+    successful = sum(1 for d in results.values() if d.get("success"))
     print(f"\n✓ Successfully collected data for {successful}/{total} tickers")
     print(f"✓ Balance sheet data available for {bs_success}/{total} tickers")
 
     return results
+
 
 if __name__ == "__main__":
     test_ticker = "VRTX"

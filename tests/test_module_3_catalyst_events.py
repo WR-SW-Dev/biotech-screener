@@ -9,14 +9,15 @@ Covers:
 - Timeline change detection
 """
 
-import pytest
-from datetime import date
-from pathlib import Path
-from decimal import Decimal
-from typing import Dict, Any, List
-
 # Import module under test
 import sys
+from datetime import date
+from decimal import Decimal
+from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # These would normally be imported from module_3 but we'll test the concepts
@@ -53,6 +54,7 @@ STATUS_SEVERITY = {
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def as_of_date():
     """Standard as_of_date."""
@@ -76,6 +78,7 @@ def sample_trial_record():
 # ============================================================================
 # EVENT TYPE CLASSIFICATION
 # ============================================================================
+
 
 class TestEventTypeClassification:
     """Tests for event type classification."""
@@ -109,6 +112,7 @@ class TestEventTypeClassification:
 # ============================================================================
 # STATUS CHANGE DETECTION
 # ============================================================================
+
 
 class TestStatusChangeDetection:
     """Tests for detecting status changes."""
@@ -158,6 +162,7 @@ class TestStatusChangeDetection:
 # TIMELINE CHANGE DETECTION
 # ============================================================================
 
+
 class TestTimelineChangeDetection:
     """Tests for detecting timeline changes."""
 
@@ -198,6 +203,7 @@ class TestTimelineChangeDetection:
 # ============================================================================
 # EVENT SCORING
 # ============================================================================
+
 
 class TestEventScoring:
     """Tests for event scoring."""
@@ -251,6 +257,7 @@ class TestEventScoring:
 # EVENT AGGREGATION
 # ============================================================================
 
+
 class TestEventAggregation:
     """Tests for aggregating events per ticker."""
 
@@ -295,6 +302,7 @@ class TestEventAggregation:
 # PIT SAFETY
 # ============================================================================
 
+
 class TestPITSafety:
     """Tests for point-in-time safety in event detection."""
 
@@ -324,6 +332,7 @@ class TestPITSafety:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -352,6 +361,7 @@ class TestDeterminism:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -379,4 +389,3 @@ class TestEdgeCases:
 
         total_impact = sum(e.get("impact", 0) for e in events)
         assert total_impact == 0
-

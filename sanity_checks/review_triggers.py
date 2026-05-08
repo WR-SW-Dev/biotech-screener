@@ -23,6 +23,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
 
 from sanity_checks.types import (
+    DEFAULT_THRESHOLDS,
     CheckCategory,
     FlagSeverity,
     ReviewLevel,
@@ -31,7 +32,6 @@ from sanity_checks.types import (
     SanityFlag,
     SecurityContext,
     ThresholdConfig,
-    DEFAULT_THRESHOLDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OverrideRecord:
     """Record of a manual override decision."""
+
     ticker: str
     override_type: str
     original_rank: Optional[int]
@@ -53,6 +54,7 @@ class OverrideRecord:
 @dataclass
 class ICReadinessItem:
     """Investment committee readiness checklist item."""
+
     item: str
     required: bool
     present: bool
@@ -62,6 +64,7 @@ class ICReadinessItem:
 @dataclass
 class ICDocumentation:
     """IC documentation requirements for a candidate."""
+
     ticker: str
     rank: int
     has_thesis: bool
@@ -114,9 +117,7 @@ class ReviewTriggerChecker:
                 continue
 
             # Get review requirements based on rank
-            requirements = self._get_review_requirements(
-                sec, previous_ranks, documentation
-            )
+            requirements = self._get_review_requirements(sec, previous_ranks, documentation)
             if requirements:
                 review_requirements.append(requirements)
 
@@ -133,9 +134,7 @@ class ReviewTriggerChecker:
         metrics = self._calculate_metrics(flags, review_requirements)
 
         # Determine if IC presentation is blocked
-        ic_blocked = any(
-            r.blocking for r in review_requirements
-        ) or any(
+        ic_blocked = any(r.blocking for r in review_requirements) or any(
             f.severity == FlagSeverity.CRITICAL for f in flags
         )
 
@@ -272,18 +271,20 @@ class ReviewTriggerChecker:
                     unknown_components.append("catalyst")
 
                 if unknown_components:
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.HIGH if sec.rank <= 10 else FlagSeverity.MEDIUM,
-                        category=CheckCategory.REVIEW_TRIGGER,
-                        ticker=sec.ticker,
-                        check_name="unknown_score_components",
-                        message=f"Top {sec.rank} has UNKNOWN components: {', '.join(unknown_components)}",
-                        details={
-                            "rank": sec.rank,
-                            "unknown_components": unknown_components,
-                        },
-                        recommendation="Manual review required - score data incomplete",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.HIGH if sec.rank <= 10 else FlagSeverity.MEDIUM,
+                            category=CheckCategory.REVIEW_TRIGGER,
+                            ticker=sec.ticker,
+                            check_name="unknown_score_components",
+                            message=f"Top {sec.rank} has UNKNOWN components: {', '.join(unknown_components)}",
+                            details={
+                                "rank": sec.rank,
+                                "unknown_components": unknown_components,
+                            },
+                            recommendation="Manual review required - score data incomplete",
+                        )
+                    )
 
             # Large rank changes
             if previous_ranks and sec.ticker in previous_ranks:
@@ -291,19 +292,21 @@ class ReviewTriggerChecker:
                 rank_change = abs(sec.rank - prev_rank)
 
                 if rank_change > self.config.max_rank_jump_single_week and sec.rank <= 50:
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.MEDIUM,
-                        category=CheckCategory.REVIEW_TRIGGER,
-                        ticker=sec.ticker,
-                        check_name="large_rank_change",
-                        message=f"Rank changed {rank_change} positions ({prev_rank} -> {sec.rank})",
-                        details={
-                            "previous_rank": prev_rank,
-                            "current_rank": sec.rank,
-                            "change": rank_change,
-                        },
-                        recommendation="Document rank change explanation",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.MEDIUM,
+                            category=CheckCategory.REVIEW_TRIGGER,
+                            ticker=sec.ticker,
+                            check_name="large_rank_change",
+                            message=f"Rank changed {rank_change} positions ({prev_rank} -> {sec.rank})",
+                            details={
+                                "previous_rank": prev_rank,
+                                "current_rank": sec.rank,
+                                "change": rank_change,
+                            },
+                            recommendation="Document rank change explanation",
+                        )
+                    )
 
             # Financial coverage check
             if sec.rank <= 20:
@@ -317,19 +320,21 @@ class ReviewTriggerChecker:
 
                 coverage_pct = 1 - (len(coverage_issues) / 3)
                 if coverage_pct < 0.5:
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.HIGH,
-                        category=CheckCategory.REVIEW_TRIGGER,
-                        ticker=sec.ticker,
-                        check_name="low_financial_coverage",
-                        message=f"Financial coverage {coverage_pct:.0%} for top {sec.rank} candidate",
-                        details={
-                            "rank": sec.rank,
-                            "missing": coverage_issues,
-                            "coverage_pct": coverage_pct,
-                        },
-                        recommendation="Insufficient financial data for top candidate",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.HIGH,
+                            category=CheckCategory.REVIEW_TRIGGER,
+                            ticker=sec.ticker,
+                            check_name="low_financial_coverage",
+                            message=f"Financial coverage {coverage_pct:.0%} for top {sec.rank} candidate",
+                            details={
+                                "rank": sec.rank,
+                                "missing": coverage_issues,
+                                "coverage_pct": coverage_pct,
+                            },
+                            recommendation="Insufficient financial data for top candidate",
+                        )
+                    )
 
         return flags
 
@@ -348,15 +353,17 @@ class ReviewTriggerChecker:
             doc = documentation.get(sec.ticker)
 
             if doc is None:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.CRITICAL,
-                    category=CheckCategory.REVIEW_TRIGGER,
-                    ticker=sec.ticker,
-                    check_name="missing_ic_documentation",
-                    message=f"Top {sec.rank} candidate missing all IC documentation",
-                    details={"rank": sec.rank},
-                    recommendation="BLOCK IC presentation - documentation required",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.CRITICAL,
+                        category=CheckCategory.REVIEW_TRIGGER,
+                        ticker=sec.ticker,
+                        check_name="missing_ic_documentation",
+                        message=f"Top {sec.rank} candidate missing all IC documentation",
+                        details={"rank": sec.rank},
+                        recommendation="BLOCK IC presentation - documentation required",
+                    )
+                )
                 continue
 
             missing = []
@@ -372,23 +379,25 @@ class ReviewTriggerChecker:
                 missing.append("valuation framework")
 
             if missing:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.CRITICAL if len(missing) >= 2 else FlagSeverity.HIGH,
-                    category=CheckCategory.REVIEW_TRIGGER,
-                    ticker=sec.ticker,
-                    check_name="incomplete_ic_documentation",
-                    message=f"Top {sec.rank} missing: {', '.join(missing)}",
-                    details={
-                        "rank": sec.rank,
-                        "missing": missing,
-                        "has_thesis": doc.has_thesis,
-                        "has_risks": doc.has_risks,
-                        "has_catalyst_timeline": doc.has_catalyst_timeline,
-                        "has_competitive_analysis": doc.has_competitive_analysis,
-                        "has_valuation": doc.has_valuation,
-                    },
-                    recommendation="Complete IC documentation before presentation",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.CRITICAL if len(missing) >= 2 else FlagSeverity.HIGH,
+                        category=CheckCategory.REVIEW_TRIGGER,
+                        ticker=sec.ticker,
+                        check_name="incomplete_ic_documentation",
+                        message=f"Top {sec.rank} missing: {', '.join(missing)}",
+                        details={
+                            "rank": sec.rank,
+                            "missing": missing,
+                            "has_thesis": doc.has_thesis,
+                            "has_risks": doc.has_risks,
+                            "has_catalyst_timeline": doc.has_catalyst_timeline,
+                            "has_competitive_analysis": doc.has_competitive_analysis,
+                            "has_valuation": doc.has_valuation,
+                        },
+                        recommendation="Complete IC documentation before presentation",
+                    )
+                )
 
         return flags
 

@@ -9,16 +9,17 @@ The canonical example is INSM: a Phase 3 company with a CT_PRIMARY_COMPLETION ca
 was classified as "poc" (threshold 55) instead of "late" (threshold 45), triggering
 the thesis gate when it shouldn't have.
 """
+
 from decimal import Decimal
 
 import pytest
 
 from module_5_scoring_v3 import (
-    _stage_bucket,
-    _determine_stage_bucket_alpha,
-    apply_thesis_gate,
-    ScoringMode,
     THESIS_GATE_CONFIG,
+    ScoringMode,
+    _determine_stage_bucket_alpha,
+    _stage_bucket,
+    apply_thesis_gate,
 )
 
 
@@ -50,24 +51,15 @@ class TestStageClassification:
     def test_ct_primary_completion_maps_to_poc_event_stage(self):
         """CT_PRIMARY_COMPLETION catalyst should map to 'poc' event stage."""
         # This is the event stage - used for timing/decay, NOT thesis gate threshold
-        assert _determine_stage_bucket_alpha(
-            lead_phase="phase 3",
-            cat_event_type="CT_PRIMARY_COMPLETION"
-        ) == "poc"
+        assert _determine_stage_bucket_alpha(lead_phase="phase 3", cat_event_type="CT_PRIMARY_COMPLETION") == "poc"
 
     def test_ct_results_posted_maps_to_poc_event_stage(self):
         """CT_RESULTS_POSTED catalyst should map to 'poc' event stage."""
-        assert _determine_stage_bucket_alpha(
-            lead_phase="phase 3",
-            cat_event_type="CT_RESULTS_POSTED"
-        ) == "poc"
+        assert _determine_stage_bucket_alpha(lead_phase="phase 3", cat_event_type="CT_RESULTS_POSTED") == "poc"
 
     def test_fda_pdufa_maps_to_regulatory_event_stage(self):
         """FDA_PDUFA_DATE catalyst should map to 'regulatory' event stage."""
-        assert _determine_stage_bucket_alpha(
-            lead_phase="phase 3",
-            cat_event_type="FDA_PDUFA_DATE"
-        ) == "regulatory"
+        assert _determine_stage_bucket_alpha(lead_phase="phase 3", cat_event_type="FDA_PDUFA_DATE") == "regulatory"
 
 
 class TestThesisGateThresholds:
@@ -95,17 +87,18 @@ class TestThesisGateRegression:
     when thesis score is between late threshold (45) and poc threshold (55).
     """
 
-    @pytest.mark.parametrize("thesis_score,should_trigger", [
-        (Decimal("44"), True),   # Below late threshold (45) - should trigger
-        (Decimal("45"), False),  # At late threshold - should pass
-        (Decimal("46"), False),  # Above late threshold - should pass (INSM case)
-        (Decimal("54"), False),  # Below poc threshold but above late - should pass
-        (Decimal("55"), False),  # At poc threshold - should pass
-        (Decimal("56"), False),  # Above poc threshold - should pass
-    ])
-    def test_late_stage_uses_late_threshold_not_event_threshold(
-        self, thesis_score, should_trigger
-    ):
+    @pytest.mark.parametrize(
+        "thesis_score,should_trigger",
+        [
+            (Decimal("44"), True),  # Below late threshold (45) - should trigger
+            (Decimal("45"), False),  # At late threshold - should pass
+            (Decimal("46"), False),  # Above late threshold - should pass (INSM case)
+            (Decimal("54"), False),  # Below poc threshold but above late - should pass
+            (Decimal("55"), False),  # At poc threshold - should pass
+            (Decimal("56"), False),  # Above poc threshold - should pass
+        ],
+    )
+    def test_late_stage_uses_late_threshold_not_event_threshold(self, thesis_score, should_trigger):
         """
         Late-stage company should use 'late' threshold (45), not 'poc' threshold (55).
 

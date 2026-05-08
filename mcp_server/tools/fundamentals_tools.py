@@ -46,19 +46,19 @@ def get_financial_health(ticker: str) -> str:
         if not match:
             # Fall back to universe data
             universe = _load_universe()
-            uni_match = [
-                u for u in universe
-                if u.get("ticker", "").upper() == ticker.upper()
-            ]
+            uni_match = [u for u in universe if u.get("ticker", "").upper() == ticker.upper()]
             if not uni_match:
                 return json.dumps({"ticker": ticker, "error": "Ticker not found"})
             entry = uni_match[0]
             fin = entry.get("financial_data") or entry.get("financials") or {}
-            return json.dumps({
-                "ticker": ticker,
-                "source": "universe",
-                "data": {k: v for k, v in fin.items() if v is not None},
-            }, default=str)
+            return json.dumps(
+                {
+                    "ticker": ticker,
+                    "source": "universe",
+                    "data": {k: v for k, v in fin.items() if v is not None},
+                },
+                default=str,
+            )
 
         rec = match[0]
 

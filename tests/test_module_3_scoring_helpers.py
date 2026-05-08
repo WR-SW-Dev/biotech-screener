@@ -3,6 +3,7 @@
 Covers: _proximity_time_weight, compute_velocity,
 _compute_catalyst_confidence, _select_top_3_events.
 """
+
 from __future__ import annotations
 
 import sys
@@ -15,17 +16,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from module_3_schema import CatalystEventV2, ConfidenceLevel, EventSeverity, EventType
 from module_3_scoring import (
-    _proximity_time_weight,
-    compute_velocity,
     _compute_catalyst_confidence,
+    _proximity_time_weight,
     _select_top_3_events,
-)
-from module_3_schema import (
-    CatalystEventV2,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
+    compute_velocity,
 )
 
 
@@ -57,6 +53,7 @@ def _make_event(
 # =============================================================================
 # _proximity_time_weight — piecewise-linear kernel
 # =============================================================================
+
 
 class TestProximityTimeWeight:
     def test_past_event_zero(self):
@@ -120,6 +117,7 @@ class TestProximityTimeWeight:
 # compute_velocity
 # =============================================================================
 
+
 class TestComputeVelocity:
     def test_insufficient_history_returns_none(self):
         assert compute_velocity(Decimal("0.5"), [Decimal("0.4"), Decimal("0.3")]) is None
@@ -148,8 +146,7 @@ class TestComputeVelocity:
         assert result == Decimal("0")
 
     def test_uses_only_first_4(self):
-        hist = [Decimal("0.4"), Decimal("0.4"), Decimal("0.4"), Decimal("0.4"),
-                Decimal("99"), Decimal("99")]
+        hist = [Decimal("0.4"), Decimal("0.4"), Decimal("0.4"), Decimal("0.4"), Decimal("99"), Decimal("99")]
         result = compute_velocity(Decimal("0.5"), hist)
         assert result == Decimal("0.10")  # 0.5 - 0.4
 
@@ -157,6 +154,7 @@ class TestComputeVelocity:
 # =============================================================================
 # _compute_catalyst_confidence
 # =============================================================================
+
 
 class TestComputeCatalystConfidence:
     def test_no_next_date_returns_med(self):
@@ -185,6 +183,7 @@ class TestComputeCatalystConfidence:
 # =============================================================================
 # _select_top_3_events
 # =============================================================================
+
 
 class TestSelectTop3Events:
     def test_empty_events(self):

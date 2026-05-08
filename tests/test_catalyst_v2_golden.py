@@ -27,31 +27,29 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from module_3_schema_v2 import (
-    CatalystEventV2,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-    SourceReliability,
-    DateSpecificity,
-    DeltaType,
-    DeltaEvent,
-    TickerCatalystSummaryV2,
-    DiagnosticCountsV2,
     SCHEMA_VERSION,
     SCORE_VERSION,
+    CatalystEventV2,
+    ConfidenceLevel,
+    DateSpecificity,
+    DeltaEvent,
+    DeltaType,
+    DiagnosticCountsV2,
+    EventSeverity,
+    EventType,
+    SourceReliability,
+    TickerCatalystSummaryV2,
     canonical_json_dumps,
 )
-
 from module_3_scoring_v2 import (
-    compute_proximity_score,
-    compute_negative_catalyst_score,
-    detect_deltas,
-    compute_delta_score,
-    compute_velocity,
     calculate_ticker_catalyst_score,
+    compute_delta_score,
+    compute_negative_catalyst_score,
+    compute_proximity_score,
+    compute_velocity,
+    detect_deltas,
     score_catalyst_events,
 )
-
 
 # =============================================================================
 # GOLDEN FIXTURES
@@ -104,6 +102,7 @@ GOLDEN_EVENT_2 = CatalystEventV2(
 # =============================================================================
 # TEST CLASS
 # =============================================================================
+
 
 class CatalystV2GoldenTestRunner:
     """
@@ -171,8 +170,7 @@ class CatalystV2GoldenTestRunner:
         )
 
         # event_id should be identical (doesn't include observation metadata)
-        assert event1.event_id == event2.event_id, \
-            f"Event IDs differ: {event1.event_id} != {event2.event_id}"
+        assert event1.event_id == event2.event_id, f"Event IDs differ: {event1.event_id} != {event2.event_id}"
 
     def test_event_id_uniqueness(self):
         """Test that different events have different IDs."""
@@ -266,8 +264,7 @@ class CatalystV2GoldenTestRunner:
             corroboration_count=5,  # Different
         )
 
-        assert base.event_id == variant.event_id, \
-            "event_id should not depend on observation metadata"
+        assert base.event_id == variant.event_id, "event_id should not depend on observation metadata"
 
     # =========================================================================
     # PIT FILTERING TESTS
@@ -331,8 +328,9 @@ class CatalystV2GoldenTestRunner:
         recent_certainty = recent_event.compute_certainty_score(as_of)
         stale_certainty = stale_event.compute_certainty_score(as_of)
 
-        assert recent_certainty > stale_certainty, \
-            f"Recent event should have higher certainty: {recent_certainty} vs {stale_certainty}"
+        assert (
+            recent_certainty > stale_certainty
+        ), f"Recent event should have higher certainty: {recent_certainty} vs {stale_certainty}"
 
     def test_pit_future_event_zero_certainty(self):
         """Test that events with future source_date have zero certainty."""
@@ -355,8 +353,7 @@ class CatalystV2GoldenTestRunner:
         as_of = date(2026, 1, 11)
         certainty = future_event.compute_certainty_score(as_of)
 
-        assert certainty == Decimal("0"), \
-            f"Future source_date should have zero certainty, got {certainty}"
+        assert certainty == Decimal("0"), f"Future source_date should have zero certainty, got {certainty}"
 
     # =========================================================================
     # DETERMINISTIC HASH TESTS
@@ -378,8 +375,7 @@ class CatalystV2GoldenTestRunner:
 
         # Keys should be sorted
         assert '"a_field"' in json1
-        assert json1.index('"a_field"') < json1.index('"m_field"'), \
-            "Keys should be alphabetically sorted"
+        assert json1.index('"a_field"') < json1.index('"m_field"'), "Keys should be alphabetically sorted"
 
     def test_event_to_dict_determinism(self):
         """Test that event.to_dict() is deterministic."""

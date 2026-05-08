@@ -13,25 +13,25 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-import sys
-import json
 import hashlib
-from decimal import Decimal
+import json
+import sys
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pos_engine import ProbabilityOfSuccessEngine, DataQualityState
+from pos_engine import DataQualityState, ProbabilityOfSuccessEngine
+from regime_engine import MarketRegime, RegimeDetectionEngine
 from short_interest_engine import ShortInterestSignalEngine
-from regime_engine import RegimeDetectionEngine, MarketRegime
-
 
 # =============================================================================
 # TEST: Probability of Success Engine
 # =============================================================================
+
 
 class TestProbabilityOfSuccessEngine:
     """Tests for ProbabilityOfSuccessEngine."""
@@ -47,11 +47,7 @@ class TestProbabilityOfSuccessEngine:
     def test_pos_score_phase3_oncology(self):
         """Test Phase 3 oncology scoring returns expected values."""
         engine = ProbabilityOfSuccessEngine()
-        result = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology",
-            as_of_date=date(2026, 1, 11)
-        )
+        result = engine.calculate_pos_score(base_stage="phase_3", indication="oncology", as_of_date=date(2026, 1, 11))
 
         # Basic structure checks
         assert "pos_score" in result
@@ -75,16 +71,8 @@ class TestProbabilityOfSuccessEngine:
         engine = ProbabilityOfSuccessEngine()
         as_of = date(2026, 1, 11)
 
-        oncology = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology",
-            as_of_date=as_of
-        )
-        rare = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="rare disease",
-            as_of_date=as_of
-        )
+        oncology = engine.calculate_pos_score(base_stage="phase_3", indication="oncology", as_of_date=as_of)
+        rare = engine.calculate_pos_score(base_stage="phase_3", indication="rare disease", as_of_date=as_of)
 
         # Rare disease should have higher PoS than oncology
         assert rare["pos_score"] > oncology["pos_score"]
@@ -97,16 +85,8 @@ class TestProbabilityOfSuccessEngine:
         engine2 = ProbabilityOfSuccessEngine()
         as_of = date(2026, 1, 11)
 
-        result1 = engine1.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology",
-            as_of_date=as_of
-        )
-        result2 = engine2.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology",
-            as_of_date=as_of
-        )
+        result1 = engine1.calculate_pos_score(base_stage="phase_3", indication="oncology", as_of_date=as_of)
+        result2 = engine2.calculate_pos_score(base_stage="phase_3", indication="oncology", as_of_date=as_of)
 
         # Same inputs → same outputs
         assert result1["pos_score"] == result2["pos_score"]
@@ -124,10 +104,7 @@ class TestProbabilityOfSuccessEngine:
 
         # Test various Phase 3 inputs
         inputs = ["phase_3", "Phase 3", "Phase III", "p3", "phase3", "pivotal"]
-        results = [
-            engine.calculate_pos_score(base_stage=s, as_of_date=as_of)
-            for s in inputs
-        ]
+        results = [engine.calculate_pos_score(base_stage=s, as_of_date=as_of) for s in inputs]
 
         # All should normalize to phase_3 with same stage score
         for r in results:
@@ -141,19 +118,13 @@ class TestProbabilityOfSuccessEngine:
 
         # "dose" should NOT match "os" (overall survival)
         dose_result = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="dose escalation study",
-            as_of_date=as_of
+            base_stage="phase_3", indication="dose escalation study", as_of_date=as_of
         )
         # Should fall back to all_indications, not match oncology
         assert dose_result["indication_normalized"] == "all_indications"
 
         # "oncology" SHOULD match
-        onc_result = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology study",
-            as_of_date=as_of
-        )
+        onc_result = engine.calculate_pos_score(base_stage="phase_3", indication="oncology study", as_of_date=as_of)
         assert onc_result["indication_normalized"] == "oncology"
 
     def test_pos_score_clamping(self):
@@ -163,18 +134,12 @@ class TestProbabilityOfSuccessEngine:
 
         # Very high quality (should clamp to 1.3)
         high_result = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology",
-            trial_design_quality=Decimal("2.0"),
-            as_of_date=as_of
+            base_stage="phase_3", indication="oncology", trial_design_quality=Decimal("2.0"), as_of_date=as_of
         )
 
         # Very low quality (should clamp to 0.7)
         low_result = engine.calculate_pos_score(
-            base_stage="phase_3",
-            indication="oncology",
-            trial_design_quality=Decimal("0.3"),
-            as_of_date=as_of
+            base_stage="phase_3", indication="oncology", trial_design_quality=Decimal("0.3"), as_of_date=as_of
         )
 
         # Scores should be different but within bounds
@@ -190,7 +155,7 @@ class TestProbabilityOfSuccessEngine:
         universe = [
             {"ticker": "ACME", "base_stage": "phase_3", "indication": "oncology"},
             {"ticker": "BIOTECH", "base_stage": "phase_2", "indication": "rare disease"},
-            {"ticker": "PHARMA", "base_stage": "commercial", "indication": "neurology"}
+            {"ticker": "PHARMA", "base_stage": "commercial", "indication": "neurology"},
         ]
 
         result = engine.score_universe(universe, as_of)
@@ -204,6 +169,7 @@ class TestProbabilityOfSuccessEngine:
 # =============================================================================
 # TEST: Short Interest Signal Engine
 # =============================================================================
+
 
 class TestShortInterestSignalEngine:
     """Tests for ShortInterestSignalEngine."""
@@ -221,10 +187,7 @@ class TestShortInterestSignalEngine:
 
         # High squeeze potential: high SI%, high DTC
         result = engine.calculate_short_signal(
-            ticker="SQUEEZE",
-            short_interest_pct=Decimal("45.0"),
-            days_to_cover=Decimal("12.0"),
-            as_of_date=as_of
+            ticker="SQUEEZE", short_interest_pct=Decimal("45.0"), days_to_cover=Decimal("12.0"), as_of_date=as_of
         )
 
         assert result["status"] == "SUCCESS"
@@ -237,10 +200,7 @@ class TestShortInterestSignalEngine:
         as_of = date(2026, 1, 11)
 
         result = engine.calculate_short_signal(
-            ticker="NORMAL",
-            short_interest_pct=Decimal("3.0"),
-            days_to_cover=Decimal("2.0"),
-            as_of_date=as_of
+            ticker="NORMAL", short_interest_pct=Decimal("3.0"), days_to_cover=Decimal("2.0"), as_of_date=as_of
         )
 
         assert result["squeeze_potential"] == "LOW"
@@ -253,10 +213,7 @@ class TestShortInterestSignalEngine:
         as_of = date(2026, 1, 11)
 
         result = engine.calculate_short_signal(
-            ticker="MISSING",
-            short_interest_pct=None,
-            days_to_cover=None,
-            as_of_date=as_of
+            ticker="MISSING", short_interest_pct=None, days_to_cover=None, as_of_date=as_of
         )
 
         assert result["status"] == "INSUFFICIENT_DATA"
@@ -271,16 +228,10 @@ class TestShortInterestSignalEngine:
         as_of = date(2026, 1, 11)
 
         result1 = engine1.calculate_short_signal(
-            ticker="TEST",
-            short_interest_pct=Decimal("25.0"),
-            days_to_cover=Decimal("8.0"),
-            as_of_date=as_of
+            ticker="TEST", short_interest_pct=Decimal("25.0"), days_to_cover=Decimal("8.0"), as_of_date=as_of
         )
         result2 = engine2.calculate_short_signal(
-            ticker="TEST",
-            short_interest_pct=Decimal("25.0"),
-            days_to_cover=Decimal("8.0"),
-            as_of_date=as_of
+            ticker="TEST", short_interest_pct=Decimal("25.0"), days_to_cover=Decimal("8.0"), as_of_date=as_of
         )
 
         assert result1["short_signal_score"] == result2["short_signal_score"]
@@ -296,7 +247,7 @@ class TestShortInterestSignalEngine:
             short_interest_pct=Decimal("20.0"),
             days_to_cover=Decimal("6.0"),
             short_interest_change_pct=Decimal("-25.0"),  # Strong covering
-            as_of_date=as_of
+            as_of_date=as_of,
         )
 
         assert result["trend_direction"] == "COVERING"
@@ -306,6 +257,7 @@ class TestShortInterestSignalEngine:
 # =============================================================================
 # TEST: Regime Detection Engine
 # =============================================================================
+
 
 class TestRegimeDetectionEngine:
     """Tests for RegimeDetectionEngine."""
@@ -325,7 +277,7 @@ class TestRegimeDetectionEngine:
             vix_current=Decimal("13.0"),  # Low VIX
             xbi_vs_spy_30d=Decimal("6.0"),  # Strong XBI outperformance
             fed_rate_change_3m=Decimal("-0.25"),  # Rate cuts
-            as_of_date=as_of
+            as_of_date=as_of,
         )
 
         assert result["regime"] == "BULL"
@@ -345,7 +297,7 @@ class TestRegimeDetectionEngine:
             vix_current=Decimal("28.0"),  # Elevated VIX
             xbi_vs_spy_30d=Decimal("-8.0"),  # XBI underperforming
             fed_rate_change_3m=Decimal("0.75"),  # Aggressive hikes
-            as_of_date=as_of
+            as_of_date=as_of,
         )
 
         assert result["regime"] == "BEAR"
@@ -359,9 +311,7 @@ class TestRegimeDetectionEngine:
         # VIX = 50+ with neutral XBI performance triggers VOLATILITY_SPIKE
         # (XBI underperformance would tilt toward BEAR)
         result = engine.detect_regime(
-            vix_current=Decimal("50.0"),  # Extreme VIX
-            xbi_vs_spy_30d=Decimal("0.0"),  # Neutral XBI
-            as_of_date=as_of
+            vix_current=Decimal("50.0"), xbi_vs_spy_30d=Decimal("0.0"), as_of_date=as_of  # Extreme VIX  # Neutral XBI
         )
 
         assert result["regime"] == "VOLATILITY_SPIKE"
@@ -374,16 +324,8 @@ class TestRegimeDetectionEngine:
         engine2 = RegimeDetectionEngine()
         as_of = date(2026, 1, 11)
 
-        result1 = engine1.detect_regime(
-            vix_current=Decimal("18.0"),
-            xbi_vs_spy_30d=Decimal("2.5"),
-            as_of_date=as_of
-        )
-        result2 = engine2.detect_regime(
-            vix_current=Decimal("18.0"),
-            xbi_vs_spy_30d=Decimal("2.5"),
-            as_of_date=as_of
-        )
+        result1 = engine1.detect_regime(vix_current=Decimal("18.0"), xbi_vs_spy_30d=Decimal("2.5"), as_of_date=as_of)
+        result2 = engine2.detect_regime(vix_current=Decimal("18.0"), xbi_vs_spy_30d=Decimal("2.5"), as_of_date=as_of)
 
         assert result1["regime"] == result2["regime"]
         assert result1["confidence"] == result2["confidence"]
@@ -393,16 +335,9 @@ class TestRegimeDetectionEngine:
         """Test composite weight adjustment."""
         engine = RegimeDetectionEngine()
 
-        base_weights = {
-            "clinical": Decimal("0.40"),
-            "financial": Decimal("0.35"),
-            "catalyst": Decimal("0.25")
-        }
+        base_weights = {"clinical": Decimal("0.40"), "financial": Decimal("0.35"), "catalyst": Decimal("0.25")}
 
-        adjusted = engine.get_composite_weight_adjustments(
-            regime="BEAR",
-            base_weights=base_weights
-        )
+        adjusted = engine.get_composite_weight_adjustments(regime="BEAR", base_weights=base_weights)
 
         # Weights should sum to ~1.0
         total = sum(adjusted.values())
@@ -415,6 +350,7 @@ class TestRegimeDetectionEngine:
 # =============================================================================
 # TEST: Integration Tests
 # =============================================================================
+
 
 class TestEnhancementIntegration:
     """Integration tests for enhancement modules."""
@@ -432,30 +368,23 @@ class TestEnhancementIntegration:
 
             # Detect regime
             regime = regime_engine.detect_regime(
-                vix_current=Decimal("18.0"),
-                xbi_vs_spy_30d=Decimal("3.0"),
-                as_of_date=as_of
+                vix_current=Decimal("18.0"), xbi_vs_spy_30d=Decimal("3.0"), as_of_date=as_of
             )
 
             # Score a company
-            pos = pos_engine.calculate_pos_score(
-                base_stage="phase_3",
-                indication="oncology",
-                as_of_date=as_of
-            )
+            pos = pos_engine.calculate_pos_score(base_stage="phase_3", indication="oncology", as_of_date=as_of)
 
             short = short_engine.calculate_short_signal(
-                ticker="TEST",
-                short_interest_pct=Decimal("15.0"),
-                days_to_cover=Decimal("5.0"),
-                as_of_date=as_of
+                ticker="TEST", short_interest_pct=Decimal("15.0"), days_to_cover=Decimal("5.0"), as_of_date=as_of
             )
 
-            results.append({
-                "regime": regime["regime"],
-                "pos_score": str(pos["pos_score"]),
-                "short_score": str(short["short_signal_score"])
-            })
+            results.append(
+                {
+                    "regime": regime["regime"],
+                    "pos_score": str(pos["pos_score"]),
+                    "short_score": str(short["short_signal_score"]),
+                }
+            )
 
         # Both runs should be identical
         assert results[0] == results[1]
@@ -465,13 +394,14 @@ class TestEnhancementIntegration:
 # RUN TESTS
 # =============================================================================
 
+
 def run_tests():
     """Run all tests and report results."""
     test_classes = [
         TestProbabilityOfSuccessEngine,
         TestShortInterestSignalEngine,
         TestRegimeDetectionEngine,
-        TestEnhancementIntegration
+        TestEnhancementIntegration,
     ]
 
     total_tests = 0
@@ -481,10 +411,10 @@ def run_tests():
     for test_class in test_classes:
         print(f"\n{'='*60}")
         print(f"Running: {test_class.__name__}")
-        print('='*60)
+        print("=" * 60)
 
         instance = test_class()
-        methods = [m for m in dir(instance) if m.startswith('test_')]
+        methods = [m for m in dir(instance) if m.startswith("test_")]
 
         for method in methods:
             total_tests += 1
@@ -501,7 +431,7 @@ def run_tests():
 
     print(f"\n{'='*60}")
     print(f"RESULTS: {passed_tests}/{total_tests} tests passed")
-    print('='*60)
+    print("=" * 60)
 
     if failed_tests:
         print("\nFailed tests:")

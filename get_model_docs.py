@@ -14,7 +14,6 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 DOCS_DIR = Path(__file__).parent / "docs"
 MODEL_DOC_PATH = DOCS_DIR / "MODEL_DOCUMENTATION.md"
 DOD_PATH = DOCS_DIR / "MODULE_5_DEFINITION_OF_DONE.md"
@@ -44,18 +43,21 @@ def get_model_documentation(as_json: bool = False) -> str:
     content = MODEL_DOC_PATH.read_text()
 
     if as_json:
-        return json.dumps({
-            "document": "MODEL_DOCUMENTATION",
-            "version": "1.0.0",
-            "retrieved_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-            "file_path": str(MODEL_DOC_PATH),
-            "content_hash": get_file_hash(MODEL_DOC_PATH),
-            "related_documents": {
-                "definition_of_done": str(DOD_PATH),
-                "dod_hash": get_file_hash(DOD_PATH),
+        return json.dumps(
+            {
+                "document": "MODEL_DOCUMENTATION",
+                "version": "1.0.0",
+                "retrieved_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "file_path": str(MODEL_DOC_PATH),
+                "content_hash": get_file_hash(MODEL_DOC_PATH),
+                "related_documents": {
+                    "definition_of_done": str(DOD_PATH),
+                    "dod_hash": get_file_hash(DOD_PATH),
+                },
+                "content": content,
             },
-            "content": content,
-        }, indent=2)
+            indent=2,
+        )
 
     return content
 

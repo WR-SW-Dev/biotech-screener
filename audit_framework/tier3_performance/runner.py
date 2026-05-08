@@ -12,23 +12,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from audit_framework.types import (
-    AuditMetrics,
-    AuditTier,
-    ComplianceGrade,
-    PassCriteria,
-    TierResult,
-)
-
-from audit_framework.tier3_performance.profiling import (
-    validate_performance,
-)
-from audit_framework.tier3_performance.resilience import (
-    validate_resilience,
-)
-from audit_framework.tier3_performance.dependencies import (
-    validate_dependencies,
-)
+from audit_framework.tier3_performance.dependencies import validate_dependencies
+from audit_framework.tier3_performance.profiling import validate_performance
+from audit_framework.tier3_performance.resilience import validate_resilience
+from audit_framework.types import AuditMetrics, AuditTier, ComplianceGrade, PassCriteria, TierResult
 
 
 @dataclass
@@ -96,11 +83,7 @@ def run_tier3_audit(
     result.execution_time_seconds = execution_time.quantize(Decimal("0.001"))
 
     # Determine overall pass/fail
-    result.passed = (
-        result.performance_passed
-        and result.resilience_passed
-        and result.dependencies_passed
-    )
+    result.passed = result.performance_passed and result.resilience_passed and result.dependencies_passed
 
     # Grade calculation
     critical_count = result.critical_count

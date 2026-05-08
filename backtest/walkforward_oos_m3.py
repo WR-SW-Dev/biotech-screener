@@ -12,6 +12,7 @@ Optionally adds regime-conditioned M3 (--use-regime).
 Deterministic: stable sorting, no randomness, stable CSV output.
 PIT-safe by construction: training uses only weeks < t.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,14 +30,9 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from backtest.calibrate_m3_weights import pooled_ridge
-from backtest.evaluate_m3_weights import (
-    DEFAULT_V3_WEIGHTS,
-    FEATURE_COLS,
-    compute_linear_score,
-)
+from backtest.evaluate_m3_weights import DEFAULT_V3_WEIGHTS, FEATURE_COLS, compute_linear_score
 from backtest.fmb import newey_west_se
 from backtest.metrics_m1 import spearman_rank_ic
-
 
 # ── Regime auto-collapse ─────────────────────────────────────────────
 
@@ -86,6 +82,7 @@ def collapse_thin_regimes(
 
 # ── Core walk-forward loop ────────────────────────────────────────────
 
+
 def walk_forward_evaluate(
     panel: pd.DataFrame,
     return_col: str = "fwd_5d",
@@ -130,9 +127,7 @@ def walk_forward_evaluate(
     n_dates = len(dates)
 
     if train_window_weeks >= n_dates:
-        raise ValueError(
-            f"train_window_weeks ({train_window_weeks}) >= total dates ({n_dates})"
-        )
+        raise ValueError(f"train_window_weeks ({train_window_weeks}) >= total dates ({n_dates})")
 
     ts_records: List[Dict[str, Any]] = []
     wt_records: List[Dict[str, Any]] = []
@@ -177,15 +172,10 @@ def walk_forward_evaluate(
         if use_regime:
             eval_regime = regime_by_date.get(eval_date, "CHOP")
             # Filter training dates to same regime
-            regime_train_dates = [
-                d for d in train_dates
-                if regime_by_date.get(d, "CHOP") == eval_regime
-            ]
+            regime_train_dates = [d for d in train_dates if regime_by_date.get(d, "CHOP") == eval_regime]
             n_regime = len(regime_train_dates)
             if n_regime >= min_fit_weeks:
-                regime_train_df = panel[
-                    panel[date_col].isin(regime_train_dates)
-                ].copy()
+                regime_train_df = panel[panel[date_col].isin(regime_train_dates)].copy()
                 weights_regime_raw, _ = pooled_ridge(
                     regime_train_df,
                     return_col=return_col,
@@ -215,7 +205,10 @@ def walk_forward_evaluate(
             blend_alpha = n_regime / (n_regime + blend_k)
             if weights_regime is not None and fit_scope == "REGIME":
                 weights_regime = _blend_weights(
-                    weights_regime, weights_global, blend_alpha, feature_cols,
+                    weights_regime,
+                    weights_global,
+                    blend_alpha,
+                    feature_cols,
                 )
             # For GLOBAL_FALLBACK, alpha is still computed but weights stay global
 
@@ -280,10 +273,7 @@ def _blend_weights(
     feature_cols: List[str],
 ) -> Dict[str, float]:
     """Blend regime and global weights: w = alpha * w_regime + (1-alpha) * w_global."""
-    return {
-        c: alpha * w_regime.get(c, 0.0) + (1 - alpha) * w_global.get(c, 0.0)
-        for c in feature_cols
-    }
+    return {c: alpha * w_regime.get(c, 0.0) + (1 - alpha) * w_global.get(c, 0.0) for c in feature_cols}
 
 
 def _quintile_spread(
@@ -307,6 +297,7 @@ def _quintile_spread(
 
 
 # ── Aggregation ───────────────────────────────────────────────────────
+
 
 def aggregate_results(
     ts_df: pd.DataFrame,
@@ -374,8 +365,7 @@ def _summarize_group(
     # Top-N stats
     topn_mean = np.mean(topn_vals) if len(topn_vals) > 0 else np.nan
     topn_se = newey_west_se(topn_vals, lags=nw_lags)
-    topn_tstat = (topn_mean / topn_se
-                  if topn_se > 0 and np.isfinite(topn_se) else np.nan)
+    topn_tstat = topn_mean / topn_se if topn_se > 0 and np.isfinite(topn_se) else np.nan
 
     # Cumulative return (compounded)
     cum = np.prod(1 + topn_vals) if len(topn_vals) > 0 else np.nan
@@ -384,8 +374,7 @@ def _summarize_group(
     # Sharpe (weekly, annualized)
     if len(topn_vals) > 1:
         topn_std = np.std(topn_vals, ddof=1)
-        sharpe = (topn_mean / topn_std * np.sqrt(52)
-                  if topn_std > 0 else np.nan)
+        sharpe = topn_mean / topn_std * np.sqrt(52) if topn_std > 0 else np.nan
     else:
         sharpe = np.nan
 
@@ -417,6 +406,7 @@ def _summarize_group(
 
 
 # ── Console output ────────────────────────────────────────────────────
+
 
 def print_walkforward_table(summary_df: pd.DataFrame, title: str = "") -> str:
     """Print side-by-side comparison table."""
@@ -454,6 +444,7 @@ def print_walkforward_table(summary_df: pd.DataFrame, title: str = "") -> str:
 
 # ── CLI ───────────────────────────────────────────────────────────────
 
+
 def run_walkforward(
     panel_path: str,
     return_col: str = "fwd_5d",
@@ -483,43 +474,47 @@ def run_walkforward(
 
     n_dates = df["rebalance_date"].nunique()
     print(f"  {len(df):,} rows, {n_dates} dates, {df['ticker'].nunique()} tickers")
-    print(f"  Train window: {train_window_weeks}w, return: {return_col}, "
-          f"lambda: {ridge_lambda}, top-N: {top_n}")
+    print(f"  Train window: {train_window_weeks}w, return: {return_col}, " f"lambda: {ridge_lambda}, top-N: {top_n}")
     print(f"  OOS eval dates: {n_dates - train_window_weeks}")
 
     # Regime setup
     regime_by_date = None
     if use_regime:
-        from backtest.regime import (
-            load_price_history,
-            compute_regime_series,
-            assign_regime_to_rebalance_dates,
-        )
+        from backtest.regime import assign_regime_to_rebalance_dates, compute_regime_series, load_price_history
+
         if price_csv is None:
             price_csv = str(_PROJECT_ROOT / "production_data" / "price_history.csv")
         print(f"\nLoading regime from {price_csv} (ticker={market_ticker}) ...")
         price_df = load_price_history(Path(price_csv))
         regime_series = compute_regime_series(
-            price_df, market_ticker=market_ticker, split_chop=split_chop,
+            price_df,
+            market_ticker=market_ticker,
+            split_chop=split_chop,
         )
         rebalance_dates = sorted(df["rebalance_date"].unique())
         regime_by_date = assign_regime_to_rebalance_dates(
-            regime_series, rebalance_dates,
+            regime_series,
+            rebalance_dates,
         )
         # Print regime distribution
         from collections import Counter
+
         counts = Counter(regime_by_date.values())
         print(f"  Regime distribution (raw): {dict(sorted(counts.items()))}")
 
         # Auto-collapse thin regime buckets
         eval_dates = sorted(df["rebalance_date"].unique())[train_window_weeks:]
         regime_by_date = collapse_thin_regimes(
-            regime_by_date, eval_dates, min_eval_weeks=min_eval_weeks,
+            regime_by_date,
+            eval_dates,
+            min_eval_weeks=min_eval_weeks,
         )
         counts_after = Counter(regime_by_date.values())
         if counts_after != counts:
-            print(f"  Regime distribution (after collapse, min_eval={min_eval_weeks}): "
-                  f"{dict(sorted(counts_after.items()))}")
+            print(
+                f"  Regime distribution (after collapse, min_eval={min_eval_weeks}): "
+                f"{dict(sorted(counts_after.items()))}"
+            )
         print(f"  Min fit weeks: {min_fit_weeks}, blend_k: {blend_k}")
 
     print("\nRunning walk-forward evaluation ...")
@@ -546,20 +541,25 @@ def run_walkforward(
     # Direction guardrail
     for _, row in summary_df.iterrows():
         if row["IC_mean"] < -0.02:
-            print(f"  WARNING: {row['variant']} has mean IC = {row['IC_mean']:.4f} "
-                  f"(strongly negative) — check sign/feature mapping")
+            print(
+                f"  WARNING: {row['variant']} has mean IC = {row['IC_mean']:.4f} "
+                f"(strongly negative) — check sign/feature mapping"
+            )
 
     # Write outputs
     summary_df.to_csv(
-        os.path.join(output_dir, "oos_summary.csv"), index=False,
+        os.path.join(output_dir, "oos_summary.csv"),
+        index=False,
     )
     ts_df.to_csv(
-        os.path.join(output_dir, "oos_timeseries.csv"), index=False,
+        os.path.join(output_dir, "oos_timeseries.csv"),
+        index=False,
     )
     if len(wt_df) > 0:
         wt_df.to_csv(
             os.path.join(output_dir, "oos_weights_by_date.csv.gz"),
-            index=False, compression="gzip",
+            index=False,
+            compression="gzip",
         )
 
     print_walkforward_table(summary_df)
@@ -569,7 +569,8 @@ def run_walkforward(
         regime_summary = aggregate_by_regime(ts_df, nw_lags=nw_lags)
         if len(regime_summary) > 0:
             regime_summary.to_csv(
-                os.path.join(output_dir, "oos_regime_summary.csv"), index=False,
+                os.path.join(output_dir, "oos_regime_summary.csv"),
+                index=False,
             )
             # Print per-regime breakdown for key variants
             for regime in sorted(regime_summary["regime"].unique()):
@@ -587,34 +588,38 @@ def run_walkforward(
                 n_fallback = scope_counts.get("GLOBAL_FALLBACK", 0)
                 fallback_pct = n_fallback / n_total * 100 if n_total > 0 else 0
                 n_regime_fit = scope_counts.get("REGIME", 0)
-                print(f"\n  Regime fit_scope: {n_regime_fit}/{n_total} REGIME, "
-                      f"{n_fallback}/{n_total} GLOBAL_FALLBACK ({fallback_pct:.0f}%)")
+                print(
+                    f"\n  Regime fit_scope: {n_regime_fit}/{n_total} REGIME, "
+                    f"{n_fallback}/{n_total} GLOBAL_FALLBACK ({fallback_pct:.0f}%)"
+                )
                 if fallback_pct > 40:
-                    print(f"  WARNING: {fallback_pct:.0f}% of weeks used global "
-                          f"fallback; consider lowering --min-fit-weeks or "
-                          f"increasing --train-window-weeks")
+                    print(
+                        f"  WARNING: {fallback_pct:.0f}% of weeks used global "
+                        f"fallback; consider lowering --min-fit-weeks or "
+                        f"increasing --train-window-weeks"
+                    )
                 # Print blend alpha diagnostics
                 alphas = regime_rows["blend_alpha"].dropna()
                 if len(alphas) > 0:
-                    print(f"  Mean blend alpha (all weeks): {alphas.mean():.2f} "
-                          f"(1.0 = pure regime, 0.0 = pure global)")
+                    print(
+                        f"  Mean blend alpha (all weeks): {alphas.mean():.2f} "
+                        f"(1.0 = pure regime, 0.0 = pure global)"
+                    )
                 regime_fit_rows = regime_rows[regime_rows["fit_scope"] == "REGIME"]
                 if len(regime_fit_rows) > 0:
                     eff_alphas = regime_fit_rows["blend_alpha"].dropna()
                     if len(eff_alphas) > 0:
-                        print(f"  Mean blend alpha (REGIME-fit weeks only): "
-                              f"{eff_alphas.mean():.2f}")
+                        print(f"  Mean blend alpha (REGIME-fit weeks only): " f"{eff_alphas.mean():.2f}")
 
     print(f"\nOutputs written to {output_dir}/")
     return summary_df
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Walk-Forward OOS M3 Evaluation (Rolling 52-week)"
-    )
+    parser = argparse.ArgumentParser(description="Walk-Forward OOS M3 Evaluation (Rolling 52-week)")
     parser.add_argument(
-        "--panel", required=True,
+        "--panel",
+        required=True,
         help="Path to M1 panel CSV (gzipped OK)",
     )
     parser.add_argument("--return-col", default="fwd_5d")
@@ -625,23 +630,28 @@ def main():
     parser.add_argument("--lambda", dest="ridge_lambda", type=float, default=10.0)
     parser.add_argument("--feature-cols", nargs="+", default=None)
     parser.add_argument(
-        "--output-dir", default="output/backtest_walkforward_m3",
+        "--output-dir",
+        default="output/backtest_walkforward_m3",
     )
     # Regime options
-    parser.add_argument("--use-regime", action="store_true",
-                        help="Enable regime-conditioned M3 variant")
-    parser.add_argument("--price-csv", default=None,
-                        help="Path to price history CSV (default: production_data/price_history.csv)")
-    parser.add_argument("--market-ticker", default="XBI",
-                        help="Ticker for regime classification (default: XBI)")
-    parser.add_argument("--min-fit-weeks", type=int, default=8,
-                        help="Min regime training weeks to attempt fit (default: 8)")
-    parser.add_argument("--blend-k", type=int, default=20,
-                        help="Shrinkage anchor for regime/global blending (default: 20)")
-    parser.add_argument("--split-chop", action="store_true",
-                        help="Split CHOP into CHOP_LOWVOL / CHOP_HIGHVOL")
-    parser.add_argument("--min-eval-weeks", type=int, default=10,
-                        help="Auto-collapse regime buckets with fewer eval weeks (default: 10)")
+    parser.add_argument("--use-regime", action="store_true", help="Enable regime-conditioned M3 variant")
+    parser.add_argument(
+        "--price-csv", default=None, help="Path to price history CSV (default: production_data/price_history.csv)"
+    )
+    parser.add_argument("--market-ticker", default="XBI", help="Ticker for regime classification (default: XBI)")
+    parser.add_argument(
+        "--min-fit-weeks", type=int, default=8, help="Min regime training weeks to attempt fit (default: 8)"
+    )
+    parser.add_argument(
+        "--blend-k", type=int, default=20, help="Shrinkage anchor for regime/global blending (default: 20)"
+    )
+    parser.add_argument("--split-chop", action="store_true", help="Split CHOP into CHOP_LOWVOL / CHOP_HIGHVOL")
+    parser.add_argument(
+        "--min-eval-weeks",
+        type=int,
+        default=10,
+        help="Auto-collapse regime buckets with fewer eval weeks (default: 10)",
+    )
     args = parser.parse_args()
 
     run_walkforward(

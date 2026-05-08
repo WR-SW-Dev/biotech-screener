@@ -1,4 +1,5 @@
 """Tests for scripts/audit_drawdown_coverage.py."""
+
 from __future__ import annotations
 
 import csv
@@ -11,21 +12,24 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.audit_drawdown_coverage import (
-    audit_drawdown_coverage,
-    format_audit_markdown,
-)
-
+from scripts.audit_drawdown_coverage import audit_drawdown_coverage, format_audit_markdown
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _write_rankings(path: Path, rows: list[dict]) -> None:
     """Write a minimal rankings.csv."""
     cols = [
-        "ticker", "archetype", "de_drawdown", "de_drawdown_missing_reason",
-        "eligible", "tier_dev", "composite_score", "composite_rank",
+        "ticker",
+        "archetype",
+        "de_drawdown",
+        "de_drawdown_missing_reason",
+        "eligible",
+        "tier_dev",
+        "composite_score",
+        "composite_rank",
     ]
     with open(path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=cols)
@@ -60,6 +64,7 @@ def _dev_row(ticker: str, drawdown: str = "-0.20", reason: str = "") -> dict:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestAuditDrawdownCoverage:
 
@@ -151,13 +156,15 @@ class TestAuditDrawdownCoverage:
         with tempfile.TemporaryDirectory() as tmp:
             rank_path = Path(tmp) / "rankings.csv"
             rows = [_dev_row("A", drawdown="-0.10")]
-            rows += [{
-                "ticker": "COMM",
-                "archetype": "commercial_biotech",
-                "de_drawdown": "",
-                "de_drawdown_missing_reason": "no_price_series",
-                "eligible": "1",
-            }]
+            rows += [
+                {
+                    "ticker": "COMM",
+                    "archetype": "commercial_biotech",
+                    "de_drawdown": "",
+                    "de_drawdown_missing_reason": "no_price_series",
+                    "eligible": "1",
+                }
+            ]
             _write_rankings(rank_path, rows)
 
             result = audit_drawdown_coverage(rank_path, None)

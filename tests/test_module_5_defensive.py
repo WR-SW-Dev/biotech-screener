@@ -10,15 +10,13 @@ These tests cover:
 - Position sizing
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from module_5_composite_with_defensive import (
-    compute_module_5_composite_with_defensive,
-    _apply_sanity_overrides,
-)
+import pytest
+
+from module_5_composite_with_defensive import _apply_sanity_overrides, compute_module_5_composite_with_defensive
 
 
 class TestVersionSelection:

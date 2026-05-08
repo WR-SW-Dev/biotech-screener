@@ -1,15 +1,12 @@
 """Tests for Milestone 1 IC metrics."""
+
 import math
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest.metrics_m1 import (
-    spearman_rank_ic,
-    compute_ic_timeseries,
-    summarize_ic,
-)
+from backtest.metrics_m1 import compute_ic_timeseries, spearman_rank_ic, summarize_ic
 
 
 class TestSpearmanRankIC:
@@ -72,19 +69,19 @@ class TestICTimeseries:
         rows = []
         for dt in ["2025-01-03", "2025-01-10"]:
             for i, ticker in enumerate(["A", "B", "C", "D", "E"]):
-                rows.append({
-                    "rebalance_date": dt,
-                    "ticker": ticker,
-                    "score_x": float(i + 1),
-                    "fwd_21d": float(i + 1) * 0.01,
-                })
+                rows.append(
+                    {
+                        "rebalance_date": dt,
+                        "ticker": ticker,
+                        "score_x": float(i + 1),
+                        "fwd_21d": float(i + 1) * 0.01,
+                    }
+                )
         return rows
 
     def test_ic_timeseries_perfect(self):
         rows = self._make_panel()
-        ic_ts = compute_ic_timeseries(
-            rows, ["score_x"], ["fwd_21d"], date_col="rebalance_date"
-        )
+        ic_ts = compute_ic_timeseries(rows, ["score_x"], ["fwd_21d"], date_col="rebalance_date")
         assert len(ic_ts) == 2  # 2 dates
         for entry in ic_ts:
             assert abs(entry["ic"] - 1.0) < 1e-9
@@ -92,9 +89,7 @@ class TestICTimeseries:
 
     def test_summarize_ic(self):
         rows = self._make_panel()
-        ic_ts = compute_ic_timeseries(
-            rows, ["score_x"], ["fwd_21d"], date_col="rebalance_date"
-        )
+        ic_ts = compute_ic_timeseries(rows, ["score_x"], ["fwd_21d"], date_col="rebalance_date")
         summary = summarize_ic(ic_ts)
         assert len(summary) == 1
         s = summary[0]
@@ -109,15 +104,15 @@ class TestICTimeseries:
         rows = []
         for dt in ["2025-01-03", "2025-01-10"]:
             for i, ticker in enumerate(["A", "B", "C", "D", "E"]):
-                rows.append({
-                    "rebalance_date": dt,
-                    "ticker": ticker,
-                    "score_x": float(5 - i),  # reversed
-                    "fwd_21d": float(i + 1) * 0.01,
-                })
-        ic_ts = compute_ic_timeseries(
-            rows, ["score_x"], ["fwd_21d"], date_col="rebalance_date"
-        )
+                rows.append(
+                    {
+                        "rebalance_date": dt,
+                        "ticker": ticker,
+                        "score_x": float(5 - i),  # reversed
+                        "fwd_21d": float(i + 1) * 0.01,
+                    }
+                )
+        ic_ts = compute_ic_timeseries(rows, ["score_x"], ["fwd_21d"], date_col="rebalance_date")
         summary = summarize_ic(ic_ts)
         assert abs(summary[0]["mean_ic"] - (-1.0)) < 1e-6
         assert summary[0]["hit_rate"] == 0.0
@@ -127,16 +122,16 @@ class TestICTimeseries:
         rows = []
         for dt in ["2025-01-03"]:
             for i, ticker in enumerate(["A", "B", "C", "D", "E"]):
-                rows.append({
-                    "rebalance_date": dt,
-                    "ticker": ticker,
-                    "score_a": float(i),
-                    "score_b": float(4 - i),
-                    "fwd_21d": float(i) * 0.01,
-                    "fwd_63d": float(i) * 0.02,
-                })
-        ic_ts = compute_ic_timeseries(
-            rows, ["score_a", "score_b"], ["fwd_21d", "fwd_63d"]
-        )
+                rows.append(
+                    {
+                        "rebalance_date": dt,
+                        "ticker": ticker,
+                        "score_a": float(i),
+                        "score_b": float(4 - i),
+                        "fwd_21d": float(i) * 0.01,
+                        "fwd_63d": float(i) * 0.02,
+                    }
+                )
+        ic_ts = compute_ic_timeseries(rows, ["score_a", "score_b"], ["fwd_21d", "fwd_63d"])
         # 1 date × 2 scores × 2 horizons = 4 rows
         assert len(ic_ts) == 4

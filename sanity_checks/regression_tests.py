@@ -21,6 +21,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 from sanity_checks.types import (
+    DEFAULT_THRESHOLDS,
     CheckCategory,
     FlagSeverity,
     GoldenTestCase,
@@ -29,7 +30,6 @@ from sanity_checks.types import (
     SanityFlag,
     SecurityContext,
     ThresholdConfig,
-    DEFAULT_THRESHOLDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RegressionTestResult:
     """Result of a single regression test case."""
+
     test_case: GoldenTestCase
     actual_rank: Optional[int]
     passed: bool
@@ -141,20 +142,22 @@ class RegressionTestRunner:
 
         for result in positive_results:
             if not result.passed:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.CRITICAL,
-                    category=CheckCategory.REGRESSION,
-                    ticker=result.test_case.ticker,
-                    check_name="golden_positive_failed",
-                    message=f"Validated winner {result.test_case.ticker} ranked #{result.actual_rank} (expected top {result.test_case.threshold_rank})",
-                    details={
-                        "description": result.test_case.description,
-                        "expected_outcome": result.test_case.expected_outcome,
-                        "actual_rank": result.actual_rank,
-                        "threshold": result.test_case.threshold_rank,
-                    },
-                    recommendation="Missing validated winner patterns - investigate scoring",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.CRITICAL,
+                        category=CheckCategory.REGRESSION,
+                        ticker=result.test_case.ticker,
+                        check_name="golden_positive_failed",
+                        message=f"Validated winner {result.test_case.ticker} ranked #{result.actual_rank} (expected top {result.test_case.threshold_rank})",
+                        details={
+                            "description": result.test_case.description,
+                            "expected_outcome": result.test_case.expected_outcome,
+                            "actual_rank": result.actual_rank,
+                            "threshold": result.test_case.threshold_rank,
+                        },
+                        recommendation="Missing validated winner patterns - investigate scoring",
+                    )
+                )
 
         # 2. Golden Negative Tests (must NOT rank highly)
         negative_results = self._run_negative_tests(rank_lookup, universe_size)
@@ -162,19 +165,21 @@ class RegressionTestRunner:
 
         for result in negative_results:
             if not result.passed:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.CRITICAL,
-                    category=CheckCategory.REGRESSION,
-                    ticker=result.test_case.ticker,
-                    check_name="golden_negative_failed",
-                    message=f"Known loser {result.test_case.ticker} ranked #{result.actual_rank} (should be bottom 50%)",
-                    details={
-                        "description": result.test_case.description,
-                        "expected_outcome": result.test_case.expected_outcome,
-                        "actual_rank": result.actual_rank,
-                    },
-                    recommendation="Not filtering losers - investigate risk scoring",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.CRITICAL,
+                        category=CheckCategory.REGRESSION,
+                        ticker=result.test_case.ticker,
+                        check_name="golden_negative_failed",
+                        message=f"Known loser {result.test_case.ticker} ranked #{result.actual_rank} (should be bottom 50%)",
+                        details={
+                            "description": result.test_case.description,
+                            "expected_outcome": result.test_case.expected_outcome,
+                            "actual_rank": result.actual_rank,
+                        },
+                        recommendation="Not filtering losers - investigate risk scoring",
+                    )
+                )
 
         # 3. Edge Case Tests
         edge_results = self._run_edge_tests(rank_lookup, current_snapshot)
@@ -182,19 +187,21 @@ class RegressionTestRunner:
 
         for result in edge_results:
             if not result.passed:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.HIGH,
-                    category=CheckCategory.REGRESSION,
-                    ticker=result.test_case.ticker,
-                    check_name="edge_case_failed",
-                    message=result.message,
-                    details={
-                        "description": result.test_case.description,
-                        "expected_outcome": result.test_case.expected_outcome,
-                        "actual_rank": result.actual_rank,
-                    },
-                    recommendation="Edge case handling issue",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.HIGH,
+                        category=CheckCategory.REGRESSION,
+                        ticker=result.test_case.ticker,
+                        check_name="edge_case_failed",
+                        message=result.message,
+                        details={
+                            "description": result.test_case.description,
+                            "expected_outcome": result.test_case.expected_outcome,
+                            "actual_rank": result.actual_rank,
+                        },
+                        recommendation="Edge case handling issue",
+                    )
+                )
 
         # Calculate metrics
         metrics = self._calculate_metrics(test_results)
@@ -305,10 +312,12 @@ class RegressionTestRunner:
 
         # Test: Pre-revenue, pre-Phase 2, micro-cap should not rank top 100
         for sec in snapshot.securities:
-            if (sec.lead_phase in ("Preclinical", "Phase 1") and
-                sec.is_micro_cap and
-                sec.rank is not None and
-                sec.rank <= 20):
+            if (
+                sec.lead_phase in ("Preclinical", "Phase 1")
+                and sec.is_micro_cap
+                and sec.rank is not None
+                and sec.rank <= 20
+            ):
 
                 test_case = GoldenTestCase(
                     ticker=sec.ticker,
@@ -329,10 +338,12 @@ class RegressionTestRunner:
 
         # Test: Cash runway <3 months should have max penalty
         for sec in snapshot.securities:
-            if (sec.runway_months is not None and
-                sec.runway_months < Decimal("3") and
-                sec.rank is not None and
-                sec.rank <= 10):
+            if (
+                sec.runway_months is not None
+                and sec.runway_months < Decimal("3")
+                and sec.rank is not None
+                and sec.rank <= 10
+            ):
 
                 test_case = GoldenTestCase(
                     ticker=sec.ticker,
@@ -353,10 +364,12 @@ class RegressionTestRunner:
 
         # Test: Zero institutional ownership should have conviction penalty
         for sec in snapshot.securities:
-            if (sec.total_13f_holders is not None and
-                sec.total_13f_holders == 0 and
-                sec.rank is not None and
-                sec.rank <= 20):
+            if (
+                sec.total_13f_holders is not None
+                and sec.total_13f_holders == 0
+                and sec.rank is not None
+                and sec.rank <= 20
+            ):
 
                 test_case = GoldenTestCase(
                     ticker=sec.ticker,
@@ -488,12 +501,21 @@ def generate_historical_validation_report(
 
     # Calculate pass rates
     report["pass_rates"] = {
-        "overall": report["summary"]["passed"] / report["summary"]["total_tests"]
-        if report["summary"]["total_tests"] > 0 else 0,
-        "positive": sum(1 for t in report["positive_tests"] if t["passed"]) / len(report["positive_tests"])
-        if report["positive_tests"] else 0,
-        "negative": sum(1 for t in report["negative_tests"] if t["passed"]) / len(report["negative_tests"])
-        if report["negative_tests"] else 0,
+        "overall": (
+            report["summary"]["passed"] / report["summary"]["total_tests"]
+            if report["summary"]["total_tests"] > 0
+            else 0
+        ),
+        "positive": (
+            sum(1 for t in report["positive_tests"] if t["passed"]) / len(report["positive_tests"])
+            if report["positive_tests"]
+            else 0
+        ),
+        "negative": (
+            sum(1 for t in report["negative_tests"] if t["passed"]) / len(report["negative_tests"])
+            if report["negative_tests"]
+            else 0
+        ),
     }
 
     return report

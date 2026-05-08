@@ -21,10 +21,10 @@ Usage:
     result = compute_survivability_score(financial_data, debt_data, catalyst_data, as_of_date)
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import date, datetime
 import logging
+from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,7 @@ EPS = Decimal("1")
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def to_decimal(value: Any, default: Decimal = Decimal("0")) -> Decimal:
     """Safely convert value to Decimal."""
     if value is None:
@@ -113,7 +114,7 @@ def parse_date(date_val: Any) -> Optional[date]:
         return date_val.date()
     if isinstance(date_val, str):
         try:
-            return datetime.fromisoformat(date_val.split('T')[0]).date()
+            return datetime.fromisoformat(date_val.split("T")[0]).date()
         except Exception:
             return None
     return None
@@ -123,11 +124,9 @@ def parse_date(date_val: Any) -> Optional[date]:
 # SUB-SCORE CALCULATIONS
 # =============================================================================
 
+
 def compute_effective_runway(
-    cash_total: Decimal,
-    burn_ttm: Decimal,
-    interest_cash: Decimal,
-    near_term_debt: Decimal
+    cash_total: Decimal, burn_ttm: Decimal, interest_cash: Decimal, near_term_debt: Decimal
 ) -> Tuple[Decimal, str]:
     """
     Compute effective runway in months.
@@ -155,11 +154,7 @@ def compute_effective_runway(
     return runway_months, "calculated"
 
 
-def score_runway(
-    effective_runway_months: Decimal,
-    burn_ttm: Decimal,
-    cash_total: Decimal
-) -> Tuple[Decimal, str]:
+def score_runway(effective_runway_months: Decimal, burn_ttm: Decimal, cash_total: Decimal) -> Tuple[Decimal, str]:
     """
     Score A: Effective Runway Score (bounded [+2, -6])
 
@@ -186,9 +181,7 @@ def score_runway(
 
 
 def score_burn_discipline(
-    r_and_d_expense_ttm: Optional[Decimal],
-    total_operating_expense_ttm: Optional[Decimal],
-    burn_ttm: Decimal
+    r_and_d_expense_ttm: Optional[Decimal], total_operating_expense_ttm: Optional[Decimal], burn_ttm: Decimal
 ) -> Tuple[Decimal, str, bool]:
     """
     Score B: Burn Efficiency / Discipline Score (bounded [+2, -2])
@@ -197,9 +190,7 @@ def score_burn_discipline(
         (score, bucket_description, is_missing)
     """
     # Primary method: R&D ratio to total operating expense
-    if (r_and_d_expense_ttm is not None and
-        total_operating_expense_ttm is not None and
-        total_operating_expense_ttm > 0):
+    if r_and_d_expense_ttm is not None and total_operating_expense_ttm is not None and total_operating_expense_ttm > 0:
 
         rd_ratio = r_and_d_expense_ttm / total_operating_expense_ttm
 
@@ -230,10 +221,7 @@ def score_burn_discipline(
 
 
 def score_burn_acceleration(
-    burn_last_quarter: Optional[Decimal],
-    burn_prev_quarter: Optional[Decimal],
-    burn_ttm: Decimal,
-    cash_total: Decimal
+    burn_last_quarter: Optional[Decimal], burn_prev_quarter: Optional[Decimal], burn_ttm: Decimal, cash_total: Decimal
 ) -> Tuple[Decimal, str, Optional[Decimal]]:
     """
     Score C: Burn Acceleration / Cash Concentration Score (bounded [0, -2])
@@ -276,7 +264,7 @@ def score_debt_fragility(
     nearest_maturity_date: Optional[date],
     next_major_catalyst_date: Optional[date],
     amount_due_12m: Optional[Decimal],
-    effective_runway_months: Decimal
+    effective_runway_months: Decimal,
 ) -> Tuple[Decimal, str, Optional[Decimal]]:
     """
     Score D: Debt Fragility & Maturity Mismatch Score (bounded [+1, -3])
@@ -335,11 +323,12 @@ def score_debt_fragility(
 # MAIN SCORING FUNCTION
 # =============================================================================
 
+
 def compute_survivability_score(
     financial_data: Dict[str, Any],
     debt_data: Optional[Dict[str, Any]] = None,
     catalyst_data: Optional[Dict[str, Any]] = None,
-    as_of_date: Optional[date] = None
+    as_of_date: Optional[date] = None,
 ) -> Dict[str, Any]:
     """
     Compute Financial Module 2: Survivability & Capital Discipline score.
@@ -364,11 +353,12 @@ def compute_survivability_score(
     # ==========================================================================
 
     # Cash total = cash_and_equivalents + short_term_investments
-    cash_and_equiv = to_decimal(financial_data.get('cash_and_equivalents') or
-                                 financial_data.get('Cash'))
-    short_term_inv = to_decimal(financial_data.get('short_term_investments') or
-                                 financial_data.get('ShortTermInvestments') or
-                                 financial_data.get('MarketableSecurities'))
+    cash_and_equiv = to_decimal(financial_data.get("cash_and_equivalents") or financial_data.get("Cash"))
+    short_term_inv = to_decimal(
+        financial_data.get("short_term_investments")
+        or financial_data.get("ShortTermInvestments")
+        or financial_data.get("MarketableSecurities")
+    )
 
     cash_total = cash_and_equiv + short_term_inv
 
@@ -378,9 +368,9 @@ def compute_survivability_score(
         coverage_flags.append("no_short_term_investments")
 
     # Burn TTM = max(0, -operating_cash_flow_ttm)
-    ocf_ttm = to_decimal(financial_data.get('operating_cash_flow_ttm') or
-                          financial_data.get('CFO') or
-                          financial_data.get('NetIncome'))
+    ocf_ttm = to_decimal(
+        financial_data.get("operating_cash_flow_ttm") or financial_data.get("CFO") or financial_data.get("NetIncome")
+    )
 
     burn_ttm = Decimal("0")
     burn_method = "none"
@@ -389,11 +379,10 @@ def compute_survivability_score(
         if ocf_ttm < 0:
             burn_ttm = abs(ocf_ttm)
             burn_method = "ocf"
-    elif financial_data.get('total_operating_expense_ttm') is not None:
+    elif financial_data.get("total_operating_expense_ttm") is not None:
         # Fallback: approximate burn from opex - revenue
-        opex = to_decimal(financial_data.get('total_operating_expense_ttm'))
-        revenue = to_decimal(financial_data.get('revenue_ttm') or
-                              financial_data.get('Revenue'))
+        opex = to_decimal(financial_data.get("total_operating_expense_ttm"))
+        revenue = to_decimal(financial_data.get("revenue_ttm") or financial_data.get("Revenue"))
         approx_burn = opex - revenue
         if approx_burn > 0:
             burn_ttm = approx_burn
@@ -404,17 +393,15 @@ def compute_survivability_score(
         coverage_flags.append("missing_burn_data")
 
     # Interest expense (check both normalized and raw SEC field names)
-    interest_cash = to_decimal(financial_data.get('interest_expense_ttm') or
-                                financial_data.get('InterestExpense'))
+    interest_cash = to_decimal(financial_data.get("interest_expense_ttm") or financial_data.get("InterestExpense"))
     if interest_cash < 0:
         interest_cash = abs(interest_cash)
-    if financial_data.get('interest_expense_ttm') is None and financial_data.get('InterestExpense') is None:
+    if financial_data.get("interest_expense_ttm") is None and financial_data.get("InterestExpense") is None:
         coverage_flags.append("missing_interest_expense")
 
     # Near-term debt
-    amount_due_12m = to_decimal(debt_data.get('amount_due_12m'))
-    current_debt = to_decimal(financial_data.get('current_debt') or
-                               financial_data.get('LongTermDebtCurrent'))
+    amount_due_12m = to_decimal(debt_data.get("amount_due_12m"))
+    current_debt = to_decimal(financial_data.get("current_debt") or financial_data.get("LongTermDebtCurrent"))
 
     if amount_due_12m > 0:
         near_term_debt = amount_due_12m
@@ -425,25 +412,24 @@ def compute_survivability_score(
         coverage_flags.append("missing_near_term_debt")
 
     # Total debt
-    total_debt = to_decimal(financial_data.get('total_debt'))
+    total_debt = to_decimal(financial_data.get("total_debt"))
     if total_debt <= 0:
         # Try to compute from components
-        long_term_debt = to_decimal(financial_data.get('long_term_debt') or
-                                     financial_data.get('LongTermDebt'))
+        long_term_debt = to_decimal(financial_data.get("long_term_debt") or financial_data.get("LongTermDebt"))
         if current_debt > 0 or long_term_debt > 0:
             total_debt = current_debt + long_term_debt
         else:
             coverage_flags.append("missing_total_debt")
 
     # R&D and operating expenses
-    r_and_d_expense = to_decimal(financial_data.get('r_and_d_expense_ttm') or
-                                  financial_data.get('R&D'))
+    r_and_d_expense = to_decimal(financial_data.get("r_and_d_expense_ttm") or financial_data.get("R&D"))
     if r_and_d_expense <= 0:
         r_and_d_expense = None
         coverage_flags.append("missing_rd_expense")
 
-    total_opex = to_decimal(financial_data.get('total_operating_expense_ttm') or
-                             financial_data.get('OperatingExpenses'))
+    total_opex = to_decimal(
+        financial_data.get("total_operating_expense_ttm") or financial_data.get("OperatingExpenses")
+    )
     if total_opex <= 0:
         total_opex = None
         coverage_flags.append("missing_total_opex")
@@ -451,7 +437,7 @@ def compute_survivability_score(
     # Quarterly burn data (if available)
     burn_last_quarter = None
     burn_prev_quarter = None
-    quarterly_burns = financial_data.get('quarterly_burns') or financial_data.get('burn_history')
+    quarterly_burns = financial_data.get("quarterly_burns") or financial_data.get("burn_history")
     if quarterly_burns and len(quarterly_burns) >= 2:
         try:
             burn_last_quarter = to_decimal(quarterly_burns[0])
@@ -467,9 +453,10 @@ def compute_survivability_score(
         coverage_flags.append("missing_quarterly_burn")
 
     # Dates
-    nearest_maturity_date = parse_date(debt_data.get('nearest_maturity_date'))
-    next_major_catalyst_date = parse_date(catalyst_data.get('next_major_catalyst_date') or
-                                           catalyst_data.get('next_catalyst_date'))
+    nearest_maturity_date = parse_date(debt_data.get("nearest_maturity_date"))
+    next_major_catalyst_date = parse_date(
+        catalyst_data.get("next_major_catalyst_date") or catalyst_data.get("next_catalyst_date")
+    )
 
     # ==========================================================================
     # COMPUTE EFFECTIVE RUNWAY
@@ -498,24 +485,24 @@ def compute_survivability_score(
     notes.append(f"A:{note_a}")
 
     # B) Burn Discipline Score
-    score_b, note_b, discipline_missing = score_burn_discipline(
-        r_and_d_expense, total_opex, burn_ttm
-    )
+    score_b, note_b, discipline_missing = score_burn_discipline(r_and_d_expense, total_opex, burn_ttm)
     notes.append(f"B:{note_b}")
     if discipline_missing:
         coverage_flags.append("discipline_missing")
 
     # C) Burn Acceleration / Cash Concentration Score
-    score_c, note_c, accel_metric = score_burn_acceleration(
-        burn_last_quarter, burn_prev_quarter, burn_ttm, cash_total
-    )
+    score_c, note_c, accel_metric = score_burn_acceleration(burn_last_quarter, burn_prev_quarter, burn_ttm, cash_total)
     notes.append(f"C:{note_c}")
 
     # D) Debt Fragility Score
     score_d, note_d, debt_to_cash = score_debt_fragility(
-        total_debt, cash_total, burn_ttm,
-        nearest_maturity_date, next_major_catalyst_date,
-        amount_due_12m, effective_runway_months
+        total_debt,
+        cash_total,
+        burn_ttm,
+        nearest_maturity_date,
+        next_major_catalyst_date,
+        amount_due_12m,
+        effective_runway_months,
     )
     notes.append(f"D:{note_d}")
 
@@ -574,12 +561,13 @@ def compute_survivability_score(
 # BATCH PROCESSING
 # =============================================================================
 
+
 def compute_survivability_scores_batch(
     tickers: List[str],
     financial_lookup: Dict[str, Dict[str, Any]],
     debt_lookup: Optional[Dict[str, Dict[str, Any]]] = None,
     catalyst_lookup: Optional[Dict[str, Dict[str, Any]]] = None,
-    as_of_date: Optional[date] = None
+    as_of_date: Optional[date] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """
     Compute survivability scores for a batch of tickers.
@@ -597,9 +585,7 @@ def compute_survivability_scores_batch(
         catalyst_data = catalyst_lookup.get(ticker, {})
 
         try:
-            result = compute_survivability_score(
-                financial_data, debt_data, catalyst_data, as_of_date
-            )
+            result = compute_survivability_score(financial_data, debt_data, catalyst_data, as_of_date)
             result["ticker"] = ticker
             results[ticker] = result
         except Exception as e:
@@ -621,6 +607,7 @@ def compute_survivability_scores_batch(
 # CLI / MAIN
 # =============================================================================
 
+
 def main():
     """Test with sample data."""
     print("=" * 80)
@@ -628,14 +615,16 @@ def main():
     print("=" * 80)
 
     # Test case 1: Healthy company
-    healthy = compute_survivability_score({
-        'Cash': 500e6,
-        'ShortTermInvestments': 200e6,
-        'CFO': -80e6,  # $80M annual burn
-        'R&D': 60e6,
-        'total_operating_expense_ttm': 100e6,
-        'LongTermDebt': 50e6,
-    })
+    healthy = compute_survivability_score(
+        {
+            "Cash": 500e6,
+            "ShortTermInvestments": 200e6,
+            "CFO": -80e6,  # $80M annual burn
+            "R&D": 60e6,
+            "total_operating_expense_ttm": 100e6,
+            "LongTermDebt": 50e6,
+        }
+    )
     print(f"\nHealthy Company:")
     print(f"  Score: {healthy['score']:.1f}")
     print(f"  Subscores: {healthy['subscores']}")
@@ -643,14 +632,16 @@ def main():
     print(f"  Coverage: {healthy['coverage']}")
 
     # Test case 2: Distressed company
-    distressed = compute_survivability_score({
-        'Cash': 30e6,
-        'CFO': -100e6,  # $100M annual burn
-        'R&D': 20e6,
-        'total_operating_expense_ttm': 120e6,
-        'LongTermDebt': 80e6,
-        'current_debt': 20e6,
-    })
+    distressed = compute_survivability_score(
+        {
+            "Cash": 30e6,
+            "CFO": -100e6,  # $100M annual burn
+            "R&D": 20e6,
+            "total_operating_expense_ttm": 120e6,
+            "LongTermDebt": 80e6,
+            "current_debt": 20e6,
+        }
+    )
     print(f"\nDistressed Company:")
     print(f"  Score: {distressed['score']:.1f}")
     print(f"  Subscores: {distressed['subscores']}")
@@ -658,21 +649,25 @@ def main():
     print(f"  Coverage: {distressed['coverage']}")
 
     # Test case 3: Non-burner (profitable)
-    profitable = compute_survivability_score({
-        'Cash': 1000e6,
-        'CFO': 200e6,  # Positive cash flow
-        'R&D': 150e6,
-        'total_operating_expense_ttm': 200e6,
-    })
+    profitable = compute_survivability_score(
+        {
+            "Cash": 1000e6,
+            "CFO": 200e6,  # Positive cash flow
+            "R&D": 150e6,
+            "total_operating_expense_ttm": 200e6,
+        }
+    )
     print(f"\nProfitable Company:")
     print(f"  Score: {profitable['score']:.1f}")
     print(f"  Subscores: {profitable['subscores']}")
     print(f"  Coverage: {profitable['coverage']}")
 
     # Test case 4: Missing data
-    missing = compute_survivability_score({
-        'Cash': 100e6,
-    })
+    missing = compute_survivability_score(
+        {
+            "Cash": 100e6,
+        }
+    )
     print(f"\nMissing Data Company:")
     print(f"  Score: {missing['score']:.1f}")
     print(f"  Subscores: {missing['subscores']}")

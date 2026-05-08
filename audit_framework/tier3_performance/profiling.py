@@ -22,11 +22,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -80,7 +76,7 @@ class PerformanceValidator:
     """
 
     # Performance thresholds
-    MAX_RUNTIME_320_TICKERS = 300   # 5 minutes
+    MAX_RUNTIME_320_TICKERS = 300  # 5 minutes
     MAX_RUNTIME_1000_TICKERS = 1800  # 30 minutes
 
     # Patterns indicating potential performance issues
@@ -128,7 +124,7 @@ class PerformanceValidator:
                     for pattern, description in self.PERFORMANCE_PATTERNS:
                         matches = re.finditer(pattern, content, re.MULTILINE)
                         for match in matches:
-                            line_num = content[:match.start()].count("\n") + 1
+                            line_num = content[: match.start()].count("\n") + 1
                             rel_path = str(file_path.relative_to(self.codebase_path))
                             bottlenecks.append(f"{rel_path}:{line_num} - {description}")
 
@@ -157,16 +153,18 @@ class PerformanceValidator:
 
                     for pattern, description, issue_type in self.CONCURRENCY_PATTERNS:
                         for match in re.finditer(pattern, content, re.MULTILINE):
-                            line_num = content[:match.start()].count("\n") + 1
+                            line_num = content[: match.start()].count("\n") + 1
                             snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
-                            findings.append(ConcurrencyFinding(
-                                file_path=str(file_path.relative_to(self.codebase_path)),
-                                line_number=line_num,
-                                issue_type=issue_type,
-                                description=description,
-                                code_snippet=snippet.strip()[:80],
-                            ))
+                            findings.append(
+                                ConcurrencyFinding(
+                                    file_path=str(file_path.relative_to(self.codebase_path)),
+                                    line_number=line_num,
+                                    issue_type=issue_type,
+                                    description=description,
+                                    code_snippet=snippet.strip()[:80],
+                                )
+                            )
 
                 except Exception:
                     continue

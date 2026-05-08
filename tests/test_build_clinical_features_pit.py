@@ -1,4 +1,5 @@
 """Tests for scripts/build_clinical_features_pit.py — PIT-safe clinical features."""
+
 from __future__ import annotations
 
 import json
@@ -16,11 +17,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from scripts.build_clinical_features_pit import (
-    DEFAULT_QUALITY,
-    SCHEMA_VERSION,
     _CE_WEIGHTS,
     _CLINICAL_PHASES,
     _PHASE_NUM,
+    DEFAULT_QUALITY,
+    SCHEMA_VERSION,
     _clinical_proximity,
     _collected_at_range,
     _compute_far_horizon_days,
@@ -35,10 +36,10 @@ from scripts.build_clinical_features_pit import (
     validate_clinical_features_schema,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_trial(
     ticker="ACAD",
@@ -79,6 +80,7 @@ AS_OF_DATE = date(2026, 1, 15)
 # ===================================================================
 # TestPITFiltering
 # ===================================================================
+
 
 class TestPITFiltering:
     """PIT admission gate tests."""
@@ -122,7 +124,8 @@ class TestPITFiltering:
         """Non-INTERVENTIONAL study type → admitted but no readout days."""
         trials = [_make_trial(study_type="OBSERVATIONAL")]
         rd, nct_id, n_adm, n_filt, pit_field = _compute_readout_for_ticker(
-            trials, AS_OF_DATE,
+            trials,
+            AS_OF_DATE,
         )
         assert rd is None
         assert n_adm == 1  # admitted but no readout contribution
@@ -134,7 +137,8 @@ class TestPITFiltering:
         # Terminal trials are still admitted/counted for readout_days
         # (only far_horizon excludes them)
         rd, nct_id, n_adm, n_filt, pit_field = _compute_readout_for_ticker(
-            trials, AS_OF_DATE,
+            trials,
+            AS_OF_DATE,
         )
         assert n_adm == 1
         assert n_filt == 0
@@ -143,6 +147,7 @@ class TestPITFiltering:
 # ===================================================================
 # TestReadoutDays
 # ===================================================================
+
 
 class TestReadoutDays:
     """Readout days computation tests."""
@@ -156,28 +161,34 @@ class TestReadoutDays:
 
     def test_past_pcd_no_results_imminent(self):
         """Past PCD with no results_first_posted → 0 (imminent)."""
-        trials = [_make_trial(
-            primary_completion_date="2025-12-01",
-            results_first_posted=None,
-        )]
+        trials = [
+            _make_trial(
+                primary_completion_date="2025-12-01",
+                results_first_posted=None,
+            )
+        ]
         rd, *_ = _compute_readout_for_ticker(trials, AS_OF_DATE)
         assert rd == 0
 
     def test_past_pcd_with_results_skipped(self):
         """Past PCD with results_first_posted → skipped."""
-        trials = [_make_trial(
-            primary_completion_date="2025-12-01",
-            results_first_posted="2025-12-15",
-        )]
+        trials = [
+            _make_trial(
+                primary_completion_date="2025-12-01",
+                results_first_posted="2025-12-15",
+            )
+        ]
         rd, *_ = _compute_readout_for_ticker(trials, AS_OF_DATE)
         assert rd is None
 
     def test_completion_date_fallback(self):
         """completion_date fallback when no PCD."""
-        trials = [_make_trial(
-            primary_completion_date=None,
-            completion_date="2026-04-01",
-        )]
+        trials = [
+            _make_trial(
+                primary_completion_date=None,
+                completion_date="2026-04-01",
+            )
+        ]
         rd, *_ = _compute_readout_for_ticker(trials, AS_OF_DATE)
         expected = (date(2026, 4, 1) - AS_OF_DATE).days
         assert rd == expected
@@ -204,6 +215,7 @@ class TestReadoutDays:
 # TestClinicalAlphaRaw
 # ===================================================================
 
+
 class TestClinicalAlphaRaw:
     """Clinical alpha raw score computation tests."""
 
@@ -214,12 +226,17 @@ class TestClinicalAlphaRaw:
         quality = DEFAULT_QUALITY
         expected = 0.35 * phase_num + 0.35 * proximity + 0.30 * quality
         # Build via actual function
-        trials = [_make_trial(
-            phase="PHASE3",
-            primary_completion_date="2026-04-01",  # ~76 days → proximity
-        )]
+        trials = [
+            _make_trial(
+                phase="PHASE3",
+                primary_completion_date="2026-04-01",  # ~76 days → proximity
+            )
+        ]
         features = build_clinical_features(
-            AS_OF, trials, {"ACAD"}, quality_value=quality,
+            AS_OF,
+            trials,
+            {"ACAD"},
+            quality_value=quality,
         )
         ticker_data = features["tickers"]["ACAD"]
         # Verify proximity ~ exp(-76/90)
@@ -254,44 +271,53 @@ class TestClinicalAlphaRaw:
 # TestFarHorizonPIT
 # ===================================================================
 
+
 class TestFarHorizonPIT:
     """Far horizon PIT safety tests."""
 
     def test_respects_pit_gate(self):
         """Far horizon respects PIT gate (trial first_posted after as_of → excluded)."""
-        trials = [_make_trial(
-            first_posted="2026-02-01",  # after as_of
-            primary_completion_date="2026-06-15",
-        )]
+        trials = [
+            _make_trial(
+                first_posted="2026-02-01",  # after as_of
+                primary_completion_date="2026-06-15",
+            )
+        ]
         result = _compute_far_horizon_days(trials, AS_OF_DATE)
         assert result is None
 
     def test_within_far_window(self):
         """Trial within far_window_days → recorded."""
-        trials = [_make_trial(
-            first_posted="2025-01-01",
-            primary_completion_date="2027-01-01",  # ~351 days
-        )]
+        trials = [
+            _make_trial(
+                first_posted="2025-01-01",
+                primary_completion_date="2027-01-01",  # ~351 days
+            )
+        ]
         result = _compute_far_horizon_days(trials, AS_OF_DATE, far_max=730)
         expected = (date(2027, 1, 1) - AS_OF_DATE).days
         assert result == expected
 
     def test_beyond_far_window_excluded(self):
         """Trial beyond far_window_days → excluded."""
-        trials = [_make_trial(
-            first_posted="2025-01-01",
-            primary_completion_date="2030-01-01",  # way beyond 730d
-        )]
+        trials = [
+            _make_trial(
+                first_posted="2025-01-01",
+                primary_completion_date="2030-01-01",  # way beyond 730d
+            )
+        ]
         result = _compute_far_horizon_days(trials, AS_OF_DATE, far_max=730)
         assert result is None
 
     def test_terminal_status_excluded(self):
         """Only INTERVENTIONAL, non-terminal trials qualify."""
-        trials = [_make_trial(
-            first_posted="2025-01-01",
-            status="TERMINATED",
-            primary_completion_date="2026-06-15",
-        )]
+        trials = [
+            _make_trial(
+                first_posted="2025-01-01",
+                status="TERMINATED",
+                primary_completion_date="2026-06-15",
+            )
+        ]
         result = _compute_far_horizon_days(trials, AS_OF_DATE)
         assert result is None
 
@@ -299,6 +325,7 @@ class TestFarHorizonPIT:
 # ===================================================================
 # TestHighestPhase
 # ===================================================================
+
 
 class TestHighestPhase:
     """Phase ranking tests."""
@@ -325,6 +352,7 @@ class TestHighestPhase:
 # ===================================================================
 # TestSchemaValidation
 # ===================================================================
+
 
 class TestSchemaValidation:
     """Schema validation tests."""
@@ -371,6 +399,7 @@ class TestSchemaValidation:
 # TestEdgeCases
 # ===================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -395,10 +424,8 @@ class TestEdgeCases:
     def test_multiple_tickers_correct_aggregation(self):
         """Multiple tickers from same trial set → correct per-ticker aggregation."""
         trials = [
-            _make_trial(ticker="ACAD", phase="PHASE3",
-                        primary_completion_date="2026-06-15"),
-            _make_trial(ticker="AARD", phase="PHASE1",
-                        primary_completion_date="2026-03-01"),
+            _make_trial(ticker="ACAD", phase="PHASE3", primary_completion_date="2026-06-15"),
+            _make_trial(ticker="AARD", phase="PHASE1", primary_completion_date="2026-03-01"),
         ]
         features = build_clinical_features(AS_OF, trials, {"ACAD", "AARD"})
         assert features["tickers"]["ACAD"]["phase_num"] == 0.83
@@ -438,6 +465,7 @@ class TestEdgeCases:
 # TestCLI
 # ===================================================================
 
+
 class TestCLI:
     """CLI integration tests."""
 
@@ -458,12 +486,18 @@ class TestCLI:
         uni_path.write_text(json.dumps(["ACAD", "AARD", "ALNY"]))
 
         out_path = tmp_path / "output.json"
-        rc = main([
-            "--as-of-date", AS_OF,
-            "--trial-records", str(trial_path),
-            "--universe", str(uni_path),
-            "--out", str(out_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                AS_OF,
+                "--trial-records",
+                str(trial_path),
+                "--universe",
+                str(uni_path),
+                "--out",
+                str(out_path),
+            ]
+        )
         assert rc == 0
         data = json.loads(out_path.read_text())
         ok, reason = validate_clinical_features_schema(data)

@@ -1,4 +1,5 @@
 """Tests for scripts/audit_return_integrity.py."""
+
 from __future__ import annotations
 
 import csv
@@ -21,16 +22,14 @@ from scripts.audit_return_integrity import (
     detect_discontinuities,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _price_map(ticker: str, date_prices: List[tuple]) -> Dict[str, Dict[date, Decimal]]:
     """Build a prices dict for a single ticker: [(date_str, price_float), ...]."""
-    return {
-        ticker: {date.fromisoformat(d): Decimal(str(p)) for d, p in date_prices}
-    }
+    return {ticker: {date.fromisoformat(d): Decimal(str(p)) for d, p in date_prices}}
 
 
 def _merge_prices(*maps) -> Dict[str, Dict[date, Decimal]]:
@@ -62,16 +61,20 @@ def _panel_row(
 # Phase A — Discontinuity detection
 # ---------------------------------------------------------------------------
 
+
 class TestDetectDiscontinuities:
 
     def test_detect_reverse_split(self):
         """A 10x single-day jump is flagged as reverse_split."""
-        prices = _price_map("DRUG", [
-            ("2024-10-11", 1.10),
-            ("2024-10-14", 1.08),
-            ("2024-10-15", 38.49),  # ~35x jump
-            ("2024-10-16", 37.50),
-        ])
+        prices = _price_map(
+            "DRUG",
+            [
+                ("2024-10-11", 1.10),
+                ("2024-10-14", 1.08),
+                ("2024-10-15", 38.49),  # ~35x jump
+                ("2024-10-16", 37.50),
+            ],
+        )
         flags = detect_discontinuities(prices)
         assert len(flags) == 1
         assert flags[0]["ticker"] == "DRUG"
@@ -80,12 +83,15 @@ class TestDetectDiscontinuities:
 
     def test_detect_forward_split(self):
         """An 80% single-day drop is flagged as forward_split."""
-        prices = _price_map("SPLT", [
-            ("2025-03-01", 100.0),
-            ("2025-03-02", 100.0),
-            ("2025-03-03", 20.0),   # -80% drop
-            ("2025-03-04", 21.0),
-        ])
+        prices = _price_map(
+            "SPLT",
+            [
+                ("2025-03-01", 100.0),
+                ("2025-03-02", 100.0),
+                ("2025-03-03", 20.0),  # -80% drop
+                ("2025-03-04", 21.0),
+            ],
+        )
         flags = detect_discontinuities(prices)
         assert len(flags) == 1
         assert flags[0]["ticker"] == "SPLT"
@@ -94,12 +100,15 @@ class TestDetectDiscontinuities:
 
     def test_no_false_positive_normal_volatility(self):
         """A ±50% day in a biotech should NOT be flagged (real vol)."""
-        prices = _price_map("BIOT", [
-            ("2025-01-10", 10.0),
-            ("2025-01-13", 15.0),   # +50%
-            ("2025-01-14", 7.5),    # -50%
-            ("2025-01-15", 8.0),
-        ])
+        prices = _price_map(
+            "BIOT",
+            [
+                ("2025-01-10", 10.0),
+                ("2025-01-13", 15.0),  # +50%
+                ("2025-01-14", 7.5),  # -50%
+                ("2025-01-15", 8.0),
+            ],
+        )
         flags = detect_discontinuities(prices)
         assert len(flags) == 0
 
@@ -108,18 +117,21 @@ class TestDetectDiscontinuities:
 # Phase B — Panel extreme classification
 # ---------------------------------------------------------------------------
 
+
 class TestPanelExtremeClassification:
 
     def test_confirmed_split_vs_plausible(self):
         """A row whose ticker has a flagged date in its forward window → confirmed_split."""
-        disc = [{
-            "ticker": "DRUG",
-            "date": "2024-10-15",
-            "close_before": 1.08,
-            "close_after": 38.49,
-            "pct_change": 34.64,
-            "flag_type": "reverse_split",
-        }]
+        disc = [
+            {
+                "ticker": "DRUG",
+                "date": "2024-10-15",
+                "close_before": 1.08,
+                "close_after": 38.49,
+                "pct_change": 34.64,
+                "flag_type": "reverse_split",
+            }
+        ]
         rows = [
             # DRUG with as_of before the split → confirmed
             _panel_row("DRUG", "2024-09-30", "D", "0", "0.50", "39.87"),
@@ -127,8 +139,7 @@ class TestPanelExtremeClassification:
             _panel_row("SAFE", "2024-09-30", "B", "1", "0.05", "0.10"),
         ]
         # Need enough rows so 0.5% tail captures at least 1
-        filler = [_panel_row(f"F{i}", "2024-06-30", "B", "1", "0.03", "0.08")
-                   for i in range(200)]
+        filler = [_panel_row(f"F{i}", "2024-06-30", "B", "1", "0.03", "0.08") for i in range(200)]
         all_rows = rows + filler
         result = classify_panel_extremes(all_rows, disc)
         year_2024 = result.get("2024", [])
@@ -139,8 +150,7 @@ class TestPanelExtremeClassification:
         """Extreme return (>500%) with no flagged discontinuity → suspicious_jump."""
         disc = []  # no discontinuities at all
         rows = [_panel_row("WEIRD", "2025-06-30", "D", "0", "2.0", "6.0")]
-        filler = [_panel_row(f"F{i}", "2025-06-30", "B", "1", "0.03", "0.08")
-                   for i in range(200)]
+        filler = [_panel_row(f"F{i}", "2025-06-30", "B", "1", "0.03", "0.08") for i in range(200)]
         all_rows = rows + filler
         result = classify_panel_extremes(all_rows, disc)
         year_2025 = result.get("2025", [])
@@ -151,6 +161,7 @@ class TestPanelExtremeClassification:
 # ---------------------------------------------------------------------------
 # Phase C — Tier impact
 # ---------------------------------------------------------------------------
+
 
 class TestTierImpact:
 
@@ -203,6 +214,7 @@ class TestTierImpact:
 # JSON output schema
 # ---------------------------------------------------------------------------
 
+
 class TestJsonOutput:
 
     def test_json_output_schema(self):
@@ -214,8 +226,7 @@ class TestJsonOutput:
             tier_impact={},
             scan_date="2026-02-13",
         )
-        for key in ("scan_date", "price_discontinuities", "flagged_tickers",
-                     "panel_extremes", "tier_impact"):
+        for key in ("scan_date", "price_discontinuities", "flagged_tickers", "panel_extremes", "tier_impact"):
             assert key in output
 
     def test_empty_panel_no_crash(self):

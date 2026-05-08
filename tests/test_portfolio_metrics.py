@@ -9,16 +9,17 @@ Tests cover:
 - RiskMetrics and PerformanceSummary
 """
 
-import pytest
 from decimal import Decimal
 
+import pytest
+
 from backtest.portfolio_metrics import (
-    DrawdownEvent,
     DrawdownAnalysis,
-    RiskMetrics,
+    DrawdownEvent,
     PerformanceSummary,
-    _to_decimal,
+    RiskMetrics,
     _quantize,
+    _to_decimal,
 )
 
 

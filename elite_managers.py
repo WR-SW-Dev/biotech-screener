@@ -19,7 +19,7 @@ Usage:
 
 import json
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 # =============================================================================
 # REGISTRY LOADING
@@ -34,14 +34,14 @@ def _load_registry() -> Dict[str, Any]:
     """Load manager registry from canonical JSON source."""
     global _registry_cache
     if _registry_cache is None:
-        with open(REGISTRY_PATH, 'r', encoding='utf-8') as f:
+        with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
             _registry_cache = json.load(f)
     return _registry_cache
 
 
 def _normalize_cik(cik: str) -> str:
     """Normalize CIK to 10-digit format with leading zeros."""
-    return cik.lstrip('0').zfill(10)
+    return cik.lstrip("0").zfill(10)
 
 
 def _manager_to_legacy_format(mgr: Dict[str, Any], tier: int) -> Dict[str, Any]:
@@ -51,7 +51,7 @@ def _manager_to_legacy_format(mgr: Dict[str, Any], tier: int) -> Dict[str, Any]:
     Registry format: {cik, name, aum_b, style}
     Legacy format: {cik, name, short_name, style, tier, ...}
     """
-    name = mgr['name']
+    name = mgr["name"]
 
     # Generate short name from full name
     # "Baker Bros Advisors" -> "Baker Bros"
@@ -59,30 +59,42 @@ def _manager_to_legacy_format(mgr: Dict[str, Any], tier: int) -> Dict[str, Any]:
     words = name.split()
     if len(words) >= 2:
         # Check for common suffixes to exclude
-        suffixes = {'Advisors', 'Management', 'Partners', 'Capital', 'Group',
-                    'Investments', 'Asset', 'LP', 'LLC', 'Inc', 'Ltd'}
+        suffixes = {
+            "Advisors",
+            "Management",
+            "Partners",
+            "Capital",
+            "Group",
+            "Investments",
+            "Asset",
+            "LP",
+            "LLC",
+            "Inc",
+            "Ltd",
+        }
         short_words = []
         for w in words:
             if w in suffixes and len(short_words) >= 2:
                 break
             short_words.append(w)
-        short_name = ' '.join(short_words[:3])  # Max 3 words
+        short_name = " ".join(short_words[:3])  # Max 3 words
     else:
         short_name = name
 
     return {
-        'cik': mgr['cik'].lstrip('0'),  # Legacy format without leading zeros
-        'name': name,
-        'short_name': short_name,
-        'style': mgr.get('style', 'diversified_healthcare'),
-        'aum_b': mgr.get('aum_b', 0),
-        'tier': tier,
+        "cik": mgr["cik"].lstrip("0"),  # Legacy format without leading zeros
+        "name": name,
+        "short_name": short_name,
+        "style": mgr.get("style", "diversified_healthcare"),
+        "aum_b": mgr.get("aum_b", 0),
+        "tier": tier,
     }
 
 
 # =============================================================================
 # MANAGER ACCESS FUNCTIONS
 # =============================================================================
+
 
 def get_elite_managers() -> List[Dict[str, Any]]:
     """
@@ -91,7 +103,7 @@ def get_elite_managers() -> List[Dict[str, Any]]:
     Returns list of manager dicts in legacy format.
     """
     registry = _load_registry()
-    return [_manager_to_legacy_format(m, tier=1) for m in registry['elite_core']]
+    return [_manager_to_legacy_format(m, tier=1) for m in registry["elite_core"]]
 
 
 def get_conditional_managers() -> List[Dict[str, Any]]:
@@ -101,7 +113,7 @@ def get_conditional_managers() -> List[Dict[str, Any]]:
     Returns list of manager dicts in legacy format.
     """
     registry = _load_registry()
-    return [_manager_to_legacy_format(m, tier=2) for m in registry['conditional']]
+    return [_manager_to_legacy_format(m, tier=2) for m in registry["conditional"]]
 
 
 def get_all_managers() -> List[Dict[str, Any]]:
@@ -146,11 +158,12 @@ ELITE_MANAGERS = _ManagersProxy()
 # LOOKUP FUNCTIONS
 # =============================================================================
 
+
 def get_manager_by_cik(cik: str) -> Optional[Dict[str, Any]]:
     """Look up manager metadata by CIK."""
-    cik_clean = cik.lstrip('0')
+    cik_clean = cik.lstrip("0")
     for manager in get_all_managers():
-        if manager['cik'].lstrip('0') == cik_clean:
+        if manager["cik"].lstrip("0") == cik_clean:
             return manager
     return None
 
@@ -159,10 +172,10 @@ def get_manager_by_short_name(short_name: str) -> Optional[Dict[str, Any]]:
     """Look up manager by short name (case-insensitive)."""
     short_lower = short_name.lower()
     for manager in get_all_managers():
-        if manager['short_name'].lower() == short_lower:
+        if manager["short_name"].lower() == short_lower:
             return manager
         # Also check if query is contained in name
-        if short_lower in manager['name'].lower():
+        if short_lower in manager["name"].lower():
             return manager
     return None
 
@@ -174,17 +187,17 @@ def get_tier_1_managers() -> List[Dict[str, Any]]:
 
 def get_all_ciks() -> List[str]:
     """Return list of all manager CIKs."""
-    return [m['cik'] for m in get_all_managers()]
+    return [m["cik"] for m in get_all_managers()]
 
 
 def get_elite_ciks() -> List[str]:
     """Return list of Elite Core manager CIKs."""
-    return [m['cik'] for m in get_elite_managers()]
+    return [m["cik"] for m in get_elite_managers()]
 
 
 def get_conditional_ciks() -> List[str]:
     """Return list of Conditional manager CIKs."""
-    return [m['cik'] for m in get_conditional_managers()]
+    return [m["cik"] for m in get_conditional_managers()]
 
 
 def get_ciks_by_tier(tier: int) -> List[str]:
@@ -207,43 +220,43 @@ def get_ciks_by_tier(tier: int) -> List[str]:
 # =============================================================================
 
 TIER_WEIGHTS = {
-    1: 1.0,   # Full weight for Elite Core
-    2: 0.3,   # Reduced weight for Conditional (also capped at 30% in scoring)
+    1: 1.0,  # Full weight for Elite Core
+    2: 0.3,  # Reduced weight for Conditional (also capped at 30% in scoring)
 }
 
 STYLE_CONVICTION_MULTIPLIER = {
     # High conviction styles (biotech specialists)
-    'concentrated_conviction': 1.2,
-    'concentrated_life_sciences': 1.2,
-    'scientific_deep_dive': 1.1,
-    'clinical_probability_engine': 1.1,
-    'clinical_stage_specialists': 1.1,
-    'physician_led_fundamental': 1.1,
+    "concentrated_conviction": 1.2,
+    "concentrated_life_sciences": 1.2,
+    "scientific_deep_dive": 1.1,
+    "clinical_probability_engine": 1.1,
+    "clinical_stage_specialists": 1.1,
+    "physician_led_fundamental": 1.1,
     # Standard biotech styles
-    'event_driven': 1.0,
-    'oncology_focused': 1.0,
-    'genomics_focused': 1.0,
-    'healthcare_fundamental': 1.0,
-    'fundamental_long_short': 1.0,
-    'life_sciences_value': 1.0,
-    'value_healthcare': 1.0,
-    'biotech_value': 1.0,
-    'garp_healthcare': 1.0,
+    "event_driven": 1.0,
+    "oncology_focused": 1.0,
+    "genomics_focused": 1.0,
+    "healthcare_fundamental": 1.0,
+    "fundamental_long_short": 1.0,
+    "life_sciences_value": 1.0,
+    "value_healthcare": 1.0,
+    "biotech_value": 1.0,
+    "garp_healthcare": 1.0,
     # Crossover/diversified styles
-    'venture_crossover': 0.9,
-    'life_sciences_crossover': 0.9,
-    'growth_equity': 0.9,
-    'healthcare_long_short': 0.9,
-    'diversified_healthcare': 0.8,
-    'multi_strategy': 0.8,
-    'multi_stage_healthcare': 0.8,
-    'private_equity_crossover': 0.8,
-    'asia_biotech': 0.8,
-    'scientific_data_driven': 0.9,
+    "venture_crossover": 0.9,
+    "life_sciences_crossover": 0.9,
+    "growth_equity": 0.9,
+    "healthcare_long_short": 0.9,
+    "diversified_healthcare": 0.8,
+    "multi_strategy": 0.8,
+    "multi_stage_healthcare": 0.8,
+    "private_equity_crossover": 0.8,
+    "asia_biotech": 0.8,
+    "scientific_data_driven": 0.9,
     # Multi-strategy/quant (Conditional tier)
-    'multi_strategy_macro': 0.5,
-    'multi_strategy_platform': 0.4,
-    'quantitative': 0.3,
+    "multi_strategy_macro": 0.5,
+    "multi_strategy_platform": 0.4,
+    "quantitative": 0.3,
 }
 
 
@@ -253,8 +266,8 @@ def get_manager_weight(manager: Dict[str, Any]) -> float:
 
     Used when aggregating signals across multiple managers.
     """
-    tier_weight = TIER_WEIGHTS.get(manager.get('tier', 2), 0.3)
-    style = manager.get('style', 'diversified_healthcare')
+    tier_weight = TIER_WEIGHTS.get(manager.get("tier", 2), 0.3)
+    style = manager.get("style", "diversified_healthcare")
     style_mult = STYLE_CONVICTION_MULTIPLIER.get(style, 0.8)
     return tier_weight * style_mult
 
@@ -263,19 +276,20 @@ def get_manager_weight(manager: Dict[str, Any]) -> float:
 # VALIDATION
 # =============================================================================
 
+
 def validate_registry() -> bool:
     """Validate registry integrity."""
     registry = _load_registry()
 
-    all_mgrs = registry['elite_core'] + registry['conditional']
-    ciks = [m['cik'] for m in all_mgrs]
+    all_mgrs = registry["elite_core"] + registry["conditional"]
+    ciks = [m["cik"] for m in all_mgrs]
 
     # Check for duplicate CIKs
     if len(ciks) != len(set(ciks)):
         raise ValueError("Duplicate CIKs in registry")
 
     # Check required fields
-    required = ['cik', 'name', 'style']
+    required = ["cik", "name", "style"]
     for manager in all_mgrs:
         for field in required:
             if field not in manager:
@@ -288,16 +302,16 @@ def get_registry_info() -> Dict[str, Any]:
     """Get registry metadata."""
     registry = _load_registry()
     return {
-        'elite_core_count': len(registry['elite_core']),
-        'conditional_count': len(registry['conditional']),
-        'total_count': len(registry['elite_core']) + len(registry['conditional']),
-        'version': registry.get('metadata', {}).get('version', 'unknown'),
-        'last_updated': registry.get('metadata', {}).get('last_updated', 'unknown'),
-        'elite_aum_b': registry.get('metadata', {}).get('total_elite_aum_b', 0),
+        "elite_core_count": len(registry["elite_core"]),
+        "conditional_count": len(registry["conditional"]),
+        "total_count": len(registry["elite_core"]) + len(registry["conditional"]),
+        "version": registry.get("metadata", {}).get("version", "unknown"),
+        "last_updated": registry.get("metadata", {}).get("last_updated", "unknown"),
+        "elite_aum_b": registry.get("metadata", {}).get("total_elite_aum_b", 0),
     }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Quick validation
     validate_registry()
 

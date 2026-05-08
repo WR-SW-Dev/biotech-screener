@@ -7,21 +7,11 @@ Tests edge cases and error scenarios including:
 - Schema version verification
 """
 
-import pytest
-from datetime import date
 from decimal import Decimal
 
-from module_5_composite_v3 import (
-    V3_ENHANCED_WEIGHTS,
-    V3_DEFAULT_WEIGHTS,
-    SCHEMA_VERSION,
-)
-from module_5_scoring_v3 import (
-    _coalesce,
-    _market_cap_bucket,
-    _stage_bucket,
-)
 from common.types import Severity
+from module_5_composite_v3 import SCHEMA_VERSION, V3_DEFAULT_WEIGHTS, V3_ENHANCED_WEIGHTS
+from module_5_scoring_v3 import _coalesce, _market_cap_bucket, _stage_bucket
 
 
 class TestCoalesceFunction:

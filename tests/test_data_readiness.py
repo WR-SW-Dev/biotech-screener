@@ -10,33 +10,34 @@ Covers:
 - Preflight gate logic
 """
 
-import pytest
-import tempfile
-from datetime import date
-from pathlib import Path
-from decimal import Decimal
-
 # Import module under test
 import sys
+import tempfile
+from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backtest.data_readiness import (
-    normalize_column_name,
-    validate_and_load_csv,
-    infer_trading_calendar,
-    compute_ticker_coverage,
-    run_data_readiness_preflight,
-    compute_next_trading_day,
-    SchemaValidationError,
-    REQUIRED_COLUMNS,
     COLUMN_MAPPINGS,
     MIN_COVERAGE_GATE,
+    REQUIRED_COLUMNS,
+    SchemaValidationError,
+    compute_next_trading_day,
+    compute_ticker_coverage,
+    infer_trading_calendar,
+    normalize_column_name,
+    run_data_readiness_preflight,
+    validate_and_load_csv,
 )
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def valid_csv_content():
@@ -102,6 +103,7 @@ def sample_data():
 # COLUMN NORMALIZATION
 # ============================================================================
 
+
 class TestColumnNormalization:
     """Tests for column name normalization."""
 
@@ -147,6 +149,7 @@ class TestColumnNormalization:
 # ============================================================================
 # VALIDATE AND LOAD CSV
 # ============================================================================
+
 
 class TestValidateAndLoadCSV:
     """Tests for validate_and_load_csv function."""
@@ -244,6 +247,7 @@ ACME,2026-01-02
 # TRADING CALENDAR
 # ============================================================================
 
+
 class TestTradingCalendar:
     """Tests for trading calendar functions."""
 
@@ -291,15 +295,14 @@ class TestTradingCalendar:
 # TICKER COVERAGE
 # ============================================================================
 
+
 class TestTickerCoverage:
     """Tests for ticker coverage computation."""
 
     def test_compute_coverage(self, sample_data):
         """Computes per-ticker coverage."""
         calendar = infer_trading_calendar(sample_data)
-        coverage = compute_ticker_coverage(
-            sample_data, calendar, "2026-01-02", "2026-01-06"
-        )
+        coverage = compute_ticker_coverage(sample_data, calendar, "2026-01-02", "2026-01-06")
 
         assert "ACME" in coverage
         assert "BETA" in coverage
@@ -327,6 +330,7 @@ class TestTickerCoverage:
 # ============================================================================
 # PREFLIGHT
 # ============================================================================
+
 
 class TestPreflightReport:
     """Tests for run_data_readiness_preflight function."""
@@ -379,6 +383,7 @@ ACME,invalid,100.00
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -437,6 +442,7 @@ Acme,2026-01-03,101.00
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -462,4 +468,3 @@ class TestDeterminism:
 
         assert result1["gate_passed"] == result2["gate_passed"]
         assert result1["ticker_coverage"]["avg_coverage_pct"] == result2["ticker_coverage"]["avg_coverage_pct"]
-

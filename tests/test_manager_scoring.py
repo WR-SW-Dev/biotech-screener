@@ -1,4 +1,5 @@
 """Tests for Tier-1 manager scoring."""
+
 import sys
 from pathlib import Path
 
@@ -8,10 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest.manager_scoring import (
-    build_manager_leaderboard,
-    compute_manager_returns,
-)
+from backtest.manager_scoring import build_manager_leaderboard, compute_manager_returns
 
 
 def _make_panel(dates, tickers, returns_map):
@@ -24,11 +22,13 @@ def _make_panel(dates, tickers, returns_map):
     for dt in dates:
         for ticker in tickers:
             ret = returns_map.get(ticker, {}).get(dt, np.nan)
-            rows.append({
-                "rebalance_date": dt,
-                "ticker": ticker,
-                "fwd_21d": ret,
-            })
+            rows.append(
+                {
+                    "rebalance_date": dt,
+                    "ticker": ticker,
+                    "fwd_21d": ret,
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -42,14 +42,16 @@ def _make_weekly_holdings(manager_tickers, dates):
     for dt in dates:
         for (cik, name), tickers in manager_tickers.items():
             for t in sorted(tickers):
-                rows.append({
-                    "rebalance_date": dt,
-                    "manager_cik": cik,
-                    "manager_name": name,
-                    "ticker": t,
-                    "shares": 1000,
-                    "value_kusd": 100,
-                })
+                rows.append(
+                    {
+                        "rebalance_date": dt,
+                        "manager_cik": cik,
+                        "manager_name": name,
+                        "ticker": t,
+                        "shares": 1000,
+                        "value_kusd": 100,
+                    }
+                )
     return pd.DataFrame(rows)
 
 
@@ -94,7 +96,8 @@ class TestComputeManagerReturns:
         }
         panel = _make_panel(dates, tickers, returns_map)
         holdings = _make_weekly_holdings(
-            {("CIK1", "M1"): ["A"]}, dates,
+            {("CIK1", "M1"): ["A"]},
+            dates,
         )
         result = compute_manager_returns(holdings, panel, "fwd_21d")
         # Universe mean: (0.10 + 0.20 + 0.30) / 3 = 0.20
@@ -141,7 +144,8 @@ class TestManagerLeaderboard:
         returns_map = {"A": {d: 0.01 for d in dates}}
         panel = _make_panel(dates, tickers, returns_map)
         holdings = _make_weekly_holdings(
-            {("CIK1", "ShortTrack"): ["A"]}, dates,
+            {("CIK1", "ShortTrack"): ["A"]},
+            dates,
         )
         mgr_returns = compute_manager_returns(holdings, panel, "fwd_21d")
         leaderboard = build_manager_leaderboard(mgr_returns, min_weeks=5)
@@ -158,7 +162,8 @@ class TestManagerLeaderboard:
 
         panel = _make_panel(dates, tickers, returns_map)
         holdings = _make_weekly_holdings(
-            {("CIK1", "M1"): ["A"]}, dates,
+            {("CIK1", "M1"): ["A"]},
+            dates,
         )
         mgr_returns = compute_manager_returns(holdings, panel, "fwd_21d")
         leaderboard = build_manager_leaderboard(mgr_returns, min_weeks=3)
@@ -174,7 +179,8 @@ class TestManagerLeaderboard:
         }
         panel = _make_panel(dates, tickers, returns_map)
         holdings = _make_weekly_holdings(
-            {("CIK1", "M1"): ["A", "B"]}, dates,
+            {("CIK1", "M1"): ["A", "B"]},
+            dates,
         )
         r1 = compute_manager_returns(holdings, panel, "fwd_21d")
         r2 = compute_manager_returns(holdings, panel, "fwd_21d")
@@ -182,10 +188,16 @@ class TestManagerLeaderboard:
 
     def test_empty_holdings(self):
         """Empty holdings returns empty leaderboard."""
-        empty = pd.DataFrame(columns=[
-            "rebalance_date", "manager_cik", "manager_name",
-            "portfolio_return", "n_holdings", "n_with_returns",
-            "universe_mean_return",
-        ])
+        empty = pd.DataFrame(
+            columns=[
+                "rebalance_date",
+                "manager_cik",
+                "manager_name",
+                "portfolio_return",
+                "n_holdings",
+                "n_with_returns",
+                "universe_mean_return",
+            ]
+        )
         lb = build_manager_leaderboard(empty)
         assert lb.empty

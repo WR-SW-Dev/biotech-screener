@@ -6,28 +6,28 @@ Tests all threshold boundaries, edge cases, and scoring logic.
 """
 
 import unittest
-from decimal import Decimal
 from datetime import date, timedelta
+from decimal import Decimal
 
 from financial_module_2_survivability import (
-    compute_survivability_score,
-    compute_effective_runway,
-    score_runway,
-    score_burn_discipline,
-    score_burn_acceleration,
-    score_debt_fragility,
-    clamp,
-    to_decimal,
-    FINAL_SCORE_MIN,
     FINAL_SCORE_MAX,
-    SCORE_A_MIN,
+    FINAL_SCORE_MIN,
     SCORE_A_MAX,
-    SCORE_B_MIN,
+    SCORE_A_MIN,
     SCORE_B_MAX,
-    SCORE_C_MIN,
+    SCORE_B_MIN,
     SCORE_C_MAX,
-    SCORE_D_MIN,
+    SCORE_C_MIN,
     SCORE_D_MAX,
+    SCORE_D_MIN,
+    clamp,
+    compute_effective_runway,
+    compute_survivability_score,
+    score_burn_acceleration,
+    score_burn_discipline,
+    score_debt_fragility,
+    score_runway,
+    to_decimal,
 )
 
 
@@ -120,83 +120,57 @@ class TestBurnDisciplineScore(unittest.TestCase):
 
     def test_rd_ratio_055_boundary(self):
         """R&D ratio >= 0.55 should score +2.0"""
-        score, note, missing = score_burn_discipline(
-            Decimal("55"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("55"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("2.0"))
         self.assertFalse(missing)
 
-        score, note, missing = score_burn_discipline(
-            Decimal("70"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("70"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("2.0"))
 
     def test_rd_ratio_045_boundary(self):
         """R&D ratio [0.45, 0.55) should score +1.0"""
-        score, note, missing = score_burn_discipline(
-            Decimal("45"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("45"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("1.0"))
 
-        score, note, missing = score_burn_discipline(
-            Decimal("54"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("54"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("1.0"))
 
     def test_rd_ratio_030_boundary(self):
         """R&D ratio [0.30, 0.45) should score 0.0"""
-        score, note, missing = score_burn_discipline(
-            Decimal("30"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("30"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("0.0"))
 
-        score, note, missing = score_burn_discipline(
-            Decimal("44"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("44"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("0.0"))
 
     def test_rd_ratio_020_boundary(self):
         """R&D ratio [0.20, 0.30) should score -1.0"""
-        score, note, missing = score_burn_discipline(
-            Decimal("20"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("20"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("-1.0"))
 
-        score, note, missing = score_burn_discipline(
-            Decimal("29"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("29"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("-1.0"))
 
     def test_rd_ratio_below_020_boundary(self):
         """R&D ratio < 0.20 should score -2.0"""
-        score, note, missing = score_burn_discipline(
-            Decimal("19"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("19"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("-2.0"))
 
-        score, note, missing = score_burn_discipline(
-            Decimal("10"), Decimal("100"), Decimal("50")
-        )
+        score, note, missing = score_burn_discipline(Decimal("10"), Decimal("100"), Decimal("50"))
         self.assertEqual(score, Decimal("-2.0"))
 
     def test_fallback_rd_to_burn(self):
         """Fallback to R&D/burn ratio when opex missing."""
         # R&D/burn >= 0.60: +1.0
-        score, note, missing = score_burn_discipline(
-            Decimal("60"), None, Decimal("100")
-        )
+        score, note, missing = score_burn_discipline(Decimal("60"), None, Decimal("100"))
         self.assertEqual(score, Decimal("1.0"))
 
         # R&D/burn [0.40, 0.60): 0.0
-        score, note, missing = score_burn_discipline(
-            Decimal("50"), None, Decimal("100")
-        )
+        score, note, missing = score_burn_discipline(Decimal("50"), None, Decimal("100"))
         self.assertEqual(score, Decimal("0.0"))
 
         # R&D/burn < 0.40: -1.0
-        score, note, missing = score_burn_discipline(
-            Decimal("30"), None, Decimal("100")
-        )
+        score, note, missing = score_burn_discipline(Decimal("30"), None, Decimal("100"))
         self.assertEqual(score, Decimal("-1.0"))
 
     def test_missing_data(self):
@@ -212,58 +186,44 @@ class TestBurnAccelerationScore(unittest.TestCase):
     def test_burn_accel_050_boundary(self):
         """Burn acceleration >= 0.50 should score -2.0"""
         # 100 -> 150 = 50% increase
-        score, note, metric = score_burn_acceleration(
-            Decimal("150"), Decimal("100"), Decimal("100"), Decimal("500")
-        )
+        score, note, metric = score_burn_acceleration(Decimal("150"), Decimal("100"), Decimal("100"), Decimal("500"))
         self.assertEqual(score, Decimal("-2.0"))
 
     def test_burn_accel_025_boundary(self):
         """Burn acceleration [0.25, 0.50) should score -1.0"""
         # 100 -> 130 = 30% increase
-        score, note, metric = score_burn_acceleration(
-            Decimal("130"), Decimal("100"), Decimal("100"), Decimal("500")
-        )
+        score, note, metric = score_burn_acceleration(Decimal("130"), Decimal("100"), Decimal("100"), Decimal("500"))
         self.assertEqual(score, Decimal("-1.0"))
 
     def test_burn_accel_below_025(self):
         """Burn acceleration < 0.25 should score 0.0"""
         # 100 -> 120 = 20% increase
-        score, note, metric = score_burn_acceleration(
-            Decimal("120"), Decimal("100"), Decimal("100"), Decimal("500")
-        )
+        score, note, metric = score_burn_acceleration(Decimal("120"), Decimal("100"), Decimal("100"), Decimal("500"))
         self.assertEqual(score, Decimal("0.0"))
 
     def test_cash_concentration_025_boundary(self):
         """Cash concentration >= 0.25 should score -2.0"""
         # burn_ttm=400, cash=400 -> quarterly=100, conc=0.25
-        score, note, metric = score_burn_acceleration(
-            None, None, Decimal("400"), Decimal("400")
-        )
+        score, note, metric = score_burn_acceleration(None, None, Decimal("400"), Decimal("400"))
         self.assertEqual(score, Decimal("-2.0"))
 
     def test_cash_concentration_015_boundary(self):
         """Cash concentration [0.15, 0.25) should score -1.0"""
         # burn_ttm=200, cash=500 -> quarterly=50, conc=0.10 (below threshold)
         # burn_ttm=300, cash=500 -> quarterly=75, conc=0.15
-        score, note, metric = score_burn_acceleration(
-            None, None, Decimal("300"), Decimal("500")
-        )
+        score, note, metric = score_burn_acceleration(None, None, Decimal("300"), Decimal("500"))
         self.assertEqual(score, Decimal("-1.0"))
 
     def test_cash_concentration_below_015(self):
         """Cash concentration < 0.15 should score 0.0"""
         # burn_ttm=200, cash=500 -> quarterly=50, conc=0.10
-        score, note, metric = score_burn_acceleration(
-            None, None, Decimal("200"), Decimal("500")
-        )
+        score, note, metric = score_burn_acceleration(None, None, Decimal("200"), Decimal("500"))
         self.assertEqual(score, Decimal("0.0"))
 
     def test_score_never_positive(self):
         """Score C should never be positive."""
         # Burn decreasing
-        score, note, metric = score_burn_acceleration(
-            Decimal("50"), Decimal("100"), Decimal("100"), Decimal("500")
-        )
+        score, note, metric = score_burn_acceleration(Decimal("50"), Decimal("100"), Decimal("100"), Decimal("500"))
         self.assertLessEqual(score, Decimal("0.0"))
 
 
@@ -273,40 +233,35 @@ class TestDebtFragilityScore(unittest.TestCase):
     def test_debt_to_cash_010_boundary(self):
         """Debt/cash < 0.10 should score +1.0"""
         score, note, ratio = score_debt_fragility(
-            Decimal("9"), Decimal("100"), Decimal("10"),
-            None, None, None, Decimal("24")
+            Decimal("9"), Decimal("100"), Decimal("10"), None, None, None, Decimal("24")
         )
         self.assertEqual(score, Decimal("1.0"))
 
     def test_debt_to_cash_040_boundary(self):
         """Debt/cash [0.10, 0.40) should score 0.0"""
         score, note, ratio = score_debt_fragility(
-            Decimal("30"), Decimal("100"), Decimal("10"),
-            None, None, None, Decimal("24")
+            Decimal("30"), Decimal("100"), Decimal("10"), None, None, None, Decimal("24")
         )
         self.assertEqual(score, Decimal("0.0"))
 
     def test_debt_to_cash_080_boundary(self):
         """Debt/cash [0.40, 0.80) should score -1.0"""
         score, note, ratio = score_debt_fragility(
-            Decimal("60"), Decimal("100"), Decimal("10"),
-            None, None, None, Decimal("24")
+            Decimal("60"), Decimal("100"), Decimal("10"), None, None, None, Decimal("24")
         )
         self.assertEqual(score, Decimal("-1.0"))
 
     def test_debt_to_cash_above_080_burner(self):
         """Debt/cash >= 0.80 for burner should score -2.0"""
         score, note, ratio = score_debt_fragility(
-            Decimal("90"), Decimal("100"), Decimal("10"),  # is_burner=True
-            None, None, None, Decimal("24")
+            Decimal("90"), Decimal("100"), Decimal("10"), None, None, None, Decimal("24")  # is_burner=True
         )
         self.assertEqual(score, Decimal("-2.0"))
 
     def test_debt_to_cash_above_080_non_burner(self):
         """Debt/cash >= 0.80 for non-burner should score -1.0"""
         score, note, ratio = score_debt_fragility(
-            Decimal("90"), Decimal("100"), Decimal("0"),  # is_burner=False
-            None, None, None, Decimal("24")
+            Decimal("90"), Decimal("100"), Decimal("0"), None, None, None, Decimal("24")  # is_burner=False
         )
         self.assertEqual(score, Decimal("-1.0"))
 
@@ -318,8 +273,7 @@ class TestDebtFragilityScore(unittest.TestCase):
 
         # Base score would be 0.0 (debt/cash = 0.30)
         score, note, ratio = score_debt_fragility(
-            Decimal("30"), Decimal("100"), Decimal("10"),
-            maturity, catalyst, None, Decimal("24")
+            Decimal("30"), Decimal("100"), Decimal("10"), maturity, catalyst, None, Decimal("24")
         )
         self.assertEqual(score, Decimal("-1.0"))  # 0.0 + (-1.0) penalty
         self.assertIn("maturity_before_catalyst", note)
@@ -328,8 +282,7 @@ class TestDebtFragilityScore(unittest.TestCase):
         """Debt due within 12m with short runway should add -1.0 penalty."""
         # Base score would be 0.0 (debt/cash = 0.30)
         score, note, ratio = score_debt_fragility(
-            Decimal("30"), Decimal("100"), Decimal("10"),
-            None, None, Decimal("20"), Decimal("10")  # runway < 12
+            Decimal("30"), Decimal("100"), Decimal("10"), None, None, Decimal("20"), Decimal("10")  # runway < 12
         )
         self.assertEqual(score, Decimal("-1.0"))  # 0.0 + (-1.0) penalty
         self.assertIn("debt_due_12m_short_runway", note)
@@ -342,8 +295,7 @@ class TestDebtFragilityScore(unittest.TestCase):
         catalyst = today + timedelta(days=180)
 
         score, note, ratio = score_debt_fragility(
-            Decimal("90"), Decimal("100"), Decimal("10"),
-            maturity, catalyst, None, Decimal("24")
+            Decimal("90"), Decimal("100"), Decimal("10"), maturity, catalyst, None, Decimal("24")
         )
         self.assertEqual(score, Decimal("-3.0"))
         self.assertGreaterEqual(score, SCORE_D_MIN)
@@ -356,46 +308,52 @@ class TestFinalScoreBounds(unittest.TestCase):
     def test_score_clamped_to_minus_10(self):
         """Final score should not go below -10.0"""
         # Create worst-case scenario
-        result = compute_survivability_score({
-            'Cash': 10e6,
-            'CFO': -200e6,  # Massive burn
-            'R&D': 10e6,
-            'total_operating_expense_ttm': 200e6,
-            'LongTermDebt': 100e6,
-            'current_debt': 50e6,
-        })
-        self.assertGreaterEqual(result['score'], -10.0)
+        result = compute_survivability_score(
+            {
+                "Cash": 10e6,
+                "CFO": -200e6,  # Massive burn
+                "R&D": 10e6,
+                "total_operating_expense_ttm": 200e6,
+                "LongTermDebt": 100e6,
+                "current_debt": 50e6,
+            }
+        )
+        self.assertGreaterEqual(result["score"], -10.0)
 
     def test_score_clamped_to_plus_5(self):
         """Final score should not exceed +5.0"""
         # Create best-case scenario
-        result = compute_survivability_score({
-            'Cash': 1000e6,
-            'ShortTermInvestments': 500e6,
-            'CFO': 100e6,  # Profitable
-            'R&D': 150e6,
-            'total_operating_expense_ttm': 200e6,
-        })
-        self.assertLessEqual(result['score'], 5.0)
+        result = compute_survivability_score(
+            {
+                "Cash": 1000e6,
+                "ShortTermInvestments": 500e6,
+                "CFO": 100e6,  # Profitable
+                "R&D": 150e6,
+                "total_operating_expense_ttm": 200e6,
+            }
+        )
+        self.assertLessEqual(result["score"], 5.0)
 
     def test_subscores_within_bounds(self):
         """All subscores should be within their bounds."""
-        result = compute_survivability_score({
-            'Cash': 100e6,
-            'CFO': -50e6,
-            'R&D': 30e6,
-            'total_operating_expense_ttm': 60e6,
-        })
+        result = compute_survivability_score(
+            {
+                "Cash": 100e6,
+                "CFO": -50e6,
+                "R&D": 30e6,
+                "total_operating_expense_ttm": 60e6,
+            }
+        )
 
-        subscores = result['subscores']
-        self.assertGreaterEqual(subscores['runway'], float(SCORE_A_MIN))
-        self.assertLessEqual(subscores['runway'], float(SCORE_A_MAX))
-        self.assertGreaterEqual(subscores['discipline'], float(SCORE_B_MIN))
-        self.assertLessEqual(subscores['discipline'], float(SCORE_B_MAX))
-        self.assertGreaterEqual(subscores['accel'], float(SCORE_C_MIN))
-        self.assertLessEqual(subscores['accel'], float(SCORE_C_MAX))
-        self.assertGreaterEqual(subscores['debt'], float(SCORE_D_MIN))
-        self.assertLessEqual(subscores['debt'], float(SCORE_D_MAX))
+        subscores = result["subscores"]
+        self.assertGreaterEqual(subscores["runway"], float(SCORE_A_MIN))
+        self.assertLessEqual(subscores["runway"], float(SCORE_A_MAX))
+        self.assertGreaterEqual(subscores["discipline"], float(SCORE_B_MIN))
+        self.assertLessEqual(subscores["discipline"], float(SCORE_B_MAX))
+        self.assertGreaterEqual(subscores["accel"], float(SCORE_C_MIN))
+        self.assertLessEqual(subscores["accel"], float(SCORE_C_MAX))
+        self.assertGreaterEqual(subscores["debt"], float(SCORE_D_MIN))
+        self.assertLessEqual(subscores["debt"], float(SCORE_D_MAX))
 
 
 class TestMissingData(unittest.TestCase):
@@ -404,41 +362,49 @@ class TestMissingData(unittest.TestCase):
     def test_missing_all_data(self):
         """Should not crash with empty data."""
         result = compute_survivability_score({})
-        self.assertIn('score', result)
-        self.assertIn('subscores', result)
-        self.assertIn('coverage', result)
-        self.assertGreaterEqual(result['score'], -10.0)
-        self.assertLessEqual(result['score'], 5.0)
+        self.assertIn("score", result)
+        self.assertIn("subscores", result)
+        self.assertIn("coverage", result)
+        self.assertGreaterEqual(result["score"], -10.0)
+        self.assertLessEqual(result["score"], 5.0)
 
     def test_missing_cash_flagged(self):
         """Missing cash should be flagged."""
-        result = compute_survivability_score({
-            'CFO': -50e6,
-        })
-        self.assertIn('missing_cash', result['coverage'])
+        result = compute_survivability_score(
+            {
+                "CFO": -50e6,
+            }
+        )
+        self.assertIn("missing_cash", result["coverage"])
 
     def test_missing_burn_flagged(self):
         """Missing burn data should be flagged."""
-        result = compute_survivability_score({
-            'Cash': 100e6,
-        })
-        self.assertIn('missing_burn_data', result['coverage'])
+        result = compute_survivability_score(
+            {
+                "Cash": 100e6,
+            }
+        )
+        self.assertIn("missing_burn_data", result["coverage"])
 
     def test_missing_rd_flagged(self):
         """Missing R&D should be flagged."""
-        result = compute_survivability_score({
-            'Cash': 100e6,
-            'CFO': -50e6,
-        })
-        self.assertIn('missing_rd_expense', result['coverage'])
+        result = compute_survivability_score(
+            {
+                "Cash": 100e6,
+                "CFO": -50e6,
+            }
+        )
+        self.assertIn("missing_rd_expense", result["coverage"])
 
     def test_missing_quarterly_burn_flagged(self):
         """Missing quarterly burn should be flagged."""
-        result = compute_survivability_score({
-            'Cash': 100e6,
-            'CFO': -50e6,
-        })
-        self.assertIn('missing_quarterly_burn', result['coverage'])
+        result = compute_survivability_score(
+            {
+                "Cash": 100e6,
+                "CFO": -50e6,
+            }
+        )
+        self.assertIn("missing_quarterly_burn", result["coverage"])
 
 
 class TestEffectiveRunwayCalculation(unittest.TestCase):
@@ -447,37 +413,27 @@ class TestEffectiveRunwayCalculation(unittest.TestCase):
     def test_basic_runway_calculation(self):
         """Test basic runway = 12 * (cash - debt) / (burn + interest)"""
         # cash=600, debt=100, burn=100, interest=20 -> 12 * 500 / 120 = 50 months
-        runway, method = compute_effective_runway(
-            Decimal("600"), Decimal("100"), Decimal("20"), Decimal("100")
-        )
+        runway, method = compute_effective_runway(Decimal("600"), Decimal("100"), Decimal("20"), Decimal("100"))
         self.assertEqual(runway, Decimal("50"))
 
     def test_non_burner_runway(self):
         """Non-burner should get 999 months runway."""
-        runway, method = compute_effective_runway(
-            Decimal("100"), Decimal("0"), Decimal("0"), Decimal("0")
-        )
+        runway, method = compute_effective_runway(Decimal("100"), Decimal("0"), Decimal("0"), Decimal("0"))
         self.assertEqual(runway, Decimal("999"))
         self.assertEqual(method, "non_burner")
 
     def test_no_cash_runway(self):
         """No cash should get 0 months runway."""
-        runway, method = compute_effective_runway(
-            Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0")
-        )
+        runway, method = compute_effective_runway(Decimal("0"), Decimal("0"), Decimal("0"), Decimal("0"))
         self.assertEqual(runway, Decimal("0"))
         self.assertEqual(method, "no_cash")
 
     def test_debt_reduces_effective_cash(self):
         """Near-term debt should reduce effective cash."""
         # cash=100, debt=50 -> effective=50
-        runway_with_debt, _ = compute_effective_runway(
-            Decimal("100"), Decimal("12"), Decimal("0"), Decimal("50")
-        )
+        runway_with_debt, _ = compute_effective_runway(Decimal("100"), Decimal("12"), Decimal("0"), Decimal("50"))
         # cash=100, debt=0 -> effective=100
-        runway_no_debt, _ = compute_effective_runway(
-            Decimal("100"), Decimal("12"), Decimal("0"), Decimal("0")
-        )
+        runway_no_debt, _ = compute_effective_runway(Decimal("100"), Decimal("12"), Decimal("0"), Decimal("0"))
         self.assertLess(runway_with_debt, runway_no_debt)
 
 
@@ -486,43 +442,49 @@ class TestIntegration(unittest.TestCase):
 
     def test_healthy_biotech(self):
         """Healthy biotech should score positively."""
-        result = compute_survivability_score({
-            'Cash': 500e6,
-            'ShortTermInvestments': 200e6,
-            'CFO': -80e6,
-            'R&D': 60e6,
-            'total_operating_expense_ttm': 100e6,
-            'LongTermDebt': 30e6,
-        })
+        result = compute_survivability_score(
+            {
+                "Cash": 500e6,
+                "ShortTermInvestments": 200e6,
+                "CFO": -80e6,
+                "R&D": 60e6,
+                "total_operating_expense_ttm": 100e6,
+                "LongTermDebt": 30e6,
+            }
+        )
         # Should have good runway, good discipline, no acceleration, low debt
-        self.assertGreater(result['score'], 0)
-        self.assertEqual(result['subscores']['runway'], 2.0)  # 105 months
-        self.assertGreaterEqual(result['subscores']['discipline'], 1.0)  # R&D ratio 60%
+        self.assertGreater(result["score"], 0)
+        self.assertEqual(result["subscores"]["runway"], 2.0)  # 105 months
+        self.assertGreaterEqual(result["subscores"]["discipline"], 1.0)  # R&D ratio 60%
 
     def test_distressed_biotech(self):
         """Distressed biotech should score negatively."""
-        result = compute_survivability_score({
-            'Cash': 20e6,
-            'CFO': -100e6,
-            'R&D': 15e6,
-            'total_operating_expense_ttm': 120e6,
-            'LongTermDebt': 80e6,
-            'current_debt': 30e6,
-        })
+        result = compute_survivability_score(
+            {
+                "Cash": 20e6,
+                "CFO": -100e6,
+                "R&D": 15e6,
+                "total_operating_expense_ttm": 120e6,
+                "LongTermDebt": 80e6,
+                "current_debt": 30e6,
+            }
+        )
         # Should have poor runway, poor discipline, high debt
-        self.assertLess(result['score'], 0)
-        self.assertEqual(result['subscores']['runway'], -6.0)  # ~2.4 months
+        self.assertLess(result["score"], 0)
+        self.assertEqual(result["subscores"]["runway"], -6.0)  # ~2.4 months
 
     def test_profitable_company(self):
         """Profitable company should score well."""
-        result = compute_survivability_score({
-            'Cash': 1000e6,
-            'CFO': 200e6,  # Positive
-            'R&D': 150e6,
-            'total_operating_expense_ttm': 250e6,
-        })
-        self.assertEqual(result['subscores']['runway'], 2.0)  # Non-burner
-        self.assertGreater(result['score'], 0)
+        result = compute_survivability_score(
+            {
+                "Cash": 1000e6,
+                "CFO": 200e6,  # Positive
+                "R&D": 150e6,
+                "total_operating_expense_ttm": 250e6,
+            }
+        )
+        self.assertEqual(result["subscores"]["runway"], 2.0)  # Non-burner
+        self.assertGreater(result["score"], 0)
 
 
 class TestOutputFormat(unittest.TestCase):
@@ -530,41 +492,43 @@ class TestOutputFormat(unittest.TestCase):
 
     def test_output_has_required_fields(self):
         """Output should have all required fields."""
-        result = compute_survivability_score({'Cash': 100e6})
+        result = compute_survivability_score({"Cash": 100e6})
 
-        self.assertIn('module', result)
-        self.assertIn('score', result)
-        self.assertIn('subscores', result)
-        self.assertIn('metrics', result)
-        self.assertIn('coverage', result)
-        self.assertIn('notes', result)
+        self.assertIn("module", result)
+        self.assertIn("score", result)
+        self.assertIn("subscores", result)
+        self.assertIn("metrics", result)
+        self.assertIn("coverage", result)
+        self.assertIn("notes", result)
 
-        self.assertEqual(result['module'], 'financial_module_2_survivability')
+        self.assertEqual(result["module"], "financial_module_2_survivability")
 
     def test_subscores_has_all_components(self):
         """Subscores should have all four components."""
-        result = compute_survivability_score({'Cash': 100e6})
+        result = compute_survivability_score({"Cash": 100e6})
 
-        subscores = result['subscores']
-        self.assertIn('runway', subscores)
-        self.assertIn('discipline', subscores)
-        self.assertIn('accel', subscores)
-        self.assertIn('debt', subscores)
+        subscores = result["subscores"]
+        self.assertIn("runway", subscores)
+        self.assertIn("discipline", subscores)
+        self.assertIn("accel", subscores)
+        self.assertIn("debt", subscores)
 
     def test_metrics_are_floats(self):
         """Numeric metrics should be float values."""
-        result = compute_survivability_score({
-            'Cash': 100e6,
-            'CFO': -50e6,
-        })
+        result = compute_survivability_score(
+            {
+                "Cash": 100e6,
+                "CFO": -50e6,
+            }
+        )
 
         # String fields that are expected
-        string_fields = {'runway_confidence'}
+        string_fields = {"runway_confidence"}
 
-        for key, value in result['metrics'].items():
+        for key, value in result["metrics"].items():
             if value is not None and key not in string_fields:
                 self.assertIsInstance(value, (int, float), f"{key} should be numeric")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

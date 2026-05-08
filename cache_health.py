@@ -6,6 +6,7 @@ health record persisted as ``cache_health.json`` in each snapshot.
 
 Status hierarchy: ok < warning < bad  (worst wins for overall_status).
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
@@ -13,24 +14,24 @@ from typing import Any, Dict, Optional
 # ---------------------------------------------------------------------------
 # Thresholds (defensive defaults; intentionally generous)
 # ---------------------------------------------------------------------------
-SEC8K_MIN_COUNT = 0            # BAD if strictly zero (complete outage)
-SEC8K_MIN_RATIO_VS_PRIOR = 0.30   # WARNING if ratio < 0.30 (sharp collapse)
+SEC8K_MIN_COUNT = 0  # BAD if strictly zero (complete outage)
+SEC8K_MIN_RATIO_VS_PRIOR = 0.30  # WARNING if ratio < 0.30 (sharp collapse)
 
-CTGOV_WARN_RATIO_LOW = 0.80   # WARNING band: [0.80, 1.25]
+CTGOV_WARN_RATIO_LOW = 0.80  # WARNING band: [0.80, 1.25]
 CTGOV_WARN_RATIO_HIGH = 1.25
-CTGOV_BAD_RATIO_LOW = 0.60    # BAD band: outside [0.60, 1.50]
+CTGOV_BAD_RATIO_LOW = 0.60  # BAD band: outside [0.60, 1.50]
 CTGOV_BAD_RATIO_HIGH = 1.50
 
 # New registries — generous initial thresholds (first deployments may have low counts)
 EUCTR_MIN_COUNT = 0
 CTIS_MIN_COUNT = 0
 ISRCTN_MIN_COUNT = 0
-TRIAL_MERGE_BAD_RATIO_LOW = 0.50    # reject if merged count drops >50% vs prior
-TRIAL_MERGE_BAD_RATIO_HIGH = 2.00   # reject if merged count doubles vs prior
+TRIAL_MERGE_BAD_RATIO_LOW = 0.50  # reject if merged count drops >50% vs prior
+TRIAL_MERGE_BAD_RATIO_HIGH = 2.00  # reject if merged count doubles vs prior
 
 # EMA committee events / outcomes — generous initial thresholds
-EMA_AGENDA_BAD_RATIO_LOW = 0.30     # reject if count drops >70% vs prior
-EMA_AGENDA_BAD_RATIO_HIGH = 3.00    # reject if count triples vs prior
+EMA_AGENDA_BAD_RATIO_LOW = 0.30  # reject if count drops >70% vs prior
+EMA_AGENDA_BAD_RATIO_HIGH = 3.00  # reject if count triples vs prior
 EMA_OUTCOMES_BAD_RATIO_LOW = 0.30
 EMA_OUTCOMES_BAD_RATIO_HIGH = 3.00
 
@@ -44,6 +45,7 @@ def _worst(*statuses: str) -> str:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def compute_cache_health(
     sec8k_count: int,
@@ -179,7 +181,11 @@ def compute_cache_health(
     if ema_agenda_count is not None:
         result["ema_agenda"] = {"count": ema_agenda_count, "status": ema_agenda_status, "reason": ema_agenda_reason}
     if ema_outcomes_count is not None:
-        result["ema_outcomes"] = {"count": ema_outcomes_count, "status": ema_outcomes_status, "reason": ema_outcomes_reason}
+        result["ema_outcomes"] = {
+            "count": ema_outcomes_count,
+            "status": ema_outcomes_status,
+            "reason": ema_outcomes_reason,
+        }
 
     return result
 

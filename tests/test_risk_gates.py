@@ -9,37 +9,39 @@ Tests the fail-closed risk gate module including:
 - CASH_RISK gating
 - Mixed case scenarios
 """
-import pytest
+
 import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from risk_gates import (
-    load_market_data,
-    load_financial_data,
+    ADV_MINIMUM,
+    FLAG_ADV_UNKNOWN,
+    FLAG_CASH_RISK,
+    FLAG_LOW_LIQUIDITY,
+    FLAG_MICRO_CAP,
+    FLAG_PENNY_STOCK,
+    FLAG_RUNWAY_UNKNOWN,
+    MARKET_CAP_MINIMUM,
+    PRICE_MINIMUM,
+    RUNWAY_MINIMUM_MONTHS,
+    apply_all_gates,
+    apply_financial_gate,
+    apply_liquidity_gate,
     calculate_adv,
     calculate_runway_months,
-    apply_liquidity_gate,
-    apply_financial_gate,
-    apply_all_gates,
-    get_parameters_snapshot,
     compute_parameters_hash,
-    ADV_MINIMUM,
-    PRICE_MINIMUM,
-    MARKET_CAP_MINIMUM,
-    RUNWAY_MINIMUM_MONTHS,
-    FLAG_ADV_UNKNOWN,
-    FLAG_LOW_LIQUIDITY,
-    FLAG_PENNY_STOCK,
-    FLAG_MICRO_CAP,
-    FLAG_CASH_RISK,
-    FLAG_RUNWAY_UNKNOWN,
+    get_parameters_snapshot,
+    load_financial_data,
+    load_market_data,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_market_data():
@@ -145,6 +147,7 @@ def sample_financial_data():
 # DATA LOADING TESTS
 # =============================================================================
 
+
 class TestDataLoading:
     def test_load_market_data_list_format(self, tmp_path):
         """Load market data from list format."""
@@ -179,6 +182,7 @@ class TestDataLoading:
 # =============================================================================
 # ADV CALCULATION TESTS
 # =============================================================================
+
 
 class TestADVCalculation:
     def test_adv_from_volume_and_price(self, sample_market_data):
@@ -215,6 +219,7 @@ class TestADVCalculation:
 # =============================================================================
 # RUNWAY CALCULATION TESTS
 # =============================================================================
+
 
 class TestRunwayCalculation:
     def test_runway_from_net_income(self, sample_financial_data):
@@ -258,6 +263,7 @@ class TestRunwayCalculation:
 # LIQUIDITY GATE TESTS
 # =============================================================================
 
+
 class TestLiquidityGate:
     def test_passes_all_checks(self, sample_market_data):
         """GOOD ticker passes all liquidity checks."""
@@ -300,6 +306,7 @@ class TestLiquidityGate:
 # FINANCIAL GATE TESTS
 # =============================================================================
 
+
 class TestFinancialGate:
     def test_passes_healthy(self, sample_financial_data):
         """Healthy company passes financial gate."""
@@ -330,6 +337,7 @@ class TestFinancialGate:
 # =============================================================================
 # COMBINED GATE TESTS
 # =============================================================================
+
 
 class TestApplyAllGates:
     def test_all_gates_pass(self, sample_market_data, sample_financial_data):
@@ -395,6 +403,7 @@ class TestApplyAllGates:
 # PARAMETER SNAPSHOT TESTS
 # =============================================================================
 
+
 class TestParameterSnapshot:
     def test_snapshot_contains_all_params(self):
         """Snapshot contains all threshold parameters."""
@@ -418,6 +427,7 @@ class TestParameterSnapshot:
 # =============================================================================
 # EDGE CASE TESTS
 # =============================================================================
+
 
 class TestEdgeCases:
     def test_zero_cash(self):

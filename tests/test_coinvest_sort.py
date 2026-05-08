@@ -11,6 +11,7 @@ Verifies:
   - Coverage metadata
   - Health gate WARN on low coverage
 """
+
 from __future__ import annotations
 
 import sys
@@ -24,16 +25,16 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from decision_engine import (
     DecisionRuleset,
-    compute_actionable_sort_key,
-    compute_decision_fields,
     _compute_overlays,
     _safe_float,
+    compute_actionable_sort_key,
+    compute_decision_fields,
 )
-
 
 # =============================================================================
 # FIXTURE BUILDER
 # =============================================================================
+
 
 def _rec(
     ticker: str = "TEST",
@@ -87,6 +88,7 @@ def _rec(
 # 1. OVERLAY CONVICTION FIELDS
 # =============================================================================
 
+
 class TestOverlayConvictionFields:
     """Verify _compute_overlays extracts all coinvest conviction fields."""
 
@@ -139,6 +141,7 @@ class TestOverlayConvictionFields:
 # 2. COINVEST Z-SCORE
 # =============================================================================
 
+
 class TestCoinvestZScore:
     """Test the z-score computation logic (unit-level, simulated)."""
 
@@ -147,7 +150,7 @@ class TestCoinvestZScore:
         vals = [float(c) for c in tier1_counts]
         mean = sum(vals) / len(vals)
         var = sum((v - mean) ** 2 for v in vals) / len(vals)
-        std = var ** 0.5
+        std = var**0.5
         if std == 0:
             return [0.0] * len(vals)
         return [round((v - mean) / std, 4) for v in vals]
@@ -190,6 +193,7 @@ class TestCoinvestZScore:
 # 3. SORT KEY — COINVEST DISABLED (zero impact)
 # =============================================================================
 
+
 class TestSortKeyCoinvestDisabled:
     """When enable_coinvest_sort_signal=False, coinvest has zero sort impact."""
 
@@ -199,19 +203,38 @@ class TestSortKeyCoinvestDisabled:
             enable_coinvest_sort_signal=False,
             catalyst_priority_mode="tiebreaker",
         )
-        fields_a = {"eligible": "1", "tier_dev": "A", "catalyst_mode": "specific_days",
-                     "catalyst_days": 45, "catalyst_in_window": "1",
-                     "sponsor_tier1_count": 5, "mom_state": "neutral",
-                     "coinvest_score_z": 2.0, "clinical_score_z_tier": 0.0,
-                     "stage_bucket": "mid", "missing_components": "", "missingness_penalty": 0}
+        fields_a = {
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": 45,
+            "catalyst_in_window": "1",
+            "sponsor_tier1_count": 5,
+            "mom_state": "neutral",
+            "coinvest_score_z": 2.0,
+            "clinical_score_z_tier": 0.0,
+            "stage_bucket": "mid",
+            "missing_components": "",
+            "missingness_penalty": 0,
+        }
         fields_b = dict(fields_a)
         fields_b["coinvest_score_z"] = -1.0
 
         key_a = compute_actionable_sort_key(
-            fields_a, "drug_developer", 0.75, 1, "TICKER_A", ruleset=rs,
+            fields_a,
+            "drug_developer",
+            0.75,
+            1,
+            "TICKER_A",
+            ruleset=rs,
         )
         key_b = compute_actionable_sort_key(
-            fields_b, "drug_developer", 0.75, 1, "TICKER_B", ruleset=rs,
+            fields_b,
+            "drug_developer",
+            0.75,
+            1,
+            "TICKER_B",
+            ruleset=rs,
         )
         # Only ticker differs; coinvest_score_z should have zero impact
         assert key_a[:-1] == key_b[:-1]  # last element is ticker
@@ -221,18 +244,24 @@ class TestSortKeyCoinvestDisabled:
 # 4. SORT KEY — COINVEST ENABLED (tiebreaker mode)
 # =============================================================================
 
+
 class TestSortKeyCoinvestEnabled:
     """When enable_coinvest_sort_signal=True, higher z → sorts earlier."""
 
     def _make_fields(self, coinvest_z: float, ticker: str = "T") -> dict:
         return {
-            "eligible": "1", "tier_dev": "A", "catalyst_mode": "specific_days",
-            "catalyst_days": 45, "catalyst_in_window": "1",
-            "sponsor_tier1_count": 3, "mom_state": "neutral",
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": 45,
+            "catalyst_in_window": "1",
+            "sponsor_tier1_count": 3,
+            "mom_state": "neutral",
             "coinvest_score_z": coinvest_z,
             "clinical_score_z_tier": 0.0,
             "stage_bucket": "mid",
-            "missing_components": "", "missingness_penalty": 0,
+            "missing_components": "",
+            "missingness_penalty": 0,
         }
 
     def test_higher_z_sorts_earlier_tiebreaker(self):
@@ -246,10 +275,20 @@ class TestSortKeyCoinvestEnabled:
         fields_low = self._make_fields(0.0, "LOW_CZ")
 
         key_high = compute_actionable_sort_key(
-            fields_high, "drug_developer", 0.75, 5, "HIGH_CZ", ruleset=rs,
+            fields_high,
+            "drug_developer",
+            0.75,
+            5,
+            "HIGH_CZ",
+            ruleset=rs,
         )
         key_low = compute_actionable_sort_key(
-            fields_low, "drug_developer", 0.75, 5, "LOW_CZ", ruleset=rs,
+            fields_low,
+            "drug_developer",
+            0.75,
+            5,
+            "LOW_CZ",
+            ruleset=rs,
         )
         assert key_high < key_low
 
@@ -264,10 +303,20 @@ class TestSortKeyCoinvestEnabled:
         fields_low = self._make_fields(0.0, "LOW_CZ")
 
         key_high = compute_actionable_sort_key(
-            fields_high, "drug_developer", 0.75, 5, "HIGH_CZ", ruleset=rs,
+            fields_high,
+            "drug_developer",
+            0.75,
+            5,
+            "HIGH_CZ",
+            ruleset=rs,
         )
         key_low = compute_actionable_sort_key(
-            fields_low, "drug_developer", 0.75, 5, "LOW_CZ", ruleset=rs,
+            fields_low,
+            "drug_developer",
+            0.75,
+            5,
+            "LOW_CZ",
+            ruleset=rs,
         )
         assert key_high < key_low
 
@@ -282,10 +331,20 @@ class TestSortKeyCoinvestEnabled:
         fields_low = self._make_fields(0.0, "LOW_CZ")
 
         key_high = compute_actionable_sort_key(
-            fields_high, "drug_developer", 0.75, 5, "HIGH_CZ", ruleset=rs,
+            fields_high,
+            "drug_developer",
+            0.75,
+            5,
+            "HIGH_CZ",
+            ruleset=rs,
         )
         key_low = compute_actionable_sort_key(
-            fields_low, "drug_developer", 0.75, 5, "LOW_CZ", ruleset=rs,
+            fields_low,
+            "drug_developer",
+            0.75,
+            5,
+            "LOW_CZ",
+            ruleset=rs,
         )
         assert key_high < key_low
 
@@ -293,6 +352,7 @@ class TestSortKeyCoinvestEnabled:
 # =============================================================================
 # 5. POSITIVE-ONLY MODE
 # =============================================================================
+
 
 class TestCoinvestPositiveOnly:
     """Negative z clamped to 0 → no penalty for low coinvest."""
@@ -306,21 +366,37 @@ class TestCoinvestPositiveOnly:
             catalyst_priority_mode="tiebreaker",
         )
         fields_neg = {
-            "eligible": "1", "tier_dev": "A", "catalyst_mode": "specific_days",
-            "catalyst_days": 45, "catalyst_in_window": "1",
-            "sponsor_tier1_count": 3, "mom_state": "neutral",
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": 45,
+            "catalyst_in_window": "1",
+            "sponsor_tier1_count": 3,
+            "mom_state": "neutral",
             "coinvest_score_z": -1.5,
-            "clinical_score_z_tier": 0.0, "stage_bucket": "mid",
-            "missing_components": "", "missingness_penalty": 0,
+            "clinical_score_z_tier": 0.0,
+            "stage_bucket": "mid",
+            "missing_components": "",
+            "missingness_penalty": 0,
         }
         fields_zero = dict(fields_neg)
         fields_zero["coinvest_score_z"] = 0.0
 
         key_neg = compute_actionable_sort_key(
-            fields_neg, "drug_developer", 0.75, 5, "SAME", ruleset=rs,
+            fields_neg,
+            "drug_developer",
+            0.75,
+            5,
+            "SAME",
+            ruleset=rs,
         )
         key_zero = compute_actionable_sort_key(
-            fields_zero, "drug_developer", 0.75, 5, "SAME", ruleset=rs,
+            fields_zero,
+            "drug_developer",
+            0.75,
+            5,
+            "SAME",
+            ruleset=rs,
         )
         # Both should produce the same effective_comp_rank
         assert key_neg == key_zero
@@ -329,6 +405,7 @@ class TestCoinvestPositiveOnly:
 # =============================================================================
 # 6. ADDITIVE WITH CLINICAL SORT SIGNAL
 # =============================================================================
+
 
 class TestCoinvestPlusClinical:
     """Both signals active → both adjustments additive."""
@@ -344,23 +421,38 @@ class TestCoinvestPlusClinical:
         )
 
         fields_both = {
-            "eligible": "1", "tier_dev": "A", "catalyst_mode": "specific_days",
-            "catalyst_days": 45, "catalyst_in_window": "1",
-            "sponsor_tier1_count": 5, "mom_state": "neutral",
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": 45,
+            "catalyst_in_window": "1",
+            "sponsor_tier1_count": 5,
+            "mom_state": "neutral",
             "coinvest_score_z": 1.5,
             "clinical_score_z_tier": 1.0,
             "stage_bucket": "mid",  # stage_mult=1.0
-            "missing_components": "", "missingness_penalty": 0,
+            "missing_components": "",
+            "missingness_penalty": 0,
         }
         fields_none = dict(fields_both)
         fields_none["coinvest_score_z"] = 0.0
         fields_none["clinical_score_z_tier"] = 0.0
 
         key_both = compute_actionable_sort_key(
-            fields_both, "drug_developer", 0.75, 5, "BOTH", ruleset=rs,
+            fields_both,
+            "drug_developer",
+            0.75,
+            5,
+            "BOTH",
+            ruleset=rs,
         )
         key_none = compute_actionable_sort_key(
-            fields_none, "drug_developer", 0.75, 5, "NONE", ruleset=rs,
+            fields_none,
+            "drug_developer",
+            0.75,
+            5,
+            "NONE",
+            ruleset=rs,
         )
         # With both signals, effective_comp_rank is lower → sorts earlier
         assert key_both < key_none
@@ -376,13 +468,18 @@ class TestCoinvestPlusClinical:
         )
 
         base = {
-            "eligible": "1", "tier_dev": "A", "catalyst_mode": "specific_days",
-            "catalyst_days": 45, "catalyst_in_window": "1",
-            "sponsor_tier1_count": 5, "mom_state": "neutral",
+            "eligible": "1",
+            "tier_dev": "A",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": 45,
+            "catalyst_in_window": "1",
+            "sponsor_tier1_count": 5,
+            "mom_state": "neutral",
             "coinvest_score_z": 0.0,
             "clinical_score_z_tier": 0.0,
             "stage_bucket": "mid",
-            "missing_components": "", "missingness_penalty": 0,
+            "missing_components": "",
+            "missingness_penalty": 0,
         }
 
         # Coinvest only
@@ -394,13 +491,28 @@ class TestCoinvestPlusClinical:
         f_clinical["clinical_score_z_tier"] = 1.5
 
         key_base = compute_actionable_sort_key(
-            base, "drug_developer", 0.75, 5, "BASE", ruleset=rs,
+            base,
+            "drug_developer",
+            0.75,
+            5,
+            "BASE",
+            ruleset=rs,
         )
         key_coinvest = compute_actionable_sort_key(
-            f_coinvest, "drug_developer", 0.75, 5, "BASE", ruleset=rs,
+            f_coinvest,
+            "drug_developer",
+            0.75,
+            5,
+            "BASE",
+            ruleset=rs,
         )
         key_clinical = compute_actionable_sort_key(
-            f_clinical, "drug_developer", 0.75, 5, "BASE", ruleset=rs,
+            f_clinical,
+            "drug_developer",
+            0.75,
+            5,
+            "BASE",
+            ruleset=rs,
         )
 
         # Both should be better than base
@@ -411,6 +523,7 @@ class TestCoinvestPlusClinical:
 # =============================================================================
 # 7. RULESET VALIDATION
 # =============================================================================
+
 
 class TestCoinvestRulesetValidation:
     """Ruleset field validation for coinvest settings."""
@@ -446,12 +559,14 @@ class TestCoinvestRulesetValidation:
 # 8. HEALTH GATE — COINVEST COVERAGE
 # =============================================================================
 
+
 class TestHealthGateCoinvestCoverage:
     """Verify coinvest coverage WARN fires in health gate."""
 
     def test_health_gate_coverage_warn(self):
         """Coverage below threshold → WARN reason."""
         import pandas as pd
+
         from run_phase2_snapshot_delta import Phase2HealthThresholds
 
         th = Phase2HealthThresholds(warn_coinvest_coverage_min=70.0)
@@ -459,9 +574,7 @@ class TestHealthGateCoinvestCoverage:
         data = {"sponsor_tier1_count": [3, 0, 5, 0, 2, 0, 0, 0, 1, 0]}
         df = pd.DataFrame(data)
         n_total = len(df)
-        n_with = int(df["sponsor_tier1_count"].apply(
-            lambda x: pd.notna(x) and str(x).strip() not in ("", "0")
-        ).sum())
+        n_with = int(df["sponsor_tier1_count"].apply(lambda x: pd.notna(x) and str(x).strip() not in ("", "0")).sum())
         cov = 100.0 * n_with / n_total
         assert cov < th.warn_coinvest_coverage_min
         assert cov == 40.0  # 4 out of 10
@@ -469,6 +582,7 @@ class TestHealthGateCoinvestCoverage:
     def test_health_gate_coverage_ok(self):
         """Coverage above threshold → no WARN."""
         import pandas as pd
+
         from run_phase2_snapshot_delta import Phase2HealthThresholds
 
         th = Phase2HealthThresholds(warn_coinvest_coverage_min=70.0)
@@ -476,9 +590,7 @@ class TestHealthGateCoinvestCoverage:
         data = {"sponsor_tier1_count": [3, 1, 5, 2, 2, 4, 1, 3, 0, 0]}
         df = pd.DataFrame(data)
         n_total = len(df)
-        n_with = int(df["sponsor_tier1_count"].apply(
-            lambda x: pd.notna(x) and str(x).strip() not in ("", "0")
-        ).sum())
+        n_with = int(df["sponsor_tier1_count"].apply(lambda x: pd.notna(x) and str(x).strip() not in ("", "0")).sum())
         cov = 100.0 * n_with / n_total
         assert cov >= th.warn_coinvest_coverage_min
         assert cov == 80.0

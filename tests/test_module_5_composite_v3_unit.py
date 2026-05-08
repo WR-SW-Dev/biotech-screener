@@ -16,44 +16,42 @@ Tests IC-enhanced composite scoring:
 - Determinism verification
 """
 
-import pytest
+import sys
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, Any, List
-import sys
+from typing import Any, Dict, List
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from module_5_composite_v3 import (
-    compute_module_5_composite_v3,
-    _empty_result,
-    _compute_alpha_distribution_metrics,
-    # Constants
-    V3_DEFAULT_WEIGHTS,
-    V3_PARTIAL_WEIGHTS,
-    V3_ENHANCED_WEIGHTS,
+from common.types import Severity
+from module_5_composite_v3 import (  # Constants
     HEALTH_GATE_THRESHOLDS,
     SCHEMA_VERSION,
+    V3_DEFAULT_WEIGHTS,
+    V3_ENHANCED_WEIGHTS,
+    V3_PARTIAL_WEIGHTS,
+    _compute_alpha_distribution_metrics,
+    _empty_result,
+    compute_module_5_composite_v3,
 )
-
 from module_5_scoring_v3 import (
-    ScoringMode,
-    RunStatus,
+    DEV_CATALYST_ATTENUATION_CONFIG,
     NormalizationMethod,
+    RunStatus,
+    ScoringMode,
+    _get_worst_severity,
     _market_cap_bucket,
     _stage_bucket,
-    _get_worst_severity,
     apply_dev_catalyst_weight_attenuation,
-    DEV_CATALYST_ATTENUATION_CONFIG,
 )
-
-from common.types import Severity
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -237,6 +235,7 @@ def sample_market_data():
 # EMPTY RESULT TESTS
 # ============================================================================
 
+
 class TestEmptyResult:
     """Tests for _empty_result function."""
 
@@ -271,6 +270,7 @@ class TestEmptyResult:
 # ============================================================================
 # MAIN FUNCTION TESTS - BASIC BEHAVIOR
 # ============================================================================
+
 
 class TestComputeModule5CompositeV3Basic:
     """Basic tests for compute_module_5_composite_v3."""
@@ -346,6 +346,7 @@ class TestComputeModule5CompositeV3Basic:
 # SCORING MODE TESTS
 # ============================================================================
 
+
 class TestScoringModeSelection:
     """Tests for scoring mode determination."""
 
@@ -418,6 +419,7 @@ class TestScoringModeSelection:
 # WEIGHT SELECTION TESTS
 # ============================================================================
 
+
 class TestWeightSelection:
     """Tests for weight selection logic."""
 
@@ -477,6 +479,7 @@ class TestWeightSelection:
 # SEVERITY GATE TESTS
 # ============================================================================
 
+
 class TestSeverityGates:
     """Tests for severity-based exclusion."""
 
@@ -535,6 +538,7 @@ class TestSeverityGates:
 # ============================================================================
 # DIAGNOSTIC COUNTS TESTS
 # ============================================================================
+
 
 class TestDiagnosticCounts:
     """Tests for diagnostic count accuracy."""
@@ -603,6 +607,7 @@ class TestDiagnosticCounts:
 # ============================================================================
 # OUTPUT FORMAT TESTS
 # ============================================================================
+
 
 class TestOutputFormat:
     """Tests for output format and schema compliance."""
@@ -717,6 +722,7 @@ class TestOutputFormat:
 # ENHANCEMENT DATA TESTS
 # ============================================================================
 
+
 class TestEnhancementData:
     """Tests for enhancement data extraction."""
 
@@ -789,6 +795,7 @@ class TestEnhancementData:
 # PIPELINE HEALTH TESTS
 # ============================================================================
 
+
 class TestPipelineHealth:
     """Tests for pipeline health checks."""
 
@@ -838,6 +845,7 @@ class TestPipelineHealth:
 # ============================================================================
 # COHORT STATS TESTS
 # ============================================================================
+
 
 class TestCohortStats:
     """Tests for cohort statistics."""
@@ -889,6 +897,7 @@ class TestCohortStats:
 # ============================================================================
 # DETERMINISM TESTS
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests verifying deterministic behavior."""
@@ -991,6 +1000,7 @@ class TestDeterminism:
 # HELPER FUNCTION TESTS
 # ============================================================================
 
+
 class TestMarketCapBucket:
     """Tests for _market_cap_bucket function."""
 
@@ -1087,6 +1097,7 @@ class TestComputeAlphaDistributionMetrics:
 # SCORE BREAKDOWN TESTS
 # ============================================================================
 
+
 class TestScoreBreakdown:
     """Tests for score breakdown in output."""
 
@@ -1121,6 +1132,7 @@ class TestScoreBreakdown:
 # PROVENANCE TESTS
 # ============================================================================
 
+
 class TestProvenance:
     """Tests for provenance metadata."""
 
@@ -1151,6 +1163,7 @@ class TestProvenance:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests for composite scoring."""
@@ -1256,9 +1269,7 @@ def _compute_confidence_overall(component_scores: list) -> Decimal:
         if _cw > 0 and _cc is not None and _cc > 0:
             _conf_total_w += _cw
             _conf_total_wc += _cw * _cc
-    confidence_overall = (
-        (_conf_total_wc / _conf_total_w) if _conf_total_w > 0 else Decimal("0.5")
-    )
+    confidence_overall = (_conf_total_wc / _conf_total_w) if _conf_total_w > 0 else Decimal("0.5")
     confidence_overall = _clamp(confidence_overall, Decimal("0.1"), Decimal("0.9"))
     return confidence_overall
 
@@ -1297,9 +1308,9 @@ class TestConfidenceOverallWeighted:
             _make_cs("catalyst", "0.20", "0.6"),
         ]
         result = _compute_confidence_overall(cs)
-        expected = (Decimal("0.35") * Decimal("0.9")
-                    + Decimal("0.25") * Decimal("0.3")
-                    + Decimal("0.20") * Decimal("0.6")) / Decimal("0.80")
+        expected = (
+            Decimal("0.35") * Decimal("0.9") + Decimal("0.25") * Decimal("0.3") + Decimal("0.20") * Decimal("0.6")
+        ) / Decimal("0.80")
         assert result == expected
 
     def test_clamped_above_at_0_9(self):
@@ -1384,13 +1395,12 @@ class TestConfidenceOverallWeighted:
     def test_result_in_valid_range(self):
         """Result is always in [0.1, 0.9] regardless of inputs."""
         import random
+
         random.seed(42)
         for _ in range(100):
             n = random.randint(1, 6)
             cs = [
-                _make_cs(f"c{i}",
-                         str(round(random.uniform(0.0, 1.0), 4)),
-                         str(round(random.uniform(0.0, 1.0), 4)))
+                _make_cs(f"c{i}", str(round(random.uniform(0.0, 1.0), 4)), str(round(random.uniform(0.0, 1.0), 4)))
                 for i in range(n)
             ]
             result = _compute_confidence_overall(cs)
@@ -1400,6 +1410,7 @@ class TestConfidenceOverallWeighted:
 # ============================================================================
 # CATALYST WEIGHT ATTENUATION TESTS
 # ============================================================================
+
 
 class TestDevCatalystWeightAttenuation:
     """Tests for apply_dev_catalyst_weight_attenuation() — graduated shrink."""
@@ -1423,14 +1434,20 @@ class TestDevCatalystWeightAttenuation:
         # EXACT and MONTH: zero risk → no attenuation
         for spec in ("EXACT", "MONTH"):
             new_w, flags, diag = apply_dev_catalyst_weight_attenuation(
-                ew, "early", spec, norms,
+                ew,
+                "early",
+                spec,
+                norms,
             )
             assert diag.get("attenuated") is not True, f"Wrongly triggered for {spec}"
             assert new_w["catalyst"] == ew["catalyst"]
 
         # QUARTER → mild shrink (risk=0.3, shrink=0.12)
         new_q, flags_q, diag_q = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "QUARTER", norms,
+            ew,
+            "early",
+            "QUARTER",
+            norms,
         )
         assert diag_q["attenuated"] is True
         assert new_q["catalyst"] < ew["catalyst"]
@@ -1438,21 +1455,26 @@ class TestDevCatalystWeightAttenuation:
 
         # YEAR → moderate shrink (risk=0.6, shrink=0.24)
         new_y, flags_y, diag_y = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "YEAR", norms,
+            ew,
+            "early",
+            "YEAR",
+            norms,
         )
         assert diag_y["attenuated"] is True
         shrink_y = (ew["catalyst"] - new_y["catalyst"]) / ew["catalyst"]
 
         # UNKNOWN → strong shrink (risk=0.8, shrink=0.32)
         new_u, flags_u, diag_u = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "UNKNOWN", norms,
+            ew,
+            "early",
+            "UNKNOWN",
+            norms,
         )
         assert diag_u["attenuated"] is True
         shrink_u = (ew["catalyst"] - new_u["catalyst"]) / ew["catalyst"]
 
         # Gradient: QUARTER < YEAR < UNKNOWN
-        assert shrink_q < shrink_y < shrink_u, \
-            f"Non-monotonic shrink: Q={shrink_q}, Y={shrink_y}, U={shrink_u}"
+        assert shrink_q < shrink_y < shrink_u, f"Non-monotonic shrink: Q={shrink_q}, Y={shrink_y}, U={shrink_u}"
 
     def test_corroboration_discount_halves_not_zeroes(self):
         """With corroboration, shrink is halved — attenuation still occurs."""
@@ -1462,14 +1484,20 @@ class TestDevCatalystWeightAttenuation:
 
         # Without corroboration
         new_no, _, diag_no = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "UNKNOWN", norms_low,
+            ew,
+            "early",
+            "UNKNOWN",
+            norms_low,
         )
         assert diag_no["attenuated"] is True
         shrink_no = ew["catalyst"] - new_no["catalyst"]
 
         # With corroboration (smart_money > 45)
         new_co, _, diag_co = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "UNKNOWN", norms_high,
+            ew,
+            "early",
+            "UNKNOWN",
+            norms_high,
         )
         assert diag_co["attenuated"] is True  # still attenuated, not bypassed
         assert diag_co.get("corroborated") is True
@@ -1478,27 +1506,31 @@ class TestDevCatalystWeightAttenuation:
         # Corroborated shrink should be roughly half of non-corroborated
         assert shrink_co < shrink_no, "Corroboration did not reduce shrink"
         ratio = shrink_co / shrink_no if shrink_no > 0 else Decimal("0")
-        assert Decimal("0.4") < ratio < Decimal("0.6"), \
-            f"Corroboration ratio {ratio} not ~0.5"
+        assert Decimal("0.4") < ratio < Decimal("0.6"), f"Corroboration ratio {ratio} not ~0.5"
 
     def test_weight_sum_preserved(self):
         """Total absolute weight sum is preserved after attenuation."""
         ew = self._base_weights()
         orig_abs_total = sum(abs(v) for v in ew.values())
         new_w, _, diag = apply_dev_catalyst_weight_attenuation(
-            ew, "poc", "UNKNOWN",
+            ew,
+            "poc",
+            "UNKNOWN",
             {"smart_money": Decimal("30"), "financial": Decimal("30")},
         )
         if diag["attenuated"]:
             new_abs_total = sum(abs(v) for v in new_w.values())
-            assert abs(new_abs_total - orig_abs_total) < Decimal("0.02"), \
-                f"Abs total changed: {orig_abs_total} -> {new_abs_total}"
+            assert abs(new_abs_total - orig_abs_total) < Decimal(
+                "0.02"
+            ), f"Abs total changed: {orig_abs_total} -> {new_abs_total}"
 
     def test_pro_rata_redistribution(self):
         """Excess weight goes to other components proportionally."""
         ew = self._base_weights()
         new_w, _, diag = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "YEAR",
+            ew,
+            "early",
+            "YEAR",
             {"smart_money": Decimal("30"), "financial": Decimal("30")},
         )
         if diag["attenuated"]:
@@ -1512,7 +1544,9 @@ class TestDevCatalystWeightAttenuation:
         ew = self._base_weights()
         for stage in ("pivotal", "regulatory", "commercial"):
             new_w, flags, diag = apply_dev_catalyst_weight_attenuation(
-                ew, stage, "UNKNOWN",
+                ew,
+                stage,
+                "UNKNOWN",
                 {"smart_money": Decimal("30"), "financial": Decimal("30")},
             )
             assert diag.get("attenuated") is not True, f"Wrongly triggered for {stage}"
@@ -1523,7 +1557,9 @@ class TestDevCatalystWeightAttenuation:
         ew = self._base_weights()
         original = dict(ew)
         apply_dev_catalyst_weight_attenuation(
-            ew, "early", "UNKNOWN",
+            ew,
+            "early",
+            "UNKNOWN",
             {"smart_money": Decimal("30"), "financial": Decimal("30")},
         )
         assert ew == original, "Input weights were mutated"
@@ -1543,9 +1579,11 @@ class TestDevCatalystWeightAttenuation:
         ew = self._base_weights()
         norms = {"smart_money": Decimal("30"), "financial": Decimal("30")}
         new_w, _, diag = apply_dev_catalyst_weight_attenuation(
-            ew, "early", "UNKNOWN", norms,
+            ew,
+            "early",
+            "UNKNOWN",
+            norms,
         )
         if diag["attenuated"]:
             shrink_pct = (ew["catalyst"] - new_w["catalyst"]) / ew["catalyst"]
-            assert shrink_pct <= Decimal("0.41"), \
-                f"Shrink {shrink_pct} exceeds max_shrink"
+            assert shrink_pct <= Decimal("0.41"), f"Shrink {shrink_pct} exceeds max_shrink"

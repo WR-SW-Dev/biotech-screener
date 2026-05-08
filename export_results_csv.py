@@ -9,67 +9,113 @@ from typing import Any, Dict, List
 
 # Core columns (always first, in order)
 CORE_COLUMNS = [
-    "ticker", "composite_rank", "risk_adjusted_rank", "composite_score", "risk_adjusted_score", "z_score",
-    "expected_excess_return", "volatility", "drawdown", "cluster_id",
-    "corr_xbi", "beta_xbi",  # Diversification proof columns
-    "vol_blended", "vol_63d", "vol_252d",
-    "max_drawdown_blended", "max_drawdown_252d", "max_drawdown_2y",
-    "risk_data_state_vol", "risk_data_state_drawdown", "risk_data_state_beta",
+    "ticker",
+    "composite_rank",
+    "risk_adjusted_rank",
+    "composite_score",
+    "risk_adjusted_score",
+    "z_score",
+    "expected_excess_return",
+    "volatility",
+    "drawdown",
+    "cluster_id",
+    "corr_xbi",
+    "beta_xbi",  # Diversification proof columns
+    "vol_blended",
+    "vol_63d",
+    "vol_252d",
+    "max_drawdown_blended",
+    "max_drawdown_252d",
+    "max_drawdown_2y",
+    "risk_data_state_vol",
+    "risk_data_state_drawdown",
+    "risk_data_state_beta",
     "confidence_risk",
-    "defensive_multiplier", "defensive_bucket", "defensive_notes",
+    "defensive_multiplier",
+    "defensive_bucket",
+    "defensive_notes",
     "rank_driver",  # IC audit: alpha | defensive_boost | defensive_penalty | suppressed
-    "fundamental_red_flag", "fundamental_red_flag_reasons",
-    "severity", "stage_bucket", "market_cap_bucket", "rankable",
+    "fundamental_red_flag",
+    "fundamental_red_flag_reasons",
+    "severity",
+    "stage_bucket",
+    "market_cap_bucket",
+    "rankable",
 ]
 
 # Signal columns (flattened from nested dicts)
 SIGNAL_COLUMNS = [
-    "momentum_score", "momentum_window", "momentum_alpha",
-    "catalyst_score", "catalyst_effective_score", "catalyst_proximity_score",
-    "smart_money_score", "smart_money_overlap", "smart_money_tier1_holders",
-    "short_interest_score", "short_interest_crowding", "short_interest_squeeze",
-    "valuation_score", "valuation_method", "valuation_confidence",
-    "valuation_raw_metric", "valuation_mcap_mm",
+    "momentum_score",
+    "momentum_window",
+    "momentum_alpha",
+    "catalyst_score",
+    "catalyst_effective_score",
+    "catalyst_proximity_score",
+    "smart_money_score",
+    "smart_money_overlap",
+    "smart_money_tier1_holders",
+    "short_interest_score",
+    "short_interest_crowding",
+    "short_interest_squeeze",
+    "valuation_score",
+    "valuation_method",
+    "valuation_confidence",
+    "valuation_raw_metric",
+    "valuation_mcap_mm",
     "valuation_denom_trials_total",
-    "valuation_denom_trials_p1", "valuation_denom_trials_p2",
-    "valuation_denom_trials_p3", "valuation_denom_trials_reg", "valuation_denom_trials_other",
-    "valuation_phase_weighted_trials", "valuation_metric_pw",
-    "valuation_pct_overall", "valuation_pct_in_size_bucket",
+    "valuation_denom_trials_p1",
+    "valuation_denom_trials_p2",
+    "valuation_denom_trials_p3",
+    "valuation_denom_trials_reg",
+    "valuation_denom_trials_other",
+    "valuation_phase_weighted_trials",
+    "valuation_metric_pw",
+    "valuation_pct_overall",
+    "valuation_pct_in_size_bucket",
     "valuation_size_bucket",
-    "valuation_applicable", "valuation_notes",
-    "partnership_score", "partnership_strength", "partnership_top_partners",
-    "fda_designation_score", "fda_designations",
-    "competitive_intensity_score", "competitive_crowding_level",
-    "pipeline_diversity_score", "pipeline_risk_profile",
+    "valuation_applicable",
+    "valuation_notes",
+    "partnership_score",
+    "partnership_strength",
+    "partnership_top_partners",
+    "fda_designation_score",
+    "fda_designations",
+    "competitive_intensity_score",
+    "competitive_crowding_level",
+    "pipeline_diversity_score",
+    "pipeline_risk_profile",
 ]
 
 # Confidence columns
 CONFIDENCE_COLUMNS = [
-    "confidence_overall", "confidence_financial", "confidence_clinical",
-    "confidence_catalyst", "confidence_pos",
+    "confidence_overall",
+    "confidence_financial",
+    "confidence_clinical",
+    "confidence_catalyst",
+    "confidence_pos",
 ]
 
 # Clinical PIT observability columns (joined from Module 4 scores)
 CLINICAL_PIT_COLUMNS = [
-    "pit_trials_total",           # n_trials_raw from Module 4
-    "pit_trials_eligible",        # n_trials_unique from Module 4
-    "pit_trials_filtered",        # pit_filtered_count_ticker
-    "pit_trials_no_date",         # derived: max(0, total - eligible - filtered)
-    "clinical_lead_phase",        # lead_phase
-    "clinical_lead_nct_id",       # lead_trial_nct_id
-    "clinical_recency_days",      # recency_days
-    "clinical_score_raw",         # clinical_score (the 0-100 score)
+    "pit_trials_total",  # n_trials_raw from Module 4
+    "pit_trials_eligible",  # n_trials_unique from Module 4
+    "pit_trials_filtered",  # pit_filtered_count_ticker
+    "pit_trials_no_date",  # derived: max(0, total - eligible - filtered)
+    "clinical_lead_phase",  # lead_phase
+    "clinical_lead_nct_id",  # lead_trial_nct_id
+    "clinical_recency_days",  # recency_days
+    "clinical_score_raw",  # clinical_score (the 0-100 score)
 ]
 
 # Catalyst debug columns (joined from Module 3 summaries)
 CATALYST_DEBUG_COLUMNS = [
     "catalyst_event_count_upcoming",  # n_events_upcoming
-    "catalyst_confidence_m3",         # catalyst_confidence from M3 summary
-    "catalyst_window_days_m3",        # catalyst_window_days
-    "catalyst_window_bucket_m3",      # catalyst_window_bucket
-    "catalyst_next_date",             # next_catalyst_date
-    "catalyst_top_event_type",        # event_type of top event from top_3_events
-    "catalyst_top_event_date",        # event_date of top event
+    "catalyst_confidence_m3",  # catalyst_confidence from M3 summary
+    "catalyst_window_days_m3",  # catalyst_window_days
+    "catalyst_window_bucket_m3",  # catalyst_window_bucket
+    "catalyst_next_date",  # next_catalyst_date
+    "catalyst_top_event_type",  # event_type of top event from top_3_events
+    "catalyst_top_event_date",  # event_date of top event
 ]
 
 
@@ -100,11 +146,14 @@ def _compute_valuation_percentiles(flat_records: List[Dict[str, Any]]) -> None:
         raw = rec.get("valuation_raw_metric")
         if raw is not None and raw != "":
             try:
-                indexed.append((
-                    i, float(raw),
-                    rec.get("valuation_method", ""),
-                    rec.get("valuation_size_bucket", ""),
-                ))
+                indexed.append(
+                    (
+                        i,
+                        float(raw),
+                        rec.get("valuation_method", ""),
+                        rec.get("valuation_size_bucket", ""),
+                    )
+                )
             except (ValueError, TypeError):
                 pass
 
@@ -191,8 +240,7 @@ def flatten_record(
     if def_feat.get("confidence_risk") is not None:
         flat["confidence_risk"] = def_feat.get("confidence_risk")
     else:
-        state_fields = [flat["risk_data_state_vol"], flat["risk_data_state_drawdown"],
-                        flat["risk_data_state_beta"]]
+        state_fields = [flat["risk_data_state_vol"], flat["risk_data_state_drawdown"], flat["risk_data_state_beta"]]
         live_count = sum(1 for s in state_fields if s == "live")
         # Continuous mapping: 0.35 + (live_count/3) * 0.55
         flat["confidence_risk"] = round(0.35 + (live_count / 3) * 0.55, 2)
@@ -235,13 +283,19 @@ def flatten_record(
     flat["valuation_confidence"] = val_sig.get("confidence")
     # Valuation debug columns (percentiles computed cross-sectionally in export_to_csv)
     for col in [
-        "valuation_raw_metric", "valuation_mcap_mm",
+        "valuation_raw_metric",
+        "valuation_mcap_mm",
         "valuation_denom_trials_total",
-        "valuation_denom_trials_p1", "valuation_denom_trials_p2",
-        "valuation_denom_trials_p3", "valuation_denom_trials_reg", "valuation_denom_trials_other",
-        "valuation_phase_weighted_trials", "valuation_metric_pw",
+        "valuation_denom_trials_p1",
+        "valuation_denom_trials_p2",
+        "valuation_denom_trials_p3",
+        "valuation_denom_trials_reg",
+        "valuation_denom_trials_other",
+        "valuation_phase_weighted_trials",
+        "valuation_metric_pw",
         "valuation_size_bucket",
-        "valuation_applicable", "valuation_notes",
+        "valuation_applicable",
+        "valuation_notes",
     ]:
         flat[col] = val_sig.get(col)
 

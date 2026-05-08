@@ -41,6 +41,7 @@ SUPPORTED_SCORE_VERSIONS = ["v1"]
 # VALIDATION HELPERS
 # =============================================================================
 
+
 def validate_schema_version(
     schema_version: str,
     expected_version: Optional[str] = None,
@@ -65,8 +66,8 @@ def validate_schema_version(
 
     # Parse versions
     try:
-        actual_parts = [int(x) for x in schema_version.split('.')]
-        expected_parts = [int(x) for x in expected_version.split('.')]
+        actual_parts = [int(x) for x in schema_version.split(".")]
+        expected_parts = [int(x) for x in expected_version.split(".")]
     except (ValueError, AttributeError):
         return False, f"Invalid version format: {schema_version}"
 

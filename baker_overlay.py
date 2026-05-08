@@ -44,11 +44,11 @@ ACTIVITY_CHANGE_THRESHOLD = 0.10  # 10% = meaningful change
 
 # Queue 1: Baker Core Divergence (IC review)
 # Note: value_kusd field stores raw USD despite the name
-Q1_WEIGHT_PCT = 0.01           # 1.0% portfolio weight (as fraction)
-Q1_WEIGHT_RANK = 75            # composite_rank > 75
-Q1_VALUE_USD = 250_000_000     # $250M in raw USD
+Q1_WEIGHT_PCT = 0.01  # 1.0% portfolio weight (as fraction)
+Q1_WEIGHT_RANK = 75  # composite_rank > 75
+Q1_VALUE_USD = 250_000_000  # $250M in raw USD
 Q1_VALUE_RANK = 75
-Q1_VALUE_MIN_WEIGHT = 0.0025   # 0.25% portfolio weight floor for value trigger
+Q1_VALUE_MIN_WEIGHT = 0.0025  # 0.25% portfolio weight floor for value trigger
 Q1_ACTIVITY_RANK = 75
 Q1_ACTIVITY_MIN_WEIGHT = 0.0025  # 0.25% portfolio weight floor for activity trigger
 
@@ -256,10 +256,7 @@ def compute_baker_overlay(
         else:
             pos["portfolio_weight"] = 0.0
 
-    logger.info(
-        f"  Baker overlay: {len(baker_positions)} positions, "
-        f"${baker_total_usd / 1_000_000_000:.1f}B total"
-    )
+    logger.info(f"  Baker overlay: {len(baker_positions)} positions, " f"${baker_total_usd / 1_000_000_000:.1f}B total")
 
     # =========================================================================
     # Step 2: Enrich ranked securities with per-ticker baker signals
@@ -292,10 +289,7 @@ def compute_baker_overlay(
     # =========================================================================
     # Step 3: Compute baker_rank_by_weight and baker_rank_by_activity
     # =========================================================================
-    held_indices = [
-        i for i in range(len(security_baker_data))
-        if security_baker_data[i]["held"]
-    ]
+    held_indices = [i for i in range(len(security_baker_data)) if security_baker_data[i]["held"]]
 
     # Rank by weight (desc), tiebreak by ticker (asc)
     weight_sorted = sorted(
@@ -345,35 +339,29 @@ def compute_baker_overlay(
         if weight_frac >= Q1_WEIGHT_PCT and composite_rank > Q1_WEIGHT_RANK:
             reasons.append(f"weight>={Q1_WEIGHT_PCT*100:.0f}%_rank>{Q1_WEIGHT_RANK}")
         # Large position: value >= $250M with 0.25% weight floor
-        if (
-            value_usd >= Q1_VALUE_USD
-            and weight_frac >= Q1_VALUE_MIN_WEIGHT
-            and composite_rank > Q1_VALUE_RANK
-        ):
+        if value_usd >= Q1_VALUE_USD and weight_frac >= Q1_VALUE_MIN_WEIGHT and composite_rank > Q1_VALUE_RANK:
             reasons.append(f"value>=$250M_rank>{Q1_VALUE_RANK}")
         # Active building: new/add with 0.25% weight floor
-        if (
-            activity in ("new", "add")
-            and weight_frac >= Q1_ACTIVITY_MIN_WEIGHT
-            and composite_rank > Q1_ACTIVITY_RANK
-        ):
+        if activity in ("new", "add") and weight_frac >= Q1_ACTIVITY_MIN_WEIGHT and composite_rank > Q1_ACTIVITY_RANK:
             reasons.append(f"activity={activity}_rank>{Q1_ACTIVITY_RANK}")
 
         if reasons:
             # Extract disagreement reasons from model output
             disagreement = _extract_disagreement_reasons(sec)
 
-            queue_1.append({
-                "ticker": sec["ticker"],
-                "composite_rank": composite_rank,
-                "baker_rank_by_weight": bd["rank_by_weight"],
-                "baker_portfolio_weight_pct": bd["portfolio_weight_pct"],
-                "baker_value_usd": value_usd,
-                "baker_activity": activity,
-                "queue_reasons": reasons,
-                "disagreement_reasons": disagreement,
-                "severity": sec.get("severity", "none"),
-            })
+            queue_1.append(
+                {
+                    "ticker": sec["ticker"],
+                    "composite_rank": composite_rank,
+                    "baker_rank_by_weight": bd["rank_by_weight"],
+                    "baker_portfolio_weight_pct": bd["portfolio_weight_pct"],
+                    "baker_value_usd": value_usd,
+                    "baker_activity": activity,
+                    "queue_reasons": reasons,
+                    "disagreement_reasons": disagreement,
+                    "severity": sec.get("severity", "none"),
+                }
+            )
 
     # Sort by baker weight desc
     queue_1.sort(key=lambda x: (-x["baker_portfolio_weight_pct"], x["ticker"]))
@@ -405,19 +393,18 @@ def compute_baker_overlay(
                 integration = ticker_summary.get("integration", {})
                 days_to_catalyst = integration.get("catalyst_window_days")
 
-        if (
-            days_to_catalyst is not None
-            and Q2_CATALYST_MIN_DAYS <= days_to_catalyst <= Q2_CATALYST_MAX_DAYS
-        ):
-            queue_2.append({
-                "ticker": sec["ticker"],
-                "composite_rank": composite_rank,
-                "baker_rank_by_weight": bd["rank_by_weight"],
-                "baker_portfolio_weight_pct": bd["portfolio_weight_pct"],
-                "baker_activity": bd["activity"],
-                "days_to_catalyst": days_to_catalyst,
-                "severity": sec.get("severity", "none"),
-            })
+        if days_to_catalyst is not None and Q2_CATALYST_MIN_DAYS <= days_to_catalyst <= Q2_CATALYST_MAX_DAYS:
+            queue_2.append(
+                {
+                    "ticker": sec["ticker"],
+                    "composite_rank": composite_rank,
+                    "baker_rank_by_weight": bd["rank_by_weight"],
+                    "baker_portfolio_weight_pct": bd["portfolio_weight_pct"],
+                    "baker_activity": bd["activity"],
+                    "days_to_catalyst": days_to_catalyst,
+                    "severity": sec.get("severity", "none"),
+                }
+            )
 
     # Sort by days_to_catalyst asc (soonest first)
     queue_2.sort(key=lambda x: (x["days_to_catalyst"], x["ticker"]))
@@ -437,10 +424,7 @@ def compute_baker_overlay(
     # Recall@K: fraction of Baker top-20 in composite top-K
     recall_metrics = {}
     for k in RECALL_K_VALUES:
-        composite_top_k = set(
-            sec["ticker"] for sec in ranked_securities
-            if sec.get("composite_rank", 999) <= k
-        )
+        composite_top_k = set(sec["ticker"] for sec in ranked_securities if sec.get("composite_rank", 999) <= k)
         overlap = baker_top_n_tickers & composite_top_k
         recall = len(overlap) / max(1, len(baker_top_n_tickers))
         recall_metrics[f"recall_at_{k}"] = round(recall, 4)

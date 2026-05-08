@@ -6,6 +6,7 @@ Verifies the invariants:
 - If applied=True => flags contain reinforcement strength flag
 - If applied=False => no reinforcement flags (except thesis gate block)
 """
+
 from decimal import Decimal
 
 from module_5_scoring_v3 import ScoringMode, compute_smart_money_reinforcement
@@ -49,8 +50,7 @@ def test_thesis_gate_block_emits_block_flag_but_not_applied():
     assert "sm_reinforcement_blocked_by_thesis_gate" in flags
     # Block is an audit flag; ensure no reinforcement strength flags
     assert not any(
-        f in ("sm_reinforcement_weak", "sm_reinforcement_moderate", "sm_reinforcement_strong")
-        for f in flags
+        f in ("sm_reinforcement_weak", "sm_reinforcement_moderate", "sm_reinforcement_strong") for f in flags
     )
 
 
@@ -68,10 +68,7 @@ def test_positive_reinforcement_sets_applied_true_and_emits_strength_flag():
     )
     assert _is_applied(diag) is True
     assert (cat != Decimal("1.00")) or (mom != Decimal("1.00"))
-    assert any(
-        f in ("sm_reinforcement_weak", "sm_reinforcement_moderate", "sm_reinforcement_strong")
-        for f in flags
-    )
+    assert any(f in ("sm_reinforcement_weak", "sm_reinforcement_moderate", "sm_reinforcement_strong") for f in flags)
 
 
 def test_negative_trend_always_applies_penalty():

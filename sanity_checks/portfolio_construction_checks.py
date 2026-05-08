@@ -24,13 +24,13 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sanity_checks.types import (
+    DEFAULT_THRESHOLDS,
     CheckCategory,
     FlagSeverity,
     SanityCheckResult,
     SanityFlag,
     SecurityContext,
     ThresholdConfig,
-    DEFAULT_THRESHOLDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,7 @@ class FundMandate:
 
     Immutable to prevent modification during validation.
     """
+
     name: str
     min_market_cap_mm: Decimal = Decimal("200")
     max_position_size_mm: Decimal = Decimal("50")
@@ -56,6 +57,7 @@ class FundMandate:
 @dataclass
 class LiquidityAssessment:
     """Liquidity assessment for a position."""
+
     ticker: str
     adv_dollars: Decimal
     target_position_mm: Decimal
@@ -68,6 +70,7 @@ class LiquidityAssessment:
 @dataclass
 class ConcentrationRisk:
     """Concentration risk assessment."""
+
     concentration_type: str  # "sector", "indication", "catalyst_date"
     count: int
     tickers: List[str]
@@ -184,15 +187,17 @@ class PortfolioConstructionChecker:
                 continue
 
             if sec.adv_dollars is None:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=sec.ticker,
-                    check_name="missing_liquidity_data",
-                    message=f"Top {sec.rank} candidate missing ADV data",
-                    details={"rank": sec.rank},
-                    recommendation="Cannot assess liquidity",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=sec.ticker,
+                        check_name="missing_liquidity_data",
+                        message=f"Top {sec.rank} candidate missing ADV data",
+                        details={"rank": sec.rank},
+                        recommendation="Cannot assess liquidity",
+                    )
+                )
                 continue
 
             # Calculate days to build position
@@ -206,7 +211,11 @@ class PortfolioConstructionChecker:
             impact = self._estimate_impact(target_position_mm, sec.adv_dollars, days_to_build)
 
             investable = days_to_build <= self.mandate.max_adv_days_to_build
-            reason = None if investable else f"Requires {days_to_build:.1f} days to build (max: {self.mandate.max_adv_days_to_build})"
+            reason = (
+                None
+                if investable
+                else f"Requires {days_to_build:.1f} days to build (max: {self.mandate.max_adv_days_to_build})"
+            )
 
             assessment = LiquidityAssessment(
                 ticker=sec.ticker,
@@ -221,36 +230,40 @@ class PortfolioConstructionChecker:
 
             # Flag if not investable
             if not investable:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.HIGH,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=sec.ticker,
-                    check_name="insufficient_liquidity",
-                    message=f"Top {sec.rank} candidate: ADV ${sec.adv_dollars/1000000:.1f}M insufficient for ${self.mandate.aum_mm:.0f}M fund",
-                    details={
-                        "rank": sec.rank,
-                        "adv_dollars": float(sec.adv_dollars),
-                        "days_to_build": float(days_to_build),
-                        "estimated_impact_pct": float(impact),
-                    },
-                    recommendation="Insufficient liquidity for fund size",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.HIGH,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=sec.ticker,
+                        check_name="insufficient_liquidity",
+                        message=f"Top {sec.rank} candidate: ADV ${sec.adv_dollars/1000000:.1f}M insufficient for ${self.mandate.aum_mm:.0f}M fund",
+                        details={
+                            "rank": sec.rank,
+                            "adv_dollars": float(sec.adv_dollars),
+                            "days_to_build": float(days_to_build),
+                            "estimated_impact_pct": float(impact),
+                        },
+                        recommendation="Insufficient liquidity for fund size",
+                    )
+                )
 
             # Flag high impact
             if impact > self.config.max_position_impact_pct:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=sec.ticker,
-                    check_name="high_market_impact",
-                    message=f"Estimated {impact:.1%} market impact for ${target_position_mm:.0f}M position",
-                    details={
-                        "rank": sec.rank,
-                        "estimated_impact_pct": float(impact),
-                        "threshold": float(self.config.max_position_impact_pct),
-                    },
-                    recommendation="High transaction cost expected",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=sec.ticker,
+                        check_name="high_market_impact",
+                        message=f"Estimated {impact:.1%} market impact for ${target_position_mm:.0f}M position",
+                        details={
+                            "rank": sec.rank,
+                            "estimated_impact_pct": float(impact),
+                            "threshold": float(self.config.max_position_impact_pct),
+                        },
+                        recommendation="High transaction cost expected",
+                    )
+                )
 
         # Calculate metrics
         investable_count = sum(1 for a in assessments if a.investable)
@@ -258,7 +271,9 @@ class PortfolioConstructionChecker:
             "total_assessed": len(assessments),
             "investable_count": investable_count,
             "not_investable_count": len(assessments) - investable_count,
-            "avg_days_to_build": float(sum(a.days_to_build for a in assessments) / len(assessments)) if assessments else 0,
+            "avg_days_to_build": (
+                float(sum(a.days_to_build for a in assessments) / len(assessments)) if assessments else 0
+            ),
         }
 
         return flags, metrics
@@ -300,19 +315,21 @@ class PortfolioConstructionChecker:
                     exceeds_threshold=True,
                 )
                 risks.append(risk)
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.HIGH,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=None,
-                    check_name="sector_concentration",
-                    message=f"Top 10 has {len(tickers)} names in {sector} sector",
-                    details={
-                        "sector": sector,
-                        "count": len(tickers),
-                        "tickers": tickers,
-                    },
-                    recommendation="Regulatory/competitive risk correlation",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.HIGH,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=None,
+                        check_name="sector_concentration",
+                        message=f"Top 10 has {len(tickers)} names in {sector} sector",
+                        details={
+                            "sector": sector,
+                            "count": len(tickers),
+                            "tickers": tickers,
+                        },
+                        recommendation="Regulatory/competitive risk correlation",
+                    )
+                )
 
         # Indication concentration
         indication_counts: Dict[str, List[str]] = {}
@@ -331,19 +348,21 @@ class PortfolioConstructionChecker:
                     exceeds_threshold=True,
                 )
                 risks.append(risk)
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=None,
-                    check_name="indication_concentration",
-                    message=f"Top 10 has {len(tickers)} names in {indication}",
-                    details={
-                        "indication": indication,
-                        "count": len(tickers),
-                        "tickers": tickers,
-                    },
-                    recommendation="Regulatory/competitive risk correlation",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=None,
+                        check_name="indication_concentration",
+                        message=f"Top 10 has {len(tickers)} names in {indication}",
+                        details={
+                            "indication": indication,
+                            "count": len(tickers),
+                            "tickers": tickers,
+                        },
+                        recommendation="Regulatory/competitive risk correlation",
+                    )
+                )
 
         # Catalyst date clustering
         catalyst_windows: Dict[str, List[str]] = {}  # window -> tickers
@@ -364,19 +383,21 @@ class PortfolioConstructionChecker:
                     exceeds_threshold=True,
                 )
                 risks.append(risk)
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=None,
-                    check_name="catalyst_clustering",
-                    message=f"Top 10 has {len(tickers)} names with catalysts in {window}",
-                    details={
-                        "window": window,
-                        "count": len(tickers),
-                        "tickers": tickers,
-                    },
-                    recommendation="Event risk clustering",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=None,
+                        check_name="catalyst_clustering",
+                        message=f"Top 10 has {len(tickers)} names with catalysts in {window}",
+                        details={
+                            "window": window,
+                            "count": len(tickers),
+                            "tickers": tickers,
+                        },
+                        recommendation="Event risk clustering",
+                    )
+                )
 
         return flags, risks
 
@@ -400,19 +421,21 @@ class PortfolioConstructionChecker:
             # Market cap check
             if sec.market_cap_mm is not None:
                 if sec.market_cap_mm < self.mandate.min_market_cap_mm:
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.HIGH,
-                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                        ticker=sec.ticker,
-                        check_name="below_mandate_threshold",
-                        message=f"Market cap ${sec.market_cap_mm:.0f}M below mandate minimum ${self.mandate.min_market_cap_mm:.0f}M",
-                        details={
-                            "rank": sec.rank,
-                            "market_cap_mm": float(sec.market_cap_mm),
-                            "mandate_min": float(self.mandate.min_market_cap_mm),
-                        },
-                        recommendation="Below mandate threshold - not investable per mandate",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.HIGH,
+                            category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                            ticker=sec.ticker,
+                            check_name="below_mandate_threshold",
+                            message=f"Market cap ${sec.market_cap_mm:.0f}M below mandate minimum ${self.mandate.min_market_cap_mm:.0f}M",
+                            details={
+                                "rank": sec.rank,
+                                "market_cap_mm": float(sec.market_cap_mm),
+                                "mandate_min": float(self.mandate.min_market_cap_mm),
+                            },
+                            recommendation="Below mandate threshold - not investable per mandate",
+                        )
+                    )
 
         return flags
 
@@ -451,20 +474,22 @@ class PortfolioConstructionChecker:
 
             # Flag high cost
             if total_cost > Decimal("0.02"):  # >2% total cost
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=sec.ticker,
-                    check_name="high_transaction_cost",
-                    message=f"Estimated {total_cost:.1%} transaction cost for ${target_position_mm:.0f}M position",
-                    details={
-                        "rank": sec.rank,
-                        "total_cost_pct": float(total_cost),
-                        "spread_pct": float(self.SPREAD_ASSUMPTION),
-                        "impact_pct": float(impact),
-                    },
-                    recommendation="High transaction cost - consider smaller position",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=sec.ticker,
+                        check_name="high_transaction_cost",
+                        message=f"Estimated {total_cost:.1%} transaction cost for ${target_position_mm:.0f}M position",
+                        details={
+                            "rank": sec.rank,
+                            "total_cost_pct": float(total_cost),
+                            "spread_pct": float(self.SPREAD_ASSUMPTION),
+                            "impact_pct": float(impact),
+                        },
+                        recommendation="High transaction cost - consider smaller position",
+                    )
+                )
 
         metrics = {
             "avg_cost_pct": float(sum(c for _, c in costs) / len(costs)) if costs else 0,
@@ -494,18 +519,20 @@ class PortfolioConstructionChecker:
 
             if sec.ticker in existing_holdings:
                 current_position = existing_holdings[sec.ticker]
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.LOW,
-                    category=CheckCategory.PORTFOLIO_CONSTRUCTION,
-                    ticker=sec.ticker,
-                    check_name="existing_holding_overlap",
-                    message=f"Top {sec.rank} candidate already held (${current_position:.1f}M)",
-                    details={
-                        "rank": sec.rank,
-                        "current_position_mm": float(current_position),
-                    },
-                    recommendation="Existing holding - consider position sizing",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.LOW,
+                        category=CheckCategory.PORTFOLIO_CONSTRUCTION,
+                        ticker=sec.ticker,
+                        check_name="existing_holding_overlap",
+                        message=f"Top {sec.rank} candidate already held (${current_position:.1f}M)",
+                        details={
+                            "rank": sec.rank,
+                            "current_position_mm": float(current_position),
+                        },
+                        recommendation="Existing holding - consider position sizing",
+                    )
+                )
 
         return flags
 

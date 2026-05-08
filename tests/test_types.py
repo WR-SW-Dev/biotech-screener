@@ -12,16 +12,11 @@ Covers:
 - CompositeRecord dataclass
 """
 
-import pytest
 from decimal import Decimal
-from common.types import (
-    Severity,
-    StatusGate,
-    SecurityRecord,
-    CatalystRecord,
-    ClinicalScore,
-    CompositeRecord,
-)
+
+import pytest
+
+from common.types import CatalystRecord, ClinicalScore, CompositeRecord, SecurityRecord, Severity, StatusGate
 
 
 class TestSeverityEnum:
@@ -100,9 +95,13 @@ class TestStatusGateEnum:
     def test_status_gate_all_values(self):
         """All status gates should be present."""
         expected = {
-            "active", "excluded_shell", "excluded_delisted",
-            "excluded_acquired", "excluded_missing_data",
-            "excluded_small_cap", "not_found"
+            "active",
+            "excluded_shell",
+            "excluded_delisted",
+            "excluded_acquired",
+            "excluded_missing_data",
+            "excluded_small_cap",
+            "not_found",
         }
         values = {s.value for s in StatusGate}
         assert values == expected

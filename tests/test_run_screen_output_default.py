@@ -1,4 +1,5 @@
 """Tests for _default_output_path in run_screen.py."""
+
 from pathlib import Path
 
 from run_screen import _default_output_path

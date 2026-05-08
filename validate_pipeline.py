@@ -78,15 +78,13 @@ def compute_content_hash(data: Any) -> str:
 def get_git_info() -> Dict[str, str]:
     """Get current git commit info"""
     try:
-        commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()[:8]
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()[:8]
 
-        branch = subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            stderr=subprocess.DEVNULL
-        ).decode().strip()
+        branch = (
+            subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
 
         return {"commit": commit, "branch": branch}
     except Exception:
@@ -299,7 +297,7 @@ def validate_module_5_composite(data: Dict[str, Any], result: ValidationResult):
         if weight_diff > WEIGHT_SUM_TOLERANCE:
             result.error(
                 f"Module 5: Weight sum ({total_weight:.4f}) differs from target ({EXPECTED_WEIGHT_SUM}) by {weight_diff:.4f}",
-                "m5_weight_sum"
+                "m5_weight_sum",
             )
         else:
             result.success("m5_weight_sum", total_weight)
@@ -308,7 +306,9 @@ def validate_module_5_composite(data: Dict[str, Any], result: ValidationResult):
         if total_weight == 0.0:
             result.success("m5_weight_sum", "position_sizing_disabled")
         else:
-            result.error(f"Module 5: Weights should be 0 when position sizing disabled, got {total_weight}", "m5_weight_sum")
+            result.error(
+                f"Module 5: Weights should be 0 when position sizing disabled, got {total_weight}", "m5_weight_sum"
+            )
 
     # Check excluded have zero weight
     excluded_with_weight = 0
@@ -317,7 +317,9 @@ def validate_module_5_composite(data: Dict[str, Any], result: ValidationResult):
             excluded_with_weight += 1
 
     if excluded_with_weight > 0:
-        result.error(f"Module 5: {excluded_with_weight} excluded securities have non-zero weight", "m5_excluded_zero_weight")
+        result.error(
+            f"Module 5: {excluded_with_weight} excluded securities have non-zero weight", "m5_excluded_zero_weight"
+        )
     else:
         result.success("m5_excluded_zero_weight", True)
 
@@ -354,11 +356,7 @@ def validate_determinism(data: Dict[str, Any], baseline: Optional[Dict], result:
         result.metrics["differing_sections"] = differing_sections
 
 
-def run_validation(
-    output_path: Path,
-    baseline_path: Optional[Path] = None,
-    strict: bool = False
-) -> ValidationResult:
+def run_validation(output_path: Path, baseline_path: Optional[Path] = None, strict: bool = False) -> ValidationResult:
     """Run all validation checks"""
 
     result = ValidationResult()
@@ -472,40 +470,18 @@ What it checks:
     - Position weights sum to target (0.90)
     - Excluded securities have zero weight
     - Output matches baseline (if provided)
-        """
+        """,
     )
 
-    parser.add_argument(
-        "--output", "-o",
-        type=Path,
-        required=True,
-        help="Path to pipeline output JSON file"
-    )
+    parser.add_argument("--output", "-o", type=Path, required=True, help="Path to pipeline output JSON file")
 
-    parser.add_argument(
-        "--baseline", "-b",
-        type=Path,
-        default=None,
-        help="Path to baseline JSON for comparison"
-    )
+    parser.add_argument("--baseline", "-b", type=Path, default=None, help="Path to baseline JSON for comparison")
 
-    parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Strict mode: treat warnings as errors"
-    )
+    parser.add_argument("--strict", action="store_true", help="Strict mode: treat warnings as errors")
 
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output result as JSON"
-    )
+    parser.add_argument("--json", action="store_true", help="Output result as JSON")
 
     args = parser.parse_args()
 

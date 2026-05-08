@@ -11,17 +11,13 @@ Tests cover:
 - Endpoint extraction
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from data_sources.ctgov_client import (
-    ClinicalTrialsClient,
-    CTGOV_API_BASE,
-    CTGOV_RATE_LIMIT,
-    BIOTECH_TICKER_MAP,
-)
+import pytest
+
+from data_sources.ctgov_client import BIOTECH_TICKER_MAP, CTGOV_API_BASE, CTGOV_RATE_LIMIT, ClinicalTrialsClient
 
 
 class TestClinicalTrialsClientInit:
@@ -181,11 +177,7 @@ class TestGetPrimaryEndpoint:
 
     def test_extracts_measure(self, client):
         """Should extract primary outcome measure."""
-        outcomes = {
-            "primaryOutcomes": [
-                {"measure": "Overall Survival", "timeFrame": "24 months"}
-            ]
-        }
+        outcomes = {"primaryOutcomes": [{"measure": "Overall Survival", "timeFrame": "24 months"}]}
         assert client._get_primary_endpoint(outcomes) == "Overall Survival"
 
     def test_returns_first_primary(self, client):
@@ -214,13 +206,13 @@ class TestSearchBySponsor:
 
     def test_returns_list(self, client):
         """Should return a list."""
-        with patch.object(client, '_make_request', return_value={}):
+        with patch.object(client, "_make_request", return_value={}):
             result = client.search_by_sponsor("Test Company")
             assert isinstance(result, list)
 
     def test_handles_empty_response(self, client):
         """Should handle empty response."""
-        with patch.object(client, '_make_request', return_value={}):
+        with patch.object(client, "_make_request", return_value={}):
             result = client.search_by_sponsor("Test Company")
             assert result == []
 
@@ -248,7 +240,7 @@ class TestSearchBySponsor:
             ]
         }
 
-        with patch.object(client, '_make_request', return_value=mock_response):
+        with patch.object(client, "_make_request", return_value=mock_response):
             result = client.search_by_sponsor("Test Company", max_results=1)
 
             assert len(result) == 1
@@ -267,13 +259,13 @@ class TestGetTrialByNct:
 
     def test_returns_dict(self, client):
         """Should return a dict on success."""
-        with patch.object(client, '_make_request', return_value={"protocolSection": {}}):
+        with patch.object(client, "_make_request", return_value={"protocolSection": {}}):
             result = client.get_trial_by_nct("NCT00000001")
             assert isinstance(result, dict)
 
     def test_returns_none_on_failure(self, client):
         """Should return None on failure."""
-        with patch.object(client, '_make_request', return_value={}):
+        with patch.object(client, "_make_request", return_value={}):
             result = client.get_trial_by_nct("NCT00000001")
             assert result == {}
 

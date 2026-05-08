@@ -17,7 +17,7 @@ from datetime import date
 import pytest
 
 from src.providers.aact_provider import AACTClinicalTrialsProvider
-from src.providers.protocols import Phase, TrialStatus, PCDType
+from src.providers.protocols import PCDType, Phase, TrialStatus
 
 
 class TestCSVParsingRobustness:
@@ -26,12 +26,12 @@ class TestCSVParsingRobustness:
     def test_parses_commas_in_status_field(self):
         """CSV with quoted commas must parse correctly."""
         csv_content = (
-            'nct_id,phase,overall_status,primary_completion_date,'
-            'primary_completion_date_type,last_update_posted_date,study_type\n'
+            "nct_id,phase,overall_status,primary_completion_date,"
+            "primary_completion_date_type,last_update_posted_date,study_type\n"
             'NCT00000001,Phase 2,"Active, not recruiting",2024-06-01,'
-            'Anticipated,2024-01-10,Interventional\n'
+            "Anticipated,2024-01-10,Interventional\n"
             'NCT00000002,Phase 3,"Terminated, lack of funding",2024-03-01,'
-            'Actual,2024-01-05,Interventional\n'
+            "Actual,2024-01-05,Interventional\n"
         )
 
         fd, path = tempfile.mkstemp(suffix=".csv")
@@ -52,12 +52,12 @@ class TestCSVParsingRobustness:
         """CSV with escaped quotes inside fields must parse correctly."""
         # RFC 4180: quotes inside quoted fields are escaped by doubling
         csv_content = (
-            'nct_id,phase,overall_status,primary_completion_date,'
-            'primary_completion_date_type,last_update_posted_date,study_type\n'
+            "nct_id,phase,overall_status,primary_completion_date,"
+            "primary_completion_date_type,last_update_posted_date,study_type\n"
             'NCT00000001,Phase 2,"Active, not recruiting (""special cohort"")",2024-06-01,'
-            'Anticipated,2024-01-10,Interventional\n'
+            "Anticipated,2024-01-10,Interventional\n"
             'NCT00000002,Phase 1,"Recruiting ""Phase 1b"" patients",2024-09-01,'
-            'Anticipated,2024-01-12,Interventional\n'
+            "Anticipated,2024-01-12,Interventional\n"
         )
 
         fd, path = tempfile.mkstemp(suffix=".csv")
@@ -77,7 +77,7 @@ class TestCSVParsingRobustness:
     def test_parses_sponsor_names_with_special_characters(self):
         """Sponsor names can contain commas, quotes, and special chars."""
         csv_content = (
-            'nct_id,name,lead_or_collaborator\n'
+            "nct_id,name,lead_or_collaborator\n"
             'NCT00000001,"Acme Pharmaceuticals, Inc.",LEAD\n'
             'NCT00000002,"BioTech ""Innovation"" Labs, Ltd.",LEAD\n'
             'NCT00000003,"University of California, San Francisco",LEAD\n'
@@ -101,12 +101,12 @@ class TestCSVParsingRobustness:
     def test_handles_empty_and_missing_fields(self):
         """Empty fields should parse as empty strings, not cause errors."""
         csv_content = (
-            'nct_id,phase,overall_status,primary_completion_date,'
-            'primary_completion_date_type,last_update_posted_date,study_type\n'
-            'NCT00000001,Phase 2,Recruiting,,,'
-            ',Interventional\n'
-            'NCT00000002,,Unknown status,2024-06-01,,'
-            '2024-01-10,\n'
+            "nct_id,phase,overall_status,primary_completion_date,"
+            "primary_completion_date_type,last_update_posted_date,study_type\n"
+            "NCT00000001,Phase 2,Recruiting,,,"
+            ",Interventional\n"
+            "NCT00000002,,Unknown status,2024-06-01,,"
+            "2024-01-10,\n"
         )
 
         fd, path = tempfile.mkstemp(suffix=".csv")
@@ -129,23 +129,26 @@ class TestCSVParsingRobustness:
 class TestPhaseNormalization:
     """Test AACT phase strings normalize to expected buckets."""
 
-    @pytest.mark.parametrize("aact_phase,expected", [
-        ("Phase 1", Phase.P1),
-        ("PHASE 1", Phase.P1),
-        ("Early Phase 1", Phase.P1),
-        ("Phase 1/Phase 2", Phase.P1_2),
-        ("Phase 1/2", Phase.P1_2),
-        ("Phase 2", Phase.P2),
-        ("Phase 2/Phase 3", Phase.P2_3),
-        ("Phase 2/3", Phase.P2_3),
-        ("Phase 3", Phase.P3),
-        ("Phase 4", Phase.P4),
-        ("N/A", Phase.UNKNOWN),
-        ("Not Applicable", Phase.UNKNOWN),
-        ("", Phase.UNKNOWN),
-        (None, Phase.UNKNOWN),
-        ("  Phase 2  ", Phase.P2),  # whitespace handling
-    ])
+    @pytest.mark.parametrize(
+        "aact_phase,expected",
+        [
+            ("Phase 1", Phase.P1),
+            ("PHASE 1", Phase.P1),
+            ("Early Phase 1", Phase.P1),
+            ("Phase 1/Phase 2", Phase.P1_2),
+            ("Phase 1/2", Phase.P1_2),
+            ("Phase 2", Phase.P2),
+            ("Phase 2/Phase 3", Phase.P2_3),
+            ("Phase 2/3", Phase.P2_3),
+            ("Phase 3", Phase.P3),
+            ("Phase 4", Phase.P4),
+            ("N/A", Phase.UNKNOWN),
+            ("Not Applicable", Phase.UNKNOWN),
+            ("", Phase.UNKNOWN),
+            (None, Phase.UNKNOWN),
+            ("  Phase 2  ", Phase.P2),  # whitespace handling
+        ],
+    )
     def test_phase_normalization(self, aact_phase, expected):
         """Phase strings from AACT should map to correct buckets."""
         assert Phase.from_aact(aact_phase) == expected
@@ -154,20 +157,23 @@ class TestPhaseNormalization:
 class TestStatusNormalization:
     """Test AACT status strings normalize to expected enums."""
 
-    @pytest.mark.parametrize("aact_status,expected", [
-        ("Active, not recruiting", TrialStatus.ACTIVE),
-        ("ACTIVE, NOT RECRUITING", TrialStatus.ACTIVE),
-        ("Recruiting", TrialStatus.RECRUITING),
-        ("Enrolling by invitation", TrialStatus.ENROLLING),
-        ("Completed", TrialStatus.COMPLETED),
-        ("Suspended", TrialStatus.SUSPENDED),
-        ("Terminated", TrialStatus.TERMINATED),
-        ("Withdrawn", TrialStatus.WITHDRAWN),
-        ("Not yet recruiting", TrialStatus.NOT_YET_RECRUITING),
-        ("Unknown status", TrialStatus.UNKNOWN),
-        ("", TrialStatus.UNKNOWN),
-        (None, TrialStatus.UNKNOWN),
-    ])
+    @pytest.mark.parametrize(
+        "aact_status,expected",
+        [
+            ("Active, not recruiting", TrialStatus.ACTIVE),
+            ("ACTIVE, NOT RECRUITING", TrialStatus.ACTIVE),
+            ("Recruiting", TrialStatus.RECRUITING),
+            ("Enrolling by invitation", TrialStatus.ENROLLING),
+            ("Completed", TrialStatus.COMPLETED),
+            ("Suspended", TrialStatus.SUSPENDED),
+            ("Terminated", TrialStatus.TERMINATED),
+            ("Withdrawn", TrialStatus.WITHDRAWN),
+            ("Not yet recruiting", TrialStatus.NOT_YET_RECRUITING),
+            ("Unknown status", TrialStatus.UNKNOWN),
+            ("", TrialStatus.UNKNOWN),
+            (None, TrialStatus.UNKNOWN),
+        ],
+    )
     def test_status_normalization(self, aact_status, expected):
         """Status strings from AACT should map to correct enums."""
         assert TrialStatus.from_aact(aact_status) == expected
@@ -194,15 +200,18 @@ class TestStatusNormalization:
 class TestPCDTypeNormalization:
     """Test PCD type normalization and flag behavior."""
 
-    @pytest.mark.parametrize("aact_type,expected", [
-        ("Actual", PCDType.ACTUAL),
-        ("ACTUAL", PCDType.ACTUAL),
-        ("Anticipated", PCDType.ANTICIPATED),
-        ("ANTICIPATED", PCDType.ANTICIPATED),
-        ("Estimated", PCDType.ANTICIPATED),
-        ("", PCDType.UNKNOWN),
-        (None, PCDType.UNKNOWN),
-    ])
+    @pytest.mark.parametrize(
+        "aact_type,expected",
+        [
+            ("Actual", PCDType.ACTUAL),
+            ("ACTUAL", PCDType.ACTUAL),
+            ("Anticipated", PCDType.ANTICIPATED),
+            ("ANTICIPATED", PCDType.ANTICIPATED),
+            ("Estimated", PCDType.ANTICIPATED),
+            ("", PCDType.UNKNOWN),
+            (None, PCDType.UNKNOWN),
+        ],
+    )
     def test_pcd_type_normalization(self, aact_type, expected):
         """PCD type strings from AACT should map to correct enums."""
         assert PCDType.from_aact(aact_type) == expected

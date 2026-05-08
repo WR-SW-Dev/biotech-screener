@@ -27,16 +27,12 @@ from forward_eval_gate import (
     _load_rankings_signal,
     evaluate_rolling_ic,
 )
-from run_daily_production import (
-    GATE_ALLOWLIST,
-    GateConfig,
-    check_forward_eval,
-)
-
+from run_daily_production import GATE_ALLOWLIST, GateConfig, check_forward_eval
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_rankings_csv(path: Path, tickers_ranks: List[tuple]) -> None:
     """Write rankings.csv with (ticker, rank) pairs."""
@@ -88,13 +84,15 @@ def _make_positive_ic_data(n_tickers=20):
         anchor = 10.0
         # Higher rank (lower number) → higher return
         fwd = anchor * (1.0 + 0.10 - i * 0.01)
-        pit_rows.append({
-            "ticker": t,
-            "anchor_date": "2026-02-09",
-            "anchor_close": str(anchor),
-            "h5_date": "2026-02-17",
-            "h5_close": str(round(fwd, 4)),
-        })
+        pit_rows.append(
+            {
+                "ticker": t,
+                "anchor_date": "2026-02-09",
+                "anchor_close": str(anchor),
+                "h5_date": "2026-02-17",
+                "h5_close": str(round(fwd, 4)),
+            }
+        )
     return tickers_ranks, pit_rows
 
 
@@ -108,19 +106,22 @@ def _make_negative_ic_data(n_tickers=20):
         anchor = 10.0
         # Higher rank (lower number) → LOWER return (inverted)
         fwd = anchor * (1.0 - 0.10 + i * 0.01)
-        pit_rows.append({
-            "ticker": t,
-            "anchor_date": "2026-02-09",
-            "anchor_close": str(anchor),
-            "h5_date": "2026-02-17",
-            "h5_close": str(round(fwd, 4)),
-        })
+        pit_rows.append(
+            {
+                "ticker": t,
+                "anchor_date": "2026-02-09",
+                "anchor_close": str(anchor),
+                "h5_date": "2026-02-17",
+                "h5_close": str(round(fwd, 4)),
+            }
+        )
     return tickers_ranks, pit_rows
 
 
 # ---------------------------------------------------------------------------
 # TestEvaluateRollingIC
 # ---------------------------------------------------------------------------
+
 
 class TestEvaluateRollingIC:
 
@@ -225,7 +226,9 @@ class TestEvaluateRollingIC:
         _write_rankings_csv(snapshot_dir / d / "rankings.csv", tickers_ranks)
         # Mark first ticker as split warning
         _write_pit_cache(
-            cache_base / d, d, pit_rows,
+            cache_base / d,
+            d,
+            pit_rows,
             horizons_filled=[5],
             split_warnings=[{"ticker": "T000", "horizon": 5}],
         )
@@ -246,12 +249,14 @@ class TestEvaluateRollingIC:
         """Verify we import spearman_ic from eval_forward_returns, not reimplement."""
         from scripts.eval_forward_returns import spearman_ic as eval_ic
         from tools.forward_eval_gate import spearman_ic as gate_ic
+
         assert eval_ic is gate_ic
 
 
 # ---------------------------------------------------------------------------
 # TestCheckForwardEval
 # ---------------------------------------------------------------------------
+
 
 class TestCheckForwardEval:
 
@@ -302,6 +307,7 @@ class TestCheckForwardEval:
 # ---------------------------------------------------------------------------
 # TestDiscoverPitDates
 # ---------------------------------------------------------------------------
+
 
 class TestDiscoverPitDates:
 

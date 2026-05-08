@@ -23,14 +23,14 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
-from datetime import date
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
 import argparse
 import csv
 import json
 import sys
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 __version__ = "1.0.0"
 
@@ -46,6 +46,7 @@ SCORE_PRECISION = Decimal("0.01")
 # =============================================================================
 # DATA CLASSES
 # =============================================================================
+
 
 class RankedSecurity:
     """Represents a ranked security with score breakdown."""
@@ -111,6 +112,7 @@ class RankedSecurity:
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def _to_decimal(value: Any) -> Optional[Decimal]:
     """Convert value to Decimal safely."""
     if value is None:
@@ -131,6 +133,7 @@ def _quantize_score(score: Decimal) -> Decimal:
 # =============================================================================
 # CORE FUNCTIONS
 # =============================================================================
+
 
 def load_results(filepath: Union[str, Path]) -> Dict[str, Any]:
     """
@@ -275,6 +278,7 @@ def rank_securities(
 # DISPLAY FUNCTIONS
 # =============================================================================
 
+
 def print_rankings(
     ranked: List[RankedSecurity],
     top_n: int = DEFAULT_TOP_N,
@@ -409,32 +413,36 @@ def export_to_csv(
 
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "Rank",
-            "Ticker",
-            "Final_Score",
-            "PreGov_Score",
-            "Gov_Impact",
-            "Gov_Impact_Pct",
-            "Gov_Flags",
-            "Severity",
-            "Stage",
-            "Market_Cap_Bucket",
-        ])
+        writer.writerow(
+            [
+                "Rank",
+                "Ticker",
+                "Final_Score",
+                "PreGov_Score",
+                "Gov_Impact",
+                "Gov_Impact_Pct",
+                "Gov_Flags",
+                "Severity",
+                "Stage",
+                "Market_Cap_Bucket",
+            ]
+        )
 
         for sec in display_list:
-            writer.writerow([
-                sec.rank,
-                sec.ticker,
-                f"{sec.enhanced_score:.2f}",
-                f"{sec.base_score:.2f}",
-                f"{sec.delta:+.2f}",
-                f"{sec.delta_pct:+.1f}%",
-                sec.gov_flags,
-                sec.severity,
-                sec.stage_bucket,
-                sec.market_cap_bucket,
-            ])
+            writer.writerow(
+                [
+                    sec.rank,
+                    sec.ticker,
+                    f"{sec.enhanced_score:.2f}",
+                    f"{sec.base_score:.2f}",
+                    f"{sec.delta:+.2f}",
+                    f"{sec.delta_pct:+.1f}%",
+                    sec.gov_flags,
+                    sec.severity,
+                    sec.stage_bucket,
+                    sec.market_cap_bucket,
+                ]
+            )
 
     print(f"\nRankings exported to: {filepath}")
 
@@ -483,6 +491,7 @@ def export_to_json(
 # =============================================================================
 # ANALYSIS FUNCTIONS
 # =============================================================================
+
 
 def analyze_enhancement_impact(ranked: List[RankedSecurity]) -> Dict[str, Any]:
     """
@@ -581,7 +590,9 @@ def print_movers(
     print(f"{'Ticker':<10}{'Final':<12}{'Pre-Gov':<12}{'Impact':<12}{'Flags':<10}")
     print("-" * 60)
     for sec in gainers:
-        print(f"{sec.ticker:<10}{sec.enhanced_score:<12.2f}{sec.base_score:<12.2f}{sec.delta:+10.2f}  {sec.gov_flags:<10}")
+        print(
+            f"{sec.ticker:<10}{sec.enhanced_score:<12.2f}{sec.base_score:<12.2f}{sec.delta:+10.2f}  {sec.gov_flags:<10}"
+        )
 
     print(f"\n{'='*60}")
     print(f"MOST PENALIZED (Largest Gov Impact)")
@@ -589,12 +600,15 @@ def print_movers(
     print(f"{'Ticker':<10}{'Final':<12}{'Pre-Gov':<12}{'Impact':<12}{'Flags':<10}")
     print("-" * 60)
     for sec in losers:
-        print(f"{sec.ticker:<10}{sec.enhanced_score:<12.2f}{sec.base_score:<12.2f}{sec.delta:+10.2f}  {sec.gov_flags:<10}")
+        print(
+            f"{sec.ticker:<10}{sec.enhanced_score:<12.2f}{sec.base_score:<12.2f}{sec.delta:+10.2f}  {sec.gov_flags:<10}"
+        )
 
 
 # =============================================================================
 # SELF-CHECKS
 # =============================================================================
+
 
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify module correctness."""
@@ -649,18 +663,19 @@ def _run_self_checks() -> List[str]:
 # MAIN
 # =============================================================================
 
+
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Display score rankings with enhanced vs base comparison"
-    )
+    parser = argparse.ArgumentParser(description="Display score rankings with enhanced vs base comparison")
     parser.add_argument(
-        "--file", "-f",
+        "--file",
+        "-f",
         type=str,
         help="Path to Module 5 results JSON file",
     )
     parser.add_argument(
-        "--top", "-n",
+        "--top",
+        "-n",
         type=int,
         default=DEFAULT_TOP_N,
         help=f"Number of top securities to display (default: {DEFAULT_TOP_N})",
@@ -672,22 +687,26 @@ def main():
         help="Output format (default: text)",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=str,
         help="Output file path (for csv/json formats)",
     )
     parser.add_argument(
-        "--detailed", "-d",
+        "--detailed",
+        "-d",
         action="store_true",
         help="Show detailed score breakdown",
     )
     parser.add_argument(
-        "--movers", "-m",
+        "--movers",
+        "-m",
         action="store_true",
         help="Show biggest movers (gainers/losers)",
     )
     parser.add_argument(
-        "--analysis", "-a",
+        "--analysis",
+        "-a",
         action="store_true",
         help="Show enhancement impact analysis",
     )

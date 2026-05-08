@@ -22,25 +22,25 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from module_4_clinical_dev_v2 import (
-    compute_module_4_clinical_dev_v2,
-    _classify_endpoint,
-    _parse_phase,
-    _parse_status,
-    _is_pit_admissible,
-    _dedup_trials_by_nct_id,
-    _identify_lead_program,
-    _compute_lead_program_key,
-    _score_execution,
-    TrialPITRecord,
-    TrialStatus,
     STRONG_ENDPOINT_PATTERNS,
     WEAK_ENDPOINT_PATTERNS,
+    TrialPITRecord,
+    TrialStatus,
+    _classify_endpoint,
+    _compute_lead_program_key,
+    _dedup_trials_by_nct_id,
+    _identify_lead_program,
+    _is_pit_admissible,
+    _parse_phase,
+    _parse_status,
+    _score_execution,
+    compute_module_4_clinical_dev_v2,
 )
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 def create_trial_record(
     ticker: str,
@@ -98,6 +98,7 @@ def create_pit_record(
 # ============================================================================
 # PIT CUTOFF TESTS
 # ============================================================================
+
 
 def test_pit_cutoff_filtering():
     """Test PIT cutoff correctly filters future-dated records."""
@@ -157,6 +158,7 @@ def test_pit_filtering_in_scoring():
 # ============================================================================
 # ENDPOINT PARSING TESTS
 # ============================================================================
+
 
 def test_endpoint_word_boundaries():
     """Test endpoint parsing uses word boundaries correctly."""
@@ -230,6 +232,7 @@ def test_endpoint_no_double_counting():
 # DEDUP STABILITY TESTS
 # ============================================================================
 
+
 def test_dedup_by_nct_id():
     """Test deduplication by nct_id is deterministic."""
     print("  Running test_dedup_by_nct_id...")
@@ -299,6 +302,7 @@ def test_dedup_deterministic_across_runs():
 # LEAD PROGRAM IDENTIFICATION TESTS
 # ============================================================================
 
+
 def test_lead_program_highest_phase():
     """Test lead program is highest phase."""
     print("  Running test_lead_program_highest_phase...")
@@ -361,6 +365,7 @@ def test_lead_program_key_stability():
 # STATUS QUALITY SCORING TESTS
 # ============================================================================
 
+
 def test_termination_rate_calculation():
     """Test termination rate uses Decimal arithmetic."""
     print("  Running test_termination_rate_calculation...")
@@ -412,6 +417,7 @@ def test_status_quality_score():
 # ============================================================================
 # DECIMAL PRECISION TESTS
 # ============================================================================
+
 
 def test_score_precision():
     """Test all scores are properly quantized."""
@@ -469,6 +475,7 @@ def test_rate_precision():
 # PHASE PARSING TESTS
 # ============================================================================
 
+
 def test_phase_parsing():
     """Test phase parsing handles CT.gov formats."""
     print("  Running test_phase_parsing...")
@@ -512,6 +519,7 @@ def test_status_parsing():
 # ============================================================================
 # INTEGRATION TESTS
 # ============================================================================
+
 
 def test_full_scoring_output():
     """Test full scoring produces expected output structure."""
@@ -574,6 +582,7 @@ def test_empty_trials():
 # RUN ALL TESTS
 # ============================================================================
 
+
 def run_all_tests():
     """Run all golden fixture tests."""
     print("=" * 60)
@@ -583,41 +592,65 @@ def run_all_tests():
 
     test_functions = [
         # PIT tests
-        ("PIT Cutoff Tests:", [
-            test_pit_cutoff_filtering,
-            test_pit_filtering_in_scoring,
-        ]),
-        ("Endpoint Parsing Tests:", [
-            test_endpoint_word_boundaries,
-            test_endpoint_priority_ladder,
-            test_endpoint_no_double_counting,
-        ]),
-        ("Dedup Stability Tests:", [
-            test_dedup_by_nct_id,
-            test_dedup_prefers_pit_admissible,
-            test_dedup_deterministic_across_runs,
-        ]),
-        ("Lead Program Tests:", [
-            test_lead_program_highest_phase,
-            test_lead_program_deterministic_tiebreak,
-            test_lead_program_key_stability,
-        ]),
-        ("Status Quality Tests:", [
-            test_termination_rate_calculation,
-            test_status_quality_score,
-        ]),
-        ("Decimal Precision Tests:", [
-            test_score_precision,
-            test_rate_precision,
-        ]),
-        ("Parsing Tests:", [
-            test_phase_parsing,
-            test_status_parsing,
-        ]),
-        ("Integration Tests:", [
-            test_full_scoring_output,
-            test_empty_trials,
-        ]),
+        (
+            "PIT Cutoff Tests:",
+            [
+                test_pit_cutoff_filtering,
+                test_pit_filtering_in_scoring,
+            ],
+        ),
+        (
+            "Endpoint Parsing Tests:",
+            [
+                test_endpoint_word_boundaries,
+                test_endpoint_priority_ladder,
+                test_endpoint_no_double_counting,
+            ],
+        ),
+        (
+            "Dedup Stability Tests:",
+            [
+                test_dedup_by_nct_id,
+                test_dedup_prefers_pit_admissible,
+                test_dedup_deterministic_across_runs,
+            ],
+        ),
+        (
+            "Lead Program Tests:",
+            [
+                test_lead_program_highest_phase,
+                test_lead_program_deterministic_tiebreak,
+                test_lead_program_key_stability,
+            ],
+        ),
+        (
+            "Status Quality Tests:",
+            [
+                test_termination_rate_calculation,
+                test_status_quality_score,
+            ],
+        ),
+        (
+            "Decimal Precision Tests:",
+            [
+                test_score_precision,
+                test_rate_precision,
+            ],
+        ),
+        (
+            "Parsing Tests:",
+            [
+                test_phase_parsing,
+                test_status_parsing,
+            ],
+        ),
+        (
+            "Integration Tests:",
+            [
+                test_full_scoring_output,
+                test_empty_trials,
+            ],
+        ),
     ]
 
     passed = 0

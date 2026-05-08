@@ -7,6 +7,7 @@ computes forward returns, and produces a manager leaderboard.
 PIT-safe: holdings are assigned to weeks only AFTER the filing date.
 Deterministic: stable manager/ticker/date ordering throughout.
 """
+
 from __future__ import annotations
 
 import json
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Load manager registry (Tier-1 elite_core)
 # ---------------------------------------------------------------------------
 
+
 def load_manager_registry(
     registry_path: Path,
     tier: str = "elite_core",
@@ -43,6 +45,7 @@ def load_manager_registry(
 # ---------------------------------------------------------------------------
 # Build manager holdings panel from holdings_snapshots.json
 # ---------------------------------------------------------------------------
+
 
 def build_manager_holdings_panel(
     holdings_path: Path,
@@ -93,28 +96,29 @@ def build_manager_holdings_panel(
                     if filed_at > filing_metadata_cutoff:
                         continue
 
-                records.append({
-                    "manager_cik": cik,
-                    "manager_name": manager_ciks[cik],
-                    "quarter_end": quarter_end,
-                    "ticker": ticker,
-                    "shares": shares,
-                    "value_kusd": value_kusd,
-                    "filed_at": filed_at,
-                })
+                records.append(
+                    {
+                        "manager_cik": cik,
+                        "manager_name": manager_ciks[cik],
+                        "quarter_end": quarter_end,
+                        "ticker": ticker,
+                        "shares": shares,
+                        "value_kusd": value_kusd,
+                        "filed_at": filed_at,
+                    }
+                )
 
     df = pd.DataFrame(records)
     if df.empty:
         return df
-    df = df.sort_values(
-        ["manager_cik", "quarter_end", "ticker"]
-    ).reset_index(drop=True)
+    df = df.sort_values(["manager_cik", "quarter_end", "ticker"]).reset_index(drop=True)
     return df
 
 
 # ---------------------------------------------------------------------------
 # Map manager holdings to weekly rebalance dates (PIT-safe)
 # ---------------------------------------------------------------------------
+
 
 def assign_holdings_to_weeks(
     holdings_df: pd.DataFrame,
@@ -132,15 +136,23 @@ def assign_holdings_to_weeks(
         rebalance_date, manager_cik, manager_name, ticker, shares, value_kusd
     """
     if holdings_df.empty:
-        return pd.DataFrame(columns=[
-            "rebalance_date", "manager_cik", "manager_name",
-            "ticker", "shares", "value_kusd",
-        ])
+        return pd.DataFrame(
+            columns=[
+                "rebalance_date",
+                "manager_cik",
+                "manager_name",
+                "ticker",
+                "shares",
+                "value_kusd",
+            ]
+        )
 
     # Get unique filings per (manager_cik, quarter_end)
-    filings = holdings_df.groupby(
-        ["manager_cik", "quarter_end"]
-    ).agg({"filed_at": "first", "manager_name": "first"}).reset_index()
+    filings = (
+        holdings_df.groupby(["manager_cik", "quarter_end"])
+        .agg({"filed_at": "first", "manager_name": "first"})
+        .reset_index()
+    )
 
     # Log PIT boundary: earliest filing date
     earliest_filing = filings["filed_at"].min()
@@ -171,31 +183,29 @@ def assign_holdings_to_weeks(
     # Build final records from best_quarter mapping
     final_records: List[Dict[str, Any]] = []
     for (dt, cik), qe in sorted(best_quarter.items()):
-        mask = (
-            (holdings_df["manager_cik"] == cik)
-            & (holdings_df["quarter_end"] == qe)
-        )
+        mask = (holdings_df["manager_cik"] == cik) & (holdings_df["quarter_end"] == qe)
         for _, row in holdings_df[mask].iterrows():
-            final_records.append({
-                "rebalance_date": dt,
-                "manager_cik": cik,
-                "manager_name": row["manager_name"],
-                "ticker": row["ticker"],
-                "shares": row["shares"],
-                "value_kusd": row["value_kusd"],
-            })
+            final_records.append(
+                {
+                    "rebalance_date": dt,
+                    "manager_cik": cik,
+                    "manager_name": row["manager_name"],
+                    "ticker": row["ticker"],
+                    "shares": row["shares"],
+                    "value_kusd": row["value_kusd"],
+                }
+            )
 
     result = pd.DataFrame(final_records)
     if result.empty:
         return result
-    return result.sort_values(
-        ["rebalance_date", "manager_cik", "ticker"]
-    ).reset_index(drop=True)
+    return result.sort_values(["rebalance_date", "manager_cik", "ticker"]).reset_index(drop=True)
 
 
 # ---------------------------------------------------------------------------
 # Compute manager portfolio returns
 # ---------------------------------------------------------------------------
+
 
 def compute_manager_returns(
     weekly_holdings: pd.DataFrame,
@@ -213,10 +223,17 @@ def compute_manager_returns(
         n_holdings, n_with_returns, universe_mean_return
     """
     if weekly_holdings.empty:
-        return pd.DataFrame(columns=[
-            date_col, "manager_cik", "manager_name", "portfolio_return",
-            "n_holdings", "n_with_returns", "universe_mean_return",
-        ])
+        return pd.DataFrame(
+            columns=[
+                date_col,
+                "manager_cik",
+                "manager_name",
+                "portfolio_return",
+                "n_holdings",
+                "n_with_returns",
+                "universe_mean_return",
+            ]
+        )
 
     # Merge holdings with panel returns
     merged = weekly_holdings.merge(
@@ -243,15 +260,17 @@ def compute_manager_returns(
 
         univ_mean = float(universe_means.get(dt, np.nan))
 
-        results.append({
-            date_col: dt,
-            "manager_cik": cik,
-            "manager_name": name,
-            "portfolio_return": port_ret,
-            "n_holdings": n_holdings,
-            "n_with_returns": n_with_returns,
-            "universe_mean_return": univ_mean,
-        })
+        results.append(
+            {
+                date_col: dt,
+                "manager_cik": cik,
+                "manager_name": name,
+                "portfolio_return": port_ret,
+                "n_holdings": n_holdings,
+                "n_with_returns": n_with_returns,
+                "universe_mean_return": univ_mean,
+            }
+        )
 
     df = pd.DataFrame(results)
     return df.sort_values([date_col, "manager_cik"]).reset_index(drop=True)
@@ -260,6 +279,7 @@ def compute_manager_returns(
 # ---------------------------------------------------------------------------
 # Newey–West t-stat for a return series
 # ---------------------------------------------------------------------------
+
 
 def _nw_tstat(series: np.ndarray, lags: int = 4) -> float:
     """Newey–West t-stat for the mean of a time series."""
@@ -270,7 +290,7 @@ def _nw_tstat(series: np.ndarray, lags: int = 4) -> float:
     mean = np.mean(valid)
     demeaned = valid - mean
 
-    gamma_0 = np.sum(demeaned ** 2) / T
+    gamma_0 = np.sum(demeaned**2) / T
     nw_sum = gamma_0
     for j in range(1, min(lags, T - 1) + 1):
         w = 1.0 - j / (lags + 1.0)
@@ -287,6 +307,7 @@ def _nw_tstat(series: np.ndarray, lags: int = 4) -> float:
 # Manager leaderboard
 # ---------------------------------------------------------------------------
 
+
 def build_manager_leaderboard(
     manager_returns: pd.DataFrame,
     min_weeks: int = 3,
@@ -301,11 +322,19 @@ def build_manager_leaderboard(
         hit_rate, avg_excess_vs_universe, n_weeks, avg_holdings
     """
     if manager_returns.empty:
-        return pd.DataFrame(columns=[
-            "manager_cik", "manager_name", "avg_return", "volatility",
-            "t_stat", "hit_rate", "avg_excess_vs_universe",
-            "n_weeks", "avg_holdings",
-        ])
+        return pd.DataFrame(
+            columns=[
+                "manager_cik",
+                "manager_name",
+                "avg_return",
+                "volatility",
+                "t_stat",
+                "hit_rate",
+                "avg_excess_vs_universe",
+                "n_weeks",
+                "avg_holdings",
+            ]
+        )
 
     rows: List[Dict[str, Any]] = []
     groups = manager_returns.groupby(["manager_cik", "manager_name"])
@@ -329,17 +358,19 @@ def build_manager_leaderboard(
 
         avg_holdings = float(group["n_with_returns"].mean())
 
-        rows.append({
-            "manager_cik": cik,
-            "manager_name": name,
-            "avg_return": round(avg_ret, 6),
-            "volatility": round(vol, 6) if np.isfinite(vol) else np.nan,
-            "t_stat": round(t_stat, 4) if np.isfinite(t_stat) else np.nan,
-            "hit_rate": round(hit_rate, 4),
-            "avg_excess_vs_universe": round(avg_excess, 6) if np.isfinite(avg_excess) else np.nan,
-            "n_weeks": n_weeks,
-            "avg_holdings": round(avg_holdings, 1),
-        })
+        rows.append(
+            {
+                "manager_cik": cik,
+                "manager_name": name,
+                "avg_return": round(avg_ret, 6),
+                "volatility": round(vol, 6) if np.isfinite(vol) else np.nan,
+                "t_stat": round(t_stat, 4) if np.isfinite(t_stat) else np.nan,
+                "hit_rate": round(hit_rate, 4),
+                "avg_excess_vs_universe": round(avg_excess, 6) if np.isfinite(avg_excess) else np.nan,
+                "n_weeks": n_weeks,
+                "avg_holdings": round(avg_holdings, 1),
+            }
+        )
 
     df = pd.DataFrame(rows)
     if df.empty:
@@ -357,6 +388,7 @@ def build_manager_leaderboard(
 # ---------------------------------------------------------------------------
 # Convenience: write outputs
 # ---------------------------------------------------------------------------
+
 
 def write_manager_outputs(
     leaderboard: pd.DataFrame,

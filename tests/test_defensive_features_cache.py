@@ -3,11 +3,7 @@
 
 import math
 
-from wake_robin_data_pipeline.defensive_features_cache import (
-    compute_returns,
-    vol,
-    build_cache,
-)
+from wake_robin_data_pipeline.defensive_features_cache import build_cache, compute_returns, vol
 
 
 class TestDefensiveFeaturesCache:

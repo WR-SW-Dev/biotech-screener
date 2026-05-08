@@ -8,23 +8,23 @@ with existing collect_8k_timing_events().
 import json
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
     FORM_TO_SOURCE,
     PATTERN_VERSION,
-    _multi_form_cache_path,
-    collect_sec_filing_events,
-    collect_8k_timing_events,
     _extract_timing_events,
+    _multi_form_cache_path,
+    collect_8k_timing_events,
+    collect_sec_filing_events,
 )
-
 
 # ===========================================================================
 # FORM_TO_SOURCE mapping
 # ===========================================================================
+
 
 class TestFormToSource:
     """Verify FORM_TO_SOURCE mapping is correct and complete."""
@@ -49,6 +49,7 @@ class TestFormToSource:
 # _multi_form_cache_path
 # ===========================================================================
 
+
 class TestMultiFormCachePath:
     """Verify cache path prefix and versioning."""
 
@@ -70,9 +71,8 @@ class TestMultiFormCachePath:
 
     def test_cache_path_differs_from_8k(self):
         """Multi-form cache path must differ from 8-K cache path."""
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _versioned_cache_path,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _versioned_cache_path
+
         cache_dir = Path("/tmp/cache")
         as_of = date(2026, 2, 7)
         p_8k = _versioned_cache_path(cache_dir, as_of)
@@ -84,6 +84,7 @@ class TestMultiFormCachePath:
 # collect_sec_filing_events — cache read
 # ===========================================================================
 
+
 class TestCollectSecFilingEventsCache:
     """Verify cache read behavior without network calls."""
 
@@ -94,8 +95,13 @@ class TestCollectSecFilingEventsCache:
 
         as_of = date(2026, 2, 7)
         cached_events = [
-            {"ticker": "ACAD", "event_type": "DATA_READOUT", "event_date": "2026-06-15",
-             "source": "SEC_10Q_FILING", "filing_form": "10-Q"},
+            {
+                "ticker": "ACAD",
+                "event_type": "DATA_READOUT",
+                "event_date": "2026-06-15",
+                "source": "SEC_10Q_FILING",
+                "filing_form": "10-Q",
+            },
         ]
 
         cache_path = _multi_form_cache_path(cache_dir, as_of)
@@ -122,8 +128,13 @@ class TestCollectSecFilingEventsCache:
 
         as_of = date(2026, 2, 7)
         cached_events = [
-            {"ticker": "FOLD", "event_type": "FDA_PDUFA_DATE", "event_date": "2026-09-01",
-             "source": "SEC_10K_FILING", "filing_form": "10-K"},
+            {
+                "ticker": "FOLD",
+                "event_type": "FDA_PDUFA_DATE",
+                "event_date": "2026-09-01",
+                "source": "SEC_10K_FILING",
+                "filing_form": "10-K",
+            },
         ]
 
         fallback_path = _multi_form_cache_path(fallback_dir, as_of)
@@ -153,6 +164,7 @@ class TestCollectSecFilingEventsCache:
 # filing_form field on extracted events
 # ===========================================================================
 
+
 class TestFilingFormField:
     """Verify filing_form field is populated on events."""
 
@@ -163,10 +175,20 @@ class TestFilingFormField:
 
         as_of = date(2026, 2, 7)
         cached_events = [
-            {"ticker": "SGEN", "event_type": "DATA_READOUT", "event_date": "2026-03-15",
-             "source": "SEC_6K_FILING", "filing_form": "6-K"},
-            {"ticker": "MRNA", "event_type": "FDA_PDUFA_DATE", "event_date": "2026-05-10",
-             "source": "SEC_10Q_FILING", "filing_form": "10-Q"},
+            {
+                "ticker": "SGEN",
+                "event_type": "DATA_READOUT",
+                "event_date": "2026-03-15",
+                "source": "SEC_6K_FILING",
+                "filing_form": "6-K",
+            },
+            {
+                "ticker": "MRNA",
+                "event_type": "FDA_PDUFA_DATE",
+                "event_date": "2026-05-10",
+                "source": "SEC_10Q_FILING",
+                "filing_form": "10-Q",
+            },
         ]
 
         cache_path = _multi_form_cache_path(cache_dir, as_of)
@@ -186,6 +208,7 @@ class TestFilingFormField:
 # ===========================================================================
 # Source label mapping from form_type
 # ===========================================================================
+
 
 class TestSourceLabelMapping:
     """Verify source labels are correctly assigned per form type."""
@@ -210,6 +233,7 @@ class TestSourceLabelMapping:
 # Backwards compatibility: collect_8k_timing_events unchanged
 # ===========================================================================
 
+
 class TestBackwardsCompat:
     """Verify collect_8k_timing_events is not affected by multi-form changes."""
 
@@ -219,9 +243,8 @@ class TestBackwardsCompat:
 
     def test_8k_cache_uses_original_prefix(self, tmp_path):
         """8-K cache path uses the original '8k_catalysts_' prefix, not 'sec_filings_'."""
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _versioned_cache_path,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _versioned_cache_path
+
         p = _versioned_cache_path(tmp_path, date(2026, 2, 7))
         assert "8k_catalysts_" in p.name
         assert "sec_filings_" not in p.name
@@ -231,34 +254,40 @@ class TestBackwardsCompat:
 # Priority resolution for new SEC sources
 # ===========================================================================
 
+
 class TestPriorityResolutionNewSources:
     """Verify catalyst priority resolves correctly for new SEC form sources."""
 
     def test_sec_10q_priority_2(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("DATA_READOUT", "SEC_10Q_FILING", rs) == 2
 
     def test_sec_10k_priority_2(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("DATA_READOUT", "SEC_10K_FILING", rs) == 2
 
     def test_sec_6k_priority_2(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("DATA_READOUT", "SEC_6K_FILING", rs) == 2
 
     def test_federal_register_fda_approval_priority_1(self):
         """FDA_APPROVAL from FEDERAL_REGISTER → event-type rule wins → still pri=1."""
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         # FDA_APPROVAL matches ("FDA_APPROVAL", "*", 1) before ("*", "FEDERAL_REGISTER", 3)
         assert resolve_catalyst_priority("FDA_APPROVAL", "FEDERAL_REGISTER", rs) == 1
 
     def test_federal_register_wildcard_type_priority_3(self):
         """Any event type from FEDERAL_REGISTER gets priority 3."""
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("SOME_NOVEL_TYPE", "FEDERAL_REGISTER", rs) == 3
 
@@ -267,46 +296,47 @@ class TestPriorityResolutionNewSources:
 # adsh-level parsed event cache
 # ===========================================================================
 
+
 class TestAdshCache:
     """Verify per-filing adsh-level cache helpers."""
 
     def test_adsh_cache_dir(self):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _adsh_cache_dir,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _adsh_cache_dir
+
         d = _adsh_cache_dir(Path("/tmp/cache"))
         assert d.name == "multi_form_parsed"
         assert d.parent == Path("/tmp/cache")
 
     def test_adsh_cache_path_contains_version(self):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _adsh_cache_path, PATTERN_VERSION,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import PATTERN_VERSION, _adsh_cache_path
+
         p = _adsh_cache_path(Path("/tmp/cache"), "0001234567-26-001234")
         assert PATTERN_VERSION in p.name
         assert p.suffix == ".json"
 
     def test_adsh_cache_path_sanitizes_slashes(self):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _adsh_cache_path,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _adsh_cache_path
+
         p = _adsh_cache_path(Path("/tmp/cache"), "0001/234567-26-001234")
         assert "/" not in p.name
 
     def test_cache_miss_returns_none(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _load_adsh_cache,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _load_adsh_cache
+
         result = _load_adsh_cache(tmp_path, "nonexistent-adsh")
         assert result is None
 
     def test_save_then_load_roundtrip(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _save_adsh_cache, _load_adsh_cache,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _load_adsh_cache, _save_adsh_cache
+
         events = [
-            {"ticker": "ACAD", "event_type": "DATA_READOUT", "event_date": "2026-06-15",
-             "source": "SEC_10Q_FILING", "filing_form": "10-Q"},
+            {
+                "ticker": "ACAD",
+                "event_type": "DATA_READOUT",
+                "event_date": "2026-06-15",
+                "source": "SEC_10Q_FILING",
+                "filing_form": "10-Q",
+            },
         ]
         _save_adsh_cache(tmp_path, "0001234567-26-001234", events)
         loaded = _load_adsh_cache(tmp_path, "0001234567-26-001234")
@@ -316,9 +346,8 @@ class TestAdshCache:
 
     def test_save_empty_events_cached(self, tmp_path):
         """Empty results are cached (prevents re-fetching filings with no events)."""
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _save_adsh_cache, _load_adsh_cache,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _load_adsh_cache, _save_adsh_cache
+
         _save_adsh_cache(tmp_path, "0001234567-26-000001", [])
         loaded = _load_adsh_cache(tmp_path, "0001234567-26-000001")
         assert loaded is not None
@@ -326,9 +355,8 @@ class TestAdshCache:
 
     def test_cache_deterministic(self, tmp_path):
         """Same adsh always loads same events."""
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _save_adsh_cache, _load_adsh_cache,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _load_adsh_cache, _save_adsh_cache
+
         events = [
             {"ticker": "INSM", "event_type": "FDA_PDUFA_DATE", "event_date": "2026-09-01"},
             {"ticker": "INSM", "event_type": "DATA_READOUT", "event_date": "2026-07-01"},
@@ -343,27 +371,28 @@ class TestAdshCache:
 # Per-ticker cap constant
 # ===========================================================================
 
+
 class TestPerTickerCap:
     """Verify per-ticker cap constant is set and reasonable."""
 
     def test_cap_is_positive_int(self):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _MAX_FILINGS_PER_TICKER,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _MAX_FILINGS_PER_TICKER
+
         assert isinstance(_MAX_FILINGS_PER_TICKER, int)
         assert _MAX_FILINGS_PER_TICKER >= 1
 
     def test_cap_is_small(self):
         """Per-ticker cap should be much smaller than global cap."""
         from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _MAX_FILINGS_PER_TICKER, _MAX_FILINGS_PER_MULTI_FORM_RUN,
+            _MAX_FILINGS_PER_MULTI_FORM_RUN,
+            _MAX_FILINGS_PER_TICKER,
         )
+
         assert _MAX_FILINGS_PER_TICKER < _MAX_FILINGS_PER_MULTI_FORM_RUN
 
     def test_default_cap_is_2(self):
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _MAX_FILINGS_PER_TICKER,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _MAX_FILINGS_PER_TICKER
+
         assert _MAX_FILINGS_PER_TICKER == 2
 
 
@@ -371,12 +400,14 @@ class TestPerTickerCap:
 # convert_sec_8k_to_v2 source label passthrough
 # ===========================================================================
 
+
 class TestSourceLabelPassthrough:
     """Verify multi-form source labels survive CatalystEventV2 conversion."""
 
     def test_10q_source_preserved(self):
         """10-Q event should keep SEC_10Q_FILING source after conversion."""
         from module_3_catalyst import convert_sec_8k_to_v2
+
         ev = {
             "ticker": "ACAD",
             "event_type": "DATA_READOUT",
@@ -391,6 +422,7 @@ class TestSourceLabelPassthrough:
 
     def test_10k_source_preserved(self):
         from module_3_catalyst import convert_sec_8k_to_v2
+
         ev = {
             "ticker": "FOLD",
             "event_type": "FDA_PDUFA_DATE",
@@ -405,6 +437,7 @@ class TestSourceLabelPassthrough:
 
     def test_6k_source_preserved(self):
         from module_3_catalyst import convert_sec_8k_to_v2
+
         ev = {
             "ticker": "SGEN",
             "event_type": "DATA_READOUT",
@@ -420,6 +453,7 @@ class TestSourceLabelPassthrough:
     def test_8k_default_source(self):
         """8-K event without explicit source should default to SEC_8K_FILING."""
         from module_3_catalyst import convert_sec_8k_to_v2
+
         ev = {
             "ticker": "INSM",
             "event_type": "DATA_READOUT",
@@ -435,27 +469,32 @@ class TestSourceLabelPassthrough:
 # run_screen _build_m3_config wiring
 # ===========================================================================
 
+
 class TestBuildM3Config:
     """Verify _build_m3_config passes multi-form and FDA regulatory modes."""
 
     def test_default_modes_cache_only(self):
         from run_screen import _build_m3_config
+
         cfg = _build_m3_config()
         assert cfg.enable_sec_multi_form == "cache_only"
         assert cfg.enable_fda_regulatory == "cache_only"
 
     def test_multi_form_mode_passed(self):
         from run_screen import _build_m3_config
+
         cfg = _build_m3_config(sec_multi_form_mode="cache_only")
         assert cfg.enable_sec_multi_form == "cache_only"
 
     def test_fda_regulatory_mode_passed(self):
         from run_screen import _build_m3_config
+
         cfg = _build_m3_config(fda_regulatory_mode="live")
         assert cfg.enable_fda_regulatory == "live"
 
     def test_all_modes_together(self):
         from run_screen import _build_m3_config
+
         cfg = _build_m3_config(
             sec_8k_mode="live",
             sec_multi_form_mode="live",
@@ -469,6 +508,7 @@ class TestBuildM3Config:
 # ===========================================================================
 # cache_only mode integration (module_3_catalyst reads from cache)
 # ===========================================================================
+
 
 class TestCacheOnlyMode:
     """Verify cache_only mode reads cached events and handles missing cache."""

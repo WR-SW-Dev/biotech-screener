@@ -8,30 +8,32 @@ from pathlib import Path
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import pytest
 from decimal import Decimal
+
+import pytest
+
 from baker_overlay import (
-    compute_baker_overlay,
-    _classify_activity,
-    _risk_gates_pass,
-    _guardrail_blocks_bonus,
-    _extract_disagreement_reasons,
     BAKER_CIK,
+    Q1_ACTIVITY_MIN_WEIGHT,
+    Q1_ACTIVITY_RANK,
+    Q1_VALUE_RANK,
+    Q1_VALUE_USD,
     Q1_WEIGHT_PCT,
     Q1_WEIGHT_RANK,
-    Q1_VALUE_USD,
-    Q1_VALUE_RANK,
-    Q1_ACTIVITY_RANK,
-    Q1_ACTIVITY_MIN_WEIGHT,
-    Q2_CATALYST_MIN_DAYS,
     Q2_CATALYST_MAX_DAYS,
+    Q2_CATALYST_MIN_DAYS,
     Q2_RANK,
+    _classify_activity,
+    _extract_disagreement_reasons,
+    _guardrail_blocks_bonus,
+    _risk_gates_pass,
+    compute_baker_overlay,
 )
-
 
 # =============================================================================
 # Helpers: build minimal test data
 # =============================================================================
+
 
 def _make_holdings(baker_positions: dict, other_positions: dict = None):
     """Build holdings_snapshots dict.
@@ -82,6 +84,7 @@ def _make_ranked(tickers_and_ranks, severity="none", flags=None, catalyst_days=N
 # Activity classification
 # =============================================================================
 
+
 class TestActivityClassification:
     def test_new_position(self):
         activity, pct = _classify_activity(100_000, 0)
@@ -118,6 +121,7 @@ class TestActivityClassification:
 # Baker signal extraction
 # =============================================================================
 
+
 class TestBakerSignals:
     def test_baker_held_true(self):
         holdings = _make_holdings({"AAAA": (500_000, 400_000)})
@@ -146,10 +150,12 @@ class TestBakerSignals:
         assert sec["activity"] == "exited"
 
     def test_portfolio_weight_computation(self):
-        holdings = _make_holdings({
-            "AAAA": (300_000, 200_000),  # 30%
-            "BBBB": (700_000, 500_000),  # 70%
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (300_000, 200_000),  # 30%
+                "BBBB": (700_000, 500_000),  # 70%
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2)])
         result = compute_baker_overlay(ranked, holdings)
         sec_a = result["securities"][0]
@@ -175,13 +181,16 @@ class TestBakerSignals:
 # Ranking
 # =============================================================================
 
+
 class TestBakerRanking:
     def test_rank_by_weight(self):
-        holdings = _make_holdings({
-            "AAAA": (100_000, 80_000),
-            "BBBB": (300_000, 250_000),
-            "CCCC": (200_000, 180_000),
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (100_000, 80_000),
+                "BBBB": (300_000, 250_000),
+                "CCCC": (200_000, 180_000),
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2), ("CCCC", 3)])
         result = compute_baker_overlay(ranked, holdings)
         # BBBB has highest weight -> rank 1
@@ -190,11 +199,13 @@ class TestBakerRanking:
         assert result["securities"][0]["rank_by_weight"] == 3  # AAAA
 
     def test_rank_by_activity(self):
-        holdings = _make_holdings({
-            "AAAA": (100_000, 0),          # new (priority 0)
-            "BBBB": (300_000, 250_000),    # add (priority 1)
-            "CCCC": (200_000, 195_000),    # unchanged (priority 2)
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (100_000, 0),  # new (priority 0)
+                "BBBB": (300_000, 250_000),  # add (priority 1)
+                "CCCC": (200_000, 195_000),  # unchanged (priority 2)
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2), ("CCCC", 3)])
         result = compute_baker_overlay(ranked, holdings)
         assert result["securities"][0]["rank_by_activity"] == 1  # AAAA (new)
@@ -213,14 +224,17 @@ class TestBakerRanking:
 # Queue 1: Baker Core Divergence
 # =============================================================================
 
+
 class TestQueue1:
     def test_weight_trigger(self):
         """weight >= 1% AND composite_rank > 75 -> Queue 1."""
         # Total = 1M, AAAA = 20K (2%) at rank 80
-        holdings = _make_holdings({
-            "AAAA": (20_000, 15_000),   # 2% weight
-            "BBBB": (980_000, 900_000),  # 98% weight
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (20_000, 15_000),  # 2% weight
+                "BBBB": (980_000, 900_000),  # 98% weight
+            }
+        )
         ranked = _make_ranked([("AAAA", 80), ("BBBB", 5)])
         result = compute_baker_overlay(ranked, holdings)
         q1_tickers = [q["ticker"] for q in result["queue_1_core_divergence"]]
@@ -232,12 +246,14 @@ class TestQueue1:
     def test_value_trigger_with_weight_floor(self):
         """value >= $250M AND weight >= 0.25% AND rank > 75 -> Queue 1."""
         # Total = 10B. AAAA = 300M (3%), BBBB = 100M (1%), CCCC = 10M (0.1%)
-        holdings = _make_holdings({
-            "AAAA": (300_000_000, 250_000_000),  # $300M, 3% weight
-            "BBBB": (100_000_000, 80_000_000),   # $100M, 1% weight
-            "CCCC": (10_000_000, 5_000_000),     # $10M, 0.1% weight (below floor)
-            "DDDD": (9_590_000_000, 9_000_000_000),  # filler
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (300_000_000, 250_000_000),  # $300M, 3% weight
+                "BBBB": (100_000_000, 80_000_000),  # $100M, 1% weight
+                "CCCC": (10_000_000, 5_000_000),  # $10M, 0.1% weight (below floor)
+                "DDDD": (9_590_000_000, 9_000_000_000),  # filler
+            }
+        )
         ranked = _make_ranked([("AAAA", 80), ("BBBB", 80), ("CCCC", 80), ("DDDD", 5)])
         result = compute_baker_overlay(ranked, holdings)
         q1_tickers = [q["ticker"] for q in result["queue_1_core_divergence"]]
@@ -253,11 +269,13 @@ class TestQueue1:
     def test_activity_trigger_with_weight_floor(self):
         """activity in {new, add} AND weight >= 0.25% AND rank > 75 -> Queue 1."""
         # Total = 10B. AAAA = 50M new (0.5%), BBBB = 5M new (0.05%)
-        holdings = _make_holdings({
-            "AAAA": (50_000_000, 0),              # new, 0.5% weight
-            "BBBB": (5_000_000, 0),               # new, 0.05% weight (below floor)
-            "CCCC": (9_945_000_000, 9_000_000_000),  # filler
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (50_000_000, 0),  # new, 0.5% weight
+                "BBBB": (5_000_000, 0),  # new, 0.05% weight (below floor)
+                "CCCC": (9_945_000_000, 9_000_000_000),  # filler
+            }
+        )
         ranked = _make_ranked([("AAAA", 80), ("BBBB", 80), ("CCCC", 10)])
         result = compute_baker_overlay(ranked, holdings)
         q1_tickers = [q["ticker"] for q in result["queue_1_core_divergence"]]
@@ -284,11 +302,13 @@ class TestQueue1:
 
     def test_queue_sorted_by_weight_desc(self):
         """Queue 1 entries sorted by baker weight descending."""
-        holdings = _make_holdings({
-            "AAAA": (100_000_000, 80_000_000),
-            "BBBB": (300_000_000, 250_000_000),
-            "CCCC": (200_000_000, 180_000_000),
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (100_000_000, 80_000_000),
+                "BBBB": (300_000_000, 250_000_000),
+                "CCCC": (200_000_000, 180_000_000),
+            }
+        )
         ranked = _make_ranked([("AAAA", 80), ("BBBB", 80), ("CCCC", 80)])
         result = compute_baker_overlay(ranked, holdings)
         q1 = result["queue_1_core_divergence"]
@@ -309,6 +329,7 @@ class TestQueue1:
 # =============================================================================
 # Queue 2: Baker Near-Term Catalyst
 # =============================================================================
+
 
 class TestQueue2:
     def test_catalyst_in_window(self):
@@ -373,10 +394,12 @@ class TestQueue2:
 
     def test_queue_sorted_by_days_asc(self):
         """Queue 2 sorted by days_to_catalyst ascending."""
-        holdings = _make_holdings({
-            "AAAA": (100_000, 80_000),
-            "BBBB": (200_000, 150_000),
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (100_000, 80_000),
+                "BBBB": (200_000, 150_000),
+            }
+        )
         ranked = [
             {**_make_ranked([("AAAA", 60)], catalyst_days=60)[0]},
             {**_make_ranked([("BBBB", 70)], catalyst_days=20)[0]},
@@ -392,6 +415,7 @@ class TestQueue2:
 # Alignment metrics
 # =============================================================================
 
+
 class TestAlignmentMetrics:
     def test_recall_at_k(self):
         """Recall@50: fraction of Baker top-20 in composite top-50."""
@@ -403,9 +427,9 @@ class TestAlignmentMetrics:
         for i in range(1, 21):
             ticker = f"BK{i:02d}"
             if i <= 15:
-                ranked_list.append((ticker, i * 3))   # ranks 3-45, all in top-50
+                ranked_list.append((ticker, i * 3))  # ranks 3-45, all in top-50
             else:
-                ranked_list.append((ticker, 50 + i))   # ranks 66-70, outside top-50
+                ranked_list.append((ticker, 50 + i))  # ranks 66-70, outside top-50
         # Add filler to get to 100
         for j in range(80):
             ranked_list.append((f"FL{j:02d}", 21 + j))
@@ -419,10 +443,12 @@ class TestAlignmentMetrics:
 
     def test_divergence_pct(self):
         """baker_divergence_pct measures rank divergence normalized by universe size."""
-        holdings = _make_holdings({
-            "AAAA": (500_000, 400_000),  # weight rank 1
-            "BBBB": (300_000, 250_000),  # weight rank 2
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (500_000, 400_000),  # weight rank 1
+                "BBBB": (300_000, 250_000),  # weight rank 2
+            }
+        )
         # AAAA at composite rank 100, BBBB at composite rank 1
         ranked = _make_ranked([("BBBB", 1), ("AAAA", 100)])
         result = compute_baker_overlay(ranked, holdings)
@@ -431,10 +457,12 @@ class TestAlignmentMetrics:
 
     def test_baker_held_count(self):
         """Metrics include correct held count."""
-        holdings = _make_holdings({
-            "AAAA": (100_000, 80_000),
-            "BBBB": (0, 50_000),  # exited
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (100_000, 80_000),
+                "BBBB": (0, 50_000),  # exited
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2), ("CCCC", 3)])
         result = compute_baker_overlay(ranked, holdings)
         assert result["metrics"]["baker_held_count"] == 1  # BBBB is exited
@@ -444,13 +472,16 @@ class TestAlignmentMetrics:
 # Bonus computation
 # =============================================================================
 
+
 class TestBonus:
     def test_bonus_weight_proportional(self):
         """Bonus = min(weight_pct, 2.0), capped at 2."""
-        holdings = _make_holdings({
-            "AAAA": (500_000, 400_000),  # 50% weight
-            "BBBB": (500_000, 400_000),  # 50% weight
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (500_000, 400_000),  # 50% weight
+                "BBBB": (500_000, 400_000),  # 50% weight
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2)])
         result = compute_baker_overlay(ranked, holdings)
         # 50% weight -> min(50, 2) = 2.00
@@ -458,10 +489,12 @@ class TestBonus:
 
     def test_bonus_small_weight(self):
         """Small weight -> proportional bonus."""
-        holdings = _make_holdings({
-            "AAAA": (5_000, 4_000),        # 0.5% weight
-            "BBBB": (995_000, 900_000),    # 99.5% weight
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (5_000, 4_000),  # 0.5% weight
+                "BBBB": (995_000, 900_000),  # 99.5% weight
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2)])
         result = compute_baker_overlay(ranked, holdings)
         assert result["securities"][0]["bonus"] == "0.50"
@@ -497,10 +530,12 @@ class TestBonus:
 
     def test_bonus_eligible_count(self):
         """Metrics track bonus eligible count."""
-        holdings = _make_holdings({
-            "AAAA": (100_000, 80_000),
-            "BBBB": (200_000, 150_000),
-        })
+        holdings = _make_holdings(
+            {
+                "AAAA": (100_000, 80_000),
+                "BBBB": (200_000, 150_000),
+            }
+        )
         ranked = _make_ranked([("AAAA", 1), ("BBBB", 2)])
         result = compute_baker_overlay(ranked, holdings)
         assert result["metrics"]["baker_bonus_eligible_count"] == 2
@@ -509,6 +544,7 @@ class TestBonus:
 # =============================================================================
 # Risk gate helpers
 # =============================================================================
+
 
 class TestRiskGates:
     def test_risk_gates_pass_clean(self):
@@ -521,24 +557,39 @@ class TestRiskGates:
         assert _risk_gates_pass({"severity": "sev3", "flags": []}) is False
 
     def test_risk_gates_fail_survivability(self):
-        assert _risk_gates_pass({
-            "severity": "none",
-            "flags": ["guardrail_a_survivability_critical"],
-        }) is False
+        assert (
+            _risk_gates_pass(
+                {
+                    "severity": "none",
+                    "flags": ["guardrail_a_survivability_critical"],
+                }
+            )
+            is False
+        )
 
     def test_risk_gates_fail_runway(self):
-        assert _risk_gates_pass({
-            "severity": "none",
-            "flags": ["guardrail_a_cash_runway_lt_6m"],
-        }) is False
+        assert (
+            _risk_gates_pass(
+                {
+                    "severity": "none",
+                    "flags": ["guardrail_a_cash_runway_lt_6m"],
+                }
+            )
+            is False
+        )
 
     def test_guardrail_blocks_bonus_sev(self):
         assert _guardrail_blocks_bonus({"flags": ["guardrail_a_sev_sev2"]}) is True
 
     def test_guardrail_blocks_bonus_red_flag(self):
-        assert _guardrail_blocks_bonus({
-            "flags": ["guardrail_a_red_flag_eligible:dilution_high"],
-        }) is True
+        assert (
+            _guardrail_blocks_bonus(
+                {
+                    "flags": ["guardrail_a_red_flag_eligible:dilution_high"],
+                }
+            )
+            is True
+        )
 
     def test_guardrail_does_not_block_clean(self):
         assert _guardrail_blocks_bonus({"flags": []}) is False
@@ -552,6 +603,7 @@ class TestRiskGates:
 # Disagreement reasons
 # =============================================================================
 
+
 class TestDisagreementReasons:
     def test_severity_sev2(self):
         reasons = _extract_disagreement_reasons({"severity": "sev2", "flags": []})
@@ -562,49 +614,59 @@ class TestDisagreementReasons:
         assert "severity_sev1" in reasons
 
     def test_thesis_gate(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": ["thesis_gate_penalty_0.80"],
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": ["thesis_gate_penalty_0.80"],
+            }
+        )
         assert "thesis_gate" in reasons
 
     def test_sm_reinforcement_blocked(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": ["sm_reinforcement_blocked_by_thesis_gate"],
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": ["sm_reinforcement_blocked_by_thesis_gate"],
+            }
+        )
         assert "sm_reinforcement_blocked" in reasons
 
     def test_low_components(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": [],
-            "component_scores": [
-                {"name": "financial", "normalized": "22.5", "raw": "69"},
-                {"name": "clinical", "normalized": "60", "raw": "70"},
-            ],
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": [],
+                "component_scores": [
+                    {"name": "financial", "normalized": "22.5", "raw": "69"},
+                    {"name": "clinical", "normalized": "60", "raw": "70"},
+                ],
+            }
+        )
         assert any("low_financial=22" in r for r in reasons)
         assert not any("low_clinical" in r for r in reasons)
 
     def test_negative_momentum(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": [],
-            "score_breakdown": {
-                "enhancements": {"momentum": {"score": "28.5"}},
-            },
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": [],
+                "score_breakdown": {
+                    "enhancements": {"momentum": {"score": "28.5"}},
+                },
+            }
+        )
         assert any("neg_momentum=28" in r for r in reasons)
 
     def test_low_valuation(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": [],
-            "score_breakdown": {
-                "enhancements": {"valuation": {"score": "15.2"}},
-            },
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": [],
+                "score_breakdown": {
+                    "enhancements": {"valuation": {"score": "15.2"}},
+                },
+            }
+        )
         assert any("low_valuation=15" in r for r in reasons)
 
     def test_clean_security_no_reasons(self):
@@ -612,17 +674,21 @@ class TestDisagreementReasons:
         assert reasons == []
 
     def test_survivability_warning(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": ["survivability_warning"],
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": ["survivability_warning"],
+            }
+        )
         assert "survivability_warning" in reasons
 
     def test_late_stage_distress(self):
-        reasons = _extract_disagreement_reasons({
-            "severity": "none",
-            "flags": ["late_stage_distress"],
-        })
+        reasons = _extract_disagreement_reasons(
+            {
+                "severity": "none",
+                "flags": ["late_stage_distress"],
+            }
+        )
         assert "late_stage_distress" in reasons
 
 
@@ -634,17 +700,28 @@ class TestDisagreementReasons:
 # Schema contract — prevent KeyError regressions
 # =============================================================================
 
+
 class TestSchemaContract:
     """Ensure queue entries always contain the required key set."""
 
     QUEUE_1_REQUIRED = {
-        "ticker", "baker_activity", "baker_portfolio_weight_pct",
-        "baker_value_usd", "baker_rank_by_weight", "composite_rank",
-        "severity", "queue_reasons", "disagreement_reasons",
+        "ticker",
+        "baker_activity",
+        "baker_portfolio_weight_pct",
+        "baker_value_usd",
+        "baker_rank_by_weight",
+        "composite_rank",
+        "severity",
+        "queue_reasons",
+        "disagreement_reasons",
     }
     QUEUE_2_REQUIRED = {
-        "ticker", "baker_activity", "baker_portfolio_weight_pct",
-        "baker_rank_by_weight", "composite_rank", "severity",
+        "ticker",
+        "baker_activity",
+        "baker_portfolio_weight_pct",
+        "baker_rank_by_weight",
+        "composite_rank",
+        "severity",
         "days_to_catalyst",
     }
 

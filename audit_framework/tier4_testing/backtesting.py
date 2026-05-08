@@ -18,11 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -218,21 +214,11 @@ class BacktestValidator:
         metrics = self.check_metrics_implementation()
 
         # Determine specific capabilities
-        has_walk_forward = any(
-            c.present for c in capabilities if c.capability == "walk_forward"
-        )
-        has_pit = any(
-            c.present for c in capabilities if c.capability == "pit_reconstruction"
-        )
-        has_regime = any(
-            c.present for c in capabilities if c.capability == "regime_testing"
-        )
-        has_stats = any(
-            c.present for c in capabilities if c.capability == "statistical_metrics"
-        )
-        has_overfit = any(
-            c.present for c in capabilities if c.capability == "overfitting_detection"
-        )
+        has_walk_forward = any(c.present for c in capabilities if c.capability == "walk_forward")
+        has_pit = any(c.present for c in capabilities if c.capability == "pit_reconstruction")
+        has_regime = any(c.present for c in capabilities if c.capability == "regime_testing")
+        has_stats = any(c.present for c in capabilities if c.capability == "statistical_metrics")
+        has_overfit = any(c.present for c in capabilities if c.capability == "overfitting_detection")
 
         # Calculate readiness score
         score = 0

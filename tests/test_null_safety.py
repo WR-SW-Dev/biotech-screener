@@ -13,43 +13,37 @@ These tests cover:
 - Collection safety (ensure_list, filter_none)
 """
 
-import pytest
 from decimal import Decimal
 
-from common.null_safety import (
-    # Null checks
-    is_present,
-    is_missing,
-    is_zero_or_none,
-    is_empty_or_none,
-    # Safe access
-    safe_get,
-    safe_get_nested,
-    safe_get_index,
-    safe_get_first,
-    safe_get_last,
-    # Coalesce
+import pytest
+
+from common.null_safety import (  # Null checks; Safe access; Coalesce; Safe arithmetic; Safe conversion; Conditional execution; Collection safety
     coalesce,
-    default_if_none,
-    default_if_empty,
-    # Safe arithmetic
-    safe_divide,
-    safe_multiply,
-    safe_sum,
-    # Safe conversion
-    safe_int,
-    safe_float,
-    safe_decimal,
-    safe_str,
-    # Conditional execution
-    if_present,
-    map_if_present,
-    # Collection safety
-    ensure_list,
-    ensure_dict,
-    filter_none,
     count_none,
     count_present,
+    default_if_empty,
+    default_if_none,
+    ensure_dict,
+    ensure_list,
+    filter_none,
+    if_present,
+    is_empty_or_none,
+    is_missing,
+    is_present,
+    is_zero_or_none,
+    map_if_present,
+    safe_decimal,
+    safe_divide,
+    safe_float,
+    safe_get,
+    safe_get_first,
+    safe_get_index,
+    safe_get_last,
+    safe_get_nested,
+    safe_int,
+    safe_multiply,
+    safe_str,
+    safe_sum,
 )
 
 

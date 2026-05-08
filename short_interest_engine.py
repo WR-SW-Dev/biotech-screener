@@ -31,10 +31,9 @@ Version: 1.0.0
 
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any
 from datetime import date
-
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional
 
 # Module metadata
 __version__ = "1.0.0"
@@ -68,22 +67,18 @@ class ShortInterestSignalEngine:
         "extreme": {"si_pct": Decimal("40"), "dtc": Decimal("10")},
         "high": {"si_pct": Decimal("20"), "dtc": Decimal("7")},
         "moderate": {"si_pct": Decimal("10"), "dtc": Decimal("5")},
-        "low": {"si_pct": Decimal("0"), "dtc": Decimal("0")}
+        "low": {"si_pct": Decimal("0"), "dtc": Decimal("0")},
     }
 
     # Crowding risk thresholds (high SI = crowded short)
-    CROWDING_THRESHOLDS: Dict[str, Decimal] = {
-        "high": Decimal("30"),
-        "medium": Decimal("15"),
-        "low": Decimal("0")
-    }
+    CROWDING_THRESHOLDS: Dict[str, Decimal] = {"high": Decimal("30"), "medium": Decimal("15"), "low": Decimal("0")}
 
     # Signal contribution weights
     SIGNAL_WEIGHTS: Dict[str, Decimal] = {
         "squeeze_potential": Decimal("0.40"),
         "trend": Decimal("0.30"),
         "institutional_support": Decimal("0.20"),
-        "days_to_cover": Decimal("0.10")
+        "days_to_cover": Decimal("0.10"),
     }
 
     # Score contributions by component
@@ -91,7 +86,7 @@ class ShortInterestSignalEngine:
         "extreme": Decimal("25"),
         "high": Decimal("15"),
         "moderate": Decimal("8"),
-        "low": Decimal("0")
+        "low": Decimal("0"),
     }
 
     def __init__(self):
@@ -106,7 +101,7 @@ class ShortInterestSignalEngine:
         short_interest_change_pct: Optional[Decimal] = None,  # Period-over-period change
         institutional_long_pct: Optional[Decimal] = None,  # From 13F analysis
         avg_daily_volume: Optional[Decimal] = None,  # For context
-        as_of_date: Optional[date] = None
+        as_of_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Calculate short interest signal score.
@@ -159,13 +154,7 @@ class ShortInterestSignalEngine:
         # Calculate composite score (base 50 = neutral)
         base_score = Decimal("50")
 
-        composite_score = (
-            base_score +
-            squeeze_contrib +
-            trend_contrib +
-            inst_contrib +
-            dtc_contrib
-        )
+        composite_score = base_score + squeeze_contrib + trend_contrib + inst_contrib + dtc_contrib
 
         # Clamp to 0-100 range
         composite_score = max(Decimal("0"), min(Decimal("100"), composite_score))
@@ -180,9 +169,7 @@ class ShortInterestSignalEngine:
             signal_direction = "NEUTRAL"
 
         # Generate flags
-        flags = self._generate_flags(
-            si_pct, dtc, squeeze_potential, crowding_risk, short_interest_change_pct
-        )
+        flags = self._generate_flags(si_pct, dtc, squeeze_potential, crowding_risk, short_interest_change_pct)
 
         # Deterministic timestamp from as_of_date
         deterministic_timestamp = f"{as_of_date.isoformat()}T00:00:00Z" if as_of_date else None
@@ -197,7 +184,7 @@ class ShortInterestSignalEngine:
                 "days_to_cover": str(dtc),
                 "short_interest_change_pct": str(short_interest_change_pct) if short_interest_change_pct else None,
                 "institutional_long_pct": str(institutional_long_pct) if institutional_long_pct else None,
-                "avg_daily_volume": str(avg_daily_volume) if avg_daily_volume else None
+                "avg_daily_volume": str(avg_daily_volume) if avg_daily_volume else None,
             },
             "calculation": {
                 "squeeze_potential": squeeze_potential,
@@ -209,10 +196,10 @@ class ShortInterestSignalEngine:
                 "dtc_contrib": str(dtc_contrib),
                 "base_score": str(base_score),
                 "composite_score": str(composite_score),
-                "signal_direction": signal_direction
+                "signal_direction": signal_direction,
             },
             "flags": flags,
-            "module_version": self.VERSION
+            "module_version": self.VERSION,
         }
 
         self.audit_trail.append(audit_entry)
@@ -229,17 +216,13 @@ class ShortInterestSignalEngine:
                 "squeeze": squeeze_contrib,
                 "trend": trend_contrib,
                 "institutional": inst_contrib,
-                "days_to_cover": dtc_contrib
+                "days_to_cover": dtc_contrib,
             },
             "flags": flags,
-            "audit_entry": audit_entry
+            "audit_entry": audit_entry,
         }
 
-    def score_universe(
-        self,
-        universe: List[Dict[str, Any]],
-        as_of_date: date
-    ) -> Dict[str, Any]:
+    def score_universe(self, universe: List[Dict[str, Any]], as_of_date: date) -> Dict[str, Any]:
         """
         Score an entire universe of companies.
 
@@ -261,12 +244,8 @@ class ShortInterestSignalEngine:
         """
 
         scores = []
-        squeeze_distribution: Dict[str, int] = {
-            "EXTREME": 0, "HIGH": 0, "MODERATE": 0, "LOW": 0, "UNKNOWN": 0
-        }
-        signal_distribution: Dict[str, int] = {
-            "BULLISH": 0, "NEUTRAL": 0, "BEARISH": 0
-        }
+        squeeze_distribution: Dict[str, int] = {"EXTREME": 0, "HIGH": 0, "MODERATE": 0, "LOW": 0, "UNKNOWN": 0}
+        signal_distribution: Dict[str, int] = {"BULLISH": 0, "NEUTRAL": 0, "BEARISH": 0}
         data_coverage = 0
 
         for company in universe:
@@ -286,17 +265,19 @@ class ShortInterestSignalEngine:
                 short_interest_change_pct=si_change,
                 institutional_long_pct=inst_long,
                 avg_daily_volume=adv,
-                as_of_date=as_of_date
+                as_of_date=as_of_date,
             )
 
-            scores.append({
-                "ticker": ticker,
-                "short_signal_score": result["short_signal_score"],
-                "squeeze_potential": result["squeeze_potential"],
-                "crowding_risk": result["crowding_risk"],
-                "signal_direction": result["signal_direction"],
-                "flags": result.get("flags", [])
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "short_signal_score": result["short_signal_score"],
+                    "squeeze_potential": result["squeeze_potential"],
+                    "crowding_risk": result["crowding_risk"],
+                    "signal_direction": result["signal_direction"],
+                    "flags": result.get("flags", []),
+                }
+            )
 
             # Track metrics
             squeeze_distribution[result["squeeze_potential"]] += 1
@@ -306,8 +287,7 @@ class ShortInterestSignalEngine:
 
         # Calculate content hash
         scores_json = json.dumps(
-            [{"t": s["ticker"], "s": str(s["short_signal_score"])} for s in scores],
-            sort_keys=True
+            [{"t": s["ticker"], "s": str(s["short_signal_score"])} for s in scores], sort_keys=True
         )
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
@@ -319,21 +299,17 @@ class ShortInterestSignalEngine:
                 "data_coverage": data_coverage,
                 "data_coverage_pct": f"{data_coverage / max(1, len(scores)) * 100:.1f}%",
                 "squeeze_distribution": squeeze_distribution,
-                "signal_distribution": signal_distribution
+                "signal_distribution": signal_distribution,
             },
             "provenance": {
                 "module": "short_interest_engine",
                 "module_version": self.VERSION,
                 "content_hash": content_hash,
-                "pit_cutoff": as_of_date.isoformat()
-            }
+                "pit_cutoff": as_of_date.isoformat(),
+            },
         }
 
-    def _insufficient_data_result(
-        self,
-        ticker: str,
-        as_of_date: Optional[date]
-    ) -> Dict[str, Any]:
+    def _insufficient_data_result(self, ticker: str, as_of_date: Optional[date]) -> Dict[str, Any]:
         """Return standardized result when data is insufficient."""
         # Deterministic timestamp
         deterministic_timestamp = f"{as_of_date.isoformat()}T00:00:00Z" if as_of_date else None
@@ -342,7 +318,7 @@ class ShortInterestSignalEngine:
             "as_of_date": as_of_date.isoformat() if as_of_date else None,
             "ticker": ticker,
             "status": "INSUFFICIENT_DATA",
-            "module_version": self.VERSION
+            "module_version": self.VERSION,
         }
         self.audit_trail.append(audit_entry)
 
@@ -356,24 +332,20 @@ class ShortInterestSignalEngine:
             "trend_direction": "UNKNOWN",
             "component_contributions": {},
             "flags": ["SI_DATA_MISSING"],
-            "audit_entry": audit_entry
+            "audit_entry": audit_entry,
         }
 
-    def _assess_squeeze_potential(
-        self,
-        si_pct: Decimal,
-        dtc: Decimal
-    ) -> str:
+    def _assess_squeeze_potential(self, si_pct: Decimal, dtc: Decimal) -> str:
         """Assess squeeze potential category based on SI% and days-to-cover."""
         # Check thresholds from highest to lowest
-        if (si_pct >= self.SQUEEZE_THRESHOLDS["extreme"]["si_pct"] and
-            dtc >= self.SQUEEZE_THRESHOLDS["extreme"]["dtc"]):
+        if si_pct >= self.SQUEEZE_THRESHOLDS["extreme"]["si_pct"] and dtc >= self.SQUEEZE_THRESHOLDS["extreme"]["dtc"]:
             return "EXTREME"
-        elif (si_pct >= self.SQUEEZE_THRESHOLDS["high"]["si_pct"] and
-              dtc >= self.SQUEEZE_THRESHOLDS["high"]["dtc"]):
+        elif si_pct >= self.SQUEEZE_THRESHOLDS["high"]["si_pct"] and dtc >= self.SQUEEZE_THRESHOLDS["high"]["dtc"]:
             return "HIGH"
-        elif (si_pct >= self.SQUEEZE_THRESHOLDS["moderate"]["si_pct"] and
-              dtc >= self.SQUEEZE_THRESHOLDS["moderate"]["dtc"]):
+        elif (
+            si_pct >= self.SQUEEZE_THRESHOLDS["moderate"]["si_pct"]
+            and dtc >= self.SQUEEZE_THRESHOLDS["moderate"]["dtc"]
+        ):
             return "MODERATE"
         else:
             return "LOW"
@@ -387,10 +359,7 @@ class ShortInterestSignalEngine:
         else:
             return "LOW"
 
-    def _calculate_trend_contribution(
-        self,
-        si_change_pct: Optional[Decimal]
-    ) -> Decimal:
+    def _calculate_trend_contribution(self, si_change_pct: Optional[Decimal]) -> Decimal:
         """
         Calculate trend contribution to score.
 
@@ -404,23 +373,20 @@ class ShortInterestSignalEngine:
         if si_change_pct <= Decimal("-20"):
             return Decimal("15")  # Strong covering
         elif si_change_pct <= Decimal("-10"):
-            return Decimal("8")   # Moderate covering
+            return Decimal("8")  # Moderate covering
         elif si_change_pct <= Decimal("-5"):
-            return Decimal("4")   # Light covering
+            return Decimal("4")  # Light covering
         # Shorts increasing = bearish (negative contribution)
         elif si_change_pct >= Decimal("20"):
             return Decimal("-12")  # Strong buildup
         elif si_change_pct >= Decimal("10"):
-            return Decimal("-6")   # Moderate buildup
+            return Decimal("-6")  # Moderate buildup
         elif si_change_pct >= Decimal("5"):
-            return Decimal("-3")   # Light buildup
+            return Decimal("-3")  # Light buildup
         else:
-            return Decimal("0")    # Stable
+            return Decimal("0")  # Stable
 
-    def _get_trend_direction(
-        self,
-        si_change_pct: Optional[Decimal]
-    ) -> str:
+    def _get_trend_direction(self, si_change_pct: Optional[Decimal]) -> str:
         """Determine trend direction from SI change."""
         if si_change_pct is None:
             return "UNKNOWN"
@@ -431,10 +397,7 @@ class ShortInterestSignalEngine:
         else:
             return "STABLE"
 
-    def _calculate_institutional_contribution(
-        self,
-        inst_long_pct: Optional[Decimal]
-    ) -> Decimal:
+    def _calculate_institutional_contribution(self, inst_long_pct: Optional[Decimal]) -> Decimal:
         """
         Calculate institutional support contribution.
 
@@ -446,11 +409,11 @@ class ShortInterestSignalEngine:
         if inst_long_pct >= Decimal("70"):
             return Decimal("10")  # Very strong institutional support
         elif inst_long_pct >= Decimal("50"):
-            return Decimal("6")   # Strong support
+            return Decimal("6")  # Strong support
         elif inst_long_pct >= Decimal("30"):
-            return Decimal("3")   # Moderate support
+            return Decimal("3")  # Moderate support
         else:
-            return Decimal("0")   # Low support
+            return Decimal("0")  # Low support
 
     def _calculate_dtc_contribution(self, dtc: Decimal) -> Decimal:
         """
@@ -459,15 +422,15 @@ class ShortInterestSignalEngine:
         Higher DTC = more squeeze pressure = positive contribution (bullish)
         """
         if dtc >= Decimal("15"):
-            return Decimal("8")   # Extreme squeeze pressure
+            return Decimal("8")  # Extreme squeeze pressure
         elif dtc >= Decimal("10"):
-            return Decimal("5")   # High squeeze pressure
+            return Decimal("5")  # High squeeze pressure
         elif dtc >= Decimal("7"):
-            return Decimal("3")   # Moderate squeeze pressure
+            return Decimal("3")  # Moderate squeeze pressure
         elif dtc >= Decimal("5"):
-            return Decimal("1")   # Light squeeze pressure
+            return Decimal("1")  # Light squeeze pressure
         else:
-            return Decimal("0")   # No significant pressure
+            return Decimal("0")  # No significant pressure
 
     def _generate_flags(
         self,
@@ -475,7 +438,7 @@ class ShortInterestSignalEngine:
         dtc: Decimal,
         squeeze_potential: str,
         crowding_risk: str,
-        si_change_pct: Optional[Decimal]
+        si_change_pct: Optional[Decimal],
     ) -> List[str]:
         """Generate warning/info flags based on analysis."""
         flags = []
@@ -543,7 +506,7 @@ def demonstration() -> None:
         short_interest_pct=Decimal("35.5"),
         days_to_cover=Decimal("12.3"),
         short_interest_change_pct=Decimal("-18.0"),
-        institutional_long_pct=Decimal("55.0")
+        institutional_long_pct=Decimal("55.0"),
     )
 
     print(f"Ticker: {result1['ticker']}")
@@ -564,7 +527,7 @@ def demonstration() -> None:
         short_interest_pct=Decimal("15.0"),
         days_to_cover=Decimal("4.5"),
         short_interest_change_pct=Decimal("22.0"),
-        institutional_long_pct=Decimal("25.0")
+        institutional_long_pct=Decimal("25.0"),
     )
 
     print(f"Ticker: {result2['ticker']}")
@@ -582,7 +545,7 @@ def demonstration() -> None:
         ticker="NEUTRAL",
         short_interest_pct=Decimal("3.5"),
         days_to_cover=Decimal("2.1"),
-        short_interest_change_pct=Decimal("1.0")
+        short_interest_change_pct=Decimal("1.0"),
     )
 
     print(f"Ticker: {result3['ticker']}")

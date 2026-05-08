@@ -1,17 +1,19 @@
 """Tests for archive-mode helpers in run_rank_ic_backtest.py."""
+
 from __future__ import annotations
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Ensure project root on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from run_rank_ic_backtest import assert_rank_unique, signal_to_rankings
 
-
 # ── assert_rank_unique ──────────────────────────────────────────────────────
+
 
 class TestAssertRankUnique:
     def test_unique_ranks_pass(self):
@@ -39,6 +41,7 @@ class TestAssertRankUnique:
 
 
 # ── signal_to_rankings ──────────────────────────────────────────────────────
+
 
 class TestSignalToRankings:
     def test_higher_is_better(self):

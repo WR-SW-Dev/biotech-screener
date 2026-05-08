@@ -32,10 +32,9 @@ import hashlib
 import json
 import random
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 
@@ -44,12 +43,12 @@ __version__ = "1.0.0"
 # Biotech tends to have higher SI than market average due to binary outcomes
 SI_DISTRIBUTION = {
     # SI% buckets with approximate probabilities
-    "very_low": {"range": (0.5, 2.0), "probability": 0.20},    # 20% have <2% SI
-    "low": {"range": (2.0, 5.0), "probability": 0.30},         # 30% have 2-5% SI
-    "moderate": {"range": (5.0, 10.0), "probability": 0.25},   # 25% have 5-10% SI
-    "high": {"range": (10.0, 20.0), "probability": 0.15},      # 15% have 10-20% SI
-    "very_high": {"range": (20.0, 40.0), "probability": 0.08}, # 8% have 20-40% SI
-    "extreme": {"range": (40.0, 60.0), "probability": 0.02},   # 2% have >40% SI
+    "very_low": {"range": (0.5, 2.0), "probability": 0.20},  # 20% have <2% SI
+    "low": {"range": (2.0, 5.0), "probability": 0.30},  # 30% have 2-5% SI
+    "moderate": {"range": (5.0, 10.0), "probability": 0.25},  # 25% have 5-10% SI
+    "high": {"range": (10.0, 20.0), "probability": 0.15},  # 15% have 10-20% SI
+    "very_high": {"range": (20.0, 40.0), "probability": 0.08},  # 8% have 20-40% SI
+    "extreme": {"range": (40.0, 60.0), "probability": 0.02},  # 2% have >40% SI
 }
 
 # Days to cover distribution
@@ -78,7 +77,7 @@ class DeterministicRNG:
     def random(self) -> float:
         """Return random float in [0, 1)."""
         b = self._next_bytes()[:8]
-        n = int.from_bytes(b, 'big')
+        n = int.from_bytes(b, "big")
         return n / (2**64)
 
     def uniform(self, a: float, b: float) -> float:
@@ -90,6 +89,7 @@ class DeterministicRNG:
         u1 = max(1e-10, self.random())  # Avoid log(0)
         u2 = self.random()
         import math
+
         z = math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2)
         return mu + sigma * z
 
@@ -100,10 +100,7 @@ class DeterministicRNG:
 
 
 def generate_si_for_ticker(
-    ticker: str,
-    rng: DeterministicRNG,
-    as_of_date: date,
-    market_cap_mm: Optional[float] = None
+    ticker: str, rng: DeterministicRNG, as_of_date: date, market_cap_mm: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Generate synthetic short interest data for a single ticker.
@@ -184,10 +181,7 @@ def generate_si_for_ticker(
 
 
 def generate_universe_si_data(
-    tickers: List[str],
-    as_of_date: date,
-    seed: Optional[int] = None,
-    market_caps: Optional[Dict[str, float]] = None
+    tickers: List[str], as_of_date: date, seed: Optional[int] = None, market_caps: Optional[Dict[str, float]] = None
 ) -> List[Dict[str, Any]]:
     """
     Generate short interest data for entire universe.
@@ -210,10 +204,7 @@ def generate_universe_si_data(
     results = []
     for ticker in sorted(tickers):  # Sort for determinism
         si_data = generate_si_for_ticker(
-            ticker=ticker,
-            rng=rng,
-            as_of_date=as_of_date,
-            market_cap_mm=market_caps.get(ticker)
+            ticker=ticker, rng=rng, as_of_date=as_of_date, market_cap_mm=market_caps.get(ticker)
         )
         results.append(si_data)
 
@@ -227,7 +218,7 @@ def load_universe_tickers(universe_path: Path) -> tuple:
     Returns:
         Tuple of (tickers list, market_caps dict)
     """
-    with open(universe_path, 'r') as f:
+    with open(universe_path, "r") as f:
         data = json.load(f)
 
     tickers = []
@@ -252,37 +243,12 @@ def load_universe_tickers(universe_path: Path) -> tuple:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate or load short interest data for biotech universe"
-    )
-    parser.add_argument(
-        "--universe",
-        type=Path,
-        required=True,
-        help="Path to universe.json file"
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        required=True,
-        help="Output path for short_interest.json"
-    )
-    parser.add_argument(
-        "--as-of-date",
-        required=True,
-        help="As-of date (YYYY-MM-DD)"
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Random seed for reproducibility"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print summary without writing file"
-    )
+    parser = argparse.ArgumentParser(description="Generate or load short interest data for biotech universe")
+    parser.add_argument("--universe", type=Path, required=True, help="Path to universe.json file")
+    parser.add_argument("--output", type=Path, required=True, help="Output path for short_interest.json")
+    parser.add_argument("--as-of-date", required=True, help="As-of date (YYYY-MM-DD)")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
+    parser.add_argument("--dry-run", action="store_true", help="Print summary without writing file")
 
     args = parser.parse_args()
 
@@ -296,12 +262,7 @@ def main():
 
     # Generate SI data
     print(f"Generating SI data for {args.as_of_date}...")
-    si_data = generate_universe_si_data(
-        tickers=tickers,
-        as_of_date=as_of_date,
-        seed=args.seed,
-        market_caps=market_caps
-    )
+    si_data = generate_universe_si_data(tickers=tickers, as_of_date=as_of_date, seed=args.seed, market_caps=market_caps)
 
     # Compute summary stats
     si_values = [float(r["short_interest_pct"]) for r in si_data]
@@ -315,11 +276,7 @@ def main():
     print(f"  Mean DTC: {sum(dtc_values)/len(dtc_values):.1f} days")
 
     # Identify squeeze candidates
-    squeeze_candidates = [
-        r for r in si_data
-        if float(r["short_interest_pct"]) > 15
-        and float(r["days_to_cover"]) > 5
-    ]
+    squeeze_candidates = [r for r in si_data if float(r["short_interest_pct"]) > 15 and float(r["days_to_cover"]) > 5]
     print(f"\nPotential Squeeze Candidates ({len(squeeze_candidates)}):")
     for r in sorted(squeeze_candidates, key=lambda x: -float(x["short_interest_pct"]))[:10]:
         print(f"  {r['ticker']}: SI={r['short_interest_pct']}%, DTC={r['days_to_cover']}")
@@ -330,9 +287,9 @@ def main():
 
     # Write output
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.output, 'w') as f:
+    with open(args.output, "w") as f:
         json.dump(si_data, f, indent=2)
-        f.write('\n')
+        f.write("\n")
 
     print(f"\nWrote {len(si_data)} SI records to {args.output}")
     return 0

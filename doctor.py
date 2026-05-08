@@ -128,10 +128,7 @@ def check_file_exists(path: Path, description: str, required: bool = True) -> Tu
 
 
 def validate_json_schema(
-    data: List[Dict[str, Any]],
-    required_fields: set,
-    recommended_fields: set,
-    name: str
+    data: List[Dict[str, Any]], required_fields: set, recommended_fields: set, name: str
 ) -> Tuple[List[str], List[str]]:
     """Validate JSON data against expected schema"""
     errors = []
@@ -265,6 +262,7 @@ def check_config() -> HealthCheck:
 
     try:
         import yaml
+
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -385,21 +383,17 @@ Fix instructions:
     - Invalid JSON: Check file encoding and syntax
     - Missing fields: Update input files with required fields
     - Write permissions: Check directory ownership and permissions
-        """
+        """,
     )
 
     parser.add_argument(
         "--data-dir",
         type=Path,
         default=Path("production_data"),
-        help="Data directory to check (default: production_data)"
+        help="Data directory to check (default: production_data)",
     )
 
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Show verbose output (all info messages)"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Show verbose output (all info messages)")
 
     args = parser.parse_args()
 

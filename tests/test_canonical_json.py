@@ -11,27 +11,23 @@ Tests deterministic JSON serialization:
 - Canonical validation
 """
 
-import pytest
 import json
 import math
+import sys
 from decimal import Decimal
 from io import StringIO
-
-import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from governance.canonical_json import (
-    CanonicalJSONEncoder,
-    canonical_dumps,
-    canonical_dump,
-    validate_canonical_json,
-)
-
+from governance.canonical_json import CanonicalJSONEncoder, canonical_dump, canonical_dumps, validate_canonical_json
 
 # ============================================================================
 # ENCODER TESTS
 # ============================================================================
+
 
 class TestCanonicalJSONEncoder:
     """Tests for CanonicalJSONEncoder class."""
@@ -106,17 +102,17 @@ class TestFloatFormatting:
 
     def test_nan_rejected(self):
         """NaN values should raise ValueError."""
-        data = {"value": float('nan')}
+        data = {"value": float("nan")}
         with pytest.raises(ValueError, match="NaN"):
             canonical_dumps(data)
 
     def test_infinity_rejected(self):
         """Infinity values should raise ValueError."""
-        data = {"value": float('inf')}
+        data = {"value": float("inf")}
         with pytest.raises(ValueError, match="Infinity"):
             canonical_dumps(data)
 
-        data = {"value": float('-inf')}
+        data = {"value": float("-inf")}
         with pytest.raises(ValueError, match="Infinity"):
             canonical_dumps(data)
 
@@ -133,13 +129,13 @@ class TestDecimalHandling:
 
     def test_decimal_nan_rejected(self):
         """Decimal NaN should raise ValueError."""
-        data = {"value": Decimal('NaN')}
+        data = {"value": Decimal("NaN")}
         with pytest.raises(ValueError, match="NaN"):
             canonical_dumps(data)
 
     def test_decimal_infinity_rejected(self):
         """Decimal Infinity should raise ValueError."""
-        data = {"value": Decimal('Infinity')}
+        data = {"value": Decimal("Infinity")}
         with pytest.raises(ValueError, match="Infinity"):
             canonical_dumps(data)
 
@@ -155,6 +151,7 @@ class TestDecimalHandling:
 # CANONICAL DUMPS TESTS
 # ============================================================================
 
+
 class TestCanonicalDumps:
     """Tests for canonical_dumps function."""
 
@@ -162,14 +159,14 @@ class TestCanonicalDumps:
         """Output should end with trailing newline."""
         data = {"key": "value"}
         result = canonical_dumps(data)
-        assert result.endswith('\n')
+        assert result.endswith("\n")
 
     def test_indent_default(self):
         """Default indent should be 2 spaces."""
         data = {"key": "value"}
         result = canonical_dumps(data)
         # With indent=2, should have proper spacing
-        assert '\n' in result  # Multi-line
+        assert "\n" in result  # Multi-line
         assert '  "key"' in result  # 2-space indent
 
     def test_compact_mode(self):
@@ -177,7 +174,7 @@ class TestCanonicalDumps:
         data = {"key": "value", "other": 123}
         result = canonical_dumps(data, indent=None)
         # Should be single line (plus newline)
-        lines = result.strip().split('\n')
+        lines = result.strip().split("\n")
         assert len(lines) == 1
 
     def test_ascii_safe(self):
@@ -214,6 +211,7 @@ class TestCanonicalDumps:
 # CANONICAL DUMP (FILE) TESTS
 # ============================================================================
 
+
 class TestCanonicalDump:
     """Tests for canonical_dump function (file writing)."""
 
@@ -224,7 +222,7 @@ class TestCanonicalDump:
         canonical_dump(data, output)
         result = output.getvalue()
         assert '"key"' in result
-        assert result.endswith('\n')
+        assert result.endswith("\n")
 
     def test_indent_parameter(self):
         """Should respect indent parameter."""
@@ -238,6 +236,7 @@ class TestCanonicalDump:
 # ============================================================================
 # VALIDATION TESTS
 # ============================================================================
+
 
 class TestValidateCanonicalJson:
     """Tests for validate_canonical_json function."""
@@ -262,13 +261,14 @@ class TestValidateCanonicalJson:
     def test_missing_newline_invalid(self):
         """Missing trailing newline should be invalid."""
         data = {"key": "value"}
-        no_newline = canonical_dumps(data).rstrip('\n')
+        no_newline = canonical_dumps(data).rstrip("\n")
         assert validate_canonical_json(no_newline) is False
 
 
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests for canonical JSON."""
@@ -336,6 +336,7 @@ class TestEdgeCases:
 # DETERMINISM TESTS
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests verifying deterministic behavior."""
 
@@ -369,6 +370,7 @@ class TestDeterminism:
 # ============================================================================
 # TYPE HANDLING TESTS
 # ============================================================================
+
 
 class TestTypeHandling:
     """Tests for various Python types."""

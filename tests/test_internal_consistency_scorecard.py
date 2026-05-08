@@ -1,23 +1,23 @@
 """Tests for scripts/internal_consistency_scorecard.py."""
+
 from __future__ import annotations
 
 import csv
 import json
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List
 
 import pytest
 
-import sys
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from scripts.internal_consistency_scorecard import (
-    SCHEMA_VERSION,
     NA_FIELD_RULES,
+    SCHEMA_VERSION,
     CheckResult,
     Scorecard,
     _is_flag_true,
@@ -33,10 +33,10 @@ from scripts.internal_consistency_scorecard import (
     write_scorecard_md,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tmp_dir():
@@ -129,6 +129,7 @@ def _write_snapshot(snap_dir: Path, rows: List[Dict[str, str]]) -> None:
 # Unit tests: duplicate detection
 # ---------------------------------------------------------------------------
 
+
 class TestDuplicateTickers:
     def test_no_duplicates(self):
         rows = _make_rows(5)
@@ -145,6 +146,7 @@ class TestDuplicateTickers:
 # ---------------------------------------------------------------------------
 # Unit tests: missingness
 # ---------------------------------------------------------------------------
+
 
 class TestMissingness:
     def test_clean_data(self):
@@ -172,6 +174,7 @@ class TestMissingness:
 # Unit tests: NaN hotspots
 # ---------------------------------------------------------------------------
 
+
 class TestNaNHotspots:
     def test_no_nans(self):
         rows = _make_rows(10)
@@ -191,6 +194,7 @@ class TestNaNHotspots:
 # Unit tests: tie density
 # ---------------------------------------------------------------------------
 
+
 class TestTieDensity:
     def test_no_ties(self):
         rows = _make_rows(10)
@@ -207,6 +211,7 @@ class TestTieDensity:
 # ---------------------------------------------------------------------------
 # Unit tests: rank invariants
 # ---------------------------------------------------------------------------
+
 
 class TestRankInvariants:
     def test_contiguous_ranks(self):
@@ -231,6 +236,7 @@ class TestRankInvariants:
 # Unit tests: eligibility/tier consistency
 # ---------------------------------------------------------------------------
 
+
 class TestEligibilityConsistency:
     def test_consistent(self):
         rows = _make_rows(10)
@@ -246,6 +252,7 @@ class TestEligibilityConsistency:
 # ---------------------------------------------------------------------------
 # Unit tests: required columns
 # ---------------------------------------------------------------------------
+
 
 class TestRequiredColumns:
     def test_all_present(self):
@@ -270,6 +277,7 @@ class TestRequiredColumns:
 # N/A-aware missingness tests
 # ---------------------------------------------------------------------------
 
+
 class TestNAAwareMissingness:
     def test_commercial_quality_pct_na_not_counted_as_real_miss(self):
         """drug_developer rows with empty commercial_quality_pct are expected N/A."""
@@ -280,7 +288,7 @@ class TestNAAwareMissingness:
             r["commercial_quality_pct"] = ""
         result, total, real = check_missingness(rows, warn_threshold=0.05)
         assert total["commercial_quality_pct"] == 1.0  # all missing
-        assert real["commercial_quality_pct"] == 0.0    # all expected N/A
+        assert real["commercial_quality_pct"] == 0.0  # all expected N/A
 
     def test_clinical_optionality_na_not_counted_as_real_miss(self):
         """commercial rows with empty clinical_optionality_pct_dev are expected N/A."""
@@ -338,8 +346,8 @@ class TestNAAwareMissingness:
                 r["has_commercial_quality"] = "1"
                 r["commercial_quality_pct"] = ""  # real miss!
         result, total, real = check_missingness(rows, warn_threshold=0.05)
-        assert total["commercial_quality_pct"] == 1.0   # all 10 missing
-        assert real["commercial_quality_pct"] == 0.5     # 5/10 real miss
+        assert total["commercial_quality_pct"] == 1.0  # all 10 missing
+        assert real["commercial_quality_pct"] == 0.5  # 5/10 real miss
 
     def test_coinvest_filing_age_days_na_when_no_recency(self):
         """Empty coinvest_recency_state → coinvest_filing_age_days is expected N/A."""
@@ -355,6 +363,7 @@ class TestNAAwareMissingness:
 # ---------------------------------------------------------------------------
 # _is_flag_true robustness
 # ---------------------------------------------------------------------------
+
 
 class TestIsFlagTrue:
     def test_string_one(self):
@@ -388,6 +397,7 @@ class TestIsFlagTrue:
 # ---------------------------------------------------------------------------
 # Breakdown tables tests
 # ---------------------------------------------------------------------------
+
 
 class TestBreakdownTables:
     def test_md_output_contains_archetype_breakdown(self, tmp_dir):
@@ -459,6 +469,7 @@ class TestBreakdownTables:
 # Integration: run_scorecard
 # ---------------------------------------------------------------------------
 
+
 class TestRunScorecard:
     def test_clean_snapshot(self, tmp_dir):
         snap_dir = tmp_dir / "2025-06-01"
@@ -512,6 +523,7 @@ class TestRunScorecard:
 # ---------------------------------------------------------------------------
 # Integration: output writers
 # ---------------------------------------------------------------------------
+
 
 class TestOutputWriters:
     def test_json_md_written(self, tmp_dir):

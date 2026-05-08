@@ -1,4 +1,5 @@
 """Tests for scripts/rollup_shadow_metrics.py."""
+
 from __future__ import annotations
 
 import csv
@@ -7,14 +8,15 @@ from pathlib import Path
 
 import pytest
 
-from scripts.rollup_shadow_metrics import collect_shadow_metrics, write_csv, main, COLUMNS
+from scripts.rollup_shadow_metrics import COLUMNS, collect_shadow_metrics, main, write_csv
 
 
 def _write_shadow(snap_dir: Path, date_str: str, data: dict) -> None:
     d = snap_dir / date_str
     d.mkdir(parents=True, exist_ok=True)
     (d / "catalyst_shadow_metrics.json").write_text(
-        json.dumps(data), encoding="utf-8",
+        json.dumps(data),
+        encoding="utf-8",
     )
 
 
@@ -202,12 +204,18 @@ class TestMain:
         _write_shadow(snap, "2026-03-01", _sample_metrics("2026-03-01"))
         out = tmp_path / "out.csv"
 
-        rc = main([
-            "--snapshot-dir", str(snap),
-            "--output", str(out),
-            "--from-date", "2026-01-01",
-            "--to-date", "2026-02-28",
-        ])
+        rc = main(
+            [
+                "--snapshot-dir",
+                str(snap),
+                "--output",
+                str(out),
+                "--from-date",
+                "2026-01-01",
+                "--to-date",
+                "2026-02-28",
+            ]
+        )
         assert rc == 0
 
         with open(out, encoding="utf-8") as f:
@@ -254,9 +262,7 @@ class TestDegradedSnapshotSkip:
         """Corrupt cache_health.json does not skip snapshot."""
         snap = tmp_path / "snapshots"
         _write_shadow(snap, "2026-02-11", _sample_metrics("2026-02-11"))
-        (snap / "2026-02-11" / "cache_health.json").write_text(
-            "{bad json", encoding="utf-8"
-        )
+        (snap / "2026-02-11" / "cache_health.json").write_text("{bad json", encoding="utf-8")
 
         rows = collect_shadow_metrics(snap)
         assert len(rows) == 1

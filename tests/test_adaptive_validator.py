@@ -7,10 +7,12 @@ fallback mechanisms, and qualified pass logic.
 Author: Wake Robin Capital Management
 """
 
-import pytest
 from decimal import Decimal
-from typing import Dict, Any
+from typing import Any, Dict
 
+import pytest
+
+from validation.adaptive_validator import AdaptiveValidator, CoverageReport, FallbackActivation, run_adaptive_validation
 from validation.validation_config import (
     AdaptiveCoverageConfig,
     CoverageMode,
@@ -19,17 +21,11 @@ from validation.validation_config import (
     ValidationCriteriaConfig,
     ValidationOutcome,
 )
-from validation.adaptive_validator import (
-    AdaptiveValidator,
-    CoverageReport,
-    FallbackActivation,
-    run_adaptive_validation,
-)
-
 
 # =============================================================================
 # Test Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_coverage_data() -> Dict[str, Any]:
@@ -106,6 +102,7 @@ def sample_component_metrics() -> Dict[str, Dict[str, Any]]:
 # =============================================================================
 # CoverageReport Tests
 # =============================================================================
+
 
 class TestCoverageReport:
     """Tests for CoverageReport."""
@@ -196,6 +193,7 @@ class TestFallbackActivation:
 # AdaptiveValidator Tests
 # =============================================================================
 
+
 class TestAdaptiveValidatorInit:
     """Tests for AdaptiveValidator initialization."""
 
@@ -213,9 +211,7 @@ class TestAdaptiveValidatorInit:
 
     def test_custom_fallback_config(self):
         """Validator accepts custom fallback config."""
-        fallback_config = FallbackScoringConfig(
-            pos_fallback_strategy=FallbackStrategy.DISABLE
-        )
+        fallback_config = FallbackScoringConfig(pos_fallback_strategy=FallbackStrategy.DISABLE)
         validator = AdaptiveValidator(fallback_config=fallback_config)
         assert validator.fallback_config.pos_fallback_strategy == FallbackStrategy.DISABLE
 
@@ -226,9 +222,7 @@ class TestValidateCoverage:
     def test_validate_coverage_adaptive_mode(self, sample_coverage_data):
         """Coverage validation with adaptive mode."""
         validator = AdaptiveValidator()
-        reports, overall_pass = validator.validate_coverage(
-            sample_coverage_data, universe_size=100
-        )
+        reports, overall_pass = validator.validate_coverage(sample_coverage_data, universe_size=100)
 
         assert len(reports) == 4  # financial, clinical, catalyst, institutional
         # With 65% financial, 55% clinical, 60% catalyst, 40% institutional
@@ -238,9 +232,7 @@ class TestValidateCoverage:
         """Coverage validation with strict mode fails with low coverage."""
         config = AdaptiveCoverageConfig(coverage_mode=CoverageMode.STRICT)
         validator = AdaptiveValidator(coverage_config=config)
-        reports, overall_pass = validator.validate_coverage(
-            sample_coverage_data, universe_size=100
-        )
+        reports, overall_pass = validator.validate_coverage(sample_coverage_data, universe_size=100)
 
         # With 65% financial in STRICT mode (requires 90%), should fail
         financial_report = next(r for r in reports if r.category == "financial")
@@ -250,9 +242,7 @@ class TestValidateCoverage:
         """Coverage validation with minimal mode passes with low coverage."""
         config = AdaptiveCoverageConfig(coverage_mode=CoverageMode.MINIMAL)
         validator = AdaptiveValidator(coverage_config=config)
-        reports, overall_pass = validator.validate_coverage(
-            sample_coverage_data, universe_size=100
-        )
+        reports, overall_pass = validator.validate_coverage(sample_coverage_data, universe_size=100)
 
         # With minimal mode, all should pass
         assert all(r.meets_threshold for r in reports)
@@ -411,9 +401,7 @@ class TestValidateSampleSize:
 class TestValidatePipelineRun:
     """Tests for full pipeline validation."""
 
-    def test_full_validation_pass(
-        self, sample_coverage_data, sample_backtest_results, sample_component_metrics
-    ):
+    def test_full_validation_pass(self, sample_coverage_data, sample_backtest_results, sample_component_metrics):
         """Full validation with good data passes."""
         validator = AdaptiveValidator()
         summary = validator.validate_pipeline_run(
@@ -447,9 +435,7 @@ class TestValidatePipelineRun:
         assert "pos" in summary.fallbacks_active
         assert "momentum" in summary.fallbacks_active
 
-    def test_validation_downgrades_for_small_sample(
-        self, sample_coverage_data, sample_component_metrics
-    ):
+    def test_validation_downgrades_for_small_sample(self, sample_coverage_data, sample_component_metrics):
         """Validation downgrades outcome for small sample size."""
         backtest = {
             "ic_mean": "0.08",
@@ -473,9 +459,7 @@ class TestValidatePipelineRun:
             ValidationOutcome.WARN,
         )
 
-    def test_validation_summary_includes_limitations(
-        self, sample_coverage_data, sample_backtest_results
-    ):
+    def test_validation_summary_includes_limitations(self, sample_coverage_data, sample_backtest_results):
         """Validation summary includes relevant limitations."""
         component_metrics = {
             "pos": {"calibration_confidence": "0.30", "weight": "0.20", "score": "65.0"},
@@ -496,9 +480,7 @@ class TestValidatePipelineRun:
 class TestConvenienceFunction:
     """Tests for run_adaptive_validation convenience function."""
 
-    def test_run_adaptive_validation(
-        self, sample_coverage_data, sample_backtest_results
-    ):
+    def test_run_adaptive_validation(self, sample_coverage_data, sample_backtest_results):
         """Convenience function runs validation correctly."""
         summary = run_adaptive_validation(
             coverage_data=sample_coverage_data,
@@ -510,9 +492,7 @@ class TestConvenienceFunction:
         assert summary.coverage_mode == CoverageMode.ADAPTIVE
         assert summary.overall_outcome is not None
 
-    def test_run_with_lenient_mode(
-        self, sample_coverage_data, sample_backtest_results
-    ):
+    def test_run_with_lenient_mode(self, sample_coverage_data, sample_backtest_results):
         """Convenience function works with lenient mode."""
         summary = run_adaptive_validation(
             coverage_data=sample_coverage_data,
@@ -566,9 +546,7 @@ class TestEdgeCases:
     def test_zero_universe_size(self, sample_coverage_data):
         """Handles zero universe size gracefully."""
         validator = AdaptiveValidator()
-        reports, overall_pass = validator.validate_coverage(
-            sample_coverage_data, universe_size=0
-        )
+        reports, overall_pass = validator.validate_coverage(sample_coverage_data, universe_size=0)
         # Should not crash
 
     def test_missing_backtest_fields(self):

@@ -13,7 +13,7 @@ Same inputs always produce the same run_id.
 No timestamps, no UUIDs, no randomness.
 """
 
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 from governance.hashing import hash_canonical_json_short
 
@@ -44,16 +44,14 @@ def compute_run_id(
     """
     # Ensure sorted input hashes
     sorted_input_hashes = sorted(
-        [{"path": h["path"], "sha256": h["sha256"]} for h in input_hashes],
-        key=lambda x: x["path"]
+        [{"path": h["path"], "sha256": h["sha256"]} for h in input_hashes], key=lambda x: x["path"]
     )
 
     # Ensure sorted mapping hashes
     sorted_mapping_hashes = []
     if mapping_hashes:
         sorted_mapping_hashes = sorted(
-            [{"name": h["name"], "sha256": h["sha256"]} for h in mapping_hashes],
-            key=lambda x: x["name"]
+            [{"name": h["name"], "sha256": h["sha256"]} for h in mapping_hashes], key=lambda x: x["name"]
         )
 
     # Build canonical run identity

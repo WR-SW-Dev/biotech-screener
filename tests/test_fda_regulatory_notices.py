@@ -7,23 +7,23 @@ deduplication, cache read/write, and priority resolution for FEDERAL_REGISTER so
 import json
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
     _FR_REGULATORY_QUERIES,
     _GENERIC_INTERVENTION_NAMES,
+    FEDERAL_REGISTER_API,
+    _match_product_to_ticker,
     build_product_ticker_map,
     collect_fda_regulatory_notices,
-    _match_product_to_ticker,
-    FEDERAL_REGISTER_API,
 )
-
 
 # ===========================================================================
 # FR query construction
 # ===========================================================================
+
 
 class TestFRQueryConstruction:
     """Verify _FR_REGULATORY_QUERIES structure and content."""
@@ -59,14 +59,13 @@ class TestFRQueryConstruction:
 # Event type mapping from FR queries
 # ===========================================================================
 
+
 class TestEventTypeMapping:
     """Verify event_type values are valid and consistent."""
 
     def test_all_event_types_start_with_fda(self):
         for spec in _FR_REGULATORY_QUERIES:
-            assert spec["event_type"].startswith("FDA_"), (
-                f"Event type {spec['event_type']} should start with FDA_"
-            )
+            assert spec["event_type"].startswith("FDA_"), f"Event type {spec['event_type']} should start with FDA_"
 
     def test_event_types_are_uppercase(self):
         for spec in _FR_REGULATORY_QUERIES:
@@ -76,6 +75,7 @@ class TestEventTypeMapping:
 # ===========================================================================
 # Product-to-ticker matching
 # ===========================================================================
+
 
 class TestProductToTickerMatching:
     """Verify _match_product_to_ticker works for regulatory notice titles."""
@@ -102,6 +102,7 @@ class TestProductToTickerMatching:
 # Cache read/write
 # ===========================================================================
 
+
 class TestFDARegulatoryCache:
     """Verify caching behavior for collect_fda_regulatory_notices."""
 
@@ -112,8 +113,7 @@ class TestFDARegulatoryCache:
 
         as_of = date(2026, 2, 7)
         cached_events = [
-            {"ticker": "ACAD", "event_type": "FDA_APPROVAL",
-             "event_date": "2026-01-15", "source": "FEDERAL_REGISTER"},
+            {"ticker": "ACAD", "event_type": "FDA_APPROVAL", "event_date": "2026-01-15", "source": "FEDERAL_REGISTER"},
         ]
 
         cache_path = cache_dir / f"fda_regulatory_{as_of.isoformat()}.json"
@@ -141,6 +141,7 @@ class TestFDARegulatoryCache:
 # Deduplication
 # ===========================================================================
 
+
 class TestFDARegulatoryDedup:
     """Verify deduplication by (ticker, event_type, event_date)."""
 
@@ -152,8 +153,7 @@ class TestFDARegulatoryDedup:
         as_of = date(2026, 2, 7)
         # Cache already contains deduped data (dedup happens before cache write)
         cached_events = [
-            {"ticker": "FOLD", "event_type": "FDA_CRL",
-             "event_date": "2026-01-10", "source": "FEDERAL_REGISTER"},
+            {"ticker": "FOLD", "event_type": "FDA_CRL", "event_date": "2026-01-10", "source": "FEDERAL_REGISTER"},
         ]
 
         cache_path = cache_dir / f"fda_regulatory_{as_of.isoformat()}.json"
@@ -172,33 +172,39 @@ class TestFDARegulatoryDedup:
 # Priority resolution for FEDERAL_REGISTER source
 # ===========================================================================
 
+
 class TestFederalRegisterPriority:
     """Verify catalyst priority for FEDERAL_REGISTER events."""
 
     def test_fda_approval_federal_register_priority_1(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("FDA_APPROVAL", "FEDERAL_REGISTER", rs) == 1
 
     def test_fda_crl_federal_register_priority_1(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         # FDA_CRL matches the ("FDA_CRL", "*", 1) rule first
         assert resolve_catalyst_priority("FDA_CRL", "FEDERAL_REGISTER", rs) == 1
 
     def test_fda_rtf_federal_register_priority_1(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("FDA_RTF", "FEDERAL_REGISTER", rs) == 1
 
     def test_fda_warning_letter_federal_register_priority_1(self):
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("FDA_WARNING_LETTER", "FEDERAL_REGISTER", rs) == 1
 
     def test_generic_type_federal_register_priority_3(self):
         """Novel type from FEDERAL_REGISTER falls through to source wildcard → 3 (demoted)."""
-        from decision_engine import resolve_catalyst_priority, DecisionRuleset
+        from decision_engine import DecisionRuleset, resolve_catalyst_priority
+
         rs = DecisionRuleset(enable_catalyst_priority=True)
         assert resolve_catalyst_priority("NOVEL_TYPE", "FEDERAL_REGISTER", rs) == 3
 
@@ -206,6 +212,7 @@ class TestFederalRegisterPriority:
 # ===========================================================================
 # Event schema
 # ===========================================================================
+
 
 class TestFDARegulatoryEventSchema:
     """Verify the expected event dict shape from cached data."""
@@ -252,6 +259,7 @@ class TestFDARegulatoryEventSchema:
 # Product map expansion from trial_records.json
 # ===========================================================================
 
+
 class TestProductMapTrialExpansion:
     """Verify build_product_ticker_map() mines trial_records.json."""
 
@@ -274,10 +282,18 @@ class TestProductMapTrialExpansion:
     def test_product_map_excludes_generic_names(self, tmp_path):
         """Generic names like 'placebo' and 'standard of care' are excluded."""
         trials = [
-            {"ticker": "ACAD", "interventions": [
-                "pimavanserin", "placebo", "standard of care", "saline",
-                "sham", "vehicle", "matching placebo",
-            ]},
+            {
+                "ticker": "ACAD",
+                "interventions": [
+                    "pimavanserin",
+                    "placebo",
+                    "standard of care",
+                    "saline",
+                    "sham",
+                    "vehicle",
+                    "matching placebo",
+                ],
+            },
         ]
         with open(tmp_path / "trial_records.json", "w") as f:
             json.dump(trials, f)

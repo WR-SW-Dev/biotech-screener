@@ -19,6 +19,7 @@ Cache layout (deterministic, auditable):
     meta_<as_of_date>.json
     raw/   (optional; captured HTML only in live runs)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -47,6 +48,7 @@ _NCT_RE = re.compile(r"NCT\d{8}")
 # ---------------------------------------------------------------------------
 # Utility helpers
 # ---------------------------------------------------------------------------
+
 
 def normalize_name(s: str) -> str:
     """Lowercase, strip punctuation, collapse whitespace."""
@@ -95,10 +97,15 @@ def _read_cache_if_exists(cache_path: Path) -> Optional[List[dict]]:
 def _fetch(url: str) -> str:
     """Fetch URL content with rate limiting. Returns HTML text."""
     import requests
+
     time.sleep(_RATE_LIMIT_SECS)
-    resp = requests.get(url, timeout=_REQUEST_TIMEOUT, headers={
-        "User-Agent": "WakeRobinResearch/1.0 (conference-collector)",
-    })
+    resp = requests.get(
+        url,
+        timeout=_REQUEST_TIMEOUT,
+        headers={
+            "User-Agent": "WakeRobinResearch/1.0 (conference-collector)",
+        },
+    )
     resp.raise_for_status()
     return resp.text
 
@@ -144,6 +151,7 @@ def _map_to_ticker(
 # Conference adapter interface
 # ---------------------------------------------------------------------------
 
+
 class ConferenceAdapter(ABC):
     """Base class for per-conference parsing adapters."""
 
@@ -175,7 +183,11 @@ class ConfexMixin:
     """
 
     def _parse_confex_sessions(
-        self, html: str, edition_year: int, conf_name: str, tz: str,
+        self,
+        html: str,
+        edition_year: int,
+        conf_name: str,
+        tz: str,
     ) -> List[dict]:
         sessions: List[dict] = []
         try:
@@ -242,30 +254,36 @@ class ConfexMixin:
 
                 entities = _extract_entities(title)
 
-                sessions.append({
-                    "schema": "conference_session.v1",
-                    "id": sid,
-                    "conference": conf_name,
-                    "edition_year": edition_year,
-                    "session_type": stype,
-                    "track": None,
-                    "title": title,
-                    "start_dt_local": start_raw,
-                    "end_dt_local": end_raw or None,
-                    "timezone": tz,
-                    "start_dt_utc": _local_to_utc(start_raw, tz),
-                    "end_dt_utc": _local_to_utc(end_raw, tz) if end_raw else None,
-                    "location": s.get("location"),
-                    "url": "",
-                    "entities": entities,
-                })
+                sessions.append(
+                    {
+                        "schema": "conference_session.v1",
+                        "id": sid,
+                        "conference": conf_name,
+                        "edition_year": edition_year,
+                        "session_type": stype,
+                        "track": None,
+                        "title": title,
+                        "start_dt_local": start_raw,
+                        "end_dt_local": end_raw or None,
+                        "timezone": tz,
+                        "start_dt_utc": _local_to_utc(start_raw, tz),
+                        "end_dt_utc": _local_to_utc(end_raw, tz) if end_raw else None,
+                        "location": s.get("location"),
+                        "url": "",
+                        "entities": entities,
+                    }
+                )
         except Exception as e:
             logger.warning("%s confex session parse error: %s", conf_name, e)
 
         return sessions
 
     def _parse_confex_abstracts(
-        self, html: str, edition_year: int, conf_name: str, tz: str,
+        self,
+        html: str,
+        edition_year: int,
+        conf_name: str,
+        tz: str,
     ) -> List[dict]:
         abstracts: List[dict] = []
         try:
@@ -330,22 +348,24 @@ class ConfexMixin:
 
                 entities = _extract_entities(title)
 
-                abstracts.append({
-                    "schema": "conference_abstract.v1",
-                    "id": aid,
-                    "conference": conf_name,
-                    "edition_year": edition_year,
-                    "abstract_code": code or None,
-                    "title": title,
-                    "session_id": None,
-                    "presentation_type": ptype,
-                    "presenter": a.get("presenter"),
-                    "affiliation": a.get("affiliation"),
-                    "sponsor_company": None,
-                    "entities": entities,
-                    "url": "",
-                    "disclosed_at": None,
-                })
+                abstracts.append(
+                    {
+                        "schema": "conference_abstract.v1",
+                        "id": aid,
+                        "conference": conf_name,
+                        "edition_year": edition_year,
+                        "abstract_code": code or None,
+                        "title": title,
+                        "session_id": None,
+                        "presentation_type": ptype,
+                        "presenter": a.get("presenter"),
+                        "affiliation": a.get("affiliation"),
+                        "sponsor_company": None,
+                        "entities": entities,
+                        "url": "",
+                        "disclosed_at": None,
+                    }
+                )
         except Exception as e:
             logger.warning("%s confex abstract parse error: %s", conf_name, e)
 
@@ -439,23 +459,25 @@ class AscoAdapter(ConferenceAdapter):
 
                 entities = _extract_entities(title)
 
-                sessions.append({
-                    "schema": "conference_session.v1",
-                    "id": sid,
-                    "conference": self.conf_name,
-                    "edition_year": edition_year,
-                    "session_type": stype,
-                    "track": s.get("track"),
-                    "title": title,
-                    "start_dt_local": start_raw,
-                    "end_dt_local": end_raw or None,
-                    "timezone": self.default_tz,
-                    "start_dt_utc": _local_to_utc(start_raw, self.default_tz),
-                    "end_dt_utc": _local_to_utc(end_raw, self.default_tz) if end_raw else None,
-                    "location": s.get("location"),
-                    "url": "",
-                    "entities": entities,
-                })
+                sessions.append(
+                    {
+                        "schema": "conference_session.v1",
+                        "id": sid,
+                        "conference": self.conf_name,
+                        "edition_year": edition_year,
+                        "session_type": stype,
+                        "track": s.get("track"),
+                        "title": title,
+                        "start_dt_local": start_raw,
+                        "end_dt_local": end_raw or None,
+                        "timezone": self.default_tz,
+                        "start_dt_utc": _local_to_utc(start_raw, self.default_tz),
+                        "end_dt_utc": _local_to_utc(end_raw, self.default_tz) if end_raw else None,
+                        "location": s.get("location"),
+                        "url": "",
+                        "entities": entities,
+                    }
+                )
         except Exception as e:
             logger.warning("ASCO session parse error: %s", e)
 
@@ -531,22 +553,24 @@ class AscoAdapter(ConferenceAdapter):
                 if sponsor:
                     entities["companies"].append(sponsor)
 
-                abstracts.append({
-                    "schema": "conference_abstract.v1",
-                    "id": aid,
-                    "conference": self.conf_name,
-                    "edition_year": edition_year,
-                    "abstract_code": code or None,
-                    "title": title,
-                    "session_id": None,
-                    "presentation_type": ptype,
-                    "presenter": a.get("presenter"),
-                    "affiliation": a.get("affiliation"),
-                    "sponsor_company": sponsor or None,
-                    "entities": entities,
-                    "url": "",
-                    "disclosed_at": None,
-                })
+                abstracts.append(
+                    {
+                        "schema": "conference_abstract.v1",
+                        "id": aid,
+                        "conference": self.conf_name,
+                        "edition_year": edition_year,
+                        "abstract_code": code or None,
+                        "title": title,
+                        "session_id": None,
+                        "presentation_type": ptype,
+                        "presenter": a.get("presenter"),
+                        "affiliation": a.get("affiliation"),
+                        "sponsor_company": sponsor or None,
+                        "entities": entities,
+                        "url": "",
+                        "disclosed_at": None,
+                    }
+                )
         except Exception as e:
             logger.warning("ASCO abstract parse error: %s", e)
 
@@ -556,6 +580,7 @@ class AscoAdapter(ConferenceAdapter):
 # ---------------------------------------------------------------------------
 # Additional conference adapters
 # ---------------------------------------------------------------------------
+
 
 class _CustomSessionParserBase:
     """Helper to build per-conference HTMLParser session parsers.
@@ -589,8 +614,7 @@ class _CustomSessionParserBase:
                 cls = ad.get("class") or ""
                 if tag == "div" and container_class in cls:
                     self._in = True
-                    self._cur = {"session_type": ad.get("data-type", "other"),
-                                 "track": ad.get("data-track")}
+                    self._cur = {"session_type": ad.get("data-type", "other"), "track": ad.get("data-track")}
                 if self._in:
                     for field in ("title", "time", "location"):
                         if f"{child_prefix}{field}" in cls:
@@ -627,23 +651,25 @@ class _CustomSessionParserBase:
             key = f"{conf_name}|{edition_year}|{stype}|{title}|{start_raw}"
             sid = f"CONF_{conf_name}_{edition_year}_SESSION_{_stable_hash10(key)}"
 
-            sessions.append({
-                "schema": "conference_session.v1",
-                "id": sid,
-                "conference": conf_name,
-                "edition_year": edition_year,
-                "session_type": stype,
-                "track": s.get("track"),
-                "title": title,
-                "start_dt_local": start_raw,
-                "end_dt_local": end_raw or None,
-                "timezone": tz,
-                "start_dt_utc": _local_to_utc(start_raw, tz),
-                "end_dt_utc": _local_to_utc(end_raw, tz) if end_raw else None,
-                "location": s.get("location"),
-                "url": "",
-                "entities": _extract_entities(title),
-            })
+            sessions.append(
+                {
+                    "schema": "conference_session.v1",
+                    "id": sid,
+                    "conference": conf_name,
+                    "edition_year": edition_year,
+                    "session_type": stype,
+                    "track": s.get("track"),
+                    "title": title,
+                    "start_dt_local": start_raw,
+                    "end_dt_local": end_raw or None,
+                    "timezone": tz,
+                    "start_dt_utc": _local_to_utc(start_raw, tz),
+                    "end_dt_utc": _local_to_utc(end_raw, tz) if end_raw else None,
+                    "location": s.get("location"),
+                    "url": "",
+                    "entities": _extract_entities(title),
+                }
+            )
         return sessions
 
     @staticmethod
@@ -712,22 +738,24 @@ class _CustomSessionParserBase:
             if sponsor:
                 entities["companies"].append(sponsor)
 
-            abstracts.append({
-                "schema": "conference_abstract.v1",
-                "id": aid,
-                "conference": conf_name,
-                "edition_year": edition_year,
-                "abstract_code": code or None,
-                "title": title,
-                "session_id": None,
-                "presentation_type": ptype,
-                "presenter": a.get("presenter"),
-                "affiliation": a.get("affiliation"),
-                "sponsor_company": sponsor or None,
-                "entities": entities,
-                "url": "",
-                "disclosed_at": None,
-            })
+            abstracts.append(
+                {
+                    "schema": "conference_abstract.v1",
+                    "id": aid,
+                    "conference": conf_name,
+                    "edition_year": edition_year,
+                    "abstract_code": code or None,
+                    "title": title,
+                    "session_id": None,
+                    "presentation_type": ptype,
+                    "presenter": a.get("presenter"),
+                    "affiliation": a.get("affiliation"),
+                    "sponsor_company": sponsor or None,
+                    "entities": entities,
+                    "url": "",
+                    "disclosed_at": None,
+                }
+            )
         return abstracts
 
 
@@ -746,8 +774,12 @@ class EsmoAdapter(ConferenceAdapter):
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_sessions(
-                program_payload, "session-item", "session-item-",
-                self.conf_name, edition_year, self.default_tz,
+                program_payload,
+                "session-item",
+                "session-item-",
+                self.conf_name,
+                edition_year,
+                self.default_tz,
             )
         except Exception as e:
             logger.warning("ESMO session parse error: %s", e)
@@ -756,8 +788,11 @@ class EsmoAdapter(ConferenceAdapter):
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_abstracts(
-                abstract_payload, "abstract-item", "abstract-item-",
-                self.conf_name, edition_year,
+                abstract_payload,
+                "abstract-item",
+                "abstract-item-",
+                self.conf_name,
+                edition_year,
             )
         except Exception as e:
             logger.warning("ESMO abstract parse error: %s", e)
@@ -779,8 +814,12 @@ class AacrAdapter(ConferenceAdapter):
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_sessions(
-                program_payload, "program-session", "program-session-",
-                self.conf_name, edition_year, self.default_tz,
+                program_payload,
+                "program-session",
+                "program-session-",
+                self.conf_name,
+                edition_year,
+                self.default_tz,
             )
         except Exception as e:
             logger.warning("AACR session parse error: %s", e)
@@ -789,8 +828,11 @@ class AacrAdapter(ConferenceAdapter):
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_abstracts(
-                abstract_payload, "abstract-entry", "abstract-entry-",
-                self.conf_name, edition_year,
+                abstract_payload,
+                "abstract-entry",
+                "abstract-entry-",
+                self.conf_name,
+                edition_year,
             )
         except Exception as e:
             logger.warning("AACR abstract parse error: %s", e)
@@ -811,12 +853,18 @@ class AshAdapter(ConfexMixin, ConferenceAdapter):
 
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         return self._parse_confex_sessions(
-            program_payload, edition_year, self.conf_name, self.default_tz,
+            program_payload,
+            edition_year,
+            self.conf_name,
+            self.default_tz,
         )
 
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         return self._parse_confex_abstracts(
-            abstract_payload, edition_year, self.conf_name, self.default_tz,
+            abstract_payload,
+            edition_year,
+            self.conf_name,
+            self.default_tz,
         )
 
 
@@ -834,12 +882,18 @@ class SitcAdapter(ConfexMixin, ConferenceAdapter):
 
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         return self._parse_confex_sessions(
-            program_payload, edition_year, self.conf_name, self.default_tz,
+            program_payload,
+            edition_year,
+            self.conf_name,
+            self.default_tz,
         )
 
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         return self._parse_confex_abstracts(
-            abstract_payload, edition_year, self.conf_name, self.default_tz,
+            abstract_payload,
+            edition_year,
+            self.conf_name,
+            self.default_tz,
         )
 
 
@@ -859,8 +913,12 @@ class SabcsAdapter(ConferenceAdapter):
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_sessions(
-                program_payload, "program-item", "program-item-",
-                self.conf_name, edition_year, self.default_tz,
+                program_payload,
+                "program-item",
+                "program-item-",
+                self.conf_name,
+                edition_year,
+                self.default_tz,
             )
         except Exception as e:
             logger.warning("SABCS session parse error: %s", e)
@@ -869,8 +927,11 @@ class SabcsAdapter(ConferenceAdapter):
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_abstracts(
-                abstract_payload, "abstract-card", "abstract-card-",
-                self.conf_name, edition_year,
+                abstract_payload,
+                "abstract-card",
+                "abstract-card-",
+                self.conf_name,
+                edition_year,
             )
         except Exception as e:
             logger.warning("SABCS abstract parse error: %s", e)
@@ -892,8 +953,12 @@ class AanAdapter(ConferenceAdapter):
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_sessions(
-                program_payload, "itinerary-item", "itinerary-item-",
-                self.conf_name, edition_year, self.default_tz,
+                program_payload,
+                "itinerary-item",
+                "itinerary-item-",
+                self.conf_name,
+                edition_year,
+                self.default_tz,
             )
         except Exception as e:
             logger.warning("AAN session parse error: %s", e)
@@ -902,8 +967,11 @@ class AanAdapter(ConferenceAdapter):
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_abstracts(
-                abstract_payload, "submission-item", "submission-item-",
-                self.conf_name, edition_year,
+                abstract_payload,
+                "submission-item",
+                "submission-item-",
+                self.conf_name,
+                edition_year,
             )
         except Exception as e:
             logger.warning("AAN abstract parse error: %s", e)
@@ -925,8 +993,12 @@ class AcrAdapter(ConferenceAdapter):
     def parse_sessions(self, program_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_sessions(
-                program_payload, "session-entry", "session-entry-",
-                self.conf_name, edition_year, self.default_tz,
+                program_payload,
+                "session-entry",
+                "session-entry-",
+                self.conf_name,
+                edition_year,
+                self.default_tz,
             )
         except Exception as e:
             logger.warning("ACR session parse error: %s", e)
@@ -935,8 +1007,11 @@ class AcrAdapter(ConferenceAdapter):
     def parse_abstracts(self, abstract_payload: str, edition_year: int) -> List[dict]:
         try:
             return _CustomSessionParserBase._build_abstracts(
-                abstract_payload, "abstract-entry", "abstract-entry-",
-                self.conf_name, edition_year,
+                abstract_payload,
+                "abstract-entry",
+                "abstract-entry-",
+                self.conf_name,
+                edition_year,
             )
         except Exception as e:
             logger.warning("ACR abstract parse error: %s", e)
@@ -983,6 +1058,7 @@ def _local_to_utc(dt_str: str, tz: str) -> Optional[str]:
         return None
     try:
         from zoneinfo import ZoneInfo
+
         naive = datetime.fromisoformat(dt_str)
         local = naive.replace(tzinfo=ZoneInfo(tz))
         utc = local.astimezone(ZoneInfo("UTC"))
@@ -1011,6 +1087,7 @@ CONFERENCE_ADAPTERS: Dict[str, ConferenceAdapter] = {
 # ---------------------------------------------------------------------------
 # Derived event generation
 # ---------------------------------------------------------------------------
+
 
 def derive_events_from_records(
     sessions: List[dict],
@@ -1043,7 +1120,10 @@ def derive_events_from_records(
             entities.setdefault("companies", []).append(sponsor)
 
         ticker, method, matched_val = _map_to_ticker(
-            entities, product_ticker_map, company_ticker_map, nct_ticker_map,
+            entities,
+            product_ticker_map,
+            company_ticker_map,
+            nct_ticker_map,
         )
 
         if not ticker:
@@ -1085,24 +1165,26 @@ def derive_events_from_records(
         key = f"{conference}|{edition_year}|{event_type}|{event_date_str}|{ticker}|{code}"
         eid = f"CONF_{conference}_{edition_year}_{event_type}_{event_date_str}_{_stable_hash10(key)}"
 
-        events.append({
-            "schema": "conference_catalyst_event.v1",
-            "id": eid,
-            "ticker": ticker,
-            "conference": conference,
-            "edition_year": edition_year,
-            "event_type": event_type,
-            "event_date": event_date_str,
-            "event_dt_utc": None,
-            "disclosed_at": abstract.get("disclosed_at") or as_of_date.isoformat(),
-            "title": abstract.get("title", ""),
-            "confidence": confidence,
-            "source": "CONF_ABSTRACTS",
-            "url": abstract.get("url", ""),
-            "session_id": session_id,
-            "abstract_id": abstract.get("id"),
-            "mapping_method": method,
-        })
+        events.append(
+            {
+                "schema": "conference_catalyst_event.v1",
+                "id": eid,
+                "ticker": ticker,
+                "conference": conference,
+                "edition_year": edition_year,
+                "event_type": event_type,
+                "event_date": event_date_str,
+                "event_dt_utc": None,
+                "disclosed_at": abstract.get("disclosed_at") or as_of_date.isoformat(),
+                "title": abstract.get("title", ""),
+                "confidence": confidence,
+                "source": "CONF_ABSTRACTS",
+                "url": abstract.get("url", ""),
+                "session_id": session_id,
+                "abstract_id": abstract.get("id"),
+                "mapping_method": method,
+            }
+        )
 
     # Process sessions without abstract linkage (orphan late-breaking sessions)
     abstract_session_ids = {a.get("session_id") for a in abstracts if a.get("session_id")}
@@ -1114,7 +1196,10 @@ def derive_events_from_records(
 
         entities = session.get("entities", {})
         ticker, method, matched_val = _map_to_ticker(
-            entities, product_ticker_map, company_ticker_map, nct_ticker_map,
+            entities,
+            product_ticker_map,
+            company_ticker_map,
+            nct_ticker_map,
         )
         if not ticker:
             continue
@@ -1129,24 +1214,26 @@ def derive_events_from_records(
         key = f"{conference}|{edition_year}|CONF_LATE_BREAKER|{event_date_str}|{ticker}|{session['id']}"
         eid = f"CONF_{conference}_{edition_year}_CONF_LATE_BREAKER_{event_date_str}_{_stable_hash10(key)}"
 
-        events.append({
-            "schema": "conference_catalyst_event.v1",
-            "id": eid,
-            "ticker": ticker,
-            "conference": conference,
-            "edition_year": edition_year,
-            "event_type": "CONF_LATE_BREAKER",
-            "event_date": event_date_str,
-            "event_dt_utc": session.get("start_dt_utc"),
-            "disclosed_at": as_of_date.isoformat(),
-            "title": session.get("title", ""),
-            "confidence": "HIGH",
-            "source": "CONF_PROGRAM",
-            "url": session.get("url", ""),
-            "session_id": session["id"],
-            "abstract_id": None,
-            "mapping_method": method,
-        })
+        events.append(
+            {
+                "schema": "conference_catalyst_event.v1",
+                "id": eid,
+                "ticker": ticker,
+                "conference": conference,
+                "edition_year": edition_year,
+                "event_type": "CONF_LATE_BREAKER",
+                "event_date": event_date_str,
+                "event_dt_utc": session.get("start_dt_utc"),
+                "disclosed_at": as_of_date.isoformat(),
+                "title": session.get("title", ""),
+                "confidence": "HIGH",
+                "source": "CONF_PROGRAM",
+                "url": session.get("url", ""),
+                "session_id": session["id"],
+                "abstract_id": None,
+                "mapping_method": method,
+            }
+        )
 
     # Sort deterministically
     events.sort(key=lambda e: (e["event_date"], e["ticker"], e["event_type"], e["id"]))
@@ -1170,6 +1257,7 @@ def derive_events_from_records(
 # ---------------------------------------------------------------------------
 # Public entrypoints
 # ---------------------------------------------------------------------------
+
 
 def collect_conference_sessions(
     *,
@@ -1366,6 +1454,8 @@ def collect_conference_derived_events(
 
     logger.info(
         "Conference derived events: %d events (%d tickers) cached → %s",
-        len(events), stats["matched_tickers"], derived_path.name,
+        len(events),
+        stats["matched_tickers"],
+        derived_path.name,
     )
     return events

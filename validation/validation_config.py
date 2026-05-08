@@ -30,31 +30,31 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 class CoverageMode(str, Enum):
     """Coverage mode determines how strictly coverage requirements are enforced."""
 
-    STRICT = "strict"           # Original thresholds (90% financial, 70% clinical)
-    STANDARD = "standard"       # Moderate thresholds (75% financial, 60% clinical)
-    ADAPTIVE = "adaptive"       # Data-driven adaptive thresholds
-    LENIENT = "lenient"         # Relaxed thresholds (60% financial, 50% clinical)
-    MINIMAL = "minimal"         # Minimum viable (50% financial, 40% clinical)
+    STRICT = "strict"  # Original thresholds (90% financial, 70% clinical)
+    STANDARD = "standard"  # Moderate thresholds (75% financial, 60% clinical)
+    ADAPTIVE = "adaptive"  # Data-driven adaptive thresholds
+    LENIENT = "lenient"  # Relaxed thresholds (60% financial, 50% clinical)
+    MINIMAL = "minimal"  # Minimum viable (50% financial, 40% clinical)
 
 
 class FallbackStrategy(str, Enum):
     """Fallback strategy when a scoring component fails validation."""
 
-    DISABLE = "disable"               # Disable component entirely, renormalize weights
-    STAGE_ONLY = "stage_only"         # Use stage-based fallback (e.g., PoS)
-    BINARY_FLAG = "binary_flag"       # Use binary flag instead of continuous score
-    STATIC_WEIGHTS = "static_weights" # Use static instead of adaptive weights
-    REDUCE_WEIGHT = "reduce_weight"   # Reduce weight to 10% of normal
-    NEUTRAL_SCORE = "neutral_score"   # Use neutral score (50) with low confidence
+    DISABLE = "disable"  # Disable component entirely, renormalize weights
+    STAGE_ONLY = "stage_only"  # Use stage-based fallback (e.g., PoS)
+    BINARY_FLAG = "binary_flag"  # Use binary flag instead of continuous score
+    STATIC_WEIGHTS = "static_weights"  # Use static instead of adaptive weights
+    REDUCE_WEIGHT = "reduce_weight"  # Reduce weight to 10% of normal
+    NEUTRAL_SCORE = "neutral_score"  # Use neutral score (50) with low confidence
 
 
 class ValidationOutcome(str, Enum):
     """Outcome of validation check."""
 
-    PASS = "pass"                     # Full pass - all criteria met
-    QUALIFIED_PASS = "qualified_pass" # Pass with documented limitations
-    WARN = "warn"                     # Warning - close to thresholds
-    FAIL = "fail"                     # Fail - below thresholds
+    PASS = "pass"  # Full pass - all criteria met
+    QUALIFIED_PASS = "qualified_pass"  # Pass with documented limitations
+    WARN = "warn"  # Warning - close to thresholds
+    FAIL = "fail"  # Fail - below thresholds
 
 
 @dataclass
@@ -123,9 +123,7 @@ class AdaptiveCoverageConfig:
     coverage_mode: CoverageMode = CoverageMode.ADAPTIVE
 
     # Coverage tiers by category
-    coverage_tiers: Dict[str, List[CoverageTierConfig]] = field(
-        default_factory=lambda: DEFAULT_COVERAGE_TIERS.copy()
-    )
+    coverage_tiers: Dict[str, List[CoverageTierConfig]] = field(default_factory=lambda: DEFAULT_COVERAGE_TIERS.copy())
 
     # Minimum viable coverage thresholds (absolute floors)
     absolute_min_financial: Decimal = Decimal("0.25")
@@ -561,6 +559,7 @@ class ValidationSummary:
 # =============================================================================
 # PRESET CONFIGURATIONS
 # =============================================================================
+
 
 def get_strict_config() -> Tuple[AdaptiveCoverageConfig, FallbackScoringConfig, ValidationCriteriaConfig]:
     """Get strict validation configuration (original thresholds)."""

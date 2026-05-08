@@ -1,4 +1,5 @@
 """Tests for build_coinvest_features_from_13f.py."""
+
 from __future__ import annotations
 
 import json
@@ -27,10 +28,10 @@ from scripts.build_coinvest_features_from_13f import (
     validate_coinvest_features_schema,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
+
 
 def _holding(
     ticker="",
@@ -68,19 +69,21 @@ def _write_cache(
 
     mgr_entries = []
     for cik, name, holdings in managers_data:
-        mgr_entries.append({
-            "manager_cik": cik,
-            "manager_name": name,
-            "selected": True,
-            "period_of_report": period_of_report,
-            "filed_at": filed_at,
-            "form_type": "13F-HR",
-            "accession": "0000000000-00-000000",
-            "holdings_count": len(holdings),
-            "manager_json_path": f"managers/{cik}.json",
-            "raw_xml_path": "",
-            "rejection_reason": "",
-        })
+        mgr_entries.append(
+            {
+                "manager_cik": cik,
+                "manager_name": name,
+                "selected": True,
+                "period_of_report": period_of_report,
+                "filed_at": filed_at,
+                "form_type": "13F-HR",
+                "accession": "0000000000-00-000000",
+                "holdings_count": len(holdings),
+                "manager_json_path": f"managers/{cik}.json",
+                "raw_xml_path": "",
+                "rejection_reason": "",
+            }
+        )
         mgr_json = {
             "manager_cik": cik,
             "manager_name": name,
@@ -125,19 +128,27 @@ def _basic_cache(tmp_path, as_of="2026-02-19"):
         tmp_path,
         as_of,
         [
-            (CIK_T1, "Baker Bros", [
-                _holding("AAAA", shares=5000, value=500),
-                _holding("BBBB", shares=3000, value=300),
-                _holding("CCCC", shares=1000, value=100),
-                # Non-universe ticker (counts toward total value).
-                _holding("NOPE", shares=2000, value=200),
-            ]),
-            (CIK_T2, "Orbimed", [
-                _holding("AAAA", shares=4000, value=400),
-                _holding("DDDD", shares=6000, value=600),
-                # Non-universe.
-                _holding("NOPE", shares=1000, value=100),
-            ]),
+            (
+                CIK_T1,
+                "Baker Bros",
+                [
+                    _holding("AAAA", shares=5000, value=500),
+                    _holding("BBBB", shares=3000, value=300),
+                    _holding("CCCC", shares=1000, value=100),
+                    # Non-universe ticker (counts toward total value).
+                    _holding("NOPE", shares=2000, value=200),
+                ],
+            ),
+            (
+                CIK_T2,
+                "Orbimed",
+                [
+                    _holding("AAAA", shares=4000, value=400),
+                    _holding("DDDD", shares=6000, value=600),
+                    # Non-universe.
+                    _holding("NOPE", shares=1000, value=100),
+                ],
+            ),
         ],
     )
 
@@ -146,11 +157,16 @@ def _basic_cache(tmp_path, as_of="2026-02-19"):
 # TestCacheLoading
 # ===================================================================
 
+
 class TestCacheLoading:
 
     def test_missing_cache_returns_none(self, tmp_path):
         result = build_coinvest_features(
-            "2025-12-31", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2025-12-31",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result is None
 
@@ -159,33 +175,61 @@ class TestCacheLoading:
         d.mkdir(parents=True)
         (d / "index.json").write_text(json.dumps({"schema_version": "bad"}))
         result = build_coinvest_features(
-            "2025-12-31", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2025-12-31",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result is None
 
     def test_cusip_resolution_fallback(self, tmp_path):
         cusip_map = {"111111111": "AAAA"}
-        _write_cache(tmp_path, "2026-02-19", [
-            (CIK_T1, "Baker Bros", [
-                _holding("", shares=1000, value=100, cusip="111111111"),
-            ]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-02-19",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("", shares=1000, value=100, cusip="111111111"),
+                    ],
+                ),
+            ],
+        )
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
             cusip_map=cusip_map,
         )
         assert result is not None
         assert "AAAA" in result["tickers"]
 
     def test_no_cusip_map_only_embedded_tickers(self, tmp_path):
-        _write_cache(tmp_path, "2026-02-19", [
-            (CIK_T1, "Baker Bros", [
-                _holding("AAAA", shares=1000, value=100),
-                _holding("", shares=500, value=50, cusip="999999999"),
-            ]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-02-19",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", shares=1000, value=100),
+                        _holding("", shares=500, value=50, cusip="999999999"),
+                    ],
+                ),
+            ],
+        )
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result is not None
         assert "AAAA" in result["tickers"]
@@ -193,14 +237,26 @@ class TestCacheLoading:
         assert result["provenance"]["unresolved_holdings"] >= 1
 
     def test_non_universe_tickers_excluded(self, tmp_path):
-        _write_cache(tmp_path, "2026-02-19", [
-            (CIK_T1, "Baker Bros", [
-                _holding("AAAA", shares=1000, value=100),
-                _holding("NOPE", shares=5000, value=500),
-            ]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-02-19",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", shares=1000, value=100),
+                        _holding("NOPE", shares=5000, value=500),
+                    ],
+                ),
+            ],
+        )
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert "AAAA" in result["tickers"]
         assert "NOPE" not in result["tickers"]
@@ -210,13 +266,18 @@ class TestCacheLoading:
 # TestPerTickerFeatures
 # ===================================================================
 
+
 class TestPerTickerFeatures:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         _basic_cache(tmp_path)
         self.result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert self.result is not None
 
@@ -275,12 +336,25 @@ class TestPerTickerFeatures:
 
     def test_days_since_latest_filing_is_min(self, tmp_path):
         # Two managers with different filed_at dates.
-        _write_cache(tmp_path, "2026-03-01", [
-            (CIK_T1, "Baker Bros", [_holding("AAAA", value=100)],),
-        ], filed_at="2026-02-20")
-        _write_cache(tmp_path, "2026-03-01", [
-            # Second write appends to same dir — use a different CIK trick.
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-03-01",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [_holding("AAAA", value=100)],
+                ),
+            ],
+            filed_at="2026-02-20",
+        )
+        _write_cache(
+            tmp_path,
+            "2026-03-01",
+            [
+                # Second write appends to same dir — use a different CIK trick.
+            ],
+        )
         # Simpler: just check the basic cache result.
         assert self.result["tickers"]["AAAA"]["days_since_latest_filing"] == 5
 
@@ -289,11 +363,20 @@ class TestPerTickerFeatures:
         assert self.result["tickers"]["AAAA"]["coinvest_recency_state"] == "fresh"
 
         # Stale: filed_at far in the past.
-        _write_cache(tmp_path, "2026-06-01", [
-            (CIK_T1, "Baker Bros", [_holding("AAAA", value=100)]),
-        ], filed_at="2025-12-01")
+        _write_cache(
+            tmp_path,
+            "2026-06-01",
+            [
+                (CIK_T1, "Baker Bros", [_holding("AAAA", value=100)]),
+            ],
+            filed_at="2025-12-01",
+        )
         res = build_coinvest_features(
-            "2026-06-01", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-06-01",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         # days_since = (2026-06-01 - 2025-12-01).days = 182
         assert res["tickers"]["AAAA"]["coinvest_recency_state"] == "stale"
@@ -302,6 +385,7 @@ class TestPerTickerFeatures:
 # ===================================================================
 # TestPositionChanges
 # ===================================================================
+
 
 class TestPositionChanges:
 
@@ -326,7 +410,11 @@ class TestPositionChanges:
     def test_no_prior_cache_empty_position_changes(self, tmp_path):
         _basic_cache(tmp_path)
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
             no_prior=True,
         )
         for td in result["tickers"].values():
@@ -337,32 +425,51 @@ class TestPositionChanges:
 # TestPositionChangesIntegration
 # ===================================================================
 
+
 class TestPositionChangesIntegration:
     """Integration tests: full build with prior cache."""
 
     def test_new_and_hold_with_prior(self, tmp_path):
         # Prior quarter: Baker Bros holds AAAA=100, BBBB=200.
         _write_cache(
-            tmp_path, "2025-09-30",
-            [(CIK_T1, "Baker Bros", [
-                _holding("AAAA", value=100),
-                _holding("BBBB", value=200),
-            ])],
+            tmp_path,
+            "2025-09-30",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", value=100),
+                        _holding("BBBB", value=200),
+                    ],
+                )
+            ],
             period_of_report="2025-06-30",
             filed_at="2025-08-14",
         )
         # Current quarter: Baker Bros holds AAAA=100 (HOLD), CCCC=300 (NEW).
         _write_cache(
-            tmp_path, "2025-12-31",
-            [(CIK_T1, "Baker Bros", [
-                _holding("AAAA", value=100),
-                _holding("CCCC", value=300),
-            ])],
+            tmp_path,
+            "2025-12-31",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", value=100),
+                        _holding("CCCC", value=300),
+                    ],
+                )
+            ],
             period_of_report="2025-09-30",
             filed_at="2025-11-14",
         )
         result = build_coinvest_features(
-            "2025-12-31", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2025-12-31",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result is not None
         # AAAA: same value -> HOLD.
@@ -376,40 +483,52 @@ class TestPositionChangesIntegration:
     def test_increase_with_prior(self, tmp_path):
         # Prior: AAAA=100.
         _write_cache(
-            tmp_path, "2025-09-30",
+            tmp_path,
+            "2025-09-30",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=100)])],
             period_of_report="2025-06-30",
             filed_at="2025-08-14",
         )
         # Current: AAAA=150 (+50%).
         _write_cache(
-            tmp_path, "2025-12-31",
+            tmp_path,
+            "2025-12-31",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=150)])],
             period_of_report="2025-09-30",
             filed_at="2025-11-14",
         )
         result = build_coinvest_features(
-            "2025-12-31", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2025-12-31",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result["tickers"]["AAAA"]["position_changes"]["Baker Bros"] == "INCREASE"
 
     def test_decrease_with_prior(self, tmp_path):
         # Prior: AAAA=200.
         _write_cache(
-            tmp_path, "2025-09-30",
+            tmp_path,
+            "2025-09-30",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=200)])],
             period_of_report="2025-06-30",
             filed_at="2025-08-14",
         )
         # Current: AAAA=100 (-50%).
         _write_cache(
-            tmp_path, "2025-12-31",
+            tmp_path,
+            "2025-12-31",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=100)])],
             period_of_report="2025-09-30",
             filed_at="2025-11-14",
         )
         result = build_coinvest_features(
-            "2025-12-31", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2025-12-31",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result["tickers"]["AAAA"]["position_changes"]["Baker Bros"] == "DECREASE"
 
@@ -417,6 +536,7 @@ class TestPositionChangesIntegration:
 # ===================================================================
 # TestPriorQuarterFinding
 # ===================================================================
+
 
 class TestPriorQuarterFinding:
 
@@ -429,7 +549,8 @@ class TestPriorQuarterFinding:
     def test_find_prior_by_scan(self, tmp_path):
         # Write prior quarter cache with por=2025-06-30.
         _write_cache(
-            tmp_path, "2025-09-30",
+            tmp_path,
+            "2025-09-30",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=100)])],
             period_of_report="2025-06-30",
             filed_at="2025-08-14",
@@ -441,7 +562,8 @@ class TestPriorQuarterFinding:
     def test_no_matching_prior(self, tmp_path):
         # Write a cache that won't match any prior quarter.
         _write_cache(
-            tmp_path, "2025-12-31",
+            tmp_path,
+            "2025-12-31",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=100)])],
             period_of_report="2025-12-31",
         )
@@ -468,12 +590,17 @@ class TestPriorQuarterFinding:
 # TestSchemaValidation
 # ===================================================================
 
+
 class TestSchemaValidation:
 
     def test_full_output_passes(self, tmp_path):
         _basic_cache(tmp_path)
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         ok, msg = validate_coinvest_features_schema(result)
         assert ok, msg
@@ -481,7 +608,11 @@ class TestSchemaValidation:
     def test_coverage_consistency(self, tmp_path):
         _basic_cache(tmp_path)
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         n_sig = result["tickers_with_signal"]
         n_uni = result["tickers_in_universe"]
@@ -491,7 +622,11 @@ class TestSchemaValidation:
     def test_provenance_complete(self, tmp_path):
         _basic_cache(tmp_path)
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         prov = result["provenance"]
         assert prov["builder"] == "build_coinvest_features_from_13f.py"
@@ -506,12 +641,17 @@ class TestSchemaValidation:
 # TestEdgeCases
 # ===================================================================
 
+
 class TestEdgeCases:
 
     def test_empty_universe(self, tmp_path):
         _basic_cache(tmp_path)
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, set(), TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            set(),
+            TIERS,
+            NAMES,
         )
         assert result is not None
         assert result["tickers"] == {}
@@ -519,13 +659,25 @@ class TestEdgeCases:
         assert result["signal_coverage_pct"] == 0.0
 
     def test_manager_zero_total_value(self, tmp_path):
-        _write_cache(tmp_path, "2026-02-19", [
-            (CIK_T1, "Baker Bros", [
-                _holding("AAAA", shares=0, value=0),
-            ]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-02-19",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", shares=0, value=0),
+                    ],
+                ),
+            ],
+        )
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         # Zero total value -> pos_w = 0.5 (minimum).
         # position_pct = 0 -> pos_w = max(0.5, sqrt(0)) = 0.5
@@ -535,14 +687,26 @@ class TestEdgeCases:
         assert abs(td["conviction_overlap"] - round(expected, 4)) < 0.001
 
     def test_multiple_holdings_same_ticker_aggregated(self, tmp_path):
-        _write_cache(tmp_path, "2026-02-19", [
-            (CIK_T1, "Baker Bros", [
-                _holding("AAAA", shares=1000, value=100),
-                _holding("AAAA", shares=500, value=50, put_call="CALL"),
-            ]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-02-19",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", shares=1000, value=100),
+                        _holding("AAAA", shares=500, value=50, put_call="CALL"),
+                    ],
+                ),
+            ],
+        )
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         td = result["tickers"]["AAAA"]
         # Aggregated: value=150, total=150. pct = 100%.
@@ -554,25 +718,42 @@ class TestEdgeCases:
         assert td["coinvest_overlap_count"] == 1
 
     def test_put_call_holdings_included(self, tmp_path):
-        _write_cache(tmp_path, "2026-02-19", [
-            (CIK_T1, "Baker Bros", [
-                _holding("AAAA", shares=1000, value=100, put_call="PUT"),
-            ]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-02-19",
+            [
+                (
+                    CIK_T1,
+                    "Baker Bros",
+                    [
+                        _holding("AAAA", shares=1000, value=100, put_call="PUT"),
+                    ],
+                ),
+            ],
+        )
         result = build_coinvest_features(
-            "2026-02-19", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-02-19",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert "AAAA" in result["tickers"]
 
     def test_future_filing_skipped(self, tmp_path):
         """PIT safety: manager with filed_at > as_of is excluded."""
         _write_cache(
-            tmp_path, "2026-01-15",
+            tmp_path,
+            "2026-01-15",
             [(CIK_T1, "Baker Bros", [_holding("AAAA", value=100)])],
             filed_at="2026-02-14",  # Filed AFTER as_of.
         )
         result = build_coinvest_features(
-            "2026-01-15", tmp_path, UNIVERSE, TIERS, NAMES,
+            "2026-01-15",
+            tmp_path,
+            UNIVERSE,
+            TIERS,
+            NAMES,
         )
         assert result is not None
         # Manager skipped -> no tickers.
@@ -583,6 +764,7 @@ class TestEdgeCases:
 # ===================================================================
 # TestCusipHelpers
 # ===================================================================
+
 
 class TestCusipHelpers:
 

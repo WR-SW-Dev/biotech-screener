@@ -31,8 +31,7 @@ import ssl
 import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Set
-
+from typing import Any, Dict, List, Optional, Set
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -69,9 +68,9 @@ def fetch_url(url: str, timeout: int = 30) -> bytes:
     request = urllib.request.Request(
         url,
         headers={
-            'User-Agent': 'Mozilla/5.0 (compatible; WakeRobinDataFeed/1.0)',
-            'Accept': 'text/plain,text/html,*/*;q=0.8',
-        }
+            "User-Agent": "Mozilla/5.0 (compatible; WakeRobinDataFeed/1.0)",
+            "Accept": "text/plain,text/html,*/*;q=0.8",
+        },
     )
 
     with urllib.request.urlopen(request, timeout=timeout, context=ctx) as response:
@@ -126,7 +125,7 @@ def download_nasdaq_threshold_list(
 
         # Save raw file
         output_file = output_dir / f"nasdaq_{list_date.isoformat()}.txt"
-        with open(output_file, 'wb') as f:
+        with open(output_file, "wb") as f:
             f.write(data)
 
         data_hash = compute_sha256(data)
@@ -146,7 +145,7 @@ def download_nasdaq_threshold_list(
             "download_version": __version__,
         }
 
-        with open(meta_file, 'w') as f:
+        with open(meta_file, "w") as f:
             json.dump(meta, f, indent=2)
 
         return {
@@ -212,7 +211,7 @@ def download_nyse_threshold_list(
 
         # Save raw file
         output_file = output_dir / f"nyse_{list_date.isoformat()}.txt"
-        with open(output_file, 'wb') as f:
+        with open(output_file, "wb") as f:
             f.write(data)
 
         data_hash = compute_sha256(data)
@@ -232,7 +231,7 @@ def download_nyse_threshold_list(
             "download_version": __version__,
         }
 
-        with open(meta_file, 'w') as f:
+        with open(meta_file, "w") as f:
             json.dump(meta, f, indent=2)
 
         return {
@@ -264,28 +263,28 @@ def parse_nasdaq_threshold_file(file_path: Path) -> Set[str]:
     """
     symbols = set()
 
-    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
-    lines = content.strip().split('\n')
+    lines = content.strip().split("\n")
 
     for line in lines:
-        if not line.strip() or line.startswith('#'):
+        if not line.strip() or line.startswith("#"):
             continue
 
         # Handle pipe-delimited format
-        if '|' in line:
-            parts = line.split('|')
+        if "|" in line:
+            parts = line.split("|")
             if len(parts) >= 1:
                 symbol = parts[0].strip()
                 # Skip header rows
-                if symbol.upper() in ('SYMBOL', 'SECURITY', 'TICKER'):
+                if symbol.upper() in ("SYMBOL", "SECURITY", "TICKER"):
                     continue
                 if symbol and len(symbol) <= 10 and symbol.isalpha():
                     symbols.add(symbol.upper())
         else:
             # Space or comma delimited
-            parts = line.replace(',', ' ').split()
+            parts = line.replace(",", " ").split()
             if parts:
                 symbol = parts[0].strip()
                 if symbol and len(symbol) <= 10 and symbol.isalpha():
@@ -303,26 +302,26 @@ def parse_nyse_threshold_file(file_path: Path) -> Set[str]:
     """
     symbols = set()
 
-    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
-    lines = content.strip().split('\n')
+    lines = content.strip().split("\n")
 
     for line in lines:
-        if not line.strip() or line.startswith('#'):
+        if not line.strip() or line.startswith("#"):
             continue
 
         # Handle various delimiters
-        for delimiter in ['|', ',', '\t']:
+        for delimiter in ["|", ",", "\t"]:
             if delimiter in line:
                 parts = line.split(delimiter)
                 if len(parts) >= 1:
                     symbol = parts[0].strip()
-                    if symbol.upper() in ('SYMBOL', 'SECURITY', 'TICKER'):
+                    if symbol.upper() in ("SYMBOL", "SECURITY", "TICKER"):
                         continue
                     if symbol and len(symbol) <= 10:
                         # Remove common suffixes
-                        symbol = symbol.split('.')[0].split('-')[0]
+                        symbol = symbol.split(".")[0].split("-")[0]
                         if symbol.isalpha():
                             symbols.add(symbol.upper())
                 break
@@ -330,17 +329,14 @@ def parse_nyse_threshold_file(file_path: Path) -> Set[str]:
             # Single column or space delimited
             parts = line.split()
             if parts:
-                symbol = parts[0].strip().split('.')[0].split('-')[0]
+                symbol = parts[0].strip().split(".")[0].split("-")[0]
                 if symbol and len(symbol) <= 10 and symbol.isalpha():
                     symbols.add(symbol.upper())
 
     return symbols
 
 
-def load_threshold_securities(
-    list_date: date,
-    exchanges: Optional[List[str]] = None
-) -> Dict[str, Any]:
+def load_threshold_securities(list_date: date, exchanges: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Load threshold securities for a given date.
 
@@ -417,10 +413,7 @@ def get_threshold_flags_for_universe(
     threshold_data = load_threshold_securities(list_date)
     threshold_set = threshold_data["combined"]
 
-    return {
-        ticker.upper(): ticker.upper() in threshold_set
-        for ticker in tickers
-    }
+    return {ticker.upper(): ticker.upper() in threshold_set for ticker in tickers}
 
 
 def demonstration():

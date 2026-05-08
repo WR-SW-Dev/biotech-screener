@@ -10,25 +10,24 @@ Covers:
 - Audit trail
 """
 
-import pytest
 import json
-from datetime import date
-from pathlib import Path
-from typing import Dict, Any, List
 
 # Import module under test
 import sys
+from datetime import date
+from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from indication_mapper import (
-    IndicationMapper,
-    MappingValidationError,
-)
-
+from indication_mapper import IndicationMapper, MappingValidationError
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mapper():
@@ -91,6 +90,7 @@ def as_of_date():
 # ============================================================================
 # BASIC FUNCTIONALITY
 # ============================================================================
+
 
 class TestBasicMapping:
     """Tests for basic mapping functionality."""
@@ -174,6 +174,7 @@ class TestBasicMapping:
 # PRECEDENCE RULES
 # ============================================================================
 
+
 class TestPrecedenceRules:
     """Tests for mapping precedence rules."""
 
@@ -214,6 +215,7 @@ class TestPrecedenceRules:
 # ============================================================================
 # PIT SAFETY
 # ============================================================================
+
 
 class TestPITSafety:
     """Tests for point-in-time safety in v3 overrides."""
@@ -273,6 +275,7 @@ class TestPITSafety:
 # ============================================================================
 # PATTERN MATCHING
 # ============================================================================
+
 
 class TestPatternMatching:
     """Tests for condition pattern matching."""
@@ -336,6 +339,7 @@ class TestPatternMatching:
 # CATEGORY ALIASES
 # ============================================================================
 
+
 class TestCategoryAliases:
     """Tests for category alias resolution."""
 
@@ -368,6 +372,7 @@ class TestCategoryAliases:
 # ============================================================================
 # AUDIT TRAIL
 # ============================================================================
+
 
 class TestAuditTrail:
     """Tests for audit trail functionality."""
@@ -414,6 +419,7 @@ class TestAuditTrail:
 # UNIVERSE MAPPING
 # ============================================================================
 
+
 class TestUniverseMapping:
     """Tests for mapping entire universe."""
 
@@ -454,6 +460,7 @@ class TestUniverseMapping:
 # VALIDATION
 # ============================================================================
 
+
 class TestValidation:
     """Tests for mapping validation."""
 
@@ -479,6 +486,7 @@ class TestValidation:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -528,6 +536,7 @@ class TestEdgeCases:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -551,4 +560,3 @@ class TestDeterminism:
 
         assert results1["ACME"]["indication"] == results2["ACME"]["indication"]
         assert results1["BETA"]["indication"] == results2["BETA"]["indication"]
-

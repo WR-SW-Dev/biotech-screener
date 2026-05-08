@@ -1,4 +1,5 @@
 """Tests for Fama-MacBeth cross-sectional regression."""
+
 import sys
 from pathlib import Path
 
@@ -8,12 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backtest.fmb import (
-    cross_sectional_regression,
-    fama_macbeth,
-    newey_west_se,
-    zscore_features,
-)
+from backtest.fmb import cross_sectional_regression, fama_macbeth, newey_west_se, zscore_features
 
 
 class TestCrossSectionalRegression:
@@ -83,10 +79,12 @@ class TestZscoreFeatures:
 
     def test_zero_mean_unit_var(self):
         """After z-scoring, each date should have mean≈0 std≈1."""
-        df = pd.DataFrame({
-            "date": ["2025-01-03"] * 5 + ["2025-01-10"] * 5,
-            "x": [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0],
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2025-01-03"] * 5 + ["2025-01-10"] * 5,
+                "x": [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0],
+            }
+        )
         result = zscore_features(df, ["x"], date_col="date")
         for dt in ["2025-01-03", "2025-01-10"]:
             vals = result[result["date"] == dt]["x"]
@@ -108,20 +106,25 @@ class TestFamaMacBeth:
             x = np.random.randn(n_stocks)
             ret = true_beta * x + np.random.randn(n_stocks) * 0.5
             for i in range(n_stocks):
-                rows.append({
-                    "rebalance_date": dt,
-                    "ticker": f"T{i:03d}",
-                    "score_x": x[i],
-                    "fwd_return": ret[i],
-                })
+                rows.append(
+                    {
+                        "rebalance_date": dt,
+                        "ticker": f"T{i:03d}",
+                        "score_x": x[i],
+                        "fwd_return": ret[i],
+                    }
+                )
         return pd.DataFrame(rows)
 
     def test_positive_signal_detected(self):
         """Feature with true beta=0.5 should produce mean_beta > 0 and |t| > 2."""
         panel = self._make_panel(n_dates=50, n_stocks=50, true_beta=0.5)
         summary, betas = fama_macbeth(
-            panel, "fwd_return", ["score_x"],
-            standardize=True, nw_lags=4,
+            panel,
+            "fwd_return",
+            ["score_x"],
+            standardize=True,
+            nw_lags=4,
         )
         assert len(summary) == 1
         row = summary.iloc[0]
@@ -132,8 +135,11 @@ class TestFamaMacBeth:
         """Feature with true beta=0 should produce |t| < 2 (usually)."""
         panel = self._make_panel(n_dates=50, n_stocks=50, true_beta=0.0)
         summary, betas = fama_macbeth(
-            panel, "fwd_return", ["score_x"],
-            standardize=True, nw_lags=4,
+            panel,
+            "fwd_return",
+            ["score_x"],
+            standardize=True,
+            nw_lags=4,
         )
         # With beta=0, t-stat should be small most of the time
         assert abs(summary.iloc[0]["t_stat"]) < 4.0  # Generous bound
@@ -157,17 +163,22 @@ class TestFamaMacBeth:
             x2 = np.random.randn(n)
             ret = 0.8 * x1 + np.random.randn(n) * 0.3  # x2 has no signal
             for i in range(n):
-                rows.append({
-                    "rebalance_date": dt,
-                    "ticker": f"T{i:03d}",
-                    "signal": x1[i],
-                    "noise": x2[i],
-                    "fwd_return": ret[i],
-                })
+                rows.append(
+                    {
+                        "rebalance_date": dt,
+                        "ticker": f"T{i:03d}",
+                        "signal": x1[i],
+                        "noise": x2[i],
+                        "fwd_return": ret[i],
+                    }
+                )
         panel = pd.DataFrame(rows)
         summary, _ = fama_macbeth(
-            panel, "fwd_return", ["noise", "signal"],
-            standardize=True, nw_lags=4,
+            panel,
+            "fwd_return",
+            ["noise", "signal"],
+            standardize=True,
+            nw_lags=4,
         )
         signal_row = summary[summary["feature"] == "signal"].iloc[0]
         noise_row = summary[summary["feature"] == "noise"].iloc[0]

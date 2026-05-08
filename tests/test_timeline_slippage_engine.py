@@ -12,16 +12,17 @@ These tests cover:
 - Universe scoring
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from timeline_slippage_engine import (
-    TimelineSlippageEngine,
     SlippageDirection,
+    SlippageResult,
     SlippageSeverity,
     TickerSlippageScore,
-    SlippageResult,
+    TimelineSlippageEngine,
 )
 
 
@@ -211,14 +212,8 @@ class TestScoreCalculation:
         """Score should always be between 0 and 100."""
         engine = TimelineSlippageEngine()
         # Create multiple severe pushouts
-        current = [
-            {"nct_id": f"NCT00{i}", "primary_completion_date": "2028-01-01"}
-            for i in range(5)
-        ]
-        prior = [
-            {"nct_id": f"NCT00{i}", "primary_completion_date": "2026-01-01"}
-            for i in range(5)
-        ]
+        current = [{"nct_id": f"NCT00{i}", "primary_completion_date": "2028-01-01"} for i in range(5)]
+        prior = [{"nct_id": f"NCT00{i}", "primary_completion_date": "2026-01-01"} for i in range(5)]
 
         result = engine.calculate_slippage_score(
             ticker="ACME",
@@ -372,14 +367,8 @@ class TestConfidenceLevel:
     def test_high_confidence_many_trials(self):
         """3+ trials should yield high confidence."""
         engine = TimelineSlippageEngine()
-        current = [
-            {"nct_id": f"NCT00{i}", "primary_completion_date": "2026-06-01"}
-            for i in range(3)
-        ]
-        prior = [
-            {"nct_id": f"NCT00{i}", "primary_completion_date": "2026-05-01"}
-            for i in range(3)
-        ]
+        current = [{"nct_id": f"NCT00{i}", "primary_completion_date": "2026-06-01"} for i in range(3)]
+        prior = [{"nct_id": f"NCT00{i}", "primary_completion_date": "2026-05-01"} for i in range(3)]
 
         result = engine.calculate_slippage_score(
             ticker="ACME",

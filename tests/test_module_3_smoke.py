@@ -13,43 +13,38 @@ Verifies that Module 3 correctly detects:
 These tests use synthetic fixtures with known events to prevent regressions.
 """
 
-import pytest
+import json
+import tempfile
 from datetime import date, timedelta
 from decimal import Decimal
-import tempfile
-import json
 from pathlib import Path
 
-from ctgov_adapter import (
-    CTGovStatus,
-    CompletionType,
-    CanonicalTrialRecord,
-    CTGovAdapter,
-    AdapterConfig,
+import pytest
+
+from catalyst_diagnostics import (
+    CalendarCatalyst,
+    DeltaDiagnostics,
+    StalenessResult,
+    check_trial_records_staleness,
+    compute_delta_diagnostics,
+    detect_calendar_catalysts,
 )
+from ctgov_adapter import AdapterConfig, CanonicalTrialRecord, CompletionType, CTGovAdapter, CTGovStatus
 from event_detector import (
+    CatalystEvent,
     EventDetector,
     EventDetectorConfig,
     EventType,
-    CatalystEvent,
     SimpleMarketCalendar,
     classify_status_change,
     classify_timeline_change,
 )
-from state_management import StateStore, StateSnapshot
-from catalyst_diagnostics import (
-    compute_delta_diagnostics,
-    check_trial_records_staleness,
-    detect_calendar_catalysts,
-    DeltaDiagnostics,
-    StalenessResult,
-    CalendarCatalyst,
-)
-
+from state_management import StateSnapshot, StateStore
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -95,6 +90,7 @@ def sample_prior_record():
 # STATUS CHANGE TESTS
 # ============================================================================
 
+
 class TestStatusChangeDetection:
     """Test status change event detection"""
 
@@ -116,9 +112,9 @@ class TestStatusChangeDetection:
 
         assert len(events) == 1
         assert events[0].event_type == EventType.CT_TRIAL_TERMINATED
-        assert events[0].direction == 'NEG'
+        assert events[0].direction == "NEG"
         assert events[0].impact == 3
-        assert 'terminated' in events[0].confidence_reason.lower()
+        assert "terminated" in events[0].confidence_reason.lower()
         assert events[0].event_rule_id == "M3_DIFF_CT_TRIAL_TERMINATED"
 
     def test_status_upgrade(self, event_detector, as_of_date):
@@ -150,8 +146,8 @@ class TestStatusChangeDetection:
 
         assert len(events) == 1
         assert events[0].event_type == EventType.CT_STATUS_UPGRADE
-        assert events[0].direction == 'POS'
-        assert 'upgrade' in events[0].confidence_reason.lower()
+        assert events[0].direction == "POS"
+        assert "upgrade" in events[0].confidence_reason.lower()
 
     def test_status_downgrade(self, event_detector, as_of_date):
         """Status downgrade should trigger negative event"""
@@ -183,12 +179,13 @@ class TestStatusChangeDetection:
         # SUSPENDED triggers CT_TRIAL_SUSPENDED (specific severe negative type)
         assert len(events) == 1
         assert events[0].event_type == EventType.CT_TRIAL_SUSPENDED
-        assert events[0].direction == 'NEG'
+        assert events[0].direction == "NEG"
 
 
 # ============================================================================
 # TIMELINE SHIFT TESTS
 # ============================================================================
+
 
 class TestTimelineShiftDetection:
     """Test timeline shift event detection"""
@@ -211,9 +208,9 @@ class TestTimelineShiftDetection:
 
         assert len(events) == 1
         assert events[0].event_type == EventType.CT_TIMELINE_PUSHOUT
-        assert events[0].direction == 'NEG'
-        assert 'pushed out' in events[0].confidence_reason.lower()
-        assert '35 days' in events[0].confidence_reason
+        assert events[0].direction == "NEG"
+        assert "pushed out" in events[0].confidence_reason.lower()
+        assert "35 days" in events[0].confidence_reason
 
     def test_date_pullin_30_days(self, event_detector, sample_prior_record, as_of_date):
         """30+ day pull-in should trigger positive timeline event"""
@@ -233,8 +230,8 @@ class TestTimelineShiftDetection:
 
         assert len(events) == 1
         assert events[0].event_type == EventType.CT_TIMELINE_PULLIN
-        assert events[0].direction == 'POS'
-        assert 'pulled in' in events[0].confidence_reason.lower()
+        assert events[0].direction == "POS"
+        assert "pulled in" in events[0].confidence_reason.lower()
 
     def test_small_date_change_ignored(self, event_detector, sample_prior_record, as_of_date):
         """Small date changes (<14 days) should be ignored as noise"""
@@ -260,6 +257,7 @@ class TestTimelineShiftDetection:
 # RESULTS POSTED TESTS
 # ============================================================================
 
+
 class TestResultsPostedDetection:
     """Test results posted event detection"""
 
@@ -282,12 +280,13 @@ class TestResultsPostedDetection:
         # Should have results_posted and possibly status/type changes
         results_events = [e for e in events if e.event_type == EventType.CT_RESULTS_POSTED]
         assert len(results_events) == 1
-        assert 'first posted' in results_events[0].confidence_reason.lower()
+        assert "first posted" in results_events[0].confidence_reason.lower()
 
 
 # ============================================================================
 # STATUS NORMALIZATION TESTS
 # ============================================================================
+
 
 class TestStatusNormalization:
     """Test that uncommon statuses are properly normalized"""
@@ -329,6 +328,7 @@ class TestStatusNormalization:
 # DELTA DIAGNOSTICS TESTS
 # ============================================================================
 
+
 class TestDeltaDiagnostics:
     """Test delta diagnostics computation"""
 
@@ -368,8 +368,8 @@ class TestDeltaDiagnostics:
 
         assert diag.records_changed_count == 1
         assert diag.no_changes_detected is False
-        assert 'overall_status' in diag.fields_changed_histogram
-        assert 'primary_completion_date' in diag.fields_changed_histogram
+        assert "overall_status" in diag.fields_changed_histogram
+        assert "primary_completion_date" in diag.fields_changed_histogram
         assert len(diag.sample_diffs) > 0
 
     def test_delta_no_changes(self, prior_date, as_of_date):
@@ -422,51 +422,47 @@ class TestDeltaDiagnostics:
 # STALENESS GATING TESTS
 # ============================================================================
 
+
 class TestStalenessGating:
     """Test staleness gating for trial records"""
 
     def test_fresh_data(self, as_of_date):
         """Fresh data should have HIGH confidence"""
-        records = [
-            {"ticker": "TEST", "nct_id": "NCT00000001", "last_update_posted": as_of_date.isoformat()}
-        ]
+        records = [{"ticker": "TEST", "nct_id": "NCT00000001", "last_update_posted": as_of_date.isoformat()}]
 
         result = check_trial_records_staleness(records, as_of_date)
 
         assert result.is_stale is False
-        assert result.confidence_level == 'HIGH'
+        assert result.confidence_level == "HIGH"
         assert result.age_days == 0
 
     def test_stale_data(self, as_of_date):
         """Stale data (>5 days) should have LOW confidence"""
         old_date = as_of_date - timedelta(days=10)
-        records = [
-            {"ticker": "TEST", "nct_id": "NCT00000001", "last_update_posted": old_date.isoformat()}
-        ]
+        records = [{"ticker": "TEST", "nct_id": "NCT00000001", "last_update_posted": old_date.isoformat()}]
 
         result = check_trial_records_staleness(records, as_of_date)
 
         assert result.is_stale is True
-        assert result.confidence_level == 'LOW'
+        assert result.confidence_level == "LOW"
         assert result.age_days == 10
 
     def test_future_data(self, as_of_date):
         """Future data should be flagged as DEGRADED"""
         future_date = as_of_date + timedelta(days=5)
-        records = [
-            {"ticker": "TEST", "nct_id": "NCT00000001", "last_update_posted": future_date.isoformat()}
-        ]
+        records = [{"ticker": "TEST", "nct_id": "NCT00000001", "last_update_posted": future_date.isoformat()}]
 
         result = check_trial_records_staleness(records, as_of_date)
 
         assert result.is_stale is True
-        assert result.confidence_level == 'DEGRADED'
-        assert 'lookahead' in result.recommendation.lower()
+        assert result.confidence_level == "DEGRADED"
+        assert "lookahead" in result.recommendation.lower()
 
 
 # ============================================================================
 # CALENDAR CATALYST TESTS
 # ============================================================================
+
 
 class TestCalendarCatalysts:
     """Test calendar-based catalyst detection"""
@@ -491,8 +487,8 @@ class TestCalendarCatalysts:
         catalysts = detect_calendar_catalysts(snapshot, as_of_date)
 
         assert len(catalysts) == 1
-        assert catalysts[0].event_type == 'UPCOMING_PCD'
-        assert catalysts[0].window == '30D'
+        assert catalysts[0].event_type == "UPCOMING_PCD"
+        assert catalysts[0].window == "30D"
         assert catalysts[0].days_until == 25
 
     def test_upcoming_pcd_60d(self, as_of_date):
@@ -515,7 +511,7 @@ class TestCalendarCatalysts:
         catalysts = detect_calendar_catalysts(snapshot, as_of_date)
 
         assert len(catalysts) == 1
-        assert catalysts[0].window == '60D'
+        assert catalysts[0].window == "60D"
 
     def test_terminal_trial_excluded(self, as_of_date):
         """Terminal negative trials should not have calendar catalysts"""
@@ -542,6 +538,7 @@ class TestCalendarCatalysts:
 # ============================================================================
 # INTEGRATION SMOKE TEST
 # ============================================================================
+
 
 class TestModule3IntegrationSmoke:
     """End-to-end smoke test with synthetic data"""

@@ -19,50 +19,45 @@ in the data integration validation review.
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
-import pytest
+
+import hashlib
+import json
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Dict, List, Any
-import json
-import hashlib
+from typing import Any, Dict, List
+
+import pytest
 
 # Import contract validators
-from common.data_integration_contracts import (
-    # Schema validators
-    validate_market_data_schema,
-    validate_financial_records_schema,
-    validate_trial_records_schema,
-    validate_holdings_schema,
-    # Join validation
-    validate_join_invariants,
-    normalize_ticker_set,
-    check_ticker_uniqueness,
-    check_ticker_case_consistency,
-    # PIT validation
-    validate_pit_admissibility,
-    validate_dataset_pit,
-    PITValidationResult,
-    # Coverage guardrails
-    validate_coverage_guardrails,
+from common.data_integration_contracts import (  # Schema validators; Join validation; PIT validation; Coverage guardrails; Determinism; Numeric safety; Exceptions
     CoverageConfig,
-    CoverageReport,
-    # Determinism
-    compute_deterministic_hash,
-    validate_output_determinism,
-    # Numeric safety
-    safe_numeric_check,
-    validate_numeric_field,
-    # Exceptions
-    SchemaValidationError,
-    JoinInvariantError,
-    PITViolationError,
     CoverageGuardrailError,
+    CoverageReport,
+    JoinInvariantError,
+    PITValidationResult,
+    PITViolationError,
+    SchemaValidationError,
+    check_ticker_case_consistency,
+    check_ticker_uniqueness,
+    compute_deterministic_hash,
+    normalize_ticker_set,
+    safe_numeric_check,
+    validate_coverage_guardrails,
+    validate_dataset_pit,
+    validate_financial_records_schema,
+    validate_holdings_schema,
+    validate_join_invariants,
+    validate_market_data_schema,
+    validate_numeric_field,
+    validate_output_determinism,
+    validate_pit_admissibility,
+    validate_trial_records_schema,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def as_of_date() -> str:
@@ -128,13 +123,14 @@ def sample_momentum_results() -> Dict:
         "summary": {
             "coordinated_buys": ["ACME"],
             "coordinated_sells": ["GAMMA"],
-        }
+        },
     }
 
 
 # =============================================================================
 # TEST 1: NUMERIC FALSY VALUE HANDLING
 # =============================================================================
+
 
 class TestNumericFalsyHandling:
     """
@@ -207,6 +203,7 @@ class TestNumericFalsyHandling:
 # TEST 2: TICKER CASE NORMALIZATION
 # =============================================================================
 
+
 class TestTickerCaseNormalization:
     """
     Test that ticker case is consistently normalized across datasets.
@@ -263,6 +260,7 @@ class TestTickerCaseNormalization:
 # TEST 3: PIT TIMESTAMP BOUNDARY CONDITIONS
 # =============================================================================
 
+
 class TestPITBoundaryConditions:
     """
     Test PIT (Point-in-Time) boundary conditions.
@@ -312,9 +310,7 @@ class TestPITBoundaryConditions:
         ]
 
         result = validate_pit_admissibility(
-            records, as_of_date,
-            date_field="source_date",
-            fallback_fields=["first_posted"]
+            records, as_of_date, date_field="source_date", fallback_fields=["first_posted"]
         )
 
         assert result.is_valid is True
@@ -332,6 +328,7 @@ class TestPITBoundaryConditions:
 # =============================================================================
 # TEST 4: SCHEMA DRIFT DETECTION
 # =============================================================================
+
 
 class TestSchemaDriftDetection:
     """Test that schema validation catches missing/malformed fields."""
@@ -392,6 +389,7 @@ class TestSchemaDriftDetection:
 # TEST 5: JOIN KEY MISMATCHES
 # =============================================================================
 
+
 class TestJoinKeyMismatches:
     """Test detection of join key mismatches between datasets."""
 
@@ -442,6 +440,7 @@ class TestJoinKeyMismatches:
 # =============================================================================
 # TEST 6: COVERAGE GUARDRAIL ENFORCEMENT
 # =============================================================================
+
 
 class TestCoverageGuardrails:
     """Test coverage guardrail thresholds."""
@@ -501,6 +500,7 @@ class TestCoverageGuardrails:
 # TEST 7: DETERMINISTIC HASH CONSISTENCY
 # =============================================================================
 
+
 class TestDeterministicHash:
     """Test deterministic hashing of data structures."""
 
@@ -556,6 +556,7 @@ class TestDeterministicHash:
 # TEST 8: HOLDINGS SNAPSHOT PIT FILTERING
 # =============================================================================
 
+
 class TestHoldingsSnapshotPIT:
     """Test PIT filtering for holdings snapshots."""
 
@@ -601,6 +602,7 @@ class TestHoldingsSnapshotPIT:
 # TEST 9: ZERO RETURN_60D HANDLING
 # =============================================================================
 
+
 class TestZeroReturnHandling:
     """Test that zero return values are handled correctly."""
 
@@ -622,9 +624,7 @@ class TestZeroReturnHandling:
 
     def test_market_data_with_zero_returns(self, sample_market_data):
         """Market data schema should accept zero returns."""
-        is_valid, invalid = validate_market_data_schema(
-            sample_market_data, raise_on_error=False
-        )
+        is_valid, invalid = validate_market_data_schema(sample_market_data, raise_on_error=False)
 
         assert is_valid is True
         # GAMMA and ZERO have zero returns, should both be valid
@@ -642,6 +642,7 @@ class TestZeroReturnHandling:
 # =============================================================================
 # TEST 10: COORDINATED ACTIVITY FLAG PRESERVATION
 # =============================================================================
+
 
 class TestCoordinatedActivityFlags:
     """
@@ -717,6 +718,7 @@ class TestCoordinatedActivityFlags:
 # =============================================================================
 # INTEGRATION TEST: FULL VALIDATION HARNESS
 # =============================================================================
+
 
 class TestFullValidationHarness:
     """Integration test for the full validation harness."""

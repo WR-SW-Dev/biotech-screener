@@ -8,11 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.slo_tracker import (
-    compute_slo_report,
-    format_report,
-    load_ledger,
-)
+from tools.slo_tracker import compute_slo_report, format_report, load_ledger
 
 
 def _make_row(as_of_date: str, overall_status: str, gates: dict = None):
@@ -83,7 +79,10 @@ class TestComputeSloReport:
         rows = [_make_row(f"2026-02-{d + 10:02d}", "PASS") for d in range(19)]
         rows.append(_make_row("2026-03-01", "FAIL"))
         report = compute_slo_report(
-            rows, window_days=30, slo_target_pct=95.0, as_of=date(2026, 3, 5),
+            rows,
+            window_days=30,
+            slo_target_pct=95.0,
+            as_of=date(2026, 3, 5),
         )
         assert report["total_runs"] == 20
         assert report["budget_total"] == 1  # floor(20 * 0.05)
@@ -97,7 +96,10 @@ class TestComputeSloReport:
         rows.append(_make_row("2026-03-01", "FAIL"))
         rows.append(_make_row("2026-03-02", "FAIL"))
         report = compute_slo_report(
-            rows, window_days=30, slo_target_pct=95.0, as_of=date(2026, 3, 5),
+            rows,
+            window_days=30,
+            slo_target_pct=95.0,
+            as_of=date(2026, 3, 5),
         )
         assert report["slo_met"] is False
         assert report["pass_rate_pct"] == 90.0

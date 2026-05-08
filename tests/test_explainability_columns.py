@@ -1,4 +1,5 @@
 """Tests for explainability columns (top_3_drivers, catalyst_reason_detail)."""
+
 import sys
 from pathlib import Path
 
@@ -6,12 +7,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decision_engine import compute_decision_fields, DecisionRuleset
-
+from decision_engine import DecisionRuleset, compute_decision_fields
 
 # =============================================================================
 # Helpers
 # =============================================================================
+
 
 def _base_rec(**overrides):
     rec = {
@@ -50,8 +51,11 @@ def _base_rec(**overrides):
 def _compute_top_3_drivers(row):
     """Replicate the top_3_drivers logic from run_screen.py for unit tests."""
     score_cols = [
-        "clinical_score", "catalyst_score", "momentum_score",
-        "financial_score", "smart_money_score",
+        "clinical_score",
+        "catalyst_score",
+        "momentum_score",
+        "financial_score",
+        "smart_money_score",
     ]
     vals = {}
     for sc in score_cols:
@@ -87,6 +91,7 @@ def _compute_catalyst_reason_detail(row):
 # =============================================================================
 # top_3_drivers tests
 # =============================================================================
+
 
 class TestTop3Drivers:
     def test_format(self):
@@ -161,8 +166,8 @@ class TestTop3Drivers:
         """Score with largest deviation from mean should be first."""
         row = {
             "clinical_score": 100.0,  # +40 from mean of 60
-            "catalyst_score": 60.0,   # 0
-            "momentum_score": 60.0,   # 0
+            "catalyst_score": 60.0,  # 0
+            "momentum_score": 60.0,  # 0
             "financial_score": 60.0,  # 0
             "smart_money_score": 20.0,  # -40
         }
@@ -189,6 +194,7 @@ class TestTop3Drivers:
 # =============================================================================
 # catalyst_reason_detail tests
 # =============================================================================
+
 
 class TestCatalystReasonDetail:
     def test_with_days(self):
@@ -238,9 +244,11 @@ class TestCatalystReasonDetail:
 # SNAPSHOT_COLUMNS contract test
 # =============================================================================
 
+
 class TestSnapshotColumns:
     def test_snapshot_columns_include_new(self):
         from run_screen import SNAPSHOT_COLUMNS
+
         assert "top_3_drivers" in SNAPSHOT_COLUMNS
         assert "catalyst_reason_detail" in SNAPSHOT_COLUMNS
         assert "catalyst_decay_w" in SNAPSHOT_COLUMNS

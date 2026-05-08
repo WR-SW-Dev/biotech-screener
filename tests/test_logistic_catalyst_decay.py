@@ -1,4 +1,5 @@
 """Tests for logistic catalyst decay and smooth gating."""
+
 import sys
 from pathlib import Path
 
@@ -6,17 +7,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decision_engine import (
-    DecisionRuleset,
-    DEFAULT_RULESET,
-    _logistic_decay,
-    compute_decision_fields,
-)
-
+from decision_engine import DEFAULT_RULESET, DecisionRuleset, _logistic_decay, compute_decision_fields
 
 # =============================================================================
 # _logistic_decay unit tests
 # =============================================================================
+
 
 def test_logistic_decay_monotone():
     """Decay weight should decrease as days increase."""
@@ -56,6 +52,7 @@ def test_logistic_large_days():
 # =============================================================================
 # Integration: hard mode unchanged
 # =============================================================================
+
 
 def _base_rec(**overrides):
     """Build a minimal rec dict with sane defaults."""
@@ -128,6 +125,7 @@ def test_hard_mode_decay_w_values():
 # =============================================================================
 # Integration: logistic mode smooth boundary
 # =============================================================================
+
 
 def test_logistic_mode_smooth_boundary():
     """In hard mode day 89 → near, day 91 → mid. In logistic mode both should be 'near'
@@ -217,6 +215,7 @@ def test_logistic_blended_window():
 # =============================================================================
 # Validation
 # =============================================================================
+
 
 def test_invalid_decay_mode():
     with pytest.raises(ValueError, match="catalyst_time_decay_mode"):

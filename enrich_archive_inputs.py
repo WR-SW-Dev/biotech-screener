@@ -48,6 +48,7 @@ TRIAL_PCD_WINDOW_DAYS = 365
 # PRICE DATA LOADER
 # =============================================================================
 
+
 def load_price_history(csv_path: Path) -> Dict[str, List[Tuple[date, float]]]:
     """Load price_history.csv into {ticker: [(date, close), ...]} sorted by date.
 
@@ -78,9 +79,7 @@ def load_price_history(csv_path: Path) -> Dict[str, List[Tuple[date, float]]]:
     return prices
 
 
-def _filter_prices(
-    series: List[Tuple[date, float]], as_of: date
-) -> List[Tuple[date, float]]:
+def _filter_prices(series: List[Tuple[date, float]], as_of: date) -> List[Tuple[date, float]]:
     """Return prices up to and including as_of_date (PIT filter)."""
     return [(d, p) for d, p in series if d <= as_of]
 
@@ -88,6 +87,7 @@ def _filter_prices(
 # =============================================================================
 # DEFENSIVE FEATURES FROM PRICES
 # =============================================================================
+
 
 def _compute_returns(closes: List[float]) -> List[float]:
     """Compute daily log returns from a list of closing prices."""
@@ -247,6 +247,7 @@ def compute_defensive_and_momentum(
 # CATALYST FROM TRIALS + PDUFA
 # =============================================================================
 
+
 def _sec_event_days(event: Dict[str, Any], as_of: date) -> Optional[int]:
     """Compute days-to-catalyst from a SEC 8-K or ADCOM event.
 
@@ -308,8 +309,7 @@ def compute_catalyst(
         if trial.get("ticker", "").upper() != ticker.upper():
             continue
         phase = str(trial.get("phase", "")).upper()
-        if phase not in ("PHASE2", "PHASE3", "PHASE 2", "PHASE 3",
-                         "PHASE2/PHASE3", "PHASE 2/PHASE 3"):
+        if phase not in ("PHASE2", "PHASE3", "PHASE 2", "PHASE 3", "PHASE2/PHASE3", "PHASE 2/PHASE 3"):
             continue
         fp_str = trial.get("first_posted")
         pcd_str = trial.get("primary_completion_date")
@@ -405,6 +405,7 @@ def compute_catalyst(
 # COINVEST TIER1 COUNT
 # =============================================================================
 
+
 def compute_tier1_counts(
     holdings_data: Dict[str, Any],
     tier1_ciks: set,
@@ -435,10 +436,14 @@ def compute_tier1_counts(
 # PER-ARCHIVE ENRICHMENT
 # =============================================================================
 
-CATALYST_KEYS = frozenset({
-    "days_to_catalyst", "in_optimal_window", "catalyst_source",
-    "catalyst_event_type",
-})
+CATALYST_KEYS = frozenset(
+    {
+        "days_to_catalyst",
+        "in_optimal_window",
+        "catalyst_source",
+        "catalyst_event_type",
+    }
+)
 
 
 def enrich_archive(
@@ -525,6 +530,7 @@ def enrich_archive(
 
         # ---- Tier1 CIKs from elite_managers ----
         from elite_managers import get_elite_ciks
+
         raw_ciks = get_elite_ciks()
         tier1_ciks = {cik.lstrip("0").zfill(10) for cik in raw_ciks}
 
@@ -558,19 +564,22 @@ def enrich_archive(
                 # A+B: Defensive + momentum from prices
                 ticker_prices = all_prices.get(ticker, [])
                 if ticker_prices:
-                    features = compute_defensive_and_momentum(
-                        ticker_prices, xbi_prices, as_of
-                    )
+                    features = compute_defensive_and_momentum(ticker_prices, xbi_prices, as_of)
                     entry.update(features)
                     if "beta_xbi_60d" in features:
                         stats["n_beta"] += 1
 
             # C: Catalyst from trials + PDUFA + SEC/ADCOM
-            cat = compute_catalyst(ticker, trials, pdufa_entries, as_of,
-                                   trial_window_days=trial_window_days,
-                                   sec_events=sec_events,
-                                   adcom_events=adcom_events,
-                                   fda_regulatory_events=fda_regulatory_events)
+            cat = compute_catalyst(
+                ticker,
+                trials,
+                pdufa_entries,
+                as_of,
+                trial_window_days=trial_window_days,
+                sec_events=sec_events,
+                adcom_events=adcom_events,
+                fda_regulatory_events=fda_regulatory_events,
+            )
             if cat:
                 entry.update(cat)
                 stats["n_catalyst"] += 1
@@ -620,6 +629,7 @@ def enrich_archive(
 # MAIN
 # =============================================================================
 
+
 def _collect_sec_events_for_date(
     as_of: date,
     universe_entries: List[Dict[str, Any]],
@@ -640,9 +650,8 @@ def _collect_sec_events_for_date(
 
     if sec_mode == "live":
         try:
-            from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-                collect_8k_timing_events,
-            )
+            from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import collect_8k_timing_events
+
             sec_events = collect_8k_timing_events(
                 universe=universe_entries,
                 as_of_date=as_of,
@@ -654,9 +663,8 @@ def _collect_sec_events_for_date(
 
     if multi_form_mode == "live":
         try:
-            from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-                collect_sec_filing_events,
-            )
+            from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import collect_sec_filing_events
+
             multi_form_events = collect_sec_filing_events(
                 universe=universe_entries,
                 as_of_date=as_of,
@@ -669,9 +677,10 @@ def _collect_sec_events_for_date(
     if adcom_mode == "live":
         try:
             from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-                collect_fda_adcom_events,
                 build_product_ticker_map,
+                collect_fda_adcom_events,
             )
+
             product_map = build_product_ticker_map(data_dir)
             ticker_set = {e.get("ticker", "").upper() for e in universe_entries if e.get("ticker")}
             adcom_events = collect_fda_adcom_events(
@@ -687,9 +696,10 @@ def _collect_sec_events_for_date(
     if fda_regulatory_mode == "live":
         try:
             from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-                collect_fda_regulatory_notices,
                 build_product_ticker_map,
+                collect_fda_regulatory_notices,
             )
+
             product_map = build_product_ticker_map(data_dir)
             fda_regulatory_events = collect_fda_regulatory_notices(
                 product_ticker_map=product_map,
@@ -706,53 +716,58 @@ def _collect_sec_events_for_date(
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Enrich archives with decision engine inputs"
+    parser = argparse.ArgumentParser(description="Enrich archives with decision engine inputs")
+    parser.add_argument("--dry-run", action="store_true", help="Compute but don't modify archives")
+    parser.add_argument("--archive", type=str, default=None, help="Process a single archive date (e.g. 2025-06-30)")
+    parser.add_argument(
+        "--trial-window",
+        type=int,
+        default=None,
+        help=f"Trial PCD look-ahead window in days (default: {TRIAL_PCD_WINDOW_DAYS})",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
-        help="Compute but don't modify archives"
+        "--catalyst-only", action="store_true", help="Only update catalyst fields; preserve existing defensive features"
     )
     parser.add_argument(
-        "--archive", type=str, default=None,
-        help="Process a single archive date (e.g. 2025-06-30)"
+        "--sec-8k-mode",
+        type=str,
+        default="off",
+        choices=["off", "live"],
+        help="SEC 8-K catalyst mode: off (default) or live (fetch from EDGAR)",
     )
     parser.add_argument(
-        "--trial-window", type=int, default=None,
-        help=f"Trial PCD look-ahead window in days (default: {TRIAL_PCD_WINDOW_DAYS})"
+        "--adcom-mode",
+        type=str,
+        default="off",
+        choices=["off", "live"],
+        help="FDA ADCOM mode: off (default) or live (fetch from Federal Register + EDGAR)",
     )
     parser.add_argument(
-        "--catalyst-only", action="store_true",
-        help="Only update catalyst fields; preserve existing defensive features"
+        "--sec-multi-form-mode",
+        type=str,
+        default="off",
+        choices=["off", "live"],
+        help="SEC multi-form (10-Q, 10-K, 6-K) mode: off (default) or live",
     )
     parser.add_argument(
-        "--sec-8k-mode", type=str, default="off", choices=["off", "live"],
-        help="SEC 8-K catalyst mode: off (default) or live (fetch from EDGAR)"
+        "--fda-regulatory-mode",
+        type=str,
+        default="off",
+        choices=["off", "live"],
+        help="FDA regulatory notices (Federal Register) mode: off (default) or live",
     )
     parser.add_argument(
-        "--adcom-mode", type=str, default="off", choices=["off", "live"],
-        help="FDA ADCOM mode: off (default) or live (fetch from Federal Register + EDGAR)"
-    )
-    parser.add_argument(
-        "--sec-multi-form-mode", type=str, default="off", choices=["off", "live"],
-        help="SEC multi-form (10-Q, 10-K, 6-K) mode: off (default) or live"
-    )
-    parser.add_argument(
-        "--fda-regulatory-mode", type=str, default="off", choices=["off", "live"],
-        help="FDA regulatory notices (Federal Register) mode: off (default) or live"
-    )
-    parser.add_argument(
-        "--out-dir", type=str, default=None,
+        "--out-dir",
+        type=str,
+        default=None,
         help="Output directory for enriched archives (default: modify in-place). "
-             "Source archives are copied then enriched, preserving originals."
+        "Source archives are copied then enriched, preserving originals.",
     )
     parser.add_argument(
-        "--start", type=str, default=None,
-        help="Only process archives on or after this date (YYYY-MM-DD)"
+        "--start", type=str, default=None, help="Only process archives on or after this date (YYYY-MM-DD)"
     )
     parser.add_argument(
-        "--end", type=str, default=None,
-        help="Only process archives on or before this date (YYYY-MM-DD)"
+        "--end", type=str, default=None, help="Only process archives on or before this date (YYYY-MM-DD)"
     )
     args = parser.parse_args()
 
@@ -841,7 +856,11 @@ def main():
             try:
                 as_of = datetime.strptime(date_str, "%Y-%m-%d").date()
                 sec_events, adcom_events_list, multi_form_events, fda_reg_events = _collect_sec_events_for_date(
-                    as_of, universe_entries, args.sec_8k_mode, args.adcom_mode, data_dir,
+                    as_of,
+                    universe_entries,
+                    args.sec_8k_mode,
+                    args.adcom_mode,
+                    data_dir,
                     multi_form_mode=args.sec_multi_form_mode,
                     fda_regulatory_mode=args.fda_regulatory_mode,
                 )
@@ -860,12 +879,16 @@ def main():
         combined_sec = list(sec_events) if sec_events else []
         if multi_form_events:
             combined_sec.extend(multi_form_events)
-        r = enrich_archive(enrich_path, all_prices, dry_run=args.dry_run,
-                           trial_window_days=trial_window,
-                           catalyst_only=args.catalyst_only,
-                           sec_events=combined_sec or None,
-                           adcom_events=adcom_events_list,
-                           fda_regulatory_events=fda_reg_events)
+        r = enrich_archive(
+            enrich_path,
+            all_prices,
+            dry_run=args.dry_run,
+            trial_window_days=trial_window,
+            catalyst_only=args.catalyst_only,
+            sec_events=combined_sec or None,
+            adcom_events=adcom_events_list,
+            fda_regulatory_events=fda_reg_events,
+        )
         s = r.get("stats", {})
         if r["status"] in ("ok", "dry_run"):
             tag = "DRY" if r["status"] == "dry_run" else "OK"

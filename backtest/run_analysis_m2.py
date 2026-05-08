@@ -105,20 +105,23 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--panel", required=True, help="Path to M1 panel (csv.gz or csv)")
     p.add_argument("--data-dir", default="production_data", help="Data directory with holdings + registry")
     p.add_argument("--outdir", default="output/backtest_m2", help="Output directory")
-    p.add_argument("--return-col", default=None,
-                   help="Forward return column (default: fwd_5d if present, else fwd_21d)")
+    p.add_argument(
+        "--return-col", default=None, help="Forward return column (default: fwd_5d if present, else fwd_21d)"
+    )
     p.add_argument("--date-col", default="rebalance_date", help="Date column name")
     p.add_argument("--nw-lags", type=int, default=4, help="Newey-West lags (default: 4)")
     p.add_argument("--no-standardize", action="store_true", help="Skip z-scoring features")
     p.add_argument("--fmb-only", action="store_true", help="Skip manager scoring")
-    p.add_argument("--feature-cols", nargs="+", default=None,
-                   help="Override feature columns (default: auto-detect from panel)")
-    p.add_argument("--include-confidence", action="store_true",
-                   help="Include confidence columns in FMB features")
-    p.add_argument("--extended-features", action="store_true",
-                   help="Use extended feature set (raw + contribution + normalized)")
-    p.add_argument("--min-manager-weeks", type=int, default=3,
-                   help="Minimum weeks for manager to appear in leaderboard")
+    p.add_argument(
+        "--feature-cols", nargs="+", default=None, help="Override feature columns (default: auto-detect from panel)"
+    )
+    p.add_argument("--include-confidence", action="store_true", help="Include confidence columns in FMB features")
+    p.add_argument(
+        "--extended-features", action="store_true", help="Use extended feature set (raw + contribution + normalized)"
+    )
+    p.add_argument(
+        "--min-manager-weeks", type=int, default=3, help="Minimum weeks for manager to appear in leaderboard"
+    )
     return p.parse_args(argv)
 
 
@@ -229,9 +232,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if all_summaries:
         combined_summary = pd.concat(all_summaries, ignore_index=True)
-        combined_summary = combined_summary.sort_values(
-            ["return_col", "feature"]
-        ).reset_index(drop=True)
+        combined_summary = combined_summary.sort_values(["return_col", "feature"]).reset_index(drop=True)
     else:
         combined_summary = pd.DataFrame()
 
@@ -284,7 +285,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
             # Build holdings panel
             holdings_df = build_manager_holdings_panel(
-                holdings_path, manager_ciks,
+                holdings_path,
+                manager_ciks,
             )
             logger.info(f"  Holdings panel: {len(holdings_df)} rows")
 

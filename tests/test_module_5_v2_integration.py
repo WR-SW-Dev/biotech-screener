@@ -15,32 +15,31 @@ Acceptance Criteria:
 4. Aggregation invariants: final always in [0,100]
 """
 
-import pytest
-from decimal import Decimal
 from copy import deepcopy
+from decimal import Decimal
+
+import pytest
 
 from module_5_composite_v2 import (
-    compute_module_5_composite_v2,
-    _apply_monotonic_caps,
-    _extract_confidence_financial,
-    _extract_confidence_clinical,
-    _extract_confidence_catalyst,
-    _rank_normalize_winsorized,
-    _compute_determinism_hash,
-    MonotonicCap,
     HYBRID_ALPHA,
-    ScoringMode,
+    MonotonicCap,
     NormalizationMethod,
+    ScoringMode,
+    _apply_monotonic_caps,
+    _compute_determinism_hash,
+    _extract_confidence_catalyst,
+    _extract_confidence_clinical,
+    _extract_confidence_financial,
+    _rank_normalize_winsorized,
+    compute_module_5_composite_v2,
 )
-from module_5_composite_with_defensive import (
-    compute_module_5_composite_with_defensive,
-    __version__ as wrapper_version,
-)
-
+from module_5_composite_with_defensive import __version__ as wrapper_version
+from module_5_composite_with_defensive import compute_module_5_composite_with_defensive
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def minimal_universe_result():
@@ -182,6 +181,7 @@ def as_of_date():
 # ACCEPTANCE CRITERION 1: EXACT REPRODUCIBILITY
 # =============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic output guarantee."""
 
@@ -213,9 +213,9 @@ class TestDeterminism:
         # Check all tickers have identical hashes
         for sec1, sec2 in zip(result1["ranked_securities"], result2["ranked_securities"]):
             assert sec1["ticker"] == sec2["ticker"]
-            assert sec1["determinism_hash"] == sec2["determinism_hash"], (
-                f"Hash mismatch for {sec1['ticker']}: {sec1['determinism_hash']} != {sec2['determinism_hash']}"
-            )
+            assert (
+                sec1["determinism_hash"] == sec2["determinism_hash"]
+            ), f"Hash mismatch for {sec1['ticker']}: {sec1['determinism_hash']} != {sec2['determinism_hash']}"
             assert sec1["composite_score"] == sec2["composite_score"]
 
     def test_determinism_hash_changes_with_inputs(
@@ -257,6 +257,7 @@ class TestDeterminism:
 # =============================================================================
 # ACCEPTANCE CRITERION 2: MONOTONIC CAP INVARIANTS
 # =============================================================================
+
 
 class TestMonotonicCaps:
     """Tests for monotonic cap invariants: firing a cap can't increase score."""
@@ -324,7 +325,7 @@ class TestMonotonicCaps:
         capped, caps = _apply_monotonic_caps(
             score=high_score,
             liquidity_gate_status="FAIL",  # Cap at 35
-            runway_months=Decimal("5"),     # Cap at 40
+            runway_months=Decimal("5"),  # Cap at 40
             dilution_risk_bucket="SEVERE",  # Cap at 45
         )
 
@@ -339,6 +340,7 @@ class TestMonotonicCaps:
 # =============================================================================
 # ACCEPTANCE CRITERION 3: CONFIDENCE INVARIANTS
 # =============================================================================
+
 
 class TestConfidenceWeighting:
     """Tests for confidence invariants: lower confidence can't increase weight."""
@@ -388,7 +390,7 @@ class TestConfidenceWeighting:
             {"financial_data_state": "FULL"},
             {"financial_data_state": "NONE"},
             {"confidence": "-0.5"},  # Should be clamped
-            {"confidence": "1.5"},   # Should be clamped
+            {"confidence": "1.5"},  # Should be clamped
         ]
 
         for case in test_cases:
@@ -399,6 +401,7 @@ class TestConfidenceWeighting:
 # =============================================================================
 # ACCEPTANCE CRITERION 4: AGGREGATION INVARIANTS
 # =============================================================================
+
 
 class TestAggregationInvariants:
     """Tests for aggregation invariants: final always in [0,100]."""
@@ -422,9 +425,7 @@ class TestAggregationInvariants:
 
         for sec in result["ranked_securities"]:
             score = Decimal(sec["composite_score"])
-            assert Decimal("0") <= score <= Decimal("100"), (
-                f"Score {score} for {sec['ticker']} out of bounds"
-            )
+            assert Decimal("0") <= score <= Decimal("100"), f"Score {score} for {sec['ticker']} out of bounds"
 
     def test_hybrid_alpha_is_configured(self):
         """Hybrid aggregation alpha should be near 0.85."""
@@ -455,6 +456,7 @@ class TestAggregationInvariants:
 # =============================================================================
 # WRAPPER INTEGRATION TESTS
 # =============================================================================
+
 
 class TestDefensiveWrapper:
     """Tests for the defensive wrapper with v2 scoring."""
@@ -510,6 +512,7 @@ class TestDefensiveWrapper:
 # =============================================================================
 # V2 FEATURE PRESENCE TESTS
 # =============================================================================
+
 
 class TestV2Features:
     """Tests verifying v2 features are present in output."""
@@ -612,6 +615,7 @@ class TestV2Features:
 # GOLDEN HASH TEST (for regression)
 # =============================================================================
 
+
 class TestGoldenHash:
     """Golden hash test for determinism regression."""
 
@@ -626,16 +630,18 @@ class TestGoldenHash:
                 "excluded_securities": [],
             },
             "financial_result": {
-                "scores": [{
-                    "ticker": "TEST",
-                    "financial_score": "60.00",
-                    "financial_normalized": "60.00",
-                    "market_cap_mm": 1000,
-                    "runway_months": "24",
-                    "severity": "none",
-                    "flags": [],
-                    "financial_data_state": "FULL",
-                }],
+                "scores": [
+                    {
+                        "ticker": "TEST",
+                        "financial_score": "60.00",
+                        "financial_normalized": "60.00",
+                        "market_cap_mm": 1000,
+                        "runway_months": "24",
+                        "severity": "none",
+                        "flags": [],
+                        "financial_data_state": "FULL",
+                    }
+                ],
             },
             "catalyst_result": {
                 "summaries": {
@@ -652,14 +658,16 @@ class TestGoldenHash:
                 },
             },
             "clinical_result": {
-                "scores": [{
-                    "ticker": "TEST",
-                    "clinical_score": "55.00",
-                    "lead_phase": "phase_2",
-                    "severity": "none",
-                    "flags": [],
-                    "trial_count": 3,
-                }],
+                "scores": [
+                    {
+                        "ticker": "TEST",
+                        "clinical_score": "55.00",
+                        "lead_phase": "phase_2",
+                        "severity": "none",
+                        "flags": [],
+                        "trial_count": 3,
+                    }
+                ],
             },
             "as_of_date": "2026-01-15",
         }

@@ -1,4 +1,5 @@
 """Tests for scripts/make_ic_onepager.py — IC one-pager generator."""
+
 from __future__ import annotations
 
 import csv
@@ -15,10 +16,10 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from make_ic_onepager import generate_ic_onepager
 
-
 # ---------------------------------------------------------------------------
 # Fixture helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_json(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data), encoding="utf-8")
@@ -176,6 +177,7 @@ def _build_full_snapshot(tmp_path: Path) -> Path:
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestFullOnepager:
     def test_all_sections_present(self, tmp_path: Path) -> None:
         snap = _build_full_snapshot(tmp_path)
@@ -236,8 +238,7 @@ class TestMissingFiles:
 
     def test_missing_all_jsons(self, tmp_path: Path) -> None:
         snap = _build_full_snapshot(tmp_path)
-        for f in ["phase2_health.json", "phase2_run_delta_details.json",
-                   "catalyst_source_mix.json"]:
+        for f in ["phase2_health.json", "phase2_run_delta_details.json", "catalyst_source_mix.json"]:
             (snap / f).unlink()
         md = generate_ic_onepager(snap)
         # Should still produce a document with portfolio and tiers

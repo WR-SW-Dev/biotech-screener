@@ -3,17 +3,12 @@
 Tests for Partnership Validation Engine
 """
 
-import pytest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
-from partnership_engine import (
-    PartnershipEngine,
-    PartnerTier,
-    DealType,
-    PartnershipStrength,
-    Partnership,
-)
+import pytest
+
+from partnership_engine import DealType, Partnership, PartnershipEngine, PartnershipStrength, PartnerTier
 
 
 class TestPartnershipEngine:
@@ -458,8 +453,9 @@ class TestCompetitivePartnershipInteraction:
 
     def test_interaction_modifier_affects_ranking(self):
         """Verify CI + partnership interaction changes final scores."""
-        from src.modules.ic_enhancements import compute_interaction_terms
         from decimal import Decimal
+
+        from src.modules.ic_enhancements import compute_interaction_terms
 
         # Common inputs
         clinical = Decimal("70")
@@ -469,14 +465,22 @@ class TestCompetitivePartnershipInteraction:
 
         # Ticker A: uncrowded + exceptional partnership (should get +2.5)
         result_a = compute_interaction_terms(
-            clinical, fin_data, catalyst, stage, None,
+            clinical,
+            fin_data,
+            catalyst,
+            stage,
+            None,
             competitive_crowding="uncrowded",
             partnership_strength="exceptional",
         )
 
         # Ticker B: intense competition + no partnership (should get -1.5)
         result_b = compute_interaction_terms(
-            clinical, fin_data, catalyst, stage, None,
+            clinical,
+            fin_data,
+            catalyst,
+            stage,
+            None,
             competitive_crowding="highly_crowded",
             partnership_strength="unknown",
         )
@@ -499,11 +503,16 @@ class TestCompetitivePartnershipInteraction:
 
     def test_validated_crowded_soften(self):
         """Crowded but exceptional partnership gets small boost."""
-        from src.modules.ic_enhancements import compute_interaction_terms
         from decimal import Decimal
 
+        from src.modules.ic_enhancements import compute_interaction_terms
+
         result = compute_interaction_terms(
-            Decimal("70"), {"runway_months": 24}, Decimal("60"), "mid", None,
+            Decimal("70"),
+            {"runway_months": 24},
+            Decimal("60"),
+            "mid",
+            None,
             competitive_crowding="highly_crowded",
             partnership_strength="exceptional",
         )
@@ -513,11 +522,16 @@ class TestCompetitivePartnershipInteraction:
 
     def test_no_interaction_for_neutral_cases(self):
         """Neutral cases (moderate crowding, moderate partnership) get no modifier."""
-        from src.modules.ic_enhancements import compute_interaction_terms
         from decimal import Decimal
 
+        from src.modules.ic_enhancements import compute_interaction_terms
+
         result = compute_interaction_terms(
-            Decimal("70"), {"runway_months": 24}, Decimal("60"), "mid", None,
+            Decimal("70"),
+            {"runway_months": 24},
+            Decimal("60"),
+            "mid",
+            None,
             competitive_crowding="moderate",
             partnership_strength="moderate",
         )
@@ -527,11 +541,16 @@ class TestCompetitivePartnershipInteraction:
 
     def test_interaction_bounded_to_3(self):
         """Interaction modifier is bounded to ±3."""
-        from src.modules.ic_enhancements import compute_interaction_terms
         from decimal import Decimal
 
+        from src.modules.ic_enhancements import compute_interaction_terms
+
         result = compute_interaction_terms(
-            Decimal("70"), {"runway_months": 24}, Decimal("60"), "mid", None,
+            Decimal("70"),
+            {"runway_months": 24},
+            Decimal("60"),
+            "mid",
+            None,
             competitive_crowding="uncrowded",
             partnership_strength="exceptional",
         )
@@ -541,8 +560,9 @@ class TestCompetitivePartnershipInteraction:
 
     def test_end_to_end_scorer_uses_ci_partnership(self):
         """End-to-end test: final score differs based on CI+partnership data."""
-        from module_5_scoring_v3 import _score_single_ticker_v3, ScoringMode, NormalizationMethod
         from decimal import Decimal
+
+        from module_5_scoring_v3 import NormalizationMethod, ScoringMode, _score_single_ticker_v3
 
         # Minimal required inputs
         base_inputs = {
@@ -564,7 +584,12 @@ class TestCompetitivePartnershipInteraction:
             },
             "regime": "NEUTRAL",
             "mode": ScoringMode.DEFAULT,
-            "normalized_scores": {"clinical": Decimal("70"), "financial": Decimal("60"), "catalyst": Decimal("50"), "pos": None},
+            "normalized_scores": {
+                "clinical": Decimal("70"),
+                "financial": Decimal("60"),
+                "catalyst": Decimal("50"),
+                "pos": None,
+            },
             "cohort_key": "mid_small",
             "normalization_method": NormalizationMethod.COHORT,
             "peer_valuations": [],
@@ -575,15 +600,41 @@ class TestCompetitivePartnershipInteraction:
         # Score with uncrowded + exceptional partnership (should get boost)
         result_boosted = _score_single_ticker_v3(
             **base_inputs,
-            intensity_data={"competitive_intensity_score": 25, "crowding_level": "uncrowded", "competitive_position": "first_in_class", "competitor_count": 2, "has_approved_competition": False},
-            partnership_data={"partnership_score": 80, "partnership_strength": "exceptional", "partnership_count": 2, "top_tier_partners": 2, "total_deal_value": 1000, "top_partners": ["Pfizer", "Roche"]},
+            intensity_data={
+                "competitive_intensity_score": 25,
+                "crowding_level": "uncrowded",
+                "competitive_position": "first_in_class",
+                "competitor_count": 2,
+                "has_approved_competition": False,
+            },
+            partnership_data={
+                "partnership_score": 80,
+                "partnership_strength": "exceptional",
+                "partnership_count": 2,
+                "top_tier_partners": 2,
+                "total_deal_value": 1000,
+                "top_partners": ["Pfizer", "Roche"],
+            },
         )
 
         # Score with crowded + no partnership (should get penalty)
         result_penalized = _score_single_ticker_v3(
             **base_inputs,
-            intensity_data={"competitive_intensity_score": 90, "crowding_level": "highly_crowded", "competitive_position": "me_too", "competitor_count": 50, "has_approved_competition": True},
-            partnership_data={"partnership_score": 50, "partnership_strength": "unknown", "partnership_count": 0, "top_tier_partners": 0, "total_deal_value": 0, "top_partners": []},
+            intensity_data={
+                "competitive_intensity_score": 90,
+                "crowding_level": "highly_crowded",
+                "competitive_position": "me_too",
+                "competitor_count": 50,
+                "has_approved_competition": True,
+            },
+            partnership_data={
+                "partnership_score": 50,
+                "partnership_strength": "unknown",
+                "partnership_count": 0,
+                "top_tier_partners": 0,
+                "total_deal_value": 0,
+                "top_partners": [],
+            },
         )
 
         score_boosted = Decimal(str(result_boosted["composite_score"]))

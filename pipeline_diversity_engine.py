@@ -25,13 +25,12 @@ Version: 1.0.0
 
 import hashlib
 import json
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any, Set, Tuple
-from datetime import date
 from collections import Counter
 from dataclasses import dataclass
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -39,22 +38,24 @@ __author__ = "Wake Robin Capital Management"
 
 class PipelineRiskProfile(Enum):
     """Pipeline risk classification."""
-    SINGLE_ASSET = "single_asset"           # 1 program, highest binary risk
-    CONCENTRATED = "concentrated"            # 2-3 programs, high binary risk
-    FOCUSED = "focused"                      # 4-6 programs, moderate risk
-    DIVERSIFIED = "diversified"             # 7-12 programs, lower risk
-    BROAD_PORTFOLIO = "broad_portfolio"     # 13+ programs, institutional profile
+
+    SINGLE_ASSET = "single_asset"  # 1 program, highest binary risk
+    CONCENTRATED = "concentrated"  # 2-3 programs, high binary risk
+    FOCUSED = "focused"  # 4-6 programs, moderate risk
+    DIVERSIFIED = "diversified"  # 7-12 programs, lower risk
+    BROAD_PORTFOLIO = "broad_portfolio"  # 13+ programs, institutional profile
 
 
 class PlatformType(Enum):
     """Technology platform categories."""
+
     SMALL_MOLECULE = "small_molecule"
     ANTIBODY = "antibody"
     BISPECIFIC = "bispecific"
-    ADC = "adc"                    # Antibody-drug conjugate
+    ADC = "adc"  # Antibody-drug conjugate
     CAR_T = "car_t"
     GENE_THERAPY = "gene_therapy"
-    RNA = "rna"                    # mRNA, siRNA, ASO
+    RNA = "rna"  # mRNA, siRNA, ASO
     CELL_THERAPY = "cell_therapy"
     PROTEIN = "protein"
     VACCINE = "vaccine"
@@ -64,6 +65,7 @@ class PlatformType(Enum):
 @dataclass
 class PipelineProgram:
     """Individual program in a company's pipeline."""
+
     ticker: str
     program_name: Optional[str]
     nct_id: Optional[str]
@@ -117,11 +119,11 @@ class PipelineDiversityEngine:
 
     # Score adjustments by risk profile
     RISK_PROFILE_SCORE_ADJUSTMENTS: Dict[PipelineRiskProfile, Decimal] = {
-        PipelineRiskProfile.SINGLE_ASSET: Decimal("-15"),      # Higher risk, lower score
+        PipelineRiskProfile.SINGLE_ASSET: Decimal("-15"),  # Higher risk, lower score
         PipelineRiskProfile.CONCENTRATED: Decimal("-8"),
-        PipelineRiskProfile.FOCUSED: Decimal("0"),             # Baseline
+        PipelineRiskProfile.FOCUSED: Decimal("0"),  # Baseline
         PipelineRiskProfile.DIVERSIFIED: Decimal("8"),
-        PipelineRiskProfile.BROAD_PORTFOLIO: Decimal("12"),    # Institutional profile
+        PipelineRiskProfile.BROAD_PORTFOLIO: Decimal("12"),  # Institutional profile
     }
 
     # Platform validation bonus (having multiple programs proves platform works)
@@ -130,18 +132,18 @@ class PipelineDiversityEngine:
 
     # Indication diversity bonus
     INDICATION_DIVERSITY_THRESHOLDS = {
-        1: Decimal("0"),      # Single indication
-        2: Decimal("3"),      # Two indications
-        3: Decimal("6"),      # Three indications
-        4: Decimal("8"),      # Four+ indications
+        1: Decimal("0"),  # Single indication
+        2: Decimal("3"),  # Two indications
+        3: Decimal("6"),  # Three indications
+        4: Decimal("8"),  # Four+ indications
     }
 
     # Phase diversity bonus (having programs across multiple phases)
     PHASE_DIVERSITY_THRESHOLDS = {
-        1: Decimal("0"),      # Single phase
-        2: Decimal("4"),      # Two phases
-        3: Decimal("8"),      # Three phases
-        4: Decimal("10"),     # Four+ phases
+        1: Decimal("0"),  # Single phase
+        2: Decimal("4"),  # Two phases
+        3: Decimal("8"),  # Three phases
+        4: Decimal("10"),  # Four+ phases
     }
 
     def __init__(self):
@@ -153,7 +155,7 @@ class PipelineDiversityEngine:
         ticker: str,
         trial_records: List[Dict[str, Any]],
         as_of_date: date,
-        clinical_score_data: Optional[Dict[str, Any]] = None
+        clinical_score_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Calculate pipeline diversity score for a ticker.
@@ -205,15 +207,11 @@ class PipelineDiversityEngine:
 
         # 2. Phase diversity bonus
         phase_count = len([p for p, c in phase_distribution.items() if c > 0])
-        phase_diversity_bonus = self.PHASE_DIVERSITY_THRESHOLDS.get(
-            min(phase_count, 4), Decimal("10")
-        )
+        phase_diversity_bonus = self.PHASE_DIVERSITY_THRESHOLDS.get(min(phase_count, 4), Decimal("10"))
 
         # 3. Indication diversity bonus
         indication_count = len([i for i, c in indication_distribution.items() if c > 0])
-        indication_diversity_bonus = self.INDICATION_DIVERSITY_THRESHOLDS.get(
-            min(indication_count, 4), Decimal("8")
-        )
+        indication_diversity_bonus = self.INDICATION_DIVERSITY_THRESHOLDS.get(min(indication_count, 4), Decimal("8"))
 
         # 4. Platform validation bonus
         platform_validated = False
@@ -226,11 +224,7 @@ class PipelineDiversityEngine:
 
         # Calculate final score
         diversity_score = (
-            base_score
-            + risk_adjustment
-            + phase_diversity_bonus
-            + indication_diversity_bonus
-            + platform_bonus
+            base_score + risk_adjustment + phase_diversity_bonus + indication_diversity_bonus + platform_bonus
         )
 
         # Clamp to 0-100
@@ -277,20 +271,14 @@ class PipelineDiversityEngine:
         }
 
     def _extract_programs(
-        self,
-        ticker: str,
-        trial_records: List[Dict[str, Any]],
-        as_of_date: date
+        self, ticker: str, trial_records: List[Dict[str, Any]], as_of_date: date
     ) -> List[PipelineProgram]:
         """Extract distinct programs from trial records."""
         programs = []
         seen_nct_ids: Set[str] = set()
 
         for trial in trial_records:
-            trial_ticker = (
-                trial.get("lead_sponsor_ticker") or
-                trial.get("ticker") or ""
-            ).upper()
+            trial_ticker = (trial.get("lead_sponsor_ticker") or trial.get("ticker") or "").upper()
 
             if trial_ticker != ticker:
                 continue
@@ -309,23 +297,21 @@ class PipelineDiversityEngine:
             indication = self._extract_indication(trial.get("conditions", []))
             platform = self._infer_platform(trial.get("interventions", []))
 
-            programs.append(PipelineProgram(
-                ticker=ticker,
-                program_name=trial.get("title", "")[:50] if trial.get("title") else None,
-                nct_id=nct_id,
-                phase=phase,
-                indication=indication,
-                platform_type=platform,
-                is_lead_program=False,
-            ))
+            programs.append(
+                PipelineProgram(
+                    ticker=ticker,
+                    program_name=trial.get("title", "")[:50] if trial.get("title") else None,
+                    nct_id=nct_id,
+                    phase=phase,
+                    indication=indication,
+                    platform_type=platform,
+                    is_lead_program=False,
+                )
+            )
 
         return programs
 
-    def _programs_from_clinical_data(
-        self,
-        ticker: str,
-        clinical_data: Dict[str, Any]
-    ) -> List[PipelineProgram]:
+    def _programs_from_clinical_data(self, ticker: str, clinical_data: Dict[str, Any]) -> List[PipelineProgram]:
         """Create synthetic programs from clinical score data."""
         programs = []
 
@@ -353,15 +339,17 @@ class PipelineDiversityEngine:
 
         for phase in estimated_phases:
             for i in range(min(programs_per_phase, 10)):  # Cap at 10 per phase
-                programs.append(PipelineProgram(
-                    ticker=ticker,
-                    program_name=f"Program_{phase}_{i+1}",
-                    nct_id=None,
-                    phase=phase,
-                    indication="unknown",
-                    platform_type=PlatformType.UNKNOWN,
-                    is_lead_program=(i == 0 and phase == phase_normalized),
-                ))
+                programs.append(
+                    PipelineProgram(
+                        ticker=ticker,
+                        program_name=f"Program_{phase}_{i+1}",
+                        nct_id=None,
+                        phase=phase,
+                        indication="unknown",
+                        platform_type=PlatformType.UNKNOWN,
+                        is_lead_program=(i == 0 and phase == phase_normalized),
+                    )
+                )
 
         return programs
 
@@ -484,11 +472,7 @@ class PipelineDiversityEngine:
         counter = Counter(p.platform_type for p in programs)
         return dict(counter)
 
-    def _classify_risk_profile(
-        self,
-        weighted_count: Decimal,
-        raw_count: int = 0
-    ) -> PipelineRiskProfile:
+    def _classify_risk_profile(self, weighted_count: Decimal, raw_count: int = 0) -> PipelineRiskProfile:
         """
         Classify risk profile based on weighted program count.
 
@@ -545,10 +529,7 @@ class PipelineDiversityEngine:
         }
 
     def score_universe(
-        self,
-        universe: List[Dict[str, Any]],
-        trial_records: List[Dict[str, Any]],
-        as_of_date: date
+        self, universe: List[Dict[str, Any]], trial_records: List[Dict[str, Any]], as_of_date: date
     ) -> Dict[str, Any]:
         """
         Score pipeline diversity for an entire universe.
@@ -575,24 +556,23 @@ class PipelineDiversityEngine:
                 clinical_score_data=clinical_data,
             )
 
-            scores.append({
-                "ticker": ticker,
-                "diversity_score": result["diversity_score"],
-                "risk_profile": result["risk_profile"],
-                "program_count": result["program_count"],
-                "phase_diversity_count": result["phase_diversity_count"],
-                "indication_diversity_count": result["indication_diversity_count"],
-                "platform_validated": result["platform_validated"],
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "diversity_score": result["diversity_score"],
+                    "risk_profile": result["risk_profile"],
+                    "program_count": result["program_count"],
+                    "phase_diversity_count": result["phase_diversity_count"],
+                    "indication_diversity_count": result["indication_diversity_count"],
+                    "platform_validated": result["platform_validated"],
+                }
+            )
 
             profile = result["risk_profile"]
             risk_distribution[profile] = risk_distribution.get(profile, 0) + 1
 
         # Content hash
-        scores_json = json.dumps(
-            [{"t": s["ticker"], "s": str(s["diversity_score"])} for s in scores],
-            sort_keys=True
-        )
+        scores_json = json.dumps([{"t": s["ticker"], "s": str(s["diversity_score"])} for s in scores], sort_keys=True)
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
         return {

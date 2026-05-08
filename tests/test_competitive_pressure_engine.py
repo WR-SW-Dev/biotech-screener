@@ -11,14 +11,12 @@ Covers:
 - Edge cases
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
-from competitive_pressure_engine import (
-    CompetitivePressureEngine,
-    TickerCompetitiveScore,
-)
+import pytest
+
+from competitive_pressure_engine import CompetitivePressureEngine, TickerCompetitiveScore
 
 
 class TestCompetitivePressureEngineInit:

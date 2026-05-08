@@ -11,28 +11,29 @@ Tests data consistency validation utilities:
 - Record completeness validation
 """
 
-import pytest
+import sys
 from datetime import date
 from pathlib import Path
-import sys
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common.data_consistency import (
     ConsistencyIssue,
     ConsistencyReport,
+    check_coverage,
     extract_tickers,
     find_duplicates,
-    check_coverage,
+    log_consistency_report,
     validate_data_consistency,
     validate_record_completeness,
-    log_consistency_report,
 )
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_universe():
@@ -76,6 +77,7 @@ def sample_market_data():
 # ============================================================================
 # CONSISTENCY ISSUE TESTS
 # ============================================================================
+
 
 class TestConsistencyIssue:
     """Tests for ConsistencyIssue dataclass."""
@@ -135,6 +137,7 @@ class TestConsistencyIssue:
 # ============================================================================
 # CONSISTENCY REPORT TESTS
 # ============================================================================
+
 
 class TestConsistencyReport:
     """Tests for ConsistencyReport dataclass."""
@@ -205,6 +208,7 @@ class TestConsistencyReport:
 # EXTRACT TICKERS TESTS
 # ============================================================================
 
+
 class TestExtractTickers:
     """Tests for extract_tickers function."""
 
@@ -272,6 +276,7 @@ class TestExtractTickers:
 # FIND DUPLICATES TESTS
 # ============================================================================
 
+
 class TestFindDuplicates:
     """Tests for find_duplicates function."""
 
@@ -330,6 +335,7 @@ class TestFindDuplicates:
 # CHECK COVERAGE TESTS
 # ============================================================================
 
+
 class TestCheckCoverage:
     """Tests for check_coverage function."""
 
@@ -381,6 +387,7 @@ class TestCheckCoverage:
 # VALIDATE DATA CONSISTENCY TESTS
 # ============================================================================
 
+
 class TestValidateDataConsistency:
     """Tests for validate_data_consistency function."""
 
@@ -404,8 +411,7 @@ class TestValidateDataConsistency:
         )
 
         # Should have a warning (66.7% coverage < 80%)
-        assert any(i.category == "missing" and "Financial" in i.message
-                   for i in report.issues)
+        assert any(i.category == "missing" and "Financial" in i.message for i in report.issues)
 
     def test_detects_orphan_records(self, sample_universe):
         """Should detect orphan records."""
@@ -449,8 +455,7 @@ class TestValidateDataConsistency:
             trial_records=trials_with_dup,
         )
 
-        dup_issues = [i for i in report.issues
-                      if i.category == "duplicate" and "Trial" in i.message]
+        dup_issues = [i for i in report.issues if i.category == "duplicate" and "Trial" in i.message]
         assert len(dup_issues) > 0
 
     def test_coverage_below_threshold_is_error(self, sample_universe):
@@ -463,8 +468,7 @@ class TestValidateDataConsistency:
             min_coverage_pct=50.0,  # 33% < 50%
         )
 
-        error_issues = [i for i in report.issues
-                        if i.severity == "error" and i.category == "missing"]
+        error_issues = [i for i in report.issues if i.severity == "error" and i.category == "missing"]
         assert len(error_issues) > 0
 
     def test_stats_populated(self, sample_universe, sample_financial_records):
@@ -495,6 +499,7 @@ class TestValidateDataConsistency:
 # ============================================================================
 # VALIDATE RECORD COMPLETENESS TESTS
 # ============================================================================
+
 
 class TestValidateRecordCompleteness:
     """Tests for validate_record_completeness function."""
@@ -585,6 +590,7 @@ class TestValidateRecordCompleteness:
 # LOG CONSISTENCY REPORT TESTS
 # ============================================================================
 
+
 class TestLogConsistencyReport:
     """Tests for log_consistency_report function."""
 
@@ -602,6 +608,7 @@ class TestLogConsistencyReport:
 # ============================================================================
 # EDGE CASE TESTS
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests for data consistency validation."""
@@ -655,6 +662,7 @@ class TestEdgeCases:
 # ============================================================================
 # DETERMINISM TESTS
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests verifying deterministic behavior."""

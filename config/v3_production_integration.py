@@ -25,39 +25,39 @@ Version: 1.1.0
 Created: 2026-01-18
 Updated: 2026-01-18 - Added intelligent governance integration
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set
 from enum import Enum
-
+from typing import Any, Dict, List, Optional, Set
 
 # =============================================================================
 # OPTIMIZED COMPONENT WEIGHTS (Scipy Differential Evolution - 2026-01-19)
 # =============================================================================
 
 COMPONENT_WEIGHTS_V3 = {
-    'clinical': 0.223,     # was 0.280 (-5.7pp)
-    'financial': 0.257,    # was 0.250 (+0.7pp)
-    'catalyst': 0.156,     # was 0.170 (-1.4pp)
-    'pos': 0.232,          # was 0.150 (+8.2pp) ← KEY CHANGE
-    'momentum': 0.102,     # was 0.100 (+0.2pp)
-    'valuation': 0.030     # was 0.050 (-2.0pp)
+    "clinical": 0.223,  # was 0.280 (-5.7pp)
+    "financial": 0.257,  # was 0.250 (+0.7pp)
+    "catalyst": 0.156,  # was 0.170 (-1.4pp)
+    "pos": 0.232,  # was 0.150 (+8.2pp) ← KEY CHANGE
+    "momentum": 0.102,  # was 0.100 (+0.2pp)
+    "valuation": 0.030,  # was 0.050 (-2.0pp)
 }
 
 # Optimization metadata for audit trail
 WEIGHT_OPTIMIZATION_METADATA = {
-    'optimization_date': '2026-01-19',
-    'method': 'scipy_differential_evolution',
-    'training_period': '2022-01-01 to 2024-12-31',
-    'baseline_sharpe': 3.34,
-    'optimized_sharpe': 4.26,
-    'improvement_pct': 27.6,
-    'oos_validated': True,
-    'deployment_approved_by': 'Darren Schulz',
-    'next_review_date': '2026-04-19',
-    'key_finding': 'PoS should be weighted 23% (was 15%)'
+    "optimization_date": "2026-01-19",
+    "method": "scipy_differential_evolution",
+    "training_period": "2022-01-01 to 2024-12-31",
+    "baseline_sharpe": 3.34,
+    "optimized_sharpe": 4.26,
+    "improvement_pct": 27.6,
+    "oos_validated": True,
+    "deployment_approved_by": "Darren Schulz",
+    "next_review_date": "2026-04-19",
+    "key_finding": "PoS should be weighted 23% (was 15%)",
 }
 
 
@@ -70,19 +70,15 @@ WEIGHT_OPTIMIZATION_METADATA = {
 
 POS_CONFIDENCE_CONFIG = {
     # Minimum confidence to apply full PoS weight
-    'min_confidence_full_weight': 0.60,
-
+    "min_confidence_full_weight": 0.60,
     # Below this threshold, set effective PoS weight to 0 and renormalize
-    'min_confidence_threshold': 0.40,
-
+    "min_confidence_threshold": 0.40,
     # Effective weight formula: w_pos_eff = w_pos * pos_conf (when conf >= threshold)
-    'scale_by_confidence': True,
-
+    "scale_by_confidence": True,
     # Log coverage per run to detect drift
-    'log_coverage_metrics': True,
-
+    "log_coverage_metrics": True,
     # Alert if coverage drops below this
-    'min_coverage_alert_threshold': 0.70,
+    "min_coverage_alert_threshold": 0.70,
 }
 
 
@@ -98,23 +94,18 @@ POS_CONFIDENCE_CONFIG = {
 
 SCORING_VERSION_CONFIG = {
     # Primary scorer (production rankings)
-    'default_version': 'v3',
-
+    "default_version": "v3",
     # Shadow scorer (logged for diff monitoring, not used for ranking)
-    'shadow_version': 'v2',
-
+    "shadow_version": "v2",
     # Enable shadow scoring (runs v2 in parallel, logs diffs)
-    'enable_shadow_scoring': True,
-
+    "enable_shadow_scoring": True,
     # Fallback to shadow version if primary fails validation
-    'fallback_on_primary_failure': True,
-
+    "fallback_on_primary_failure": True,
     # Log top-N rank differences between v3 and v2
-    'diff_report_top_n': 10,
-
+    "diff_report_top_n": 10,
     # Alert if >N tickers have rank divergence > threshold
-    'rank_divergence_alert_count': 5,
-    'rank_divergence_threshold': 15,
+    "rank_divergence_alert_count": 5,
+    "rank_divergence_threshold": 15,
 }
 
 
@@ -125,41 +116,36 @@ SCORING_VERSION_CONFIG = {
 
 DIFF_MONITORING_CONFIG = {
     # Generate diff report each run
-    'enabled': True,
-
+    "enabled": True,
     # Number of top rank differences to report
-    'top_n_diffs': 10,
-
+    "top_n_diffs": 10,
     # Include reason codes explaining the rank change
-    'include_reason_codes': True,
-
+    "include_reason_codes": True,
     # Reason code categories (in order of priority)
-    'reason_code_priority': [
-        'clinical_signal_change',     # Clinical score moved significantly
-        'financial_gate_change',      # Financial severity changed
-        'catalyst_event',             # New catalyst or catalyst decay
-        'pos_mapping_change',         # PoS indication mapping changed
-        'momentum_signal',            # Price momentum moved ranks
-        'valuation_peer_change',      # Peer valuation comparison changed
-        'smart_money_signal',         # 13F overlap change
-        'interaction_effect',         # Non-linear interaction triggered
+    "reason_code_priority": [
+        "clinical_signal_change",  # Clinical score moved significantly
+        "financial_gate_change",  # Financial severity changed
+        "catalyst_event",  # New catalyst or catalyst decay
+        "pos_mapping_change",  # PoS indication mapping changed
+        "momentum_signal",  # Price momentum moved ranks
+        "valuation_peer_change",  # Peer valuation comparison changed
+        "smart_money_signal",  # 13F overlap change
+        "interaction_effect",  # Non-linear interaction triggered
     ],
-
     # Minimum contribution % to be flagged as reason
-    'min_contribution_for_reason': 0.20,
-
+    "min_contribution_for_reason": 0.20,
     # Output format
-    'report_format': 'json',  # 'json' or 'markdown'
-
+    "report_format": "json",  # 'json' or 'markdown'
     # Log to separate file for easy monitoring
-    'log_to_separate_file': True,
-    'diff_report_path': 'logs/v3_v2_diff_report.json',
+    "log_to_separate_file": True,
+    "diff_report_path": "logs/v3_v2_diff_report.json",
 }
 
 
 # =============================================================================
 # FEATURE FLAG DEFAULTS
 # =============================================================================
+
 
 class FeatureFlags:
     """
@@ -176,17 +162,17 @@ class FeatureFlags:
     # =========================================================================
 
     # Core v2 features carried forward (proven stable)
-    MONOTONIC_CAPS: bool = True              # Risk gates can't be "outvoted"
-    CONFIDENCE_WEIGHTING: bool = True        # Module confidence affects weights
-    HYBRID_AGGREGATION: bool = True          # weighted_sum + weakest_link blend
-    DETERMINISM_HASH: bool = True            # SHA256 audit trail
-    WINSORIZED_NORMALIZATION: bool = True    # Percentile rank with winsorization
+    MONOTONIC_CAPS: bool = True  # Risk gates can't be "outvoted"
+    CONFIDENCE_WEIGHTING: bool = True  # Module confidence affects weights
+    HYBRID_AGGREGATION: bool = True  # weighted_sum + weakest_link blend
+    DETERMINISM_HASH: bool = True  # SHA256 audit trail
+    WINSORIZED_NORMALIZATION: bool = True  # Percentile rank with winsorization
 
     # V3 features proven stable in backtest
-    CATALYST_DECAY: bool = True              # Time-based IC decay for catalyst events
-    PRICE_MOMENTUM: bool = True              # 60-day relative strength vs XBI
-    PEER_VALUATION: bool = True              # MCap-per-asset peer comparison
-    SMART_MONEY_OVERLAP: bool = True         # 13F overlap counting
+    CATALYST_DECAY: bool = True  # Time-based IC decay for catalyst events
+    PRICE_MOMENTUM: bool = True  # 60-day relative strength vs XBI
+    PEER_VALUATION: bool = True  # MCap-per-asset peer comparison
+    SMART_MONEY_OVERLAP: bool = True  # 13F overlap counting
 
     # =========================================================================
     # TIER 2: MONITORED FEATURES (ON by default, logged for watchlist)
@@ -196,11 +182,11 @@ class FeatureFlags:
     # If anomalies detected, can be disabled without code change
 
     VOLATILITY_ADJUSTED_SCORING: bool = True  # Vol adjustment to scores/weights
-    SHRINKAGE_NORMALIZATION: bool = True      # Bayesian cohort adjustment
+    SHRINKAGE_NORMALIZATION: bool = True  # Bayesian cohort adjustment
 
     # Smart money V2 enhancements
-    SMART_MONEY_TIER_WEIGHTING: bool = True   # Tier1/Tier2/Tier3 weighting
-    SMART_MONEY_POSITION_CHANGES: bool = True # NEW/INCREASE/HOLD/DECREASE/EXIT
+    SMART_MONEY_TIER_WEIGHTING: bool = True  # Tier1/Tier2/Tier3 weighting
+    SMART_MONEY_POSITION_CHANGES: bool = True  # NEW/INCREASE/HOLD/DECREASE/EXIT
 
     # =========================================================================
     # TIER 3: EXPERIMENTAL FEATURES (OFF by default, require explicit opt-in)
@@ -209,9 +195,9 @@ class FeatureFlags:
     # These features showed promise but need more live validation
     # Can be enabled via --enable-experimental or config override
 
-    INTERACTION_TERMS: bool = False           # Cross-factor synergies/penalties
-    ADAPTIVE_WEIGHT_LEARNING: bool = False    # Historical IC optimization
-    REGIME_ADAPTIVE_WEIGHTS: bool = False     # Bull/Bear regime adjustments
+    INTERACTION_TERMS: bool = False  # Cross-factor synergies/penalties
+    ADAPTIVE_WEIGHT_LEARNING: bool = False  # Historical IC optimization
+    REGIME_ADAPTIVE_WEIGHTS: bool = False  # Bull/Bear regime adjustments
 
     # Cap for interaction term impact (even when enabled)
     INTERACTION_TERMS_MAX_ADJUSTMENT: Decimal = Decimal("3.0")  # Max ±3 points
@@ -232,7 +218,7 @@ class FeatureFlags:
     BUSINESS_LOGIC_INTERACTIONS: bool = True  # ON - proven stable
 
     # Ensemble ranking (multiple ranking perspectives: composite, momentum, value)
-    ENSEMBLE_RANKING: bool = False            # OFF - experimental
+    ENSEMBLE_RANKING: bool = False  # OFF - experimental
 
     # Regime-adaptive weight orchestration (combines base + Sharpe + regime multipliers)
     REGIME_WEIGHT_ORCHESTRATION: bool = True  # ON - proven stable
@@ -244,6 +230,7 @@ class FeatureFlags:
 # =============================================================================
 # LOGGING REQUIREMENTS
 # =============================================================================
+
 
 class LoggingConfig:
     """
@@ -304,10 +291,8 @@ class LoggingConfig:
     ALERT_THRESHOLDS: Dict[str, Decimal] = {
         # If >N% of tickers hit this cap, raise alert
         "monotonic_caps_pct_threshold": Decimal("0.30"),
-
         # If interaction adjustment exceeds this, raise alert
         "interaction_terms_max_alert": Decimal("2.5"),
-
         # If single ticker jumps more than N ranks vs v2, log warning
         "rank_divergence_threshold": 10,
     }
@@ -316,6 +301,7 @@ class LoggingConfig:
 # =============================================================================
 # FALLBACK THRESHOLDS
 # =============================================================================
+
 
 class FallbackConfig:
     """
@@ -368,6 +354,7 @@ class FallbackConfig:
 # =============================================================================
 # INTELLIGENT GOVERNANCE CONFIGURATION (NEW)
 # =============================================================================
+
 
 class IntelligentGovernanceConfig:
     """
@@ -461,8 +448,8 @@ class IntelligentGovernanceConfig:
 
     # Weights for ensemble ranking perspectives
     ENSEMBLE_COMPOSITE_WEIGHT: Decimal = Decimal("0.50")  # Standard weighted
-    ENSEMBLE_MOMENTUM_WEIGHT: Decimal = Decimal("0.25")   # Trend-following
-    ENSEMBLE_VALUE_WEIGHT: Decimal = Decimal("0.25")      # Value/catalyst
+    ENSEMBLE_MOMENTUM_WEIGHT: Decimal = Decimal("0.25")  # Trend-following
+    ENSEMBLE_VALUE_WEIGHT: Decimal = Decimal("0.25")  # Value/catalyst
 
     # =========================================================================
     # REGIME ADAPTATION PARAMETERS
@@ -562,13 +549,10 @@ class IntelligentGovernanceLogging:
     GOVERNANCE_ALERT_THRESHOLDS: Dict[str, Decimal] = {
         # Alert if interaction adjustment exceeds this
         "interaction_max_alert": Decimal("2.5"),
-
         # Alert if Sharpe optimization confidence below this
         "sharpe_min_confidence_alert": Decimal("0.30"),
-
         # Alert if ensemble rank divergence exceeds this
         "ensemble_max_divergence_alert": 15,
-
         # Alert if regime weight delta exceeds this
         "regime_delta_alert": Decimal("0.12"),
     }
@@ -632,9 +616,11 @@ class IntelligentGovernanceFallbacks:
 # SANITY OVERRIDE MECHANISM
 # =============================================================================
 
+
 @dataclass
 class SanityOverrideResult:
     """Result of sanity override check."""
+
     ticker: str
     v3_rank: int
     v2_rank: int
@@ -678,20 +664,20 @@ class SanityOverrideConfig:
 
     # Valid driving factors (in order of trust)
     TRUSTED_DRIVING_FACTORS: List[str] = [
-        "clinical",      # Strong clinical signal
-        "financial",     # Clear financial improvement
-        "catalyst",      # Near-term catalyst
+        "clinical",  # Strong clinical signal
+        "financial",  # Clear financial improvement
+        "catalyst",  # Near-term catalyst
     ]
 
     MONITORED_DRIVING_FACTORS: List[str] = [
-        "momentum",      # Price momentum - can be noise
-        "valuation",     # Peer valuation - can be stale
-        "smart_money",   # 13F overlap - 45-day lag
+        "momentum",  # Price momentum - can be noise
+        "valuation",  # Peer valuation - can be stale
+        "smart_money",  # 13F overlap - 45-day lag
     ]
 
     EXPERIMENTAL_DRIVING_FACTORS: List[str] = [
-        "interaction",   # Interaction terms - high variance
-        "adaptive",      # Adaptive weights - can overfit
+        "interaction",  # Interaction terms - high variance
+        "adaptive",  # Adaptive weights - can overfit
     ]
 
     # =========================================================================
@@ -780,9 +766,7 @@ def check_sanity_override(
     enhancements = score_breakdown.get("enhancements", {})
 
     # Check interaction terms
-    interaction_adj = Decimal(str(
-        score_breakdown.get("interaction_terms", {}).get("total_adjustment", "0")
-    ))
+    interaction_adj = Decimal(str(score_breakdown.get("interaction_terms", {}).get("total_adjustment", "0")))
     if abs(interaction_adj) > Decimal("1.5"):
         driving_factor = "interaction"
 
@@ -831,10 +815,8 @@ V3_PRODUCTION_DEFAULTS = {
     # =========================================================================
     # MODULE 5 V3 CONFIGURATION
     # =========================================================================
-
     # Scoring mode: Always start with ENHANCED if PoS data available
     "default_scoring_mode": "enhanced",
-
     # Feature flags
     "feature_flags": {
         # TIER 1: ON by default
@@ -846,34 +828,29 @@ V3_PRODUCTION_DEFAULTS = {
         "momentum": True,
         "valuation": True,
         "smart_money": True,
-
         # TIER 2: ON with monitoring
         "volatility_adjustment": True,
         "shrinkage_normalization": True,
         "smart_money_tiers": True,
         "smart_money_changes": True,
-
         # TIER 3: OFF until explicit opt-in
         "interaction_terms": False,
         "adaptive_weights": False,
         "regime_adaptation": False,
     },
-
     # =========================================================================
     # WEIGHTS
     # =========================================================================
-
     # Optimized weights from scipy differential evolution (2026-01-19)
     # Sharpe improvement: 3.34 -> 4.26 (+27.6%)
     "v3_enhanced_weights": {
-        "clinical": "0.223",    # was 0.28 (-5.7pp)
-        "financial": "0.257",   # was 0.25 (+0.7pp)
-        "catalyst": "0.156",    # was 0.17 (-1.4pp)
-        "pos": "0.232",         # was 0.15 (+8.2pp) KEY CHANGE
-        "momentum": "0.102",    # was 0.10 (+0.2pp)
-        "valuation": "0.030",   # was 0.05 (-2.0pp)
+        "clinical": "0.223",  # was 0.28 (-5.7pp)
+        "financial": "0.257",  # was 0.25 (+0.7pp)
+        "catalyst": "0.156",  # was 0.17 (-1.4pp)
+        "pos": "0.232",  # was 0.15 (+8.2pp) KEY CHANGE
+        "momentum": "0.102",  # was 0.10 (+0.2pp)
+        "valuation": "0.030",  # was 0.05 (-2.0pp)
     },
-
     "v3_partial_weights": {
         "clinical": "0.35",
         "financial": "0.30",
@@ -881,57 +858,46 @@ V3_PRODUCTION_DEFAULTS = {
         "momentum": "0.10",
         "valuation": "0.05",
     },
-
     "v3_default_weights": {
         "clinical": "0.40",
         "financial": "0.35",
         "catalyst": "0.25",
     },
-
     # =========================================================================
     # FALLBACKS
     # =========================================================================
-
     "min_market_data_coverage": "0.50",
     "min_momentum_completeness": "0.50",
     "min_peer_count": 5,
     "min_cohort_size": 10,
     "min_adaptive_confidence": "0.40",
     "max_weight_l1_change": "0.15",
-
     # =========================================================================
     # SANITY OVERRIDES
     # =========================================================================
-
     "sanity_rank_divergence_threshold": 25,
     "sanity_top_bucket_jump_threshold": 30,
     "sanity_experimental_confidence_threshold": "0.60",
     "sanity_monitored_confidence_threshold": "0.50",
-
     # =========================================================================
     # PIT GATES
     # =========================================================================
-
     "enforce_pit_gates": True,
     "embargo_months": 1,
     "shrinkage_lambda": "0.70",
     "smooth_gamma": "0.80",
-
     # =========================================================================
     # INTELLIGENT GOVERNANCE (NEW)
     # =========================================================================
-
     "intelligent_governance": {
         # Master control knob: 0.0 (conservative) to 1.0 (aggressive)
         # Production default: 0.5 (balanced)
         "smartness": "0.5",
-
         # Feature toggles
         "enable_sharpe_optimization": False,  # OFF - needs historical data
-        "enable_interaction_effects": True,   # ON - proven stable
-        "enable_ensemble_ranking": False,     # OFF - experimental
-        "enable_regime_adaptation": True,     # ON - proven stable
-
+        "enable_interaction_effects": True,  # ON - proven stable
+        "enable_ensemble_ranking": False,  # OFF - experimental
+        "enable_regime_adaptation": True,  # ON - proven stable
         # Sharpe optimization (when enabled)
         "sharpe": {
             "min_periods": 12,
@@ -942,7 +908,6 @@ V3_PRODUCTION_DEFAULTS = {
             "max_weight": "0.60",
             "min_confidence": "0.40",
         },
-
         # Interaction effects
         "interactions": {
             "max_adjustment": "3.0",
@@ -950,7 +915,6 @@ V3_PRODUCTION_DEFAULTS = {
             "conflict_cap": "2.0",
             "min_confidence": "0.40",
         },
-
         # Ensemble ranking (when enabled)
         "ensemble": {
             "composite_weight": "0.50",
@@ -958,7 +922,6 @@ V3_PRODUCTION_DEFAULTS = {
             "value_weight": "0.25",
             "min_agreement": "0.30",
         },
-
         # Regime adaptation
         "regime": {
             "max_weight_delta": "0.15",
@@ -1032,16 +995,12 @@ __all__ = [
     # Optimized weights (2026-01-19)
     "COMPONENT_WEIGHTS_V3",
     "WEIGHT_OPTIMIZATION_METADATA",
-
     # PoS confidence gating
     "POS_CONFIDENCE_CONFIG",
-
     # V3 default / V2 shadow configuration
     "SCORING_VERSION_CONFIG",
-
     # Diff monitoring
     "DIFF_MONITORING_CONFIG",
-
     # Existing exports
     "FeatureFlags",
     "LoggingConfig",
@@ -1051,7 +1010,6 @@ __all__ = [
     "check_sanity_override",
     "V3_PRODUCTION_DEFAULTS",
     "REQUIRED_REGRESSION_TESTS",
-
     # Intelligent Governance exports (NEW)
     "IntelligentGovernanceConfig",
     "IntelligentGovernanceLogging",
@@ -1063,6 +1021,7 @@ __all__ = [
 # =============================================================================
 # FACTORY FUNCTION FOR INTELLIGENT GOVERNANCE LAYER
 # =============================================================================
+
 
 def create_intelligent_governance_layer(
     config: Optional[Dict[str, Any]] = None,

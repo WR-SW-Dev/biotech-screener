@@ -17,55 +17,55 @@ Run with: pytest tests/test_module_3_vnext.py -v
 
 import hashlib
 import json
-import pytest
+import sys
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import List
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from module_3_schema import (
+    EVENT_DEFAULT_CONFIDENCE,
+    EVENT_SEVERITY_MAP,
     SCHEMA_VERSION,
     SCORE_VERSION,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-    CatalystWindowBucket,
     CatalystEventV2,
-    TickerCatalystSummaryV2,
+    CatalystWindowBucket,
+    ConfidenceLevel,
     DiagnosticCounts,
-    EVENT_SEVERITY_MAP,
-    EVENT_DEFAULT_CONFIDENCE,
+    EventSeverity,
+    EventType,
+    TickerCatalystSummaryV2,
     canonical_json_dumps,
+    compute_catalyst_window_bucket,
     validate_event_schema,
     validate_summary_schema,
-    compute_catalyst_window_bucket,
 )
-
 from module_3_scoring import (
-    calculate_score_override,
+    _PROXIMITY_HORIZON,
+    _PROXIMITY_PLATEAU_END,
+    _PROXIMITY_RAMP_END,
+    _PROXIMITY_SATURATION_K,
+    PROXIMITY_NEUTRAL_BASE,
+    SCORE_DEFAULT,
+    SCORE_OVERRIDE_CRITICAL_POSITIVE,
+    SCORE_OVERRIDE_SEVERE_NEGATIVE,
+    _proximity_time_weight,
     calculate_score_blended,
+    calculate_score_override,
     calculate_ticker_catalyst_score,
+    compute_bucket_proximity_score,
     compute_recency_weight,
     compute_staleness_factor,
-    compute_bucket_proximity_score,
-    _proximity_time_weight,
-    SCORE_OVERRIDE_SEVERE_NEGATIVE,
-    SCORE_OVERRIDE_CRITICAL_POSITIVE,
-    SCORE_DEFAULT,
-    PROXIMITY_NEUTRAL_BASE,
-    _PROXIMITY_RAMP_END,
-    _PROXIMITY_PLATEAU_END,
-    _PROXIMITY_HORIZON,
-    _PROXIMITY_SATURATION_K,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_events() -> List[CatalystEventV2]:
@@ -168,6 +168,7 @@ def legacy_summary_fixture() -> dict:
 # T1: DETERMINISM / BYTE-IDENTICAL
 # =============================================================================
 
+
 class TestDeterminism:
     """T1: Verify byte-identical outputs across runs."""
 
@@ -232,6 +233,7 @@ class TestDeterminism:
 # =============================================================================
 # T2: PIT SAFETY
 # =============================================================================
+
 
 class TestPITSafety:
     """T2: Point-in-time safety - no future data."""
@@ -311,6 +313,7 @@ class TestPITSafety:
 # T3: STABLE ORDERING
 # =============================================================================
 
+
 class TestStableOrdering:
     """T3: Verify ordering remains stable across runs."""
 
@@ -338,16 +341,30 @@ class TestStableOrdering:
     def test_events_sorted_by_date_first(self):
         """Events are sorted by date first."""
         e1 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-20",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-20",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-20",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-20",
         )
         e2 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT002", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-10",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-10",
+            ticker="TEST",
+            nct_id="NCT002",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-10",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-10",
         )
 
         sorted_events = sorted([e1, e2], key=lambda e: e.sort_key())
@@ -358,16 +375,30 @@ class TestStableOrdering:
     def test_null_dates_sort_last(self):
         """Events with null dates sort after events with dates."""
         e1 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date=None,  # Null
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-20",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date=None,  # Null
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-20",
         )
         e2 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT002", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-10",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-10",
+            ticker="TEST",
+            nct_id="NCT002",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-10",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-10",
         )
 
         sorted_events = sorted([e1, e2], key=lambda e: e.sort_key())
@@ -379,15 +410,23 @@ class TestStableOrdering:
         """Shuffled input produces same sorted output."""
         events = [
             CatalystEventV2(
-                ticker="TEST", nct_id=f"NCT{i:03d}", event_type=EventType.CT_STATUS_UPGRADE,
-                event_severity=EventSeverity.POSITIVE, event_date=f"2024-01-{10+i:02d}",
-                field_changed="s", prior_value="a", new_value="b", source="X",
-                confidence=ConfidenceLevel.HIGH, disclosed_at=f"2024-01-{10+i:02d}",
+                ticker="TEST",
+                nct_id=f"NCT{i:03d}",
+                event_type=EventType.CT_STATUS_UPGRADE,
+                event_severity=EventSeverity.POSITIVE,
+                event_date=f"2024-01-{10+i:02d}",
+                field_changed="s",
+                prior_value="a",
+                new_value="b",
+                source="X",
+                confidence=ConfidenceLevel.HIGH,
+                disclosed_at=f"2024-01-{10+i:02d}",
             )
             for i in range(5)
         ]
 
         import random
+
         shuffled1 = events.copy()
         random.shuffle(shuffled1)
         shuffled2 = events.copy()
@@ -402,6 +441,7 @@ class TestStableOrdering:
 # =============================================================================
 # T4: SCHEMA EVOLUTION
 # =============================================================================
+
 
 class TestSchemaEvolution:
     """T4: Legacy schema migration works correctly."""
@@ -448,6 +488,7 @@ class TestSchemaEvolution:
 # T5: CONFIDENCE WEIGHTING
 # =============================================================================
 
+
 class TestConfidenceWeighting:
     """T5: Confidence affects blended score, not override."""
 
@@ -455,18 +496,32 @@ class TestConfidenceWeighting:
         """Override score doesn't change with confidence."""
         # High confidence severe negative
         high_conf = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_SEVERE_NEG,
-            event_severity=EventSeverity.SEVERE_NEGATIVE, event_date="2024-01-15",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_SEVERE_NEG,
+            event_severity=EventSeverity.SEVERE_NEGATIVE,
+            event_date="2024-01-15",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-15",
         )
 
         # Low confidence severe negative
         low_conf = CatalystEventV2(
-            ticker="TEST", nct_id="NCT002", event_type=EventType.CT_STATUS_SEVERE_NEG,
-            event_severity=EventSeverity.SEVERE_NEGATIVE, event_date="2024-01-15",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.LOW, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT002",
+            event_type=EventType.CT_STATUS_SEVERE_NEG,
+            event_severity=EventSeverity.SEVERE_NEGATIVE,
+            event_date="2024-01-15",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.LOW,
+            disclosed_at="2024-01-15",
         )
 
         score_high, _ = calculate_score_override([high_conf])
@@ -482,18 +537,32 @@ class TestConfidenceWeighting:
 
         # High confidence positive
         high_conf = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-15",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-15",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-15",
         )
 
         # Low confidence positive (same event otherwise)
         low_conf = CatalystEventV2(
-            ticker="TEST", nct_id="NCT002", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-15",
-            field_changed="s", prior_value="a", new_value="b", source="X",
-            confidence=ConfidenceLevel.LOW, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT002",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-15",
+            field_changed="s",
+            prior_value="a",
+            new_value="b",
+            source="X",
+            confidence=ConfidenceLevel.LOW,
+            disclosed_at="2024-01-15",
         )
 
         score_high, _ = calculate_score_blended([high_conf], as_of)
@@ -506,6 +575,7 @@ class TestConfidenceWeighting:
 # =============================================================================
 # T6: RECENCY / DECAY
 # =============================================================================
+
 
 class TestRecencyDecay:
     """T6: Recent events contribute more than old events."""
@@ -534,10 +604,17 @@ class TestRecencyDecay:
         # Events older than 180 days
         old_events = [
             CatalystEventV2(
-                ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-                event_severity=EventSeverity.POSITIVE, event_date="2023-06-01",  # Very old
-                field_changed="s", prior_value="a", new_value="b", source="X",
-                confidence=ConfidenceLevel.HIGH, disclosed_at="2023-06-01",
+                ticker="TEST",
+                nct_id="NCT001",
+                event_type=EventType.CT_STATUS_UPGRADE,
+                event_severity=EventSeverity.POSITIVE,
+                event_date="2023-06-01",  # Very old
+                field_changed="s",
+                prior_value="a",
+                new_value="b",
+                source="X",
+                confidence=ConfidenceLevel.HIGH,
+                disclosed_at="2023-06-01",
             )
         ]
 
@@ -550,10 +627,17 @@ class TestRecencyDecay:
         """No staleness penalty for recent events."""
         recent_events = [
             CatalystEventV2(
-                ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-                event_severity=EventSeverity.POSITIVE, event_date="2024-01-20",
-                field_changed="s", prior_value="a", new_value="b", source="X",
-                confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-20",
+                ticker="TEST",
+                nct_id="NCT001",
+                event_type=EventType.CT_STATUS_UPGRADE,
+                event_severity=EventSeverity.POSITIVE,
+                event_date="2024-01-20",
+                field_changed="s",
+                prior_value="a",
+                new_value="b",
+                source="X",
+                confidence=ConfidenceLevel.HIGH,
+                disclosed_at="2024-01-20",
             )
         ]
 
@@ -567,6 +651,7 @@ class TestRecencyDecay:
 # T7: INTEGRATION HOOKS
 # =============================================================================
 
+
 class TestIntegrationHooks:
     """T7: Integration hooks are computed correctly."""
 
@@ -576,16 +661,30 @@ class TestIntegrationHooks:
 
         events = [
             CatalystEventV2(
-                ticker="TEST", nct_id="NCT001", event_type=EventType.CT_PRIMARY_COMPLETION,
-                event_severity=EventSeverity.CRITICAL_POSITIVE, event_date="2024-02-15",  # Future
-                field_changed="s", prior_value="a", new_value="b", source="X",
-                confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-10",
+                ticker="TEST",
+                nct_id="NCT001",
+                event_type=EventType.CT_PRIMARY_COMPLETION,
+                event_severity=EventSeverity.CRITICAL_POSITIVE,
+                event_date="2024-02-15",  # Future
+                field_changed="s",
+                prior_value="a",
+                new_value="b",
+                source="X",
+                confidence=ConfidenceLevel.HIGH,
+                disclosed_at="2024-01-10",
             ),
             CatalystEventV2(
-                ticker="TEST", nct_id="NCT002", event_type=EventType.CT_STATUS_UPGRADE,
-                event_severity=EventSeverity.POSITIVE, event_date="2024-01-10",  # Past
-                field_changed="s", prior_value="a", new_value="b", source="X",
-                confidence=ConfidenceLevel.MED, disclosed_at="2024-01-10",
+                ticker="TEST",
+                nct_id="NCT002",
+                event_type=EventType.CT_STATUS_UPGRADE,
+                event_severity=EventSeverity.POSITIVE,
+                event_date="2024-01-10",  # Past
+                field_changed="s",
+                prior_value="a",
+                new_value="b",
+                source="X",
+                confidence=ConfidenceLevel.MED,
+                disclosed_at="2024-01-10",
             ),
         ]
 
@@ -610,10 +709,17 @@ class TestIntegrationHooks:
         # Future event with HIGH confidence
         events = [
             CatalystEventV2(
-                ticker="TEST", nct_id="NCT001", event_type=EventType.CT_PRIMARY_COMPLETION,
-                event_severity=EventSeverity.CRITICAL_POSITIVE, event_date="2024-02-15",
-                field_changed="s", prior_value="a", new_value="b", source="X",
-                confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-10",
+                ticker="TEST",
+                nct_id="NCT001",
+                event_type=EventType.CT_PRIMARY_COMPLETION,
+                event_severity=EventSeverity.CRITICAL_POSITIVE,
+                event_date="2024-02-15",
+                field_changed="s",
+                prior_value="a",
+                new_value="b",
+                source="X",
+                confidence=ConfidenceLevel.HIGH,
+                disclosed_at="2024-01-10",
             ),
         ]
 
@@ -639,6 +745,7 @@ class TestIntegrationHooks:
 # T8: DEDUP / NOISE-BAND
 # =============================================================================
 
+
 class TestDedupNoiseBand:
     """T8: Deduplication and noise-band handling."""
 
@@ -648,10 +755,17 @@ class TestDedupNoiseBand:
 
         # Create identical events
         event = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-15",
-            field_changed="status", prior_value="A", new_value="B", source="CTGOV",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-15",
+            field_changed="status",
+            prior_value="A",
+            new_value="B",
+            source="CTGOV",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-15",
         )
 
         # Same event twice
@@ -666,16 +780,30 @@ class TestDedupNoiseBand:
         from module_3_catalyst import dedup_events
 
         e1 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-15",
-            field_changed="status", prior_value="A", new_value="B", source="CTGOV",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-15",
+            field_changed="status",
+            prior_value="A",
+            new_value="B",
+            source="CTGOV",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-15",
         )
         e2 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT002", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-16",
-            field_changed="status", prior_value="A", new_value="B", source="CTGOV",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-16",
+            ticker="TEST",
+            nct_id="NCT002",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-16",
+            field_changed="status",
+            prior_value="A",
+            new_value="B",
+            source="CTGOV",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-16",
         )
 
         events = [e1, e2]
@@ -687,17 +815,30 @@ class TestDedupNoiseBand:
     def test_event_id_differs_for_different_values(self):
         """Events with different values have different IDs."""
         e1 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-15",
-            field_changed="status", prior_value="A", new_value="B", source="CTGOV",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-15",
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-15",
+            field_changed="status",
+            prior_value="A",
+            new_value="B",
+            source="CTGOV",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-15",
         )
         e2 = CatalystEventV2(
-            ticker="TEST", nct_id="NCT001", event_type=EventType.CT_STATUS_UPGRADE,
-            event_severity=EventSeverity.POSITIVE, event_date="2024-01-15",
-            field_changed="status", prior_value="A", new_value="C",  # Different new_value
+            ticker="TEST",
+            nct_id="NCT001",
+            event_type=EventType.CT_STATUS_UPGRADE,
+            event_severity=EventSeverity.POSITIVE,
+            event_date="2024-01-15",
+            field_changed="status",
+            prior_value="A",
+            new_value="C",  # Different new_value
             source="CTGOV",
-            confidence=ConfidenceLevel.HIGH, disclosed_at="2024-01-15",
+            confidence=ConfidenceLevel.HIGH,
+            disclosed_at="2024-01-15",
         )
 
         assert e1.event_id != e2.event_id
@@ -706,6 +847,7 @@ class TestDedupNoiseBand:
 # =============================================================================
 # ADDITIONAL TESTS
 # =============================================================================
+
 
 class TestScoreOverride:
     """Additional tests for override scoring logic."""
@@ -766,6 +908,7 @@ class TestDiagnostics:
 # T9: CALENDAR CATALYST INTEGRATION
 # =============================================================================
 
+
 class TestCalendarCatalystIntegration:
     """T9: Calendar catalysts flow through to scoring and diagnostics.
 
@@ -780,8 +923,8 @@ class TestCalendarCatalystIntegration:
 
     def test_calendar_catalyst_conversion(self):
         """Calendar catalysts can be converted to CatalystEventV2."""
-        from module_3_catalyst import convert_calendar_catalyst_to_v2
         from catalyst_diagnostics import CalendarCatalyst, EventEvidence, EventRuleID
+        from module_3_catalyst import convert_calendar_catalyst_to_v2
 
         calendar_cat = CalendarCatalyst(
             ticker="TEST",
@@ -812,8 +955,8 @@ class TestCalendarCatalystIntegration:
 
     def test_calendar_catalyst_confidence_mapping(self):
         """Calendar catalyst confidence is mapped correctly."""
-        from module_3_catalyst import convert_calendar_catalyst_to_v2
         from catalyst_diagnostics import CalendarCatalyst, EventEvidence, EventRuleID
+        from module_3_catalyst import convert_calendar_catalyst_to_v2
 
         def make_cal_cat(confidence: float) -> CalendarCatalyst:
             return CalendarCatalyst(
@@ -847,8 +990,8 @@ class TestCalendarCatalystIntegration:
 
     def test_calendar_event_type_mapping(self):
         """Calendar event types map to correct EventType."""
-        from module_3_catalyst import convert_calendar_catalyst_to_v2
         from catalyst_diagnostics import CalendarCatalyst, EventEvidence, EventRuleID
+        from module_3_catalyst import convert_calendar_catalyst_to_v2
 
         def make_cal_cat(event_type: str, rule_id: str) -> CalendarCatalyst:
             return CalendarCatalyst(
@@ -924,10 +1067,10 @@ class TestCalendarCatalystIntegration:
         summaries, diagnostics = score_catalyst_events(events_by_ticker, active_tickers, as_of)
 
         # Key invariant: If calendar catalysts exist, diagnostics should reflect them
-        assert diagnostics.events_detected_total == 2, \
-            f"Expected 2 events, got {diagnostics.events_detected_total}"
-        assert diagnostics.tickers_with_events == 2, \
-            f"Expected 2 tickers with events, got {diagnostics.tickers_with_events}"
+        assert diagnostics.events_detected_total == 2, f"Expected 2 events, got {diagnostics.events_detected_total}"
+        assert (
+            diagnostics.tickers_with_events == 2
+        ), f"Expected 2 tickers with events, got {diagnostics.tickers_with_events}"
 
         # Verify events appear in summaries
         assert len(summaries["ACME"].events) == 1
@@ -962,10 +1105,10 @@ class TestCalendarCatalystIntegration:
         summary = calculate_ticker_catalyst_score("TEST", [calendar_event], as_of)
 
         # Proximity score should be positive (event is in future)
-        assert summary.catalyst_proximity_score > Decimal("0"), \
-            f"Expected positive proximity score, got {summary.catalyst_proximity_score}"
-        assert summary.n_events_upcoming == 1, \
-            f"Expected 1 upcoming event, got {summary.n_events_upcoming}"
+        assert summary.catalyst_proximity_score > Decimal(
+            "0"
+        ), f"Expected positive proximity score, got {summary.catalyst_proximity_score}"
+        assert summary.n_events_upcoming == 1, f"Expected 1 upcoming event, got {summary.n_events_upcoming}"
 
         # Next catalyst date should be set
         assert summary.next_catalyst_date == "2024-03-01"
@@ -980,12 +1123,15 @@ class TestContinuousCatalystProximity:
     # Helper: make a single catalyst event at a given days-from-now offset
     # -----------------------------------------------------------------
     @staticmethod
-    def _event(days_ahead: int, as_of: date,
-               event_type: EventType = EventType.FDA_PDUFA_DATE,
-               confidence: ConfidenceLevel = ConfidenceLevel.HIGH,
-               severity: EventSeverity = EventSeverity.CRITICAL_POSITIVE,
-               ) -> CatalystEventV2:
+    def _event(
+        days_ahead: int,
+        as_of: date,
+        event_type: EventType = EventType.FDA_PDUFA_DATE,
+        confidence: ConfidenceLevel = ConfidenceLevel.HIGH,
+        severity: EventSeverity = EventSeverity.CRITICAL_POSITIVE,
+    ) -> CatalystEventV2:
         from datetime import timedelta
+
         event_date = (as_of + timedelta(days=days_ahead)).isoformat()
         return CatalystEventV2(
             ticker="TEST",
@@ -1029,8 +1175,7 @@ class TestContinuousCatalystProximity:
         # d=67 is midpoint of [45, 90) decay
         mid = (_PROXIMITY_PLATEAU_END + _PROXIMITY_HORIZON) // 2  # 67
         w = _proximity_time_weight(mid)
-        expected = Decimal(_PROXIMITY_HORIZON - mid) / Decimal(
-            _PROXIMITY_HORIZON - _PROXIMITY_PLATEAU_END)
+        expected = Decimal(_PROXIMITY_HORIZON - mid) / Decimal(_PROXIMITY_HORIZON - _PROXIMITY_PLATEAU_END)
         assert abs(w - expected) < Decimal("0.001")
 
     def test_time_kernel_horizon_zero(self):
@@ -1054,8 +1199,7 @@ class TestContinuousCatalystProximity:
             d_far, s_far = scores[i]
             d_near, s_near = scores[i + 1]
             assert s_near >= s_far, (
-                f"Score should increase as event approaches: "
-                f"d={d_far}→{s_far} vs d={d_near}→{s_near}"
+                f"Score should increase as event approaches: " f"d={d_far}→{s_far} vs d={d_near}→{s_near}"
             )
 
     # -----------------------------------------------------------------
@@ -1092,8 +1236,7 @@ class TestContinuousCatalystProximity:
         # All events at plateau (d=30, peak time weight)
         events_1 = [self._event(30, as_of)]
         events_2 = [self._event(30, as_of), self._event(25, as_of)]
-        events_3 = [self._event(30, as_of), self._event(25, as_of),
-                     self._event(20, as_of)]
+        events_3 = [self._event(30, as_of), self._event(25, as_of), self._event(20, as_of)]
 
         s1, _ = compute_bucket_proximity_score(events_1, as_of)
         s2, _ = compute_bucket_proximity_score(events_2, as_of)
@@ -1106,9 +1249,7 @@ class TestContinuousCatalystProximity:
         # Diminishing returns: marginal gain decreases
         gain_1_to_2 = s2 - s1
         gain_2_to_3 = s3 - s2
-        assert gain_2_to_3 < gain_1_to_2, (
-            f"Diminishing returns: 1→2 gain={gain_1_to_2}, 2→3 gain={gain_2_to_3}"
-        )
+        assert gain_2_to_3 < gain_1_to_2, f"Diminishing returns: 1→2 gain={gain_1_to_2}, 2→3 gain={gain_2_to_3}"
 
     # -----------------------------------------------------------------
     # T5: Score always > 50 when events exist
@@ -1120,9 +1261,7 @@ class TestContinuousCatalystProximity:
             ev = self._event(days, as_of)
             score, n = compute_bucket_proximity_score([ev], as_of)
             if n > 0:  # d=0 same-day event gets 0 time weight → excluded
-                assert score > PROXIMITY_NEUTRAL_BASE, (
-                    f"d={days}: score={score}, expected > {PROXIMITY_NEUTRAL_BASE}"
-                )
+                assert score > PROXIMITY_NEUTRAL_BASE, f"d={days}: score={score}, expected > {PROXIMITY_NEUTRAL_BASE}"
 
     # -----------------------------------------------------------------
     # T6: Determinism — same inputs produce identical outputs
@@ -1178,8 +1317,12 @@ class TestContinuousCatalystProximity:
         as_of = date(2026, 1, 1)
         unique_scores = set()
 
-        event_types = [EventType.FDA_PDUFA_DATE, EventType.DATA_READOUT,
-                       EventType.CT_PRIMARY_COMPLETION, EventType.CT_ENROLLMENT_STARTED]
+        event_types = [
+            EventType.FDA_PDUFA_DATE,
+            EventType.DATA_READOUT,
+            EventType.CT_PRIMARY_COMPLETION,
+            EventType.CT_ENROLLMENT_STARTED,
+        ]
         confidences = [ConfidenceLevel.HIGH, ConfidenceLevel.MED, ConfidenceLevel.LOW]
 
         for days in range(5, 85, 5):
@@ -1193,9 +1336,7 @@ class TestContinuousCatalystProximity:
         # Old bucketed version: ~15-20 unique scores
         # Continuous version: should have 50+ unique values (some collapse
         # from 0.01 quantization and the saturation function)
-        assert len(unique_scores) > 50, (
-            f"Expected >50 unique scores from 192 combos, got {len(unique_scores)}"
-        )
+        assert len(unique_scores) > 50, f"Expected >50 unique scores from 192 combos, got {len(unique_scores)}"
 
     # -----------------------------------------------------------------
     # T10: n_upcoming count accuracy
@@ -1204,11 +1345,11 @@ class TestContinuousCatalystProximity:
         """n_upcoming reflects events within horizon with nonzero time weight."""
         as_of = date(2026, 1, 1)
         events = [
-            self._event(10, as_of),   # in ramp → counted
-            self._event(30, as_of),   # in plateau → counted
-            self._event(80, as_of),   # in decay → counted
+            self._event(10, as_of),  # in ramp → counted
+            self._event(30, as_of),  # in plateau → counted
+            self._event(80, as_of),  # in decay → counted
             self._event(100, as_of),  # beyond horizon → NOT counted
-            self._event(-5, as_of),   # past → NOT counted
+            self._event(-5, as_of),  # past → NOT counted
         ]
         _, n = compute_bucket_proximity_score(events, as_of)
         assert n == 3
@@ -1218,12 +1359,18 @@ class TestContinuousCatalystProximity:
 # T11: RANGE-PROGRESS RECENCY MODULATION
 # =============================================================================
 
+
 class TestRangeProgressModulation:
     """T11: In-range events get different recency based on range progress."""
 
-    def _make_range_event(self, start: str, end: str, precision: str = "RANGE",
-                          severity=EventSeverity.CRITICAL_POSITIVE,
-                          confidence=ConfidenceLevel.LOW) -> CatalystEventV2:
+    def _make_range_event(
+        self,
+        start: str,
+        end: str,
+        precision: str = "RANGE",
+        severity=EventSeverity.CRITICAL_POSITIVE,
+        confidence=ConfidenceLevel.LOW,
+    ) -> CatalystEventV2:
         return CatalystEventV2(
             ticker="TEST",
             nct_id="NCT001",
@@ -1298,9 +1445,7 @@ class TestRangeProgressModulation:
             scores.append(s)
         # Each score should be <= previous (monotone non-increasing)
         for i in range(1, len(scores)):
-            assert scores[i] <= scores[i - 1], (
-                f"Score at month {i+1} ({scores[i]}) > month {i} ({scores[i-1]})"
-            )
+            assert scores[i] <= scores[i - 1], f"Score at month {i+1} ({scores[i]}) > month {i} ({scores[i-1]})"
 
 
 if __name__ == "__main__":

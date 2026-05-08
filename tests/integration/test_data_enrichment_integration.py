@@ -20,6 +20,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 # Add parent to path for imports
@@ -28,10 +29,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from dilution_risk_engine import DilutionRiskEngine
 from timeline_slippage_engine import TimelineSlippageEngine
 
-
 # =============================================================================
 # TEST FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def as_of_date() -> date:
@@ -150,6 +151,7 @@ def sample_holdings_snapshots() -> Dict[str, Dict[str, Any]]:
 # DILUTION RISK ENGINE INTEGRATION TESTS
 # =============================================================================
 
+
 class TestDilutionRiskIntegration:
     """Test dilution risk engine integration with pipeline."""
 
@@ -178,14 +180,16 @@ class TestDilutionRiskIntegration:
             if net_income is not None and net_income < 0:
                 quarterly_burn = Decimal(str(net_income)) / Decimal("4")
 
-            dilution_universe.append({
-                "ticker": ticker,
-                "quarterly_cash": Decimal(str(fin.get("Cash"))) if fin.get("Cash") else None,
-                "quarterly_burn": quarterly_burn,
-                "next_catalyst_date": catalyst.get("next_catalyst_date"),
-                "market_cap": Decimal(str(mkt.get("market_cap"))) if mkt.get("market_cap") else None,
-                "avg_daily_volume_90d": int(mkt.get("avg_volume_90d", 0)) if mkt.get("avg_volume_90d") else None,
-            })
+            dilution_universe.append(
+                {
+                    "ticker": ticker,
+                    "quarterly_cash": Decimal(str(fin.get("Cash"))) if fin.get("Cash") else None,
+                    "quarterly_burn": quarterly_burn,
+                    "next_catalyst_date": catalyst.get("next_catalyst_date"),
+                    "market_cap": Decimal(str(mkt.get("market_cap"))) if mkt.get("market_cap") else None,
+                    "avg_daily_volume_90d": int(mkt.get("avg_volume_90d", 0)) if mkt.get("avg_volume_90d") else None,
+                }
+            )
 
         result = engine.score_universe(dilution_universe, as_of_date)
 
@@ -213,13 +217,15 @@ class TestDilutionRiskIntegration:
         """Test that dilution risk fails gracefully without catalyst date."""
         engine = DilutionRiskEngine()
 
-        universe = [{
-            "ticker": "NOCATALYST",
-            "quarterly_cash": Decimal("100000000"),
-            "quarterly_burn": Decimal("-15000000"),
-            "next_catalyst_date": None,  # Missing
-            "market_cap": Decimal("500000000"),
-        }]
+        universe = [
+            {
+                "ticker": "NOCATALYST",
+                "quarterly_cash": Decimal("100000000"),
+                "quarterly_burn": Decimal("-15000000"),
+                "next_catalyst_date": None,  # Missing
+                "market_cap": Decimal("500000000"),
+            }
+        ]
 
         result = engine.score_universe(universe, as_of_date)
 
@@ -230,6 +236,7 @@ class TestDilutionRiskIntegration:
 # =============================================================================
 # TIMELINE SLIPPAGE ENGINE INTEGRATION TESTS
 # =============================================================================
+
 
 class TestTimelineSlippageIntegration:
     """Test timeline slippage engine integration with pipeline."""
@@ -300,6 +307,7 @@ class TestTimelineSlippageIntegration:
 # SMART MONEY POSITION CHANGE TRACKING TESTS
 # =============================================================================
 
+
 class TestSmartMoneyPositionChanges:
     """Test smart money position change detection."""
 
@@ -361,6 +369,7 @@ class TestSmartMoneyPositionChanges:
 # =============================================================================
 # REGIME-ADAPTIVE WEIGHTING TESTS
 # =============================================================================
+
 
 class TestRegimeAdaptiveWeighting:
     """Test regime-adaptive weight adjustments."""
@@ -443,6 +452,7 @@ class TestRegimeAdaptiveWeighting:
 # ENHANCEMENT LAYER ASSEMBLY TESTS
 # =============================================================================
 
+
 class TestEnhancementLayerAssembly:
     """Test that enhancement results are properly assembled."""
 
@@ -480,6 +490,7 @@ class TestEnhancementLayerAssembly:
 # DETERMINISM TESTS
 # =============================================================================
 
+
 class TestEnrichmentDeterminism:
     """Test that enrichment engines produce deterministic outputs."""
 
@@ -488,14 +499,16 @@ class TestEnrichmentDeterminism:
         engine1 = DilutionRiskEngine()
         engine2 = DilutionRiskEngine()
 
-        universe = [{
-            "ticker": "TEST",
-            "quarterly_cash": Decimal("100000000"),
-            "quarterly_burn": Decimal("-15000000"),
-            "next_catalyst_date": "2026-06-15",
-            "market_cap": Decimal("500000000"),
-            "avg_daily_volume_90d": 1000000,
-        }]
+        universe = [
+            {
+                "ticker": "TEST",
+                "quarterly_cash": Decimal("100000000"),
+                "quarterly_burn": Decimal("-15000000"),
+                "next_catalyst_date": "2026-06-15",
+                "market_cap": Decimal("500000000"),
+                "avg_daily_volume_90d": 1000000,
+            }
+        ]
 
         result1 = engine1.score_universe(universe, as_of_date)
         result2 = engine2.score_universe(universe, as_of_date)

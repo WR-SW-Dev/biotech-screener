@@ -55,11 +55,13 @@ BINDER_VERSION = 1
 # NEEDS_REVIEW is kept so downstream can see the binder caught it.
 TERMINAL_OUTCOMES: frozenset[str] = frozenset({"HIT", "MISS", "DELAYED", "MIXED", "NEEDS_REVIEW"})
 
-SKIP_RESOLUTION_FILES = frozenset({
-    "calibration_summary.json",
-    "manual_overrides.json",
-    "watchlist_current.json",
-})
+SKIP_RESOLUTION_FILES = frozenset(
+    {
+        "calibration_summary.json",
+        "manual_overrides.json",
+        "watchlist_current.json",
+    }
+)
 
 
 @dataclass

@@ -1,4 +1,5 @@
 """Tests for conference program + abstract collector (offline, deterministic)."""
+
 from __future__ import annotations
 
 import json
@@ -11,23 +12,23 @@ import pytest
 from wake_robin_data_pipeline.collectors.conference_program_collector import (
     ALL_CONFERENCE_SLUGS,
     CONFERENCE_ADAPTERS,
-    EsmoAdapter,
     AacrAdapter,
-    AshAdapter,
-    SitcAdapter,
-    SabcsAdapter,
     AanAdapter,
     AcrAdapter,
-    collect_conference_sessions,
-    collect_conference_abstracts,
-    collect_conference_derived_events,
-    derive_events_from_records,
-    normalize_name,
-    _stable_hash10,
+    AshAdapter,
+    EsmoAdapter,
+    SabcsAdapter,
+    SitcAdapter,
     _extract_entities,
     _map_to_ticker,
-    _write_cache,
     _read_cache_if_exists,
+    _stable_hash10,
+    _write_cache,
+    collect_conference_abstracts,
+    collect_conference_derived_events,
+    collect_conference_sessions,
+    derive_events_from_records,
+    normalize_name,
 )
 
 AS_OF = date(2026, 5, 20)
@@ -132,15 +133,21 @@ class TestIdStability:
             side_effect=_mock_fetch,
         ):
             s1 = collect_conference_sessions(
-                conference_slug="asco", edition_year=2026,
-                as_of_date=AS_OF, cache_dir=tmp_path, fetch_live=True,
+                conference_slug="asco",
+                edition_year=2026,
+                as_of_date=AS_OF,
+                cache_dir=tmp_path,
+                fetch_live=True,
             )
             # Clear cache and re-collect
             for f in tmp_path.rglob("sessions_*.json"):
                 f.unlink()
             s2 = collect_conference_sessions(
-                conference_slug="asco", edition_year=2026,
-                as_of_date=AS_OF, cache_dir=tmp_path, fetch_live=True,
+                conference_slug="asco",
+                edition_year=2026,
+                as_of_date=AS_OF,
+                cache_dir=tmp_path,
+                fetch_live=True,
             )
         assert len(s1) == len(s2)
         for a, b in zip(s1, s2):
@@ -214,24 +221,30 @@ class TestUnmatchedTelemetry:
         # Create many abstracts with unmatchable entities
         abstracts = []
         for i in range(150):
-            abstracts.append({
-                "schema": "conference_abstract.v1",
-                "id": f"ABS_{i}",
-                "title": f"Unknown Drug-{i} Phase 2 Results",
-                "abstract_code": f"P{i:04d}",
-                "presentation_type": "poster",
-                "sponsor_company": f"UnknownCo-{i}",
-                "entities": {"companies": [], "drugs": [f"unknown-drug-{i}"], "nct_ids": []},
-                "url": "",
-                "disclosed_at": None,
-                "session_id": None,
-            })
+            abstracts.append(
+                {
+                    "schema": "conference_abstract.v1",
+                    "id": f"ABS_{i}",
+                    "title": f"Unknown Drug-{i} Phase 2 Results",
+                    "abstract_code": f"P{i:04d}",
+                    "presentation_type": "poster",
+                    "sponsor_company": f"UnknownCo-{i}",
+                    "entities": {"companies": [], "drugs": [f"unknown-drug-{i}"], "nct_ids": []},
+                    "url": "",
+                    "disclosed_at": None,
+                    "session_id": None,
+                }
+            )
 
         events, stats = derive_events_from_records(
-            sessions=[], abstracts=abstracts,
-            product_ticker_map={}, company_ticker_map={},
-            nct_ticker_map=None, conference="ASCO",
-            edition_year=2026, as_of_date=AS_OF,
+            sessions=[],
+            abstracts=abstracts,
+            product_ticker_map={},
+            company_ticker_map={},
+            nct_ticker_map=None,
+            conference="ASCO",
+            edition_year=2026,
+            as_of_date=AS_OF,
         )
         assert len(events) == 0
         assert stats["unmatched_items"] <= 100
@@ -246,8 +259,10 @@ class TestDerivedEventsSortingAndConfidence:
             side_effect=_mock_fetch,
         ):
             events = collect_conference_derived_events(
-                conference_slug="asco", edition_year=2026,
-                as_of_date=AS_OF, cache_dir=tmp_path,
+                conference_slug="asco",
+                edition_year=2026,
+                as_of_date=AS_OF,
+                cache_dir=tmp_path,
                 product_ticker_map=PRODUCT_MAP,
                 company_ticker_map=COMPANY_MAP,
                 nct_ticker_map=NCT_MAP,
@@ -276,8 +291,11 @@ class TestCacheOnlyMode:
     def test_disable_live_uses_cache_only(self, tmp_path):
         # No cache exists, fetch_live=False → empty
         sessions = collect_conference_sessions(
-            conference_slug="asco", edition_year=2026,
-            as_of_date=AS_OF, cache_dir=tmp_path, fetch_live=False,
+            conference_slug="asco",
+            edition_year=2026,
+            as_of_date=AS_OF,
+            cache_dir=tmp_path,
+            fetch_live=False,
         )
         assert sessions == []
 
@@ -287,15 +305,21 @@ class TestCacheOnlyMode:
             side_effect=_mock_fetch,
         ):
             sessions_live = collect_conference_sessions(
-                conference_slug="asco", edition_year=2026,
-                as_of_date=AS_OF, cache_dir=tmp_path, fetch_live=True,
+                conference_slug="asco",
+                edition_year=2026,
+                as_of_date=AS_OF,
+                cache_dir=tmp_path,
+                fetch_live=True,
             )
         assert len(sessions_live) > 0
 
         # Now read from cache without network
         sessions_cached = collect_conference_sessions(
-            conference_slug="asco", edition_year=2026,
-            as_of_date=AS_OF, cache_dir=tmp_path, fetch_live=False,
+            conference_slug="asco",
+            edition_year=2026,
+            as_of_date=AS_OF,
+            cache_dir=tmp_path,
+            fetch_live=False,
         )
         assert len(sessions_cached) == len(sessions_live)
 
@@ -315,7 +339,7 @@ class TestModule3ConferenceIngest:
 
     def test_convert_conference_event_to_v2(self):
         from module_3_catalyst import convert_conference_event_to_v2
-        from module_3_schema import EventType, ConfidenceLevel
+        from module_3_schema import ConfidenceLevel, EventType
 
         event = {
             "id": "CONF_ASCO_2026_CONF_LATE_BREAKER_2026-06-01_abc123",
@@ -340,7 +364,7 @@ class TestModule3ConferenceIngest:
 
     def test_convert_presentation_event(self):
         from module_3_catalyst import convert_conference_event_to_v2
-        from module_3_schema import EventType, ConfidenceLevel
+        from module_3_schema import ConfidenceLevel, EventType
 
         event = {
             "id": "CONF_ASCO_2026_CONF_PRESENTATION_2026-06-02_def456",

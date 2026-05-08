@@ -11,30 +11,31 @@ Tests phase-dependent data staleness enforcement:
 - Future date (lookahead bias) detection
 """
 
-import pytest
+import sys
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
-import sys
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common.staleness_gates import (
-    StalenessGateEngine,
-    StalenessAction,
-    DataType,
-    StalenessThreshold,
-    StalenessCheckResult,
     DEFAULT_STALENESS_THRESHOLDS,
     SEC_13F_FILING_LAG_DAYS,
+    DataType,
+    StalenessAction,
+    StalenessCheckResult,
+    StalenessGateEngine,
+    StalenessThreshold,
     compute_13f_effective_date,
     validate_13f_pit_safety,
 )
 
-
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def engine():
@@ -57,6 +58,7 @@ def as_of_date():
 # ============================================================================
 # ENGINE INITIALIZATION TESTS
 # ============================================================================
+
 
 class TestEngineInitialization:
     """Tests for StalenessGateEngine initialization."""
@@ -85,15 +87,14 @@ class TestEngineInitialization:
 # STALENESS CHECK TESTS
 # ============================================================================
 
+
 class TestStalenessCheck:
     """Tests for check_staleness method."""
 
     def test_fresh_data_passes(self, engine, as_of_date):
         """Fresh data should pass."""
         data_date = as_of_date - timedelta(days=10)
-        result = engine.check_staleness(
-            DataType.FINANCIAL, data_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, data_date, as_of_date)
         assert result.action == StalenessAction.PASS
         assert result.penalty_multiplier == Decimal("1.0")
 
@@ -101,9 +102,7 @@ class TestStalenessCheck:
         """Data past warning threshold should warn."""
         # Financial warning is 60 days
         data_date = as_of_date - timedelta(days=70)
-        result = engine.check_staleness(
-            DataType.FINANCIAL, data_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, data_date, as_of_date)
         assert result.action == StalenessAction.WARN
         assert result.penalty_multiplier == Decimal("1.0")
 
@@ -111,9 +110,7 @@ class TestStalenessCheck:
         """Data past soft gate should apply penalty."""
         # Financial soft gate is 90 days
         data_date = as_of_date - timedelta(days=100)
-        result = engine.check_staleness(
-            DataType.FINANCIAL, data_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, data_date, as_of_date)
         assert result.action == StalenessAction.SOFT_GATE
         assert result.penalty_multiplier < Decimal("1.0")
 
@@ -121,26 +118,20 @@ class TestStalenessCheck:
         """Data past hard gate should trigger exclusion."""
         # Financial hard gate is 120 days
         data_date = as_of_date - timedelta(days=150)
-        result = engine.check_staleness(
-            DataType.FINANCIAL, data_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, data_date, as_of_date)
         assert result.action == StalenessAction.HARD_GATE
         assert result.penalty_multiplier == Decimal("0")
 
     def test_unknown_date_soft_gates(self, engine, as_of_date):
         """Unknown data date should soft gate."""
-        result = engine.check_staleness(
-            DataType.FINANCIAL, None, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, None, as_of_date)
         assert result.action == StalenessAction.SOFT_GATE
         assert result.age_days == -1
 
     def test_future_date_hard_gates(self, engine, as_of_date):
         """Future data should hard gate (lookahead bias)."""
         future_date = as_of_date + timedelta(days=10)
-        result = engine.check_staleness(
-            DataType.FINANCIAL, future_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, future_date, as_of_date)
         assert result.action == StalenessAction.HARD_GATE
         assert "LOOKAHEAD BIAS" in result.message
 
@@ -148,6 +139,7 @@ class TestStalenessCheck:
 # ============================================================================
 # PHASE-DEPENDENT THRESHOLD TESTS
 # ============================================================================
+
 
 class TestPhaseDependentThresholds:
     """Tests for phase-dependent staleness thresholds."""
@@ -158,14 +150,10 @@ class TestPhaseDependentThresholds:
         data_date = as_of_date - timedelta(days=150)
 
         # Phase 3: hard gate at 180 days
-        p3_result = engine.check_staleness(
-            DataType.TRIAL, data_date, as_of_date, phase="phase_3"
-        )
+        p3_result = engine.check_staleness(DataType.TRIAL, data_date, as_of_date, phase="phase_3")
 
         # Phase 1: hard gate at 545 days
-        p1_result = engine.check_staleness(
-            DataType.TRIAL, data_date, as_of_date, phase="phase_1"
-        )
+        p1_result = engine.check_staleness(DataType.TRIAL, data_date, as_of_date, phase="phase_1")
 
         # Same data should be more serious for Phase 3
         assert p3_result.action in (StalenessAction.SOFT_GATE, StalenessAction.WARN)
@@ -175,9 +163,7 @@ class TestPhaseDependentThresholds:
         """Unknown phase should use default thresholds."""
         data_date = as_of_date - timedelta(days=200)
 
-        result = engine.check_staleness(
-            DataType.TRIAL, data_date, as_of_date, phase=None
-        )
+        result = engine.check_staleness(DataType.TRIAL, data_date, as_of_date, phase=None)
 
         # Should get some result (default thresholds)
         assert result.action in StalenessAction
@@ -187,6 +173,7 @@ class TestPhaseDependentThresholds:
 # STRICT MODE TESTS
 # ============================================================================
 
+
 class TestStrictMode:
     """Tests for strict mode behavior."""
 
@@ -195,9 +182,7 @@ class TestStrictMode:
         # Financial soft gate is 90 days
         data_date = as_of_date - timedelta(days=100)
 
-        result = strict_engine.check_staleness(
-            DataType.FINANCIAL, data_date, as_of_date
-        )
+        result = strict_engine.check_staleness(DataType.FINANCIAL, data_date, as_of_date)
 
         assert result.action == StalenessAction.HARD_GATE
 
@@ -205,6 +190,7 @@ class TestStrictMode:
 # ============================================================================
 # PIPELINE STALENESS CHECK TESTS
 # ============================================================================
+
 
 class TestPipelineStalenessCheck:
     """Tests for check_pipeline_staleness method."""
@@ -245,6 +231,7 @@ class TestPipelineStalenessCheck:
 # ============================================================================
 # PIPELINE HEALTH TESTS
 # ============================================================================
+
 
 class TestPipelineHealth:
     """Tests for get_pipeline_health method."""
@@ -291,6 +278,7 @@ class TestPipelineHealth:
 # ============================================================================
 # 13F PIT SAFETY TESTS
 # ============================================================================
+
 
 class TestCompute13fEffectiveDate:
     """Tests for compute_13f_effective_date function."""
@@ -351,15 +339,14 @@ class TestValidate13fPitSafety:
 # STALENESS CHECK RESULT TESTS
 # ============================================================================
 
+
 class TestStalenessCheckResult:
     """Tests for StalenessCheckResult dataclass."""
 
     def test_to_dict(self, engine, as_of_date):
         """Should serialize to dict correctly."""
         data_date = as_of_date - timedelta(days=30)
-        result = engine.check_staleness(
-            DataType.FINANCIAL, data_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, data_date, as_of_date)
 
         d = result.to_dict()
 
@@ -374,42 +361,33 @@ class TestStalenessCheckResult:
 # DATA TYPE COVERAGE TESTS
 # ============================================================================
 
+
 class TestDataTypeCoverage:
     """Tests ensuring all data types have thresholds."""
 
     def test_financial_thresholds_exist(self, engine, as_of_date):
         """Financial data type should have thresholds."""
-        result = engine.check_staleness(
-            DataType.FINANCIAL, as_of_date - timedelta(days=10), as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, as_of_date - timedelta(days=10), as_of_date)
         assert result is not None
 
     def test_trial_thresholds_exist(self, engine, as_of_date):
         """Trial data type should have thresholds."""
-        result = engine.check_staleness(
-            DataType.TRIAL, as_of_date - timedelta(days=10), as_of_date
-        )
+        result = engine.check_staleness(DataType.TRIAL, as_of_date - timedelta(days=10), as_of_date)
         assert result is not None
 
     def test_market_thresholds_exist(self, engine, as_of_date):
         """Market data type should have thresholds."""
-        result = engine.check_staleness(
-            DataType.MARKET, as_of_date - timedelta(days=1), as_of_date
-        )
+        result = engine.check_staleness(DataType.MARKET, as_of_date - timedelta(days=1), as_of_date)
         assert result is not None
 
     def test_short_interest_thresholds_exist(self, engine, as_of_date):
         """Short interest data type should have thresholds."""
-        result = engine.check_staleness(
-            DataType.SHORT_INTEREST, as_of_date - timedelta(days=10), as_of_date
-        )
+        result = engine.check_staleness(DataType.SHORT_INTEREST, as_of_date - timedelta(days=10), as_of_date)
         assert result is not None
 
     def test_holdings_thresholds_exist(self, engine, as_of_date):
         """13F holdings data type should have thresholds."""
-        result = engine.check_staleness(
-            DataType.HOLDINGS_13F, as_of_date - timedelta(days=30), as_of_date
-        )
+        result = engine.check_staleness(DataType.HOLDINGS_13F, as_of_date - timedelta(days=30), as_of_date)
         assert result is not None
 
 
@@ -417,39 +395,32 @@ class TestDataTypeCoverage:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests for staleness gates."""
 
     def test_same_day_data(self, engine, as_of_date):
         """Same day data should pass."""
-        result = engine.check_staleness(
-            DataType.FINANCIAL, as_of_date, as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, as_of_date, as_of_date)
         assert result.action == StalenessAction.PASS
         assert result.age_days == 0
 
     def test_one_day_old_data(self, engine, as_of_date):
         """One day old data should pass."""
-        result = engine.check_staleness(
-            DataType.FINANCIAL, as_of_date - timedelta(days=1), as_of_date
-        )
+        result = engine.check_staleness(DataType.FINANCIAL, as_of_date - timedelta(days=1), as_of_date)
         assert result.action == StalenessAction.PASS
         assert result.age_days == 1
 
     def test_market_data_very_fresh_requirement(self, engine, as_of_date):
         """Market data has very fresh requirements."""
         # 6 days old should soft gate (threshold is 5 days)
-        result = engine.check_staleness(
-            DataType.MARKET, as_of_date - timedelta(days=6), as_of_date
-        )
+        result = engine.check_staleness(DataType.MARKET, as_of_date - timedelta(days=6), as_of_date)
         assert result.action == StalenessAction.SOFT_GATE
 
     def test_unknown_data_type_uses_fallback(self, engine, as_of_date):
         """Unknown data type/phase should use fallback threshold."""
         # Remove all thresholds to test fallback
         empty_engine = StalenessGateEngine(thresholds=[])
-        result = empty_engine.check_staleness(
-            DataType.FINANCIAL, as_of_date - timedelta(days=100), as_of_date
-        )
+        result = empty_engine.check_staleness(DataType.FINANCIAL, as_of_date - timedelta(days=100), as_of_date)
         # Should still return a result using fallback
         assert result is not None

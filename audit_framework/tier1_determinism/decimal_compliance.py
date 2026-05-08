@@ -18,12 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-    ValidationFinding,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory, ValidationFinding
 
 
 @dataclass
@@ -131,10 +126,7 @@ class DecimalComplianceValidator:
         is_financial_module = module_name in self.FINANCIAL_MODULES
 
         # Also check if file contains financial patterns
-        has_financial_code = any(
-            re.search(pattern, content, re.IGNORECASE)
-            for pattern in self.FINANCIAL_PATTERNS
-        )
+        has_financial_code = any(re.search(pattern, content, re.IGNORECASE) for pattern in self.FINANCIAL_PATTERNS)
 
         should_check = is_financial_module or has_financial_code
 
@@ -247,10 +239,7 @@ class DecimalComplianceValidator:
         start = max(0, line_number - context_size - 1)
         end = min(len(lines), line_number + context_size)
         context_lines = lines[start:end]
-        return "\n".join(
-            f"{i + start + 1:4d} | {line}"
-            for i, line in enumerate(context_lines)
-        )
+        return "\n".join(f"{i + start + 1:4d} | {line}" for i, line in enumerate(context_lines))
 
     def scan_codebase(self, exclude_dirs: Optional[Set[str]] = None) -> DecimalComplianceReport:
         """
@@ -335,9 +324,7 @@ class DecimalComplianceValidator:
             # Check for quantize() calls without explicit rounding mode
             if "quantize(" in content:
                 if "ROUND_HALF_EVEN" not in content and "rounding=" not in content:
-                    issues.append(
-                        f"{module_name}: Uses quantize() without explicit ROUND_HALF_EVEN rounding mode"
-                    )
+                    issues.append(f"{module_name}: Uses quantize() without explicit ROUND_HALF_EVEN rounding mode")
 
         return issues
 
@@ -370,11 +357,7 @@ def validate_decimal_compliance(codebase_path: str) -> AuditResult:
 
     # Add findings for each violation
     for v in report.float_operations:
-        severity = (
-            AuditSeverity.CRITICAL
-            if v.violation_type == "FLOAT_CONVERSION"
-            else AuditSeverity.HIGH
-        )
+        severity = AuditSeverity.CRITICAL if v.violation_type == "FLOAT_CONVERSION" else AuditSeverity.HIGH
 
         result.add_finding(
             severity=severity,

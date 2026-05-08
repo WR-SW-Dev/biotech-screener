@@ -6,17 +6,12 @@ from pathlib import Path
 # Allow importing from the scripts package without install
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.audit_catalyst_coverage import (
-    FDA_EVENT_TYPES,
-    KNOWN_EVENT_TYPES,
-    KNOWN_SOURCES,
-    compute_coverage_metrics,
-)
-
+from scripts.audit_catalyst_coverage import FDA_EVENT_TYPES, KNOWN_EVENT_TYPES, KNOWN_SOURCES, compute_coverage_metrics
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_universe(n):
     """Return a set of N synthetic uppercase tickers: T001 .. T{n:03d}."""
@@ -30,6 +25,7 @@ def _make_vnext_event(event_type, source, event_date="2026-06-01"):
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def test_empty_universe_returns_error():
     """Empty universe short-circuits to an error dict."""
@@ -190,8 +186,8 @@ def test_pdufa_and_corp_entries():
 
     pdufa = [
         {"ticker": "T001", "drug": "DrugA"},
-        {"symbol": "T002", "drug": "DrugB"},           # uses 'symbol' key
-        {"ticker": "T999", "drug": "OutOfUniverse"},    # not in universe
+        {"symbol": "T002", "drug": "DrugB"},  # uses 'symbol' key
+        {"ticker": "T999", "drug": "OutOfUniverse"},  # not in universe
     ]
     corp = [
         {"ticker": "T003", "event_type": "DATA_READOUT", "event_date": "2026-07-01"},
@@ -233,6 +229,7 @@ def test_pdufa_and_corp_entries():
 # CTGOV diagnostic fields (regression)
 # ---------------------------------------------------------------------------
 
+
 def test_ctgov_present_flag():
     """ctgov_present is True when CTGOV events exist, False otherwise."""
     universe = _make_universe(3)
@@ -254,13 +251,17 @@ def test_ctgov_by_type_breakdown():
     """ctgov_by_type has counts per CT_* event type."""
     universe = _make_universe(5)
     vnext = {
-        "T001": {"events": [
-            _make_vnext_event("CT_PRIMARY_COMPLETION", "CTGOV_CALENDAR"),
-            _make_vnext_event("CT_STUDY_COMPLETION", "CTGOV_CALENDAR"),
-        ]},
-        "T002": {"events": [
-            _make_vnext_event("CT_PRIMARY_COMPLETION", "CTGOV_CALENDAR"),
-        ]},
+        "T001": {
+            "events": [
+                _make_vnext_event("CT_PRIMARY_COMPLETION", "CTGOV_CALENDAR"),
+                _make_vnext_event("CT_STUDY_COMPLETION", "CTGOV_CALENDAR"),
+            ]
+        },
+        "T002": {
+            "events": [
+                _make_vnext_event("CT_PRIMARY_COMPLETION", "CTGOV_CALENDAR"),
+            ]
+        },
     }
 
     result = compute_coverage_metrics(universe_tickers=universe, vnext_summaries=vnext)
@@ -273,8 +274,7 @@ def test_amended_form_source_is_unknown():
     """SEC_6K/A_FILING should be flagged as unknown source (regression)."""
     universe = _make_universe(2)
     multi_form = [
-        {"ticker": "T001", "event_type": "DATA_READOUT",
-         "source": "SEC_6K/A_FILING", "event_date": "2026-03-15"},
+        {"ticker": "T001", "event_type": "DATA_READOUT", "source": "SEC_6K/A_FILING", "event_date": "2026-03-15"},
     ]
 
     result = compute_coverage_metrics(
@@ -284,9 +284,7 @@ def test_amended_form_source_is_unknown():
 
     unk = result["unknown_events"]
     assert unk["unknown_source_count"] >= 1
-    assert any(
-        ex["source"] == "SEC_6K/A_FILING" for ex in unk["unknown_source_examples"]
-    )
+    assert any(ex["source"] == "SEC_6K/A_FILING" for ex in unk["unknown_source_examples"])
 
 
 def test_multi_form_uplift_new_tickers():
@@ -296,10 +294,8 @@ def test_multi_form_uplift_new_tickers():
         {"ticker": "T001", "event_type": "DATA_READOUT", "event_date": "2026-05-01"},
     ]
     multi_form = [
-        {"ticker": "T001", "event_type": "DATA_READOUT", "source": "SEC_10Q_FILING",
-         "event_date": "2026-06-01"},
-        {"ticker": "T002", "event_type": "DATA_READOUT", "source": "SEC_6K_FILING",
-         "event_date": "2026-07-01"},
+        {"ticker": "T001", "event_type": "DATA_READOUT", "source": "SEC_10Q_FILING", "event_date": "2026-06-01"},
+        {"ticker": "T002", "event_type": "DATA_READOUT", "source": "SEC_6K_FILING", "event_date": "2026-07-01"},
     ]
 
     result = compute_coverage_metrics(

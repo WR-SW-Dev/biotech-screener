@@ -9,30 +9,26 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
-from .protocols import (
-    ClinicalTrialsProvider,
-    ProviderResult,
-    TrialRow,
-)
+from .protocols import ClinicalTrialsProvider, ProviderResult, TrialRow
 
 
 class StubClinicalTrialsProvider:
     """
     Stub provider that returns empty trial data.
-    
+
     Used for:
         - Baseline comparison (stub vs real provider)
         - Testing modules in isolation
         - Fallback when AACT data unavailable
     """
-    
+
     def __init__(self) -> None:
         pass
-    
+
     @property
     def provider_name(self) -> str:
         return "stub"
-    
+
     def get_trials_as_of(
         self,
         as_of_date: date,
@@ -42,13 +38,13 @@ class StubClinicalTrialsProvider:
     ) -> ProviderResult:
         """
         Return empty trials for all tickers.
-        
+
         Args:
             as_of_date: The date we're generating the snapshot for
             pit_cutoff: Latest allowed data date (ignored in stub)
             tickers: List of tickers
             trial_mapping: Mapping from ticker to NCT IDs (ignored in stub)
-        
+
         Returns:
             ProviderResult with empty trials_by_ticker
         """

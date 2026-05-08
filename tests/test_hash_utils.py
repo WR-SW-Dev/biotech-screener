@@ -10,28 +10,24 @@ Covers:
 - Determinism guarantees
 """
 
-import pytest
-from datetime import date
-from decimal import Decimal
-from pathlib import Path
-from enum import Enum
-from typing import Dict, Any
-
 # Import module under test
 import sys
+from datetime import date
+from decimal import Decimal
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.hash_utils import (
-    stable_json_dumps,
-    compute_hash,
-    compute_trial_facts_hash,
-    compute_snapshot_id,
-)
-
+from common.hash_utils import compute_hash, compute_snapshot_id, compute_trial_facts_hash, stable_json_dumps
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_dict():
@@ -55,6 +51,7 @@ def nested_dict():
 @pytest.fixture
 def dict_with_special_types():
     """Dictionary with special types (date, Decimal, Enum)."""
+
     class TestEnum(Enum):
         VALUE = "test_value"
 
@@ -84,6 +81,7 @@ def sample_trials_by_ticker():
 # ============================================================================
 # STABLE JSON DUMPS
 # ============================================================================
+
 
 class TestStableJsonDumps:
     """Tests for stable_json_dumps function."""
@@ -122,6 +120,7 @@ class TestStableJsonDumps:
 
     def test_serializes_enum(self):
         """Enums are serialized by value."""
+
         class Color(Enum):
             RED = "red"
             BLUE = "blue"
@@ -151,6 +150,7 @@ class TestStableJsonDumps:
 
     def test_raises_for_unsupported_types(self):
         """Raises TypeError for unsupported types."""
+
         class CustomClass:
             pass
 
@@ -180,6 +180,7 @@ class TestStableJsonDumps:
 # ============================================================================
 # COMPUTE HASH
 # ============================================================================
+
 
 class TestComputeHash:
     """Tests for compute_hash function."""
@@ -242,6 +243,7 @@ class TestComputeHash:
 # ============================================================================
 # TRIAL FACTS HASH
 # ============================================================================
+
 
 class TestTrialFactsHash:
     """Tests for compute_trial_facts_hash function."""
@@ -315,6 +317,7 @@ class TestTrialFactsHash:
 
     def test_trial_hash_with_to_dict_objects(self):
         """Hash works with objects that have to_dict method."""
+
         class MockTrial:
             def __init__(self, nct_id: str, phase: str):
                 self.nct_id = nct_id
@@ -338,6 +341,7 @@ class TestTrialFactsHash:
 # ============================================================================
 # SNAPSHOT ID
 # ============================================================================
+
 
 class TestSnapshotId:
     """Tests for compute_snapshot_id function."""
@@ -411,6 +415,7 @@ class TestSnapshotId:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Cross-cutting determinism tests."""
 
@@ -437,10 +442,7 @@ class TestDeterminism:
 
     def test_trial_hash_multiple_calls(self, sample_trials_by_ticker):
         """Multiple trial hash calls are identical."""
-        hashes = [
-            compute_trial_facts_hash(sample_trials_by_ticker)
-            for _ in range(10)
-        ]
+        hashes = [compute_trial_facts_hash(sample_trials_by_ticker) for _ in range(10)]
 
         assert len(set(hashes)) == 1
 
@@ -448,6 +450,7 @@ class TestDeterminism:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""

@@ -1,4 +1,5 @@
 """Tests for alpha cohort scoring module."""
+
 from __future__ import annotations
 
 import json
@@ -18,10 +19,10 @@ from module_5_alpha_cohort import (
     load_alpha_cohort_table,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def v1_table_path():
@@ -66,6 +67,7 @@ def _row(
 # load_alpha_cohort_table
 # ======================================================================
 
+
 class TestLoadTable:
     def test_loads_v1(self, v1_table_path):
         t = load_alpha_cohort_table(v1_table_path)
@@ -82,6 +84,7 @@ class TestLoadTable:
 # ======================================================================
 # compute_alpha_cohort_key — stage mapping
 # ======================================================================
+
 
 class TestKeyStage:
     def test_empty_stage_falls_back_to_early(self):
@@ -101,6 +104,7 @@ class TestKeyStage:
 # ======================================================================
 # compute_alpha_cohort_key — clinical sign
 # ======================================================================
+
 
 class TestKeySign:
     def test_positive_z(self):
@@ -125,6 +129,7 @@ class TestKeySign:
 # ======================================================================
 # compute_alpha_cohort_key — catalyst horizon
 # ======================================================================
+
 
 class TestKeyHorizon:
     def test_specific_days_near_0_30(self):
@@ -188,6 +193,7 @@ class TestKeyHorizon:
 # compute_alpha_raw — shrinkage + clipping
 # ======================================================================
 
+
 class TestAlphaRaw:
     def test_missing_key_returns_zero(self):
         table = _make_table({"a|b|c": {"mean_excess_ret_6m": 0.05, "n": 100}})
@@ -225,33 +231,40 @@ class TestAlphaRaw:
 # compute_alpha_raw — horizon fallback
 # ======================================================================
 
+
 class TestAlphaRawHorizonFallback:
     """When a specific horizon cell has n=0, fall back to stage|none|sign."""
 
     def test_empty_near_falls_back_to_none(self):
-        table = _make_table({
-            "early|near_0_30|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
-            "early|none|pos": {"mean_excess_ret_6m": 0.20, "n": 190},
-        })
+        table = _make_table(
+            {
+                "early|near_0_30|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
+                "early|none|pos": {"mean_excess_ret_6m": 0.20, "n": 190},
+            }
+        )
         alpha = compute_alpha_raw("early|near_0_30|pos", table, 50, -0.10, 0.10)
         # Should use early|none|pos: w=190/240=0.7917, alpha=0.20*0.7917=0.1583 → clipped to 0.10
         assert alpha == 0.10
 
     def test_empty_far_falls_back_to_none(self):
-        table = _make_table({
-            "early|far_271_540|nonpos": {"mean_excess_ret_6m": 0.0, "n": 0},
-            "early|none|nonpos": {"mean_excess_ret_6m": -0.01, "n": 192},
-        })
+        table = _make_table(
+            {
+                "early|far_271_540|nonpos": {"mean_excess_ret_6m": 0.0, "n": 0},
+                "early|none|nonpos": {"mean_excess_ret_6m": -0.01, "n": 192},
+            }
+        )
         alpha = compute_alpha_raw("early|far_271_540|nonpos", table, 50, -0.10, 0.10)
         # w=192/242=0.7934, alpha=-0.01*0.7934≈-0.0079
         assert alpha == pytest.approx(-0.01 * (192 / 242), abs=1e-4)
 
     def test_populated_cell_does_not_fallback(self):
         """A cell with n>0 uses its own data, not the parent."""
-        table = _make_table({
-            "mid|near_31_90|pos": {"mean_excess_ret_6m": 0.05, "n": 23},
-            "mid|none|pos": {"mean_excess_ret_6m": 0.20, "n": 91},
-        })
+        table = _make_table(
+            {
+                "mid|near_31_90|pos": {"mean_excess_ret_6m": 0.05, "n": 23},
+                "mid|none|pos": {"mean_excess_ret_6m": 0.20, "n": 91},
+            }
+        )
         alpha = compute_alpha_raw("mid|near_31_90|pos", table, 50, -0.10, 0.10)
         # Uses own cell: w=23/73=0.3151, alpha=0.05*0.3151≈0.01575
         expected = 0.05 * (23 / 73)
@@ -259,33 +272,41 @@ class TestAlphaRawHorizonFallback:
 
     def test_fallback_parent_also_empty_returns_zero(self):
         """If both the cell and its none-parent have n=0, return 0.0."""
-        table = _make_table({
-            "early|near_91_180|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
-            "early|none|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
-        })
+        table = _make_table(
+            {
+                "early|near_91_180|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
+                "early|none|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
+            }
+        )
         assert compute_alpha_raw("early|near_91_180|pos", table, 50, -0.10, 0.10) == 0.0
 
     def test_none_horizon_does_not_self_fallback(self):
         """A none-horizon cell with n=0 returns 0.0 (no infinite recursion)."""
-        table = _make_table({
-            "early|none|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
-        })
+        table = _make_table(
+            {
+                "early|none|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
+            }
+        )
         assert compute_alpha_raw("early|none|pos", table, 50, -0.10, 0.10) == 0.0
 
     def test_missing_parent_key_returns_zero(self):
         """If the fallback key doesn't exist in the table at all, return 0.0."""
-        table = _make_table({
-            "early|near_0_30|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
-            # no early|none|pos
-        })
+        table = _make_table(
+            {
+                "early|near_0_30|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
+                # no early|none|pos
+            }
+        )
         assert compute_alpha_raw("early|near_0_30|pos", table, 50, -0.10, 0.10) == 0.0
 
     def test_all_early_near_cells_use_fallback(self):
         """All 10 empty early|near_*|{sign} cells now produce signal."""
-        table = _make_table({
-            "early|none|pos": {"mean_excess_ret_6m": 0.228, "n": 190},
-            "early|none|nonpos": {"mean_excess_ret_6m": -0.008, "n": 192},
-        })
+        table = _make_table(
+            {
+                "early|none|pos": {"mean_excess_ret_6m": 0.228, "n": 190},
+                "early|none|nonpos": {"mean_excess_ret_6m": -0.008, "n": 192},
+            }
+        )
         # Fill in the 10 empty early cells
         for h in ("near_0_30", "near_31_90", "near_91_180", "near_181_270", "far_271_540"):
             for s in ("pos", "nonpos"):
@@ -300,10 +321,12 @@ class TestAlphaRawHorizonFallback:
 
     def test_fallback_preserves_shrinkage(self):
         """Fallback uses parent's n for shrinkage, not a synthetic count."""
-        table = _make_table({
-            "early|near_0_30|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
-            "early|none|pos": {"mean_excess_ret_6m": 0.10, "n": 50},
-        })
+        table = _make_table(
+            {
+                "early|near_0_30|pos": {"mean_excess_ret_6m": 0.0, "n": 0},
+                "early|none|pos": {"mean_excess_ret_6m": 0.10, "n": 50},
+            }
+        )
         alpha = compute_alpha_raw("early|near_0_30|pos", table, 50, -0.10, 0.10)
         # w = 50/100 = 0.5, alpha = 0.10 * 0.5 = 0.05
         assert alpha == pytest.approx(0.05)
@@ -320,20 +343,38 @@ class TestAlphaRawHorizonFallback:
 # attach_alpha_scores — percentile assignment
 # ======================================================================
 
+
 class TestAttachAlphaScores:
     def test_three_rows_correct_pct(self):
-        table = _make_table({
-            "mid|near_31_90|pos": {"mean_excess_ret_6m": 0.08, "n": 200},
-            "mid|near_31_90|nonpos": {"mean_excess_ret_6m": 0.02, "n": 200},
-            "early|none|nonpos": {"mean_excess_ret_6m": -0.03, "n": 200},
-        })
+        table = _make_table(
+            {
+                "mid|near_31_90|pos": {"mean_excess_ret_6m": 0.08, "n": 200},
+                "mid|near_31_90|nonpos": {"mean_excess_ret_6m": 0.02, "n": 200},
+                "early|none|nonpos": {"mean_excess_ret_6m": -0.03, "n": 200},
+            }
+        )
         rows = [
-            _row(ticker="AAA", stage_bucket="mid", catalyst_mode="specific_days",
-                 catalyst_days=60, clinical_score_z_tier=1.0),
-            _row(ticker="BBB", stage_bucket="mid", catalyst_mode="specific_days",
-                 catalyst_days=60, clinical_score_z_tier=-0.5),
-            _row(ticker="CCC", stage_bucket="early", catalyst_mode="no_upcoming",
-                 catalyst_days="", clinical_score_z_tier=-0.1),
+            _row(
+                ticker="AAA",
+                stage_bucket="mid",
+                catalyst_mode="specific_days",
+                catalyst_days=60,
+                clinical_score_z_tier=1.0,
+            ),
+            _row(
+                ticker="BBB",
+                stage_bucket="mid",
+                catalyst_mode="specific_days",
+                catalyst_days=60,
+                clinical_score_z_tier=-0.5,
+            ),
+            _row(
+                ticker="CCC",
+                stage_bucket="early",
+                catalyst_mode="no_upcoming",
+                catalyst_days="",
+                clinical_score_z_tier=-0.1,
+            ),
         ]
         attach_alpha_scores(rows, table, shrink_k=50, clip_min=-0.10, clip_max=0.10)
 
@@ -381,17 +422,26 @@ class TestAttachAlphaScores:
 
     def test_keys_set_on_rows(self):
         table = _make_table()
-        rows = [_row(ticker="X", stage_bucket="late", catalyst_mode="far_window",
-                     catalyst_days=400, clinical_score_z_tier=0.3)]
+        rows = [
+            _row(
+                ticker="X",
+                stage_bucket="late",
+                catalyst_mode="far_window",
+                catalyst_days=400,
+                clinical_score_z_tier=0.3,
+            )
+        ]
         attach_alpha_scores(rows, table, shrink_k=50, clip_min=-0.10, clip_max=0.10)
         assert rows[0]["alpha_cohort_key"] == "late|far_271_540|pos"
         assert rows[0]["alpha_cohort_raw"] == 0.0
         assert rows[0]["alpha_cohort_pct"] == 0.5  # single row → (1-0.5)/1
 
     def test_deterministic_across_calls(self):
-        table = _make_table({
-            "mid|near_31_90|pos": {"mean_excess_ret_6m": 0.04, "n": 100},
-        })
+        table = _make_table(
+            {
+                "mid|near_31_90|pos": {"mean_excess_ret_6m": 0.04, "n": 100},
+            }
+        )
         rows1 = [_row(ticker="A"), _row(ticker="B")]
         rows2 = [_row(ticker="A"), _row(ticker="B")]
         attach_alpha_scores(rows1, table, shrink_k=50, clip_min=-0.10, clip_max=0.10)
@@ -405,14 +455,17 @@ class TestAttachAlphaScores:
 # Full key composition
 # ======================================================================
 
+
 class TestFullKeyComposition:
     def test_complete_key_format(self):
-        key = compute_alpha_cohort_key(_row(
-            stage_bucket="late",
-            catalyst_mode="specific_days",
-            catalyst_days=15,
-            clinical_score_z_tier=0.5,
-        ))
+        key = compute_alpha_cohort_key(
+            _row(
+                stage_bucket="late",
+                catalyst_mode="specific_days",
+                catalyst_days=15,
+                clinical_score_z_tier=0.5,
+            )
+        )
         assert key == "late|near_0_30|pos"
 
     def test_all_36_keys_reachable(self):
@@ -432,12 +485,14 @@ class TestFullKeyComposition:
         for stage in stages:
             for mode, days, horizon in horizon_inputs:
                 for z, sign in signs:
-                    key = compute_alpha_cohort_key(_row(
-                        stage_bucket=stage,
-                        catalyst_mode=mode,
-                        catalyst_days=days,
-                        clinical_score_z_tier=z,
-                    ))
+                    key = compute_alpha_cohort_key(
+                        _row(
+                            stage_bucket=stage,
+                            catalyst_mode=mode,
+                            catalyst_days=days,
+                            clinical_score_z_tier=z,
+                        )
+                    )
                     assert key == f"{stage}|{horizon}|{sign}"
                     keys.add(key)
         assert len(keys) == 36
@@ -454,14 +509,16 @@ def _make_csv_rows(n=5, alpha_raws=None):
     """Build minimal csv_rows with composite_score and alpha_cohort_raw."""
     rows = []
     for i in range(n):
-        rows.append({
-            "ticker": f"T{i:03d}",
-            "composite_score": float(n - i),  # legacy descending: T000=5, T001=4, ...
-            "composite_rank": i + 1,
-            "score_rank_pct": "",
-            "score_z": "",
-            "alpha_cohort_raw": alpha_raws[i] if alpha_raws else float(i) * 0.02,
-        })
+        rows.append(
+            {
+                "ticker": f"T{i:03d}",
+                "composite_score": float(n - i),  # legacy descending: T000=5, T001=4, ...
+                "composite_rank": i + 1,
+                "score_rank_pct": "",
+                "score_z": "",
+                "alpha_cohort_raw": alpha_raws[i] if alpha_raws else float(i) * 0.02,
+            }
+        )
     # Seed legacy score_rank_pct/score_z via attach_rank_and_z
     attach_rank_and_z(rows, score_key="composite_score")
     return rows
@@ -474,8 +531,7 @@ def _apply_composite_override(csv_rows):
     attach_rank_and_z(csv_rows, score_key="composite_score")
     _idx_sorted = sorted(
         range(len(csv_rows)),
-        key=lambda i: (-float(csv_rows[i].get("composite_score", 0)),
-                       csv_rows[i].get("ticker", "")),
+        key=lambda i: (-float(csv_rows[i].get("composite_score", 0)), csv_rows[i].get("ticker", "")),
     )
     for rank, idx in enumerate(_idx_sorted, start=1):
         csv_rows[idx]["composite_rank"] = rank
@@ -539,8 +595,7 @@ class TestCompositeEngineOverride:
         alphas = [i * 0.005 for i in range(n)]
         rows = _make_csv_rows(n, alpha_raws=alphas)
         # Simulate alpha_cohort_pct assignment (rank by raw DESC, continuity-corrected)
-        sorted_idx = sorted(range(n), key=lambda i: (-rows[i]["alpha_cohort_raw"],
-                                                      rows[i]["ticker"]))
+        sorted_idx = sorted(range(n), key=lambda i: (-rows[i]["alpha_cohort_raw"], rows[i]["ticker"]))
         for rank, idx in enumerate(sorted_idx, start=1):
             rows[idx]["alpha_cohort_pct"] = (n - rank + 0.5) / n
 

@@ -25,11 +25,10 @@ Version: 2.0.0
 
 import json
 import re
-from decimal import Decimal
-from typing import Dict, List, Optional, Any, Set, Tuple
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
-
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 __version__ = "2.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -37,6 +36,7 @@ __author__ = "Wake Robin Capital Management"
 
 class MappingValidationError(Exception):
     """Raised when mapping configuration is invalid."""
+
     pass
 
 
@@ -66,7 +66,7 @@ class IndicationMapper:
         "pattern_match_multi": 0.80,
         "pattern_match_single": 0.65,
         "ta_fallback": 0.50,
-        "phase_only": 0.30
+        "phase_only": 0.30,
     }
 
     def __init__(self, mapping_path: Optional[str] = None):
@@ -91,10 +91,7 @@ class IndicationMapper:
     def _load_mappings(self) -> None:
         """Load indication mappings from external file."""
         try:
-            paths_to_try = [
-                Path(__file__).parent / self.mapping_path,
-                Path(self.mapping_path)
-            ]
+            paths_to_try = [Path(__file__).parent / self.mapping_path, Path(self.mapping_path)]
 
             for path in paths_to_try:
                 if path.exists():
@@ -107,18 +104,12 @@ class IndicationMapper:
 
                     # Load PIT-safe v3 overrides (excluding _schema key)
                     raw_v3 = data.get("ticker_overrides_v3", {})
-                    self.ticker_overrides_v3 = {
-                        k: v for k, v in raw_v3.items()
-                        if not k.startswith("_")
-                    }
+                    self.ticker_overrides_v3 = {k: v for k, v in raw_v3.items() if not k.startswith("_")}
 
                     # Load category aliases for PoS engine compatibility
                     self.category_aliases = data.get("category_aliases", {})
                     # Remove description key if present
-                    self.category_aliases = {
-                        k: v for k, v in self.category_aliases.items()
-                        if not k.startswith("_")
-                    }
+                    self.category_aliases = {k: v for k, v in self.category_aliases.items() if not k.startswith("_")}
                     return
 
             # Fallback to empty mappings
@@ -126,9 +117,7 @@ class IndicationMapper:
 
         except (json.JSONDecodeError, IOError, OSError) as e:
             # Track the error instead of silently ignoring it
-            self.validation_errors.append(
-                f"Failed to load mapping file: {type(e).__name__}: {e}"
-            )
+            self.validation_errors.append(f"Failed to load mapping file: {type(e).__name__}: {e}")
             self._use_fallback_mappings()
 
     def _validate_mappings(self) -> None:
@@ -140,9 +129,7 @@ class IndicationMapper:
         for ticker, override in self.ticker_overrides_v3.items():
             missing = required_v3_fields - set(override.keys())
             if missing:
-                self.validation_errors.append(
-                    f"ticker_overrides_v3[{ticker}] missing required fields: {missing}"
-                )
+                self.validation_errors.append(f"ticker_overrides_v3[{ticker}] missing required fields: {missing}")
 
             # Validate effective_from is valid date format
             effective_from = override.get("effective_from", "")
@@ -165,38 +152,26 @@ class IndicationMapper:
             for pattern in sorted(patterns):
                 if pattern in pattern_to_category:
                     self.validation_errors.append(
-                        f"Pattern '{pattern}' appears in both "
-                        f"'{pattern_to_category[pattern]}' and '{category}'"
+                        f"Pattern '{pattern}' appears in both " f"'{pattern_to_category[pattern]}' and '{category}'"
                     )
                 pattern_to_category[pattern] = category
 
     def _use_fallback_mappings(self) -> None:
         """Use hardcoded fallback mappings when file unavailable."""
-        self.metadata = {
-            "source": "FALLBACK_HARDCODED",
-            "warning": "External mapping file not loaded"
-        }
+        self.metadata = {"source": "FALLBACK_HARDCODED", "warning": "External mapping file not loaded"}
         # Minimal fallback patterns
         self.condition_patterns = {
             "oncology": ["cancer", "tumor", "carcinoma", "leukemia", "lymphoma"],
             "rare_disease": ["rare", "orphan", "duchenne", "cystic fibrosis"],
             "infectious_disease": ["infection", "viral", "bacterial", "hiv", "hepatitis"],
             "autoimmune": ["autoimmune", "rheumatoid", "lupus", "psoriasis"],
-            "cns": ["alzheimer", "parkinson", "epilepsy", "depression"]
+            "cns": ["alzheimer", "parkinson", "epilepsy", "depression"],
         }
         self.ticker_overrides = {}
         self.ticker_overrides_v3 = {}
-        self.category_aliases = {
-            "cns": "neurology",
-            "autoimmune": "immunology",
-            "gi_hepatology": "gastroenterology"
-        }
+        self.category_aliases = {"cns": "neurology", "autoimmune": "immunology", "gi_hepatology": "gastroenterology"}
 
-    def _is_v3_override_pit_admissible(
-        self,
-        override: Dict[str, Any],
-        as_of_date: date
-    ) -> bool:
+    def _is_v3_override_pit_admissible(self, override: Dict[str, Any], as_of_date: date) -> bool:
         """Check if a v3 override is PIT-admissible for the given as_of_date."""
         effective_from = override.get("effective_from")
         if not effective_from:
@@ -221,9 +196,7 @@ class IndicationMapper:
             except ValueError:
                 # Invalid date format - treat as if no end date (override still active)
                 # This is logged as validation error during init
-                self.validation_errors.append(
-                    f"Invalid effective_until date format: {effective_until}"
-                )
+                self.validation_errors.append(f"Invalid effective_until date format: {effective_until}")
 
         return True
 
@@ -238,7 +211,7 @@ class IndicationMapper:
         ticker: str,
         conditions: Optional[List[str]] = None,
         as_of_date: Optional[date] = None,
-        resolve_alias: bool = True
+        resolve_alias: bool = True,
     ) -> Dict[str, Any]:
         """
         Map a ticker to its primary indication category.
@@ -259,10 +232,7 @@ class IndicationMapper:
             Dict with indication, confidence, and audit info
         """
         if as_of_date is None:
-            raise ValueError(
-                "as_of_date is REQUIRED for determinism. "
-                "Do not use date.today() - pass explicit date."
-            )
+            raise ValueError("as_of_date is REQUIRED for determinism. " "Do not use date.today() - pass explicit date.")
 
         deterministic_timestamp = f"{as_of_date.isoformat()}T00:00:00Z"
         ticker_upper = ticker.upper() if ticker else ""
@@ -284,7 +254,7 @@ class IndicationMapper:
                     "confidence_score": self.CONFIDENCE_TIERS["ticker_override_v3"],
                     "effective_from": override.get("effective_from"),
                     "evidence": override.get("evidence"),
-                    "module_version": self.VERSION
+                    "module_version": self.VERSION,
                 }
                 self.audit_trail.append(audit_entry)
                 return {
@@ -295,7 +265,7 @@ class IndicationMapper:
                     "source": "ticker_override_v3",
                     "effective_from": override.get("effective_from"),
                     "evidence": override.get("evidence"),
-                    "conditions_analyzed": 0
+                    "conditions_analyzed": 0,
                 }
 
         # PRECEDENCE 2: Check legacy ticker override
@@ -311,7 +281,7 @@ class IndicationMapper:
                 "source": "ticker_override",
                 "confidence": "HIGH",
                 "confidence_score": self.CONFIDENCE_TIERS["ticker_override"],
-                "module_version": self.VERSION
+                "module_version": self.VERSION,
             }
             self.audit_trail.append(audit_entry)
             return {
@@ -320,7 +290,7 @@ class IndicationMapper:
                 "confidence": "HIGH",
                 "confidence_score": self.CONFIDENCE_TIERS["ticker_override"],
                 "source": "ticker_override",
-                "conditions_analyzed": 0
+                "conditions_analyzed": 0,
             }
 
         # PRECEDENCE 3: Map from conditions via pattern matching
@@ -341,7 +311,7 @@ class IndicationMapper:
                 "confidence": confidence,
                 "confidence_score": self.CONFIDENCE_TIERS[confidence_key],
                 "match_info": match_info,
-                "module_version": self.VERSION
+                "module_version": self.VERSION,
             }
             self.audit_trail.append(audit_entry)
 
@@ -352,7 +322,7 @@ class IndicationMapper:
                 "confidence_score": self.CONFIDENCE_TIERS[confidence_key],
                 "source": "condition_patterns",
                 "conditions_analyzed": len(conditions),
-                "match_info": match_info
+                "match_info": match_info,
             }
 
         # PRECEDENCE 4: No data available
@@ -364,7 +334,7 @@ class IndicationMapper:
             "source": "no_data",
             "confidence": "NONE",
             "confidence_score": 0.0,
-            "module_version": self.VERSION
+            "module_version": self.VERSION,
         }
         self.audit_trail.append(audit_entry)
 
@@ -374,13 +344,10 @@ class IndicationMapper:
             "confidence": "NONE",
             "confidence_score": 0.0,
             "source": "no_data",
-            "conditions_analyzed": 0
+            "conditions_analyzed": 0,
         }
 
-    def _map_conditions(
-        self,
-        conditions: List[str]
-    ) -> tuple:
+    def _map_conditions(self, conditions: List[str]) -> tuple:
         """
         Map a list of conditions to an indication category.
 
@@ -412,7 +379,7 @@ class IndicationMapper:
             match_info = {
                 "match_count": category_scores[best_category],
                 "category_scores": category_scores,
-                "matched_patterns": matched_patterns.get(best_category, [])
+                "matched_patterns": matched_patterns.get(best_category, []),
             }
             return best_category, match_info
 
@@ -420,10 +387,7 @@ class IndicationMapper:
         return None, {"match_count": 0, "category_scores": {}, "matched_patterns": []}
 
     def map_universe(
-        self,
-        tickers: List[str],
-        trial_records: List[Dict[str, Any]],
-        as_of_date: date
+        self, tickers: List[str], trial_records: List[Dict[str, Any]], as_of_date: date
     ) -> Dict[str, Dict[str, Any]]:
         """
         Map indications for an entire universe of tickers.
@@ -453,11 +417,7 @@ class IndicationMapper:
         for ticker in tickers:
             ticker_upper = ticker.upper()
             conditions = sorted(ticker_conditions.get(ticker_upper, []))
-            results[ticker_upper] = self.map_ticker(
-                ticker=ticker_upper,
-                conditions=conditions,
-                as_of_date=as_of_date
-            )
+            results[ticker_upper] = self.map_ticker(ticker=ticker_upper, conditions=conditions, as_of_date=as_of_date)
 
         return results
 
@@ -478,7 +438,7 @@ class IndicationMapper:
             "ticker_overrides_v3_count": len(self.ticker_overrides_v3),
             "category_aliases": self.category_aliases,
             "validation_errors": self.validation_errors,
-            "mapper_version": self.VERSION
+            "mapper_version": self.VERSION,
         }
 
     def get_validation_errors(self) -> List[str]:
@@ -520,9 +480,9 @@ def demonstration():
 
     # Test cases demonstrating precedence
     test_cases = [
-        ("MRNA", ["covid-19", "vaccine"]),      # v3 override
-        ("BIIB", ["alzheimer", "neurology"]),   # v3 override with alias
-        ("REGN", ["macular degeneration"]),     # legacy override
+        ("MRNA", ["covid-19", "vaccine"]),  # v3 override
+        ("BIIB", ["alzheimer", "neurology"]),  # v3 override with alias
+        ("REGN", ["macular degeneration"]),  # legacy override
         ("UNKNOWN", ["breast cancer", "solid tumor"]),  # pattern match
     ]
 
@@ -536,7 +496,7 @@ def demonstration():
         print(f"  indication: {result['indication']} (raw: {result.get('indication_raw', 'N/A')})")
         print(f"  confidence: {result['confidence']} ({result['confidence_score']})")
         print(f"  source: {result['source']}")
-        if result.get('evidence'):
+        if result.get("evidence"):
             print(f"  evidence: {result['evidence']}")
     print()
 

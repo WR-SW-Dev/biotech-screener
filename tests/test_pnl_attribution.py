@@ -1,15 +1,15 @@
 """Tests for scripts/pnl_attribution.py."""
+
 from __future__ import annotations
 
 import csv
 import json
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List
 
 import pytest
-
-import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -21,20 +21,20 @@ from scripts.pnl_attribution import (
     PositionPnL,
     _bucket_catalyst,
     _bucket_inst_delta,
-    find_prior_date,
     build_portfolio,
     check_pnl_attribution_file,
     compute_attribution,
     compute_portfolio_turnover,
+    find_prior_date,
     load_rankings_map,
     write_attribution_json,
     write_attribution_md,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tmp_dir():
@@ -55,9 +55,17 @@ def _write_rankings_csv(snap_dir: Path, tickers_data: List[Dict[str, str]]) -> N
     """Write rankings.csv with full field set."""
     snap_dir.mkdir(parents=True, exist_ok=True)
     fieldnames = [
-        "ticker", "actionable_rank", "eligible", "tier_dev", "tier_any",
-        "catalyst_mode", "coinvest_tag", "inst_delta_z",
-        "composite_rank", "composite_score", "archetype",
+        "ticker",
+        "actionable_rank",
+        "eligible",
+        "tier_dev",
+        "tier_any",
+        "catalyst_mode",
+        "coinvest_tag",
+        "inst_delta_z",
+        "composite_rank",
+        "composite_score",
+        "archetype",
         "target_weight_pct",
     ]
     with open(snap_dir / "rankings.csv", "w", newline="") as f:
@@ -83,14 +91,22 @@ def _make_snapshot(
     snap_dir = root / date_str
     data = []
     for i, t in enumerate(tickers):
-        data.append({
-            "ticker": t, "actionable_rank": str(i + 1),
-            "eligible": "1", "tier_dev": "A", "tier_any": "A",
-            "catalyst_mode": "specific_days", "coinvest_tag": "elite_3",
-            "inst_delta_z": "0.8",
-            "composite_rank": str(i + 1), "composite_score": "50.0",
-            "archetype": "drug_developer", "target_weight_pct": "5.0",
-        })
+        data.append(
+            {
+                "ticker": t,
+                "actionable_rank": str(i + 1),
+                "eligible": "1",
+                "tier_dev": "A",
+                "tier_any": "A",
+                "catalyst_mode": "specific_days",
+                "coinvest_tag": "elite_3",
+                "inst_delta_z": "0.8",
+                "composite_rank": str(i + 1),
+                "composite_score": "50.0",
+                "archetype": "drug_developer",
+                "target_weight_pct": "5.0",
+            }
+        )
     _write_rankings_csv(snap_dir, data)
     _write_metadata(snap_dir, date_str)
     return snap_dir
@@ -99,6 +115,7 @@ def _make_snapshot(
 # ---------------------------------------------------------------------------
 # Unit tests: portfolio turnover
 # ---------------------------------------------------------------------------
+
 
 class TestPortfolioTurnover:
     def test_identical_weights(self):
@@ -127,6 +144,7 @@ class TestPortfolioTurnover:
 # Unit tests: net cost
 # ---------------------------------------------------------------------------
 
+
 class TestNetCost:
     def test_cost_deduction(self, tmp_dir):
         """Verify net = gross - turnover * cost_bps/10000."""
@@ -135,17 +153,23 @@ class TestNetCost:
         d1 = _make_snapshot(snap_root, "2025-01-03", ["A", "C"])  # B exits, C enters
 
         price_csv = tmp_dir / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"date": "2025-01-02", "ticker": "A", "close": "100"},
-            {"date": "2025-01-02", "ticker": "B", "close": "50"},
-            {"date": "2025-01-03", "ticker": "A", "close": "102"},
-            {"date": "2025-01-03", "ticker": "B", "close": "52"},
-            {"date": "2025-01-03", "ticker": "C", "close": "200"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-01-02", "ticker": "A", "close": "100"},
+                {"date": "2025-01-02", "ticker": "B", "close": "50"},
+                {"date": "2025-01-03", "ticker": "A", "close": "102"},
+                {"date": "2025-01-03", "ticker": "B", "close": "52"},
+                {"date": "2025-01-03", "ticker": "C", "close": "200"},
+            ],
+        )
 
         result = compute_attribution(
-            d0_dir=d0, d1_dir=d1,
-            price_csv=price_csv, cost_bps=30, top_k=2,
+            d0_dir=d0,
+            d1_dir=d1,
+            price_csv=price_csv,
+            cost_bps=30,
+            top_k=2,
         )
 
         assert result.gross_return is not None
@@ -158,6 +182,7 @@ class TestNetCost:
 # Unit tests: schema version
 # ---------------------------------------------------------------------------
 
+
 class TestSchema:
     def test_schema_present(self, tmp_dir):
         snap_root = tmp_dir / "snapshots"
@@ -165,10 +190,13 @@ class TestSchema:
         d1 = _make_snapshot(snap_root, "2025-01-03", ["A"])
 
         price_csv = tmp_dir / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"date": "2025-01-02", "ticker": "A", "close": "100"},
-            {"date": "2025-01-03", "ticker": "A", "close": "105"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-01-02", "ticker": "A", "close": "100"},
+                {"date": "2025-01-03", "ticker": "A", "close": "105"},
+            ],
+        )
 
         result = compute_attribution(d0, d1, price_csv)
         assert result.schema == SCHEMA_VERSION
@@ -185,6 +213,7 @@ class TestSchema:
 # Unit tests: breakdown sums
 # ---------------------------------------------------------------------------
 
+
 class TestBreakdownSums:
     def test_action_breakdown_sums_to_gross(self, tmp_dir):
         """Sum of all action breakdowns should equal gross return."""
@@ -193,15 +222,18 @@ class TestBreakdownSums:
         d1 = _make_snapshot(snap_root, "2025-01-03", ["A", "B", "D"])
 
         price_csv = tmp_dir / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"date": "2025-01-02", "ticker": "A", "close": "100"},
-            {"date": "2025-01-02", "ticker": "B", "close": "50"},
-            {"date": "2025-01-02", "ticker": "C", "close": "200"},
-            {"date": "2025-01-03", "ticker": "A", "close": "110"},
-            {"date": "2025-01-03", "ticker": "B", "close": "48"},
-            {"date": "2025-01-03", "ticker": "C", "close": "190"},
-            {"date": "2025-01-03", "ticker": "D", "close": "75"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-01-02", "ticker": "A", "close": "100"},
+                {"date": "2025-01-02", "ticker": "B", "close": "50"},
+                {"date": "2025-01-02", "ticker": "C", "close": "200"},
+                {"date": "2025-01-03", "ticker": "A", "close": "110"},
+                {"date": "2025-01-03", "ticker": "B", "close": "48"},
+                {"date": "2025-01-03", "ticker": "C", "close": "190"},
+                {"date": "2025-01-03", "ticker": "D", "close": "75"},
+            ],
+        )
 
         result = compute_attribution(d0, d1, price_csv, top_k=3)
 
@@ -213,6 +245,7 @@ class TestBreakdownSums:
 # ---------------------------------------------------------------------------
 # Unit tests: gate check
 # ---------------------------------------------------------------------------
+
 
 class TestGateCheck:
     def test_missing_file_cold_start(self, tmp_dir):
@@ -244,7 +277,8 @@ class TestGateCheck:
             json.dump(data, f)
 
         status, detail, value, threshold = check_pnl_attribution_file(
-            tmp_dir, min_coverage_pct=80.0,
+            tmp_dir,
+            min_coverage_pct=80.0,
         )
         assert status == "WARN"
         assert value == 50.0
@@ -269,6 +303,7 @@ class TestGateCheck:
 # Unit tests: bucket functions
 # ---------------------------------------------------------------------------
 
+
 class TestBuckets:
     def test_catalyst_buckets(self):
         assert _bucket_catalyst("specific_days") == "specific_days"
@@ -286,6 +321,7 @@ class TestBuckets:
 # ---------------------------------------------------------------------------
 # Unit tests: prior date finder
 # ---------------------------------------------------------------------------
+
 
 class TestFindPriorDate:
     def test_finds_most_recent(self, tmp_dir):
@@ -309,14 +345,20 @@ class TestFindPriorDate:
 # Integration: output writers
 # ---------------------------------------------------------------------------
 
+
 class TestOutputWriters:
     def test_json_md_roundtrip(self, tmp_dir):
         result = AttributionResult(
-            as_of_date="2025-01-03", prior_date="2025-01-02",
-            n_positions_d0=20, n_positions_d1=20,
-            n_priced=18, coverage_pct=0.90,
-            gross_return=0.0123, turnover=0.15,
-            cost_bps=30, net_return=0.012,
+            as_of_date="2025-01-03",
+            prior_date="2025-01-02",
+            n_positions_d0=20,
+            n_positions_d1=20,
+            n_priced=18,
+            coverage_pct=0.90,
+            gross_return=0.0123,
+            turnover=0.15,
+            cost_bps=30,
+            net_return=0.012,
         )
 
         write_attribution_json(result, tmp_dir / "pnl_attribution.json")

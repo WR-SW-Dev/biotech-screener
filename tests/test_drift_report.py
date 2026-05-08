@@ -1,36 +1,37 @@
 """Tests for scripts/run_drift_report.py — drift monitoring and guardrails."""
+
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-import sys
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from run_drift_report import (
-    ADAPTIVE_WARN_METRICS,
-    SUGGESTION_MIN_POINTS,
     _PANEL_COL_MAP,
     _SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN,
     _SUGGESTION_SPECS,
+    ADAPTIVE_WARN_METRICS,
+    SUGGESTION_MIN_POINTS,
     DriftGuardrails,
+    _catalyst_coverage_metrics,
+    _catalyst_event_type_metrics,
+    _catalyst_source_metrics,
+    _classify_unknown_reason,
     _compute_churn_details,
     _compute_gate_counts,
+    _compute_margin_summary,
     _compute_strength_counts,
     _compute_strength_transitions,
-    _compute_margin_summary,
     _cost_metrics,
     _parse_pipe_separated,
-    _catalyst_coverage_metrics,
-    _catalyst_source_metrics,
-    _catalyst_event_type_metrics,
     _returns_source_metrics,
     _synthesize_actionable_rank,
     compute_attribution,
@@ -45,8 +46,8 @@ from run_drift_report import (
     generate_rollback_packet_md,
     load_panel_as_snapshots,
     load_snapshot_window,
-    _classify_unknown_reason,
 )
+
 from run_phase2_snapshot_delta import PHASE2_PINNED_RULESET_ID, SnapshotData
 
 
@@ -74,17 +75,14 @@ def _make_rankings(
     n_eligible = int(actual_n * 0.50)
     n_cat_missing = int(n_eligible * catalyst_missing_pct / 100)
     n_cat_present = n_eligible - n_cat_missing
-    modes = (
-        ["specific_days"] * n_cat_present
-        + ["missing"] * n_cat_missing
-        + ["no_upcoming"] * (actual_n - n_eligible)
-    )
+    modes = ["specific_days"] * n_cat_present + ["missing"] * n_cat_missing + ["no_upcoming"] * (actual_n - n_eligible)
 
     # Eligible: first n_eligible are eligible
     eligible = ["1"] * n_eligible + ["0"] * (actual_n - n_eligible)
 
     # Optionality: generate values with roughly the requested std
     import random
+
     rng = random.Random(42)
     opt_vals = [round(0.5 + rng.gauss(0, optionality_std), 4) for _ in range(actual_n)]
 
@@ -377,10 +375,8 @@ class TestRollbackCandidate:
         manifest = {
             "schema_version": 1,
             "rulesets": [
-                {"id": "old1", "file": "old.json", "status": "retired",
-                 "updated_at": "2025-01-01T00:00:00Z"},
-                {"id": "old2", "file": "newer.json", "status": "retired",
-                 "updated_at": "2026-01-01T00:00:00Z"},
+                {"id": "old1", "file": "old.json", "status": "retired", "updated_at": "2025-01-01T00:00:00Z"},
+                {"id": "old2", "file": "newer.json", "status": "retired", "updated_at": "2026-01-01T00:00:00Z"},
                 {"id": "active1", "file": "active.json", "status": "active"},
             ],
         }
@@ -408,8 +404,7 @@ class TestRollbackCandidate:
         manifest = {
             "schema_version": 1,
             "rulesets": [
-                {"id": "abc123", "file": "v_old.json", "status": "retired",
-                 "updated_at": "2026-02-01T00:00:00Z"},
+                {"id": "abc123", "file": "v_old.json", "status": "retired", "updated_at": "2026-02-01T00:00:00Z"},
             ],
         }
         mpath = tmp_path / "manifest.json"
@@ -431,9 +426,12 @@ class TestDriftGuardrails:
 
     def test_json_round_trip(self, tmp_path):
         g = DriftGuardrails(
-            fail_a_pct_low=3.0, window_size=10,
-            warn_iqr_k=1.5, warn_iqr_floor=2.0,
-            warn_min_window=4, fail_corroboration_count=3,
+            fail_a_pct_low=3.0,
+            window_size=10,
+            warn_iqr_k=1.5,
+            warn_iqr_floor=2.0,
+            warn_min_window=4,
+            fail_corroboration_count=3,
         )
         path = tmp_path / "guardrails.json"
         g.to_json(str(path))
@@ -461,9 +459,7 @@ class TestReportGeneration:
         snap = _make_snapshot("2026-01-01")
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
-        md = generate_drift_report_md(
-            metrics, "OK", [], guardrails, recommended_action="NONE"
-        )
+        md = generate_drift_report_md(metrics, "OK", [], guardrails, recommended_action="NONE")
         assert "# Daily Drift Report" in md
         assert "## Current Snapshot" in md
         assert "## Guardrails: OK" in md
@@ -479,7 +475,11 @@ class TestReportGeneration:
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
         md = generate_drift_report_md(
-            metrics, "WARN", [], guardrails, recommended_action="NONE",
+            metrics,
+            "WARN",
+            [],
+            guardrails,
+            recommended_action="NONE",
             adaptive_warnings=["eligible % drifted above median"],
         )
         assert "## Adaptive Warnings" in md
@@ -489,18 +489,14 @@ class TestReportGeneration:
         snap = _make_snapshot("2026-01-01")
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
-        md = generate_drift_report_md(
-            metrics, "OK", [], guardrails, recommended_action="NONE"
-        )
+        md = generate_drift_report_md(metrics, "OK", [], guardrails, recommended_action="NONE")
         assert "## Adaptive Warnings" not in md
 
     def test_json_report_structure(self):
         snap = _make_snapshot("2026-01-01")
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
-        report = generate_drift_json(
-            metrics, "OK", [], guardrails, recommended_action="NONE"
-        )
+        report = generate_drift_json(metrics, "OK", [], guardrails, recommended_action="NONE")
         assert report["status"] == "OK"
         assert report["recommended_action"] == "NONE"
         assert "current" in report
@@ -515,7 +511,11 @@ class TestReportGeneration:
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
         report = generate_drift_json(
-            metrics, "WARN", [], guardrails, recommended_action="NONE",
+            metrics,
+            "WARN",
+            [],
+            guardrails,
+            recommended_action="NONE",
             adaptive_warnings=["eligible % spike"],
         )
         assert report["adaptive_warnings"] == ["eligible % spike"]
@@ -526,7 +526,11 @@ class TestReportGeneration:
         guardrails = DriftGuardrails()
         rollback = {"id": "old123", "file": "old.json"}
         md = generate_drift_report_md(
-            metrics, "FAIL", ["A-tier too low"], guardrails, rollback,
+            metrics,
+            "FAIL",
+            ["A-tier too low"],
+            guardrails,
+            rollback,
             recommended_action="ROLLBACK_RECOMMENDED",
         )
         assert "Rollback candidate" in md
@@ -570,8 +574,10 @@ class TestRecommendedAction:
         fake_candidate = {"id": "retired1", "file": "old.json", "status": "retired"}
 
         import run_drift_report
+
         monkeypatch.setattr(
-            run_drift_report, "find_rollback_candidate",
+            run_drift_report,
+            "find_rollback_candidate",
             lambda: fake_candidate,
         )
 
@@ -589,8 +595,10 @@ class TestRecommendedAction:
     def test_investigate_when_fail_no_candidate(self, monkeypatch):
         """FAIL + no retired entry → INVESTIGATE."""
         import run_drift_report
+
         monkeypatch.setattr(
-            run_drift_report, "find_rollback_candidate",
+            run_drift_report,
+            "find_rollback_candidate",
             lambda: None,
         )
 
@@ -611,8 +619,12 @@ class TestRollbackPacket:
         reasons = ["A-tier % = 1.0% < 2.0% floor", "Optionality std = 0.05 < 0.10 floor"]
         rollback = {"id": "abc123", "file": "old.json"}
         packet = generate_rollback_packet_md(
-            "FAIL", reasons, rollback, "ROLLBACK_RECOMMENDED",
-            {"tier_A_pct": 1.0, "optionality_std": 0.05}, DriftGuardrails(),
+            "FAIL",
+            reasons,
+            rollback,
+            "ROLLBACK_RECOMMENDED",
+            {"tier_A_pct": 1.0, "optionality_std": 0.05},
+            DriftGuardrails(),
         )
         for reason in reasons:
             assert reason in packet
@@ -620,8 +632,12 @@ class TestRollbackPacket:
     def test_packet_contains_candidate_id_and_file(self):
         rollback = {"id": "abc123", "file": "old.json"}
         packet = generate_rollback_packet_md(
-            "FAIL", ["test fail"], rollback, "ROLLBACK_RECOMMENDED",
-            {"tier_A_pct": 1.0}, DriftGuardrails(),
+            "FAIL",
+            ["test fail"],
+            rollback,
+            "ROLLBACK_RECOMMENDED",
+            {"tier_A_pct": 1.0},
+            DriftGuardrails(),
         )
         assert "abc123" in packet
         assert "production_data/decision_rulesets/old.json" in packet
@@ -629,23 +645,35 @@ class TestRollbackPacket:
     def test_packet_contains_verification_command(self):
         rollback = {"id": "abc123", "file": "old.json"}
         packet = generate_rollback_packet_md(
-            "FAIL", ["test fail"], rollback, "ROLLBACK_RECOMMENDED",
-            {"tier_A_pct": 1.0}, DriftGuardrails(),
+            "FAIL",
+            ["test fail"],
+            rollback,
+            "ROLLBACK_RECOMMENDED",
+            {"tier_A_pct": 1.0},
+            DriftGuardrails(),
         )
         assert "assert d['ruleset_id']=='abc123'" in packet
 
     def test_packet_contains_rollback_command(self):
         rollback = {"id": "abc123", "file": "old.json"}
         packet = generate_rollback_packet_md(
-            "FAIL", ["test fail"], rollback, "ROLLBACK_RECOMMENDED",
-            {"tier_A_pct": 1.0}, DriftGuardrails(),
+            "FAIL",
+            ["test fail"],
+            rollback,
+            "ROLLBACK_RECOMMENDED",
+            {"tier_A_pct": 1.0},
+            DriftGuardrails(),
         )
         assert "promote_ruleset.py abc123 --rollback --force" in packet
 
     def test_packet_investigate_when_no_candidate(self):
         packet = generate_rollback_packet_md(
-            "FAIL", ["test fail"], None, "INVESTIGATE",
-            {"tier_A_pct": 1.0}, DriftGuardrails(),
+            "FAIL",
+            ["test fail"],
+            None,
+            "INVESTIGATE",
+            {"tier_A_pct": 1.0},
+            DriftGuardrails(),
         )
         assert "Manual investigation required" in packet
         assert "Rollback Commands" not in packet
@@ -657,10 +685,7 @@ class TestRollbackPacket:
 class TestRollingQuantiles:
     def test_rolling_includes_median_iqr_delta(self):
         """Rolling entries should have median, iqr, and delta keys."""
-        snaps = [
-            _make_snapshot(f"2026-01-0{i+1}", _make_rankings(a_pct=5.0 + i))
-            for i in range(5)
-        ]
+        snaps = [_make_snapshot(f"2026-01-0{i+1}", _make_rankings(a_pct=5.0 + i)) for i in range(5)]
         metrics = compute_drift_metrics(snaps)
         rolling = metrics["rolling"]
         for key in ("tier_A_pct", "eligible_pct", "catalyst_missing_pct"):
@@ -673,6 +698,7 @@ class TestRollingQuantiles:
     def test_rolling_iqr_correct_with_known_values(self):
         """Verify IQR calculation with known values [3,5,7,9,11]."""
         import statistics
+
         vals = [3.0, 5.0, 7.0, 9.0, 11.0]
         q1, _q2, q3 = statistics.quantiles(vals, n=4)
         expected_iqr = round(q3 - q1, 2)
@@ -695,6 +721,7 @@ class TestRollingQuantiles:
         """Catalyst strength band keys appear in rolling when snapshots have catalyst_strength."""
         # Build rankings with catalyst_strength column
         import random
+
         rng = random.Random(99)
         snaps = []
         for i in range(4):
@@ -736,6 +763,7 @@ class TestAdaptiveWarnings:
 
         # Compute rolling manually (mirroring production logic)
         import statistics
+
         roll_keys = list(base.keys())
         rolling = {}
         for key in roll_keys:
@@ -813,15 +841,11 @@ class TestAdaptiveWarnings:
         # Shift of 1.5pp: with k=2.0 threshold=2.0 → no warn. With k=1.0 threshold=1.0 → warn.
         metrics = self._build_stable_metrics(5, eligible_pct=56.5)
         # k=2.0: threshold = 2.0 * max(0.0, 1.0) = 2.0, delta=1.5 → no warn
-        status_strict, _ = evaluate_adaptive_warnings(
-            metrics, DriftGuardrails(warn_iqr_k=2.0)
-        )
+        status_strict, _ = evaluate_adaptive_warnings(metrics, DriftGuardrails(warn_iqr_k=2.0))
         assert status_strict == "OK"
 
         # k=1.0: threshold = 1.0 * max(0.0, 1.0) = 1.0, delta=1.5 → warn
-        status_loose, reasons_loose = evaluate_adaptive_warnings(
-            metrics, DriftGuardrails(warn_iqr_k=1.0)
-        )
+        status_loose, reasons_loose = evaluate_adaptive_warnings(metrics, DriftGuardrails(warn_iqr_k=1.0))
         assert status_loose == "WARN"
         assert len(reasons_loose) > 0
 
@@ -844,8 +868,10 @@ class TestCorroboration:
         """1 FAIL metric + candidate → INVESTIGATE (not corroborated)."""
         fake_candidate = {"id": "retired1", "file": "old.json", "status": "retired"}
         import run_drift_report
+
         monkeypatch.setattr(
-            run_drift_report, "find_rollback_candidate",
+            run_drift_report,
+            "find_rollback_candidate",
             lambda: fake_candidate,
         )
         # overlap < 50% is a single FAIL
@@ -862,8 +888,10 @@ class TestCorroboration:
         """2 FAIL metrics + candidate → ROLLBACK_RECOMMENDED (corroborated)."""
         fake_candidate = {"id": "retired1", "file": "old.json", "status": "retired"}
         import run_drift_report
+
         monkeypatch.setattr(
-            run_drift_report, "find_rollback_candidate",
+            run_drift_report,
+            "find_rollback_candidate",
             lambda: fake_candidate,
         )
         # overlap + dispersion: 2 independent FAILs
@@ -878,8 +906,10 @@ class TestCorroboration:
     def test_two_fails_no_candidate_is_investigate(self, monkeypatch):
         """2 FAILs, no candidate → INVESTIGATE."""
         import run_drift_report
+
         monkeypatch.setattr(
-            run_drift_report, "find_rollback_candidate",
+            run_drift_report,
+            "find_rollback_candidate",
             lambda: None,
         )
         status, reasons, rollback, action = evaluate_guardrails(
@@ -895,8 +925,10 @@ class TestCorroboration:
         """Set count=3, 2 FAILs → still INVESTIGATE."""
         fake_candidate = {"id": "retired1", "file": "old.json", "status": "retired"}
         import run_drift_report
+
         monkeypatch.setattr(
-            run_drift_report, "find_rollback_candidate",
+            run_drift_report,
+            "find_rollback_candidate",
             lambda: fake_candidate,
         )
         # overlap + dispersion: 2 independent FAILs, but corroboration needs 3
@@ -973,7 +1005,13 @@ class TestDriftAttribution:
         r = _make_rankings(n_dev=20)  # no include_attribution_cols
         dev = r[r["archetype"] == "drug_developer"]
         counts = _compute_gate_counts(dev)
-        assert counts == {"financials_missing": 0, "fundamental_red_flag": 0, "sev3": 0, "deep_drawdown": 0, "adv_fail": 0}
+        assert counts == {
+            "financials_missing": 0,
+            "fundamental_red_flag": 0,
+            "sev3": 0,
+            "deep_drawdown": 0,
+            "adv_fail": 0,
+        }
 
     # -- Catalyst strength tests --
 
@@ -1021,8 +1059,7 @@ class TestDriftAttribution:
         dev2 = r2[r2["archetype"] == "drug_developer"]
         degraded, improved = _compute_strength_transitions(dev1, dev2)
         assert any(d["ticker"] == ticker for d in degraded)
-        assert all(d["prior"] == "near" and d["current"] == "far"
-                    for d in degraded if d["ticker"] == ticker)
+        assert all(d["prior"] == "near" and d["current"] == "far" for d in degraded if d["ticker"] == ticker)
 
     def test_transitions_improved(self):
         """missing→near appears in improved list."""
@@ -1068,7 +1105,7 @@ class TestDriftAttribution:
         r2 = r1.copy()
         # Swap actionable_rank of first and 30th ticker to change top-25
         r2.at[0, "actionable_rank"] = 40  # drop T000 out of top-25
-        r2.at[30, "actionable_rank"] = 1   # add T030 into top-25
+        r2.at[30, "actionable_rank"] = 1  # add T030 into top-25
 
         churn = _compute_churn_details(r1, r2)
         dropped_tickers = {d["ticker"] for d in churn["dropped"]}
@@ -1099,7 +1136,11 @@ class TestDriftAttribution:
         attribution = compute_attribution([s1, s2])
         guardrails = DriftGuardrails()
         md = generate_drift_report_md(
-            metrics, "OK", [], guardrails, attribution=attribution,
+            metrics,
+            "OK",
+            [],
+            guardrails,
+            attribution=attribution,
         )
         assert "## Drift Attribution" in md
         assert "### Eligibility Gate Changes" in md
@@ -1112,7 +1153,11 @@ class TestDriftAttribution:
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
         md = generate_drift_report_md(
-            metrics, "OK", [], guardrails, attribution=None,
+            metrics,
+            "OK",
+            [],
+            guardrails,
+            attribution=None,
         )
         assert "## Drift Attribution" not in md
 
@@ -1124,7 +1169,11 @@ class TestDriftAttribution:
         attribution = compute_attribution([s1, s2])
         guardrails = DriftGuardrails()
         report = generate_drift_json(
-            metrics, "OK", [], guardrails, attribution=attribution,
+            metrics,
+            "OK",
+            [],
+            guardrails,
+            attribution=attribution,
         )
         assert "attribution" in report
         assert report["attribution"] is not None
@@ -1136,7 +1185,11 @@ class TestDriftAttribution:
         metrics = compute_drift_metrics([snap])
         guardrails = DriftGuardrails()
         report = generate_drift_json(
-            metrics, "OK", [], guardrails, attribution=None,
+            metrics,
+            "OK",
+            [],
+            guardrails,
+            attribution=None,
         )
         assert "attribution" in report
         assert report["attribution"] is None
@@ -1190,14 +1243,34 @@ class TestGatePressure:
     def test_near_gate_count(self):
         """Tickers at ±0.05 are counted as near-gate."""
         rows = [
-            {"dd_abs_margin": 0.25, "dd_rel_margin": 0.10, "optionality_margin_a": 0.20,
-             "rescued_by_rel": "0", "eligible": "1"},
-            {"dd_abs_margin": 0.03, "dd_rel_margin": -0.04, "optionality_margin_a": -0.03,
-             "rescued_by_rel": "0", "eligible": "1"},
-            {"dd_abs_margin": -0.02, "dd_rel_margin": 0.15, "optionality_margin_a": 0.05,
-             "rescued_by_rel": "1", "eligible": "1"},
-            {"dd_abs_margin": -0.10, "dd_rel_margin": -0.20, "optionality_margin_a": -0.15,
-             "rescued_by_rel": "0", "eligible": "1"},
+            {
+                "dd_abs_margin": 0.25,
+                "dd_rel_margin": 0.10,
+                "optionality_margin_a": 0.20,
+                "rescued_by_rel": "0",
+                "eligible": "1",
+            },
+            {
+                "dd_abs_margin": 0.03,
+                "dd_rel_margin": -0.04,
+                "optionality_margin_a": -0.03,
+                "rescued_by_rel": "0",
+                "eligible": "1",
+            },
+            {
+                "dd_abs_margin": -0.02,
+                "dd_rel_margin": 0.15,
+                "optionality_margin_a": 0.05,
+                "rescued_by_rel": "1",
+                "eligible": "1",
+            },
+            {
+                "dd_abs_margin": -0.10,
+                "dd_rel_margin": -0.20,
+                "optionality_margin_a": -0.15,
+                "rescued_by_rel": "0",
+                "eligible": "1",
+            },
         ]
         result = _compute_margin_summary(self._make_dev_df(rows))
         # dd_abs: 2 of 4 near (0.03, -0.02)
@@ -1230,8 +1303,13 @@ class TestGatePressure:
     def test_no_eligible_returns_zero(self):
         """No eligible tickers → rescued_share_pct = 0."""
         rows = [
-            {"rescued_by_rel": "0", "eligible": "0",
-             "dd_abs_margin": 0.01, "dd_rel_margin": 0.01, "optionality_margin_a": 0.01},
+            {
+                "rescued_by_rel": "0",
+                "eligible": "0",
+                "dd_abs_margin": 0.01,
+                "dd_rel_margin": 0.01,
+                "optionality_margin_a": 0.01,
+            },
         ]
         result = _compute_margin_summary(self._make_dev_df(rows))
         assert result["rescued_share_pct"] == 0.0
@@ -1268,10 +1346,7 @@ class TestCostTelemetry:
         cost_bps = [50.0 + i * 20 for i in range(15)] + [1000.0] * 5
         r["est_cost_bps"] = cost_bps
         r["cost_haircut_applied"] = ["0" if m >= 1.0 else "1" for m in mults]
-        r["cost_bucket"] = [
-            "<=400bps" if m >= 1.0 else "<=1000bps" if m >= 0.85 else ">2000bps"
-            for m in mults
-        ]
+        r["cost_bucket"] = ["<=400bps" if m >= 1.0 else "<=1000bps" if m >= 0.85 else ">2000bps" for m in mults]
         snap = _make_snapshot("2026-01-01", r)
         metrics = compute_snapshot_metrics(snap)
 
@@ -1290,10 +1365,7 @@ class TestCostTelemetry:
         assert metrics["mean_cost_mult"] < 1.0
 
         # Bucket shares sum to 100%
-        total = sum(
-            metrics[f"cost_bucket_{b}_pct"]
-            for b in ("no", "mild", "heavy", "floor")
-        )
+        total = sum(metrics[f"cost_bucket_{b}_pct"] for b in ("no", "mild", "heavy", "floor"))
         assert abs(total - 100.0) < 0.2
 
         # Floor bucket share still tracked separately
@@ -1360,7 +1432,9 @@ class TestReturnsSourceMix:
     """Tests for returns-source mix metrics and guardrails."""
 
     def _make_rankings_with_rs(
-        self, n_dev: int = 50, sources: list | None = None,
+        self,
+        n_dev: int = 50,
+        sources: list | None = None,
     ) -> pd.DataFrame:
         """Build rankings DataFrame with a returns_source column."""
         r = _make_rankings(n_dev=n_dev)
@@ -1395,12 +1469,7 @@ class TestReturnsSourceMix:
     def test_mix_known_distribution(self):
         """Known source distribution → correct counts and shares."""
         r = _make_rankings(n_dev=20)
-        r["returns_source"] = (
-            ["morningstar"] * 14
-            + ["csv"] * 3
-            + ["csv_outlier_override"] * 1
-            + ["unknown"] * 2
-        )
+        r["returns_source"] = ["morningstar"] * 14 + ["csv"] * 3 + ["csv_outlier_override"] * 1 + ["unknown"] * 2
         result = _returns_source_metrics(r)
         assert result is not None
         assert result["rs_n_dev"] == 20
@@ -1550,7 +1619,8 @@ class TestCatalystCoverage:
     """Tests for catalyst coverage metrics in drift report."""
 
     def _make_rankings_with_cat(
-        self, n_dev: int = 50,
+        self,
+        n_dev: int = 50,
         eligible_pct: float = 60.0,
         modes: list | None = None,
     ) -> pd.DataFrame:
@@ -1558,9 +1628,11 @@ class TestCatalystCoverage:
         r = _make_rankings(n_dev=n_dev)
         # Ensure tier_dev is populated for eligible tickers
         n_eligible = int(n_dev * eligible_pct / 100)
-        tiers = (["A"] * max(1, n_eligible // 4)
-                 + ["B"] * max(1, n_eligible // 4)
-                 + ["C"] * (n_eligible - 2 * max(1, n_eligible // 4)))
+        tiers = (
+            ["A"] * max(1, n_eligible // 4)
+            + ["B"] * max(1, n_eligible // 4)
+            + ["C"] * (n_eligible - 2 * max(1, n_eligible // 4))
+        )
         # Pad with blank for ineligible
         tiers = tiers[:n_eligible] + [""] * (n_dev - n_eligible)
         r["tier_dev"] = tiers[:n_dev]
@@ -1588,12 +1660,7 @@ class TestCatalystCoverage:
         """Known catalyst mode distribution → correct counts and shares."""
         r = _make_rankings(n_dev=20)
         r["tier_dev"] = ["A"] * 5 + ["B"] * 5 + ["C"] * 5 + [""] * 5
-        modes = (
-            ["specific_days"] * 8
-            + ["no_upcoming"] * 4
-            + ["missing"] * 3
-            + [""] * 5  # ineligible, not counted
-        )
+        modes = ["specific_days"] * 8 + ["no_upcoming"] * 4 + ["missing"] * 3 + [""] * 5  # ineligible, not counted
         r["catalyst_mode"] = modes
         result = _catalyst_coverage_metrics(r)
         assert result is not None
@@ -1725,7 +1792,9 @@ class TestCatalystSourceMix:
     """Tests for catalyst source mix metrics and guardrails."""
 
     def _make_rankings_with_cs(
-        self, n_dev: int = 50, sources: list | None = None,
+        self,
+        n_dev: int = 50,
+        sources: list | None = None,
     ) -> pd.DataFrame:
         """Build rankings DataFrame with catalyst_source + tier_dev columns."""
         r = _make_rankings(n_dev=n_dev)
@@ -1767,7 +1836,7 @@ class TestCatalystSourceMix:
             ["CTGOV_CALENDAR"] * 10
             + ["FDA_CALENDAR"] * 5
             + ["SEC_8K_FILING"] * 2
-            + [""] * 2   # → none
+            + [""] * 2  # → none
             + [None] * 1  # → none (default: relaxed)
         )
         result = _catalyst_source_metrics(r)
@@ -1817,11 +1886,11 @@ class TestCatalystSourceMix:
         r = _make_rankings(n_dev=5)
         r["tier_dev"] = ["A"] * 5
         r["catalyst_source"] = [
-            "trial_pcd",   # → CTGOV_CALENDAR
-            "pdufa",       # → FDA_CALENDAR
-            "sec_8k",      # → SEC_8K_FILING
-            "adcom",       # → FDA_CALENDAR
-            "",            # → none
+            "trial_pcd",  # → CTGOV_CALENDAR
+            "pdufa",  # → FDA_CALENDAR
+            "sec_8k",  # → SEC_8K_FILING
+            "adcom",  # → FDA_CALENDAR
+            "",  # → none
         ]
         result = _catalyst_source_metrics(r)
         assert result["cs_ctgov_calendar_count"] == 1
@@ -1943,7 +2012,7 @@ class TestCatalystSourceMix:
         """cs_* WARNs suppressed when cat_specific_days_share < 40%."""
         m = self._metrics_with_current(
             cs_ctgov_calendar_share_pct=10.0,  # would WARN normally
-            cs_unknown_share_pct=20.0,         # would WARN normally
+            cs_unknown_share_pct=20.0,  # would WARN normally
             cat_specific_days_share_pct=30.0,  # sparse regime → gate
         )
         status, reasons, _, _ = evaluate_guardrails(m, DriftGuardrails())
@@ -2051,7 +2120,11 @@ class TestCatalystSourceMix:
         snap = _make_snapshot("2026-01-01", r)
         metrics = compute_drift_metrics([snap], strict_cs_missing=True)
         md = generate_drift_report_md(
-            metrics, "OK", [], DriftGuardrails(), verbose_offenders=True,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            verbose_offenders=True,
         )
         assert "### Unknown Source" in md
 
@@ -2063,12 +2136,18 @@ class TestCatalystSourceMix:
         r["tier_dev"] = ["A"] * 5
         r["catalyst_mode"] = ["specific_days"] * 3 + ["no_upcoming"] * 2
         r["catalyst_source"] = [
-            "FDA_CALENDAR", "SEC_8K_FILING", "CTGOV_CALENDAR",
-            "CORPORATE_CALENDAR", "CTGOV_CALENDAR",
+            "FDA_CALENDAR",
+            "SEC_8K_FILING",
+            "CTGOV_CALENDAR",
+            "CORPORATE_CALENDAR",
+            "CTGOV_CALENDAR",
         ]
         r["catalyst_event_type"] = [
-            "FDA_DECISION", "DATA_READOUT", "DATA_READOUT",
-            "TRIAL_ONGOING", "DATA_READOUT",
+            "FDA_DECISION",
+            "DATA_READOUT",
+            "DATA_READOUT",
+            "TRIAL_ONGOING",
+            "DATA_READOUT",
         ]
         r["de_catalyst_days"] = ["30", "60", "45", "90", "15"]
         result = _catalyst_source_metrics(r)
@@ -2088,7 +2167,10 @@ class TestCatalystSourceMix:
         r["tier_dev"] = ["A"] * 4
         r["catalyst_mode"] = ["specific_days"] * 4
         r["catalyst_source"] = [
-            "SEC_8K_FILING", "FDA_CALENDAR", "CORPORATE_CALENDAR", "FDA_CALENDAR",
+            "SEC_8K_FILING",
+            "FDA_CALENDAR",
+            "CORPORATE_CALENDAR",
+            "FDA_CALENDAR",
         ]
         r["catalyst_event_type"] = ["X"] * 4
         result = _catalyst_source_metrics(r)
@@ -2103,9 +2185,7 @@ class TestCatalystSourceMix:
         r["tier_dev"] = ["A"] * 10
         r["catalyst_mode"] = ["specific_days"] * 10
         # 3 CTGOV out of 10 = 30% < 37% floor
-        r["catalyst_source"] = (
-            ["CTGOV_CALENDAR"] * 3 + ["FDA_CALENDAR"] * 4 + ["SEC_8K_FILING"] * 3
-        )
+        r["catalyst_source"] = ["CTGOV_CALENDAR"] * 3 + ["FDA_CALENDAR"] * 4 + ["SEC_8K_FILING"] * 3
         r["catalyst_event_type"] = ["DATA_READOUT"] * 10
         r["de_catalyst_days"] = ["45"] * 10
         snap = _make_snapshot("2026-01-01", r)
@@ -2150,7 +2230,11 @@ class TestCatalystSourceMix:
         snap = _make_snapshot("2026-01-01", r)
         metrics = compute_drift_metrics([snap])
         md = generate_drift_report_md(
-            metrics, "OK", [], DriftGuardrails(), verbose_offenders=True,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            verbose_offenders=True,
         )
         assert "### Non-CTGOV Dated Catalysts" in md
 
@@ -2174,6 +2258,7 @@ class TestCatalystSourceMix:
 # Catalyst event type mix
 # ---------------------------------------------------------------------------
 
+
 class TestCatalystEventTypeMix:
     """Tests for catalyst event type mix metrics and report section."""
 
@@ -2185,7 +2270,7 @@ class TestCatalystEventTypeMix:
             ["DATA_READOUT"] * 10
             + ["FDA_DECISION"] * 3
             + ["FDA_ADCOM"] * 2
-            + [""] * 3   # → none
+            + [""] * 3  # → none
             + [None] * 2  # → none (default: relaxed)
         )
         result = _catalyst_event_type_metrics(r)
@@ -2222,9 +2307,9 @@ class TestCatalystEventTypeMix:
         r = _make_rankings(n_dev=4)
         r["tier_dev"] = ["A"] * 4
         r["catalyst_event_type"] = [
-            "data_readout",   # lowercase → DATA_READOUT
-            "fda_decision",   # lowercase → FDA_DECISION
-            "fda_adcom",      # lowercase → FDA_ADCOM
+            "data_readout",  # lowercase → DATA_READOUT
+            "fda_decision",  # lowercase → FDA_DECISION
+            "fda_adcom",  # lowercase → FDA_ADCOM
             "trial_ongoing",  # lowercase → TRIAL_ONGOING
         ]
         result = _catalyst_event_type_metrics(r)
@@ -2404,12 +2489,8 @@ class TestCatalystEventTypeMix:
         """FDA-tagged tickers table appears when FDA events exist."""
         r = _make_rankings(n_dev=10)
         r["tier_dev"] = ["A"] * 10
-        r["catalyst_event_type"] = (
-            ["FDA_DECISION"] * 3 + ["FDA_ADCOM"] * 2 + ["DATA_READOUT"] * 5
-        )
-        r["catalyst_source"] = (
-            ["FDA_CALENDAR"] * 5 + ["CTGOV_CALENDAR"] * 5
-        )
+        r["catalyst_event_type"] = ["FDA_DECISION"] * 3 + ["FDA_ADCOM"] * 2 + ["DATA_READOUT"] * 5
+        r["catalyst_source"] = ["FDA_CALENDAR"] * 5 + ["CTGOV_CALENDAR"] * 5
         snap = _make_snapshot("2026-01-01", r)
         metrics = compute_drift_metrics([snap])
         md = generate_drift_report_md(metrics, "OK", [], DriftGuardrails())
@@ -2548,7 +2629,11 @@ class TestCatalystEventTypeMix:
         assert "Unknown event type offenders: 2" in md_quiet
         # With verbose: full table
         md_verbose = generate_drift_report_md(
-            metrics, "OK", [], DriftGuardrails(), verbose_offenders=True,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            verbose_offenders=True,
         )
         assert "### Unknown Event Type" in md_verbose
         assert "| Days |" in md_verbose
@@ -2568,7 +2653,11 @@ class TestCatalystEventTypeMix:
         assert "FDA-tagged tickers: 5" in md_quiet
         # With verbose: full table
         md_verbose = generate_drift_report_md(
-            metrics, "OK", [], DriftGuardrails(), verbose_offenders=True,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            verbose_offenders=True,
         )
         assert "### FDA-Tagged Tickers" in md_verbose
         assert "FDA_DECISION" in md_verbose
@@ -2577,6 +2666,7 @@ class TestCatalystEventTypeMix:
 # ---------------------------------------------------------------------------
 # Unknown reason taxonomy
 # ---------------------------------------------------------------------------
+
 
 class TestClassifyUnknownReason:
     """Tests for _classify_unknown_reason helper."""
@@ -2636,6 +2726,7 @@ class TestClassifyUnknownReason:
     def test_classify_unknown_reason_called_for_each_offender(self):
         """Each cs_* unknown offender gets the correct reason from _classify_unknown_reason."""
         import numpy as np
+
         r = _make_rankings(n_dev=4)
         r["tier_dev"] = ["A"] * 4
         r["catalyst_mode"] = ["specific_days"] * 4
@@ -2654,6 +2745,7 @@ class TestClassifyUnknownReason:
 # Panel-as-snapshots
 # ---------------------------------------------------------------------------
 
+
 def _make_panel_csv(path, rows, extra_cols=None):
     """Write a minimal panel CSV for testing.
 
@@ -2662,13 +2754,31 @@ def _make_panel_csv(path, rows, extra_cols=None):
     import csv
 
     base_cols = [
-        "as_of_date", "ticker", "tier", "band", "eligible", "weight",
-        "ineligible_reasons", "first_failed_gate", "tier_reason", "risk_flags",
-        "catalyst_mode", "catalyst_strength", "mom_state",
-        "optionality", "catalyst_days_raw", "ruleset_id",
-        "drawdown_abs", "drawdown_xbi", "drawdown_rel_xbi",
-        "dd_abs_margin", "dd_rel_margin", "rescued_by_rel",
-        "dd_rel_margin_rescued", "optionality_margin_a", "actionable_catalyst",
+        "as_of_date",
+        "ticker",
+        "tier",
+        "band",
+        "eligible",
+        "weight",
+        "ineligible_reasons",
+        "first_failed_gate",
+        "tier_reason",
+        "risk_flags",
+        "catalyst_mode",
+        "catalyst_strength",
+        "mom_state",
+        "optionality",
+        "catalyst_days_raw",
+        "ruleset_id",
+        "drawdown_abs",
+        "drawdown_xbi",
+        "drawdown_rel_xbi",
+        "dd_abs_margin",
+        "dd_rel_margin",
+        "rescued_by_rel",
+        "dd_rel_margin_rescued",
+        "optionality_margin_a",
+        "actionable_catalyst",
         "returns_source",
     ]
     cols = base_cols + (extra_cols or [])
@@ -2681,26 +2791,46 @@ def _make_panel_csv(path, rows, extra_cols=None):
 
 
 def _panel_row(
-    date="2025-06-30", ticker="TICK", tier="B", band="L",
-    eligible="1", weight="5.0", catalyst_mode="specific_days",
-    catalyst_strength="near", optionality="0.70", ruleset_id=PHASE2_PINNED_RULESET_ID,
-    returns_source="morningstar", **extra,
+    date="2025-06-30",
+    ticker="TICK",
+    tier="B",
+    band="L",
+    eligible="1",
+    weight="5.0",
+    catalyst_mode="specific_days",
+    catalyst_strength="near",
+    optionality="0.70",
+    ruleset_id=PHASE2_PINNED_RULESET_ID,
+    returns_source="morningstar",
+    **extra,
 ):
     """Build a single panel row dict with sensible defaults."""
     row = {
-        "as_of_date": date, "ticker": ticker, "tier": tier, "band": band,
-        "eligible": eligible, "weight": weight,
-        "ineligible_reasons": "", "first_failed_gate": "",
+        "as_of_date": date,
+        "ticker": ticker,
+        "tier": tier,
+        "band": band,
+        "eligible": eligible,
+        "weight": weight,
+        "ineligible_reasons": "",
+        "first_failed_gate": "",
         "tier_reason": "mod_opt" if tier == "B" else "high_opt+catalyst_near",
-        "risk_flags": "", "catalyst_mode": catalyst_mode,
-        "catalyst_strength": catalyst_strength, "mom_state": "tailwind",
-        "optionality": optionality, "catalyst_days_raw": "30",
+        "risk_flags": "",
+        "catalyst_mode": catalyst_mode,
+        "catalyst_strength": catalyst_strength,
+        "mom_state": "tailwind",
+        "optionality": optionality,
+        "catalyst_days_raw": "30",
         "ruleset_id": ruleset_id,
-        "drawdown_abs": "-0.10", "drawdown_xbi": "-0.05",
+        "drawdown_abs": "-0.10",
+        "drawdown_xbi": "-0.05",
         "drawdown_rel_xbi": "-0.05",
-        "dd_abs_margin": "0.30", "dd_rel_margin": "0.20",
-        "rescued_by_rel": "0", "dd_rel_margin_rescued": "0",
-        "optionality_margin_a": "0.10", "actionable_catalyst": "1",
+        "dd_abs_margin": "0.30",
+        "dd_rel_margin": "0.20",
+        "rescued_by_rel": "0",
+        "dd_rel_margin_rescued": "0",
+        "optionality_margin_a": "0.10",
+        "actionable_catalyst": "1",
         "returns_source": returns_source,
     }
     row.update(extra)
@@ -2833,14 +2963,17 @@ class TestPanelLoader:
         rows = []
         for date in ("2025-01-31", "2025-02-28", "2025-03-31"):
             for i in range(20):
-                rows.append(_panel_row(
-                    date=date, ticker=f"T{i:03d}",
-                    tier=["A", "B", "C", "D"][i % 4],
-                    eligible="1" if i < 15 else "0",
-                    weight=str(round(5.0 - i * 0.2, 2)) if i < 15 else "0.0",
-                    catalyst_mode=["specific_days", "no_upcoming", "missing"][i % 3],
-                    catalyst_strength=["near", "mid", "far", "missing"][i % 4],
-                ))
+                rows.append(
+                    _panel_row(
+                        date=date,
+                        ticker=f"T{i:03d}",
+                        tier=["A", "B", "C", "D"][i % 4],
+                        eligible="1" if i < 15 else "0",
+                        weight=str(round(5.0 - i * 0.2, 2)) if i < 15 else "0.0",
+                        catalyst_mode=["specific_days", "no_upcoming", "missing"][i % 3],
+                        catalyst_strength=["near", "mid", "far", "missing"][i % 4],
+                    )
+                )
         _make_panel_csv(csv_path, rows)
         snaps = load_panel_as_snapshots(csv_path)
         metrics = compute_drift_metrics(snaps)
@@ -2852,6 +2985,7 @@ class TestPanelLoader:
     def test_missing_date_column_raises(self, tmp_path):
         """Panel without any recognized date column raises ValueError."""
         import csv as csv_mod
+
         csv_path = tmp_path / "bad.csv"
         with open(csv_path, "w", newline="") as f:
             w = csv_mod.writer(f)
@@ -2863,6 +2997,7 @@ class TestPanelLoader:
     def test_alternate_date_column(self, tmp_path):
         """Panel with 'snapshot_date' instead of 'as_of_date' is accepted."""
         import csv as csv_mod
+
         csv_path = tmp_path / "panel.csv"
         # Write with snapshot_date column
         row = _panel_row()
@@ -2889,9 +3024,11 @@ class TestSynthesizeActionableRank:
 
     def test_ranking_order(self):
         """Higher weight gets lower (better) rank."""
-        df = pd.DataFrame({
-            "weight": ["10.0", "5.0", "1.0", "0.0"],
-        })
+        df = pd.DataFrame(
+            {
+                "weight": ["10.0", "5.0", "1.0", "0.0"],
+            }
+        )
         ranks = _synthesize_actionable_rank(df)
         assert ranks.iloc[0] == 1  # weight=10
         assert ranks.iloc[1] == 2  # weight=5
@@ -2916,6 +3053,7 @@ class TestSynthesizeActionableRank:
 # ---------------------------------------------------------------------------
 # Suggested Guardrails
 # ---------------------------------------------------------------------------
+
 
 class TestSuggestedGuardrails:
     """Tests for compute_suggested_guardrails."""
@@ -2957,11 +3095,13 @@ class TestSuggestedGuardrails:
         """Current snapshot is excluded from baseline computation."""
         # 4 prior with stable values + 1 current with extreme value
         metrics = self._make_metrics_series(3)
-        metrics.append({
-            "date": "2025-99-01",
-            "rs_morningstar_share_pct": 10.0,  # extreme outlier
-            **{k: metrics[0][k] for k in metrics[0] if k != "rs_morningstar_share_pct"},
-        })
+        metrics.append(
+            {
+                "date": "2025-99-01",
+                "rs_morningstar_share_pct": 10.0,  # extreme outlier
+                **{k: metrics[0][k] for k in metrics[0] if k != "rs_morningstar_share_pct"},
+            }
+        )
         result = compute_suggested_guardrails(metrics, DriftGuardrails())
         ms = {s["metric"]: s for s in result}
         # Morningstar median should NOT be dragged down by the outlier current
@@ -2970,10 +3110,11 @@ class TestSuggestedGuardrails:
     def test_low_floor_formula(self):
         """Low floor: suggested = max(0, median - k*IQR)."""
         # 5 prior with constant value → IQR=0 → suggested=median
-        metrics = [{"date": f"d{i}", "cat_eligible_share_pct": 90.0}
-                   for i in range(6)]
+        metrics = [{"date": f"d{i}", "cat_eligible_share_pct": 90.0} for i in range(6)]
         result = compute_suggested_guardrails(
-            metrics, DriftGuardrails(), k=2.0,
+            metrics,
+            DriftGuardrails(),
+            k=2.0,
         )
         ms = {s["metric"]: s for s in result}
         s = ms["cat_eligible_share_pct"]
@@ -2983,11 +3124,13 @@ class TestSuggestedGuardrails:
 
     def test_high_ceiling_formula(self):
         """High ceiling: suggested = min(100, median + k*IQR)."""
-        metrics = [{"date": f"d{i}", "cs_unknown_share_pct": 5.0,
-                    "cat_specific_days_share_pct": 50.0}
-                   for i in range(6)]
+        metrics = [
+            {"date": f"d{i}", "cs_unknown_share_pct": 5.0, "cat_specific_days_share_pct": 50.0} for i in range(6)
+        ]
         result = compute_suggested_guardrails(
-            metrics, DriftGuardrails(), k=2.0,
+            metrics,
+            DriftGuardrails(),
+            k=2.0,
         )
         ms = {s["metric"]: s for s in result}
         s = ms["cs_unknown_share_pct"]
@@ -3005,7 +3148,9 @@ class TestSuggestedGuardrails:
             {"date": "d4", "tier_A_pct": 2.0},  # current (excluded)
         ]
         result = compute_suggested_guardrails(
-            metrics, DriftGuardrails(), k=2.0,
+            metrics,
+            DriftGuardrails(),
+            k=2.0,
         )
         ms = {s["metric"]: s for s in result}
         assert ms["tier_A_pct"]["suggested"] >= 0.0
@@ -3020,7 +3165,9 @@ class TestSuggestedGuardrails:
             {"date": "d4", "rs_unknown_share_pct": 50.0},  # current
         ]
         result = compute_suggested_guardrails(
-            metrics, DriftGuardrails(), k=2.0,
+            metrics,
+            DriftGuardrails(),
+            k=2.0,
         )
         ms = {s["metric"]: s for s in result}
         assert ms["rs_unknown_share_pct"]["suggested"] <= 100.0
@@ -3028,10 +3175,11 @@ class TestSuggestedGuardrails:
     def test_tighter_flag(self):
         """Tighter flag is True only when suggestion exceeds current threshold."""
         # All cat_eligible at 99% → suggested ≈ 99% >> current 80% → tighter
-        metrics = [{"date": f"d{i}", "cat_eligible_share_pct": 99.0}
-                   for i in range(6)]
+        metrics = [{"date": f"d{i}", "cat_eligible_share_pct": 99.0} for i in range(6)]
         result = compute_suggested_guardrails(
-            metrics, DriftGuardrails(), k=2.0,
+            metrics,
+            DriftGuardrails(),
+            k=2.0,
         )
         ms = {s["metric"]: s for s in result}
         assert ms["cat_eligible_share_pct"]["tighter"] is True
@@ -3042,10 +3190,15 @@ class TestSuggestedGuardrails:
         snap = _make_snapshot("2026-01-01")
         metrics = compute_drift_metrics([snap, snap, snap, snap])
         suggestions = compute_suggested_guardrails(
-            metrics["snapshots"], DriftGuardrails(),
+            metrics["snapshots"],
+            DriftGuardrails(),
         )
         md = generate_drift_report_md(
-            metrics, "OK", [], DriftGuardrails(), suggestions=suggestions,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            suggestions=suggestions,
         )
         assert "## Suggested Guardrails" in md
         assert "informational only" in md
@@ -3055,7 +3208,11 @@ class TestSuggestedGuardrails:
         snap = _make_snapshot("2026-01-01")
         metrics = compute_drift_metrics([snap])
         md = generate_drift_report_md(
-            metrics, "OK", [], DriftGuardrails(), suggestions=None,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            suggestions=None,
         )
         assert "## Suggested Guardrails" not in md
 
@@ -3064,7 +3221,9 @@ class TestSuggestedGuardrails:
         # Only tier_A_pct present, others missing → only tier_A_pct suggested
         metrics = [{"date": f"d{i}", "tier_A_pct": 5.0} for i in range(6)]
         result = compute_suggested_guardrails(
-            metrics, DriftGuardrails(), k=2.0,
+            metrics,
+            DriftGuardrails(),
+            k=2.0,
         )
         assert len(result) == 1
         assert result[0]["metric"] == "tier_A_pct"
@@ -3074,10 +3233,15 @@ class TestSuggestedGuardrails:
         snap = _make_snapshot("2026-01-01")
         metrics = compute_drift_metrics([snap, snap, snap, snap])
         suggestions = compute_suggested_guardrails(
-            metrics["snapshots"], DriftGuardrails(),
+            metrics["snapshots"],
+            DriftGuardrails(),
         )
         js = generate_drift_json(
-            metrics, "OK", [], DriftGuardrails(), suggestions=suggestions,
+            metrics,
+            "OK",
+            [],
+            DriftGuardrails(),
+            suggestions=suggestions,
         )
         assert "suggested_guardrails" in js
         assert isinstance(js["suggested_guardrails"], list)
@@ -3144,7 +3308,10 @@ class TestCsCtgovSuggestionGate:
         metrics = self._make_metrics(cat_specific_pct=25.0, cs_ctgov_pct=90.0)
         suggestions = compute_suggested_guardrails(metrics, DriftGuardrails())
         md = generate_drift_report_md(
-            {"snapshots": metrics}, "OK", [], DriftGuardrails(),
+            {"snapshots": metrics},
+            "OK",
+            [],
+            DriftGuardrails(),
             suggestions=suggestions,
         )
         assert "suppressed" in md
@@ -3184,7 +3351,10 @@ class TestCsCtgovSuggestionGate:
         metrics = self._make_metrics(cat_specific_pct=25.0, cs_ctgov_pct=90.0)
         suggestions = compute_suggested_guardrails(metrics, DriftGuardrails())
         md = generate_drift_report_md(
-            {"snapshots": metrics}, "OK", [], DriftGuardrails(),
+            {"snapshots": metrics},
+            "OK",
+            [],
+            DriftGuardrails(),
             suggestions=suggestions,
         )
         assert "suggest_cs_min_cat_specific_days_median" in md
@@ -3194,7 +3364,10 @@ class TestCsCtgovSuggestionGate:
         metrics = self._make_metrics(cat_specific_pct=50.0, cs_ctgov_pct=80.0)
         suggestions = compute_suggested_guardrails(metrics, DriftGuardrails())
         md = generate_drift_report_md(
-            {"snapshots": metrics}, "OK", [], DriftGuardrails(),
+            {"snapshots": metrics},
+            "OK",
+            [],
+            DriftGuardrails(),
             suggestions=suggestions,
         )
         assert "suggest_cs_min_cat_specific_days_median" not in md
@@ -3220,36 +3393,49 @@ class TestPanelModeSourceNote:
             "rolling": {},
             "current": {
                 "cs_n_eligible": 10,
-                "cs_ctgov_calendar_count": 5, "cs_ctgov_calendar_share_pct": 50.0,
-                "cs_fda_calendar_count": 2, "cs_fda_calendar_share_pct": 20.0,
-                "cs_sec_8k_filing_count": 0, "cs_sec_8k_filing_share_pct": 0.0,
-                "cs_corporate_calendar_count": 0, "cs_corporate_calendar_share_pct": 0.0,
-                "cs_none_count": 3, "cs_none_share_pct": 30.0,
-                "cs_unknown_count": 0, "cs_unknown_share_pct": 0.0,
+                "cs_ctgov_calendar_count": 5,
+                "cs_ctgov_calendar_share_pct": 50.0,
+                "cs_fda_calendar_count": 2,
+                "cs_fda_calendar_share_pct": 20.0,
+                "cs_sec_8k_filing_count": 0,
+                "cs_sec_8k_filing_share_pct": 0.0,
+                "cs_corporate_calendar_count": 0,
+                "cs_corporate_calendar_share_pct": 0.0,
+                "cs_none_count": 3,
+                "cs_none_share_pct": 30.0,
+                "cs_unknown_count": 0,
+                "cs_unknown_share_pct": 0.0,
             },
         }
 
     def test_md_contains_cs_header_for_replace(self):
         md = generate_drift_report_md(
-            self._metrics_with_cs(), "OK", [], DriftGuardrails(),
+            self._metrics_with_cs(),
+            "OK",
+            [],
+            DriftGuardrails(),
         )
         assert "## Catalyst Source Mix\n\n" in md
 
     def test_replace_injects_note(self):
         md = generate_drift_report_md(
-            self._metrics_with_cs(), "OK", [], DriftGuardrails(),
+            self._metrics_with_cs(),
+            "OK",
+            [],
+            DriftGuardrails(),
         )
         md = md.replace(
             "## Catalyst Source Mix\n\n",
-            "## Catalyst Source Mix\n\n"
-            "_Panel CSV: empty catalyst_source treated as `none`"
-            " (CSV ambiguity)._\n\n",
+            "## Catalyst Source Mix\n\n" "_Panel CSV: empty catalyst_source treated as `none`" " (CSV ambiguity)._\n\n",
             1,
         )
         assert "CSV ambiguity" in md
 
     def test_no_note_without_replace(self):
         md = generate_drift_report_md(
-            self._metrics_with_cs(), "OK", [], DriftGuardrails(),
+            self._metrics_with_cs(),
+            "OK",
+            [],
+            DriftGuardrails(),
         )
         assert "CSV ambiguity" not in md

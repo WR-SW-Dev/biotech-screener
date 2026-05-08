@@ -1,4 +1,5 @@
 """Tests for compute_catalyst() with trial_window_days parameter."""
+
 from __future__ import annotations
 
 import sys
@@ -10,17 +11,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from enrich_archive_inputs import (
-    CATALYST_KEYS,
-    TRIAL_PCD_WINDOW_DAYS,
-    compute_catalyst,
-    enrich_archive,
-)
-
+from enrich_archive_inputs import CATALYST_KEYS, TRIAL_PCD_WINDOW_DAYS, compute_catalyst, enrich_archive
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _trial(
     ticker: str,
@@ -46,6 +42,7 @@ AS_OF = date(2025, 4, 1)
 # ---------------------------------------------------------------------------
 # TestComputeCatalystWindow
 # ---------------------------------------------------------------------------
+
 
 class TestComputeCatalystWindow:
 
@@ -158,11 +155,14 @@ class TestCatalystOnlyMode:
             json.dump(existing, f)
 
         # Write trial_records.json with a trial at 250d (outside old 180d window)
-        trials = [{
-            "ticker": "AAA", "phase": "PHASE3",
-            "first_posted": "2024-01-01",
-            "primary_completion_date": "2025-12-07",  # 160d from 2025-06-30
-        }]
+        trials = [
+            {
+                "ticker": "AAA",
+                "phase": "PHASE3",
+                "first_posted": "2024-01-01",
+                "primary_completion_date": "2025-12-07",  # 160d from 2025-06-30
+            }
+        ]
         with open(inputs_dir / "trial_records.json", "w") as f:
             json.dump(trials, f)
         with open(inputs_dir / "pdufa_dates.json", "w") as f:
@@ -296,6 +296,7 @@ class TestOutputTarPath:
     def test_enrich_output_tar_path_leaves_original(self, tmp_path):
         """enrich_archive with output_tar_path writes there, original unmodified."""
         import hashlib
+
         tar_path, original_hash = self._make_archive(tmp_path)
 
         out_dir = tmp_path / "output"
@@ -303,7 +304,10 @@ class TestOutputTarPath:
         out_tar = out_dir / tar_path.name
 
         result = enrich_archive(
-            tar_path, {}, catalyst_only=True, output_tar_path=out_tar,
+            tar_path,
+            {},
+            catalyst_only=True,
+            output_tar_path=out_tar,
         )
         assert result["status"] == "ok"
 

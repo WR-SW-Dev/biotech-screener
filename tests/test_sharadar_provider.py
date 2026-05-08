@@ -14,23 +14,23 @@ Tests cover:
 """
 
 import csv
-import pytest
 import tempfile
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-from backtest.sharadar_provider import (
-    SharadarReturnsProvider,
-    PolygonReturnsProvider,
-    create_returns_provider,
-    # Constants
-    PRICE_QUANTIZE,
-    RETURN_QUANTIZE,
+import pytest
+
+from backtest.sharadar_provider import (  # Constants
     DATE_TOLERANCE_DAYS,
     DELISTING_POLICY_CONSERVATIVE,
-    DELISTING_POLICY_PENALTY,
     DELISTING_POLICY_LAST_PRICE,
+    DELISTING_POLICY_PENALTY,
+    PRICE_QUANTIZE,
+    RETURN_QUANTIZE,
+    PolygonReturnsProvider,
+    SharadarReturnsProvider,
+    create_returns_provider,
 )
 
 
@@ -93,9 +93,7 @@ class TestSharadarFromCsv:
 
     def test_applies_ticker_filter(self, temp_csv):
         """Should filter to specified tickers."""
-        provider = SharadarReturnsProvider.from_csv(
-            temp_csv, ticker_filter=["AMGN"]
-        )
+        provider = SharadarReturnsProvider.from_csv(temp_csv, ticker_filter=["AMGN"])
 
         assert "AMGN" in provider._tickers
         assert "GILD" not in provider._tickers
@@ -272,9 +270,7 @@ class TestDelistingPolicies:
                 # No price after this - appears delisted
             },
         }
-        provider = SharadarReturnsProvider(
-            prices, delisting_policy=DELISTING_POLICY_CONSERVATIVE
-        )
+        provider = SharadarReturnsProvider(prices, delisting_policy=DELISTING_POLICY_CONSERVATIVE)
 
         # Looking for return through 2024-03-01, but data ends Jan 1
         result = provider.get_forward_total_return("AMGN", "2024-01-01", "2024-03-01")

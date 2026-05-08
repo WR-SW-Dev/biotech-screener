@@ -41,12 +41,9 @@ import subprocess
 import sys
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -66,6 +63,7 @@ FETCH_SCRIPT = "wake_robin_data_pipeline/ctgov_collector.py"
 # ============================================================================
 # SNAPSHOT ARCHIVER
 # ============================================================================
+
 
 class SnapshotArchiver:
     """
@@ -104,7 +102,7 @@ class SnapshotArchiver:
 
     def _save_manifest(self) -> None:
         """Save the manifest with sorted keys."""
-        with open(self.manifest_path, 'w') as f:
+        with open(self.manifest_path, "w") as f:
             json.dump(self.manifest, f, indent=2, sort_keys=True)
 
     def fetch_fresh_data(self, as_of_date: date) -> bool:
@@ -159,7 +157,7 @@ class SnapshotArchiver:
         with open(self.universe_path) as f:
             universe = json.load(f)
 
-        tickers = {s['ticker'] for s in universe if s.get('ticker') != '_XBI_BENCHMARK_'}
+        tickers = {s["ticker"] for s in universe if s.get("ticker") != "_XBI_BENCHMARK_"}
         logger.info(f"Loaded {len(tickers)} active tickers from universe")
         return tickers
 
@@ -176,11 +174,11 @@ class SnapshotArchiver:
         """
         # Filter to active tickers if specified
         if active_tickers:
-            trial_records = [r for r in trial_records if r.get('ticker') in active_tickers]
+            trial_records = [r for r in trial_records if r.get("ticker") in active_tickers]
             logger.info(f"Filtered to {len(trial_records)} records for active tickers")
 
         # Sort records for determinism
-        trial_records.sort(key=lambda r: (r.get('ticker', ''), r.get('nct_id', '')))
+        trial_records.sort(key=lambda r: (r.get("ticker", ""), r.get("nct_id", "")))
 
         # Create snapshot file
         snapshot_file = self.state_dir / f"state_{as_of_date.isoformat()}.jsonl"
@@ -191,16 +189,16 @@ class SnapshotArchiver:
             return self._get_existing_snapshot_metadata(as_of_date)
 
         # Write JSONL format (one record per line)
-        with open(snapshot_file, 'w') as f:
+        with open(snapshot_file, "w") as f:
             for record in trial_records:
-                f.write(json.dumps(record, sort_keys=True) + '\n')
+                f.write(json.dumps(record, sort_keys=True) + "\n")
 
         # Compute file metadata
         file_size = snapshot_file.stat().st_size
         file_hash = self._compute_file_hash(snapshot_file)
 
         # Count unique tickers
-        tickers = set(r.get('ticker') for r in trial_records)
+        tickers = set(r.get("ticker") for r in trial_records)
 
         metadata = {
             "snapshot_date": as_of_date.isoformat(),
@@ -223,35 +221,35 @@ class SnapshotArchiver:
     def _compute_file_hash(self, file_path: Path) -> str:
         """Compute SHA256 hash of file."""
         sha256 = hashlib.sha256()
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
     def _get_existing_snapshot_metadata(self, as_of_date: date) -> Dict[str, Any]:
         """Get metadata for an existing snapshot."""
-        for snapshot in self.manifest.get('snapshots', []):
-            if snapshot.get('snapshot_date') == as_of_date.isoformat():
+        for snapshot in self.manifest.get("snapshots", []):
+            if snapshot.get("snapshot_date") == as_of_date.isoformat():
                 return snapshot
         return {"snapshot_date": as_of_date.isoformat(), "status": "already_exists"}
 
     def update_manifest(self, metadata: Dict[str, Any]) -> None:
         """Update manifest with new snapshot metadata."""
         # Check if snapshot already in manifest
-        existing_dates = {s.get('snapshot_date') for s in self.manifest.get('snapshots', [])}
-        if metadata.get('snapshot_date') in existing_dates:
+        existing_dates = {s.get("snapshot_date") for s in self.manifest.get("snapshots", [])}
+        if metadata.get("snapshot_date") in existing_dates:
             logger.info("Snapshot already in manifest - skipping update")
             return
 
         # Add new snapshot
-        self.manifest['snapshots'].append(metadata)
+        self.manifest["snapshots"].append(metadata)
 
         # Sort snapshots by date (oldest first)
-        self.manifest['snapshots'].sort(key=lambda s: s.get('snapshot_date', ''))
+        self.manifest["snapshots"].sort(key=lambda s: s.get("snapshot_date", ""))
 
         # Update created_at if first snapshot
-        if self.manifest.get('created_at') is None:
-            self.manifest['created_at'] = metadata['snapshot_date']
+        if self.manifest.get("created_at") is None:
+            self.manifest["created_at"] = metadata["snapshot_date"]
 
         # Save manifest
         self._save_manifest()
@@ -302,7 +300,7 @@ class SnapshotArchiver:
 
     def get_snapshot_history(self) -> List[Dict[str, Any]]:
         """Get list of all archived snapshots."""
-        return self.manifest.get('snapshots', [])
+        return self.manifest.get("snapshots", [])
 
     def get_snapshot_coverage(self, start_date: date, end_date: date) -> Dict[str, Any]:
         """
@@ -311,7 +309,7 @@ class SnapshotArchiver:
         Returns coverage statistics.
         """
         snapshots = self.get_snapshot_history()
-        snapshot_dates = {s.get('snapshot_date') for s in snapshots}
+        snapshot_dates = {s.get("snapshot_date") for s in snapshots}
 
         total_days = (end_date - start_date).days + 1
         covered_days = 0
@@ -340,11 +338,12 @@ class SnapshotArchiver:
 # CLI INTERFACE
 # ============================================================================
 
+
 def main():
     """Command-line interface for snapshot archiver."""
     parser = argparse.ArgumentParser(
-        description='Archive daily CT.gov snapshots for historical analysis',
-        epilog='''
+        description="Archive daily CT.gov snapshots for historical analysis",
+        epilog="""
 Examples:
     # Archive snapshot for today
     python archive_daily_snapshot.py --as-of-date 2026-01-19
@@ -360,59 +359,33 @@ Examples:
 
 Cron setup (recommended: 2 AM daily):
     0 2 * * * cd /path/to/biotech-screener && python archive_daily_snapshot.py --as-of-date $(date +\\%Y-\\%m-\\%d) --fetch-fresh >> logs/snapshot.log 2>&1
-        ''',
+        """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
+    parser.add_argument("--as-of-date", type=str, help="Snapshot date (YYYY-MM-DD) - REQUIRED for archive")
     parser.add_argument(
-        '--as-of-date',
-        type=str,
-        help='Snapshot date (YYYY-MM-DD) - REQUIRED for archive'
-    )
-    parser.add_argument(
-        '--state-dir',
+        "--state-dir",
         type=str,
         default=DEFAULT_STATE_DIR,
-        help=f'State directory for snapshots (default: {DEFAULT_STATE_DIR})'
+        help=f"State directory for snapshots (default: {DEFAULT_STATE_DIR})",
     )
     parser.add_argument(
-        '--trial-records',
+        "--trial-records",
         type=str,
         default=DEFAULT_TRIAL_RECORDS,
-        help=f'Path to trial_records.json (default: {DEFAULT_TRIAL_RECORDS})'
+        help=f"Path to trial_records.json (default: {DEFAULT_TRIAL_RECORDS})",
     )
     parser.add_argument(
-        '--universe',
-        type=str,
-        default=DEFAULT_UNIVERSE,
-        help=f'Path to universe.json (default: {DEFAULT_UNIVERSE})'
+        "--universe", type=str, default=DEFAULT_UNIVERSE, help=f"Path to universe.json (default: {DEFAULT_UNIVERSE})"
     )
+    parser.add_argument("--fetch-fresh", action="store_true", help="Fetch fresh CT.gov data before archiving")
     parser.add_argument(
-        '--fetch-fresh',
-        action='store_true',
-        help='Fetch fresh CT.gov data before archiving'
+        "--dry-run", action="store_true", help="Dry run - show what would be done without creating files"
     )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Dry run - show what would be done without creating files'
-    )
-    parser.add_argument(
-        '--check-coverage',
-        action='store_true',
-        help='Check snapshot coverage instead of archiving'
-    )
-    parser.add_argument(
-        '--days',
-        type=int,
-        default=90,
-        help='Number of days to check coverage (default: 90)'
-    )
-    parser.add_argument(
-        '--list-snapshots',
-        action='store_true',
-        help='List all archived snapshots'
-    )
+    parser.add_argument("--check-coverage", action="store_true", help="Check snapshot coverage instead of archiving")
+    parser.add_argument("--days", type=int, default=90, help="Number of days to check coverage (default: 90)")
+    parser.add_argument("--list-snapshots", action="store_true", help="List all archived snapshots")
 
     args = parser.parse_args()
 
@@ -429,10 +402,12 @@ Cron setup (recommended: 2 AM daily):
         print(f"\nArchived Snapshots ({len(snapshots)} total):")
         print("-" * 60)
         for s in snapshots[-20:]:  # Last 20
-            print(f"  {s.get('snapshot_date')}: "
-                  f"{s.get('record_count', '?')} records, "
-                  f"{s.get('ticker_count', '?')} tickers, "
-                  f"{s.get('file_size_mb', '?')} MB")
+            print(
+                f"  {s.get('snapshot_date')}: "
+                f"{s.get('record_count', '?')} records, "
+                f"{s.get('ticker_count', '?')} tickers, "
+                f"{s.get('file_size_mb', '?')} MB"
+            )
         if len(snapshots) > 20:
             print(f"  ... ({len(snapshots) - 20} more)")
         return
@@ -454,11 +429,11 @@ Cron setup (recommended: 2 AM daily):
         print(f"  Covered days: {coverage['covered_days']}")
         print(f"  Coverage: {coverage['coverage_percent']}%")
 
-        if coverage['missing_dates']:
+        if coverage["missing_dates"]:
             print(f"\n  Missing dates ({coverage['missing_count']} total):")
-            for d in coverage['missing_dates']:
+            for d in coverage["missing_dates"]:
                 print(f"    - {d}")
-            if coverage['missing_count'] > 10:
+            if coverage["missing_count"] > 10:
                 print(f"    ... ({coverage['missing_count'] - 10} more)")
         return
 

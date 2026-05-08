@@ -6,8 +6,8 @@ All providers return data that is already PIT-safe, so downstream modules
 can remain pure and deterministic.
 """
 
-from .protocols import ClinicalTrialsProvider, TrialRow, TrialDiff, ProviderResult
 from .aact_provider import AACTClinicalTrialsProvider
+from .protocols import ClinicalTrialsProvider, ProviderResult, TrialDiff, TrialRow
 from .stub_provider import StubClinicalTrialsProvider
 
 __all__ = [

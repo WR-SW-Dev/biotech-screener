@@ -62,8 +62,7 @@ def generate_manifest(data_dir: Path, manifest_path: Path) -> int:
     if errors:
         for e in errors:
             print(f"  {e}", file=sys.stderr)
-        print(f"[verify] {len(errors)} required file(s) missing — manifest NOT written.",
-              file=sys.stderr)
+        print(f"[verify] {len(errors)} required file(s) missing — manifest NOT written.", file=sys.stderr)
         return 1
 
     manifest = {
@@ -95,9 +94,10 @@ def verify(data_dir: Path, manifest_path: Path) -> int:
 
     # --- hash verification (only if manifest exists) ---
     if not manifest_path.exists():
-        print(f"[verify] WARN — no manifest at {manifest_path}; "
-              f"existence checks passed but hashes NOT verified.",
-              file=sys.stderr)
+        print(
+            f"[verify] WARN — no manifest at {manifest_path}; " f"existence checks passed but hashes NOT verified.",
+            file=sys.stderr,
+        )
         # Still pass — allows first-time runs before a manifest is committed.
         print(f"[verify] OK (existence only, {len(all_files)} files)")
         return 0
@@ -118,10 +118,7 @@ def verify(data_dir: Path, manifest_path: Path) -> int:
             continue
         actual = sha256_file(p)
         if actual != expected_hash:
-            mismatches.append(
-                f"HASH MISMATCH: {rel}  expected={expected_hash[:16]}…  "
-                f"actual={actual[:16]}…"
-            )
+            mismatches.append(f"HASH MISMATCH: {rel}  expected={expected_hash[:16]}…  " f"actual={actual[:16]}…")
 
     if mismatches:
         for m in mismatches:

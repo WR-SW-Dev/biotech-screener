@@ -7,11 +7,12 @@ do not creep back into the codebase.
 Each test documents a specific bug that was fixed.
 """
 
-import pytest
+import sys
 from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
-import sys
+
+import pytest
 
 
 class TestEventDetectorPITSafety:
@@ -148,7 +149,7 @@ class TestSharadarProviderPITSafety:
             "ACTV": {
                 "2024-01-01": Decimal("20.00"),
                 "2024-06-01": Decimal("25.00"),  # Recent data (still active)
-            }
+            },
         }
         provider = SharadarReturnsProvider(prices)
 
@@ -192,7 +193,7 @@ class TestInputValidationPITSafety:
 
     def test_validate_date_no_wall_clock_dependency(self):
         """Date validation should not depend on current wall-clock time."""
-        from common.input_validation import validate_date, InputValidationConfig
+        from common.input_validation import InputValidationConfig, validate_date
 
         config = InputValidationConfig()
 
@@ -244,7 +245,7 @@ class TestDecimalPrecision:
 
     def test_adv_calculation_uses_decimal(self):
         """ADV calculation should use Decimal for precision."""
-        from common.data_quality import DataQualityGates, DataQualityConfig
+        from common.data_quality import DataQualityConfig, DataQualityGates
 
         config = DataQualityConfig(min_adv_dollars=Decimal("500000"))
         gates = DataQualityGates(config)
@@ -276,13 +277,15 @@ class TestNoPITViolationsInImports:
         # If this import succeeds without date.today() being called,
         # the module doesn't have import-time PIT violations
         import event_detector
+
         # Module should load successfully
-        assert hasattr(event_detector, 'CatalystEvent')
+        assert hasattr(event_detector, "CatalystEvent")
 
     def test_pos_prior_engine_import_deterministic(self):
         """pos_prior_engine should not call date.today() at import time."""
         import pos_prior_engine
-        assert hasattr(pos_prior_engine, 'PoSPriorEngine')
+
+        assert hasattr(pos_prior_engine, "PoSPriorEngine")
 
 
 # Run with: pytest tests/test_pit_regression.py -v

@@ -1,4 +1,5 @@
 """Tests for scripts/build_daily_triage.py — triage bundle builder."""
+
 from __future__ import annotations
 
 import json
@@ -11,11 +12,10 @@ from scripts.build_daily_triage import (
     assemble_bundle,
     build_triage_context,
     collect_gate_artifacts,
+    main,
     render_health_summary_md,
     render_summary_md,
-    main,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixture helpers
@@ -74,10 +74,20 @@ def _make_eligibility_triage(snap: Path) -> dict:
     data = {
         "schema": "eligibility_triage.v1",
         "movers": [
-            {"ticker": "AAPL", "prior_eligible": 1, "cur_eligible": 0,
-             "prior_reasons": [], "cur_reasons": ["deep_drawdown"]},
-            {"ticker": "GOOG", "prior_eligible": 0, "cur_eligible": 1,
-             "prior_reasons": ["adv_fail"], "cur_reasons": []},
+            {
+                "ticker": "AAPL",
+                "prior_eligible": 1,
+                "cur_eligible": 0,
+                "prior_reasons": [],
+                "cur_reasons": ["deep_drawdown"],
+            },
+            {
+                "ticker": "GOOG",
+                "prior_eligible": 0,
+                "cur_eligible": 1,
+                "prior_reasons": ["adv_fail"],
+                "cur_reasons": [],
+            },
         ],
     }
     _write_json(triage_dir / "triage_summary.json", data)
@@ -105,8 +115,15 @@ def _make_ruleset_eval(snap: Path, verdict: str = "PASS", subdir: str = "") -> d
     return data
 
 
-def _make_all(snap: Path, *, monitoring: bool = True, eligibility: bool = True,
-              triage: bool = True, ruleset: bool = True, rs_subdir: str = "") -> None:
+def _make_all(
+    snap: Path,
+    *,
+    monitoring: bool = True,
+    eligibility: bool = True,
+    triage: bool = True,
+    ruleset: bool = True,
+    rs_subdir: str = "",
+) -> None:
     if monitoring:
         _make_monitoring(snap)
     if eligibility:
@@ -193,8 +210,10 @@ class TestBuildTriageContext:
         arts = collect_gate_artifacts(snap)
         # Patch _derive_monitoring_verdict to avoid needing thresholds file
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {"eligible_pct": 80.0}},
         )
         ctx = build_triage_context("2026-02-27", arts, git_sha="abc123")
@@ -211,8 +230,10 @@ class TestBuildTriageContext:
         _make_ruleset_eval(snap)
         arts = collect_gate_artifacts(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {"eligible_pct": 80.0}},
         )
         ctx = build_triage_context("2026-02-27", arts)
@@ -228,8 +249,10 @@ class TestBuildTriageContext:
         _make_ruleset_eval(snap)
         arts = collect_gate_artifacts(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "FAIL", "fail_reasons": ["eligible_pct too low"], "key_metrics": {}},
         )
         ctx = build_triage_context("2026-02-27", arts)
@@ -245,8 +268,10 @@ class TestBuildTriageContext:
         _make_ruleset_eval(snap)
         arts = collect_gate_artifacts(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {}},
         )
         ctx = build_triage_context("2026-02-27", arts)
@@ -357,8 +382,10 @@ class TestAssembleBundle:
         _make_all(snap)
         arts = collect_gate_artifacts(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {"eligible_pct": 80.0}},
         )
         ctx = build_triage_context("2026-02-27", arts)
@@ -375,8 +402,10 @@ class TestAssembleBundle:
         _make_all(snap)
         arts = collect_gate_artifacts(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {}},
         )
         ctx = build_triage_context("2026-02-27", arts)
@@ -399,8 +428,10 @@ class TestAssembleBundle:
         _make_all(snap)
         arts = collect_gate_artifacts(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {}},
         )
         ctx = build_triage_context("2026-02-27", arts)
@@ -423,21 +454,32 @@ class TestCLI:
         snap.mkdir()
         _make_all(snap)
         import scripts.build_daily_triage as mod
+
         monkeypatch.setattr(
-            mod, "_derive_monitoring_verdict",
+            mod,
+            "_derive_monitoring_verdict",
             lambda a: {"verdict": "PASS", "key_metrics": {}},
         )
-        rc = main([
-            "--as-of-date", "2026-02-27",
-            "--snapshot-dir", str(tmp_path),
-            "--git-sha", "test123",
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-02-27",
+                "--snapshot-dir",
+                str(tmp_path),
+                "--git-sha",
+                "test123",
+            ]
+        )
         assert rc == 0
         assert (snap / "daily_triage" / "context.json").exists()
 
     def test_missing_snapshot_exit_1(self, tmp_path):
-        rc = main([
-            "--as-of-date", "2026-02-27",
-            "--snapshot-dir", str(tmp_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-02-27",
+                "--snapshot-dir",
+                str(tmp_path),
+            ]
+        )
         assert rc == 1

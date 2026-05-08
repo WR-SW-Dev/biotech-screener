@@ -12,30 +12,30 @@ Tests cover:
 - Event aggregation and scoring
 """
 
-import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import List
 
-from module_3_scoring_v2 import (
-    compute_recency_weight,
-    compute_staleness_factor,
-    compute_proximity_score,
-    detect_deltas,
-    DECAY_HALF_LIFE_DAYS,
-    STALENESS_THRESHOLD_DAYS,
-    PROXIMITY_HORIZON_DAYS,
-)
+import pytest
 
 from module_3_schema_v2 import (
     CatalystEventV2,
+    ConfidenceLevel,
+    DateSpecificity,
     DeltaEvent,
     DeltaType,
-    EventType,
     EventSeverity,
-    ConfidenceLevel,
+    EventType,
     SourceReliability,
-    DateSpecificity,
+)
+from module_3_scoring_v2 import (
+    DECAY_HALF_LIFE_DAYS,
+    PROXIMITY_HORIZON_DAYS,
+    STALENESS_THRESHOLD_DAYS,
+    compute_proximity_score,
+    compute_recency_weight,
+    compute_staleness_factor,
+    detect_deltas,
 )
 
 
@@ -409,7 +409,7 @@ class TestProximityScore:
                     nct_id=f"NCT0000000{i}",
                     event_type=EventType.CT_PRIMARY_COMPLETION,
                     event_severity=EventSeverity.POSITIVE,
-                    event_date=(as_of + timedelta(days=i+1)).isoformat(),
+                    event_date=(as_of + timedelta(days=i + 1)).isoformat(),
                     field_changed="completion_date",
                     prior_value=None,
                     new_value="updated",
@@ -604,22 +604,22 @@ class TestDeltaDetection:
         as_of = date(2026, 1, 15)
 
         event = CatalystEventV2(
-                ticker="TEST",
-                nct_id="NCT00000001",
-                event_type=EventType.CT_RESULTS_POSTED,
-                event_date="2026-02-01",
-                source_date="2026-01-15",
-                disclosed_at="2026-01-15",
-                pit_date_field_used="last_update_posted_date",
-                event_severity=EventSeverity.NEUTRAL,
-                field_changed="status",
-                prior_value=None,
-                new_value="updated",
-                source="CTGOV",
-                confidence=ConfidenceLevel.HIGH,
-                source_reliability=SourceReliability.OFFICIAL,
-                date_specificity=DateSpecificity.EXACT,
-            )
+            ticker="TEST",
+            nct_id="NCT00000001",
+            event_type=EventType.CT_RESULTS_POSTED,
+            event_date="2026-02-01",
+            source_date="2026-01-15",
+            disclosed_at="2026-01-15",
+            pit_date_field_used="last_update_posted_date",
+            event_severity=EventSeverity.NEUTRAL,
+            field_changed="status",
+            prior_value=None,
+            new_value="updated",
+            source="CTGOV",
+            confidence=ConfidenceLevel.HIGH,
+            source_reliability=SourceReliability.OFFICIAL,
+            date_specificity=DateSpecificity.EXACT,
+        )
 
         deltas = detect_deltas([event], [event], as_of)
 

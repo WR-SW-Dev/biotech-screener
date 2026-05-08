@@ -7,8 +7,8 @@ All tests use inline HTML fixtures + monkeypatched _fetch — zero network calls
 import io
 import json
 import sys
-import zipfile
 import xml.etree.ElementTree as ET
+import zipfile
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
@@ -192,8 +192,7 @@ class TestDiscovery:
 
         links = _discover_links(COMMITTEE_LANDING_HTML, "https://www.ema.europa.eu")
         # The December 2025 agenda has "First published:05/12/2025"
-        dec_agenda = [d for d in links["agenda_docs"]
-                      if "8-11-december-2025" in d["url"] and "annex" not in d["url"]]
+        dec_agenda = [d for d in links["agenda_docs"] if "8-11-december-2025" in d["url"] and "annex" not in d["url"]]
         assert len(dec_agenda) == 1
         assert dec_agenda[0]["disclosed_at"] == "2025-12-05"
 
@@ -237,9 +236,7 @@ class TestParseMeetingDates:
     def test_embedded_in_title(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_dates
 
-        result = _parse_meeting_dates(
-            "Meeting highlights from the CHMP 8 - 11 December 2025"
-        )
+        result = _parse_meeting_dates("Meeting highlights from the CHMP 8 - 11 December 2025")
         assert result == ("2025-12-08", "2025-12-11")
 
     def test_no_date_returns_none(self):
@@ -275,10 +272,12 @@ class TestMedicineMatching:
     def test_substring_match(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _match_medicine_to_ticker
 
-        assert _match_medicine_to_ticker(
-            "Marketing Authorisation Application for Aficamten (company: Cytokinetics)",
-            None, PRODUCT_MAP
-        ) == "CYTK"
+        assert (
+            _match_medicine_to_ticker(
+                "Marketing Authorisation Application for Aficamten (company: Cytokinetics)", None, PRODUCT_MAP
+            )
+            == "CYTK"
+        )
 
     def test_no_match_returns_none(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _match_medicine_to_ticker
@@ -364,26 +363,24 @@ class TestHardenedMatching:
     def test_still_returns_none_for_truly_unknown(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _match_medicine_to_ticker
 
-        assert _match_medicine_to_ticker(
-            "Completely Unknown Drug hydrochloride", None, PRODUCT_MAP
-        ) is None
+        assert _match_medicine_to_ticker("Completely Unknown Drug hydrochloride", None, PRODUCT_MAP) is None
 
 
 class TestUnmatchedTop:
     """Tests for unmatched_top frequency tracking in stats."""
 
     def test_unmatched_top_in_stats(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         # Build XLSX with unmatched items that repeat
-        xlsx_bytes = _build_test_xlsx([
-            _make_row("MAA", "UnknownDrugA", "sub_a", "CompanyA"),
-            _make_row("MAA", "UnknownDrugA", "sub_a2", "CompanyA"),
-            _make_row("MAA", "UnknownDrugB", "sub_b", "CompanyB"),
-            _make_row("MAA", "Aficamten", "aficamten", "Cytokinetics"),
-        ])
+        xlsx_bytes = _build_test_xlsx(
+            [
+                _make_row("MAA", "UnknownDrugA", "sub_a", "CompanyA"),
+                _make_row("MAA", "UnknownDrugA", "sub_a2", "CompanyA"),
+                _make_row("MAA", "UnknownDrugB", "sub_b", "CompanyB"),
+                _make_row("MAA", "Aficamten", "aficamten", "Cytokinetics"),
+            ]
+        )
 
         def mock_fetch(url):
             if "committees/committee-medicinal-products" in url:
@@ -392,9 +389,11 @@ class TestUnmatchedTop:
                 return EVENT_PAGE_HTML
             return "<html></html>"
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -455,8 +454,12 @@ class TestAgendaParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_agenda_page
 
         events, unmatched = _parse_agenda_page(
-            AGENDA_HTML, "https://example.com/agenda", "CHMP",
-            "2026-01-27", "2026-01-30", PRODUCT_MAP,
+            AGENDA_HTML,
+            "https://example.com/agenda",
+            "CHMP",
+            "2026-01-27",
+            "2026-01-30",
+            PRODUCT_MAP,
         )
         tickers = [e["ticker"] for e in events]
         assert "CYTK" in tickers
@@ -466,8 +469,12 @@ class TestAgendaParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_agenda_page
 
         events, unmatched = _parse_agenda_page(
-            AGENDA_HTML, "https://example.com/agenda", "CHMP",
-            "2026-01-27", "2026-01-30", PRODUCT_MAP,
+            AGENDA_HTML,
+            "https://example.com/agenda",
+            "CHMP",
+            "2026-01-27",
+            "2026-01-30",
+            PRODUCT_MAP,
         )
         # "Unmatched Drug XYZ" and admin items should be unmatched
         assert len(unmatched) > 0
@@ -476,8 +483,12 @@ class TestAgendaParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_agenda_page
 
         events, _ = _parse_agenda_page(
-            AGENDA_HTML, "https://example.com/agenda", "CHMP",
-            "2026-01-27", "2026-01-30", PRODUCT_MAP,
+            AGENDA_HTML,
+            "https://example.com/agenda",
+            "CHMP",
+            "2026-01-27",
+            "2026-01-30",
+            PRODUCT_MAP,
         )
         if events:
             ev = events[0]
@@ -504,7 +515,10 @@ class TestMeetingHighlightsParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, unmatched = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         outcome_map = {o["ticker"]: o for o in outcomes}
 
@@ -522,7 +536,10 @@ class TestMeetingHighlightsParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         if outcomes:
             assert outcomes[0]["meeting_start"] == "2025-12-08"
@@ -532,7 +549,10 @@ class TestMeetingHighlightsParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         if outcomes:
             assert outcomes[0]["disclosed_at"] == "2025-12-11"
@@ -541,7 +561,10 @@ class TestMeetingHighlightsParsing:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         if outcomes:
             ev = outcomes[0]
@@ -564,10 +587,16 @@ class TestIdStability:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes1, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         outcomes2, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         ids1 = [o["id"] for o in outcomes1]
         ids2 = [o["id"] for o in outcomes2]
@@ -577,7 +606,10 @@ class TestIdStability:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         ids = [o["id"] for o in outcomes]
         assert len(ids) == len(set(ids)), "Duplicate IDs found"
@@ -592,9 +624,7 @@ class TestCacheWriteReload:
     """Tests for cache determinism."""
 
     def test_cache_write_and_reload(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_meeting_outcomes,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_meeting_outcomes
 
         def mock_fetch(url):
             if "committee" in url or "chmp" in url.lower():
@@ -603,8 +633,7 @@ class TestCacheWriteReload:
                 return HIGHLIGHTS_HTML
             return "<html></html>"
 
-        with patch("wake_robin_data_pipeline.collectors.ema_committee_collector._fetch",
-                    side_effect=mock_fetch):
+        with patch("wake_robin_data_pipeline.collectors.ema_committee_collector._fetch", side_effect=mock_fetch):
             result1 = collect_ema_meeting_outcomes(
                 as_of_date=date(2025, 12, 31),
                 cache_dir=tmp_path,
@@ -732,7 +761,10 @@ class TestOutcomePrecisionFilter:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_MIXED_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_MIXED_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         codes = {o["outcome_code"] for o in outcomes}
         # Should contain the three decision codes
@@ -745,7 +777,10 @@ class TestOutcomePrecisionFilter:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_MIXED_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_MIXED_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         codes = [o["outcome_code"] for o in outcomes]
         assert "other" not in codes
@@ -793,7 +828,10 @@ class TestOutcomePrecisionFilter:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _parse_meeting_highlights
 
         outcomes, _ = _parse_meeting_highlights(
-            HIGHLIGHTS_MIXED_HTML, "https://example.com/highlights", "CHMP", PRODUCT_MAP,
+            HIGHLIGHTS_MIXED_HTML,
+            "https://example.com/highlights",
+            "CHMP",
+            PRODUCT_MAP,
         )
         # positive_opinion: CYTK, negative_opinion: MRK, withdrawn: ALNY,
         # referral_started: MRK (Keytruda)
@@ -862,9 +900,14 @@ class TestMakeTags:
     def test_all_procedure_types(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _make_tags
 
-        for proc, expected in [("MAA", "maa"), ("VARIATION", "variation"),
-                               ("REFERRAL", "referral"), ("PSUR", "psur"),
-                               ("SIGNAL", "signal"), ("OTHER", "other")]:
+        for proc, expected in [
+            ("MAA", "maa"),
+            ("VARIATION", "variation"),
+            ("REFERRAL", "referral"),
+            ("PSUR", "psur"),
+            ("SIGNAL", "signal"),
+            ("OTHER", "other"),
+        ]:
             tags = _make_tags(proc, "CHMP")
             assert f"procedure:{expected}" in tags
 
@@ -873,14 +916,14 @@ class TestTagsOnEmittedEvents:
     """Tags field present on all emitted events."""
 
     def test_xlsx_parsed_events_have_tags(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
-        xlsx_bytes = _build_test_xlsx([
-            _make_row("Marketing authorisation application", "Aficamten", "aficamten", "Cytokinetics"),
-            _make_row("Variation type II", "Keytruda", "pembrolizumab", "Merck"),
-        ])
+        xlsx_bytes = _build_test_xlsx(
+            [
+                _make_row("Marketing authorisation application", "Aficamten", "aficamten", "Cytokinetics"),
+                _make_row("Variation type II", "Keytruda", "pembrolizumab", "Merck"),
+            ]
+        )
 
         def mock_fetch(url):
             if "committees/committee-medicinal-products" in url:
@@ -889,9 +932,11 @@ class TestTagsOnEmittedEvents:
                 return EVENT_PAGE_HTML
             return "<html></html>"
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             events = collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -915,15 +960,15 @@ class TestTagsOnEmittedEvents:
         assert "procedure:variation" in var_ev["tags"]
 
     def test_fallback_meeting_events_have_tags(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         def mock_fetch(url):
             return COMMITTEE_LANDING_HTML
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             events = collect_ema_committee_events(
                 as_of_date=date(2026, 1, 31),
                 cache_dir=tmp_path,
@@ -1134,13 +1179,29 @@ class TestEventLedgerEmaLoader:
 
         events_payload = {
             "schema": "ema_committee_events.v1",
-            "events": [{"id": "a1", "ticker": "CYTK", "event_date": "2026-01-30",
-                         "disclosed_at": "2026-01-20", "title": "A", "confidence": "MED"}],
+            "events": [
+                {
+                    "id": "a1",
+                    "ticker": "CYTK",
+                    "event_date": "2026-01-30",
+                    "disclosed_at": "2026-01-20",
+                    "title": "A",
+                    "confidence": "MED",
+                }
+            ],
         }
         outcomes_payload = {
             "schema": "ema_meeting_outcomes.v1",
-            "events": [{"id": "o1", "ticker": "MRK", "event_date": "2025-12-11",
-                         "disclosed_at": "2025-12-11", "title": "O", "confidence": "HIGH"}],
+            "events": [
+                {
+                    "id": "o1",
+                    "ticker": "MRK",
+                    "event_date": "2025-12-11",
+                    "disclosed_at": "2025-12-11",
+                    "title": "O",
+                    "confidence": "HIGH",
+                }
+            ],
         }
         (tmp_path / "ema_committee_events_2026-01-30.json").write_text(json.dumps(events_payload))
         (tmp_path / "ema_meeting_outcomes_2026-01-30.json").write_text(json.dumps(outcomes_payload))
@@ -1317,6 +1378,7 @@ class TestEmaEndToEndTagFlow:
         assert v2.tags == ("procedure:maa", "committee:chmp")
         # MAA tag should boost severity
         from module_3_schema import EventSeverity
+
         assert v2.event_severity == EventSeverity.CRITICAL_POSITIVE
         assert v2.field_changed == "ema_maa"
 
@@ -1382,7 +1444,9 @@ class TestEmaEndToEndTagFlow:
         """Verify source_mix keys that run_screen uses to extract EMA counts."""
         # Simulate what module_3 does: count events by v2.source
         sources = [
-            "EMA_CHMP_AGENDA", "EMA_CHMP_AGENDA", "EMA_PRAC_AGENDA",
+            "EMA_CHMP_AGENDA",
+            "EMA_CHMP_AGENDA",
+            "EMA_PRAC_AGENDA",
             "EMA_MEETING_HIGHLIGHTS",
         ]
         by_source = {}
@@ -1390,10 +1454,7 @@ class TestEmaEndToEndTagFlow:
             by_source[s] = by_source.get(s, 0) + 1
 
         # run_screen aggregation logic
-        ema_agenda_count = sum(
-            v for k, v in by_source.items()
-            if k.startswith("EMA_") and k.endswith("_AGENDA")
-        )
+        ema_agenda_count = sum(v for k, v in by_source.items() if k.startswith("EMA_") and k.endswith("_AGENDA"))
         ema_outcomes_count = by_source.get("EMA_MEETING_HIGHLIGHTS", 0)
 
         assert ema_agenda_count == 3  # 2 CHMP + 1 PRAC
@@ -1426,13 +1487,21 @@ def _build_test_xlsx(
     """
     if headers is None:
         headers = [
-            "No", "Procedure No", "EMEA No", "Rapporteur/Co-rapporteur",
+            "No",
+            "Procedure No",
+            "EMEA No",
+            "Rapporteur/Co-rapporteur",
             "Process type",  # E = col 4
             "Invented name",  # F = col 5
             "Active substance",  # G = col 6
             "Customer",  # H = col 7
-            "Scope", "Background", "Action", "Timetable",
-            "Outcome", "Notes", "Status",
+            "Scope",
+            "Background",
+            "Action",
+            "Timetable",
+            "Outcome",
+            "Notes",
+            "Status",
         ]
 
     # Build shared strings
@@ -1457,8 +1526,7 @@ def _build_test_xlsx(
 
     # Build sharedStrings.xml
     ss_ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-    ss_root = ET.Element("sst", xmlns=ss_ns, count=str(len(all_strings)),
-                         uniqueCount=str(len(all_strings)))
+    ss_root = ET.Element("sst", xmlns=ss_ns, count=str(len(all_strings)), uniqueCount=str(len(all_strings)))
     for s in all_strings:
         si = ET.SubElement(ss_root, "si")
         t = ET.SubElement(si, "t")
@@ -1515,28 +1583,40 @@ def _build_test_xlsx(
     # Assemble ZIP
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("[Content_Types].xml", """<?xml version="1.0" encoding="UTF-8"?>
+        zf.writestr(
+            "[Content_Types].xml",
+            """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
   <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
   <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
-</Types>""")
-        zf.writestr("_rels/.rels", """<?xml version="1.0" encoding="UTF-8"?>
+</Types>""",
+        )
+        zf.writestr(
+            "_rels/.rels",
+            """<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>""")
-        zf.writestr("xl/workbook.xml", """<?xml version="1.0" encoding="UTF-8"?>
+</Relationships>""",
+        )
+        zf.writestr(
+            "xl/workbook.xml",
+            """<?xml version="1.0" encoding="UTF-8"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"
     xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/></sheets>
-</workbook>""")
-        zf.writestr("xl/_rels/workbook.xml.rels", """<?xml version="1.0" encoding="UTF-8"?>
+</workbook>""",
+        )
+        zf.writestr(
+            "xl/_rels/workbook.xml.rels",
+            """<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
-</Relationships>""")
+</Relationships>""",
+        )
         zf.writestr("xl/sharedStrings.xml", ss_xml)
         zf.writestr("xl/worksheets/sheet1.xml", ws_xml)
         if tbl_xml:
@@ -1554,10 +1634,10 @@ def _make_row(
 ) -> list[str]:
     """Build a 15-element row with values in the correct column positions."""
     row = [""] * 15
-    row[4] = process_type     # E
-    row[5] = invented_name    # F
+    row[4] = process_type  # E
+    row[5] = invented_name  # F
     row[6] = active_substance  # G
-    row[7] = customer         # H
+    row[7] = customer  # H
     return row
 
 
@@ -1686,7 +1766,9 @@ class TestDiscoverMeetingEventPages:
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _discover_meeting_event_pages
 
         pages = _discover_meeting_event_pages(
-            LANDING_WITH_EVENT_PAGES_HTML, "https://www.ema.europa.eu", "CHMP",
+            LANDING_WITH_EVENT_PAGES_HTML,
+            "https://www.ema.europa.eu",
+            "CHMP",
         )
         assert len(pages) == 2
         assert pages[0]["meeting_start"] == "2026-02-23"
@@ -1750,16 +1832,16 @@ class TestCollectEmaWithEventPages:
     """Integration tests for collect_ema_committee_events with event page path."""
 
     def _build_xlsx_for_test(self):
-        return _build_test_xlsx([
-            _make_row("Variation type II", "Keytruda", "pembrolizumab", "Merck"),
-            _make_row("MAA", "Aficamten", "aficamten", "Cytokinetics"),
-            _make_row("Variation type II", "Unmapped Drug", "unknown_sub", "UnknownCo"),
-        ])
+        return _build_test_xlsx(
+            [
+                _make_row("Variation type II", "Keytruda", "pembrolizumab", "Merck"),
+                _make_row("MAA", "Aficamten", "aficamten", "Cytokinetics"),
+                _make_row("Variation type II", "Unmapped Drug", "unknown_sub", "UnknownCo"),
+            ]
+        )
 
     def test_product_level_events_from_annex(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx_for_test()
 
@@ -1773,9 +1855,11 @@ class TestCollectEmaWithEventPages:
         def mock_fetch_xlsx(url):
             return xlsx_bytes
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             events = collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -1791,9 +1875,7 @@ class TestCollectEmaWithEventPages:
         assert all(e["item_type"] == "agenda_item" for e in events if e["ticker"])
 
     def test_stats_correct(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx_for_test()
 
@@ -1807,9 +1889,11 @@ class TestCollectEmaWithEventPages:
         def mock_fetch_xlsx(url):
             return xlsx_bytes
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -1826,9 +1910,7 @@ class TestCollectEmaWithEventPages:
         assert stats["meeting_pages_found"] >= 1
 
     def test_deterministic_cache(self, tmp_path):
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx_for_test()
 
@@ -1842,9 +1924,11 @@ class TestCollectEmaWithEventPages:
         def mock_fetch_xlsx(url):
             return xlsx_bytes
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             result1 = collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -1863,16 +1947,16 @@ class TestCollectEmaWithEventPages:
 
     def test_fallback_to_landing_page_docs(self, tmp_path):
         """When no event pages found, falls back to landing page doc discovery."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         def mock_fetch(url):
             # Return landing page with docs but NO event page links
             return COMMITTEE_LANDING_HTML
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             events = collect_ema_committee_events(
                 as_of_date=date(2026, 1, 31),
                 cache_dir=tmp_path,
@@ -1886,9 +1970,7 @@ class TestCollectEmaWithEventPages:
 
     def test_xlsx_parse_error_continues(self, tmp_path):
         """XLSX parse error is logged and collector continues."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         def mock_fetch(url):
             if "committees/committee-medicinal-products" in url:
@@ -1900,9 +1982,11 @@ class TestCollectEmaWithEventPages:
         def mock_fetch_xlsx(url):
             return b"not a valid xlsx"
 
-        with patch(f"{_MOD}._fetch", side_effect=mock_fetch), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx), \
-             patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")):
+        with (
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+            patch(f"{_MOD}._fetch_xlsx_bytes", side_effect=mock_fetch_xlsx),
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS in tests")),
+        ):
             events = collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -1968,8 +2052,10 @@ class TestFetchXml:
     def test_successful_fetch(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _fetch_xml
 
-        with patch("wake_robin_data_pipeline.collectors.ema_committee_collector.requests.get") as mock_get, \
-             patch("wake_robin_data_pipeline.collectors.ema_committee_collector.time.sleep"):
+        with (
+            patch("wake_robin_data_pipeline.collectors.ema_committee_collector.requests.get") as mock_get,
+            patch("wake_robin_data_pipeline.collectors.ema_committee_collector.time.sleep"),
+        ):
             mock_get.return_value.text = RSS_AGENDAS_XML
             mock_get.return_value.raise_for_status = lambda: None
             result = _fetch_xml("https://example.com/feed.xml")
@@ -1982,9 +2068,13 @@ class TestFetchXml:
     def test_network_error_raises(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _fetch_xml
 
-        with patch("wake_robin_data_pipeline.collectors.ema_committee_collector.requests.get",
-                    side_effect=Exception("Connection failed")), \
-             patch("wake_robin_data_pipeline.collectors.ema_committee_collector.time.sleep"):
+        with (
+            patch(
+                "wake_robin_data_pipeline.collectors.ema_committee_collector.requests.get",
+                side_effect=Exception("Connection failed"),
+            ),
+            patch("wake_robin_data_pipeline.collectors.ema_committee_collector.time.sleep"),
+        ):
             with pytest.raises(Exception, match="Connection failed"):
                 _fetch_xml("https://example.com/feed.xml")
 
@@ -2041,7 +2131,10 @@ class TestConstructAnnexUrl:
 
         url = "https://www.ema.europa.eu/en/documents/agenda/agenda-chmp-meeting-23-26-february-2026_en.pdf"
         result = _construct_annex_url(url)
-        assert result == "https://www.ema.europa.eu/en/documents/agenda/annex-agenda-chmp-meeting-23-26-february-2026_en.xlsx"
+        assert (
+            result
+            == "https://www.ema.europa.eu/en/documents/agenda/annex-agenda-chmp-meeting-23-26-february-2026_en.xlsx"
+        )
 
     def test_already_annex_url_returns_none(self):
         from wake_robin_data_pipeline.collectors.ema_committee_collector import _construct_annex_url
@@ -2116,23 +2209,25 @@ class TestCollectRssIntegration:
     """Integration tests for three-tier RSS discovery."""
 
     def _build_xlsx(self):
-        return _build_test_xlsx([
-            _make_row("MAA", "Aficamten", "aficamten", "Cytokinetics"),
-            _make_row("Variation type II", "Keytruda", "pembrolizumab", "Merck"),
-            _make_row("MAA", "UnmappedDrug", "unknown_sub", "UnknownCo"),
-        ])
+        return _build_test_xlsx(
+            [
+                _make_row("MAA", "Aficamten", "aficamten", "Cytokinetics"),
+                _make_row("Variation type II", "Keytruda", "pembrolizumab", "Merck"),
+                _make_row("MAA", "UnmappedDrug", "unknown_sub", "UnknownCo"),
+            ]
+        )
 
     def test_tier1_rss_agenda_success(self, tmp_path):
         """Tier 1: RSS agenda → annex XLSX → product events with tickers."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx()
 
-        with patch(f"{_MOD}._fetch_xml", return_value=RSS_AGENDAS_XML), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-             patch(f"{_MOD}._fetch") as mock_fetch:
+        with (
+            patch(f"{_MOD}._fetch_xml", return_value=RSS_AGENDAS_XML),
+            patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+            patch(f"{_MOD}._fetch") as mock_fetch,
+        ):
             # _fetch for landing page (tier 3) — returns page with NO event links
             mock_fetch.return_value = "<html><body></body></html>"
             events = collect_ema_committee_events(
@@ -2156,9 +2251,7 @@ class TestCollectRssIntegration:
 
     def test_tier2_when_tier1_fails(self, tmp_path):
         """Tier 2: RSS events feed → event page → annex XLSX when tier 1 fails."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx()
 
@@ -2171,9 +2264,11 @@ class TestCollectRssIntegration:
             # Landing page — no event page links
             return "<html><body></body></html>"
 
-        with patch(f"{_MOD}._fetch_xml") as mock_xml, \
-             patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-             patch(f"{_MOD}._fetch", side_effect=mock_fetch):
+        with (
+            patch(f"{_MOD}._fetch_xml") as mock_xml,
+            patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+        ):
             # First call (_RSS_AGENDAS_URL) returns empty, second (_RSS_EVENTS_URL) returns events
             mock_xml.side_effect = [empty_rss, RSS_EVENTS_XML]
             events = collect_ema_committee_events(
@@ -2195,16 +2290,16 @@ class TestCollectRssIntegration:
 
     def test_tier3_fallback_when_rss_empty(self, tmp_path):
         """Tier 3: both RSS feeds empty → landing page fallback."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         def mock_fetch(url):
             # Return landing page with docs but NO event page links
             return COMMITTEE_LANDING_HTML
 
-        with patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS")), \
-             patch(f"{_MOD}._fetch", side_effect=mock_fetch):
+        with (
+            patch(f"{_MOD}._fetch_xml", side_effect=Exception("no RSS")),
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+        ):
             events = collect_ema_committee_events(
                 as_of_date=date(2026, 1, 31),
                 cache_dir=tmp_path,
@@ -2218,9 +2313,7 @@ class TestCollectRssIntegration:
 
     def test_dedup_across_tiers(self, tmp_path):
         """Same meeting in tier 1 and tier 2: only processed once."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx()
 
@@ -2229,9 +2322,11 @@ class TestCollectRssIntegration:
                 return EVENT_PAGE_HTML
             return "<html><body></body></html>"
 
-        with patch(f"{_MOD}._fetch_xml") as mock_xml, \
-             patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-             patch(f"{_MOD}._fetch", side_effect=mock_fetch):
+        with (
+            patch(f"{_MOD}._fetch_xml") as mock_xml,
+            patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+            patch(f"{_MOD}._fetch", side_effect=mock_fetch),
+        ):
             # Both RSS feeds return the same Feb 2026 meeting
             mock_xml.side_effect = [RSS_AGENDAS_XML, RSS_EVENTS_XML]
             events = collect_ema_committee_events(
@@ -2248,15 +2343,15 @@ class TestCollectRssIntegration:
 
     def test_stats_fields_populated(self, tmp_path):
         """Stats include rss_agenda_items, rss_event_items, discovery_tier."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx()
 
-        with patch(f"{_MOD}._fetch_xml", return_value=RSS_AGENDAS_XML), \
-             patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-             patch(f"{_MOD}._fetch", return_value="<html><body></body></html>"):
+        with (
+            patch(f"{_MOD}._fetch_xml", return_value=RSS_AGENDAS_XML),
+            patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+            patch(f"{_MOD}._fetch", return_value="<html><body></body></html>"),
+        ):
             collect_ema_committee_events(
                 as_of_date=date(2026, 2, 28),
                 cache_dir=tmp_path,
@@ -2274,18 +2369,18 @@ class TestCollectRssIntegration:
 
     def test_determinism_two_runs(self, tmp_path):
         """Two runs with same inputs produce identical output."""
-        from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-            collect_ema_committee_events,
-        )
+        from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
 
         xlsx_bytes = self._build_xlsx()
 
         def run():
             d = tmp_path / "run"
             d.mkdir(exist_ok=True)
-            with patch(f"{_MOD}._fetch_xml", return_value=RSS_AGENDAS_XML), \
-                 patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes), \
-                 patch(f"{_MOD}._fetch", return_value="<html><body></body></html>"):
+            with (
+                patch(f"{_MOD}._fetch_xml", return_value=RSS_AGENDAS_XML),
+                patch(f"{_MOD}._fetch_xlsx_bytes", return_value=xlsx_bytes),
+                patch(f"{_MOD}._fetch", return_value="<html><body></body></html>"),
+            ):
                 return collect_ema_committee_events(
                     as_of_date=date(2026, 2, 28),
                     cache_dir=d,

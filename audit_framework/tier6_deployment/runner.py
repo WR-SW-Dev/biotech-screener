@@ -10,17 +10,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from audit_framework.types import (
-    AuditMetrics,
-    AuditTier,
-    ComplianceGrade,
-    PassCriteria,
-    TierResult,
-)
-
-from audit_framework.tier6_deployment.readiness import (
-    validate_deployment_readiness,
-)
+from audit_framework.tier6_deployment.readiness import validate_deployment_readiness
+from audit_framework.types import AuditMetrics, AuditTier, ComplianceGrade, PassCriteria, TierResult
 
 
 @dataclass

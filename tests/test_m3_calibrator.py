@@ -3,6 +3,7 @@ Tests for M3 weight calibration (backtest/calibrate_m3_weights.py).
 
 Uses synthetic panels only — no production_data.
 """
+
 from __future__ import annotations
 
 import json
@@ -24,7 +25,6 @@ from backtest.calibrate_m3_weights import (
     pooled_ridge,
     write_weights_json,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -53,9 +53,7 @@ def _make_panel(
     rows = []
     for d in range(n_dates):
         dt = f"2024-{d+1:04d}"
-        features = {
-            name: np.random.randn(n_stocks) for name in sorted(betas.keys())
-        }
+        features = {name: np.random.randn(n_stocks) for name in sorted(betas.keys())}
         ret = np.zeros(n_stocks)
         for name, beta in betas.items():
             ret += beta * features[name]
@@ -87,7 +85,8 @@ class TestPooledRidge:
             }
         )
         weights, meta = pooled_ridge(
-            panel, "fwd_21d",
+            panel,
+            "fwd_21d",
             ["financial_normalized", "momentum_normalized", "valuation_normalized"],
             ridge_lambda=1.0,
             min_stocks_per_week=50,
@@ -100,23 +99,19 @@ class TestPooledRidge:
     def test_deterministic(self):
         """Same input → same output."""
         panel = _make_panel(seed=123)
-        w1, _ = pooled_ridge(panel, "fwd_21d",
-                             ["financial_normalized", "momentum_normalized", "valuation_normalized"],
-                             ridge_lambda=5.0)
-        w2, _ = pooled_ridge(panel, "fwd_21d",
-                             ["financial_normalized", "momentum_normalized", "valuation_normalized"],
-                             ridge_lambda=5.0)
+        w1, _ = pooled_ridge(
+            panel, "fwd_21d", ["financial_normalized", "momentum_normalized", "valuation_normalized"], ridge_lambda=5.0
+        )
+        w2, _ = pooled_ridge(
+            panel, "fwd_21d", ["financial_normalized", "momentum_normalized", "valuation_normalized"], ridge_lambda=5.0
+        )
         assert w1 == w2
 
     def test_higher_lambda_shrinks(self):
         """Higher lambda → smaller absolute weights."""
         panel = _make_panel()
-        w_low, _ = pooled_ridge(panel, "fwd_21d",
-                                ["valuation_normalized", "momentum_normalized"],
-                                ridge_lambda=1.0)
-        w_high, _ = pooled_ridge(panel, "fwd_21d",
-                                 ["valuation_normalized", "momentum_normalized"],
-                                 ridge_lambda=100.0)
+        w_low, _ = pooled_ridge(panel, "fwd_21d", ["valuation_normalized", "momentum_normalized"], ridge_lambda=1.0)
+        w_high, _ = pooled_ridge(panel, "fwd_21d", ["valuation_normalized", "momentum_normalized"], ridge_lambda=100.0)
         for feat in w_low:
             assert abs(w_high[feat]) <= abs(w_low[feat]) + 1e-10
 
@@ -210,9 +205,7 @@ class TestCalibrate:
 
     def test_constant_feature_dropped(self):
         """Features that are constant across weeks get dropped."""
-        panel = _make_panel(
-            betas={"valuation_normalized": -0.5, "momentum_normalized": -0.3}
-        )
+        panel = _make_panel(betas={"valuation_normalized": -0.5, "momentum_normalized": -0.3})
         # Add a constant feature
         panel["catalyst_normalized"] = 50.0
         final, meta = calibrate(
@@ -229,12 +222,22 @@ class TestCalibrate:
     def test_deterministic_output(self):
         """Same panel → same weights on repeat runs."""
         panel = _make_panel(seed=99)
-        w1, _ = calibrate(panel, "fwd_21d",
-                          ["valuation_normalized", "momentum_normalized"],
-                          method="ridge", ridge_lambda=5.0, min_stocks_per_week=50)
-        w2, _ = calibrate(panel, "fwd_21d",
-                          ["valuation_normalized", "momentum_normalized"],
-                          method="ridge", ridge_lambda=5.0, min_stocks_per_week=50)
+        w1, _ = calibrate(
+            panel,
+            "fwd_21d",
+            ["valuation_normalized", "momentum_normalized"],
+            method="ridge",
+            ridge_lambda=5.0,
+            min_stocks_per_week=50,
+        )
+        w2, _ = calibrate(
+            panel,
+            "fwd_21d",
+            ["valuation_normalized", "momentum_normalized"],
+            method="ridge",
+            ridge_lambda=5.0,
+            min_stocks_per_week=50,
+        )
         assert w1 == w2
 
     def test_fmb_method(self):

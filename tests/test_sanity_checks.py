@@ -20,46 +20,40 @@ Author: Wake Robin Capital Management
 
 from __future__ import annotations
 
-import pytest
-from decimal import Decimal
 from datetime import date, timedelta
+from decimal import Decimal
 
+import pytest
+
+from sanity_checks.benchmark_checks import BenchmarkChecker, PeerGroup
+from sanity_checks.cross_validation import CrossValidationChecker
+from sanity_checks.domain_expert_checks import DomainExpertChecker, TrialDetails
+from sanity_checks.executive_dashboard import ExecutiveDashboardValidator, OnePagerContent
+from sanity_checks.market_microstructure_checks import (
+    AnalystRating,
+    InsiderTransaction,
+    MarketMicrostructureChecker,
+    OptionsFlow,
+)
+from sanity_checks.portfolio_construction_checks import FundMandate, PortfolioConstructionChecker
+from sanity_checks.regression_tests import RegressionTestRunner
+from sanity_checks.review_triggers import ICDocumentation, ReviewTriggerChecker
+from sanity_checks.runner import SanityCheckRunner, generate_battle_tested_report, run_all_sanity_checks
+from sanity_checks.time_series_checks import CatalystEvent, TimeSeriesChecker
 from sanity_checks.types import (
     CheckCategory,
     FlagSeverity,
-    ReviewLevel,
+    GoldenTestCase,
     RankingSnapshot,
+    ReviewLevel,
     SecurityContext,
     ThresholdConfig,
-    GoldenTestCase,
 )
-from sanity_checks.cross_validation import CrossValidationChecker
-from sanity_checks.benchmark_checks import BenchmarkChecker, PeerGroup
-from sanity_checks.time_series_checks import TimeSeriesChecker, CatalystEvent
-from sanity_checks.domain_expert_checks import DomainExpertChecker, TrialDetails
-from sanity_checks.market_microstructure_checks import (
-    MarketMicrostructureChecker,
-    OptionsFlow,
-    InsiderTransaction,
-    AnalystRating,
-)
-from sanity_checks.portfolio_construction_checks import (
-    PortfolioConstructionChecker,
-    FundMandate,
-)
-from sanity_checks.regression_tests import RegressionTestRunner
-from sanity_checks.review_triggers import ReviewTriggerChecker, ICDocumentation
-from sanity_checks.executive_dashboard import ExecutiveDashboardValidator, OnePagerContent
-from sanity_checks.runner import (
-    SanityCheckRunner,
-    run_all_sanity_checks,
-    generate_battle_tested_report,
-)
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date() -> date:
@@ -195,10 +189,12 @@ def historical_snapshots(sample_securities) -> list[RankingSnapshot]:
             )
             securities.append(modified)
 
-        snapshots.append(RankingSnapshot(
-            as_of_date=snap_date.isoformat(),
-            securities=securities,
-        ))
+        snapshots.append(
+            RankingSnapshot(
+                as_of_date=snap_date.isoformat(),
+                securities=securities,
+            )
+        )
 
     return snapshots
 
@@ -206,6 +202,7 @@ def historical_snapshots(sample_securities) -> list[RankingSnapshot]:
 # ============================================================================
 # CROSS-VALIDATION TESTS (Query 7.1)
 # ============================================================================
+
 
 class TestCrossValidationChecker:
     """Tests for Query 7.1: Cross-Validation Sanity Checks."""
@@ -216,10 +213,7 @@ class TestCrossValidationChecker:
         result = checker.run_all_checks(sample_securities)
 
         # Should detect RISK ticker with 3-month runway
-        dilution_flags = [
-            f for f in result.flags
-            if f.check_name == "imminent_dilution_risk"
-        ]
+        dilution_flags = [f for f in result.flags if f.check_name == "imminent_dilution_risk"]
         assert len(dilution_flags) >= 1
         assert dilution_flags[0].ticker == "RISK"
         assert dilution_flags[0].severity == FlagSeverity.CRITICAL
@@ -229,10 +223,7 @@ class TestCrossValidationChecker:
         checker = CrossValidationChecker()
         result = checker.run_all_checks(sample_securities)
 
-        cash_flags = [
-            f for f in result.flags
-            if f.check_name == "trading_below_cash"
-        ]
+        cash_flags = [f for f in result.flags if f.check_name == "trading_below_cash"]
         assert len(cash_flags) >= 1
         assert cash_flags[0].ticker == "CASH"
         assert cash_flags[0].severity == FlagSeverity.CRITICAL
@@ -242,10 +233,7 @@ class TestCrossValidationChecker:
         checker = CrossValidationChecker()
         result = checker.run_all_checks(sample_securities)
 
-        pos_flags = [
-            f for f in result.flags
-            if f.check_name == "pos_calibration_error"
-        ]
+        pos_flags = [f for f in result.flags if f.check_name == "pos_calibration_error"]
         assert len(pos_flags) >= 1
         assert pos_flags[0].ticker == "POSH"
 
@@ -266,6 +254,7 @@ class TestCrossValidationChecker:
 # BENCHMARK COMPARISON TESTS (Query 7.2)
 # ============================================================================
 
+
 class TestBenchmarkChecker:
     """Tests for Query 7.2: Benchmark Comparison Checks."""
 
@@ -283,24 +272,23 @@ class TestBenchmarkChecker:
             for i in range(1, 7)
         ]
         # Add some other sectors
-        securities.extend([
-            SecurityContext(
-                ticker=f"OTHER{i}",
-                rank=i + 6,
-                composite_score=Decimal("70") - Decimal(str(i)),
-                sector="rare_disease",
-                market_cap_mm=Decimal("1000"),
-            )
-            for i in range(1, 5)
-        ])
+        securities.extend(
+            [
+                SecurityContext(
+                    ticker=f"OTHER{i}",
+                    rank=i + 6,
+                    composite_score=Decimal("70") - Decimal(str(i)),
+                    sector="rare_disease",
+                    market_cap_mm=Decimal("1000"),
+                )
+                for i in range(1, 5)
+            ]
+        )
 
         checker = BenchmarkChecker()
         result = checker.run_all_checks(securities)
 
-        concentration_flags = [
-            f for f in result.flags
-            if "concentration" in f.check_name
-        ]
+        concentration_flags = [f for f in result.flags if "concentration" in f.check_name]
         assert len(concentration_flags) >= 1
 
     def test_detects_extreme_outlier(self):
@@ -330,16 +318,14 @@ class TestBenchmarkChecker:
         checker = BenchmarkChecker()
         result = checker.run_all_checks(securities)
 
-        outlier_flags = [
-            f for f in result.flags
-            if "outlier" in f.check_name
-        ]
+        outlier_flags = [f for f in result.flags if "outlier" in f.check_name]
         assert len(outlier_flags) >= 1
 
 
 # ============================================================================
 # TIME SERIES COHERENCE TESTS (Query 7.3)
 # ============================================================================
+
 
 class TestTimeSeriesChecker:
     """Tests for Query 7.3: Time Series Coherence Checks."""
@@ -367,10 +353,7 @@ class TestTimeSeriesChecker:
             previous_snapshot=previous,
         )
 
-        jump_flags = [
-            f for f in result.flags
-            if "rank_jump" in f.check_name
-        ]
+        jump_flags = [f for f in result.flags if "rank_jump" in f.check_name]
         assert len(jump_flags) >= 1
         assert jump_flags[0].ticker == "JUMP"
 
@@ -405,6 +388,7 @@ class TestTimeSeriesChecker:
 # DOMAIN EXPERT TESTS (Query 7.4)
 # ============================================================================
 
+
 class TestDomainExpertChecker:
     """Tests for Query 7.4: Biotech Domain Expert Checks."""
 
@@ -436,10 +420,7 @@ class TestDomainExpertChecker:
             trial_details=trials,
         )
 
-        underpowered_flags = [
-            f for f in result.flags
-            if "underpowered" in f.check_name
-        ]
+        underpowered_flags = [f for f in result.flags if "underpowered" in f.check_name]
         assert len(underpowered_flags) >= 1
 
     def test_detects_early_stage_high_rank(self, sample_securities):
@@ -447,10 +428,7 @@ class TestDomainExpertChecker:
         checker = DomainExpertChecker()
         result = checker.run_all_checks(sample_securities)
 
-        early_stage_flags = [
-            f for f in result.flags
-            if "early_stage" in f.check_name
-        ]
+        early_stage_flags = [f for f in result.flags if "early_stage" in f.check_name]
         # TINY is Phase 1 at rank 8
         assert len(early_stage_flags) >= 1
 
@@ -458,6 +436,7 @@ class TestDomainExpertChecker:
 # ============================================================================
 # MARKET MICROSTRUCTURE TESTS (Query 7.5)
 # ============================================================================
+
 
 class TestMarketMicrostructureChecker:
     """Tests for Query 7.5: Insider/Market Microstructure Checks."""
@@ -501,10 +480,7 @@ class TestMarketMicrostructureChecker:
             insider_transactions=insider_transactions,
         )
 
-        csuite_flags = [
-            f for f in result.flags
-            if "csuite" in f.check_name
-        ]
+        csuite_flags = [f for f in result.flags if "csuite" in f.check_name]
         assert len(csuite_flags) >= 1
 
     def test_detects_contrarian_position(self):
@@ -518,10 +494,18 @@ class TestMarketMicrostructureChecker:
         ]
 
         analyst_ratings = [
-            AnalystRating(ticker="CONTRA", rating="sell", target_price=None, prior_rating=None, rating_change_date=None),
-            AnalystRating(ticker="CONTRA", rating="sell", target_price=None, prior_rating=None, rating_change_date=None),
-            AnalystRating(ticker="CONTRA", rating="underperform", target_price=None, prior_rating=None, rating_change_date=None),
-            AnalystRating(ticker="CONTRA", rating="hold", target_price=None, prior_rating=None, rating_change_date=None),
+            AnalystRating(
+                ticker="CONTRA", rating="sell", target_price=None, prior_rating=None, rating_change_date=None
+            ),
+            AnalystRating(
+                ticker="CONTRA", rating="sell", target_price=None, prior_rating=None, rating_change_date=None
+            ),
+            AnalystRating(
+                ticker="CONTRA", rating="underperform", target_price=None, prior_rating=None, rating_change_date=None
+            ),
+            AnalystRating(
+                ticker="CONTRA", rating="hold", target_price=None, prior_rating=None, rating_change_date=None
+            ),
         ]
 
         checker = MarketMicrostructureChecker()
@@ -530,16 +514,14 @@ class TestMarketMicrostructureChecker:
             analyst_ratings=analyst_ratings,
         )
 
-        contrarian_flags = [
-            f for f in result.flags
-            if "contrarian" in f.check_name
-        ]
+        contrarian_flags = [f for f in result.flags if "contrarian" in f.check_name]
         assert len(contrarian_flags) >= 1
 
 
 # ============================================================================
 # PORTFOLIO CONSTRUCTION TESTS (Query 7.6)
 # ============================================================================
+
 
 class TestPortfolioConstructionChecker:
     """Tests for Query 7.6: Portfolio Construction Reality Checks."""
@@ -555,10 +537,7 @@ class TestPortfolioConstructionChecker:
         checker = PortfolioConstructionChecker(mandate=mandate)
         result = checker.run_all_checks(sample_securities)
 
-        liquidity_flags = [
-            f for f in result.flags
-            if "liquidity" in f.check_name
-        ]
+        liquidity_flags = [f for f in result.flags if "liquidity" in f.check_name]
         # TINY has low ADV
         assert len(liquidity_flags) >= 1
 
@@ -573,16 +552,14 @@ class TestPortfolioConstructionChecker:
         checker = PortfolioConstructionChecker(mandate=mandate)
         result = checker.run_all_checks(sample_securities)
 
-        mandate_flags = [
-            f for f in result.flags
-            if "mandate" in f.check_name
-        ]
+        mandate_flags = [f for f in result.flags if "mandate" in f.check_name]
         assert len(mandate_flags) >= 1
 
 
 # ============================================================================
 # REGRESSION TESTS (Query 7.7)
 # ============================================================================
+
 
 class TestRegressionTestRunner:
     """Tests for Query 7.7: Regression Testing Against Known Cases."""
@@ -653,6 +630,7 @@ class TestRegressionTestRunner:
 # REVIEW TRIGGER TESTS (Query 7.8)
 # ============================================================================
 
+
 class TestReviewTriggerChecker:
     """Tests for Query 7.8: Expert Override & Manual Review Triggers."""
 
@@ -672,10 +650,7 @@ class TestReviewTriggerChecker:
         checker = ReviewTriggerChecker()
         result = checker.run_all_checks(securities)
 
-        unknown_flags = [
-            f for f in result.flags
-            if "unknown" in f.check_name
-        ]
+        unknown_flags = [f for f in result.flags if "unknown" in f.check_name]
         assert len(unknown_flags) >= 1
 
     def test_generates_review_requirements(self, sample_securities):
@@ -699,16 +674,14 @@ class TestReviewTriggerChecker:
             previous_ranks=previous_ranks,
         )
 
-        rank_change_flags = [
-            f for f in result.flags
-            if "rank_change" in f.check_name
-        ]
+        rank_change_flags = [f for f in result.flags if "rank_change" in f.check_name]
         assert len(rank_change_flags) >= 1
 
 
 # ============================================================================
 # EXECUTIVE DASHBOARD TESTS (Query 8.1)
 # ============================================================================
+
 
 class TestExecutiveDashboardValidator:
     """Tests for Query 8.1: Executive Dashboard Validation."""
@@ -722,10 +695,7 @@ class TestExecutiveDashboardValidator:
             one_pagers=None,
         )
 
-        missing_flags = [
-            f for f in result.flags
-            if "one_pager" in f.check_name
-        ]
+        missing_flags = [f for f in result.flags if "one_pager" in f.check_name]
         assert len(missing_flags) >= 1
         assert any(f.severity == FlagSeverity.CRITICAL for f in missing_flags)
 
@@ -756,16 +726,14 @@ class TestExecutiveDashboardValidator:
             one_pagers=one_pagers,
         )
 
-        incomplete_flags = [
-            f for f in result.flags
-            if "incomplete_one_pager" in f.check_name
-        ]
+        incomplete_flags = [f for f in result.flags if "incomplete_one_pager" in f.check_name]
         assert len(incomplete_flags) >= 1
 
 
 # ============================================================================
 # FULL RUNNER TESTS
 # ============================================================================
+
 
 class TestSanityCheckRunner:
     """Tests for the main SanityCheckRunner."""
@@ -841,6 +809,7 @@ class TestSanityCheckRunner:
 # THRESHOLD CONFIGURATION TESTS
 # ============================================================================
 
+
 class TestThresholdConfiguration:
     """Tests for threshold configuration."""
 
@@ -856,10 +825,7 @@ class TestThresholdConfiguration:
         result = checker.run_all_checks(sample_securities)
 
         # With 12-month runway requirement, more securities should be flagged
-        dilution_flags = [
-            f for f in result.flags
-            if "dilution" in f.check_name
-        ]
+        dilution_flags = [f for f in result.flags if "dilution" in f.check_name]
         assert len(dilution_flags) >= 1
 
     def test_default_thresholds_immutable(self):
@@ -874,6 +840,7 @@ class TestThresholdConfiguration:
 # ============================================================================
 # INTEGRATION TESTS
 # ============================================================================
+
 
 class TestFullIntegration:
     """Full integration tests."""

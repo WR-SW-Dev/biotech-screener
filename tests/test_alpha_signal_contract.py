@@ -12,25 +12,26 @@ Tests cover:
 - Diagnostics structure
 """
 
-import pytest
 from typing import Any, Dict, List
+
+import pytest
 
 from alpha_signal_contract import (
     ALPHA_CONTRACT_VERSION,
     CATALYST_TRACE_KEYS,
     AlphaContractDiagnostics,
     AlphaContractViolation,
-    validate_alpha_inputs,
-    validate_alpha_outputs,
-    _resolve_nested,
     _check_rec_fields,
     _check_row_fields,
+    _resolve_nested,
+    validate_alpha_inputs,
+    validate_alpha_outputs,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 def _make_valid_rec(ticker: str = "ACAD") -> Dict[str, Any]:
     """Build a minimal valid rec dict that passes all required checks."""
@@ -79,6 +80,7 @@ def _make_valid_row(ticker: str = "ACAD", archetype: str = "drug_developer") -> 
 # TestResolveNested
 # =============================================================================
 
+
 class TestResolveNested:
     def test_simple_path(self):
         d = {"a": {"b": 42}}
@@ -114,6 +116,7 @@ class TestResolveNested:
 # TestInputValidation
 # =============================================================================
 
+
 class TestInputValidation:
     """Tests for validate_alpha_inputs."""
 
@@ -123,7 +126,9 @@ class TestInputValidation:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors == 0
@@ -137,7 +142,9 @@ class TestInputValidation:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors >= 1
@@ -150,7 +157,9 @@ class TestInputValidation:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors >= 2
@@ -164,7 +173,9 @@ class TestInputValidation:
         del row["clinical_score_z"]
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors >= 1
@@ -177,7 +188,9 @@ class TestInputValidation:
         del row["clinical_score_z"]
 
         diag = validate_alpha_inputs(
-            {"PLAT": rec}, [row], schema_mode="warn",
+            {"PLAT": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors == 0
@@ -190,7 +203,9 @@ class TestInputValidation:
         del row["clinical_score_z"]
 
         diag = validate_alpha_inputs(
-            {"MRNA": rec}, [row], schema_mode="warn",
+            {"MRNA": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert "clinical_score_z" in diag.error_field_counts
@@ -202,7 +217,9 @@ class TestInputValidation:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert "severity" in diag.error_field_counts
@@ -217,7 +234,9 @@ class TestInputValidation:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors == 0  # no errors
@@ -227,9 +246,7 @@ class TestInputValidation:
         # Derived n_missing_catalyst_trace reflects the 3 trace fields
         d = diag.to_dict()
         assert d["n_missing_catalyst_trace"] == 3  # 1 ticker × 3 trace fields
-        assert d["n_missing_catalyst_trace"] == sum(
-            d["top_missing_recommended"].get(k, 0) for k in CATALYST_TRACE_KEYS
-        )
+        assert d["n_missing_catalyst_trace"] == sum(d["top_missing_recommended"].get(k, 0) for k in CATALYST_TRACE_KEYS)
 
     def test_recommended_clinical_fields_missing_is_warning(self):
         """Missing clinical_alpha_z (recommended) -> warning, not error."""
@@ -238,7 +255,9 @@ class TestInputValidation:
         del row["clinical_alpha_z"]
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors == 0
@@ -252,7 +271,9 @@ class TestInputValidation:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
 
         assert diag.total_errors == 0
@@ -321,6 +342,7 @@ class TestInputValidation:
 # TestFailMode
 # =============================================================================
 
+
 class TestFailMode:
     """Tests for schema_mode='fail' behavior."""
 
@@ -332,7 +354,9 @@ class TestFailMode:
 
         with pytest.raises(AlphaContractViolation) as exc_info:
             validate_alpha_inputs(
-                {"ACAD": rec}, [row], schema_mode="fail",
+                {"ACAD": rec},
+                [row],
+                schema_mode="fail",
             )
 
         assert exc_info.value.diagnostics.total_errors >= 1
@@ -343,7 +367,9 @@ class TestFailMode:
         row = _make_valid_row("ACAD")
 
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="fail",
+            {"ACAD": rec},
+            [row],
+            schema_mode="fail",
         )
 
         assert diag.total_errors == 0
@@ -356,7 +382,9 @@ class TestFailMode:
 
         # Should not raise
         diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="fail",
+            {"ACAD": rec},
+            [row],
+            schema_mode="fail",
         )
 
         assert diag.total_errors == 0
@@ -366,6 +394,7 @@ class TestFailMode:
 # =============================================================================
 # TestOutputValidation
 # =============================================================================
+
 
 class TestOutputValidation:
     """Tests for validate_alpha_outputs."""
@@ -426,6 +455,7 @@ class TestOutputValidation:
 # TestDiagnostics
 # =============================================================================
 
+
 class TestDiagnostics:
     """Tests for AlphaContractDiagnostics structure."""
 
@@ -448,9 +478,7 @@ class TestDiagnostics:
         # Derived convenience keys are consistent with source of truth
         assert d["n_missing_rec"] == 0
         assert d["n_missing_rec"] == d["top_missing_recommended"].get("alpha_contract.missing_rec", 0)
-        assert d["n_missing_catalyst_trace"] == sum(
-            d["top_missing_recommended"].get(k, 0) for k in CATALYST_TRACE_KEYS
-        )
+        assert d["n_missing_catalyst_trace"] == sum(d["top_missing_recommended"].get(k, 0) for k in CATALYST_TRACE_KEYS)
 
     def test_diagnostics_has_errors_property(self):
         diag = AlphaContractDiagnostics()
@@ -477,6 +505,7 @@ class TestDiagnostics:
 # TestMetadataIntegration
 # =============================================================================
 
+
 class TestMetadataIntegration:
     """Tests that contract diagnostics produce the expected metadata shape."""
 
@@ -490,10 +519,14 @@ class TestMetadataIntegration:
         row = _make_valid_row("ACAD")
 
         input_diag = validate_alpha_inputs(
-            {"ACAD": rec}, [row], schema_mode="warn",
+            {"ACAD": rec},
+            [row],
+            schema_mode="warn",
         )
         output_diag = validate_alpha_outputs(
-            [row], schema_mode="warn", alpha_cohort_enabled=True,
+            [row],
+            schema_mode="warn",
+            alpha_cohort_enabled=True,
         )
 
         # Build the telemetry block exactly as run_screen.py does
@@ -527,7 +560,9 @@ class TestMetadataIntegration:
         row = {"ticker": "ACAD"}
 
         output_diag = validate_alpha_outputs(
-            [row], schema_mode="warn", alpha_cohort_enabled=False,
+            [row],
+            schema_mode="warn",
+            alpha_cohort_enabled=False,
         )
 
         d = output_diag.to_dict()

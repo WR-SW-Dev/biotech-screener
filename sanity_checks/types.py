@@ -28,6 +28,7 @@ class FlagSeverity(str, Enum):
     - MEDIUM: Unusual pattern - monitor closely
     - LOW: Notable but reasonable
     """
+
     CRITICAL = "CRITICAL"
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
@@ -45,6 +46,7 @@ class FlagSeverity(str, Enum):
 
 class CheckCategory(str, Enum):
     """Categories of sanity checks."""
+
     CROSS_VALIDATION = "cross_validation"
     BENCHMARK = "benchmark"
     TIME_SERIES = "time_series"
@@ -58,6 +60,7 @@ class CheckCategory(str, Enum):
 
 class ContradictionType(str, Enum):
     """Types of cross-validation contradictions."""
+
     FINANCIAL_CLINICAL = "financial_clinical"
     INSTITUTIONAL_SIGNAL = "institutional_signal"
     MOMENTUM_FUNDAMENTAL = "momentum_fundamental"
@@ -67,6 +70,7 @@ class ContradictionType(str, Enum):
 
 class ReviewLevel(str, Enum):
     """Review requirement levels."""
+
     DIRECTOR = "director"
     SENIOR_ANALYST = "senior_analyst"
     JUNIOR_ANALYST = "junior_analyst"
@@ -80,6 +84,7 @@ class SanityFlag:
 
     Immutable record of a detected issue.
     """
+
     severity: FlagSeverity
     category: CheckCategory
     ticker: Optional[str]
@@ -111,6 +116,7 @@ class SanityCheckResult:
 
     Contains flags generated and pass/fail status.
     """
+
     check_name: str
     category: CheckCategory
     passed: bool
@@ -148,6 +154,7 @@ class ReviewRequirement:
     """
     Manual review requirement for a candidate.
     """
+
     ticker: str
     rank: int
     level: ReviewLevel
@@ -173,6 +180,7 @@ class ValidationReport:
     """
     Complete validation report from all sanity checks.
     """
+
     as_of_date: str
     check_results: List[SanityCheckResult] = field(default_factory=list)
     review_requirements: List[ReviewRequirement] = field(default_factory=list)
@@ -258,6 +266,7 @@ class ThresholdConfig:
 
     Immutable to prevent modification during runs.
     """
+
     # Financial-Clinical thresholds
     min_runway_months_for_top_rank: Decimal = Decimal("6")
     cash_to_market_cap_anomaly_ratio: Decimal = Decimal("2.5")
@@ -306,6 +315,7 @@ class SecurityContext:
 
     Aggregates data from all modules for cross-validation.
     """
+
     ticker: str
     rank: Optional[int] = None
     composite_score: Optional[Decimal] = None
@@ -380,6 +390,7 @@ class RankingSnapshot:
 
     Used for time series analysis.
     """
+
     as_of_date: str
     securities: List[SecurityContext] = field(default_factory=list)
 
@@ -390,10 +401,7 @@ class RankingSnapshot:
         return None
 
     def get_top_n(self, n: int) -> List[SecurityContext]:
-        sorted_secs = sorted(
-            [s for s in self.securities if s.rank is not None],
-            key=lambda x: x.rank
-        )
+        sorted_secs = sorted([s for s in self.securities if s.rank is not None], key=lambda x: x.rank)
         return sorted_secs[:n]
 
     def get_by_rank(self, rank: int) -> Optional[SecurityContext]:
@@ -408,6 +416,7 @@ class GoldenTestCase:
     """
     A historical test case for regression validation.
     """
+
     ticker: str
     as_of_date: str
     expected_outcome: str  # "top_20", "bottom_50", etc.

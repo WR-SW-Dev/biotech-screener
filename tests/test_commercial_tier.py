@@ -8,6 +8,7 @@ Covers:
   - Portfolio filter behavior in both modes
   - Sizing with effective tier in tier_first mode
 """
+
 from __future__ import annotations
 
 import sys
@@ -27,10 +28,10 @@ from decision_engine import (
     compute_target_weights,
 )
 
-
 # =============================================================================
 # Helper: build synthetic rec (mirrors test_decision_engine_contract._rec)
 # =============================================================================
+
 
 def _rec(
     ticker: str = "TEST",
@@ -81,6 +82,7 @@ TIER_FIRST_RS = DecisionRuleset(tiering_priority_mode="tier_first")
 # =============================================================================
 # 1–7: _compute_tier_commercial unit tests
 # =============================================================================
+
 
 class TestComputeTierCommercial:
     """Unit tests for _compute_tier_commercial."""
@@ -182,6 +184,7 @@ class TestComputeTierCommercial:
 # 8–9: tier_any derivation via compute_decision_fields
 # =============================================================================
 
+
 class TestTierAny:
     """Verify tier_any = tier_dev for dev, tier_commercial for commercial."""
 
@@ -196,7 +199,9 @@ class TestTierAny:
         """For commercial_biotech, tier_any should equal tier_commercial."""
         rec = _rec(catalyst_days=45, catalyst_in_window=True)
         result = compute_decision_fields(
-            rec, "commercial_biotech", None,
+            rec,
+            "commercial_biotech",
+            None,
             commercial_quality_pct=0.90,
         )
         assert result["tier_any"] == result["tier_commercial"]
@@ -207,6 +212,7 @@ class TestTierAny:
 # =============================================================================
 # 10–12: Sort key behavior
 # =============================================================================
+
 
 class TestSortKeyModes:
     """Sort key tests for dev_first vs tier_first mode."""
@@ -235,10 +241,20 @@ class TestSortKeyModes:
         comm_a = self._make_fields(tier_commercial="A")
 
         key_dev = compute_actionable_sort_key(
-            dev_b, "drug_developer", 0.70, 10, "DEV_B", ruleset=DEV_FIRST_RS,
+            dev_b,
+            "drug_developer",
+            0.70,
+            10,
+            "DEV_B",
+            ruleset=DEV_FIRST_RS,
         )
         key_comm = compute_actionable_sort_key(
-            comm_a, "commercial_biotech", None, 5, "COMM_A", ruleset=DEV_FIRST_RS,
+            comm_a,
+            "commercial_biotech",
+            None,
+            5,
+            "COMM_A",
+            ruleset=DEV_FIRST_RS,
         )
         assert key_dev < key_comm, "dev B should sort before commercial A in dev_first"
 
@@ -248,10 +264,20 @@ class TestSortKeyModes:
         comm_a = self._make_fields(tier_commercial="A")
 
         key_dev = compute_actionable_sort_key(
-            dev_b, "drug_developer", 0.70, 10, "DEV_B", ruleset=TIER_FIRST_RS,
+            dev_b,
+            "drug_developer",
+            0.70,
+            10,
+            "DEV_B",
+            ruleset=TIER_FIRST_RS,
         )
         key_comm = compute_actionable_sort_key(
-            comm_a, "commercial_biotech", None, 5, "COMM_A", ruleset=TIER_FIRST_RS,
+            comm_a,
+            "commercial_biotech",
+            None,
+            5,
+            "COMM_A",
+            ruleset=TIER_FIRST_RS,
         )
         assert key_comm < key_dev, "commercial A should sort before dev B in tier_first"
 
@@ -261,10 +287,20 @@ class TestSortKeyModes:
         comm_a = self._make_fields(tier_commercial="A")
 
         key_dev = compute_actionable_sort_key(
-            dev_a, "drug_developer", 0.80, 10, "DEV_A", ruleset=TIER_FIRST_RS,
+            dev_a,
+            "drug_developer",
+            0.80,
+            10,
+            "DEV_A",
+            ruleset=TIER_FIRST_RS,
         )
         key_comm = compute_actionable_sort_key(
-            comm_a, "commercial_biotech", None, 5, "COMM_A", ruleset=TIER_FIRST_RS,
+            comm_a,
+            "commercial_biotech",
+            None,
+            5,
+            "COMM_A",
+            ruleset=TIER_FIRST_RS,
         )
         assert key_dev < key_comm, "within same tier, dev should sort before commercial"
 
@@ -273,26 +309,43 @@ class TestSortKeyModes:
 # 13–14: Portfolio filter behavior
 # =============================================================================
 
+
 class TestPortfolioFilter:
     """Verify portfolio filter includes/excludes commercial names by mode."""
 
     def _make_eligible_rows(self):
         """Build a mix of eligible dev + commercial rows."""
         dev_a = {
-            "ticker": "DEV_A", "eligible": "1", "archetype": "drug_developer",
-            "tier_dev": "A", "tier_commercial": "", "tier_any": "A",
+            "ticker": "DEV_A",
+            "eligible": "1",
+            "archetype": "drug_developer",
+            "tier_dev": "A",
+            "tier_commercial": "",
+            "tier_any": "A",
         }
         dev_b = {
-            "ticker": "DEV_B", "eligible": "1", "archetype": "drug_developer",
-            "tier_dev": "B", "tier_commercial": "", "tier_any": "B",
+            "ticker": "DEV_B",
+            "eligible": "1",
+            "archetype": "drug_developer",
+            "tier_dev": "B",
+            "tier_commercial": "",
+            "tier_any": "B",
         }
         comm_a = {
-            "ticker": "COMM_A", "eligible": "1", "archetype": "commercial_biotech",
-            "tier_dev": "", "tier_commercial": "A", "tier_any": "A",
+            "ticker": "COMM_A",
+            "eligible": "1",
+            "archetype": "commercial_biotech",
+            "tier_dev": "",
+            "tier_commercial": "A",
+            "tier_any": "A",
         }
         comm_c = {
-            "ticker": "COMM_C", "eligible": "1", "archetype": "commercial_biotech",
-            "tier_dev": "", "tier_commercial": "C", "tier_any": "C",
+            "ticker": "COMM_C",
+            "eligible": "1",
+            "archetype": "commercial_biotech",
+            "tier_dev": "",
+            "tier_commercial": "C",
+            "tier_any": "C",
         }
         return [dev_a, dev_b, comm_a, comm_c]
 
@@ -315,11 +368,7 @@ class TestPortfolioFilter:
         rows = self._make_eligible_rows()
 
         # dev_first filter
-        portfolio = [
-            r for r in rows
-            if r.get("archetype") == "drug_developer"
-            and r.get("tier_dev") in tier_filter
-        ]
+        portfolio = [r for r in rows if r.get("archetype") == "drug_developer" and r.get("tier_dev") in tier_filter]
         tickers = {r["ticker"] for r in portfolio}
         assert "COMM_A" not in tickers
         assert "DEV_A" in tickers
@@ -329,6 +378,7 @@ class TestPortfolioFilter:
 # =============================================================================
 # 15: Sizing does not give commercial names dev optionality boost
 # =============================================================================
+
 
 class TestSizingTierFirst:
     """Verify commercial names do NOT get dev optionality sizing boost.
@@ -344,8 +394,11 @@ class TestSizingTierFirst:
         rs = DecisionRuleset(tiering_priority_mode="tier_first")
         rec = _rec(catalyst_days=45, catalyst_in_window=True, tier1_count=3)
         result = compute_decision_fields(
-            rec, "commercial_biotech", None,
-            ruleset=rs, commercial_quality_pct=0.90,
+            rec,
+            "commercial_biotech",
+            None,
+            ruleset=rs,
+            commercial_quality_pct=0.90,
         )
         assert result["tier_commercial"] == "A"
         assert result["tier_any"] == "A"
@@ -357,7 +410,9 @@ class TestSizingTierFirst:
         rs = DecisionRuleset(tiering_priority_mode="tier_first")
         rec = _rec(catalyst_days=45, catalyst_in_window=True, tier1_count=3)
         result = compute_decision_fields(
-            rec, "drug_developer", 0.75,
+            rec,
+            "drug_developer",
+            0.75,
             ruleset=rs,
         )
         assert result["tier_dev"] == "A"
@@ -368,12 +423,18 @@ class TestSizingTierFirst:
 # Validation tests
 # =============================================================================
 
+
 class TestPlatformArchetypes:
     """Platform archetypes (diagnostics, devices, services) get commercial tiers."""
 
-    @pytest.mark.parametrize("arch", [
-        "platform_diagnostics", "platform_devices", "platform_services",
-    ])
+    @pytest.mark.parametrize(
+        "arch",
+        [
+            "platform_diagnostics",
+            "platform_devices",
+            "platform_services",
+        ],
+    )
     def test_platform_gets_commercial_tier(self, arch):
         """platform_* with quality data → non-empty tier."""
         tier, reason = _compute_tier_commercial(
@@ -387,9 +448,14 @@ class TestPlatformArchetypes:
         assert tier == "A"
         assert "high_quality" in reason
 
-    @pytest.mark.parametrize("arch", [
-        "platform_diagnostics", "platform_devices", "platform_services",
-    ])
+    @pytest.mark.parametrize(
+        "arch",
+        [
+            "platform_diagnostics",
+            "platform_devices",
+            "platform_services",
+        ],
+    )
     def test_platform_ineligible_gets_D(self, arch):
         """Ineligible platform → D."""
         tier, reason = _compute_tier_commercial(
@@ -407,8 +473,11 @@ class TestPlatformArchetypes:
         """platform_diagnostics through compute_decision_fields → tier_any set."""
         rec = _rec(ticker="GH", catalyst_days=60, catalyst_in_window=True)
         d = compute_decision_fields(
-            rec, "platform_diagnostics", optionality_pct_dev=None,
-            ruleset=DEV_FIRST_RS, commercial_quality_pct=0.75,
+            rec,
+            "platform_diagnostics",
+            optionality_pct_dev=None,
+            ruleset=DEV_FIRST_RS,
+            commercial_quality_pct=0.75,
         )
         assert d["tier_dev"] == ""
         assert d["tier_commercial"] != ""

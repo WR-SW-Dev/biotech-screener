@@ -34,16 +34,13 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+from backtest.metrics_m1 import compute_ic_timeseries, summarize_ic
 from backtest.panel_builder_m1 import (
     build_panel,
     build_trading_day_index,
     generate_rebalance_dates,
     load_price_history,
     write_panel_csv_gz,
-)
-from backtest.metrics_m1 import (
-    compute_ic_timeseries,
-    summarize_ic,
 )
 
 logging.basicConfig(
@@ -112,7 +109,10 @@ def main(argv: list[str] | None = None) -> int:
     # ── Step 2: Generate rebalance schedule ─────────────────────────────
     trading_day_set = set(trading_days)
     rebalance_dates = generate_rebalance_dates(
-        start, end, weekday=args.weekday, trading_days=trading_day_set,
+        start,
+        end,
+        weekday=args.weekday,
+        trading_days=trading_day_set,
     )
     logger.info(f"  {len(rebalance_dates)} rebalance dates generated")
 

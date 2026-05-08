@@ -26,6 +26,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 # Add parent to path for imports
@@ -33,10 +34,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from common.provenance import compute_hash
 
-
 # =============================================================================
 # TEST FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_universe() -> List[Dict[str, Any]]:
@@ -198,6 +199,7 @@ def as_of_date() -> date:
 # TEST: DETERMINISM
 # =============================================================================
 
+
 class TestPipelineDeterminism:
     """
     Tests that the pipeline produces byte-identical outputs for identical inputs.
@@ -223,7 +225,7 @@ class TestPipelineDeterminism:
 
     def test_staleness_gate_determinism(self, as_of_date):
         """Staleness gate should produce identical output for identical input."""
-        from common.staleness_gates import StalenessGateEngine, DataType
+        from common.staleness_gates import DataType, StalenessGateEngine
 
         engine = StalenessGateEngine()
         data_date = date(2025, 10, 1)
@@ -257,6 +259,7 @@ class TestPipelineDeterminism:
 # TEST: AUDIT LOG STRUCTURE
 # =============================================================================
 
+
 class TestAuditLogStructure:
     """Tests for audit log completeness and structure."""
 
@@ -278,14 +281,11 @@ class TestAuditLogStructure:
 
     def test_decay_result_has_explanation(self, as_of_date):
         """Decay results should include explanation for auditing."""
-        from regime_adaptive_decay import RegimeAdaptiveDecayEngine, EventCategory, RegimeState
+        from regime_adaptive_decay import EventCategory, RegimeAdaptiveDecayEngine, RegimeState
 
         engine = RegimeAdaptiveDecayEngine()
         result = engine.compute_decay(
-            event_age_days=15,
-            event_category=EventCategory.POSITIVE,
-            regime=RegimeState.BULL,
-            vix_level=Decimal("22.0")
+            event_age_days=15, event_category=EventCategory.POSITIVE, regime=RegimeState.BULL, vix_level=Decimal("22.0")
         )
 
         assert result.explanation is not None
@@ -298,26 +298,20 @@ class TestAuditLogStructure:
 # TEST: STALENESS GATES
 # =============================================================================
 
+
 class TestStalenessGates:
     """Tests for data staleness gate enforcement."""
 
     def test_staleness_gate_engine_import(self):
         """Staleness gate engine should be importable."""
-        from common.staleness_gates import (
-            StalenessGateEngine,
-            DataType,
-            StalenessAction,
-        )
+        from common.staleness_gates import DataType, StalenessAction, StalenessGateEngine
+
         assert StalenessGateEngine is not None
         assert DataType.FINANCIAL is not None
 
     def test_financial_staleness_detection(self):
         """Financial data staleness should be detected correctly."""
-        from common.staleness_gates import (
-            StalenessGateEngine,
-            DataType,
-            StalenessAction,
-        )
+        from common.staleness_gates import DataType, StalenessAction, StalenessGateEngine
 
         engine = StalenessGateEngine()
         as_of = date(2026, 1, 15)
@@ -340,11 +334,7 @@ class TestStalenessGates:
 
     def test_phase_dependent_trial_staleness(self):
         """Trial staleness should vary by phase."""
-        from common.staleness_gates import (
-            StalenessGateEngine,
-            DataType,
-            StalenessAction,
-        )
+        from common.staleness_gates import DataType, StalenessAction, StalenessGateEngine
 
         engine = StalenessGateEngine()
         as_of = date(2026, 1, 15)
@@ -377,11 +367,7 @@ class TestStalenessGates:
 
     def test_lookahead_detection(self):
         """Future data should be flagged as lookahead bias."""
-        from common.staleness_gates import (
-            StalenessGateEngine,
-            DataType,
-            StalenessAction,
-        )
+        from common.staleness_gates import DataType, StalenessAction, StalenessGateEngine
 
         engine = StalenessGateEngine()
         as_of = date(2026, 1, 15)
@@ -401,15 +387,13 @@ class TestStalenessGates:
 # TEST: 13F LAG ENFORCEMENT
 # =============================================================================
 
+
 class Test13FLagEnforcement:
     """Tests for SEC 13F 45-day lag enforcement."""
 
     def test_13f_effective_date_calculation(self):
         """13F effective date should include 45-day SEC lag."""
-        from common.staleness_gates import (
-            compute_13f_effective_date,
-            SEC_13F_FILING_LAG_DAYS,
-        )
+        from common.staleness_gates import SEC_13F_FILING_LAG_DAYS, compute_13f_effective_date
 
         q3_holdings = date(2025, 9, 30)  # Q3 end
         effective = compute_13f_effective_date(q3_holdings)
@@ -444,23 +428,19 @@ class Test13FLagEnforcement:
 # TEST: FORWARD-LOOKING SEPARATION
 # =============================================================================
 
+
 class TestForwardLookingSeparation:
     """Tests for forward-looking signal separation."""
 
     def test_separator_import(self):
         """Forward-looking separator should be importable."""
-        from common.forward_looking_separation import (
-            ForwardLookingSeparator,
-            LookaheadRiskLevel,
-        )
+        from common.forward_looking_separation import ForwardLookingSeparator, LookaheadRiskLevel
+
         assert ForwardLookingSeparator is not None
 
     def test_historical_vs_forward_looking_separation(self):
         """Historical and forward-looking signals should be separated."""
-        from common.forward_looking_separation import (
-            ForwardLookingSeparator,
-            LookaheadRiskLevel,
-        )
+        from common.forward_looking_separation import ForwardLookingSeparator, LookaheadRiskLevel
 
         separator = ForwardLookingSeparator()
 
@@ -484,10 +464,7 @@ class TestForwardLookingSeparation:
 
     def test_high_forward_looking_warning(self):
         """High forward-looking contribution should generate warning."""
-        from common.forward_looking_separation import (
-            ForwardLookingSeparator,
-            LookaheadRiskLevel,
-        )
+        from common.forward_looking_separation import ForwardLookingSeparator, LookaheadRiskLevel
 
         separator = ForwardLookingSeparator()
 
@@ -533,32 +510,28 @@ class TestForwardLookingSeparation:
 # TEST: ERROR HANDLING
 # =============================================================================
 
+
 class TestErrorHandling:
     """Tests for proper error handling."""
 
     def test_empty_price_series_handling(self):
         """Empty price series should be handled gracefully."""
-        from multi_window_momentum import MultiWindowMomentumEngine, RegimeState, MomentumSignalQuality
+        from multi_window_momentum import MomentumSignalQuality, MultiWindowMomentumEngine, RegimeState
 
         engine = MultiWindowMomentumEngine()
         result = engine.compute_momentum(
-            ticker="EMPTY",
-            price_series=[],
-            as_of_date=date(2026, 1, 15),
-            regime=RegimeState.NEUTRAL
+            ticker="EMPTY", price_series=[], as_of_date=date(2026, 1, 15), regime=RegimeState.NEUTRAL
         )
 
         assert result.signal_quality == MomentumSignalQuality.INSUFFICIENT
 
     def test_unknown_data_date_handling(self):
         """Unknown data date should be handled with soft gate."""
-        from common.staleness_gates import StalenessGateEngine, DataType, StalenessAction
+        from common.staleness_gates import DataType, StalenessAction, StalenessGateEngine
 
         engine = StalenessGateEngine()
         result = engine.check_staleness(
-            DataType.FINANCIAL,
-            data_date=None,  # Unknown date
-            as_of_date=date(2026, 1, 15)
+            DataType.FINANCIAL, data_date=None, as_of_date=date(2026, 1, 15)  # Unknown date
         )
 
         assert result.action == StalenessAction.SOFT_GATE
@@ -568,6 +541,7 @@ class TestErrorHandling:
 # =============================================================================
 # TEST: ENHANCEMENT MODULE INTEGRATION
 # =============================================================================
+
 
 class TestEnhancementModuleIntegration:
     """Tests for enhancement module integration."""
@@ -590,8 +564,8 @@ class TestEnhancementModuleIntegration:
 
     def test_regime_hysteresis_integration(self):
         """Regime hysteresis should integrate with detection engine."""
-        from regime_hysteresis import RegimeHysteresisEngine, integrate_with_regime_engine
         from regime_engine import RegimeDetectionEngine
+        from regime_hysteresis import RegimeHysteresisEngine, integrate_with_regime_engine
 
         detection_engine = RegimeDetectionEngine()
         hysteresis_engine = RegimeHysteresisEngine()

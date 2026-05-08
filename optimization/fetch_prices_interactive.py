@@ -10,22 +10,23 @@ This script will:
 Run with: python optimization/fetch_prices_interactive.py
 """
 
-import json
 import csv
-from pathlib import Path
-from datetime import datetime, timedelta
-from collections import defaultdict
+import json
 import sys
 import time
+from collections import defaultdict
+from datetime import datetime, timedelta
+from pathlib import Path
 
-print("="*70)
+print("=" * 70)
 print("BIOTECH SCREENER - HISTORICAL PRICE DATA FETCHER")
-print("="*70)
+print("=" * 70)
 print()
 
 # Check for yfinance
 try:
     import yfinance as yf
+
     print("✓ yfinance is installed")
 except ImportError:
     print("❌ yfinance is not installed")
@@ -36,8 +37,8 @@ except ImportError:
     sys.exit(1)
 
 # Configuration
-CHECKPOINT_DIR = Path('checkpoints')
-OUTPUT_FILE = Path('production_data/price_history.csv')
+CHECKPOINT_DIR = Path("checkpoints")
+OUTPUT_FILE = Path("production_data/price_history.csv")
 
 print()
 print("Configuration:")
@@ -58,7 +59,7 @@ if not CHECKPOINT_DIR.exists():
     print()
     sys.exit(1)
 
-checkpoint_files = list(CHECKPOINT_DIR.glob('module_5_*.json'))
+checkpoint_files = list(CHECKPOINT_DIR.glob("module_5_*.json"))
 
 if not checkpoint_files:
     print(f"❌ ERROR: No checkpoint files found in '{CHECKPOINT_DIR}'")
@@ -76,8 +77,8 @@ print(f"✓ Found {len(checkpoint_files)} checkpoint files")
 checkpoint_dates = []
 for filepath in checkpoint_files:
     try:
-        date_str = filepath.stem.replace('module_5_', '')
-        date = datetime.strptime(date_str, '%Y-%m-%d')
+        date_str = filepath.stem.replace("module_5_", "")
+        date = datetime.strptime(date_str, "%Y-%m-%d")
         checkpoint_dates.append(date)
     except ValueError:
         continue
@@ -106,14 +107,14 @@ for i, filepath in enumerate(checkpoint_files, 1):
             data = json.load(f)
 
         # Try different possible structures
-        if 'data' in data:
-            securities = data['data'].get('ranked_securities', [])
+        if "data" in data:
+            securities = data["data"].get("ranked_securities", [])
         else:
-            securities = data.get('ranked_securities', data.get('results', []))
+            securities = data.get("ranked_securities", data.get("results", []))
 
         file_tickers = set()
         for security in securities:
-            ticker = security.get('ticker')
+            ticker = security.get("ticker")
             if ticker:
                 all_tickers.add(ticker)
                 file_tickers.add(ticker)
@@ -157,7 +158,7 @@ print()
 
 response = input("Proceed with download? (yes/no): ").strip().lower()
 
-if response not in ['yes', 'y']:
+if response not in ["yes", "y"]:
     print()
     print("Download cancelled.")
     sys.exit(0)
@@ -184,7 +185,7 @@ for i, ticker in enumerate(all_tickers, 1):
     else:
         eta = "calculating..."
 
-    print(f"[{i}/{len(all_tickers)}] {ticker:8s} (ETA: {eta})...", end='', flush=True)
+    print(f"[{i}/{len(all_tickers)}] {ticker:8s} (ETA: {eta})...", end="", flush=True)
 
     try:
         # Download with progress disabled
@@ -192,10 +193,10 @@ for i, ticker in enumerate(all_tickers, 1):
         # In yfinance v1.0+, auto_adjust defaults to True which changes column names
         df = yf.download(
             ticker,
-            start=fetch_start.strftime('%Y-%m-%d'),
-            end=fetch_end.strftime('%Y-%m-%d'),
+            start=fetch_start.strftime("%Y-%m-%d"),
+            end=fetch_end.strftime("%Y-%m-%d"),
             progress=False,
-            auto_adjust=False
+            auto_adjust=False,
         )
 
         if df.empty:
@@ -206,10 +207,10 @@ for i, ticker in enumerate(all_tickers, 1):
         # Determine which column to use for adjusted close price
         # - yfinance < 1.0 or auto_adjust=False: 'Adj Close'
         # - yfinance >= 1.0 with auto_adjust=True: 'Close' (already adjusted)
-        if 'Adj Close' in df.columns:
-            close_col = 'Adj Close'
-        elif 'Close' in df.columns:
-            close_col = 'Close'
+        if "Adj Close" in df.columns:
+            close_col = "Adj Close"
+        elif "Close" in df.columns:
+            close_col = "Close"
         else:
             print(" ❌ No price column found")
             failed_tickers.append(ticker)
@@ -217,11 +218,7 @@ for i, ticker in enumerate(all_tickers, 1):
 
         # Extract adjusted close prices
         for date, row in df.iterrows():
-            price_data.append({
-                'date': date.strftime('%Y-%m-%d'),
-                'ticker': ticker,
-                'close': float(row[close_col])
-            })
+            price_data.append({"date": date.strftime("%Y-%m-%d"), "ticker": ticker, "close": float(row[close_col])})
 
         success_count += 1
         print(f" ✓ {len(df)} days")
@@ -267,8 +264,8 @@ if not price_data:
 OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 # Write CSV
-with open(OUTPUT_FILE, 'w', newline='') as f:
-    fieldnames = ['date', 'ticker', 'close']
+with open(OUTPUT_FILE, "w", newline="") as f:
+    fieldnames = ["date", "ticker", "close"]
     writer = csv.DictWriter(f, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(price_data)
@@ -278,8 +275,8 @@ print(f"  {OUTPUT_FILE.absolute()}")
 print()
 
 # Statistics
-tickers_with_data = len(set(p['ticker'] for p in price_data))
-dates_covered = len(set(p['date'] for p in price_data))
+tickers_with_data = len(set(p["ticker"] for p in price_data))
+dates_covered = len(set(p["date"] for p in price_data))
 
 print("Price data statistics:")
 print(f"  Tickers with data: {tickers_with_data}")
@@ -288,9 +285,9 @@ print(f"  Date range: {min(p['date'] for p in price_data)} to {max(p['date'] for
 print()
 
 # Next steps
-print("="*70)
+print("=" * 70)
 print("SUCCESS! Price data is ready.")
-print("="*70)
+print("=" * 70)
 print()
 print("Next steps:")
 print()

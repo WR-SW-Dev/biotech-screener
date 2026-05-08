@@ -17,37 +17,115 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
-
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 # Python standard library modules (partial list of common ones)
 STDLIB_MODULES: Set[str] = {
-    "abc", "argparse", "ast", "asyncio", "base64", "bisect",
-    "calendar", "collections", "contextlib", "copy", "csv",
-    "dataclasses", "datetime", "decimal", "difflib", "email",
-    "enum", "functools", "glob", "gzip", "hashlib", "heapq",
-    "html", "http", "importlib", "inspect", "io", "itertools",
-    "json", "logging", "math", "mimetypes", "multiprocessing",
-    "numbers", "operator", "os", "pathlib", "pickle", "platform",
-    "pprint", "queue", "random", "re", "secrets", "shutil",
-    "signal", "socket", "sqlite3", "ssl", "statistics", "string",
-    "struct", "subprocess", "sys", "tarfile", "tempfile", "textwrap",
-    "threading", "time", "timeit", "traceback", "types", "typing",
-    "unittest", "urllib", "uuid", "warnings", "weakref", "xml",
-    "zipfile", "zlib",
+    "abc",
+    "argparse",
+    "ast",
+    "asyncio",
+    "base64",
+    "bisect",
+    "calendar",
+    "collections",
+    "contextlib",
+    "copy",
+    "csv",
+    "dataclasses",
+    "datetime",
+    "decimal",
+    "difflib",
+    "email",
+    "enum",
+    "functools",
+    "glob",
+    "gzip",
+    "hashlib",
+    "heapq",
+    "html",
+    "http",
+    "importlib",
+    "inspect",
+    "io",
+    "itertools",
+    "json",
+    "logging",
+    "math",
+    "mimetypes",
+    "multiprocessing",
+    "numbers",
+    "operator",
+    "os",
+    "pathlib",
+    "pickle",
+    "platform",
+    "pprint",
+    "queue",
+    "random",
+    "re",
+    "secrets",
+    "shutil",
+    "signal",
+    "socket",
+    "sqlite3",
+    "ssl",
+    "statistics",
+    "string",
+    "struct",
+    "subprocess",
+    "sys",
+    "tarfile",
+    "tempfile",
+    "textwrap",
+    "threading",
+    "time",
+    "timeit",
+    "traceback",
+    "types",
+    "typing",
+    "unittest",
+    "urllib",
+    "uuid",
+    "warnings",
+    "weakref",
+    "xml",
+    "zipfile",
+    "zlib",
 }
 
 # Known external dependencies (for reference)
 KNOWN_EXTERNAL: Set[str] = {
-    "requests", "pandas", "numpy", "scipy", "matplotlib", "seaborn",
-    "sqlalchemy", "flask", "django", "fastapi", "pytest", "coverage",
-    "black", "flake8", "mypy", "pylint", "isort", "pydantic",
-    "aiohttp", "httpx", "boto3", "google", "azure", "redis",
-    "celery", "beautifulsoup4", "bs4", "lxml", "pillow", "PIL",
+    "requests",
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "sqlalchemy",
+    "flask",
+    "django",
+    "fastapi",
+    "pytest",
+    "coverage",
+    "black",
+    "flake8",
+    "mypy",
+    "pylint",
+    "isort",
+    "pydantic",
+    "aiohttp",
+    "httpx",
+    "boto3",
+    "google",
+    "azure",
+    "redis",
+    "celery",
+    "beautifulsoup4",
+    "bs4",
+    "lxml",
+    "pillow",
+    "PIL",
 }
 
 
@@ -139,8 +217,18 @@ class DependencyValidator:
                         self.local_modules.add(module_name)
 
         # Also add common known local modules
-        for name in ["common", "src", "governance", "backtest", "config", "tests",
-                     "extensions", "collectors", "data_sources", "validation"]:
+        for name in [
+            "common",
+            "src",
+            "governance",
+            "backtest",
+            "config",
+            "tests",
+            "extensions",
+            "collectors",
+            "data_sources",
+            "validation",
+        ]:
             if (self.codebase_path / name).exists():
                 self.local_modules.add(name)
 
@@ -172,25 +260,29 @@ class DependencyValidator:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     module = alias.name
-                    imports.append(ImportInfo(
-                        module=module,
-                        file_path=rel_path,
-                        line_number=node.lineno,
-                        is_stdlib=self._is_stdlib(module),
-                        is_local=self._is_local(module),
-                        full_import=f"import {module}",
-                    ))
+                    imports.append(
+                        ImportInfo(
+                            module=module,
+                            file_path=rel_path,
+                            line_number=node.lineno,
+                            is_stdlib=self._is_stdlib(module),
+                            is_local=self._is_local(module),
+                            full_import=f"import {module}",
+                        )
+                    )
 
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
-                    imports.append(ImportInfo(
-                        module=node.module,
-                        file_path=rel_path,
-                        line_number=node.lineno,
-                        is_stdlib=self._is_stdlib(node.module),
-                        is_local=self._is_local(node.module),
-                        full_import=f"from {node.module} import ...",
-                    ))
+                    imports.append(
+                        ImportInfo(
+                            module=node.module,
+                            file_path=rel_path,
+                            line_number=node.lineno,
+                            is_stdlib=self._is_stdlib(node.module),
+                            is_local=self._is_local(node.module),
+                            full_import=f"from {node.module} import ...",
+                        )
+                    )
 
         return imports
 
@@ -209,15 +301,17 @@ class DependencyValidator:
 
         for pattern, call_type in self.NETWORK_PATTERNS:
             for match in re.finditer(pattern, content):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
-                calls.append(NetworkCall(
-                    file_path=rel_path,
-                    line_number=line_num,
-                    call_type=call_type,
-                    code_snippet=snippet.strip()[:80],
-                ))
+                calls.append(
+                    NetworkCall(
+                        file_path=rel_path,
+                        line_number=line_num,
+                        call_type=call_type,
+                        code_snippet=snippet.strip()[:80],
+                    )
+                )
 
         return calls
 
@@ -296,9 +390,7 @@ class DependencyValidator:
         core_external = external_deps - {"pytest", "coverage", "mypy", "black", "flake8"}
 
         stdlib_only = len(core_external) == 0
-        airgap_compatible = len(all_network_calls) == 0 or all(
-            "test" in c.file_path.lower() for c in all_network_calls
-        )
+        airgap_compatible = len(all_network_calls) == 0 or all("test" in c.file_path.lower() for c in all_network_calls)
 
         passed = stdlib_only or len(core_external) <= 3
 
@@ -338,8 +430,7 @@ def validate_dependencies(codebase_path: str) -> AuditResult:
             "stdlib_only": report.stdlib_only,
             "airgap_compatible": report.airgap_compatible,
         },
-        details=f"External dependencies: {report.external_count}, "
-                f"Stdlib only: {report.stdlib_only}",
+        details=f"External dependencies: {report.external_count}, " f"Stdlib only: {report.stdlib_only}",
     )
 
     # Add findings for external deps

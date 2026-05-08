@@ -18,6 +18,7 @@ Design Philosophy:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -25,9 +26,8 @@ import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
-
+from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 
@@ -51,21 +51,25 @@ MAX_TRAINING_MONTHS = 36
 
 class PITValidationError(Exception):
     """Raised when PIT validation fails."""
+
     pass
 
 
 class WeightStabilityError(Exception):
     """Raised when weight stability check fails."""
+
     pass
 
 
 class DataQualityError(Exception):
     """Raised when data quality checks fail."""
+
     pass
 
 
 class ValidationStatus(str, Enum):
     """Validation result status."""
+
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -76,9 +80,11 @@ class ValidationStatus(str, Enum):
 # DATACLASSES
 # =============================================================================
 
+
 @dataclass
 class PITValidationResult:
     """Result of PIT validation check."""
+
     status: ValidationStatus
     check_name: str
     as_of_date: str
@@ -93,6 +99,7 @@ class PITValidationResult:
 @dataclass
 class WeightProvenance:
     """Provenance record for learned weights."""
+
     as_of_date: str
     training_start: str
     training_end: str
@@ -109,6 +116,7 @@ class WeightProvenance:
 @dataclass
 class ProductionGateResult:
     """Result of production gate checks."""
+
     gate_name: str
     passed: bool
     checks: List[PITValidationResult]
@@ -120,6 +128,7 @@ class ProductionGateResult:
 # =============================================================================
 # PIT VALIDATION FUNCTIONS
 # =============================================================================
+
 
 def validate_adaptive_weight_pit(
     as_of_date: date,
@@ -181,18 +190,18 @@ def validate_adaptive_weight_pit(
                 score_date = date.fromisoformat(str(score_date_str)[:10])
             score_dates.append(score_date)
             if score_date >= embargo_cutoff:
-                scores_after_embargo.append({
-                    "index": i,
-                    "date": score_date.isoformat(),
-                    "ticker": score.get("ticker", "unknown"),
-                })
+                scores_after_embargo.append(
+                    {
+                        "index": i,
+                        "date": score_date.isoformat(),
+                        "ticker": score.get("ticker", "unknown"),
+                    }
+                )
         except ValueError:
             scores_without_date.append(i)
 
     if scores_without_date:
-        violations.append(
-            f"Found {len(scores_without_date)} scores without valid as_of_date"
-        )
+        violations.append(f"Found {len(scores_without_date)} scores without valid as_of_date")
 
     if scores_after_embargo:
         violations.append(
@@ -234,10 +243,12 @@ def validate_adaptive_weight_pit(
         # The return_date is when the return period STARTS
         # It must be before embargo_cutoff to be PIT-safe
         if return_date >= embargo_cutoff:
-            returns_after_embargo.append({
-                "date": return_date.isoformat(),
-                "ticker": ticker,
-            })
+            returns_after_embargo.append(
+                {
+                    "date": return_date.isoformat(),
+                    "ticker": ticker,
+                }
+            )
 
     if invalid_return_keys:
         violations.append(
@@ -306,10 +317,12 @@ def validate_peer_valuation_pit(
         try:
             snapshot_date = date.fromisoformat(snapshot_str)
             if snapshot_date > pit_cutoff:
-                peers_after_pit.append({
-                    "ticker": peer.get("ticker", f"index_{i}"),
-                    "snapshot_date": snapshot_str,
-                })
+                peers_after_pit.append(
+                    {
+                        "ticker": peer.get("ticker", f"index_{i}"),
+                        "snapshot_date": snapshot_str,
+                    }
+                )
         except ValueError:
             peers_without_snapshot.append(peer.get("ticker", f"index_{i}"))
 
@@ -319,8 +332,7 @@ def validate_peer_valuation_pit(
 
     if peers_after_pit:
         violations.append(
-            f"Found {len(peers_after_pit)} peers with snapshot after PIT cutoff: "
-            f"{peers_after_pit[:3]}..."
+            f"Found {len(peers_after_pit)} peers with snapshot after PIT cutoff: " f"{peers_after_pit[:3]}..."
         )
 
     status = ValidationStatus.PASSED if not violations else ValidationStatus.FAILED
@@ -329,8 +341,7 @@ def validate_peer_valuation_pit(
     if peers_without_snapshot and len(peers_without_snapshot) > len(peer_valuations) * 0.5:
         status = ValidationStatus.WARNING
         violations.append(
-            f"More than 50% of peers lack snapshot_date metadata - "
-            f"valuation signal reliability reduced"
+            f"More than 50% of peers lack snapshot_date metadata - " f"valuation signal reliability reduced"
         )
 
     return PITValidationResult(
@@ -375,9 +386,7 @@ def validate_coinvest_pit(
             try:
                 pub_date = date.fromisoformat(published_at_max)
                 if pub_date >= as_of_date:
-                    violations.append(
-                        f"coinvest_published_at_max ({published_at_max}) >= as_of_date"
-                    )
+                    violations.append(f"coinvest_published_at_max ({published_at_max}) >= as_of_date")
                 details["published_at_max"] = published_at_max
             except ValueError:
                 violations.append(f"Invalid published_at_max format: {published_at_max}")
@@ -403,6 +412,7 @@ def validate_coinvest_pit(
 # =============================================================================
 # WEIGHT STABILITY VALIDATION
 # =============================================================================
+
 
 def validate_weight_stability(
     current_weights: Dict[str, Decimal],
@@ -474,6 +484,7 @@ def validate_weight_stability(
 # WEIGHT PROVENANCE
 # =============================================================================
 
+
 def create_weight_provenance(
     as_of_date: date,
     training_start: date,
@@ -507,9 +518,7 @@ def create_weight_provenance(
         WeightProvenance record
     """
     # Compute universe hash
-    universe_hash = hashlib.sha256(
-        json.dumps(sorted(universe_tickers)).encode()
-    ).hexdigest()[:12]
+    universe_hash = hashlib.sha256(json.dumps(sorted(universe_tickers)).encode()).hexdigest()[:12]
 
     # Compute determinism hash
     payload = {
@@ -523,9 +532,7 @@ def create_weight_provenance(
         "weights": {k: str(v) for k, v in sorted(weights.items())},
         "sample_size": sample_size,
     }
-    determinism_hash = hashlib.sha256(
-        json.dumps(payload, sort_keys=True).encode()
-    ).hexdigest()[:16]
+    determinism_hash = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
     return WeightProvenance(
         as_of_date=as_of_date.isoformat(),
@@ -545,6 +552,7 @@ def create_weight_provenance(
 # =============================================================================
 # PRODUCTION GATE
 # =============================================================================
+
 
 def run_production_gate(
     as_of_date: date,
@@ -625,9 +633,7 @@ def run_production_gate(
             "Review warnings before production use."
         )
     elif passed:
-        recommendation = (
-            "APPROVED: All production gates passed. IC-enhanced mode is safe to use."
-        )
+        recommendation = "APPROVED: All production gates passed. IC-enhanced mode is safe to use."
     else:
         recommendation = (
             "BLOCKED: Production gates failed. Do not use IC-enhanced mode. "
@@ -648,9 +654,11 @@ def run_production_gate(
 # ABLATION TEST FRAMEWORK
 # =============================================================================
 
+
 @dataclass
 class AblationResult:
     """Result of feature ablation test."""
+
     feature_name: str
     baseline_ic: Decimal
     ablated_ic: Decimal
@@ -662,7 +670,7 @@ class AblationResult:
 def run_ablation_test(
     feature_name: str,
     baseline_scores: List[Tuple[str, Decimal]],  # (ticker, score)
-    ablated_scores: List[Tuple[str, Decimal]],   # scores without feature
+    ablated_scores: List[Tuple[str, Decimal]],  # scores without feature
     forward_returns: Dict[str, Decimal],
 ) -> AblationResult:
     """
@@ -679,6 +687,7 @@ def run_ablation_test(
     Returns:
         AblationResult with IC comparison
     """
+
     def compute_ic(scores: List[Tuple[str, Decimal]]) -> Decimal:
         """Compute rank IC between scores and returns."""
         pairs = []
@@ -694,9 +703,7 @@ def run_ablation_test(
         score_ranks = _compute_ranks([p[0] for p in pairs])
         return_ranks = _compute_ranks([p[1] for p in pairs])
 
-        d_squared_sum = sum(
-            (sr - rr) ** 2 for sr, rr in zip(score_ranks, return_ranks)
-        )
+        d_squared_sum = sum((sr - rr) ** 2 for sr, rr in zip(score_ranks, return_ranks))
 
         if n <= 1:
             return Decimal("0")

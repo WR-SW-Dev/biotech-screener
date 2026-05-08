@@ -2,6 +2,7 @@
 
 Covers: enhanced_stage_score, pos_to_catalyst_ev_weight.
 """
+
 from __future__ import annotations
 
 import sys
@@ -15,10 +16,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from pos_model_v2 import enhanced_stage_score, pos_to_catalyst_ev_weight
 
-
 # =============================================================================
 # enhanced_stage_score
 # =============================================================================
+
 
 class TestEnhancedStageScore:
     def test_median_pos_unchanged(self):
@@ -66,6 +67,7 @@ class TestEnhancedStageScore:
 # =============================================================================
 # pos_to_catalyst_ev_weight
 # =============================================================================
+
 
 class TestPosToCatalystEvWeight:
     def test_pos_1_full_ev(self):

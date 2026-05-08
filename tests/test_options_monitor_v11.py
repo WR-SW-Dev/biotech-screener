@@ -61,7 +61,9 @@ class TestCrossSectionalZ:
 
 class TestFactorEP:
     def test_all_inputs(self):
-        f = compute_factor_ep(z_event_premium_ts=1.5, z_event_premium_xs=1.0, z_term_slope_ts=0.5, iv_ramp_persist_3=0.8)
+        f = compute_factor_ep(
+            z_event_premium_ts=1.5, z_event_premium_xs=1.0, z_term_slope_ts=0.5, iv_ramp_persist_3=0.8
+        )
         assert f > _D("0.5")
         assert f <= _D("1")
 
@@ -111,9 +113,12 @@ class TestFactorDV:
 class TestChainQuality:
     def test_high_quality(self):
         q = compute_chain_quality(
-            bid_ask_pct_median=0.02, open_interest_total=5000,
-            volume_total=1000, strike_coverage_score=0.9,
-            surface_fit_r2=0.95, stale_quote_pct=0.05,
+            bid_ask_pct_median=0.02,
+            open_interest_total=5000,
+            volume_total=1000,
+            strike_coverage_score=0.9,
+            surface_fit_r2=0.95,
+            stale_quote_pct=0.05,
         )
         assert q > _D("0.7")
 
@@ -187,22 +192,33 @@ class TestFullCompute:
     def test_returns_all_fields(self):
         result = compute_v11_features(catalyst_class="regulatory", event_window_flag=True)
         expected = {
-            "om11_factor_event_premium", "om11_factor_surface_repricing",
-            "om11_factor_skew_tail", "om11_factor_divergence",
-            "om11_chain_quality", "om11_confidence", "om11_score_final",
-            "om11_primary_factor", "om11_monitor_verdict",
-            "om11_catalyst_class", "om11_event_window_flag",
+            "om11_factor_event_premium",
+            "om11_factor_surface_repricing",
+            "om11_factor_skew_tail",
+            "om11_factor_divergence",
+            "om11_chain_quality",
+            "om11_confidence",
+            "om11_score_final",
+            "om11_primary_factor",
+            "om11_monitor_verdict",
+            "om11_catalyst_class",
+            "om11_event_window_flag",
         }
         assert set(result.keys()) == expected
 
     def test_strong_signal(self):
         result = compute_v11_features(
-            z_event_premium_ts=2.0, z_event_premium_xs=1.5,
-            z_iv_change_3d_ts=1.8, z_skew_ts=1.5,
+            z_event_premium_ts=2.0,
+            z_event_premium_xs=1.5,
+            z_iv_change_3d_ts=1.8,
+            z_skew_ts=1.5,
             stock_down_iv_up=True,
-            event_window_flag=True, hard_catalyst_flag=True,
-            bid_ask_pct_median=0.02, open_interest_total=3000,
-            volume_total=500, strike_coverage_score=0.8,
+            event_window_flag=True,
+            hard_catalyst_flag=True,
+            bid_ask_pct_median=0.02,
+            open_interest_total=3000,
+            volume_total=500,
+            strike_coverage_score=0.8,
             catalyst_class="regulatory",
         )
         assert result["om11_monitor_verdict"] in ("HIGH", "WATCH")

@@ -8,38 +8,34 @@ Validates:
 4. Normalization helpers
 5. Cross-module handoff validation
 """
-import pytest
+
+import os
 from datetime import date
 from decimal import Decimal
 
-from common.integration_contracts import (
-    # Validation functions
+import pytest
+
+from common.integration_contracts import (  # Validation functions; Score extraction; Normalization; Version checking; Type re-exports
+    SUPPORTED_SCHEMA_VERSIONS,
+    EventSeverity,
+    EventType,
+    SchemaValidationError,
+    TickerCatalystSummaryV2,
+    check_schema_version,
+    extract_catalyst_score,
+    extract_clinical_score,
+    extract_financial_score,
+    extract_market_cap_mm,
+    normalize_date_input,
+    normalize_date_string,
+    normalize_ticker_set,
     validate_module_1_output,
     validate_module_2_output,
     validate_module_3_output,
     validate_module_4_output,
     validate_module_5_output,
     validate_pipeline_handoff,
-    SchemaValidationError,
-    # Score extraction
-    extract_financial_score,
-    extract_catalyst_score,
-    extract_clinical_score,
-    extract_market_cap_mm,
-    # Normalization
-    normalize_date_input,
-    normalize_date_string,
-    normalize_ticker_set,
-    # Version checking
-    check_schema_version,
-    SUPPORTED_SCHEMA_VERSIONS,
-    # Type re-exports
-    EventType,
-    EventSeverity,
-    TickerCatalystSummaryV2,
 )
-
-import os
 
 
 @pytest.fixture(autouse=True)
@@ -94,9 +90,7 @@ class TestModule2Validation:
     def test_valid_output(self):
         """Valid Module 2 output passes validation."""
         output = {
-            "scores": [
-                {"ticker": "AAPL", "financial_score": 85.5, "severity": "none"}
-            ],
+            "scores": [{"ticker": "AAPL", "financial_score": 85.5, "severity": "none"}],
             "diagnostic_counts": {"scored": 1},
         }
         validate_module_2_output(output)
@@ -119,9 +113,7 @@ class TestModule2Validation:
     def test_legacy_field_name_accepted(self):
         """Legacy financial_normalized field is accepted."""
         output = {
-            "scores": [
-                {"ticker": "AAPL", "financial_normalized": 85.5, "severity": "none"}
-            ],
+            "scores": [{"ticker": "AAPL", "financial_normalized": 85.5, "severity": "none"}],
             "diagnostic_counts": {},
         }
         validate_module_2_output(output)
@@ -165,9 +157,7 @@ class TestModule4Validation:
     def test_valid_output(self):
         """Valid Module 4 output passes validation."""
         output = {
-            "scores": [
-                {"ticker": "AAPL", "clinical_score": "75.5", "lead_phase": "Phase 3"}
-            ],
+            "scores": [{"ticker": "AAPL", "clinical_score": "75.5", "lead_phase": "Phase 3"}],
             "diagnostic_counts": {"scored": 1},
             "as_of_date": "2024-01-15",
         }
@@ -189,9 +179,7 @@ class TestModule5Validation:
     def test_valid_output(self):
         """Valid Module 5 output passes validation."""
         output = {
-            "ranked_securities": [
-                {"ticker": "AAPL", "composite_score": "85.5", "composite_rank": 1}
-            ],
+            "ranked_securities": [{"ticker": "AAPL", "composite_score": "85.5", "composite_rank": 1}],
             "excluded_securities": [],
             "diagnostic_counts": {"rankable": 1},
         }
@@ -269,6 +257,7 @@ class TestScoreExtraction:
 
     def test_extract_catalyst_score_from_dataclass(self):
         """Extract catalyst score from dataclass with score_blended."""
+
         # Create a mock object with score_blended attribute
         class MockSummary:
             score_blended = 65.5

@@ -18,15 +18,9 @@ def run_command(cmd: str, description: str) -> bool:
     print(f"\n{'='*80}")
     print(f"STEP: {description}")
     print(f"{'='*80}")
-    
+
     try:
-        result = subprocess.run(
-            cmd,
-            shell=True,
-            check=True,
-            capture_output=False,
-            text=True
-        )
+        result = subprocess.run(cmd, shell=True, check=True, capture_output=False, text=True)
         print(f"✅ Success: {description}")
         return True
     except subprocess.CalledProcessError as e:
@@ -36,72 +30,62 @@ def run_command(cmd: str, description: str) -> bool:
 
 
 def main():
-    print("="*80)
+    print("=" * 80)
     print("COMPLETE ETF UNIVERSE SETUP")
     print("ONE-COMMAND SOLUTION")
-    print("="*80)
+    print("=" * 80)
     print("\nThis will:")
     print("  1. Automatically download XBI, IBB, NBI holdings")
     print("  2. Import CSVs into JSON")
     print("  3. Add missing tickers to your universe")
     print("  4. Verify 100% coverage")
-    print("\n" + "="*80)
-    
+    print("\n" + "=" * 80)
+
     response = input("\nProceed? (yes/no): ")
-    if response.lower() not in ['yes', 'y']:
+    if response.lower() not in ["yes", "y"]:
         print("❌ Cancelled")
         return 1
-    
+
     # Step 1: Auto-download holdings
-    success_1 = run_command(
-        "python auto_download_etf_holdings.py",
-        "Auto-download ETF holdings"
-    )
-    
+    success_1 = run_command("python auto_download_etf_holdings.py", "Auto-download ETF holdings")
+
     # Check if we got at least some CSVs
-    csv_dir = Path('etf_csvs')
-    csv_files = list(csv_dir.glob('*.csv')) if csv_dir.exists() else []
-    
+    csv_dir = Path("etf_csvs")
+    csv_files = list(csv_dir.glob("*.csv")) if csv_dir.exists() else []
+
     if len(csv_files) < 3:
         print(f"\n⚠️  Only {len(csv_files)}/3 ETFs downloaded automatically")
         print(f"   Some may require manual download (see instructions above)")
-        
+
         response = input("\nContinue with available CSVs? (yes/no): ")
-        if response.lower() not in ['yes', 'y']:
+        if response.lower() not in ["yes", "y"]:
             print("❌ Cancelled - complete manual downloads and re-run")
             return 1
-    
+
     # Step 2: Import CSVs
-    success_2 = run_command(
-        "python import_etf_csvs.py",
-        "Import CSVs into JSON"
-    )
-    
+    success_2 = run_command("python import_etf_csvs.py", "Import CSVs into JSON")
+
     if not success_2:
         print("❌ Import failed - check CSV files")
         return 1
-    
+
     # Step 3: Add to universe
-    success_3 = run_command(
-        "python add_etf_tickers_to_universe.py",
-        "Add ETF tickers to universe"
-    )
-    
+    success_3 = run_command("python add_etf_tickers_to_universe.py", "Add ETF tickers to universe")
+
     if not success_3:
         print("❌ Failed to add tickers to universe")
         return 1
-    
+
     # Step 4: Verify coverage
     success_4 = run_command(
-        "python check_etf_coverage.py --universe production_data/universe.json",
-        "Verify ETF coverage"
+        "python check_etf_coverage.py --universe production_data/universe.json", "Verify ETF coverage"
     )
-    
+
     # Final summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SETUP COMPLETE!")
-    print("="*80)
-    
+    print("=" * 80)
+
     if success_1 and success_2 and success_3 and success_4:
         print("✅ All steps successful!")
         print("\n🎊 Your universe now has 100% ETF coverage!")
@@ -114,8 +98,8 @@ def main():
     else:
         print("⚠️  Some steps failed - review output above")
         return 1
-    
-    print("="*80 + "\n")
+
+    print("=" * 80 + "\n")
     return 0
 
 

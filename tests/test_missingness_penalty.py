@@ -1,4 +1,5 @@
 """Tests for config-gated missingness penalty (sort + sizing)."""
+
 from __future__ import annotations
 
 import sys
@@ -13,17 +14,17 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from decision_engine import (
     DEFAULT_RULESET,
     DecisionRuleset,
-    _has_flag,
     _compute_missing_components,
+    _has_flag,
     compute_actionable_sort_key,
     compute_decision_fields,
     compute_target_weights,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixture builder (minimal — mirrors test_decision_engine_contract._rec)
 # ---------------------------------------------------------------------------
+
 
 def _rec(
     ticker: str = "TEST",
@@ -82,6 +83,7 @@ def _rec(
 # _has_flag helper
 # ---------------------------------------------------------------------------
 
+
 class TestHasFlag:
     def test_empty_string(self):
         assert _has_flag("", "drawdown_data_missing") is False
@@ -109,6 +111,7 @@ class TestHasFlag:
 # ---------------------------------------------------------------------------
 # _compute_missing_components
 # ---------------------------------------------------------------------------
+
 
 class TestMissingComponents:
     def test_all_present(self):
@@ -167,6 +170,7 @@ class TestMissingComponents:
 # Integration: compute_decision_fields populates columns
 # ---------------------------------------------------------------------------
 
+
 class TestDecisionFieldsIntegration:
     def test_complete_rec_no_missing(self):
         """Fully populated rec → missing_components empty, penalty 0."""
@@ -209,6 +213,7 @@ class TestDecisionFieldsIntegration:
 # Default-off invariance: toggles off → no behavioral change
 # ---------------------------------------------------------------------------
 
+
 class TestDefaultOffInvariance:
     def test_sort_key_identical_when_disabled(self):
         """With penalty disabled, missing data does not affect sort key ordering."""
@@ -229,10 +234,20 @@ class TestDefaultOffInvariance:
 
         # But sort keys should NOT use missingness when disabled
         key_c = compute_actionable_sort_key(
-            fields_c, "drug_developer", 0.70, 10, "AAA", ruleset=rs,
+            fields_c,
+            "drug_developer",
+            0.70,
+            10,
+            "AAA",
+            ruleset=rs,
         )
         key_m = compute_actionable_sort_key(
-            fields_m, "drug_developer", 0.70, 10, "AAA", ruleset=rs,
+            fields_m,
+            "drug_developer",
+            0.70,
+            10,
+            "AAA",
+            ruleset=rs,
         )
         # Position 6 (missing_count) should be 0 for both when disabled
         assert key_c[6] == 0
@@ -260,6 +275,7 @@ class TestDefaultOffInvariance:
 # ---------------------------------------------------------------------------
 # Size penalty: enabled → band downgrades
 # ---------------------------------------------------------------------------
+
 
 class TestSizePenalty:
     def _make_rs(self, **kw) -> DecisionRuleset:
@@ -314,6 +330,7 @@ class TestSizePenalty:
 # Sort penalty: enabled → tiebreaking
 # ---------------------------------------------------------------------------
 
+
 class TestSortPenalty:
     def test_breaks_ties_off_mode(self):
         """With sort penalty on, missing data ticker sorts after complete one."""
@@ -326,10 +343,20 @@ class TestSortPenalty:
         fields_m = compute_decision_fields(rec_missing, "drug_developer", 0.70, rs)
 
         key_c = compute_actionable_sort_key(
-            fields_c, "drug_developer", 0.70, 10, "AAA", ruleset=rs,
+            fields_c,
+            "drug_developer",
+            0.70,
+            10,
+            "AAA",
+            ruleset=rs,
         )
         key_m = compute_actionable_sort_key(
-            fields_m, "drug_developer", 0.70, 10, "BBB", ruleset=rs,
+            fields_m,
+            "drug_developer",
+            0.70,
+            10,
+            "BBB",
+            ruleset=rs,
         )
         # Complete should sort before missing
         assert key_c < key_m
@@ -348,10 +375,20 @@ class TestSortPenalty:
         fields_m = compute_decision_fields(rec_missing, "drug_developer", 0.70, rs)
 
         key_c = compute_actionable_sort_key(
-            fields_c, "drug_developer", 0.70, 10, "AAA", ruleset=rs,
+            fields_c,
+            "drug_developer",
+            0.70,
+            10,
+            "AAA",
+            ruleset=rs,
         )
         key_m = compute_actionable_sort_key(
-            fields_m, "drug_developer", 0.70, 10, "BBB", ruleset=rs,
+            fields_m,
+            "drug_developer",
+            0.70,
+            10,
+            "BBB",
+            ruleset=rs,
         )
         assert key_c < key_m
 
@@ -369,9 +406,19 @@ class TestSortPenalty:
         fields_m = compute_decision_fields(rec_missing, "drug_developer", 0.70, rs)
 
         key_c = compute_actionable_sort_key(
-            fields_c, "drug_developer", 0.70, 10, "AAA", ruleset=rs,
+            fields_c,
+            "drug_developer",
+            0.70,
+            10,
+            "AAA",
+            ruleset=rs,
         )
         key_m = compute_actionable_sort_key(
-            fields_m, "drug_developer", 0.70, 10, "BBB", ruleset=rs,
+            fields_m,
+            "drug_developer",
+            0.70,
+            10,
+            "BBB",
+            ruleset=rs,
         )
         assert key_c < key_m

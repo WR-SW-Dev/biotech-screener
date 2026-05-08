@@ -4,15 +4,16 @@ Milestone 1 IC Metrics — Spearman Rank IC + Summary
 Deterministic, stdlib-first. Uses scipy.stats.spearmanr if available,
 otherwise falls back to rank + Pearson implementation.
 """
+
 from __future__ import annotations
 
 import math
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-
 # ---------------------------------------------------------------------------
 # Spearman rank IC
 # ---------------------------------------------------------------------------
+
 
 def _rank_array(values: Sequence[float]) -> List[float]:
     """Assign average ranks (1-based) to values, handling ties."""
@@ -57,11 +58,7 @@ def spearman_rank_ic(
     Returns NaN if fewer than 3 valid pairs.
     """
     # Filter NaN pairs
-    pairs = [
-        (s, r)
-        for s, r in zip(scores, returns)
-        if math.isfinite(s) and math.isfinite(r)
-    ]
+    pairs = [(s, r) for s, r in zip(scores, returns) if math.isfinite(s) and math.isfinite(r)]
     if len(pairs) < 3:
         return float("nan")
     sc, ret = zip(*pairs)
@@ -69,6 +66,7 @@ def spearman_rank_ic(
     # Try scipy first (much faster for large n)
     try:
         from scipy.stats import spearmanr  # type: ignore
+
         corr, _ = spearmanr(sc, ret)
         return float(corr)
     except ImportError:
@@ -80,6 +78,7 @@ def spearman_rank_ic(
 # ---------------------------------------------------------------------------
 # IC time-series builder
 # ---------------------------------------------------------------------------
+
 
 def compute_ic_timeseries(
     panel_rows: List[Dict[str, Any]],
@@ -95,6 +94,7 @@ def compute_ic_timeseries(
     """
     # Group rows by date (deterministic order)
     from collections import defaultdict
+
     by_date: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for row in panel_rows:
         by_date[row[date_col]].append(row)
@@ -119,19 +119,22 @@ def compute_ic_timeseries(
                         except (TypeError, ValueError):
                             continue
                 ic_val = spearman_rank_ic(scores, rets)
-                results.append({
-                    date_col: dt,
-                    "score_col": scol,
-                    "return_col": rcol,
-                    "ic": ic_val,
-                    "n_obs": len(scores),
-                })
+                results.append(
+                    {
+                        date_col: dt,
+                        "score_col": scol,
+                        "return_col": rcol,
+                        "ic": ic_val,
+                        "n_obs": len(scores),
+                    }
+                )
     return results
 
 
 # ---------------------------------------------------------------------------
 # IC summary
 # ---------------------------------------------------------------------------
+
 
 def summarize_ic(
     ic_rows: List[Dict[str, Any]],
@@ -143,6 +146,7 @@ def summarize_ic(
         {score_col, return_col, mean_ic, hit_rate, n_dates, median_ic}
     """
     from collections import defaultdict
+
     groups: Dict[Tuple[str, str], List[float]] = defaultdict(list)
     for row in ic_rows:
         key = (row["score_col"], row["return_col"])
@@ -151,7 +155,7 @@ def summarize_ic(
             groups[key].append(ic)
 
     summaries: List[Dict[str, Any]] = []
-    for (scol, rcol) in sorted(groups):
+    for scol, rcol in sorted(groups):
         vals = groups[(scol, rcol)]
         n = len(vals)
         if n == 0:
@@ -163,12 +167,14 @@ def summarize_ic(
             median_ic = sorted_vals[n // 2]
         else:
             median_ic = (sorted_vals[n // 2 - 1] + sorted_vals[n // 2]) / 2.0
-        summaries.append({
-            "score_col": scol,
-            "return_col": rcol,
-            "mean_ic": round(mean_ic, 6),
-            "median_ic": round(median_ic, 6),
-            "hit_rate": round(hit_rate, 4),
-            "n_dates": n,
-        })
+        summaries.append(
+            {
+                "score_col": scol,
+                "return_col": rcol,
+                "mean_ic": round(mean_ic, 6),
+                "median_ic": round(median_ic, 6),
+                "hit_rate": round(hit_rate, 4),
+                "n_dates": n,
+            }
+        )
     return summaries

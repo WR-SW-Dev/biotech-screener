@@ -20,21 +20,14 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from run_phase2_daily import (
-    assert_outputs_exist,
-    build_command,
-    format_summary,
-    main,
-    read_health_json,
-)
-
+from run_phase2_daily import assert_outputs_exist, build_command, format_summary, main, read_health_json
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _write_health_json(snap_dir: Path, date: str, status: str,
-                       reasons: list[str] | None = None) -> Path:
+
+def _write_health_json(snap_dir: Path, date: str, status: str, reasons: list[str] | None = None) -> Path:
     """Write a minimal phase2_health.json + sibling files into snap_dir/date/."""
     d = snap_dir / date
     d.mkdir(parents=True, exist_ok=True)
@@ -56,6 +49,7 @@ def _write_health_json(snap_dir: Path, date: str, status: str,
 
 def _fake_subprocess_run(returncode: int):
     """Return a mock for subprocess.run that returns *returncode* and writes to the log file."""
+
     def _run(cmd, stdout=None, stderr=None):
         # Write something to the log so the file exists
         if stdout and hasattr(stdout, "write"):
@@ -63,12 +57,14 @@ def _fake_subprocess_run(returncode: int):
         result = MagicMock()
         result.returncode = returncode
         return result
+
     return _run
 
 
 # ---------------------------------------------------------------------------
 # read_health_json
 # ---------------------------------------------------------------------------
+
 
 class TestReadHealthJson:
     def test_ok(self, tmp_path: Path):
@@ -91,6 +87,7 @@ class TestReadHealthJson:
 # format_summary
 # ---------------------------------------------------------------------------
 
+
 class TestFormatSummary:
     def test_ok_no_reasons(self, tmp_path: Path):
         s = format_summary("2026-01-15", "OK", [], tmp_path)
@@ -104,8 +101,7 @@ class TestFormatSummary:
         assert "no_a_tier_regime" in s
 
     def test_fail_multiple_reasons(self, tmp_path: Path):
-        s = format_summary("2026-01-15", "FAIL",
-                           ["optionality_broken", "catalyst_broken"], tmp_path)
+        s = format_summary("2026-01-15", "FAIL", ["optionality_broken", "catalyst_broken"], tmp_path)
         assert "FAIL" in s
         assert "optionality_broken" in s
         assert "catalyst_broken" in s
@@ -115,9 +111,11 @@ class TestFormatSummary:
 # build_command
 # ---------------------------------------------------------------------------
 
+
 class TestBuildCommand:
     def test_minimal(self, tmp_path: Path):
         import argparse
+
         args = argparse.Namespace(
             as_of_date="2026-01-15",
             data_dir=tmp_path / "data",
@@ -133,6 +131,7 @@ class TestBuildCommand:
 
     def test_with_extras(self, tmp_path: Path):
         import argparse
+
         args = argparse.Namespace(
             as_of_date="2026-01-15",
             data_dir=tmp_path / "data",
@@ -150,6 +149,7 @@ class TestBuildCommand:
 # main() — exit-code passthrough
 # ---------------------------------------------------------------------------
 
+
 class TestExitCodePassthrough:
     """Subprocess exit code flows through correctly."""
 
@@ -160,12 +160,18 @@ class TestExitCodePassthrough:
         _write_health_json(snap, "2026-01-15", "OK")
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 0
 
     @patch("run_phase2_daily.subprocess.run")
@@ -175,12 +181,18 @@ class TestExitCodePassthrough:
         _write_health_json(snap, "2026-01-15", "FAIL", ["optionality_broken"])
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 1
 
     @patch("run_phase2_daily.subprocess.run")
@@ -190,18 +202,25 @@ class TestExitCodePassthrough:
         _write_health_json(snap, "2026-01-15", "WARN", ["no_a_tier_regime"])
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 2
 
 
 # ---------------------------------------------------------------------------
 # main() — missing / malformed health JSON
 # ---------------------------------------------------------------------------
+
 
 class TestMissingHealthJson:
     @patch("run_phase2_daily.subprocess.run")
@@ -212,12 +231,18 @@ class TestMissingHealthJson:
         snap.mkdir()
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 1
 
     @patch("run_phase2_daily.subprocess.run")
@@ -229,18 +254,25 @@ class TestMissingHealthJson:
         (d / "phase2_health.json").write_text("NOT JSON{{{{")
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 1
 
 
 # ---------------------------------------------------------------------------
 # main() — unexpected exit code
 # ---------------------------------------------------------------------------
+
 
 class TestUnexpectedExitCode:
     @patch("run_phase2_daily.subprocess.run")
@@ -251,18 +283,25 @@ class TestUnexpectedExitCode:
         _write_health_json(snap, "2026-01-15", "OK")
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 1
 
 
 # ---------------------------------------------------------------------------
 # main() — --dry-run
 # ---------------------------------------------------------------------------
+
 
 class TestDryRun:
     @patch("run_phase2_daily.subprocess.run")
@@ -273,13 +312,19 @@ class TestDryRun:
         # Deliberately do NOT write health JSON
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-            "--dry-run",
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+                "--dry-run",
+            ]
+        )
         assert rc == 0
 
     @patch("run_phase2_daily.subprocess.run")
@@ -288,19 +333,26 @@ class TestDryRun:
         mock_run.side_effect = _fake_subprocess_run(1)
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(tmp_path / "snaps"),
-            "--log-file", str(log),
-            "--dry-run",
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(tmp_path / "snaps"),
+                "--log-file",
+                str(log),
+                "--dry-run",
+            ]
+        )
         assert rc == 1
 
 
 # ---------------------------------------------------------------------------
 # main() — log file created
 # ---------------------------------------------------------------------------
+
 
 class TestLogFile:
     @patch("run_phase2_daily.subprocess.run")
@@ -310,12 +362,18 @@ class TestLogFile:
         _write_health_json(snap, "2026-01-15", "OK")
         log = tmp_path / "output" / "phase2_daily.log"
 
-        main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert log.exists()
 
     @patch("run_phase2_daily.subprocess.run")
@@ -325,12 +383,18 @@ class TestLogFile:
         _write_health_json(snap, "2026-01-15", "FAIL", ["optionality_broken"])
         log = tmp_path / "log.txt"
 
-        main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         err = capsys.readouterr().err
         assert "optionality_broken" in err
         assert str(log) in err
@@ -339,6 +403,7 @@ class TestLogFile:
 # ---------------------------------------------------------------------------
 # assert_outputs_exist
 # ---------------------------------------------------------------------------
+
 
 class TestAssertOutputsExist:
     def test_all_present(self, tmp_path: Path):
@@ -374,6 +439,7 @@ class TestAssertOutputsExist:
 # main() — output assertion integration
 # ---------------------------------------------------------------------------
 
+
 class TestOutputAssertion:
     @patch("run_phase2_daily.subprocess.run")
     def test_subprocess_ok_but_no_outputs(self, mock_run, tmp_path: Path):
@@ -383,10 +449,16 @@ class TestOutputAssertion:
         snap.mkdir()
         log = tmp_path / "log.txt"
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--data-dir", str(tmp_path / "data"),
-            "--snapshot-dir", str(snap),
-            "--log-file", str(log),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--data-dir",
+                str(tmp_path / "data"),
+                "--snapshot-dir",
+                str(snap),
+                "--log-file",
+                str(log),
+            ]
+        )
         assert rc == 1

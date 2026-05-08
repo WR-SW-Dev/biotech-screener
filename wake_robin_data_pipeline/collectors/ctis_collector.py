@@ -21,10 +21,7 @@ from typing import Dict, List, Optional
 import requests
 
 from common.robustness import create_resilient_session
-from wake_robin_data_pipeline.collectors.trials_collector import (
-    SPONSOR_ALIASES,
-    _clean_company_name,
-)
+from wake_robin_data_pipeline.collectors.trials_collector import SPONSOR_ALIASES, _clean_company_name
 
 _session: requests.Session | None = None
 
@@ -34,6 +31,7 @@ def _get_session() -> requests.Session:
     if _session is None:
         _session = create_resilient_session()
     return _session
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,15 +56,15 @@ _PHASE_PATTERNS = [
 # Status integer codes observed from CTIS API -> normalized strings
 # Reverse-engineered from live responses: ctStatus field
 _STATUS_CODE_MAP = {
-    1: "RECRUITING",       # Authorised - recruiting
-    2: "RECRUITING",       # Authorised - not yet recruiting
+    1: "RECRUITING",  # Authorised - recruiting
+    2: "RECRUITING",  # Authorised - not yet recruiting
     3: "ACTIVE_NOT_RECRUITING",  # Authorised - no longer recruiting
-    4: "COMPLETED",        # Completed
-    5: "TERMINATED",       # Ended / Terminated
-    6: "TERMINATED",       # Lapsed
-    7: "TERMINATED",       # Suspended / Halted
-    8: "RECRUITING",       # Authorised (general)
-    9: "TERMINATED",       # Withdrawn
+    4: "COMPLETED",  # Completed
+    5: "TERMINATED",  # Ended / Terminated
+    6: "TERMINATED",  # Lapsed
+    7: "TERMINATED",  # Suspended / Halted
+    8: "RECRUITING",  # Authorised (general)
+    9: "TERMINATED",  # Withdrawn
 }
 
 # Status text mapping (fallback)
@@ -165,8 +163,7 @@ def collect_ctis_trials(
             page = 1
             while page <= _MAX_PAGES_PER_SPONSOR:
                 try:
-                    response = _search_ctis(term, page=page, page_size=_PAGE_SIZE,
-                                            raw_dir=raw_dir)
+                    response = _search_ctis(term, page=page, page_size=_PAGE_SIZE, raw_dir=raw_dir)
                 except Exception as e:
                     logger.warning("CTIS search failed for '%s' page %d: %s", term, page, e)
                     break
@@ -204,13 +201,12 @@ def collect_ctis_trials(
     enrich_ok = 0
     enrich_errors = 0
     if enrich_detail:
-        candidates = [
-            r for r in records if not r.get("primary_completion_date")
-        ]
+        candidates = [r for r in records if not r.get("primary_completion_date")]
         enrich_candidates = len(candidates)
         logger.info(
             "CTIS enrichment: %d/%d records missing primary_completion_date",
-            enrich_candidates, len(records),
+            enrich_candidates,
+            len(records),
         )
         for rec in candidates:
             ct_number = rec["primary_id"]
@@ -221,11 +217,15 @@ def collect_ctis_trials(
             except Exception as e:
                 enrich_errors += 1
                 logger.warning(
-                    "CTIS detail enrichment failed for %s: %s", ct_number, e,
+                    "CTIS detail enrichment failed for %s: %s",
+                    ct_number,
+                    e,
                 )
         logger.info(
             "CTIS enrichment done: %d enriched, %d errors (of %d candidates)",
-            enrich_ok, enrich_errors, enrich_candidates,
+            enrich_ok,
+            enrich_errors,
+            enrich_candidates,
         )
 
     # Atomic write
@@ -362,8 +362,7 @@ def _extract_nct_id(detail: dict) -> Optional[str]:
           .nctNumber.number
     """
     nct = (
-        detail
-        .get("authorizedApplication", {})
+        detail.get("authorizedApplication", {})
         .get("authorizedPartI", {})
         .get("trialDetails", {})
         .get("clinicalTrialIdentifiers", {})
@@ -377,7 +376,8 @@ def _extract_nct_id(detail: dict) -> Optional[str]:
 
 
 def _collect_milestone_dates(
-    events_block: dict, notification_type: str,
+    events_block: dict,
+    notification_type: str,
 ) -> List[str]:
     """Gather normalized dates for a milestone type across all countries.
 
@@ -422,7 +422,8 @@ def _parse_treatment_duration_days(detail: dict) -> Optional[int]:
 
 
 def _estimate_primary_completion_date(
-    detail: dict, as_of_date: date,
+    detail: dict,
+    as_of_date: date,
 ) -> Optional[str]:
     """Estimate primary completion date from detail endpoint data.
 
@@ -465,7 +466,9 @@ def _estimate_primary_completion_date(
 
 
 def _enrich_record_from_detail(
-    record: dict, detail: dict, as_of_date: date,
+    record: dict,
+    detail: dict,
+    as_of_date: date,
 ) -> dict:
     """Enrich a TrialRecord dict using detail endpoint data.
 

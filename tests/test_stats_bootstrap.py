@@ -1,4 +1,5 @@
 """Tests for common.stats.bootstrap module."""
+
 import sys
 from pathlib import Path
 
@@ -13,9 +14,32 @@ from common.stats.bootstrap import block_bootstrap, compare_strategies, stationa
 class TestBlockBootstrap:
     def test_positive_series(self):
         """Bootstrap of clearly positive series should have P(>0) near 1."""
-        returns = [0.02, 0.03, 0.01, 0.04, 0.02, 0.03, 0.01, 0.05,
-                   0.02, 0.03, 0.01, 0.04, 0.02, 0.03, 0.01, 0.05,
-                   0.02, 0.03, 0.01, 0.04, 0.02, 0.03, 0.01, 0.05]
+        returns = [
+            0.02,
+            0.03,
+            0.01,
+            0.04,
+            0.02,
+            0.03,
+            0.01,
+            0.05,
+            0.02,
+            0.03,
+            0.01,
+            0.04,
+            0.02,
+            0.03,
+            0.01,
+            0.05,
+            0.02,
+            0.03,
+            0.01,
+            0.04,
+            0.02,
+            0.03,
+            0.01,
+            0.05,
+        ]
         result = block_bootstrap(returns, block_length=4, n_bootstrap=5000, seed=42)
         assert result["prob_positive"] > 0.99
         assert result["ci_excludes_zero"]

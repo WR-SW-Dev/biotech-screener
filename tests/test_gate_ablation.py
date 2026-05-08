@@ -18,22 +18,22 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from decision_engine import DecisionRuleset, compute_decision_fields
+from run_decision_ruleset_sweep import ArchiveData, ForwardReturnData
 from run_gate_ablation import (
     KNOWN_GATES,
+    _compute_tier_distribution,
+    _make_scenario_ruleset,
     _patch_rec_for_scenario,
     _percentile,
     _safe_div,
     count_gate_frequencies,
     find_promoted_names,
-    _compute_tier_distribution,
-    _make_scenario_ruleset,
 )
-from run_decision_ruleset_sweep import ArchiveData, ForwardReturnData
-
 
 # =============================================================================
 # FIXTURES: minimal rec builders
 # =============================================================================
+
 
 def _make_rec(
     severity: str = "",
@@ -97,13 +97,12 @@ def _make_forward_data(
 # TEST: drawdown ablation disables gate
 # =============================================================================
 
+
 class TestDrawdownAblation:
     def test_drawdown_gate_fires_at_default(self):
         """A ticker with -50% drawdown should be ineligible under default ruleset."""
         rec = _make_rec(drawdown=-0.50)
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.70, ruleset=DecisionRuleset()
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.70, ruleset=DecisionRuleset())
         assert fields["eligible"] == "0"
         assert "deep_drawdown" in fields["ineligible_reasons"]
         assert fields["tier_dev"] == "D"
@@ -112,9 +111,7 @@ class TestDrawdownAblation:
         """Setting drawdown_gate=-999.0 should prevent the gate from firing."""
         rec = _make_rec(drawdown=-0.50)
         ablated = DecisionRuleset(drawdown_gate=-999.0)
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.70, ruleset=ablated
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.70, ruleset=ablated)
         assert fields["eligible"] == "1"
         assert "deep_drawdown" not in fields["ineligible_reasons"]
         assert fields["tier_dev"] != "D"
@@ -122,17 +119,13 @@ class TestDrawdownAblation:
     def test_drawdown_at_threshold_is_eligible(self):
         """A ticker exactly at -0.40 should be eligible (dd < gate, not dd <= gate)."""
         rec = _make_rec(drawdown=-0.40)
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.70, ruleset=DecisionRuleset()
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.70, ruleset=DecisionRuleset())
         assert fields["eligible"] == "1"
 
     def test_drawdown_just_below_threshold_ineligible(self):
         """A ticker at -0.41 should be ineligible (below -0.40 gate)."""
         rec = _make_rec(drawdown=-0.41)
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.70, ruleset=DecisionRuleset()
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.70, ruleset=DecisionRuleset())
         assert fields["eligible"] == "0"
         assert "deep_drawdown" in fields["ineligible_reasons"]
 
@@ -141,13 +134,12 @@ class TestDrawdownAblation:
 # TEST: SEV3 ablation disables gate
 # =============================================================================
 
+
 class TestSev3Ablation:
     def test_sev3_gate_fires(self):
         """A ticker with severity=SEV3 should be ineligible."""
         rec = _make_rec(severity="SEV3")
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.70, ruleset=DecisionRuleset()
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.70, ruleset=DecisionRuleset())
         assert fields["eligible"] == "0"
         assert "sev3" in fields["ineligible_reasons"]
 
@@ -155,9 +147,7 @@ class TestSev3Ablation:
         """Patching severity="" should prevent SEV3 gate from firing."""
         rec = _make_rec(severity="SEV3")
         patched = _patch_rec_for_scenario(rec, "no_sev3")
-        fields = compute_decision_fields(
-            patched, "drug_developer", 0.70, ruleset=DecisionRuleset()
-        )
+        fields = compute_decision_fields(patched, "drug_developer", 0.70, ruleset=DecisionRuleset())
         assert fields["eligible"] == "1"
         assert "sev3" not in fields["ineligible_reasons"]
 
@@ -165,9 +155,7 @@ class TestSev3Ablation:
         """Patching for sev3 should not disable drawdown gate."""
         rec = _make_rec(severity="SEV3", drawdown=-0.50)
         patched = _patch_rec_for_scenario(rec, "no_sev3")
-        fields = compute_decision_fields(
-            patched, "drug_developer", 0.70, ruleset=DecisionRuleset()
-        )
+        fields = compute_decision_fields(patched, "drug_developer", 0.70, ruleset=DecisionRuleset())
         # SEV3 gone but drawdown still fires
         assert "sev3" not in fields["ineligible_reasons"]
         assert "deep_drawdown" in fields["ineligible_reasons"]
@@ -177,6 +165,7 @@ class TestSev3Ablation:
 # =============================================================================
 # TEST: promoted names detection
 # =============================================================================
+
 
 class TestPromotedNames:
     def test_promoted_names_detection(self):
@@ -217,13 +206,14 @@ class TestPromotedNames:
 # TEST: gate frequency counting
 # =============================================================================
 
+
 class TestGateFrequency:
     def test_gate_frequency_counting(self):
         """Count gates from synthetic recs with known ineligibility."""
         tickers_data = {
             "T1": {"rec": _make_rec(drawdown=-0.50), "opt": 0.70},  # deep_drawdown
             "T2": {"rec": _make_rec(severity="SEV3"), "opt": 0.70},  # sev3
-            "T3": {"rec": _make_rec(), "opt": 0.70},                 # eligible
+            "T3": {"rec": _make_rec(), "opt": 0.70},  # eligible
             "T4": {"rec": _make_rec(drawdown=-0.60, severity="SEV3"), "opt": 0.70},  # both
         }
         ad = _make_archive_data(tickers_data, "2024-06-30")
@@ -276,6 +266,7 @@ class TestGateFrequency:
 # TEST: percentile computation
 # =============================================================================
 
+
 class TestPercentile:
     def test_percentile_p5_known(self):
         """P5 of [0..99] should be ~4.95."""
@@ -306,6 +297,7 @@ class TestPercentile:
 # TEST: scenario ruleset construction
 # =============================================================================
 
+
 class TestScenarioRuleset:
     def test_baseline_uses_default(self):
         rs = _make_scenario_ruleset("baseline")
@@ -323,6 +315,7 @@ class TestScenarioRuleset:
 # =============================================================================
 # TEST: tier distribution helper
 # =============================================================================
+
 
 class TestTierDistribution:
     def test_basic_distribution(self):
@@ -344,6 +337,7 @@ class TestTierDistribution:
 # =============================================================================
 # TEST: safe_div helper
 # =============================================================================
+
 
 class TestSafeDiv:
     def test_normal_division(self):

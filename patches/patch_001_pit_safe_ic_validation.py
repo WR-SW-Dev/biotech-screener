@@ -18,12 +18,12 @@ Usage:
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ICValidationResult:
     """Result of PIT-safe IC validation."""
+
     validation_date: str
     lookback_start: str
     lookback_end: str
@@ -106,10 +107,7 @@ class PITSafeICValidator:
         cutoff = dt - timedelta(days=1)
         return cutoff.isoformat()
 
-    def _compute_lookback_window(
-        self,
-        as_of_date: str
-    ) -> Tuple[str, str]:
+    def _compute_lookback_window(self, as_of_date: str) -> Tuple[str, str]:
         """
         Compute the historical lookback window for IC validation.
 
@@ -156,8 +154,7 @@ class PITSafeICValidator:
         lookback_start, lookback_end = self._compute_lookback_window(as_of_date)
 
         logger.info(
-            f"PIT-safe IC validation for {as_of_date}: "
-            f"using historical IC from {lookback_start} to {lookback_end}"
+            f"PIT-safe IC validation for {as_of_date}: " f"using historical IC from {lookback_start} to {lookback_end}"
         )
 
         # Load historical IC results (pre-computed)
@@ -220,11 +217,7 @@ class PITSafeICValidator:
             message=message,
         )
 
-    def _load_historical_ic(
-        self,
-        start_date: str,
-        end_date: str
-    ) -> List[Decimal]:
+    def _load_historical_ic(self, start_date: str, end_date: str) -> List[Decimal]:
         """
         Load pre-computed historical IC values.
 
@@ -244,8 +237,7 @@ class PITSafeICValidator:
 
         if not ic_file.exists():
             logger.warning(
-                f"IC history file not found: {ic_file}. "
-                "Run backtest/compute_historical_ic.py to generate."
+                f"IC history file not found: {ic_file}. " "Run backtest/compute_historical_ic.py to generate."
             )
             return []
 

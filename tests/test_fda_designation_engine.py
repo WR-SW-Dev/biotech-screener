@@ -3,15 +3,12 @@
 Tests for FDA Designation Engine
 """
 
-import pytest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
-from fda_designation_engine import (
-    FDADesignationEngine,
-    DesignationType,
-    generate_sample_designations,
-)
+import pytest
+
+from fda_designation_engine import DesignationType, FDADesignationEngine, generate_sample_designations
 
 
 class TestFDADesignationEngine:
@@ -73,10 +70,18 @@ class TestFDADesignationEngine:
 
     def test_breakthrough_therapy_boost(self, engine):
         """Breakthrough therapy should provide significant boost."""
-        engine.load_designations([
-            {"ticker": "TEST", "designation_type": "BTD", "indication": "oncology",
-             "grant_date": "2025-01-01", "source": "fda", "confidence": "confirmed"},
-        ])
+        engine.load_designations(
+            [
+                {
+                    "ticker": "TEST",
+                    "designation_type": "BTD",
+                    "indication": "oncology",
+                    "grant_date": "2025-01-01",
+                    "source": "fda",
+                    "confidence": "confirmed",
+                },
+            ]
+        )
 
         as_of = date(2026, 1, 26)
         result = engine.score_ticker("TEST", as_of, base_pos=Decimal("50"))
@@ -87,14 +92,34 @@ class TestFDADesignationEngine:
 
     def test_multiple_designations_diminishing_returns(self, engine):
         """Multiple designations should have diminishing returns."""
-        engine.load_designations([
-            {"ticker": "MULTI", "designation_type": "BTD", "indication": "oncology",
-             "grant_date": "2025-01-01", "source": "fda", "confidence": "confirmed"},
-            {"ticker": "MULTI", "designation_type": "ODD", "indication": "rare_disease",
-             "grant_date": "2025-02-01", "source": "fda", "confidence": "confirmed"},
-            {"ticker": "MULTI", "designation_type": "FT", "indication": "oncology",
-             "grant_date": "2025-03-01", "source": "fda", "confidence": "confirmed"},
-        ])
+        engine.load_designations(
+            [
+                {
+                    "ticker": "MULTI",
+                    "designation_type": "BTD",
+                    "indication": "oncology",
+                    "grant_date": "2025-01-01",
+                    "source": "fda",
+                    "confidence": "confirmed",
+                },
+                {
+                    "ticker": "MULTI",
+                    "designation_type": "ODD",
+                    "indication": "rare_disease",
+                    "grant_date": "2025-02-01",
+                    "source": "fda",
+                    "confidence": "confirmed",
+                },
+                {
+                    "ticker": "MULTI",
+                    "designation_type": "FT",
+                    "indication": "oncology",
+                    "grant_date": "2025-03-01",
+                    "source": "fda",
+                    "confidence": "confirmed",
+                },
+            ]
+        )
 
         as_of = date(2026, 1, 26)
         result = engine.score_ticker("MULTI", as_of)
@@ -130,10 +155,18 @@ class TestFDADesignationEngine:
 
     def test_date_filtering(self, engine):
         """Designations after as_of_date should be excluded."""
-        engine.load_designations([
-            {"ticker": "FUTURE", "designation_type": "BTD", "indication": "oncology",
-             "grant_date": "2027-01-01", "source": "fda", "confidence": "confirmed"},
-        ])
+        engine.load_designations(
+            [
+                {
+                    "ticker": "FUTURE",
+                    "designation_type": "BTD",
+                    "indication": "oncology",
+                    "grant_date": "2027-01-01",
+                    "source": "fda",
+                    "confidence": "confirmed",
+                },
+            ]
+        )
 
         as_of = date(2026, 1, 26)
         result = engine.score_ticker("FUTURE", as_of)
@@ -143,14 +176,30 @@ class TestFDADesignationEngine:
 
     def test_confidence_multiplier(self, engine):
         """Confidence level affects multiplier."""
-        engine.load_designations([
-            {"ticker": "CONFIRMED", "designation_type": "BTD", "indication": "oncology",
-             "grant_date": "2025-01-01", "source": "fda", "confidence": "confirmed"},
-        ])
-        engine.load_designations([
-            {"ticker": "INFERRED", "designation_type": "BTD", "indication": "oncology",
-             "grant_date": "2025-01-01", "source": "inferred", "confidence": "inferred"},
-        ])
+        engine.load_designations(
+            [
+                {
+                    "ticker": "CONFIRMED",
+                    "designation_type": "BTD",
+                    "indication": "oncology",
+                    "grant_date": "2025-01-01",
+                    "source": "fda",
+                    "confidence": "confirmed",
+                },
+            ]
+        )
+        engine.load_designations(
+            [
+                {
+                    "ticker": "INFERRED",
+                    "designation_type": "BTD",
+                    "indication": "oncology",
+                    "grant_date": "2025-01-01",
+                    "source": "inferred",
+                    "confidence": "inferred",
+                },
+            ]
+        )
 
         as_of = date(2026, 1, 26)
         confirmed = engine.score_ticker("CONFIRMED", as_of)
@@ -191,7 +240,9 @@ class TestDesignationTypes:
 
     def test_invalid_designation_type_skipped(self, engine):
         """Invalid designation types are skipped during load."""
-        loaded = engine.load_designations([
-            {"ticker": "TEST", "designation_type": "INVALID", "indication": "oncology"},
-        ])
+        loaded = engine.load_designations(
+            [
+                {"ticker": "TEST", "designation_type": "INVALID", "indication": "oncology"},
+            ]
+        )
         assert loaded == 0

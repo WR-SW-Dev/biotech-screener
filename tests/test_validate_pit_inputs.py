@@ -1,30 +1,30 @@
 """Tests for scripts/validate_pit_inputs.py — PIT validators."""
+
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date
 from pathlib import Path
 
 import pytest
 
-import sys
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_pit_inputs import (
-    VERSION,
     SCHEMA_VERSION,
-    validate_ctgov_pit,
-    validate_catalyst_pit,
+    VERSION,
     build_validation_report,
     main,
+    validate_catalyst_pit,
+    validate_ctgov_pit,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_trial(
     nct_id: str = "NCT001",
@@ -52,6 +52,7 @@ def _make_catalyst_events(tickers_data: dict) -> dict:
 # ===================================================================
 # CTgov PIT validator tests
 # ===================================================================
+
 
 class TestValidateCtgovPit:
     def test_clean_data(self):
@@ -126,74 +127,87 @@ class TestValidateCtgovPit:
 # Catalyst PIT validator tests
 # ===================================================================
 
+
 class TestValidateCatalystPit:
     def test_clean_data(self):
-        events = _make_catalyst_events({
-            "AAA": {
-                "catalyst_mode": "specific_days",
-                "nearest_disclosed_at": "2024-06-15",
-                "nearest_event_source": "SEC_8K",
-            },
-            "BBB": {
-                "catalyst_mode": "missing",  # no catalyst — skipped
-            },
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {
+                    "catalyst_mode": "specific_days",
+                    "nearest_disclosed_at": "2024-06-15",
+                    "nearest_event_source": "SEC_8K",
+                },
+                "BBB": {
+                    "catalyst_mode": "missing",  # no catalyst — skipped
+                },
+            }
+        )
         result = validate_catalyst_pit(events, "2024-06-30", mode="strict")
         assert result["clean"] is True
         assert result["missing_disclosed_at"] == 0
         assert result["future_disclosed_at"] == 0
 
     def test_missing_disclosed_at(self):
-        events = _make_catalyst_events({
-            "AAA": {
-                "catalyst_mode": "specific_days",
-                "nearest_disclosed_at": "",
-                "nearest_event_source": "CTGOV",
-            },
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {
+                    "catalyst_mode": "specific_days",
+                    "nearest_disclosed_at": "",
+                    "nearest_event_source": "CTGOV",
+                },
+            }
+        )
         result = validate_catalyst_pit(events, "2024-06-30", mode="strict")
         assert result["clean"] is False
         assert result["missing_disclosed_at"] == 1
         assert result["missing_examples"][0]["ticker"] == "AAA"
 
     def test_future_disclosed_at(self):
-        events = _make_catalyst_events({
-            "AAA": {
-                "catalyst_mode": "specific_days",
-                "nearest_disclosed_at": "2024-07-15",
-                "nearest_event_source": "SEC_8K",
-            },
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {
+                    "catalyst_mode": "specific_days",
+                    "nearest_disclosed_at": "2024-07-15",
+                    "nearest_event_source": "SEC_8K",
+                },
+            }
+        )
         result = validate_catalyst_pit(events, "2024-06-30", mode="strict")
         assert result["clean"] is False
         assert result["future_disclosed_at"] == 1
 
     def test_degrade_mode_allows_missing(self):
-        events = _make_catalyst_events({
-            "AAA": {
-                "catalyst_mode": "specific_days",
-                "nearest_disclosed_at": "",
-            },
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {
+                    "catalyst_mode": "specific_days",
+                    "nearest_disclosed_at": "",
+                },
+            }
+        )
         result = validate_catalyst_pit(events, "2024-06-30", mode="degrade")
         assert result["clean"] is True  # degrade allows missing
         assert result["missing_disclosed_at"] == 1  # still counted
 
     def test_degrade_mode_rejects_future(self):
-        events = _make_catalyst_events({
-            "AAA": {
-                "catalyst_mode": "specific_days",
-                "nearest_disclosed_at": "2024-07-15",
-            },
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {
+                    "catalyst_mode": "specific_days",
+                    "nearest_disclosed_at": "2024-07-15",
+                },
+            }
+        )
         result = validate_catalyst_pit(events, "2024-06-30", mode="degrade")
         assert result["clean"] is False  # future is always a violation
 
     def test_missing_tickers_skipped(self):
-        events = _make_catalyst_events({
-            "AAA": {"catalyst_mode": "missing"},
-            "BBB": {"catalyst_mode": "missing"},
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {"catalyst_mode": "missing"},
+                "BBB": {"catalyst_mode": "missing"},
+            }
+        )
         result = validate_catalyst_pit(events, "2024-06-30")
         assert result["clean"] is True
         assert result["total_tickers"] == 2
@@ -232,14 +246,28 @@ class TestValidateCatalystPit:
 # Report builder tests
 # ===================================================================
 
+
 class TestBuildValidationReport:
     def test_both_clean(self):
-        ctgov = {"source": "ctgov", "clean": True, "first_posted_violations": 0,
-                 "total_records": 100, "last_update_future_count": 0,
-                 "first_posted_examples": [], "last_update_future_examples": []}
-        cat = {"source": "catalyst", "clean": True, "total_tickers": 50,
-               "missing_disclosed_at": 0, "future_disclosed_at": 0,
-               "mode": "strict", "missing_examples": [], "future_examples": []}
+        ctgov = {
+            "source": "ctgov",
+            "clean": True,
+            "first_posted_violations": 0,
+            "total_records": 100,
+            "last_update_future_count": 0,
+            "first_posted_examples": [],
+            "last_update_future_examples": [],
+        }
+        cat = {
+            "source": "catalyst",
+            "clean": True,
+            "total_tickers": 50,
+            "missing_disclosed_at": 0,
+            "future_disclosed_at": 0,
+            "mode": "strict",
+            "missing_examples": [],
+            "future_examples": [],
+        }
 
         report = build_validation_report("2024-06-30", "strict", ctgov, cat)
         assert report["schema_version"] == SCHEMA_VERSION
@@ -248,17 +276,30 @@ class TestBuildValidationReport:
         assert "catalyst" in report["components"]
 
     def test_ctgov_violation_propagates(self):
-        ctgov = {"source": "ctgov", "clean": False, "first_posted_violations": 3,
-                 "total_records": 100, "last_update_future_count": 0,
-                 "first_posted_examples": [], "last_update_future_examples": []}
+        ctgov = {
+            "source": "ctgov",
+            "clean": False,
+            "first_posted_violations": 3,
+            "total_records": 100,
+            "last_update_future_count": 0,
+            "first_posted_examples": [],
+            "last_update_future_examples": [],
+        }
 
         report = build_validation_report("2024-06-30", "strict", ctgov)
         assert report["overall_clean"] is False
 
     def test_catalyst_only(self):
-        cat = {"source": "catalyst", "clean": True, "total_tickers": 50,
-               "missing_disclosed_at": 0, "future_disclosed_at": 0,
-               "mode": "strict", "missing_examples": [], "future_examples": []}
+        cat = {
+            "source": "catalyst",
+            "clean": True,
+            "total_tickers": 50,
+            "missing_disclosed_at": 0,
+            "future_disclosed_at": 0,
+            "mode": "strict",
+            "missing_examples": [],
+            "future_examples": [],
+        }
 
         report = build_validation_report("2024-06-30", "strict", catalyst_result=cat)
         assert report["overall_clean"] is True
@@ -266,7 +307,8 @@ class TestBuildValidationReport:
 
     def test_file_hashes_included(self):
         report = build_validation_report(
-            "2024-06-30", "strict",
+            "2024-06-30",
+            "strict",
             file_hashes={"ctgov_cache": "abc123"},
         )
         assert report["file_hashes"]["ctgov_cache"] == "abc123"
@@ -276,6 +318,7 @@ class TestBuildValidationReport:
 # CLI tests
 # ===================================================================
 
+
 class TestCLI:
     def test_exit_0_when_clean(self, tmp_path):
         # Write clean CTgov cache
@@ -284,11 +327,16 @@ class TestCLI:
         cache_path.write_text(json.dumps(trials))
         out_path = tmp_path / "report.json"
 
-        rc = main([
-            "--as-of-date", "2024-06-30",
-            "--ctgov-cache", str(cache_path),
-            "--out", str(out_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2024-06-30",
+                "--ctgov-cache",
+                str(cache_path),
+                "--out",
+                str(out_path),
+            ]
+        )
         assert rc == 0
         report = json.loads(out_path.read_text())
         assert report["overall_clean"] is True
@@ -299,11 +347,16 @@ class TestCLI:
         cache_path.write_text(json.dumps(trials))
         out_path = tmp_path / "report.json"
 
-        rc = main([
-            "--as-of-date", "2024-06-30",
-            "--ctgov-cache", str(cache_path),
-            "--out", str(out_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2024-06-30",
+                "--ctgov-cache",
+                str(cache_path),
+                "--out",
+                str(out_path),
+            ]
+        )
         assert rc == 2
 
     def test_both_inputs(self, tmp_path):
@@ -311,23 +364,31 @@ class TestCLI:
         cache_path = tmp_path / "trials.json"
         cache_path.write_text(json.dumps(trials))
 
-        events = _make_catalyst_events({
-            "AAA": {
-                "catalyst_mode": "specific_days",
-                "nearest_disclosed_at": "2024-06-15",
-                "nearest_event_source": "SEC_8K",
-            },
-        })
+        events = _make_catalyst_events(
+            {
+                "AAA": {
+                    "catalyst_mode": "specific_days",
+                    "nearest_disclosed_at": "2024-06-15",
+                    "nearest_event_source": "SEC_8K",
+                },
+            }
+        )
         cat_path = tmp_path / "catalyst.json"
         cat_path.write_text(json.dumps(events))
         out_path = tmp_path / "report.json"
 
-        rc = main([
-            "--as-of-date", "2024-06-30",
-            "--ctgov-cache", str(cache_path),
-            "--catalyst-events", str(cat_path),
-            "--out", str(out_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2024-06-30",
+                "--ctgov-cache",
+                str(cache_path),
+                "--catalyst-events",
+                str(cat_path),
+                "--out",
+                str(out_path),
+            ]
+        )
         assert rc == 0
         report = json.loads(out_path.read_text())
         assert "ctgov" in report["components"]
@@ -335,10 +396,15 @@ class TestCLI:
 
     def test_missing_file_does_not_crash(self, tmp_path):
         out_path = tmp_path / "report.json"
-        rc = main([
-            "--as-of-date", "2024-06-30",
-            "--ctgov-cache", str(tmp_path / "nonexistent.json"),
-            "--out", str(out_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2024-06-30",
+                "--ctgov-cache",
+                str(tmp_path / "nonexistent.json"),
+                "--out",
+                str(out_path),
+            ]
+        )
         # No components validated, so overall_clean=True (vacuously)
         assert rc == 0

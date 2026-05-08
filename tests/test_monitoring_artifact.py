@@ -1,4 +1,5 @@
 """Tests for daily monitoring artifact generation."""
+
 from __future__ import annotations
 
 import csv
@@ -26,14 +27,13 @@ _ensure_path()
 
 from scripts.build_monitoring_artifact import (
     SCHEMA,
-    build_monitoring,
-    _render_markdown,
-    _eligible_rows,
-    _ranked_tickers,
     _compute_overlap,
+    _eligible_rows,
     _rank_correlation,
+    _ranked_tickers,
+    _render_markdown,
+    build_monitoring,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -57,9 +57,17 @@ def _write_csv(path: Path, rows: List[Dict]) -> None:
 
 
 COLS = [
-    "ticker", "actionable_rank", "eligible", "tier_dev",
-    "market_cap_bucket", "stage_bucket", "archetype", "mom_state",
-    "size_band", "has_catalyst_signal", "has_coinvest_signal",
+    "ticker",
+    "actionable_rank",
+    "eligible",
+    "tier_dev",
+    "market_cap_bucket",
+    "stage_bucket",
+    "archetype",
+    "mom_state",
+    "size_band",
+    "has_catalyst_signal",
+    "has_coinvest_signal",
     "composite_rank",
 ]
 
@@ -78,20 +86,22 @@ def _make_snapshot(
 
     rows = []
     for i, t in enumerate(tickers):
-        rows.append({
-            "ticker": t,
-            "actionable_rank": str(i + 1),
-            "eligible": "1",
-            "tier_dev": "A" if i < len(tickers) // 2 else "B",
-            "market_cap_bucket": "mid" if i % 2 == 0 else "small",
-            "stage_bucket": "late" if i < 3 else "early",
-            "archetype": "drug_developer",
-            "mom_state": "tailwind" if i % 3 == 0 else "headwind",
-            "size_band": "L" if i < 4 else "M",
-            "has_catalyst_signal": "TRUE" if i % 2 == 0 else "FALSE",
-            "has_coinvest_signal": "TRUE" if i < 6 else "FALSE",
-            "composite_rank": str(i + 1),
-        })
+        rows.append(
+            {
+                "ticker": t,
+                "actionable_rank": str(i + 1),
+                "eligible": "1",
+                "tier_dev": "A" if i < len(tickers) // 2 else "B",
+                "market_cap_bucket": "mid" if i % 2 == 0 else "small",
+                "stage_bucket": "late" if i < 3 else "early",
+                "archetype": "drug_developer",
+                "mom_state": "tailwind" if i % 3 == 0 else "headwind",
+                "size_band": "L" if i < 4 else "M",
+                "has_catalyst_signal": "TRUE" if i % 2 == 0 else "FALSE",
+                "has_coinvest_signal": "TRUE" if i < 6 else "FALSE",
+                "composite_rank": str(i + 1),
+            }
+        )
     _write_csv(d / "rankings.csv", rows)
 
     meta = {
@@ -117,11 +127,14 @@ def _make_snapshot(
         meta.update(extra_meta)
     _write_json(d / "metadata.json", meta)
 
-    _write_json(d / "cache_health.json", {
-        "schema": "cache_health.v1",
-        "overall_status": "bad" if degraded else "ok",
-        "degraded_run": degraded,
-    })
+    _write_json(
+        d / "cache_health.json",
+        {
+            "schema": "cache_health.v1",
+            "overall_status": "bad" if degraded else "ok",
+            "degraded_run": degraded,
+        },
+    )
 
     return d
 
@@ -197,14 +210,17 @@ class TestBuildMonitoring:
             {"ticker": "T02", "actionable_rank": "2", "eligible": "1", "tier_dev": "B"},
         ]
         _write_csv(d / "rankings.csv", rows)
-        _write_json(d / "metadata.json", {
-            "as_of_date": "2026-01-15",
-            "version": "1.6.0",
-            "decision_mode": "phase2",
-            "clinical_sort_telemetry": {"ruleset_id": "test1234"},
-            "cache_health_overall_status": "ok",
-            "cache_degraded_run": False,
-        })
+        _write_json(
+            d / "metadata.json",
+            {
+                "as_of_date": "2026-01-15",
+                "version": "1.6.0",
+                "decision_mode": "phase2",
+                "clinical_sort_telemetry": {"ruleset_id": "test1234"},
+                "cache_health_overall_status": "ok",
+                "cache_degraded_run": False,
+            },
+        )
 
         mon = build_monitoring("2026-01-15", snap_dir, top_k=2)
 
@@ -345,13 +361,20 @@ class TestCLI:
 
         from scripts.build_monitoring_artifact import main
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--snapshot-dir", str(snap_dir),
-            "--out-json", str(tmp_path / "mon.json"),
-            "--out-md", str(tmp_path / "mon.md"),
-            "--top-k", "3",
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--out-json",
+                str(tmp_path / "mon.json"),
+                "--out-md",
+                str(tmp_path / "mon.md"),
+                "--top-k",
+                "3",
+            ]
+        )
         assert rc == 0
         assert (tmp_path / "mon.json").exists()
         assert (tmp_path / "mon.md").exists()
@@ -362,10 +385,16 @@ class TestCLI:
     def test_missing_snapshot_exits_1(self, tmp_path):
         from scripts.build_monitoring_artifact import main
 
-        rc = main([
-            "--as-of-date", "2099-01-01",
-            "--snapshot-dir", str(tmp_path / "nope"),
-            "--out-json", str(tmp_path / "mon.json"),
-            "--out-md", str(tmp_path / "mon.md"),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2099-01-01",
+                "--snapshot-dir",
+                str(tmp_path / "nope"),
+                "--out-json",
+                str(tmp_path / "mon.json"),
+                "--out-md",
+                str(tmp_path / "mon.md"),
+            ]
+        )
         assert rc == 1

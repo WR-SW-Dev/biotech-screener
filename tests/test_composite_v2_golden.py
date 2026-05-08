@@ -21,33 +21,33 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from module_5_composite_v2 import (
-    compute_module_5_composite_v2,
-    _score_single_ticker_v2,
-    _rank_normalize_winsorized,
-    _apply_monotonic_caps,
-    _compute_determinism_hash,
-    _extract_confidence_financial,
-    _extract_confidence_clinical,
-    _extract_confidence_catalyst,
-    _to_decimal,
-    _quantize_score,
-    ComponentScore,
-    ScoringMode,
-    NormalizationMethod,
-    MonotonicCap,
-    HYBRID_ALPHA,
     CRITICAL_COMPONENTS,
     DEFAULT_WEIGHTS,
     ENHANCED_WEIGHTS,
-    WINSOR_LOW,
-    WINSOR_HIGH,
     EPS,
+    HYBRID_ALPHA,
+    WINSOR_HIGH,
+    WINSOR_LOW,
+    ComponentScore,
+    MonotonicCap,
+    NormalizationMethod,
+    ScoringMode,
+    _apply_monotonic_caps,
+    _compute_determinism_hash,
+    _extract_confidence_catalyst,
+    _extract_confidence_clinical,
+    _extract_confidence_financial,
+    _quantize_score,
+    _rank_normalize_winsorized,
+    _score_single_ticker_v2,
+    _to_decimal,
+    compute_module_5_composite_v2,
 )
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 def create_universe_fixture(tickers: list) -> dict:
     """Create a universe result fixture."""
@@ -142,20 +142,24 @@ def create_full_result_set(tickers: list, base_scores: dict = None) -> tuple:
 
     for t in tickers:
         t_scores = base_scores.get(t, {})
-        financial["scores"].append(create_financial_fixture(
-            t,
-            financial_normalized=t_scores.get("financial", 50.0),
-            liquidity_gate_status=t_scores.get("liquidity_gate_status", "PASS"),
-            runway_months=t_scores.get("runway_months", 24.0),
-            dilution_risk_bucket=t_scores.get("dilution_risk_bucket", "LOW"),
-            confidence=t_scores.get("financial_confidence"),
-        ))
-        clinical["scores"].append(create_clinical_fixture(
-            t,
-            clinical_score=t_scores.get("clinical", 50.0),
-            lead_phase=t_scores.get("lead_phase", "Phase 2"),
-            confidence=t_scores.get("clinical_confidence"),
-        ))
+        financial["scores"].append(
+            create_financial_fixture(
+                t,
+                financial_normalized=t_scores.get("financial", 50.0),
+                liquidity_gate_status=t_scores.get("liquidity_gate_status", "PASS"),
+                runway_months=t_scores.get("runway_months", 24.0),
+                dilution_risk_bucket=t_scores.get("dilution_risk_bucket", "LOW"),
+                confidence=t_scores.get("financial_confidence"),
+            )
+        )
+        clinical["scores"].append(
+            create_clinical_fixture(
+                t,
+                clinical_score=t_scores.get("clinical", 50.0),
+                lead_phase=t_scores.get("lead_phase", "Phase 2"),
+                confidence=t_scores.get("clinical_confidence"),
+            )
+        )
         catalyst["summaries"][t] = create_catalyst_fixture(
             t,
             score_blended=t_scores.get("catalyst", 50.0),
@@ -170,13 +174,17 @@ def create_full_result_set(tickers: list, base_scores: dict = None) -> tuple:
 # 1. BREAKDOWN CONSISTENCY TESTS
 # ============================================================================
 
+
 def test_breakdown_sum_equals_weighted_sum():
     """Sum of component contributions equals weighted_sum in breakdown."""
     tickers = ["AAAA", "BBBB", "CCCC", "DDDD", "EEEE"]
     universe, financial, catalyst, clinical = create_full_result_set(tickers)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -185,17 +193,16 @@ def test_breakdown_sum_equals_weighted_sum():
         components = breakdown["components"]
 
         # Sum contributions
-        total_contribution = sum(
-            Decimal(c["contribution"]) for c in components
-        )
+        total_contribution = sum(Decimal(c["contribution"]) for c in components)
 
         # Get weighted_sum from hybrid_aggregation
         weighted_sum = Decimal(breakdown["hybrid_aggregation"]["weighted_sum"])
 
         # They should match within tolerance
         diff = abs(total_contribution - weighted_sum)
-        assert diff < Decimal("0.02"), \
-            f"{sec['ticker']}: contribution sum {total_contribution} != weighted_sum {weighted_sum}"
+        assert diff < Decimal(
+            "0.02"
+        ), f"{sec['ticker']}: contribution sum {total_contribution} != weighted_sum {weighted_sum}"
 
     print("✓ test_breakdown_sum_equals_weighted_sum passed")
 
@@ -206,7 +213,10 @@ def test_breakdown_effective_weights_sum_to_one():
     universe, financial, catalyst, clinical = create_full_result_set(tickers)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -215,8 +225,7 @@ def test_breakdown_effective_weights_sum_to_one():
         total_weight = sum(Decimal(w) for w in effective_weights.values())
 
         diff = abs(total_weight - Decimal("1"))
-        assert diff < Decimal("0.001"), \
-            f"{sec['ticker']}: effective weights sum to {total_weight}, expected ~1.0"
+        assert diff < Decimal("0.001"), f"{sec['ticker']}: effective weights sum to {total_weight}, expected ~1.0"
 
     print("✓ test_breakdown_effective_weights_sum_to_one passed")
 
@@ -227,7 +236,10 @@ def test_breakdown_contribution_matches_weight_times_score():
     universe, financial, catalyst, clinical = create_full_result_set(tickers)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -242,9 +254,10 @@ def test_breakdown_contribution_matches_weight_times_score():
             expected = _quantize_score(normalized * weight_eff)
             diff = abs(contribution - expected)
 
-            assert diff < Decimal("0.02"), \
-                f"{sec['ticker']}/{comp['name']}: contribution {contribution} != " \
+            assert diff < Decimal("0.02"), (
+                f"{sec['ticker']}/{comp['name']}: contribution {contribution} != "
                 f"normalized({normalized}) * weight({weight_eff}) = {expected}"
+            )
 
     print("✓ test_breakdown_contribution_matches_weight_times_score passed")
 
@@ -252,6 +265,7 @@ def test_breakdown_contribution_matches_weight_times_score():
 # ============================================================================
 # 2. CONFIDENCE WEIGHTING TESTS
 # ============================================================================
+
 
 def test_confidence_weighting_decreases_contribution():
     """Lower confidence should decrease component's effective weight."""
@@ -265,7 +279,10 @@ def test_confidence_weighting_decreases_contribution():
     financial_h["scores"][0]["financial_data_state"] = "FULL"
 
     result_high = compute_module_5_composite_v2(
-        universe_h, financial_h, catalyst_h, clinical_h,
+        universe_h,
+        financial_h,
+        catalyst_h,
+        clinical_h,
         as_of_date="2026-01-11",
     )
 
@@ -276,7 +293,10 @@ def test_confidence_weighting_decreases_contribution():
     financial_l["scores"][0]["financial_data_state"] = "MINIMAL"
 
     result_low = compute_module_5_composite_v2(
-        universe_l, financial_l, catalyst_l, clinical_l,
+        universe_l,
+        financial_l,
+        catalyst_l,
+        clinical_l,
         as_of_date="2026-01-11",
     )
 
@@ -284,8 +304,7 @@ def test_confidence_weighting_decreases_contribution():
     weight_high = Decimal(result_high["ranked_securities"][0]["effective_weights"]["financial"])
     weight_low = Decimal(result_low["ranked_securities"][0]["effective_weights"]["financial"])
 
-    assert weight_low < weight_high, \
-        f"Low confidence weight ({weight_low}) should be < high confidence ({weight_high})"
+    assert weight_low < weight_high, f"Low confidence weight ({weight_low}) should be < high confidence ({weight_high})"
 
     print("✓ test_confidence_weighting_decreases_contribution passed")
 
@@ -302,8 +321,7 @@ def test_confidence_extraction_financial_states():
     for state, expected in states_expected.items():
         data = {"financial_data_state": state}
         conf = _extract_confidence_financial(data)
-        assert conf == expected, \
-            f"State {state}: expected {expected}, got {conf}"
+        assert conf == expected, f"State {state}: expected {expected}, got {conf}"
 
     print("✓ test_confidence_extraction_financial_states passed")
 
@@ -315,8 +333,7 @@ def test_confidence_extraction_overrides_state():
         "confidence": Decimal("0.9"),  # Override
     }
     conf = _extract_confidence_financial(data)
-    assert conf == Decimal("0.9"), \
-        f"Expected 0.9 (explicit), got {conf}"
+    assert conf == Decimal("0.9"), f"Expected 0.9 (explicit), got {conf}"
 
     print("✓ test_confidence_extraction_overrides_state passed")
 
@@ -333,9 +350,7 @@ def test_confidence_clinical_trial_based():
     conf_trials = _extract_confidence_clinical({"clinical_score": 50, "trial_count": 5})
 
     # With lead phase
-    conf_full = _extract_confidence_clinical({
-        "clinical_score": 50, "trial_count": 5, "lead_phase": "Phase 3"
-    })
+    conf_full = _extract_confidence_clinical({"clinical_score": 50, "trial_count": 5, "lead_phase": "Phase 3"})
 
     assert conf_min < conf_score, "Score should increase confidence"
     assert conf_score < conf_trials, "Trials should increase confidence"
@@ -348,27 +363,34 @@ def test_confidence_clinical_trial_based():
 # 3. MONOTONIC CAPS TESTS
 # ============================================================================
 
+
 def test_monotonic_cap_liquidity_fail():
     """Liquidity FAIL should cap score at 35 regardless of other scores."""
     tickers = ["BEST"]
-    base = {"BEST": {
-        "financial": 90,
-        "clinical": 95,
-        "catalyst": 90,
-        "liquidity_gate_status": "FAIL",
-    }}
+    base = {
+        "BEST": {
+            "financial": 90,
+            "clinical": 95,
+            "catalyst": 90,
+            "liquidity_gate_status": "FAIL",
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     sec = result["ranked_securities"][0]
     score = Decimal(sec["composite_score"])
 
-    assert score <= MonotonicCap.LIQUIDITY_FAIL_CAP, \
-        f"Score {score} exceeds liquidity FAIL cap {MonotonicCap.LIQUIDITY_FAIL_CAP}"
+    assert (
+        score <= MonotonicCap.LIQUIDITY_FAIL_CAP
+    ), f"Score {score} exceeds liquidity FAIL cap {MonotonicCap.LIQUIDITY_FAIL_CAP}"
     assert len(sec["monotonic_caps_applied"]) > 0, "Should have cap applied"
     assert any(c["reason"] == "liquidity_gate_fail" for c in sec["monotonic_caps_applied"])
 
@@ -378,24 +400,30 @@ def test_monotonic_cap_liquidity_fail():
 def test_monotonic_cap_liquidity_warn():
     """Liquidity WARN should cap score at 60."""
     tickers = ["WARN"]
-    base = {"WARN": {
-        "financial": 90,
-        "clinical": 95,
-        "catalyst": 90,
-        "liquidity_gate_status": "WARN",
-    }}
+    base = {
+        "WARN": {
+            "financial": 90,
+            "clinical": 95,
+            "catalyst": 90,
+            "liquidity_gate_status": "WARN",
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     sec = result["ranked_securities"][0]
     score = Decimal(sec["composite_score"])
 
-    assert score <= MonotonicCap.LIQUIDITY_WARN_CAP, \
-        f"Score {score} exceeds liquidity WARN cap {MonotonicCap.LIQUIDITY_WARN_CAP}"
+    assert (
+        score <= MonotonicCap.LIQUIDITY_WARN_CAP
+    ), f"Score {score} exceeds liquidity WARN cap {MonotonicCap.LIQUIDITY_WARN_CAP}"
 
     print("✓ test_monotonic_cap_liquidity_warn passed")
 
@@ -403,24 +431,30 @@ def test_monotonic_cap_liquidity_warn():
 def test_monotonic_cap_runway_critical():
     """Runway < 6 months should cap score at 40."""
     tickers = ["BURN"]
-    base = {"BURN": {
-        "financial": 90,
-        "clinical": 95,
-        "catalyst": 90,
-        "runway_months": 4.0,  # Critical
-    }}
+    base = {
+        "BURN": {
+            "financial": 90,
+            "clinical": 95,
+            "catalyst": 90,
+            "runway_months": 4.0,  # Critical
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     sec = result["ranked_securities"][0]
     score = Decimal(sec["composite_score"])
 
-    assert score <= MonotonicCap.RUNWAY_CRITICAL_CAP, \
-        f"Score {score} exceeds runway critical cap {MonotonicCap.RUNWAY_CRITICAL_CAP}"
+    assert (
+        score <= MonotonicCap.RUNWAY_CRITICAL_CAP
+    ), f"Score {score} exceeds runway critical cap {MonotonicCap.RUNWAY_CRITICAL_CAP}"
 
     print("✓ test_monotonic_cap_runway_critical passed")
 
@@ -428,24 +462,30 @@ def test_monotonic_cap_runway_critical():
 def test_monotonic_cap_runway_warning():
     """Runway < 12 months should cap score at 55."""
     tickers = ["CAUTION"]
-    base = {"CAUTION": {
-        "financial": 90,
-        "clinical": 95,
-        "catalyst": 90,
-        "runway_months": 9.0,  # Warning
-    }}
+    base = {
+        "CAUTION": {
+            "financial": 90,
+            "clinical": 95,
+            "catalyst": 90,
+            "runway_months": 9.0,  # Warning
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     sec = result["ranked_securities"][0]
     score = Decimal(sec["composite_score"])
 
-    assert score <= MonotonicCap.RUNWAY_WARNING_CAP, \
-        f"Score {score} exceeds runway warning cap {MonotonicCap.RUNWAY_WARNING_CAP}"
+    assert (
+        score <= MonotonicCap.RUNWAY_WARNING_CAP
+    ), f"Score {score} exceeds runway warning cap {MonotonicCap.RUNWAY_WARNING_CAP}"
 
     print("✓ test_monotonic_cap_runway_warning passed")
 
@@ -453,24 +493,30 @@ def test_monotonic_cap_runway_warning():
 def test_monotonic_cap_dilution_severe():
     """SEVERE dilution risk should cap score at 45."""
     tickers = ["DILUTE"]
-    base = {"DILUTE": {
-        "financial": 90,
-        "clinical": 95,
-        "catalyst": 90,
-        "dilution_risk_bucket": "SEVERE",
-    }}
+    base = {
+        "DILUTE": {
+            "financial": 90,
+            "clinical": 95,
+            "catalyst": 90,
+            "dilution_risk_bucket": "SEVERE",
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     sec = result["ranked_securities"][0]
     score = Decimal(sec["composite_score"])
 
-    assert score <= MonotonicCap.DILUTION_SEVERE_CAP, \
-        f"Score {score} exceeds dilution severe cap {MonotonicCap.DILUTION_SEVERE_CAP}"
+    assert (
+        score <= MonotonicCap.DILUTION_SEVERE_CAP
+    ), f"Score {score} exceeds dilution severe cap {MonotonicCap.DILUTION_SEVERE_CAP}"
 
     print("✓ test_monotonic_cap_dilution_severe passed")
 
@@ -483,12 +529,11 @@ def test_monotonic_cap_cumulative():
     capped, caps = _apply_monotonic_caps(
         score,
         liquidity_gate_status="FAIL",  # cap 35
-        runway_months=Decimal("4"),    # cap 40
-        dilution_risk_bucket="SEVERE", # cap 45
+        runway_months=Decimal("4"),  # cap 40
+        dilution_risk_bucket="SEVERE",  # cap 45
     )
 
-    assert capped == MonotonicCap.LIQUIDITY_FAIL_CAP, \
-        f"Expected {MonotonicCap.LIQUIDITY_FAIL_CAP}, got {capped}"
+    assert capped == MonotonicCap.LIQUIDITY_FAIL_CAP, f"Expected {MonotonicCap.LIQUIDITY_FAIL_CAP}, got {capped}"
 
     # Should have all three caps applied
     assert len(caps) >= 1, "Should have at least one cap reason"
@@ -517,6 +562,7 @@ def test_no_cap_when_score_below_threshold():
 # 4. DETERMINISM HASH TESTS
 # ============================================================================
 
+
 def test_determinism_hash_same_inputs():
     """Same inputs should produce same hash."""
     tickers = ["DETER"]
@@ -524,12 +570,18 @@ def test_determinism_hash_same_inputs():
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result1 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     result2 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -550,7 +602,10 @@ def test_determinism_hash_different_score():
     universe1, financial1, catalyst1, clinical1 = create_full_result_set(tickers, base1)
 
     result1 = compute_module_5_composite_v2(
-        universe1, financial1, catalyst1, clinical1,
+        universe1,
+        financial1,
+        catalyst1,
+        clinical1,
         as_of_date="2026-01-11",
     )
 
@@ -559,7 +614,10 @@ def test_determinism_hash_different_score():
     universe2, financial2, catalyst2, clinical2 = create_full_result_set(tickers, base2)
 
     result2 = compute_module_5_composite_v2(
-        universe2, financial2, catalyst2, clinical2,
+        universe2,
+        financial2,
+        catalyst2,
+        clinical2,
         as_of_date="2026-01-11",
     )
 
@@ -579,12 +637,18 @@ def test_determinism_hash_different_date():
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result1 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-10",
     )
 
     result2 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -592,8 +656,7 @@ def test_determinism_hash_different_date():
     hash2 = result2["ranked_securities"][0]["determinism_hash"]
 
     # Hash is ticker-specific, should be same if same ticker-level inputs
-    assert hash1 == hash2, \
-        f"Same ticker data should produce same hash regardless of date"
+    assert hash1 == hash2, f"Same ticker data should produce same hash regardless of date"
 
     print("✓ test_determinism_hash_different_date passed")
 
@@ -605,7 +668,10 @@ def test_determinism_hash_length():
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -621,6 +687,7 @@ def test_determinism_hash_length():
 # 5. ROBUST NORMALIZATION (WINSORIZATION) TESTS
 # ============================================================================
 
+
 def test_winsorization_clips_outliers():
     """Extreme values should be clipped to p5-p95 range, output mapped to [5, 95]."""
     # Create cohort with one extreme outlier
@@ -631,12 +698,10 @@ def test_winsorization_clips_outliers():
     assert winsor_applied, "Winsorization should be applied with outlier"
 
     # Check that normalized values are in [5, 95] (output floor eliminates zero cliff)
-    assert all(5 <= v <= 95 for v in normalized), \
-        f"Normalized values should be in [5, 95]: {normalized}"
+    assert all(5 <= v <= 95 for v in normalized), f"Normalized values should be in [5, 95]: {normalized}"
 
     # The extreme value (1000) should be normalized to 95 (max after rescale)
-    assert normalized[-1] == Decimal("95"), \
-        f"Highest value should normalize to 95, got {normalized[-1]}"
+    assert normalized[-1] == Decimal("95"), f"Highest value should normalize to 95, got {normalized[-1]}"
 
     print("✓ test_winsorization_clips_outliers passed")
 
@@ -662,8 +727,7 @@ def test_winsorization_single_value():
     normalized, winsor_applied = _rank_normalize_winsorized(values)
 
     assert len(normalized) == 1
-    assert normalized[0] == Decimal("50"), \
-        f"Single value should normalize to 50, got {normalized[0]}"
+    assert normalized[0] == Decimal("50"), f"Single value should normalize to 50, got {normalized[0]}"
 
     print("✓ test_winsorization_single_value passed")
 
@@ -675,8 +739,9 @@ def test_winsorization_tied_values():
     normalized, _ = _rank_normalize_winsorized(values)
 
     # First four values are tied
-    assert normalized[0] == normalized[1] == normalized[2] == normalized[3], \
-        f"Tied values should have same normalized score: {normalized[:4]}"
+    assert (
+        normalized[0] == normalized[1] == normalized[2] == normalized[3]
+    ), f"Tied values should have same normalized score: {normalized[:4]}"
 
     print("✓ test_winsorization_tied_values passed")
 
@@ -696,12 +761,13 @@ def test_winsorization_in_cohort_normalization():
         "OUTLIER": {"financial": 99, "clinical": 99, "catalyst": 99},  # Extreme
     }
 
-    universe, financial, catalyst, clinical = create_full_result_set(
-        tickers, base_scores
-    )
+    universe, financial, catalyst, clinical = create_full_result_set(tickers, base_scores)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -719,19 +785,25 @@ def test_winsorization_in_cohort_normalization():
 # 6. WEAKEST-LINK HYBRID AGGREGATION TESTS
 # ============================================================================
 
+
 def test_weakest_link_reduces_score():
     """Low critical component should pull down hybrid score vs pure weighted sum."""
     tickers = ["WEAK"]
-    base = {"WEAK": {
-        "financial": 20,   # Low financial (critical)
-        "clinical": 90,    # High clinical (critical)
-        "catalyst": 85,    # High catalyst
-    }}
+    base = {
+        "WEAK": {
+            "financial": 20,  # Low financial (critical)
+            "clinical": 90,  # High clinical (critical)
+            "catalyst": 85,  # High catalyst
+        }
+    }
 
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -742,16 +814,14 @@ def test_weakest_link_reduces_score():
     min_critical = Decimal(breakdown["hybrid_aggregation"]["min_critical"])
 
     # Min critical should be much lower than weighted sum
-    assert min_critical < weighted_sum, \
-        f"min_critical ({min_critical}) should be < weighted_sum ({weighted_sum})"
+    assert min_critical < weighted_sum, f"min_critical ({min_critical}) should be < weighted_sum ({weighted_sum})"
 
     # Final pre_penalty should be pulled down from pure weighted sum
     pre_penalty = Decimal(breakdown["final"]["pre_penalty_score"])
     expected_hybrid = HYBRID_ALPHA * weighted_sum + (Decimal("1") - HYBRID_ALPHA) * min_critical
 
     diff = abs(pre_penalty - expected_hybrid)
-    assert diff < Decimal("0.1"), \
-        f"Hybrid score mismatch: {pre_penalty} vs expected {expected_hybrid}"
+    assert diff < Decimal("0.1"), f"Hybrid score mismatch: {pre_penalty} vs expected {expected_hybrid}"
 
     print("✓ test_weakest_link_reduces_score passed")
 
@@ -759,16 +829,21 @@ def test_weakest_link_reduces_score():
 def test_weakest_link_balanced_scores():
     """Balanced critical components should have minimal weakest-link impact."""
     tickers = ["BALANCED"]
-    base = {"BALANCED": {
-        "financial": 60,   # Balanced
-        "clinical": 65,    # Balanced
-        "catalyst": 70,    # Slightly higher (non-critical)
-    }}
+    base = {
+        "BALANCED": {
+            "financial": 60,  # Balanced
+            "clinical": 65,  # Balanced
+            "catalyst": 70,  # Slightly higher (non-critical)
+        }
+    }
 
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -780,8 +855,7 @@ def test_weakest_link_balanced_scores():
 
     # When balanced, min_critical should be close to weighted_sum
     diff_pct = abs(min_critical - weighted_sum) / max(weighted_sum, Decimal("1")) * 100
-    assert diff_pct < Decimal("25"), \
-        f"Balanced scores should have similar weighted_sum and min_critical"
+    assert diff_pct < Decimal("25"), f"Balanced scores should have similar weighted_sum and min_critical"
 
     print("✓ test_weakest_link_balanced_scores passed")
 
@@ -794,7 +868,10 @@ def test_hybrid_alpha_applied_correctly():
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -811,8 +888,9 @@ def test_hybrid_alpha_applied_correctly():
     pre_penalty = Decimal(breakdown["final"]["pre_penalty_score"])
 
     diff = abs(pre_penalty - _quantize_score(expected_hybrid))
-    assert diff < Decimal("0.02"), \
-        f"Hybrid formula mismatch: got {pre_penalty}, expected {_quantize_score(expected_hybrid)}"
+    assert diff < Decimal(
+        "0.02"
+    ), f"Hybrid formula mismatch: got {pre_penalty}, expected {_quantize_score(expected_hybrid)}"
 
     print("✓ test_hybrid_alpha_applied_correctly passed")
 
@@ -830,6 +908,7 @@ def test_critical_components_defined():
 # INTEGRATION TESTS
 # ============================================================================
 
+
 def test_full_pipeline_basic():
     """Basic end-to-end test of Module 5 v2."""
     tickers = ["AAAA", "BBBB", "CCCC", "DDDD", "EEEE"]
@@ -844,7 +923,10 @@ def test_full_pipeline_basic():
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base_scores)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -874,21 +956,30 @@ def test_full_pipeline_with_exclusions():
     tickers = ["GOOD", "BAD"]
 
     universe = create_universe_fixture(tickers)
-    financial = {"scores": [
-        create_financial_fixture("GOOD", financial_normalized=70),
-        create_financial_fixture("BAD", financial_normalized=60, severity="sev3"),
-    ]}
-    clinical = {"scores": [
-        create_clinical_fixture("GOOD", clinical_score=65),
-        create_clinical_fixture("BAD", clinical_score=80),
-    ]}
-    catalyst = {"summaries": {
-        "GOOD": create_catalyst_fixture("GOOD", score_blended=60),
-        "BAD": create_catalyst_fixture("BAD", score_blended=75),
-    }}
+    financial = {
+        "scores": [
+            create_financial_fixture("GOOD", financial_normalized=70),
+            create_financial_fixture("BAD", financial_normalized=60, severity="sev3"),
+        ]
+    }
+    clinical = {
+        "scores": [
+            create_clinical_fixture("GOOD", clinical_score=65),
+            create_clinical_fixture("BAD", clinical_score=80),
+        ]
+    }
+    catalyst = {
+        "summaries": {
+            "GOOD": create_catalyst_fixture("GOOD", score_blended=60),
+            "BAD": create_catalyst_fixture("BAD", score_blended=75),
+        }
+    }
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -906,14 +997,18 @@ def test_diagnostic_counts_accurate():
     tickers = ["A", "B", "C", "D", "E", "EXCLUDE"]
 
     universe = create_universe_fixture(tickers)
-    financial = {"scores": [
-        create_financial_fixture(t) for t in ["A", "B", "C", "D", "E"]
-    ] + [create_financial_fixture("EXCLUDE", severity="sev3")]}
+    financial = {
+        "scores": [create_financial_fixture(t) for t in ["A", "B", "C", "D", "E"]]
+        + [create_financial_fixture("EXCLUDE", severity="sev3")]
+    }
     clinical = {"scores": [create_clinical_fixture(t) for t in tickers]}
     catalyst = {"summaries": {t: create_catalyst_fixture(t) for t in tickers}}
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -929,24 +1024,32 @@ def test_diagnostic_counts_accurate():
 # 7. POLICY INVARIANTS (MERGE CHECKLIST)
 # ============================================================================
 
+
 def test_score_bounds_clamped_0_100():
     """Final composite score must always be in [0, 100]."""
     # Test with extreme high scores + bonuses
     tickers = ["HIGH"]
-    base = {"HIGH": {
-        "financial": 99, "clinical": 99, "catalyst": 99,
-        "proximity": 50, "delta": 50,  # Large bonuses
-    }}
+    base = {
+        "HIGH": {
+            "financial": 99,
+            "clinical": 99,
+            "catalyst": 99,
+            "proximity": 50,
+            "delta": 50,  # Large bonuses
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     score = Decimal(result["ranked_securities"][0]["composite_score"])
-    assert Decimal("0") <= score <= Decimal("100"), \
-        f"Score {score} out of bounds [0, 100]"
+    assert Decimal("0") <= score <= Decimal("100"), f"Score {score} out of bounds [0, 100]"
 
     # Test with extreme low scores
     tickers_low = ["LOW"]
@@ -954,13 +1057,15 @@ def test_score_bounds_clamped_0_100():
     universe_l, financial_l, catalyst_l, clinical_l = create_full_result_set(tickers_low, base_low)
 
     result_low = compute_module_5_composite_v2(
-        universe_l, financial_l, catalyst_l, clinical_l,
+        universe_l,
+        financial_l,
+        catalyst_l,
+        clinical_l,
         as_of_date="2026-01-11",
     )
 
     score_low = Decimal(result_low["ranked_securities"][0]["composite_score"])
-    assert Decimal("0") <= score_low <= Decimal("100"), \
-        f"Score {score_low} out of bounds [0, 100]"
+    assert Decimal("0") <= score_low <= Decimal("100"), f"Score {score_low} out of bounds [0, 100]"
 
     print("✓ test_score_bounds_clamped_0_100 passed")
 
@@ -969,16 +1074,23 @@ def test_ordering_caps_before_bonuses():
     """Monotonic caps should be applied BEFORE bonuses."""
     # Scenario: high base score gets capped, then bonus added
     tickers = ["ORDER"]
-    base = {"ORDER": {
-        "financial": 90, "clinical": 90, "catalyst": 90,
-        "liquidity_gate_status": "FAIL",  # Cap at 35
-        "proximity": 10,  # +0.5 bonus (10/20)
-        "delta": 10,      # +0.5 bonus
-    }}
+    base = {
+        "ORDER": {
+            "financial": 90,
+            "clinical": 90,
+            "catalyst": 90,
+            "liquidity_gate_status": "FAIL",  # Cap at 35
+            "proximity": 10,  # +0.5 bonus (10/20)
+            "delta": 10,  # +0.5 bonus
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -989,16 +1101,18 @@ def test_ordering_caps_before_bonuses():
     post_bonus = Decimal(breakdown["final"]["post_bonus_score"])
 
     # Post-cap should be at the cap (35)
-    assert post_cap <= MonotonicCap.LIQUIDITY_FAIL_CAP, \
-        f"Post-cap {post_cap} exceeds cap {MonotonicCap.LIQUIDITY_FAIL_CAP}"
+    assert (
+        post_cap <= MonotonicCap.LIQUIDITY_FAIL_CAP
+    ), f"Post-cap {post_cap} exceeds cap {MonotonicCap.LIQUIDITY_FAIL_CAP}"
 
     # Post-bonus should be post_cap + bonuses
     proximity_bonus = Decimal(breakdown["bonuses"]["proximity_bonus"])
     delta_bonus = Decimal(breakdown["bonuses"]["delta_bonus"])
     expected_post_bonus = post_cap + proximity_bonus + delta_bonus
 
-    assert abs(post_bonus - expected_post_bonus) < Decimal("0.02"), \
-        f"Post-bonus {post_bonus} != post_cap({post_cap}) + bonuses({proximity_bonus}+{delta_bonus})"
+    assert abs(post_bonus - expected_post_bonus) < Decimal(
+        "0.02"
+    ), f"Post-bonus {post_bonus} != post_cap({post_cap}) + bonuses({proximity_bonus}+{delta_bonus})"
 
     print("✓ test_ordering_caps_before_bonuses passed")
 
@@ -1008,14 +1122,19 @@ def test_confidence_and_uncertainty_independent():
     # Scenario 1: Has score but low confidence
     tickers = ["LOWCONF"]
     universe = create_universe_fixture(tickers)
-    financial = {"scores": [create_financial_fixture(
-        "LOWCONF", financial_normalized=70, confidence=0.3, financial_data_state="MINIMAL"
-    )]}
+    financial = {
+        "scores": [
+            create_financial_fixture("LOWCONF", financial_normalized=70, confidence=0.3, financial_data_state="MINIMAL")
+        ]
+    }
     clinical = {"scores": [create_clinical_fixture("LOWCONF", clinical_score=60)]}
     catalyst = {"summaries": {"LOWCONF": create_catalyst_fixture("LOWCONF", score_blended=50)}}
 
     result1 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -1027,23 +1146,32 @@ def test_confidence_and_uncertainty_independent():
 
     # Uncertainty penalty should be 0 (all scores present)
     uncertainty = Decimal(bd1["penalties_and_gates"]["uncertainty_penalty_pct"])
-    assert uncertainty == Decimal("0"), \
-        f"Uncertainty should be 0 when all scores present, got {uncertainty}"
+    assert uncertainty == Decimal("0"), f"Uncertainty should be 0 when all scores present, got {uncertainty}"
 
     # Scenario 2: Missing score (None) but high state confidence
     tickers2 = ["MISSING"]
     universe2 = create_universe_fixture(tickers2)
     # financial_normalized is present but we'll test with missing clinical
-    financial2 = {"scores": [create_financial_fixture(
-        "MISSING", financial_normalized=70, financial_data_state="FULL"
-    )]}
-    clinical2 = {"scores": [{"ticker": "MISSING", "clinical_score": None,
-                            "lead_phase": "Phase 2", "severity": "none",
-                            "trial_count": 5, "flags": []}]}  # Score is None
+    financial2 = {"scores": [create_financial_fixture("MISSING", financial_normalized=70, financial_data_state="FULL")]}
+    clinical2 = {
+        "scores": [
+            {
+                "ticker": "MISSING",
+                "clinical_score": None,
+                "lead_phase": "Phase 2",
+                "severity": "none",
+                "trial_count": 5,
+                "flags": [],
+            }
+        ]
+    }  # Score is None
     catalyst2 = {"summaries": {"MISSING": create_catalyst_fixture("MISSING", score_blended=50)}}
 
     result2 = compute_module_5_composite_v2(
-        universe2, financial2, catalyst2, clinical2,
+        universe2,
+        financial2,
+        catalyst2,
+        clinical2,
         as_of_date="2026-01-11",
     )
 
@@ -1052,13 +1180,11 @@ def test_confidence_and_uncertainty_independent():
 
     # Uncertainty penalty should be non-zero (1 of 3 scores missing = ~33%)
     uncertainty2 = Decimal(bd2["penalties_and_gates"]["uncertainty_penalty_pct"])
-    assert uncertainty2 > Decimal("0"), \
-        f"Uncertainty should be >0 when score missing, got {uncertainty2}"
+    assert uncertainty2 > Decimal("0"), f"Uncertainty should be >0 when score missing, got {uncertainty2}"
 
     # Clinical confidence should still be reasonable (has trials, lead_phase)
     clin_conf = Decimal(sec2["confidence_clinical"])
-    assert clin_conf >= Decimal("0.5"), \
-        f"Clinical confidence should be decent with trial data, got {clin_conf}"
+    assert clin_conf >= Decimal("0.5"), f"Clinical confidence should be decent with trial data, got {clin_conf}"
 
     print("✓ test_confidence_and_uncertainty_independent passed")
 
@@ -1070,8 +1196,7 @@ def test_winsorization_small_n_2():
 
     assert len(normalized) == 2
     # First should be lower, second higher
-    assert normalized[0] < normalized[1], \
-        f"n=2: first ({normalized[0]}) should be < second ({normalized[1]})"
+    assert normalized[0] < normalized[1], f"n=2: first ({normalized[0]}) should be < second ({normalized[1]})"
 
     print("✓ test_winsorization_small_n_2 passed")
 
@@ -1083,8 +1208,7 @@ def test_winsorization_small_n_3():
 
     assert len(normalized) == 3
     # Should maintain order
-    assert normalized[0] < normalized[1] < normalized[2], \
-        f"n=3 should maintain order: {normalized}"
+    assert normalized[0] < normalized[1] < normalized[2], f"n=3 should maintain order: {normalized}"
 
     print("✓ test_winsorization_small_n_3 passed")
 
@@ -1097,8 +1221,7 @@ def test_winsorization_small_n_4():
     assert len(normalized) == 4
     # Should maintain order
     for i in range(len(normalized) - 1):
-        assert normalized[i] <= normalized[i + 1], \
-            f"n=4 should maintain order: {normalized}"
+        assert normalized[i] <= normalized[i + 1], f"n=4 should maintain order: {normalized}"
 
     print("✓ test_winsorization_small_n_4 passed")
 
@@ -1113,7 +1236,10 @@ def test_breakdown_pre_post_penalty_reconciliation():
     clinical["scores"][0]["clinical_score"] = None
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -1130,8 +1256,9 @@ def test_breakdown_pre_post_penalty_reconciliation():
     expected_post = expected_post.quantize(Decimal("0.01"))
 
     diff = abs(post_penalty - expected_post)
-    assert diff < Decimal("0.02"), \
-        f"Post penalty {post_penalty} != pre({pre_penalty}) * (1-{uncertainty_pct}) * {severity_mult} = {expected_post}"
+    assert diff < Decimal(
+        "0.02"
+    ), f"Post penalty {post_penalty} != pre({pre_penalty}) * (1-{uncertainty_pct}) * {severity_mult} = {expected_post}"
 
     print("✓ test_breakdown_pre_post_penalty_reconciliation passed")
 
@@ -1139,14 +1266,21 @@ def test_breakdown_pre_post_penalty_reconciliation():
 def test_breakdown_caps_record_pre_and_post():
     """Caps applied should include threshold information."""
     tickers = ["CAPINFO"]
-    base = {"CAPINFO": {
-        "financial": 90, "clinical": 90, "catalyst": 90,
-        "liquidity_gate_status": "FAIL",
-    }}
+    base = {
+        "CAPINFO": {
+            "financial": 90,
+            "clinical": 90,
+            "catalyst": 90,
+            "liquidity_gate_status": "FAIL",
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     result = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
@@ -1165,28 +1299,35 @@ def test_determinism_hash_no_float_contamination():
     """Hash computation should not use any float operations."""
     # Create inputs with potential float edge cases
     tickers = ["NOFLOAT"]
-    base = {"NOFLOAT": {
-        "financial": 33.333333,  # Repeating decimal
-        "clinical": 66.666666,
-        "catalyst": 50.0,
-    }}
+    base = {
+        "NOFLOAT": {
+            "financial": 33.333333,  # Repeating decimal
+            "clinical": 66.666666,
+            "catalyst": 50.0,
+        }
+    }
     universe, financial, catalyst, clinical = create_full_result_set(tickers, base)
 
     # Run twice - if floats are involved, precision issues may cause different hashes
     result1 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
     result2 = compute_module_5_composite_v2(
-        universe, financial, catalyst, clinical,
+        universe,
+        financial,
+        catalyst,
+        clinical,
         as_of_date="2026-01-11",
     )
 
     hash1 = result1["ranked_securities"][0]["determinism_hash"]
     hash2 = result2["ranked_securities"][0]["determinism_hash"]
 
-    assert hash1 == hash2, \
-        f"Float contamination: hashes differ {hash1} vs {hash2}"
+    assert hash1 == hash2, f"Float contamination: hashes differ {hash1} vs {hash2}"
 
     print("✓ test_determinism_hash_no_float_contamination passed")
 
@@ -1204,23 +1345,48 @@ def test_determinism_hash_canonical_ordering():
     regime_adj = {}
 
     comp_scores = [
-        ComponentScore("clinical", Decimal("70"), Decimal("70"), Decimal("1"), Decimal("0.4"), Decimal("0.4"), Decimal("28")),
-        ComponentScore("financial", Decimal("60"), Decimal("60"), Decimal("1"), Decimal("0.35"), Decimal("0.35"), Decimal("21")),
-        ComponentScore("catalyst", Decimal("50"), Decimal("50"), Decimal("1"), Decimal("0.25"), Decimal("0.25"), Decimal("12.5")),
+        ComponentScore(
+            "clinical", Decimal("70"), Decimal("70"), Decimal("1"), Decimal("0.4"), Decimal("0.4"), Decimal("28")
+        ),
+        ComponentScore(
+            "financial", Decimal("60"), Decimal("60"), Decimal("1"), Decimal("0.35"), Decimal("0.35"), Decimal("21")
+        ),
+        ComponentScore(
+            "catalyst", Decimal("50"), Decimal("50"), Decimal("1"), Decimal("0.25"), Decimal("0.25"), Decimal("12.5")
+        ),
     ]
 
     hash1 = _compute_determinism_hash(
-        "TEST", "v2.0", "default", base_weights_1, effective_weights,
-        regime_adj, comp_scores, Decimal("0"), "NONE", [], "mid", Decimal("61.5")
+        "TEST",
+        "v2.0",
+        "default",
+        base_weights_1,
+        effective_weights,
+        regime_adj,
+        comp_scores,
+        Decimal("0"),
+        "NONE",
+        [],
+        "mid",
+        Decimal("61.5"),
     )
 
     hash2 = _compute_determinism_hash(
-        "TEST", "v2.0", "default", base_weights_2, effective_weights,
-        regime_adj, comp_scores, Decimal("0"), "NONE", [], "mid", Decimal("61.5")
+        "TEST",
+        "v2.0",
+        "default",
+        base_weights_2,
+        effective_weights,
+        regime_adj,
+        comp_scores,
+        Decimal("0"),
+        "NONE",
+        [],
+        "mid",
+        Decimal("61.5"),
     )
 
-    assert hash1 == hash2, \
-        f"Hash should be stable regardless of dict ordering: {hash1} vs {hash2}"
+    assert hash1 == hash2, f"Hash should be stable regardless of dict ordering: {hash1} vs {hash2}"
 
     print("✓ test_determinism_hash_canonical_ordering passed")
 
@@ -1228,6 +1394,7 @@ def test_determinism_hash_canonical_ordering():
 # ============================================================================
 # RUN ALL TESTS
 # ============================================================================
+
 
 def run_all_tests():
     """Run all golden fixture tests."""
@@ -1240,13 +1407,11 @@ def run_all_tests():
         test_breakdown_sum_equals_weighted_sum,
         test_breakdown_effective_weights_sum_to_one,
         test_breakdown_contribution_matches_weight_times_score,
-
         # 2. Confidence weighting
         test_confidence_weighting_decreases_contribution,
         test_confidence_extraction_financial_states,
         test_confidence_extraction_overrides_state,
         test_confidence_clinical_trial_based,
-
         # 3. Monotonic caps
         test_monotonic_cap_liquidity_fail,
         test_monotonic_cap_liquidity_warn,
@@ -1255,31 +1420,26 @@ def run_all_tests():
         test_monotonic_cap_dilution_severe,
         test_monotonic_cap_cumulative,
         test_no_cap_when_score_below_threshold,
-
         # 4. Determinism hash
         test_determinism_hash_same_inputs,
         test_determinism_hash_different_score,
         test_determinism_hash_different_date,
         test_determinism_hash_length,
-
         # 5. Robust normalization
         test_winsorization_clips_outliers,
         test_winsorization_rescales_range,
         test_winsorization_single_value,
         test_winsorization_tied_values,
         test_winsorization_in_cohort_normalization,
-
         # 6. Weakest-link hybrid
         test_weakest_link_reduces_score,
         test_weakest_link_balanced_scores,
         test_hybrid_alpha_applied_correctly,
         test_critical_components_defined,
-
         # Integration
         test_full_pipeline_basic,
         test_full_pipeline_with_exclusions,
         test_diagnostic_counts_accurate,
-
         # 7. Policy invariants (merge checklist)
         test_score_bounds_clamped_0_100,
         test_ordering_caps_before_bonuses,

@@ -21,10 +21,11 @@ Design Philosophy:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -40,10 +41,10 @@ WEIGHT_PRECISION = Decimal("0.0001")
 EPS = Decimal("0.000001")
 
 # Winsorization parameters
-COMPONENT_WINSOR_LOW = Decimal("2.5")   # 2.5th percentile
+COMPONENT_WINSOR_LOW = Decimal("2.5")  # 2.5th percentile
 COMPONENT_WINSOR_HIGH = Decimal("97.5")  # 97.5th percentile
-WINSOR_ABSOLUTE_FLOOR = Decimal("5")     # Never below 5
-WINSOR_ABSOLUTE_CAP = Decimal("95")      # Never above 95
+WINSOR_ABSOLUTE_FLOOR = Decimal("5")  # Never below 5
+WINSOR_ABSOLUTE_CAP = Decimal("95")  # Never above 95
 
 # Confidence-weighted shrinkage parameters
 SHRINKAGE_LOW_CONF_THRESHOLD = Decimal("0.5")  # Below this, apply shrinkage
@@ -56,15 +57,15 @@ RANK_STABILITY_MAX_PENALTY = Decimal("3.0")  # Max 3 points penalty
 
 # Multi-timeframe blending weights
 TIMEFRAME_WEIGHTS = {
-    "short": Decimal("0.20"),   # 20d signals
+    "short": Decimal("0.20"),  # 20d signals
     "medium": Decimal("0.50"),  # 60d signals (primary)
-    "long": Decimal("0.30"),    # 120d signals (trend confirmation)
+    "long": Decimal("0.30"),  # 120d signals (trend confirmation)
 }
 
 # Asymmetric interaction bounds
 # Rationale: Negative signals (risks) should have tighter bounds than positive
 # to preserve defensive posture. Positive signals allow more upside capture.
-INTERACTION_POSITIVE_CAP = Decimal("3.5")   # Max positive adjustment
+INTERACTION_POSITIVE_CAP = Decimal("3.5")  # Max positive adjustment
 INTERACTION_NEGATIVE_FLOOR = Decimal("-2.5")  # Max negative adjustment (tighter)
 
 # Regime-conditional weight floors
@@ -114,20 +115,20 @@ REGIME_WEIGHT_FLOORS = {
 
 # Defensive override thresholds
 DEFENSIVE_TRIGGER_CONDITIONS = {
-    "max_severity_ratio": Decimal("0.30"),      # >30% SEV2+ triggers defense
-    "min_avg_runway_months": Decimal("9"),       # Avg runway <9mo triggers
-    "max_high_vol_ratio": Decimal("0.40"),       # >40% high-vol triggers
+    "max_severity_ratio": Decimal("0.30"),  # >30% SEV2+ triggers defense
+    "min_avg_runway_months": Decimal("9"),  # Avg runway <9mo triggers
+    "max_high_vol_ratio": Decimal("0.40"),  # >40% high-vol triggers
     "min_positive_momentum_ratio": Decimal("0.25"),  # <25% positive momentum triggers
 }
 
 # Score distribution health thresholds
 DISTRIBUTION_HEALTH_THRESHOLDS = {
-    "min_std": Decimal("8"),      # Scores too clustered if std < 8
-    "max_std": Decimal("25"),     # Scores too dispersed if std > 25
-    "min_iqr": Decimal("10"),     # IQR < 10 indicates lack of differentiation
-    "max_skew": Decimal("1.5"),   # Skew > 1.5 indicates distributional problem
+    "min_std": Decimal("8"),  # Scores too clustered if std < 8
+    "max_std": Decimal("25"),  # Scores too dispersed if std > 25
+    "min_iqr": Decimal("10"),  # IQR < 10 indicates lack of differentiation
+    "max_skew": Decimal("1.5"),  # Skew > 1.5 indicates distributional problem
     "max_zero_ratio": Decimal("0.20"),  # >20% zeros is problematic
-    "min_range": Decimal("40"),   # Score range < 40 lacks differentiation
+    "min_range": Decimal("40"),  # Score range < 40 lacks differentiation
 }
 
 
@@ -135,30 +136,35 @@ DISTRIBUTION_HEALTH_THRESHOLDS = {
 # ENUMS
 # =============================================================================
 
+
 class DefensivePosture(str, Enum):
     """Defensive posture classification."""
+
     NONE = "none"
-    LIGHT = "light"           # Minor defensive adjustments
-    MODERATE = "moderate"     # Significant defensive bias
-    HEAVY = "heavy"           # Maximum defensive mode
+    LIGHT = "light"  # Minor defensive adjustments
+    MODERATE = "moderate"  # Significant defensive bias
+    HEAVY = "heavy"  # Maximum defensive mode
 
 
 class DistributionHealth(str, Enum):
     """Score distribution health status."""
+
     HEALTHY = "healthy"
-    CLUSTERED = "clustered"   # Scores too similar
-    DISPERSED = "dispersed"   # Scores too spread
-    SKEWED = "skewed"         # Asymmetric distribution
-    DEGRADED = "degraded"     # Multiple issues
+    CLUSTERED = "clustered"  # Scores too similar
+    DISPERSED = "dispersed"  # Scores too spread
+    SKEWED = "skewed"  # Asymmetric distribution
+    DEGRADED = "degraded"  # Multiple issues
 
 
 # =============================================================================
 # DATACLASSES
 # =============================================================================
 
+
 @dataclass
 class WinsorizedScore:
     """Result of component-level winsorization."""
+
     original: Decimal
     winsorized: Decimal
     was_clipped: bool
@@ -169,6 +175,7 @@ class WinsorizedScore:
 @dataclass
 class ShrinkageResult:
     """Result of confidence-weighted shrinkage."""
+
     original: Decimal
     shrunk: Decimal
     shrinkage_factor: Decimal  # 0 = no shrinkage, 1 = full shrinkage to mean
@@ -179,6 +186,7 @@ class ShrinkageResult:
 @dataclass
 class RankStabilityAdjustment:
     """Rank stability regularization result."""
+
     original_score: Decimal
     adjusted_score: Decimal
     penalty_applied: Decimal
@@ -191,6 +199,7 @@ class RankStabilityAdjustment:
 @dataclass
 class AsymmetricBounds:
     """Asymmetric interaction bounds configuration."""
+
     positive_cap: Decimal
     negative_floor: Decimal
     applied_value: Decimal
@@ -202,6 +211,7 @@ class AsymmetricBounds:
 @dataclass
 class WeightFloorResult:
     """Result of applying regime-conditional weight floors."""
+
     original_weights: Dict[str, Decimal]
     adjusted_weights: Dict[str, Decimal]
     floors_applied: Dict[str, Decimal]
@@ -213,6 +223,7 @@ class WeightFloorResult:
 @dataclass
 class DefensiveOverrideResult:
     """Result of defensive override trigger evaluation."""
+
     posture: DefensivePosture
     triggers_hit: List[str]
     trigger_values: Dict[str, Decimal]
@@ -223,6 +234,7 @@ class DefensiveOverrideResult:
 @dataclass
 class DistributionHealthCheck:
     """Score distribution health check result."""
+
     health: DistributionHealth
     mean: Decimal
     std: Decimal
@@ -237,6 +249,7 @@ class DistributionHealthCheck:
 @dataclass
 class RobustnessEnhancements:
     """Aggregated robustness enhancement results."""
+
     winsorization_applied: int
     shrinkage_adjustments: int
     rank_stability_penalties: Decimal
@@ -251,6 +264,7 @@ class RobustnessEnhancements:
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def _to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """Convert various types to Decimal with safe handling."""
@@ -304,6 +318,7 @@ def _compute_percentile(value: Decimal, sorted_values: List[Decimal]) -> Decimal
 # =============================================================================
 # 1. WINSORIZATION AT COMPONENT LEVEL
 # =============================================================================
+
 
 def winsorize_component_score(
     score: Decimal,
@@ -400,7 +415,8 @@ def winsorize_cohort(
 
     for ticker, score in scores.items():
         result = winsorize_component_score(
-            score, cohort_values,
+            score,
+            cohort_values,
             low_percentile=low_percentile,
             high_percentile=high_percentile,
         )
@@ -414,6 +430,7 @@ def winsorize_cohort(
 # =============================================================================
 # 2. CONFIDENCE-WEIGHTED SHRINKAGE
 # =============================================================================
+
 
 def apply_confidence_shrinkage(
     score: Decimal,
@@ -470,6 +487,7 @@ def apply_confidence_shrinkage(
 # =============================================================================
 # 3. RANK STABILITY REGULARIZATION
 # =============================================================================
+
 
 def compute_rank_stability_penalty(
     current_score: Decimal,
@@ -556,6 +574,7 @@ def compute_rank_stability_penalty(
 # 4. MULTI-TIMEFRAME SIGNAL BLENDING
 # =============================================================================
 
+
 def blend_timeframe_signals(
     short_signal: Optional[Decimal],
     medium_signal: Optional[Decimal],
@@ -637,9 +656,7 @@ def blend_timeframe_signals(
         blended_confidence += conf * normalized_weight
 
     # Re-normalize signal by total effective weight
-    total_effective_weight = sum(
-        (w / total_weight) * c for _, _, w, c in available_signals
-    )
+    total_effective_weight = sum((w / total_weight) * c for _, _, w, c in available_signals)
     if total_effective_weight > EPS:
         blended_signal = blended_signal / total_effective_weight
 
@@ -651,6 +668,7 @@ def blend_timeframe_signals(
 # =============================================================================
 # 5. ASYMMETRIC INTERACTION BOUNDS
 # =============================================================================
+
 
 def apply_asymmetric_bounds(
     interaction_value: Decimal,
@@ -702,6 +720,7 @@ def apply_asymmetric_bounds(
 # =============================================================================
 # 6. REGIME-CONDITIONAL WEIGHT FLOORS
 # =============================================================================
+
 
 def apply_weight_floors(
     weights: Dict[str, Decimal],
@@ -757,10 +776,7 @@ def apply_weight_floors(
     # Second pass: redistribute weight if needed
     if total_added > EPS:
         # Components not at floor share the burden
-        unfloored_components = [
-            k for k in adjusted
-            if k not in floors_applied and adjusted[k] > EPS
-        ]
+        unfloored_components = [k for k in adjusted if k not in floors_applied and adjusted[k] > EPS]
 
         if unfloored_components:
             total_unfloored = sum(adjusted[k] for k in unfloored_components)
@@ -791,6 +807,7 @@ def apply_weight_floors(
 # =============================================================================
 # 7. DEFENSIVE OVERRIDE TRIGGERS
 # =============================================================================
+
 
 def evaluate_defensive_triggers(
     universe_stats: Dict[str, Any],
@@ -833,9 +850,7 @@ def evaluate_defensive_triggers(
     severity_ratio = _to_decimal(universe_stats.get("severity_ratio"), Decimal("0"))
     avg_runway = _to_decimal(universe_stats.get("avg_runway_months"), Decimal("24"))
     high_vol_ratio = _to_decimal(universe_stats.get("high_vol_ratio"), Decimal("0"))
-    positive_momentum_ratio = _to_decimal(
-        universe_stats.get("positive_momentum_ratio"), Decimal("0.5")
-    )
+    positive_momentum_ratio = _to_decimal(universe_stats.get("positive_momentum_ratio"), Decimal("0.5"))
 
     trigger_values = {
         "severity_ratio": severity_ratio,
@@ -887,6 +902,7 @@ def evaluate_defensive_triggers(
 # =============================================================================
 # 8. SCORE DISTRIBUTION HEALTH CHECKS
 # =============================================================================
+
 
 def check_distribution_health(
     scores: List[Decimal],
@@ -951,7 +967,7 @@ def check_distribution_health(
     # Skewness (simplified Pearson's moment coefficient)
     if std > EPS:
         skew_sum = sum((s - mean) ** 3 for s in dec_scores)
-        skewness = (skew_sum / Decimal(n)) / (std ** 3)
+        skewness = (skew_sum / Decimal(n)) / (std**3)
     else:
         skewness = Decimal("0")
 
@@ -1019,6 +1035,7 @@ def check_distribution_health(
 # AGGREGATED ENHANCEMENT APPLICATION
 # =============================================================================
 
+
 def apply_robustness_enhancements(
     scores: Dict[str, Dict[str, Any]],
     regime: str,
@@ -1060,10 +1077,7 @@ def apply_robustness_enhancements(
     total_adjustment = Decimal("0")
 
     # Collect all composite scores for distribution check
-    all_composites = [
-        _to_decimal(s.get("composite_score"), Decimal("50"))
-        for s in scores.values()
-    ]
+    all_composites = [_to_decimal(s.get("composite_score"), Decimal("50")) for s in scores.values()]
 
     # Check distribution health
     dist_health = check_distribution_health(all_composites)
@@ -1080,10 +1094,7 @@ def apply_robustness_enhancements(
         for component in ["clinical", "financial", "catalyst"]:
             comp_key = f"{component}_normalized"
             if comp_key in enhanced_data:
-                cohort_values = [
-                    _to_decimal(s.get(comp_key), Decimal("50"))
-                    for s in scores.values()
-                ]
+                cohort_values = [_to_decimal(s.get(comp_key), Decimal("50")) for s in scores.values()]
                 winsor_result = winsorize_component_score(
                     enhanced_data[comp_key],
                     cohort_values,
@@ -1109,10 +1120,7 @@ def apply_robustness_enhancements(
         enhanced_data["composite_score"] = shrinkage.shrunk
 
         # 3. Apply asymmetric interaction bounds
-        interaction_adj = _to_decimal(
-            enhanced_data.get("interaction_terms", {}).get("total_adjustment"),
-            Decimal("0")
-        )
+        interaction_adj = _to_decimal(enhanced_data.get("interaction_terms", {}).get("total_adjustment"), Decimal("0"))
         bounds = apply_asymmetric_bounds(interaction_adj)
         if bounds.was_capped:
             interaction_caps += 1
@@ -1122,7 +1130,7 @@ def apply_robustness_enhancements(
         if "interaction_terms" in enhanced_data:
             enhanced_data["interaction_terms"]["total_adjustment"] = str(bounds.applied_value)
             adjusted_score = _to_decimal(enhanced_data["composite_score"], Decimal("50"))
-            adjusted_score += (bounds.applied_value - interaction_adj)
+            adjusted_score += bounds.applied_value - interaction_adj
             enhanced_data["composite_score"] = _clamp(adjusted_score, Decimal("0"), Decimal("100"))
 
         # 4. Apply rank stability penalty
@@ -1146,10 +1154,7 @@ def apply_robustness_enhancements(
         enhanced[ticker] = enhanced_data
 
     # 5. Apply weight floors (aggregated check)
-    sample_weights = next(
-        (s.get("effective_weights", {}) for s in scores.values() if s.get("effective_weights")),
-        {}
-    )
+    sample_weights = next((s.get("effective_weights", {}) for s in scores.values() if s.get("effective_weights")), {})
     if sample_weights:
         floor_result = apply_weight_floors(sample_weights, regime)
         floor_triggers = len(floor_result.floors_applied)

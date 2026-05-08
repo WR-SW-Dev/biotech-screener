@@ -12,6 +12,7 @@ Three score variants:
 All variants use "higher score = rank higher" for portfolio selection and IC.
 M3 weights may be negative — that's the model's learned direction; no negation applied.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,8 +23,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from backtest.metrics_m1 import spearman_rank_ic
@@ -124,9 +125,7 @@ def compute_quintile_spread(
             results[dt] = float("nan")
             continue
         valid = valid.copy()
-        valid["quintile"] = pd.qcut(
-            valid[score_col], 5, labels=False, duplicates="drop"
-        )
+        valid["quintile"] = pd.qcut(valid[score_col], 5, labels=False, duplicates="drop")
         q_means = valid.groupby("quintile")[return_col].mean()
         if len(q_means) < 2:
             results[dt] = float("nan")
@@ -216,8 +215,7 @@ def ic_summary(ic_series: pd.Series) -> Dict[str, float]:
     valid = ic_series.dropna()
     n = len(valid)
     if n == 0:
-        return {"mean": np.nan, "median": np.nan, "std": np.nan,
-                "tstat": np.nan, "hit_rate": np.nan, "n": 0}
+        return {"mean": np.nan, "median": np.nan, "std": np.nan, "tstat": np.nan, "hit_rate": np.nan, "n": 0}
     mean = valid.mean()
     std = valid.std(ddof=1) if n > 1 else np.nan
     return {
@@ -276,8 +274,7 @@ def run_evaluation(
     # Load data
     print(f"Loading panel from {panel_path} ...")
     df = pd.read_csv(panel_path)
-    print(f"  → {len(df):,} rows, {df['rebalance_date'].nunique()} dates, "
-          f"{df['ticker'].nunique()} unique tickers")
+    print(f"  → {len(df):,} rows, {df['rebalance_date'].nunique()} dates, " f"{df['ticker'].nunique()} unique tickers")
 
     # Load M3 weights
     m3_weights = load_m3_weights(weights_path)
@@ -297,12 +294,14 @@ def run_evaluation(
         for rc in RETURN_COLS:
             ic_ts = compute_ic(df, sv, rc)
             for dt, val in ic_ts.items():
-                ic_records.append({
-                    "rebalance_date": dt,
-                    "variant": sv,
-                    "return_col": rc,
-                    "ic": val,
-                })
+                ic_records.append(
+                    {
+                        "rebalance_date": dt,
+                        "variant": sv,
+                        "return_col": rc,
+                        "ic": val,
+                    }
+                )
 
     ic_df = pd.DataFrame(ic_records)
     ic_df.to_csv(os.path.join(output_dir, "ic_timeseries.csv"), index=False)
@@ -315,13 +314,15 @@ def run_evaluation(
             for n in [20, 40, 60]:
                 topn_ts = compute_topn_returns(df, sv, rc, n=n)
                 for dt, val in topn_ts.items():
-                    topn_records.append({
-                        "rebalance_date": dt,
-                        "variant": sv,
-                        "return_col": rc,
-                        "n": n,
-                        "mean_return": val,
-                    })
+                    topn_records.append(
+                        {
+                            "rebalance_date": dt,
+                            "variant": sv,
+                            "return_col": rc,
+                            "n": n,
+                            "mean_return": val,
+                        }
+                    )
 
     topn_df = pd.DataFrame(topn_records)
     topn_df.to_csv(os.path.join(output_dir, "topn_returns.csv"), index=False)
@@ -340,10 +341,14 @@ def run_evaluation(
             ics = ic_summary(ic_ts)
             prefix = rc.replace("fwd_", "")
             for k, v in ics.items():
-                summary_rows.append({
-                    "variant": sv, "horizon": rc,
-                    "metric": f"ic_{k}", "value": v,
-                })
+                summary_rows.append(
+                    {
+                        "variant": sv,
+                        "horizon": rc,
+                        "metric": f"ic_{k}",
+                        "value": v,
+                    }
+                )
             if rc == "fwd_21d":
                 for k, v in ics.items():
                     variant_metrics[f"IC_{k}"] = v
@@ -352,38 +357,54 @@ def run_evaluation(
         for n in [20, 40, 60]:
             topn_ts = compute_topn_returns(df, sv, "fwd_21d", n=n)
             mean_ret = topn_ts.mean()
-            summary_rows.append({
-                "variant": sv, "horizon": "fwd_21d",
-                "metric": f"topn_{n}_mean", "value": mean_ret,
-            })
+            summary_rows.append(
+                {
+                    "variant": sv,
+                    "horizon": "fwd_21d",
+                    "metric": f"topn_{n}_mean",
+                    "value": mean_ret,
+                }
+            )
             variant_metrics[f"top{n}_mean_21d"] = mean_ret
 
         # Quintile spread (fwd_21d)
         qspread = compute_quintile_spread(df, sv, "fwd_21d")
         mean_qs = qspread.mean()
-        summary_rows.append({
-            "variant": sv, "horizon": "fwd_21d",
-            "metric": "quintile_spread_mean", "value": mean_qs,
-        })
+        summary_rows.append(
+            {
+                "variant": sv,
+                "horizon": "fwd_21d",
+                "metric": "quintile_spread_mean",
+                "value": mean_qs,
+            }
+        )
         variant_metrics["qspread_21d"] = mean_qs
 
         # Hit rate (fwd_21d)
         hr = compute_hit_rate(df, sv, "fwd_21d")
         mean_hr = hr.mean()
-        summary_rows.append({
-            "variant": sv, "horizon": "fwd_21d",
-            "metric": "hit_rate_mean", "value": mean_hr,
-        })
+        summary_rows.append(
+            {
+                "variant": sv,
+                "horizon": "fwd_21d",
+                "metric": "hit_rate_mean",
+                "value": mean_hr,
+            }
+        )
         variant_metrics["hit_rate_21d"] = mean_hr
 
         # Turnover
         for n in [20, 40]:
             turn = compute_turnover(df, sv, n=n)
             mean_turn = turn.mean()
-            summary_rows.append({
-                "variant": sv, "horizon": "N/A",
-                "metric": f"turnover_{n}_mean", "value": mean_turn,
-            })
+            summary_rows.append(
+                {
+                    "variant": sv,
+                    "horizon": "N/A",
+                    "metric": f"turnover_{n}_mean",
+                    "value": mean_turn,
+                }
+            )
             variant_metrics[f"turnover_{n}"] = mean_turn
 
         # Cumulative return (fwd_5d weekly)
@@ -393,8 +414,7 @@ def run_evaluation(
             total_ret = cum.iloc[-1] - 1.0
             max_dd, dd_dur = compute_drawdown(cum)
             weekly_rets = topn_5d.dropna()
-            sharpe = (weekly_rets.mean() / weekly_rets.std() * np.sqrt(52)
-                      if weekly_rets.std() > 0 else np.nan)
+            sharpe = weekly_rets.mean() / weekly_rets.std() * np.sqrt(52) if weekly_rets.std() > 0 else np.nan
         else:
             total_ret, max_dd, dd_dur, sharpe = np.nan, np.nan, 0, np.nan
 
@@ -404,10 +424,14 @@ def run_evaluation(
         variant_metrics["sharpe_annual"] = sharpe
 
         for k in ["cum_return_5d", "max_drawdown", "dd_duration", "sharpe_annual"]:
-            summary_rows.append({
-                "variant": sv, "horizon": "fwd_5d",
-                "metric": k, "value": variant_metrics[k],
-            })
+            summary_rows.append(
+                {
+                    "variant": sv,
+                    "horizon": "fwd_5d",
+                    "metric": k,
+                    "value": variant_metrics[k],
+                }
+            )
 
         comparison[sv] = variant_metrics
 
@@ -422,8 +446,10 @@ def run_evaluation(
     for sv, vm in comparison.items():
         mean_ic = vm.get("IC_mean", 0)
         if mean_ic < -0.02:
-            print(f"  ⚠ {sv}: mean IC = {mean_ic:.4f} (strongly negative) "
-                  f"— direction may be inverted; check sign/feature mapping")
+            print(
+                f"  ⚠ {sv}: mean IC = {mean_ic:.4f} (strongly negative) "
+                f"— direction may be inverted; check sign/feature mapping"
+            )
 
     print(f"\nOutputs written to {output_dir}/")
     return comparison
@@ -431,9 +457,7 @@ def run_evaluation(
 
 # ── CLI ───────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(
-        description="M3 Before/After Weight Evaluation"
-    )
+    parser = argparse.ArgumentParser(description="M3 Before/After Weight Evaluation")
     parser.add_argument(
         "--panel",
         default="output/backtest_m1_full/panel_weekly.csv.gz",

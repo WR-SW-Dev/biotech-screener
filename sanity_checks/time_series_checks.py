@@ -25,6 +25,7 @@ from statistics import mean, stdev
 from typing import Any, Dict, List, Optional, Tuple
 
 from sanity_checks.types import (
+    DEFAULT_THRESHOLDS,
     CheckCategory,
     FlagSeverity,
     RankingSnapshot,
@@ -32,7 +33,6 @@ from sanity_checks.types import (
     SanityFlag,
     SecurityContext,
     ThresholdConfig,
-    DEFAULT_THRESHOLDS,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RankChange:
     """Record of a rank change between periods."""
+
     ticker: str
     old_rank: int
     new_rank: int
@@ -54,6 +55,7 @@ class RankChange:
 @dataclass
 class CatalystEvent:
     """A catalyst event that should affect rankings."""
+
     ticker: str
     event_type: str
     event_date: str
@@ -96,31 +98,23 @@ class TimeSeriesChecker:
 
         # 1. Rank Velocity Checks (requires previous snapshot)
         if previous_snapshot:
-            velocity_flags, velocity_metrics = self._check_rank_velocity(
-                current_snapshot, previous_snapshot
-            )
+            velocity_flags, velocity_metrics = self._check_rank_velocity(current_snapshot, previous_snapshot)
             flags.extend(velocity_flags)
             metrics["rank_velocity"] = velocity_metrics
 
         # 2. Score Decomposition Analysis
         if previous_snapshot:
-            decomp_flags = self._check_score_decomposition(
-                current_snapshot, previous_snapshot
-            )
+            decomp_flags = self._check_score_decomposition(current_snapshot, previous_snapshot)
             flags.extend(decomp_flags)
 
         # 3. Catalyst Timeline Coherence
         if catalyst_events:
-            catalyst_flags = self._check_catalyst_coherence(
-                current_snapshot, catalyst_events
-            )
+            catalyst_flags = self._check_catalyst_coherence(current_snapshot, catalyst_events)
             flags.extend(catalyst_flags)
 
         # 4. Trend Stability (requires historical data)
         if historical_snapshots and len(historical_snapshots) >= 3:
-            trend_flags, trend_metrics = self._check_trend_stability(
-                current_snapshot, historical_snapshots
-            )
+            trend_flags, trend_metrics = self._check_trend_stability(current_snapshot, historical_snapshots)
             flags.extend(trend_flags)
             metrics["trend_stability"] = trend_metrics
 
@@ -194,35 +188,39 @@ class TimeSeriesChecker:
 
                 # Determine if this is a jump UP or DOWN
                 if rank_delta > 0:  # Improved rank
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.HIGH,
-                        category=CheckCategory.TIME_SERIES,
-                        ticker=ticker,
-                        check_name="rank_jump_investigation",
-                        message=f"{ticker} jumped from #{prev.rank} to #{curr.rank} in one week",
-                        details={
-                            "old_rank": prev.rank,
-                            "new_rank": curr.rank,
-                            "rank_delta": rank_delta,
-                            "score_delta": float(score_delta) if score_delta else None,
-                        },
-                        recommendation="Investigate catalyst or data anomaly - generate Rank Jump Explanation Report",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.HIGH,
+                            category=CheckCategory.TIME_SERIES,
+                            ticker=ticker,
+                            check_name="rank_jump_investigation",
+                            message=f"{ticker} jumped from #{prev.rank} to #{curr.rank} in one week",
+                            details={
+                                "old_rank": prev.rank,
+                                "new_rank": curr.rank,
+                                "rank_delta": rank_delta,
+                                "score_delta": float(score_delta) if score_delta else None,
+                            },
+                            recommendation="Investigate catalyst or data anomaly - generate Rank Jump Explanation Report",
+                        )
+                    )
                 else:  # Dropped rank
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.MEDIUM,
-                        category=CheckCategory.TIME_SERIES,
-                        ticker=ticker,
-                        check_name="rank_drop_investigation",
-                        message=f"{ticker} dropped from #{prev.rank} to #{curr.rank} in one week",
-                        details={
-                            "old_rank": prev.rank,
-                            "new_rank": curr.rank,
-                            "rank_delta": rank_delta,
-                            "score_delta": float(score_delta) if score_delta else None,
-                        },
-                        recommendation="Investigate negative catalyst or data issue",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.MEDIUM,
+                            category=CheckCategory.TIME_SERIES,
+                            ticker=ticker,
+                            check_name="rank_drop_investigation",
+                            message=f"{ticker} dropped from #{prev.rank} to #{curr.rank} in one week",
+                            details={
+                                "old_rank": prev.rank,
+                                "new_rank": curr.rank,
+                                "rank_delta": rank_delta,
+                                "score_delta": float(score_delta) if score_delta else None,
+                            },
+                            recommendation="Investigate negative catalyst or data issue",
+                        )
+                    )
 
         # Calculate velocity metrics
         if rank_changes:
@@ -306,19 +304,21 @@ class TimeSeriesChecker:
                     unexplained = True
 
             if unexplained and rank_delta >= self.config.max_rank_jump_single_week:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.MEDIUM,
-                    category=CheckCategory.TIME_SERIES,
-                    ticker=ticker,
-                    check_name="unexplained_score_change",
-                    message=f"{ticker} has unexplained score delta with {rank_delta} position change",
-                    details={
-                        "rank_delta": rank_delta,
-                        "component_changes": component_changes,
-                        "unexplained_delta": float(unexplained_delta) if unexplained_delta else None,
-                    },
-                    recommendation="Score decomposition cannot fully explain rank change",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.MEDIUM,
+                        category=CheckCategory.TIME_SERIES,
+                        ticker=ticker,
+                        check_name="unexplained_score_change",
+                        message=f"{ticker} has unexplained score delta with {rank_delta} position change",
+                        details={
+                            "rank_delta": rank_delta,
+                            "component_changes": component_changes,
+                            "unexplained_delta": float(unexplained_delta) if unexplained_delta else None,
+                        },
+                        recommendation="Score decomposition cannot fully explain rank change",
+                    )
+                )
 
         return flags
 
@@ -347,38 +347,42 @@ class TimeSeriesChecker:
             if event.expected_direction == "positive":
                 if event.actual_rank_change is not None and event.actual_rank_change < 0:
                     # Rank should have improved (lower number) but didn't
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.MEDIUM,
-                        category=CheckCategory.TIME_SERIES,
-                        ticker=event.ticker,
-                        check_name="catalyst_not_incorporated",
-                        message=f"Positive catalyst {event.event_type} on {event.event_date} but rank dropped",
-                        details={
-                            "event_type": event.event_type,
-                            "event_date": event.event_date,
-                            "expected_direction": event.expected_direction,
-                            "actual_rank_change": event.actual_rank_change,
-                        },
-                        recommendation="Catalyst result may not be incorporated",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.MEDIUM,
+                            category=CheckCategory.TIME_SERIES,
+                            ticker=event.ticker,
+                            check_name="catalyst_not_incorporated",
+                            message=f"Positive catalyst {event.event_type} on {event.event_date} but rank dropped",
+                            details={
+                                "event_type": event.event_type,
+                                "event_date": event.event_date,
+                                "expected_direction": event.expected_direction,
+                                "actual_rank_change": event.actual_rank_change,
+                            },
+                            recommendation="Catalyst result may not be incorporated",
+                        )
+                    )
 
             elif event.expected_direction == "negative":
                 if event.actual_rank_change is not None and event.actual_rank_change > 5:
                     # Rank improved despite negative catalyst
-                    flags.append(SanityFlag(
-                        severity=FlagSeverity.HIGH,
-                        category=CheckCategory.TIME_SERIES,
-                        ticker=event.ticker,
-                        check_name="negative_catalyst_ignored",
-                        message=f"Negative catalyst {event.event_type} on {event.event_date} but rank improved +{event.actual_rank_change}",
-                        details={
-                            "event_type": event.event_type,
-                            "event_date": event.event_date,
-                            "expected_direction": event.expected_direction,
-                            "actual_rank_change": event.actual_rank_change,
-                        },
-                        recommendation="Negative catalyst may be ignored",
-                    ))
+                    flags.append(
+                        SanityFlag(
+                            severity=FlagSeverity.HIGH,
+                            category=CheckCategory.TIME_SERIES,
+                            ticker=event.ticker,
+                            check_name="negative_catalyst_ignored",
+                            message=f"Negative catalyst {event.event_type} on {event.event_date} but rank improved +{event.actual_rank_change}",
+                            details={
+                                "event_type": event.event_type,
+                                "event_date": event.event_date,
+                                "expected_direction": event.expected_direction,
+                                "actual_rank_change": event.actual_rank_change,
+                            },
+                            recommendation="Negative catalyst may be ignored",
+                        )
+                    )
 
         return flags
 
@@ -423,7 +427,7 @@ class TimeSeriesChecker:
             ranks = [r for _, r in history]
 
             # Check for steady improvement
-            improvements = sum(1 for i in range(1, len(ranks)) if ranks[i] < ranks[i-1])
+            improvements = sum(1 for i in range(1, len(ranks)) if ranks[i] < ranks[i - 1])
             if improvements >= len(ranks) - 1:
                 steady_climbers.append(ticker)
 
@@ -438,19 +442,21 @@ class TimeSeriesChecker:
         for ticker, variance in erratic_movers:
             sec = current_lookup.get(ticker)
             if sec and sec.rank and sec.rank <= 20:
-                flags.append(SanityFlag(
-                    severity=FlagSeverity.LOW,
-                    category=CheckCategory.TIME_SERIES,
-                    ticker=ticker,
-                    check_name="erratic_rank_movement",
-                    message=f"{ticker} shows erratic rank movement (stdev={variance:.1f}) over analysis period",
-                    details={
-                        "current_rank": sec.rank,
-                        "rank_stdev": variance,
-                        "history_length": len(rank_histories.get(ticker, [])),
-                    },
-                    recommendation="Monitor for signal stability",
-                ))
+                flags.append(
+                    SanityFlag(
+                        severity=FlagSeverity.LOW,
+                        category=CheckCategory.TIME_SERIES,
+                        ticker=ticker,
+                        check_name="erratic_rank_movement",
+                        message=f"{ticker} shows erratic rank movement (stdev={variance:.1f}) over analysis period",
+                        details={
+                            "current_rank": sec.rank,
+                            "rank_stdev": variance,
+                            "history_length": len(rank_histories.get(ticker, [])),
+                        },
+                        recommendation="Monitor for signal stability",
+                    )
+                )
 
         metrics = {
             "steady_climbers": steady_climbers,
@@ -556,8 +562,6 @@ def generate_rank_jump_report(
         report["key_changes"].append(f"Phase changed: {previous.lead_phase} -> {current.lead_phase}")
 
     if current.days_to_catalyst != previous.days_to_catalyst:
-        report["key_changes"].append(
-            f"Days to catalyst: {previous.days_to_catalyst} -> {current.days_to_catalyst}"
-        )
+        report["key_changes"].append(f"Days to catalyst: {previous.days_to_catalyst} -> {current.days_to_catalyst}")
 
     return report

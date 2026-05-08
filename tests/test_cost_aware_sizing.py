@@ -20,14 +20,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from decision_engine import (
+    DECISION_COLUMNS,
     DecisionRuleset,
     _compute_cost_mult,
     _compute_size_band,
     compute_decision_fields,
     compute_target_weights,
-    DECISION_COLUMNS,
 )
-
 
 # ---------------------------------------------------------------------------
 # Rulesets
@@ -120,18 +119,14 @@ class TestEligibilityUnchanged:
         """Cost haircut must NOT affect eligibility gates."""
         rec = _minimal_rec()
         fields_no_cost = compute_decision_fields(rec, "drug_developer", 0.80, ENABLED_RS)
-        fields_with_cost = compute_decision_fields(
-            rec, "drug_developer", 0.80, ENABLED_RS, est_cost_bps=200.0
-        )
+        fields_with_cost = compute_decision_fields(rec, "drug_developer", 0.80, ENABLED_RS, est_cost_bps=200.0)
         assert fields_no_cost["eligible"] == fields_with_cost["eligible"]
         assert fields_no_cost["ineligible_reasons"] == fields_with_cost["ineligible_reasons"]
 
     def test_ineligible_rec_unaffected_by_cost(self):
         """Ineligible ticker stays ineligible regardless of cost data."""
         rec = _minimal_rec(drawdown=-0.50)  # breaches hard gate
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.80, ENABLED_RS, est_cost_bps=10.0
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.80, ENABLED_RS, est_cost_bps=10.0)
         assert fields["eligible"] == "0"
 
 
@@ -143,18 +138,26 @@ class TestBandStepDown:
     def test_no_step_down_at_085(self):
         """cost_mult=0.85 should NOT trigger band step-down."""
         band, reasons = _compute_size_band(
-            eligible=True, effective_tier="B", optionality=0.50,
-            overlays={}, ruleset=ENABLED_RS,
-            cost_mult=0.85, cost_bucket="<=1000bps",
+            eligible=True,
+            effective_tier="B",
+            optionality=0.50,
+            overlays={},
+            ruleset=ENABLED_RS,
+            cost_mult=0.85,
+            cost_bucket="<=1000bps",
         )
         assert "cost_haircut_<=1000bps" not in reasons
 
     def test_step_down_at_070(self):
         """cost_mult=0.70 triggers band step-down."""
         band, reasons = _compute_size_band(
-            eligible=True, effective_tier="B", optionality=0.50,
-            overlays={}, ruleset=ENABLED_RS,
-            cost_mult=0.70, cost_bucket="<=2000bps",
+            eligible=True,
+            effective_tier="B",
+            optionality=0.50,
+            overlays={},
+            ruleset=ENABLED_RS,
+            cost_mult=0.70,
+            cost_bucket="<=2000bps",
         )
         assert "cost_haircut_<=2000bps" in reasons
         # Baseline without cost is M (idx=2); step-down → S (idx=1)
@@ -163,9 +166,13 @@ class TestBandStepDown:
     def test_step_down_at_floor(self):
         """cost_mult=0.55 (floor) also triggers band step-down."""
         band, reasons = _compute_size_band(
-            eligible=True, effective_tier="B", optionality=0.50,
-            overlays={}, ruleset=ENABLED_RS,
-            cost_mult=0.55, cost_bucket=">2000bps",
+            eligible=True,
+            effective_tier="B",
+            optionality=0.50,
+            overlays={},
+            ruleset=ENABLED_RS,
+            cost_mult=0.55,
+            cost_bucket=">2000bps",
         )
         assert "cost_haircut_>2000bps" in reasons
 
@@ -173,10 +180,13 @@ class TestBandStepDown:
         """Band step-down can't go below XS."""
         # Headwind pushes to S, cost pushes again — should clamp at XS
         band, reasons = _compute_size_band(
-            eligible=True, effective_tier="C", optionality=0.10,
+            eligible=True,
+            effective_tier="C",
+            optionality=0.10,
             overlays={"mom_state": "headwind", "runway_bucket": "critical"},
             ruleset=ENABLED_RS,
-            cost_mult=0.55, cost_bucket=">2000bps",
+            cost_mult=0.55,
+            cost_bucket=">2000bps",
         )
         assert band == "XS"
 
@@ -227,9 +237,7 @@ class TestOutputSchema:
     def test_disabled_emits_no_haircut(self):
         """When disabled, cost_haircut_applied is '0' even with cost data."""
         rec = _minimal_rec()
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.50, DISABLED_RS, est_cost_bps=200.0
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.50, DISABLED_RS, est_cost_bps=200.0)
         assert fields["cost_mult"] == 1.0
         assert fields["cost_bucket"] == ""
         assert fields["cost_haircut_applied"] == "0"
@@ -237,9 +245,7 @@ class TestOutputSchema:
     def test_enabled_with_high_cost(self):
         """When enabled + high cost, fields reflect the haircut."""
         rec = _minimal_rec()
-        fields = compute_decision_fields(
-            rec, "drug_developer", 0.50, ENABLED_RS, est_cost_bps=1500.0
-        )
+        fields = compute_decision_fields(rec, "drug_developer", 0.50, ENABLED_RS, est_cost_bps=1500.0)
         assert fields["cost_mult"] == 0.70
         assert fields["cost_bucket"] == "<=2000bps"
         assert fields["cost_haircut_applied"] == "1"

@@ -19,69 +19,60 @@ Design:
 - Boundary condition testing
 """
 
-import pytest
-from decimal import Decimal
+import sys
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
 from typing import Any, Dict
 
-import sys
-from pathlib import Path
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from module_2_financial_v2 import (
-    # Core functions
-    _to_decimal,
-    _safe_divide,
-    _clamp,
-    _quantize_score,
-    _quantize_rate,
-    _extract_quarterly_burns,
-    # Burn rate
-    calculate_burn_rate_v2,
-    calculate_burn_acceleration,
-    BurnResult,
-    BurnSource,
-    BurnConfidence,
-    BurnAcceleration,
-    # Liquid assets
-    calculate_liquid_assets,
-    LiquidAssetsResult,
-    # Runway
-    calculate_runway,
-    _score_runway,
-    RunwayResult,
-    # Dilution
-    calculate_dilution_risk,
-    DilutionResult,
-    DilutionRiskBucket,
-    # Liquidity
-    score_liquidity,
-    LiquidityResult,
-    LiquidityGate,
-    # Data quality
-    assess_data_quality,
-    DataQualityResult,
-    DataState,
-    # Severity
-    determine_severity,
-    # Main scoring
-    score_financial_health_v2,
-    run_module_2_v2,
-    compute_module_2_financial,
-    # Constants
+from common.types import Severity
+from module_2_financial_v2 import (  # Core functions; Burn rate; Liquid assets; Runway; Dilution; Liquidity; Data quality; Severity; Main scoring; Constants
     EPS,
+    LIQUIDITY_GATE_FAIL,
+    LIQUIDITY_GATE_WARN,
+    RUNWAY_CAUTION,
     RUNWAY_CRITICAL,
     RUNWAY_WARNING,
-    RUNWAY_CAUTION,
-    LIQUIDITY_GATE_WARN,
-    LIQUIDITY_GATE_FAIL,
+    BurnAcceleration,
+    BurnConfidence,
+    BurnResult,
+    BurnSource,
+    DataQualityResult,
+    DataState,
+    DilutionResult,
+    DilutionRiskBucket,
+    LiquidAssetsResult,
+    LiquidityGate,
+    LiquidityResult,
+    RunwayResult,
+    _clamp,
+    _extract_quarterly_burns,
+    _quantize_rate,
+    _quantize_score,
+    _safe_divide,
+    _score_runway,
+    _to_decimal,
+    assess_data_quality,
+    calculate_burn_acceleration,
+    calculate_burn_rate_v2,
+    calculate_dilution_risk,
+    calculate_liquid_assets,
+    calculate_runway,
+    compute_module_2_financial,
+    determine_severity,
+    run_module_2_v2,
+    score_financial_health_v2,
+    score_liquidity,
 )
-from common.types import Severity
-
 
 # ============================================================================
 # HELPER FUNCTION TESTS
 # ============================================================================
+
 
 class TestToDecimal:
     """Tests for _to_decimal helper function."""
@@ -185,6 +176,7 @@ class TestQuantizeFunctions:
 # ============================================================================
 # BURN RATE CALCULATION TESTS
 # ============================================================================
+
 
 class TestExtractQuarterlyBurns:
     """Tests for _extract_quarterly_burns function."""
@@ -340,6 +332,7 @@ class TestCalculateBurnAcceleration:
 # LIQUID ASSETS TESTS
 # ============================================================================
 
+
 class TestCalculateLiquidAssets:
     """Tests for calculate_liquid_assets function."""
 
@@ -376,6 +369,7 @@ class TestCalculateLiquidAssets:
 # RUNWAY SCORING TESTS
 # ============================================================================
 
+
 class TestScoreRunway:
     """Tests for _score_runway function."""
 
@@ -390,10 +384,10 @@ class TestScoreRunway:
         assert _score_runway(Decimal("30")) == Decimal("100")  # capped
 
         # Midpoints are linearly interpolated
-        assert _score_runway(Decimal("3")) == Decimal("22.5")   # midpoint 0-6
-        assert _score_runway(Decimal("9")) == Decimal("55")     # midpoint 6-12
-        assert _score_runway(Decimal("15")) == Decimal("80")    # midpoint 12-18
-        assert _score_runway(Decimal("21")) == Decimal("95")    # midpoint 18-24
+        assert _score_runway(Decimal("3")) == Decimal("22.5")  # midpoint 0-6
+        assert _score_runway(Decimal("9")) == Decimal("55")  # midpoint 6-12
+        assert _score_runway(Decimal("15")) == Decimal("80")  # midpoint 12-18
+        assert _score_runway(Decimal("21")) == Decimal("95")  # midpoint 18-24
 
         # Below zero clamped to floor
         assert _score_runway(Decimal("-1")) == Decimal("5")
@@ -442,6 +436,7 @@ class TestCalculateRunway:
 # ============================================================================
 # DILUTION RISK TESTS
 # ============================================================================
+
 
 class TestCalculateDilutionRisk:
     """Tests for calculate_dilution_risk function."""
@@ -492,6 +487,7 @@ class TestCalculateDilutionRisk:
 # ============================================================================
 # LIQUIDITY SCORING TESTS
 # ============================================================================
+
 
 class TestScoreLiquidity:
     """Tests for score_liquidity function."""
@@ -545,6 +541,7 @@ class TestScoreLiquidity:
 # DATA QUALITY TESTS
 # ============================================================================
 
+
 class TestAssessDataQuality:
     """Tests for assess_data_quality function."""
 
@@ -594,6 +591,7 @@ class TestAssessDataQuality:
 # SEVERITY TESTS
 # ============================================================================
 
+
 class TestDetermineSeverity:
     """Tests for determine_severity function."""
 
@@ -625,6 +623,7 @@ class TestDetermineSeverity:
 # ============================================================================
 # MAIN SCORING FUNCTION TESTS
 # ============================================================================
+
 
 class TestScoreFinancialHealthV2:
     """Tests for score_financial_health_v2 function."""
@@ -770,6 +769,7 @@ class TestComputeModule2Financial:
 # EDGE CASE TESTS
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case and boundary condition tests."""
 
@@ -807,13 +807,17 @@ class TestEdgeCases:
 # PARAMETRIZED TESTS
 # ============================================================================
 
-@pytest.mark.parametrize("cash,burn,expected_runway_approx", [
-    (120e6, -30e6, 12),   # 12 months
-    (240e6, -30e6, 24),   # 24 months
-    (60e6, -30e6, 6),     # 6 months
-    (30e6, -30e6, 3),     # 3 months
-    (600e6, -30e6, 60),   # 5 years
-])
+
+@pytest.mark.parametrize(
+    "cash,burn,expected_runway_approx",
+    [
+        (120e6, -30e6, 12),  # 12 months
+        (240e6, -30e6, 24),  # 24 months
+        (60e6, -30e6, 6),  # 6 months
+        (30e6, -30e6, 3),  # 3 months
+        (600e6, -30e6, 60),  # 5 years
+    ],
+)
 def test_runway_calculation_parametrized(cash, burn, expected_runway_approx):
     """Parametrized test for runway calculations."""
     fin_data = {"Cash": cash, "CFO_quarterly": burn}
@@ -822,13 +826,16 @@ def test_runway_calculation_parametrized(cash, burn, expected_runway_approx):
     assert abs(float(result.runway_months) - expected_runway_approx) < 1
 
 
-@pytest.mark.parametrize("runway_months,expected_severity", [
-    (Decimal("3"), Severity.SEV3),
-    (Decimal("6"), Severity.SEV2),
-    (Decimal("12"), Severity.SEV1),
-    (Decimal("18"), Severity.NONE),
-    (Decimal("24"), Severity.NONE),
-])
+@pytest.mark.parametrize(
+    "runway_months,expected_severity",
+    [
+        (Decimal("3"), Severity.SEV3),
+        (Decimal("6"), Severity.SEV2),
+        (Decimal("12"), Severity.SEV1),
+        (Decimal("18"), Severity.NONE),
+        (Decimal("24"), Severity.NONE),
+    ],
+)
 def test_severity_thresholds_parametrized(runway_months, expected_severity):
     """Parametrized test for severity thresholds."""
     result = determine_severity(runway_months, Decimal("0.2"))

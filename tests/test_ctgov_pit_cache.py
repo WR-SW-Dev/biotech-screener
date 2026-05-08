@@ -1,4 +1,5 @@
 """Integration tests: PIT-filtered CTGov cache → Module 3 PIT check passes."""
+
 from __future__ import annotations
 
 import json
@@ -9,8 +10,8 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from warm_caches import warm_ctgov
 from catalyst_diagnostics import check_trial_records_staleness
+from warm_caches import warm_ctgov
 
 
 def _make_trial_records(lup_dates: list[str]) -> list[dict]:
@@ -45,9 +46,7 @@ class TestCachedRecordsPassPITCheck:
         warm_ctgov(as_of, data_dir, cache_dir)
 
         # Load cached and verify PIT check passes
-        cached = json.loads(
-            (cache_dir / f"trial_records_{as_of.isoformat()}.json").read_text()
-        )
+        cached = json.loads((cache_dir / f"trial_records_{as_of.isoformat()}.json").read_text())
         result = check_trial_records_staleness(cached, as_of)
         # trial_records_date should be <= as_of → NOT stale in forward-looking sense
         assert result.trial_records_date is not None
@@ -80,8 +79,11 @@ class TestCachedRecordsPassPITCheck:
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         lup_dates = [
-            "2026-01-01", "2026-01-15", "2026-01-28",
-            "2026-02-01", "2026-02-04",
+            "2026-01-01",
+            "2026-01-15",
+            "2026-01-28",
+            "2026-02-01",
+            "2026-02-04",
         ]
         records = _make_trial_records(lup_dates)
         (data_dir / "trial_records.json").write_text(json.dumps(records))
@@ -90,9 +92,7 @@ class TestCachedRecordsPassPITCheck:
         as_of = date(2026, 1, 28)
         warm_ctgov(as_of, data_dir, cache_dir)
 
-        cached = json.loads(
-            (cache_dir / f"trial_records_{as_of.isoformat()}.json").read_text()
-        )
+        cached = json.loads((cache_dir / f"trial_records_{as_of.isoformat()}.json").read_text())
         for rec in cached:
             assert rec["last_update_posted"][:10] <= as_of.isoformat()
 

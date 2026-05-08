@@ -12,6 +12,9 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
+from audit_framework.tier1_determinism.decimal_compliance import validate_decimal_compliance
+from audit_framework.tier1_determinism.pit_integrity import validate_pit_integrity
+from audit_framework.tier1_determinism.reproducibility import run_reproducibility_stress_test
 from audit_framework.types import (
     AuditMetrics,
     AuditResult,
@@ -20,16 +23,6 @@ from audit_framework.types import (
     ComplianceGrade,
     PassCriteria,
     TierResult,
-)
-
-from audit_framework.tier1_determinism.decimal_compliance import (
-    validate_decimal_compliance,
-)
-from audit_framework.tier1_determinism.reproducibility import (
-    run_reproducibility_stress_test,
-)
-from audit_framework.tier1_determinism.pit_integrity import (
-    validate_pit_integrity,
 )
 
 
@@ -92,9 +85,7 @@ def run_tier1_audit(
     )
     result.findings.extend(repro_result.findings)
     result.reproducibility_passed = repro_result.passed
-    result.non_deterministic_sources = repro_result.metrics.get(
-        "non_deterministic_sources_count", 0
-    )
+    result.non_deterministic_sources = repro_result.metrics.get("non_deterministic_sources_count", 0)
     result.metrics.datetime_now_usages = result.non_deterministic_sources
 
     # Run Query 1.3: PIT Integrity
@@ -108,11 +99,7 @@ def run_tier1_audit(
     result.execution_time_seconds = execution_time.quantize(Decimal("0.001"))
 
     # Determine overall pass/fail and grade
-    result.passed = (
-        result.decimal_compliance_passed
-        and result.reproducibility_passed
-        and result.pit_integrity_passed
-    )
+    result.passed = result.decimal_compliance_passed and result.reproducibility_passed and result.pit_integrity_passed
 
     # Grade calculation
     critical_count = result.critical_count

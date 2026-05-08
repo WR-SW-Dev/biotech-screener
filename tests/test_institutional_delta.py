@@ -3,29 +3,30 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+
+from run_daily_production import check_institutional_delta
 
 from institutional_summary import (
     DELTA_SCHEMA_VERSION,
     SCHEMA_VERSION,
+    _find_prior_institutional_summary,
     build_institutional_summary,
     compute_institutional_delta,
-    _find_prior_institutional_summary,
-    validate_institutional_summary_schema_v1,
     validate_institutional_summary_delta_schema_v1,
+    validate_institutional_summary_schema_v1,
 )
-from run_daily_production import check_institutional_delta
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_summary(tickers: dict, as_of_date: str = "2026-02-20") -> dict:
     """Build a minimal institutional_summary dict for testing."""
@@ -67,51 +68,69 @@ def _ticker_data(
 # TestComputeDelta
 # ---------------------------------------------------------------------------
 
+
 class TestComputeDelta:
     """compute_institutional_delta() logic."""
 
     def test_new_and_exit_counts(self):
-        current = _make_summary({
-            "AAAA": _ticker_data(2, {"FundA": 100, "FundB": 200}, 300, 30),
-        })
-        prior = _make_summary({
-            "AAAA": _ticker_data(2, {"FundA": 100, "FundC": 150}, 250, 25),
-        }, as_of_date="2026-02-19")
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(2, {"FundA": 100, "FundB": 200}, 300, 30),
+            }
+        )
+        prior = _make_summary(
+            {
+                "AAAA": _ticker_data(2, {"FundA": 100, "FundC": 150}, 250, 25),
+            },
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         assert delta is not None
         tk = delta["tickers"]["AAAA"]
-        assert tk["elite_new_count"] == 1       # FundB is new
-        assert tk["elite_exit_count"] == 1      # FundC exited
+        assert tk["elite_new_count"] == 1  # FundB is new
+        assert tk["elite_exit_count"] == 1  # FundC exited
         assert tk["net_elite_holders_delta"] == 0
 
     def test_add_and_trim_counts(self):
-        current = _make_summary({
-            "AAAA": _ticker_data(2, {"FundA": 200, "FundB": 50}, 250, 25),
-        })
-        prior = _make_summary({
-            "AAAA": _ticker_data(2, {"FundA": 100, "FundB": 100}, 200, 20),
-        }, as_of_date="2026-02-19")
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(2, {"FundA": 200, "FundB": 50}, 250, 25),
+            }
+        )
+        prior = _make_summary(
+            {
+                "AAAA": _ticker_data(2, {"FundA": 100, "FundB": 100}, 200, 20),
+            },
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         tk = delta["tickers"]["AAAA"]
-        assert tk["elite_add_count"] == 1    # FundA increased
-        assert tk["elite_trim_count"] == 1   # FundB decreased
+        assert tk["elite_add_count"] == 1  # FundA increased
+        assert tk["elite_trim_count"] == 1  # FundB decreased
 
     def test_shares_and_value_deltas(self):
-        current = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 300}, 300, 30),
-        })
-        prior = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 200}, 200, 20),
-        }, as_of_date="2026-02-19")
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 300}, 300, 30),
+            }
+        )
+        prior = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 200}, 200, 20),
+            },
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         tk = delta["tickers"]["AAAA"]
         assert tk["shares_delta_total"] == 100
         assert tk["value_delta_total"] == 10
 
     def test_ticker_not_in_prior_all_new(self):
-        current = _make_summary({
-            "AAAA": _ticker_data(2, {"FundA": 100, "FundB": 200}, 300, 30),
-        })
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(2, {"FundA": 100, "FundB": 200}, 300, 30),
+            }
+        )
         prior = _make_summary({}, as_of_date="2026-02-19")
         delta = compute_institutional_delta(current, prior)
         tk = delta["tickers"]["AAAA"]
@@ -121,12 +140,17 @@ class TestComputeDelta:
         assert tk["shares_delta_total"] == 300
 
     def test_both_empty_all_zeros(self):
-        current = _make_summary({
-            "AAAA": _ticker_data(0, {}, 0, 0),
-        })
-        prior = _make_summary({
-            "AAAA": _ticker_data(0, {}, 0, 0),
-        }, as_of_date="2026-02-19")
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(0, {}, 0, 0),
+            }
+        )
+        prior = _make_summary(
+            {
+                "AAAA": _ticker_data(0, {}, 0, 0),
+            },
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         tk = delta["tickers"]["AAAA"]
         assert tk["elite_new_count"] == 0
@@ -144,25 +168,31 @@ class TestComputeDelta:
         prior = _make_summary(tickers, as_of_date="2026-02-19")
         d1 = compute_institutional_delta(current, prior)
         d2 = compute_institutional_delta(current, prior)
-        d1.pop("created_at"); d2.pop("created_at")
+        d1.pop("created_at")
+        d2.pop("created_at")
         assert json.dumps(d1, sort_keys=True) == json.dumps(d2, sort_keys=True)
 
     def test_v1_prior_returns_none(self):
         """Prior without elite_holder_shares → None."""
-        current = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
-        })
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
+            }
+        )
         # Build a v1-style prior (no elite_holder_shares)
-        prior = _make_summary({
-            "AAAA": {
-                "elite_holders_count": 1,
-                "elite_holder_names": ["FundA"],
-                "elite_total_shares": 100,
-                "elite_total_value_usd_thousands": 10,
-                "inst_score_raw": 1,
-                "inst_score_z": 0.0,
+        prior = _make_summary(
+            {
+                "AAAA": {
+                    "elite_holders_count": 1,
+                    "elite_holder_names": ["FundA"],
+                    "elite_total_shares": 100,
+                    "elite_total_value_usd_thousands": 10,
+                    "inst_score_raw": 1,
+                    "inst_score_z": 0.0,
+                },
             },
-        }, as_of_date="2026-02-19")
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         assert delta is None
 
@@ -190,14 +220,19 @@ class TestComputeDelta:
         assert delta["prior_cache_as_of_date"] == "2026-02-19"
 
     def test_top_level_counts(self):
-        current = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
-            "BBBB": _ticker_data(0, {}, 0, 0),
-        })
-        prior = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
-            "CCCC": _ticker_data(0, {}, 0, 0),
-        }, as_of_date="2026-02-19")
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
+                "BBBB": _ticker_data(0, {}, 0, 0),
+            }
+        )
+        prior = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
+                "CCCC": _ticker_data(0, {}, 0, 0),
+            },
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         assert delta["tickers_in_current"] == 2
         assert delta["tickers_in_prior"] == 2
@@ -208,6 +243,7 @@ class TestComputeDelta:
 # TestFindPrior
 # ---------------------------------------------------------------------------
 
+
 class TestFindPrior:
     """_find_prior_institutional_summary() logic."""
 
@@ -216,14 +252,18 @@ class TestFindPrior:
         date_dir = snap_dir / date_str
         date_dir.mkdir(parents=True, exist_ok=True)
         tickers = {
-            "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10) if with_shares else {
-                "elite_holders_count": 1,
-                "elite_holder_names": ["FundA"],
-                "elite_total_shares": 100,
-                "elite_total_value_usd_thousands": 10,
-                "inst_score_raw": 1,
-                "inst_score_z": 0.0,
-            },
+            "AAAA": (
+                _ticker_data(1, {"FundA": 100}, 100, 10)
+                if with_shares
+                else {
+                    "elite_holders_count": 1,
+                    "elite_holder_names": ["FundA"],
+                    "elite_total_shares": 100,
+                    "elite_total_value_usd_thousands": 10,
+                    "inst_score_raw": 1,
+                    "inst_score_z": 0.0,
+                }
+            ),
         }
         data = _make_summary(tickers, as_of_date=date_str)
         with open(date_dir / "institutional_summary.json", "w") as f:
@@ -261,7 +301,7 @@ class TestFindPrior:
         # Write 15 dates, only Feb-03 has shares
         for i in range(1, 16):
             d = f"2026-02-{i:02d}"
-            has = (i == 3)  # only Feb-03 has shares
+            has = i == 3  # only Feb-03 has shares
             self._write_summary(tmp_path, d, with_shares=has)
         # max_candidates=5 should only look at 5 most recent before 2026-02-20
         result = _find_prior_institutional_summary(tmp_path, "2026-02-20", max_candidates=5)
@@ -322,6 +362,7 @@ class TestFindPrior:
 # TestDeltaGate
 # ---------------------------------------------------------------------------
 
+
 class TestDeltaGate:
     """check_institutional_delta() gate function."""
 
@@ -347,9 +388,12 @@ class TestDeltaGate:
         # Write a prior with shares
         prior_dir = tmp_path / "2026-02-19"
         prior_dir.mkdir(parents=True)
-        prior_data = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
-        }, as_of_date="2026-02-19")
+        prior_data = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
+            },
+            as_of_date="2026-02-19",
+        )
         with open(prior_dir / "institutional_summary.json", "w") as f:
             json.dump(prior_data, f)
         # Current dir exists but no delta file
@@ -364,12 +408,14 @@ class TestDeltaGate:
 # TestGateTightening — invariant checks in check_institutional_summary
 # ---------------------------------------------------------------------------
 
+
 class TestGateTightening:
     """Gate routes through the pure validator — WARN on any invariant violation."""
 
     def test_zero_universe_warns(self, tmp_path):
         """tickers_in_universe=0 with mismatched dict → validator catches size mismatch."""
         from run_daily_production import check_institutional_summary
+
         d = _valid_summary()
         d["tickers_in_universe"] = 0
         # Keep tickers dict non-empty → size mismatch with tickers_in_universe=0
@@ -382,6 +428,7 @@ class TestGateTightening:
 
     def test_signal_exceeds_universe_warns(self, tmp_path):
         from run_daily_production import check_institutional_summary
+
         d = _valid_summary()
         d["tickers_with_signal"] = 5  # > 2 in universe
         tmp_path.mkdir(parents=True, exist_ok=True)
@@ -393,6 +440,7 @@ class TestGateTightening:
 
     def test_managers_inconsistency_warns(self, tmp_path):
         from run_daily_production import check_institutional_summary
+
         d = _valid_summary()
         d["elite_managers_with_filing"] = 30  # > total=29
         tmp_path.mkdir(parents=True, exist_ok=True)
@@ -404,6 +452,7 @@ class TestGateTightening:
 
     def test_coverage_mismatch_warns(self, tmp_path):
         from run_daily_production import check_institutional_summary
+
         d = _valid_summary()
         d["signal_coverage_pct"] = 99.0  # actual: 1/2 = 50.0
         tmp_path.mkdir(parents=True, exist_ok=True)
@@ -415,6 +464,7 @@ class TestGateTightening:
 
     def test_consistent_data_passes(self, tmp_path):
         from run_daily_production import check_institutional_summary
+
         d = _valid_summary()
         tmp_path.mkdir(parents=True, exist_ok=True)
         with open(tmp_path / "institutional_summary.json", "w") as f:
@@ -426,6 +476,7 @@ class TestGateTightening:
 # ---------------------------------------------------------------------------
 # TestValidateSummarySchema — pure validator for institutional_summary.v1
 # ---------------------------------------------------------------------------
+
 
 def _valid_summary() -> dict:
     """Minimal valid institutional_summary.v1 dict."""
@@ -574,11 +625,16 @@ class TestValidateSummarySchema:
 
     def test_build_output_passes_validator(self, tmp_path):
         """Output of build_institutional_summary() passes its own validator."""
-        from tests.test_institutional_summary import _write_cache, _holding
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA", shares=500)]),
-            ("0000000002", "Mgr B", [_holding("AAAA", shares=300), _holding("BBBB", shares=100)]),
-        ])
+        from tests.test_institutional_summary import _holding, _write_cache
+
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA", shares=500)]),
+                ("0000000002", "Mgr B", [_holding("AAAA", shares=300), _holding("BBBB", shares=100)]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", "BBBB", "CCCC"}, cache_base_dir=tmp_path)
         assert result is not None
         ok, detail = validate_institutional_summary_schema_v1(result)
@@ -588,6 +644,7 @@ class TestValidateSummarySchema:
 # ---------------------------------------------------------------------------
 # TestValidateDeltaSchema — pure validator for institutional_summary_delta.v1
 # ---------------------------------------------------------------------------
+
 
 def _valid_delta() -> dict:
     """Minimal valid institutional_summary_delta.v1 dict."""
@@ -716,14 +773,20 @@ class TestValidateDeltaSchema:
 
     def test_compute_output_passes_validator(self):
         """Output of compute_institutional_delta() passes its own validator."""
-        current = _make_summary({
-            "AAAA": _ticker_data(2, {"FundA": 200, "FundB": 100}, 300, 30),
-            "BBBB": _ticker_data(0, {}, 0, 0),
-        }, as_of_date="2026-02-20")
-        prior = _make_summary({
-            "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
-            "BBBB": _ticker_data(0, {}, 0, 0),
-        }, as_of_date="2026-02-19")
+        current = _make_summary(
+            {
+                "AAAA": _ticker_data(2, {"FundA": 200, "FundB": 100}, 300, 30),
+                "BBBB": _ticker_data(0, {}, 0, 0),
+            },
+            as_of_date="2026-02-20",
+        )
+        prior = _make_summary(
+            {
+                "AAAA": _ticker_data(1, {"FundA": 100}, 100, 10),
+                "BBBB": _ticker_data(0, {}, 0, 0),
+            },
+            as_of_date="2026-02-19",
+        )
         delta = compute_institutional_delta(current, prior)
         assert delta is not None
         ok, detail = validate_institutional_summary_delta_schema_v1(delta)
@@ -733,6 +796,7 @@ class TestValidateDeltaSchema:
 # ---------------------------------------------------------------------------
 # TestDeltaGateWithValidator — delta gate uses validator
 # ---------------------------------------------------------------------------
+
 
 class TestDeltaGateWithValidator:
     """check_institutional_delta() uses validator when delta file exists."""
@@ -877,10 +941,12 @@ class TestSortSignal:
             catalyst_priority_mode="tiebreaker",
         )
         # All signals positive → better than none
-        k_none = _sort_key(inst_delta_z=0.0, clinical_score_z_tier="0.0",
-                          coinvest_score_z="0.0", stage_bucket="mid", _ruleset=rs)
-        k_all = _sort_key(inst_delta_z=1.0, clinical_score_z_tier="1.0",
-                         coinvest_score_z="1.0", stage_bucket="mid", _ruleset=rs)
+        k_none = _sort_key(
+            inst_delta_z=0.0, clinical_score_z_tier="0.0", coinvest_score_z="0.0", stage_bucket="mid", _ruleset=rs
+        )
+        k_all = _sort_key(
+            inst_delta_z=1.0, clinical_score_z_tier="1.0", coinvest_score_z="1.0", stage_bucket="mid", _ruleset=rs
+        )
         assert k_all < k_none
 
     def test_graceful_missing_data(self):
@@ -920,6 +986,7 @@ class TestSortSignal:
 # ---------------------------------------------------------------------------
 # Coverage guard
 # ---------------------------------------------------------------------------
+
 
 class TestCoverageGuard:
     """institutional_sort_min_nonzero_pct coverage guard in run_screen.py."""
@@ -972,7 +1039,6 @@ class TestCoverageGuard:
         """Empty csv_rows → no crash, nonzero_pct = 0."""
         csv_rows = []
         nonzero_pct = (
-            100.0 * sum(1 for r in csv_rows if r.get("inst_delta_net", 0) != 0) / len(csv_rows)
-            if csv_rows else 0.0
+            100.0 * sum(1 for r in csv_rows if r.get("inst_delta_net", 0) != 0) / len(csv_rows) if csv_rows else 0.0
         )
         assert nonzero_pct == 0.0

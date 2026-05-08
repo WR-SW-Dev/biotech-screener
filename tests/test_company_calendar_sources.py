@@ -1,20 +1,23 @@
 """Tests for wake_robin_data_pipeline.company_calendar_sources."""
+
 from __future__ import annotations
 
 import json
-import pytest
 from pathlib import Path
 from typing import Any, Dict, List
 
+import pytest
+
 from wake_robin_data_pipeline.company_calendar_sources import (
     load_company_calendar_sources,
-    validate_company_calendar_sources,
     merge_universe_with_company_calendar_sources,
+    validate_company_calendar_sources,
 )
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_sources_file(tmp_path: Path, sources: Dict[str, Any]) -> Path:
     """Write a company_calendar_sources.json and return its path."""
@@ -42,16 +45,23 @@ def _universe_row(ticker: str, ir_url: str = "", pr_rss_url: str = "") -> Dict[s
 # load_company_calendar_sources
 # ---------------------------------------------------------------------------
 
+
 class TestLoadCompanyCalendarSources:
     def test_missing_file_returns_empty(self, tmp_path: Path):
         result = load_company_calendar_sources(tmp_path / "nonexistent.json")
         assert result == {}
 
     def test_valid_file_loads(self, tmp_path: Path):
-        p = _make_sources_file(tmp_path, {
-            "VRTX": {"ir_url": "https://investors.vrtx.com/events"},
-            "REGN": {"ir_url": "https://investor.regeneron.com/events", "pr_rss_url": "https://newsroom.regeneron.com/rss.xml"},
-        })
+        p = _make_sources_file(
+            tmp_path,
+            {
+                "VRTX": {"ir_url": "https://investors.vrtx.com/events"},
+                "REGN": {
+                    "ir_url": "https://investor.regeneron.com/events",
+                    "pr_rss_url": "https://newsroom.regeneron.com/rss.xml",
+                },
+            },
+        )
         result = load_company_calendar_sources(p)
         assert len(result) == 2
         assert result["VRTX"]["ir_url"] == "https://investors.vrtx.com/events"
@@ -59,10 +69,13 @@ class TestLoadCompanyCalendarSources:
         assert result["REGN"]["pr_rss_url"] == "https://newsroom.regeneron.com/rss.xml"
 
     def test_normalizes_tickers_to_uppercase(self, tmp_path: Path):
-        p = _make_sources_file(tmp_path, {
-            "vrtx": {"ir_url": "https://example.com/vrtx"},
-            " Regn ": {"ir_url": "https://example.com/regn"},
-        })
+        p = _make_sources_file(
+            tmp_path,
+            {
+                "vrtx": {"ir_url": "https://example.com/vrtx"},
+                " Regn ": {"ir_url": "https://example.com/regn"},
+            },
+        )
         result = load_company_calendar_sources(p)
         assert "VRTX" in result
         assert "REGN" in result
@@ -81,9 +94,12 @@ class TestLoadCompanyCalendarSources:
         assert result == {}
 
     def test_filters_non_string_values(self, tmp_path: Path):
-        p = _make_sources_file(tmp_path, {
-            "VRTX": {"ir_url": "https://example.com", "bad_field": 123},
-        })
+        p = _make_sources_file(
+            tmp_path,
+            {
+                "VRTX": {"ir_url": "https://example.com", "bad_field": 123},
+            },
+        )
         result = load_company_calendar_sources(p)
         assert "ir_url" in result["VRTX"]
         assert "bad_field" not in result["VRTX"]
@@ -93,10 +109,14 @@ class TestLoadCompanyCalendarSources:
 # validate_company_calendar_sources
 # ---------------------------------------------------------------------------
 
+
 class TestValidateCompanyCalendarSources:
     def test_valid_sources_no_warnings(self):
         sources = {
-            "VRTX": {"ir_url": "https://investors.vrtx.com/events", "pr_rss_url": "https://investors.vrtx.com/rss/news.xml"},
+            "VRTX": {
+                "ir_url": "https://investors.vrtx.com/events",
+                "pr_rss_url": "https://investors.vrtx.com/rss/news.xml",
+            },
         }
         warnings = validate_company_calendar_sources(sources)
         assert warnings == []
@@ -122,6 +142,7 @@ class TestValidateCompanyCalendarSources:
 # ---------------------------------------------------------------------------
 # merge_universe_with_company_calendar_sources
 # ---------------------------------------------------------------------------
+
 
 class TestMergeUniverse:
     def test_adds_missing_urls(self):
@@ -208,6 +229,7 @@ class TestMergeUniverse:
 # Integration: load + validate + merge
 # ---------------------------------------------------------------------------
 
+
 class TestIntegration:
     def test_production_file_loads_and_validates(self):
         """Smoke test: production company_calendar_sources.json loads cleanly."""
@@ -232,10 +254,13 @@ class TestIntegration:
 
     def test_full_merge_pipeline(self, tmp_path: Path):
         """Load from file, validate, merge — full pipeline."""
-        p = _make_sources_file(tmp_path, {
-            "VRTX": {"ir_url": "https://vrtx.com/ir", "pr_rss_url": "https://vrtx.com/rss.xml"},
-            "REGN": {"ir_url": "https://regn.com/ir"},
-        })
+        p = _make_sources_file(
+            tmp_path,
+            {
+                "VRTX": {"ir_url": "https://vrtx.com/ir", "pr_rss_url": "https://vrtx.com/rss.xml"},
+                "REGN": {"ir_url": "https://regn.com/ir"},
+            },
+        )
         sources = load_company_calendar_sources(p)
         warnings = validate_company_calendar_sources(sources)
         assert warnings == []

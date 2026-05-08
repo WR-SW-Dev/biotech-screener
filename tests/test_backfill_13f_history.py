@@ -1,7 +1,9 @@
 """Tests for tools/backfill_13f_history.py — PIT-safe 13F history backfill."""
+
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List
@@ -9,37 +11,30 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import sys
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
-from sec_13f.edgar_13f import SEC13FFetcher, Filing13F, Holding
-from tools.warm_13f_cache import (
-    SCHEMA_VERSION,
-    CACHE_TYPE,
-    validate_sec_13f_index_schema,
-)
+from sec_13f.edgar_13f import Filing13F, Holding, SEC13FFetcher
 from tools.backfill_13f_history import (
-    TOOL_VERSION,
     DEFAULT_LOOKBACK_FILINGS,
-    generate_quarter_end_dates,
-    _warm_one_manager_backfill,
-    _build_backfill_index,
-    _is_date_complete,
-    _find_missing_managers,
+    TOOL_VERSION,
     _backfill_one_date,
+    _build_backfill_index,
     _build_coverage_report,
+    _find_missing_managers,
+    _is_date_complete,
     _load_managers,
+    _warm_one_manager_backfill,
     backfill_13f_history,
+    generate_quarter_end_dates,
 )
-from tools.warm_13f_cache import RateLimiter
-
+from tools.warm_13f_cache import CACHE_TYPE, SCHEMA_VERSION, RateLimiter, validate_sec_13f_index_schema
 
 # ---------------------------------------------------------------------------
 # Helpers (mirrors test_warm_13f_cache.py patterns)
 # ---------------------------------------------------------------------------
+
 
 def _make_filing(
     cik: str = "0001234567",
@@ -99,6 +94,7 @@ MANAGER_C = {"cik": "5555555", "name": "Fund C"}
 # Quarter-end date generation
 # ===================================================================
 
+
 class TestGenerateQuarterEndDates:
 
     def test_single_year_all_four_quarters(self):
@@ -154,6 +150,7 @@ class TestGenerateQuarterEndDates:
 # Resume: skip valid existing index
 # ===================================================================
 
+
 class TestResumeSkipsValidExistingIndex:
 
     def _write_valid_index(self, out_root: Path, as_of: str) -> None:
@@ -206,15 +203,20 @@ class TestResumeSkipsValidExistingIndex:
     def test_invalid_schema_not_skipped(self, tmp_path):
         date_dir = tmp_path / "2025-12-31"
         date_dir.mkdir(parents=True)
-        (date_dir / "index.json").write_text(json.dumps({
-            "schema_version": "wrong_version",
-        }))
+        (date_dir / "index.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "wrong_version",
+                }
+            )
+        )
         assert _is_date_complete(tmp_path, date(2025, 12, 31)) is False
 
 
 # ===================================================================
 # Resume: repair partial cache
 # ===================================================================
+
 
 class TestResumeRepairsPartialCache:
 
@@ -229,9 +231,16 @@ class TestResumeRepairsPartialCache:
             "filed_at": "2025-11-15",
             "form_type": "13F-HR",
             "accession": "ACC1",
-            "holdings": [{"cusip": "037833100", "ticker": "AAPL",
-                          "issuer": "APPLE", "shares": 100, "value_usd_thousands": 10,
-                          "put_call": ""}],
+            "holdings": [
+                {
+                    "cusip": "037833100",
+                    "ticker": "AAPL",
+                    "issuer": "APPLE",
+                    "shares": 100,
+                    "value_usd_thousands": 10,
+                    "put_call": "",
+                }
+            ],
         }
         (managers_dir / f"{cik_padded}.json").write_text(json.dumps(data))
 
@@ -240,9 +249,7 @@ class TestResumeRepairsPartialCache:
         # Manager A is cached
         self._write_manager_json(date_dir, "0001234567")
 
-        missing, existing = _find_missing_managers(
-            date_dir, [MANAGER_A, MANAGER_B]
-        )
+        missing, existing = _find_missing_managers(date_dir, [MANAGER_A, MANAGER_B])
 
         assert len(existing) == 1
         assert existing[0]["manager_cik"] == "0001234567"
@@ -257,9 +264,7 @@ class TestResumeRepairsPartialCache:
         # Write corrupt JSON
         (managers_dir / "0001234567.json").write_text("{corrupt")
 
-        missing, existing = _find_missing_managers(
-            date_dir, [MANAGER_A]
-        )
+        missing, existing = _find_missing_managers(date_dir, [MANAGER_A])
         assert len(missing) == 1
         assert len(existing) == 0
 
@@ -268,22 +273,29 @@ class TestResumeRepairsPartialCache:
 # PIT selection via backfill worker
 # ===================================================================
 
+
 class TestPITSelectionViaBackfill:
 
     def test_prefers_latest_report_date(self, tmp_path):
         old = _make_filing(
-            filing_date=date(2025, 8, 14), report_date=date(2025, 6, 30),
+            filing_date=date(2025, 8, 14),
+            report_date=date(2025, 6, 30),
             accession="Q2",
         )
         new = _make_filing(
-            filing_date=date(2025, 11, 14), report_date=date(2025, 9, 30),
+            filing_date=date(2025, 11, 14),
+            report_date=date(2025, 9, 30),
             accession="Q3",
         )
         fetcher = _make_mock_fetcher([old, new], [_make_holding()])
         rl = RateLimiter(rate=1000.0)
 
         result = _warm_one_manager_backfill(
-            MANAGER_A, date(2025, 12, 31), tmp_path, fetcher, rl,
+            MANAGER_A,
+            date(2025, 12, 31),
+            tmp_path,
+            fetcher,
+            rl,
             lookback_filings=16,
         )
         assert result["status"] == "ok"
@@ -291,18 +303,26 @@ class TestPITSelectionViaBackfill:
 
     def test_prefers_amendment(self, tmp_path):
         original = _make_filing(
-            filing_date=date(2025, 11, 14), report_date=date(2025, 9, 30),
-            form_type="13F-HR", accession="ORIG",
+            filing_date=date(2025, 11, 14),
+            report_date=date(2025, 9, 30),
+            form_type="13F-HR",
+            accession="ORIG",
         )
         amendment = _make_filing(
-            filing_date=date(2025, 11, 20), report_date=date(2025, 9, 30),
-            form_type="13F-HR/A", accession="AMEND",
+            filing_date=date(2025, 11, 20),
+            report_date=date(2025, 9, 30),
+            form_type="13F-HR/A",
+            accession="AMEND",
         )
         fetcher = _make_mock_fetcher([original, amendment], [_make_holding()])
         rl = RateLimiter(rate=1000.0)
 
         result = _warm_one_manager_backfill(
-            MANAGER_A, date(2025, 12, 31), tmp_path, fetcher, rl,
+            MANAGER_A,
+            date(2025, 12, 31),
+            tmp_path,
+            fetcher,
+            rl,
             lookback_filings=16,
         )
         assert result["form_type"] == "13F-HR/A"
@@ -310,18 +330,24 @@ class TestPITSelectionViaBackfill:
 
     def test_excludes_future_filings(self, tmp_path):
         past = _make_filing(
-            filing_date=date(2025, 8, 14), report_date=date(2025, 6, 30),
+            filing_date=date(2025, 8, 14),
+            report_date=date(2025, 6, 30),
             accession="PAST",
         )
         future = _make_filing(
-            filing_date=date(2026, 2, 14), report_date=date(2025, 12, 31),
+            filing_date=date(2026, 2, 14),
+            report_date=date(2025, 12, 31),
             accession="FUTURE",
         )
         fetcher = _make_mock_fetcher([past, future], [_make_holding()])
         rl = RateLimiter(rate=1000.0)
 
         result = _warm_one_manager_backfill(
-            MANAGER_A, date(2025, 12, 31), tmp_path, fetcher, rl,
+            MANAGER_A,
+            date(2025, 12, 31),
+            tmp_path,
+            fetcher,
+            rl,
             lookback_filings=16,
         )
         assert result["status"] == "ok"
@@ -331,6 +357,7 @@ class TestPITSelectionViaBackfill:
 # ===================================================================
 # Index schema has backfill block
 # ===================================================================
+
 
 class TestIndexSchemaHasBackfillBlock:
 
@@ -376,9 +403,7 @@ class TestIndexSchemaHasBackfillBlock:
             cadence="quarterly",
             manager_set="coinvest",
         )
-        ok, detail = validate_sec_13f_index_schema(
-            index, expected_as_of_date="2025-12-31"
-        )
+        ok, detail = validate_sec_13f_index_schema(index, expected_as_of_date="2025-12-31")
         assert ok, f"backfill index failed v1 validation: {detail}"
 
     def test_selection_policy_has_correct_lookback(self):
@@ -398,17 +423,15 @@ class TestIndexSchemaHasBackfillBlock:
 # Backfill integration (mock fetcher, real filesystem)
 # ===================================================================
 
+
 class TestBackfillIntegration:
 
-    def _run_backfill(
-        self, tmp_path, managers, filings, holdings, **kwargs
-    ) -> Dict[str, Any]:
+    def _run_backfill(self, tmp_path, managers, filings, holdings, **kwargs) -> Dict[str, Any]:
         fetcher = _make_mock_fetcher(filings, holdings)
 
-        with patch(
-            "tools.backfill_13f_history.SEC13FFetcher", return_value=fetcher
-        ), patch(
-            "tools.backfill_13f_history._load_managers", return_value=managers
+        with (
+            patch("tools.backfill_13f_history.SEC13FFetcher", return_value=fetcher),
+            patch("tools.backfill_13f_history._load_managers", return_value=managers),
         ):
             return backfill_13f_history(
                 date_from=kwargs.pop("date_from", date(2025, 9, 30)),
@@ -511,6 +534,7 @@ class TestBackfillIntegration:
 # Manager set loading
 # ===================================================================
 
+
 class TestManagerSet:
 
     @patch("tools.backfill_13f_history.get_all_managers")
@@ -535,6 +559,7 @@ class TestManagerSet:
 # ===================================================================
 # Coverage report
 # ===================================================================
+
 
 class TestCoverageReport:
 
@@ -570,6 +595,7 @@ class TestCoverageReport:
 # ===================================================================
 # Resume integration: skip + repair
 # ===================================================================
+
 
 class TestResumeIntegration:
 
@@ -615,11 +641,12 @@ class TestResumeIntegration:
         )
         fetcher = _make_mock_fetcher([filing], [_make_holding()])
 
-        with patch(
-            "tools.backfill_13f_history.SEC13FFetcher", return_value=fetcher
-        ), patch(
-            "tools.backfill_13f_history._load_managers",
-            return_value=[MANAGER_A],
+        with (
+            patch("tools.backfill_13f_history.SEC13FFetcher", return_value=fetcher),
+            patch(
+                "tools.backfill_13f_history._load_managers",
+                return_value=[MANAGER_A],
+            ),
         ):
             summary = backfill_13f_history(
                 date_from=date(2025, 9, 30),

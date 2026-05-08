@@ -21,13 +21,13 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from dataclasses import dataclass, field
-from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from statistics import mean, stdev
-from typing import Any, Dict, List, Optional, Tuple
 import logging
 import math
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal
+from statistics import mean, stdev
+from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 
@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DrawdownEvent:
     """A single drawdown event."""
+
     start_date: str
     trough_date: str
     recovery_date: Optional[str]  # None if not recovered
@@ -66,6 +67,7 @@ class DrawdownEvent:
 @dataclass
 class DrawdownAnalysis:
     """Complete drawdown analysis."""
+
     max_drawdown_pct: Decimal
     max_drawdown_event: Optional[DrawdownEvent]
     avg_drawdown_pct: Decimal
@@ -87,8 +89,11 @@ class DrawdownAnalysis:
             "regime_summary": {
                 regime: {
                     "count": len(events),
-                    "avg_drawdown": str(Decimal(str(mean([float(e.drawdown_pct) for e in events])))
-                                        .quantize(Decimal("0.01"))) if events else None
+                    "avg_drawdown": (
+                        str(Decimal(str(mean([float(e.drawdown_pct) for e in events]))).quantize(Decimal("0.01")))
+                        if events
+                        else None
+                    ),
                 }
                 for regime, events in self.regime_drawdowns.items()
             },
@@ -98,6 +103,7 @@ class DrawdownAnalysis:
 @dataclass
 class RiskMetrics:
     """Risk-adjusted performance metrics."""
+
     sharpe_ratio: Optional[Decimal]
     sortino_ratio: Optional[Decimal]
     calmar_ratio: Optional[Decimal]  # Return / Max Drawdown
@@ -121,6 +127,7 @@ class RiskMetrics:
 @dataclass
 class PerformanceSummary:
     """Complete performance summary."""
+
     start_date: str
     end_date: str
     total_return_pct: Decimal
@@ -248,24 +255,26 @@ class DrawdownCalculator:
                 # New peak
                 if in_drawdown:
                     # Recovered from drawdown
-                    drawdown_pct = ((trough_value - current_peak) / current_peak * Decimal("100"))
+                    drawdown_pct = (trough_value - current_peak) / current_peak * Decimal("100")
                     if abs(drawdown_pct) >= self.threshold:
                         start_dt = date.fromisoformat(drawdown_start_date)
                         trough_dt = date.fromisoformat(trough_date)
                         recovery_dt = date.fromisoformat(dt)
 
-                        events.append(DrawdownEvent(
-                            start_date=drawdown_start_date,
-                            trough_date=trough_date,
-                            recovery_date=dt,
-                            peak_value=current_peak,
-                            trough_value=trough_value,
-                            drawdown_pct=_quantize(drawdown_pct),
-                            duration_days=(trough_dt - start_dt).days,
-                            recovery_days=(recovery_dt - trough_dt).days,
-                            is_recovered=True,
-                            regime_at_start=self._regimes.get(drawdown_start_date),
-                        ))
+                        events.append(
+                            DrawdownEvent(
+                                start_date=drawdown_start_date,
+                                trough_date=trough_date,
+                                recovery_date=dt,
+                                peak_value=current_peak,
+                                trough_value=trough_value,
+                                drawdown_pct=_quantize(drawdown_pct),
+                                duration_days=(trough_dt - start_dt).days,
+                                recovery_days=(recovery_dt - trough_dt).days,
+                                is_recovered=True,
+                                regime_at_start=self._regimes.get(drawdown_start_date),
+                            )
+                        )
 
                     in_drawdown = False
 
@@ -286,23 +295,25 @@ class DrawdownCalculator:
 
         # Handle ongoing drawdown
         if in_drawdown:
-            drawdown_pct = ((trough_value - current_peak) / current_peak * Decimal("100"))
+            drawdown_pct = (trough_value - current_peak) / current_peak * Decimal("100")
             if abs(drawdown_pct) >= self.threshold:
                 start_dt = date.fromisoformat(drawdown_start_date)
                 trough_dt = date.fromisoformat(trough_date)
 
-                events.append(DrawdownEvent(
-                    start_date=drawdown_start_date,
-                    trough_date=trough_date,
-                    recovery_date=None,
-                    peak_value=current_peak,
-                    trough_value=trough_value,
-                    drawdown_pct=_quantize(drawdown_pct),
-                    duration_days=(trough_dt - start_dt).days,
-                    recovery_days=None,
-                    is_recovered=False,
-                    regime_at_start=self._regimes.get(drawdown_start_date),
-                ))
+                events.append(
+                    DrawdownEvent(
+                        start_date=drawdown_start_date,
+                        trough_date=trough_date,
+                        recovery_date=None,
+                        peak_value=current_peak,
+                        trough_value=trough_value,
+                        drawdown_pct=_quantize(drawdown_pct),
+                        duration_days=(trough_dt - start_dt).days,
+                        recovery_days=None,
+                        is_recovered=False,
+                        regime_at_start=self._regimes.get(drawdown_start_date),
+                    )
+                )
 
         return events
 
@@ -342,8 +353,7 @@ class DrawdownCalculator:
             # Find peak date
             for dt, v in reversed(self._values):
                 if v == peak:
-                    days_since_peak = (date.fromisoformat(self._values[-1][0]) -
-                                      date.fromisoformat(dt)).days
+                    days_since_peak = (date.fromisoformat(self._values[-1][0]) - date.fromisoformat(dt)).days
                     break
 
         # Group by regime
@@ -464,7 +474,7 @@ class PortfolioMetricsEngine:
         sortino = None
 
         if downside_returns and len(downside_returns) > 1:
-            downside_var = sum(r ** 2 for r in downside_returns) / len(downside_returns)
+            downside_var = sum(r**2 for r in downside_returns) / len(downside_returns)
             downside_dev = math.sqrt(downside_var) * math.sqrt(self._annual_factor)
             if downside_dev > 0:
                 excess_return = mean_return - float(self.risk_free_rate)
@@ -478,7 +488,7 @@ class PortfolioMetricsEngine:
 
         if var_index > 0:
             var_95 = _quantize(Decimal(str(sorted_returns[var_index] * 100)), "0.01")
-            tail_returns = sorted_returns[:var_index + 1]
+            tail_returns = sorted_returns[: var_index + 1]
             if tail_returns:
                 cvar_95 = _quantize(Decimal(str(mean(tail_returns) * 100)), "0.01")
 
@@ -522,7 +532,7 @@ class PortfolioMetricsEngine:
 
         total_return = Decimal("1")
         for r in return_values:
-            total_return *= (Decimal("1") + r)
+            total_return *= Decimal("1") + r
         total_return_pct = _quantize((total_return - Decimal("1")) * Decimal("100"))
 
         # Annualized return
@@ -537,7 +547,7 @@ class PortfolioMetricsEngine:
         dd_calc = DrawdownCalculator()
         portfolio_value = Decimal("100")  # Start at 100
         for dt, r in returns:
-            portfolio_value *= (Decimal("1") + r)
+            portfolio_value *= Decimal("1") + r
             dd_calc.update(dt, portfolio_value, regimes.get(dt))
 
         drawdown_analysis = dd_calc.get_analysis()
@@ -589,6 +599,7 @@ class PortfolioMetricsEngine:
 
 if __name__ == "__main__":
     import random
+
     random.seed(42)  # For reproducibility
 
     print("=" * 70)

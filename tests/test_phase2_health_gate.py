@@ -1,19 +1,13 @@
 """Tests for the Phase-2 health gate (compute_health_gate / generate_health_json)."""
+
 from __future__ import annotations
+
+from pathlib import Path
 
 import pandas as pd
 import pytest
-from pathlib import Path
 
 from run_phase2_snapshot_delta import (
-    CatalystCoverage,
-    DeltaResult,
-    HealthResult,
-    SingleResult,
-    SnapshotData,
-    compute_health_gate,
-    generate_health_json,
-    generate_report,
     FAIL_A_COUNT_MIN,
     FAIL_CATALYST_COVERAGE_MIN,
     FAIL_OPTIONALITY_COVERAGE_MIN,
@@ -23,12 +17,20 @@ from run_phase2_snapshot_delta import (
     WARN_CATALYST_DROP_PP,
     WARN_TURNOVER_PCT,
     WARN_WEIGHT_L1_PCT,
+    CatalystCoverage,
+    DeltaResult,
+    HealthResult,
+    SingleResult,
+    SnapshotData,
+    compute_health_gate,
+    generate_health_json,
+    generate_report,
 )
-
 
 # ---------------------------------------------------------------------------
 # Synthetic data builders (same helpers as test_phase2_snapshot_delta.py)
 # ---------------------------------------------------------------------------
+
 
 def _make_rankings_df(
     tickers: list[str],
@@ -116,7 +118,7 @@ def _clean_snapshot(n_a=10, n_b=10, catalyst_pct=80):
     n_specific = int(n_total * catalyst_pct / 100)
     cat_modes = ["specific_days"] * n_specific + ["no_upcoming"] * (n_total - n_specific)
     rankings = _make_rankings_df(tickers, tiers=tiers, catalyst_modes=cat_modes)
-    portfolio = _make_portfolio_df(tickers[:n_a + n_b], tiers=tiers[:n_a + n_b])
+    portfolio = _make_portfolio_df(tickers[: n_a + n_b], tiers=tiers[: n_a + n_b])
     return _make_snapshot("2026-02-09", rankings, portfolio)
 
 
@@ -124,15 +126,21 @@ def _clean_snapshot(n_a=10, n_b=10, catalyst_pct=80):
 # 1. FAIL: ruleset mismatch
 # ---------------------------------------------------------------------------
 
+
 class TestFailRulesetMismatch:
     def test_non_pinned_ruleset(self):
         snap = _clean_snapshot()
         snap = SnapshotData(
-            date=snap.date, path=snap.path, rankings=snap.rankings,
-            portfolio=snap.portfolio, metadata=snap.metadata,
-            ruleset_id="bad_id", has_native_portfolio=True,
+            date=snap.date,
+            path=snap.path,
+            rankings=snap.rankings,
+            portfolio=snap.portfolio,
+            metadata=snap.metadata,
+            ruleset_id="bad_id",
+            has_native_portfolio=True,
         )
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "FAIL"
@@ -142,6 +150,7 @@ class TestFailRulesetMismatch:
 # ---------------------------------------------------------------------------
 # 2. FAIL/WARN: no A-tier (split by optionality coverage)
 # ---------------------------------------------------------------------------
+
 
 class TestNoATierSplit:
     def test_zero_a_low_optionality_coverage(self):
@@ -156,6 +165,7 @@ class TestNoATierSplit:
         portfolio = _make_portfolio_df(["T1", "T2"])
         snap = _make_snapshot("2026-02-09", rankings, portfolio)
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "FAIL"
@@ -177,6 +187,7 @@ class TestNoATierSplit:
         portfolio = _make_portfolio_df(["T1", "T2"])
         snap = _make_snapshot("2026-02-09", rankings, portfolio)
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "WARN"
@@ -191,6 +202,7 @@ class TestNoATierSplit:
 # 3. FAIL: catalyst broken
 # ---------------------------------------------------------------------------
 
+
 class TestFailCatalystBroken:
     def test_coverage_below_fail_threshold(self):
         # 10% coverage: 1 of 10 is specific_days
@@ -204,6 +216,7 @@ class TestFailCatalystBroken:
         portfolio = _make_portfolio_df(tickers[:5], tiers=["A"] * 5)
         snap = _make_snapshot("2026-02-09", rankings, portfolio)
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "FAIL"
@@ -213,6 +226,7 @@ class TestFailCatalystBroken:
 # ---------------------------------------------------------------------------
 # 4. FAIL: empty portfolio
 # ---------------------------------------------------------------------------
+
 
 class TestFailEmptyPortfolio:
     def test_no_names(self):
@@ -224,6 +238,7 @@ class TestFailEmptyPortfolio:
         portfolio = _make_portfolio_df([])  # empty
         snap = _make_snapshot("2026-02-09", rankings, portfolio)
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "FAIL"
@@ -234,9 +249,11 @@ class TestFailEmptyPortfolio:
 # 5. WARN: high turnover
 # ---------------------------------------------------------------------------
 
+
 class TestWarnHighTurnover:
     def test_100pct_turnover(self):
         from run_phase2_snapshot_delta import compute_delta
+
         cur_snap = _clean_snapshot()
         # Build a prior with completely different tickers
         n = len(cur_snap.portfolio)
@@ -259,9 +276,11 @@ class TestWarnHighTurnover:
 # 6. WARN: catalyst drop
 # ---------------------------------------------------------------------------
 
+
 class TestWarnCatalystDrop:
     def test_large_coverage_drop(self):
         from run_phase2_snapshot_delta import compute_delta
+
         # Current: 50% coverage (5 of 10 specific_days)
         cur_tickers = [f"T{i}" for i in range(10)]
         cur_rankings = _make_rankings_df(
@@ -291,6 +310,7 @@ class TestWarnCatalystDrop:
 # 7. WARN: low A-tier (above 0 but below 5)
 # ---------------------------------------------------------------------------
 
+
 class TestWarnLowATier:
     def test_a_count_between_thresholds(self):
         # 1 A-tier name: above FAIL_A_COUNT_MIN (1) but below WARN_A_COUNT_LOW (2)
@@ -304,6 +324,7 @@ class TestWarnLowATier:
         portfolio = _make_portfolio_df(tickers[:7], tiers=tiers[:7])
         snap = _make_snapshot("2026-02-09", rankings, portfolio)
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "WARN"
@@ -314,10 +335,12 @@ class TestWarnLowATier:
 # 8. OK: clean snapshot
 # ---------------------------------------------------------------------------
 
+
 class TestOkClean:
     def test_everything_within_bounds(self):
         snap = _clean_snapshot()
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         assert health.status == "OK"
@@ -327,6 +350,7 @@ class TestOkClean:
 # ---------------------------------------------------------------------------
 # 9. FAIL trumps WARN
 # ---------------------------------------------------------------------------
+
 
 class TestFailTrumpsWarn:
     def test_fail_and_warn_both_present(self):
@@ -359,10 +383,12 @@ class TestFailTrumpsWarn:
 # 10. Health JSON structure
 # ---------------------------------------------------------------------------
 
+
 class TestHealthJsonStructure:
     def test_keys_and_types(self):
         snap = _clean_snapshot()
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         hj = generate_health_json(health)
@@ -397,6 +423,7 @@ class TestHealthJsonStructure:
     def test_report_includes_health_headline(self):
         snap = _clean_snapshot()
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
         report = generate_report(snap, None, result, health=health)
@@ -406,6 +433,7 @@ class TestHealthJsonStructure:
         """Report generated without health param should not contain HEALTH line."""
         snap = _clean_snapshot()
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         result = compute_single_snapshot_summary(snap)
         report = generate_report(snap, None, result)
         assert "HEALTH:" not in report
@@ -415,22 +443,19 @@ class TestHealthJsonStructure:
 # 11. Pinned thresholds ID
 # ---------------------------------------------------------------------------
 
+
 class TestPinnedThresholds:
     def test_default_thresholds_id_pinned(self):
         """Default thresholds must produce the pinned ID."""
         from run_phase2_snapshot_delta import DEFAULT_HEALTH_THRESHOLDS
+
         assert DEFAULT_HEALTH_THRESHOLDS.thresholds_id == "70636854"
 
     def test_production_json_matches_defaults(self):
         """Production v1.json must round-trip to the same thresholds as defaults."""
-        from run_phase2_snapshot_delta import (
-            Phase2HealthThresholds,
-            DEFAULT_HEALTH_THRESHOLDS,
-        )
-        prod_path = (
-            Path(__file__).resolve().parent.parent
-            / "production_data" / "phase2_health_thresholds" / "v1.json"
-        )
+        from run_phase2_snapshot_delta import DEFAULT_HEALTH_THRESHOLDS, Phase2HealthThresholds
+
+        prod_path = Path(__file__).resolve().parent.parent / "production_data" / "phase2_health_thresholds" / "v1.json"
         assert prod_path.exists(), f"Pinned JSON not found: {prod_path}"
         loaded = Phase2HealthThresholds.from_json(str(prod_path))
         assert loaded.thresholds_id == DEFAULT_HEALTH_THRESHOLDS.thresholds_id
@@ -438,10 +463,8 @@ class TestPinnedThresholds:
 
     def test_to_json_round_trip(self, tmp_path):
         """to_json → from_json should produce identical thresholds."""
-        from run_phase2_snapshot_delta import (
-            Phase2HealthThresholds,
-            DEFAULT_HEALTH_THRESHOLDS,
-        )
+        from run_phase2_snapshot_delta import DEFAULT_HEALTH_THRESHOLDS, Phase2HealthThresholds
+
         path = tmp_path / "test_thresholds.json"
         DEFAULT_HEALTH_THRESHOLDS.to_json(str(path))
         loaded = Phase2HealthThresholds.from_json(str(path))
@@ -450,24 +473,21 @@ class TestPinnedThresholds:
 
     def test_custom_thresholds_change_id(self):
         """Changing any field should produce a different thresholds_id."""
-        from run_phase2_snapshot_delta import (
-            Phase2HealthThresholds,
-            DEFAULT_HEALTH_THRESHOLDS,
-        )
+        from run_phase2_snapshot_delta import DEFAULT_HEALTH_THRESHOLDS, Phase2HealthThresholds
+
         custom = Phase2HealthThresholds(warn_a_count_low=10)
         assert custom.thresholds_id != DEFAULT_HEALTH_THRESHOLDS.thresholds_id
 
     def test_compute_health_gate_uses_custom_thresholds(self):
         """Custom thresholds should override defaults in compute_health_gate."""
-        from run_phase2_snapshot_delta import (
-            Phase2HealthThresholds,
-            compute_single_snapshot_summary,
-        )
+        from run_phase2_snapshot_delta import Phase2HealthThresholds, compute_single_snapshot_summary
+
         # 4 A-tier names: passes default (warn < 3) but fails custom (warn < 5)
         tickers = [f"T{i}" for i in range(10)]
         tiers = ["A"] * 4 + ["B"] * 3 + ["C"] * 3
         rankings = _make_rankings_df(
-            tickers, tiers=tiers,
+            tickers,
+            tiers=tiers,
             catalyst_modes=["specific_days"] * 10,
         )
         portfolio = _make_portfolio_df(tickers[:7], tiers=tiers[:7])
@@ -489,12 +509,14 @@ class TestPinnedThresholds:
 # 12. Missingness guardrails
 # ---------------------------------------------------------------------------
 
+
 class TestMissingnessGuardrails:
     """Tests for missingness coverage thresholds in health gate."""
 
     def test_portfolio_missing_data_warns(self):
         """portfolio_missing_count > 0 → WARN portfolio_missing_data."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         # Use enough tickers so 1 missing sponsor stays above all FAIL thresholds
         tickers = [f"T{i:03d}" for i in range(50)]
         rankings = _make_rankings_df(
@@ -514,6 +536,7 @@ class TestMissingnessGuardrails:
     def test_portfolio_missing_outside_portfolio_ok(self):
         """Missing data only in non-portfolio tickers → OK (portfolio_missing_count=0)."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         tickers = [f"T{i}" for i in range(10)]
         # T5 (non-portfolio) has missing sponsor — should not trigger WARN
         mc = [""] * 5 + ["sponsor"] + [""] * 4
@@ -533,6 +556,7 @@ class TestMissingnessGuardrails:
     def test_drawdown_coverage_fail(self):
         """coverage_drawdown_pct < 95 → FAIL drawdown_coverage_low."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         tickers = [f"T{i}" for i in range(20)]
         # 2/20 dev tickers have missing drawdown → 90% coverage < 95% FAIL
         mc = ["drawdown"] * 2 + [""] * 18
@@ -552,10 +576,8 @@ class TestMissingnessGuardrails:
 
     def test_drawdown_coverage_warn(self):
         """coverage_drawdown_pct < 99 but >= 95 → WARN drawdown_coverage_low."""
-        from run_phase2_snapshot_delta import (
-            Phase2HealthThresholds,
-            compute_single_snapshot_summary,
-        )
+        from run_phase2_snapshot_delta import Phase2HealthThresholds, compute_single_snapshot_summary
+
         # 1/50 missing → 98% coverage: below WARN(99%) but above FAIL(95%)
         tickers = [f"T{i:03d}" for i in range(50)]
         mc = ["drawdown"] + [""] * 49
@@ -575,6 +597,7 @@ class TestMissingnessGuardrails:
     def test_sponsor_coverage_warn(self):
         """coverage_sponsor_pct < 90 → WARN sponsor_coverage_low."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         tickers = [f"T{i}" for i in range(10)]
         # 2/10 missing sponsor → 80% < 90%
         mc = ["sponsor"] * 2 + [""] * 8
@@ -595,6 +618,7 @@ class TestMissingnessGuardrails:
     def test_catalyst_comp_coverage_warn(self):
         """coverage_catalyst_pct < 85 → WARN catalyst_coverage_low."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         tickers = [f"T{i}" for i in range(10)]
         # 2/10 missing catalyst component → 80% < 85%
         mc = ["catalyst"] * 2 + [""] * 8
@@ -615,6 +639,7 @@ class TestMissingnessGuardrails:
     def test_no_missing_components_column_skips_guardrails(self):
         """Old snapshots without missing_components column → no missingness checks."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         snap = _clean_snapshot()
         # Remove the missing_components column to simulate old snapshot
         snap.rankings.drop(columns=["missing_components"], inplace=True)
@@ -627,6 +652,7 @@ class TestMissingnessGuardrails:
     def test_clean_snapshot_still_ok(self):
         """Clean snapshot with missing_components column (all empty) → OK."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         snap = _clean_snapshot()
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)
@@ -639,6 +665,7 @@ class TestMissingnessGuardrails:
     def test_health_json_includes_new_thresholds(self):
         """generate_health_json should include missingness thresholds."""
         from run_phase2_snapshot_delta import compute_single_snapshot_summary
+
         snap = _clean_snapshot()
         result = compute_single_snapshot_summary(snap)
         health = compute_health_gate(snap, None, result)

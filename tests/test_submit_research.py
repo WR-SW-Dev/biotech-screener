@@ -8,6 +8,7 @@ Tests for scripts/research/submit_research.py
   - Missing baseline → NEEDS_MORE
   - RESEARCH_WORKFLOW.md exists
 """
+
 from __future__ import annotations
 
 import json
@@ -22,21 +23,21 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from scripts.research.submit_research import (
-    _find_active_ruleset_id,
-    _find_baseline_summary,
-    _VERDICT_EXIT,
-    submit,
-    _DEFAULT_HORIZONS,
-    _DEFAULT_TOP_K,
-    _DEFAULT_COST_BPS,
     _DEFAULT_ANCHOR_MODE,
     _DEFAULT_BENCHMARK,
+    _DEFAULT_COST_BPS,
+    _DEFAULT_HORIZONS,
+    _DEFAULT_TOP_K,
+    _VERDICT_EXIT,
+    _find_active_ruleset_id,
+    _find_baseline_summary,
+    submit,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _write_manifest(tmp_path: Path, entries: list) -> Path:
     manifest = {"schema_version": 1, "rulesets": entries}
@@ -60,13 +61,17 @@ def _write_verdict(run_dir: Path, ruleset_id: str, verdict: str = "PROMOTE") -> 
 # 1. Baseline auto-discovery
 # ---------------------------------------------------------------------------
 
+
 class TestBaselineDiscovery:
 
     def test_auto_discover_from_active_ruleset(self, tmp_path):
         """Auto-discovery finds baseline summary when active ruleset has a VERDICT.json."""
-        manifest_path = _write_manifest(tmp_path, [
-            {"id": "abc12345", "file": "active.json", "status": "active"},
-        ])
+        manifest_path = _write_manifest(
+            tmp_path,
+            [
+                {"id": "abc12345", "file": "active.json", "status": "active"},
+            ],
+        )
         audited_root = tmp_path / "audited"
         _write_verdict(audited_root / "baseline_run", "abc12345")
 
@@ -98,9 +103,12 @@ class TestBaselineDiscovery:
 
     def test_no_active_ruleset_returns_none(self, tmp_path):
         """No active ruleset in manifest → auto-discovery returns None."""
-        manifest_path = _write_manifest(tmp_path, [
-            {"id": "abc12345", "file": "old.json", "status": "retired"},
-        ])
+        manifest_path = _write_manifest(
+            tmp_path,
+            [
+                {"id": "abc12345", "file": "old.json", "status": "retired"},
+            ],
+        )
         audited_root = tmp_path / "audited"
         audited_root.mkdir()
 
@@ -113,10 +121,13 @@ class TestBaselineDiscovery:
 
     def test_active_ruleset_id_found(self, tmp_path):
         """_find_active_ruleset_id() returns correct ID."""
-        manifest_path = _write_manifest(tmp_path, [
-            {"id": "retired_id", "file": "old.json", "status": "retired"},
-            {"id": "live_id", "file": "active.json", "status": "active"},
-        ])
+        manifest_path = _write_manifest(
+            tmp_path,
+            [
+                {"id": "retired_id", "file": "old.json", "status": "retired"},
+                {"id": "live_id", "file": "active.json", "status": "active"},
+            ],
+        )
         with patch("scripts.research.submit_research._MANIFEST_PATH", manifest_path):
             active_id = _find_active_ruleset_id()
         assert active_id == "live_id"
@@ -125,6 +136,7 @@ class TestBaselineDiscovery:
 # ---------------------------------------------------------------------------
 # 2. Correct defaults forwarded
 # ---------------------------------------------------------------------------
+
 
 class TestDefaultsForwarded:
 
@@ -171,6 +183,7 @@ class TestDefaultsForwarded:
 # ---------------------------------------------------------------------------
 # 3. Exit codes match verdict
 # ---------------------------------------------------------------------------
+
 
 class TestExitCodes:
 
@@ -222,6 +235,7 @@ class TestExitCodes:
 # 4. Missing baseline → NEEDS_MORE
 # ---------------------------------------------------------------------------
 
+
 class TestMissingBaseline:
 
     def test_no_baseline_still_runs_backtest(self, tmp_path):
@@ -241,6 +255,7 @@ class TestMissingBaseline:
 # ---------------------------------------------------------------------------
 # 5. RESEARCH_WORKFLOW.md exists
 # ---------------------------------------------------------------------------
+
 
 class TestResearchWorkflowDoc:
 

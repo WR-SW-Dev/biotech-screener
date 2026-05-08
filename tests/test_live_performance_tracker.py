@@ -10,6 +10,7 @@ Tests for tools/live_performance_tracker.py
   - Rolling summary stats
   - Turnover chain
 """
+
 from __future__ import annotations
 
 import csv
@@ -18,7 +19,7 @@ import math
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -28,25 +29,25 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from tools.live_performance_tracker import (
-    SCHEMA_VERSION,
-    HORIZON,
-    TOP_K,
     CSV_FIELDS,
+    HORIZON,
+    SCHEMA_VERSION,
+    TOP_K,
     _compute_fwd_returns,
     _get_xbi_forward_return,
+    _load_all_rows,
+    _load_existing_dates,
     _mean_safe,
+    _write_rows,
     build_summary,
     compute_row,
     run_tracker,
-    _load_existing_dates,
-    _write_rows,
-    _load_all_rows,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_pit_prices(tickers: List[str], h20_close: float = 11.0, anchor: float = 10.0) -> Dict[str, Dict]:
     """Synthetic PIT prices dict."""
@@ -55,10 +56,12 @@ def _make_pit_prices(tickers: List[str], h20_close: float = 11.0, anchor: float 
             "ticker": tk,
             "anchor_date": "2026-01-02",
             "anchor_close": str(anchor),
-            "h5_date": "", "h5_close": "",
+            "h5_date": "",
+            "h5_close": "",
             "h20_date": "2026-01-30",
             "h20_close": str(h20_close),
-            "h63_date": "", "h63_close": "",
+            "h63_date": "",
+            "h63_close": "",
         }
         for tk in tickers
     }
@@ -68,12 +71,14 @@ def _make_rankings(tickers: List[str], eligible: bool = True) -> List[Dict]:
     """Synthetic rankings list with actionable_rank."""
     rows = []
     for i, tk in enumerate(tickers, 1):
-        rows.append({
-            "ticker": tk,
-            "actionable_rank": str(i),
-            "eligible": "1" if eligible else "0",
-            "tier_dev": "A" if i <= 10 else "B",
-        })
+        rows.append(
+            {
+                "ticker": tk,
+                "actionable_rank": str(i),
+                "eligible": "1" if eligible else "0",
+                "tier_dev": "A" if i <= 10 else "B",
+            }
+        )
     return rows
 
 
@@ -82,9 +87,17 @@ def _write_pit_dir(tmp_path: Path, snap_date: str, prices: Dict, horizon: int = 
     pit_dir = tmp_path / snap_date
     pit_dir.mkdir(parents=True, exist_ok=True)
 
-    fieldnames = ["ticker", "anchor_date", "anchor_close",
-                  "h5_date", "h5_close", "h20_date", "h20_close",
-                  "h63_date", "h63_close"]
+    fieldnames = [
+        "ticker",
+        "anchor_date",
+        "anchor_close",
+        "h5_date",
+        "h5_close",
+        "h20_date",
+        "h20_close",
+        "h63_date",
+        "h63_close",
+    ]
     with (pit_dir / "prices.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -127,6 +140,7 @@ def _write_snap_dir(tmp_path: Path, snap_date: str, rankings: List[Dict]) -> Pat
 # 1. compute_fwd_returns — basic and split filtering
 # ---------------------------------------------------------------------------
 
+
 class TestComputeFwdReturns:
 
     def test_basic_return(self):
@@ -146,11 +160,14 @@ class TestComputeFwdReturns:
         """Row with empty h20_close is skipped."""
         pit_prices = {
             "GOOD": {
-                "ticker": "GOOD", "anchor_close": "10.0",
-                "h20_close": "11.0", "h20_date": "2026-01-30",
+                "ticker": "GOOD",
+                "anchor_close": "10.0",
+                "h20_close": "11.0",
+                "h20_date": "2026-01-30",
             },
             "BAD": {
-                "ticker": "BAD", "anchor_close": "10.0",
+                "ticker": "BAD",
+                "anchor_close": "10.0",
                 "h20_close": "",  # empty
                 "h20_date": "",
             },
@@ -169,6 +186,7 @@ class TestComputeFwdReturns:
 # ---------------------------------------------------------------------------
 # 2. XBI forward return
 # ---------------------------------------------------------------------------
+
 
 class TestXbiForwardReturn:
 
@@ -207,20 +225,23 @@ class TestXbiForwardReturn:
 # 3. Build summary — rolling windows + inception
 # ---------------------------------------------------------------------------
 
+
 class TestBuildSummary:
 
     def _rows(self, n: int) -> List[Dict]:
         rows = []
         for i in range(n):
             d = f"2026-{i // 28 + 1:02d}-{i % 28 + 1:02d}"
-            rows.append({
-                "date": d,
-                "horizon": str(HORIZON),
-                "gross_return": str(0.05),
-                "net_return": str(0.04),
-                "ic": str(0.10),
-                "excess_return": str(0.02),
-            })
+            rows.append(
+                {
+                    "date": d,
+                    "horizon": str(HORIZON),
+                    "gross_return": str(0.05),
+                    "net_return": str(0.04),
+                    "ic": str(0.10),
+                    "excess_return": str(0.02),
+                }
+            )
         return rows
 
     def test_summary_fields_present(self):
@@ -255,17 +276,28 @@ class TestBuildSummary:
 # 4. Write-once behavior
 # ---------------------------------------------------------------------------
 
+
 class TestWriteOnce:
 
     def test_existing_rows_not_overwritten(self, tmp_path):
         """Rows already in CSV are not rewritten (write-once guarantee)."""
         existing = [
-            {"schema_version": SCHEMA_VERSION, "date": "2025-12-01",
-             "horizon": str(HORIZON), "n_held": "20",
-             "anchor_close_mean": "10.0", "forward_close_mean": "11.0",
-             "gross_return": "0.1", "net_return": "0.095",
-             "ic": "0.05", "xbi_return": "0.03", "excess_return": "0.07",
-             "turnover": "0.1", "ruleset_id": "old_ruleset", "notes": ""},
+            {
+                "schema_version": SCHEMA_VERSION,
+                "date": "2025-12-01",
+                "horizon": str(HORIZON),
+                "n_held": "20",
+                "anchor_close_mean": "10.0",
+                "forward_close_mean": "11.0",
+                "gross_return": "0.1",
+                "net_return": "0.095",
+                "ic": "0.05",
+                "xbi_return": "0.03",
+                "excess_return": "0.07",
+                "turnover": "0.1",
+                "ruleset_id": "old_ruleset",
+                "notes": "",
+            },
         ]
         csv_path = tmp_path / "live_performance.csv"
         with csv_path.open("w", newline="") as f:
@@ -287,20 +319,40 @@ class TestWriteOnce:
     def test_new_rows_appended_not_replaced(self, tmp_path):
         """Adding new rows does not alter the old rows."""
         existing = [
-            {"schema_version": SCHEMA_VERSION, "date": "2025-11-01",
-             "horizon": str(HORIZON), "n_held": "20",
-             "anchor_close_mean": "", "forward_close_mean": "",
-             "gross_return": "0.05", "net_return": "0.04",
-             "ic": "0.08", "xbi_return": "0.02", "excess_return": "0.03",
-             "turnover": "0.05", "ruleset_id": "r1", "notes": ""},
+            {
+                "schema_version": SCHEMA_VERSION,
+                "date": "2025-11-01",
+                "horizon": str(HORIZON),
+                "n_held": "20",
+                "anchor_close_mean": "",
+                "forward_close_mean": "",
+                "gross_return": "0.05",
+                "net_return": "0.04",
+                "ic": "0.08",
+                "xbi_return": "0.02",
+                "excess_return": "0.03",
+                "turnover": "0.05",
+                "ruleset_id": "r1",
+                "notes": "",
+            },
         ]
         new = [
-            {"schema_version": SCHEMA_VERSION, "date": "2025-12-01",
-             "horizon": str(HORIZON), "n_held": "20",
-             "anchor_close_mean": "", "forward_close_mean": "",
-             "gross_return": "0.06", "net_return": "0.05",
-             "ic": "0.09", "xbi_return": "0.02", "excess_return": "0.04",
-             "turnover": "0.06", "ruleset_id": "r1", "notes": ""},
+            {
+                "schema_version": SCHEMA_VERSION,
+                "date": "2025-12-01",
+                "horizon": str(HORIZON),
+                "n_held": "20",
+                "anchor_close_mean": "",
+                "forward_close_mean": "",
+                "gross_return": "0.06",
+                "net_return": "0.05",
+                "ic": "0.09",
+                "xbi_return": "0.02",
+                "excess_return": "0.04",
+                "turnover": "0.06",
+                "ruleset_id": "r1",
+                "notes": "",
+            },
         ]
         csv_path = tmp_path / "lp.csv"
         with csv_path.open("w", newline="") as f:
@@ -318,6 +370,7 @@ class TestWriteOnce:
 # ---------------------------------------------------------------------------
 # 5. Missing price cache — graceful skip
 # ---------------------------------------------------------------------------
+
 
 class TestMissingPriceCache:
 
@@ -350,6 +403,7 @@ class TestMissingPriceCache:
 # 6. IC computation end-to-end (via mocked data)
 # ---------------------------------------------------------------------------
 
+
 class TestICComputation:
 
     def test_ic_monotone_ranking_positive(self, tmp_path):
@@ -361,9 +415,14 @@ class TestICComputation:
             # Ticker with rank=1 gets best return (10%), rank=10 gets worst (1%)
             fwd = 10.0 + (11 - i) * 0.1
             pit_prices[tk] = {
-                "ticker": tk, "anchor_close": "10.0",
-                "h20_date": "2026-01-30", "h20_close": str(fwd),
-                "h5_date": "", "h5_close": "", "h63_date": "", "h63_close": "",
+                "ticker": tk,
+                "anchor_close": "10.0",
+                "h20_date": "2026-01-30",
+                "h20_close": str(fwd),
+                "h5_date": "",
+                "h5_close": "",
+                "h63_date": "",
+                "h63_close": "",
             }
 
         fwd_rets = _compute_fwd_returns(pit_prices, set(), horizon=20)
@@ -374,6 +433,7 @@ class TestICComputation:
         rets = [fwd_rets[r["ticker"]] for r in rankings if r["ticker"] in fwd_rets]
 
         from tools.live_performance_tracker import spearman_ic as _sic
+
         ic = _sic(signal, rets)
         assert ic is not None
         assert ic > 0.9, f"Expected IC near +1, got {ic}"
@@ -381,6 +441,7 @@ class TestICComputation:
     def test_ic_none_when_insufficient_data(self):
         """Fewer than 3 overlapping tickers → IC is None."""
         from tools.live_performance_tracker import spearman_ic as _sic
+
         ic = _sic([1.0, 2.0], [0.05, 0.03])
         assert ic is None
 
@@ -388,6 +449,7 @@ class TestICComputation:
 # ---------------------------------------------------------------------------
 # 7. Fresh start (no prior data)
 # ---------------------------------------------------------------------------
+
 
 class TestFreshStart:
 

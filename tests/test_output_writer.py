@@ -9,29 +9,31 @@ Covers:
 - Environment fingerprinting
 """
 
-import pytest
 import json
-import tempfile
-from datetime import date
-from pathlib import Path
-from typing import Dict, Any, List
 
 # Import module under test
 import sys
+import tempfile
+from datetime import date
+from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from governance.output_writer import (
-    inject_governance_metadata,
-    write_canonical_output,
     build_input_lineage,
     get_environment_fingerprint,
+    inject_governance_metadata,
+    write_canonical_output,
 )
 from governance.schema_registry import PIPELINE_VERSION, SCHEMA_VERSION
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_data():
@@ -79,6 +81,7 @@ def tmp_input_files(tmp_path):
 # ============================================================================
 # INJECT GOVERNANCE METADATA
 # ============================================================================
+
 
 class TestInjectGovernanceMetadata:
     """Tests for governance metadata injection."""
@@ -223,6 +226,7 @@ class TestInjectGovernanceMetadata:
 # WRITE CANONICAL OUTPUT
 # ============================================================================
 
+
 class TestWriteCanonicalOutput:
     """Tests for canonical output writing."""
 
@@ -354,6 +358,7 @@ class TestWriteCanonicalOutput:
 # BUILD INPUT LINEAGE
 # ============================================================================
 
+
 class TestBuildInputLineage:
     """Tests for input lineage building."""
 
@@ -469,6 +474,7 @@ class TestBuildInputLineage:
 # ENVIRONMENT FINGERPRINT
 # ============================================================================
 
+
 class TestGetEnvironmentFingerprint:
     """Tests for environment fingerprinting."""
 
@@ -506,6 +512,7 @@ class TestGetEnvironmentFingerprint:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -528,22 +535,14 @@ class TestEdgeCases:
             input_lineage=sample_lineage,
         )
 
-        with open(output_path, encoding='utf-8') as f:
+        with open(output_path, encoding="utf-8") as f:
             loaded = json.load(f)
 
         assert loaded["unicode"] == "\u4e2d\u6587"
 
     def test_nested_data_structures(self, sample_lineage, tmp_output_dir):
         """Handles deeply nested data structures."""
-        data = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "level4": ["a", "b", "c"]
-                    }
-                }
-            }
-        }
+        data = {"level1": {"level2": {"level3": {"level4": ["a", "b", "c"]}}}}
 
         output_path = tmp_output_dir / "output.json"
 
@@ -563,9 +562,7 @@ class TestEdgeCases:
 
     def test_large_data_structure(self, sample_lineage, tmp_output_dir):
         """Handles large data structures."""
-        data = {
-            "items": [{"id": i, "value": f"item_{i}"} for i in range(1000)]
-        }
+        data = {"items": [{"id": i, "value": f"item_{i}"} for i in range(1000)]}
 
         output_path = tmp_output_dir / "output.json"
 
@@ -580,4 +577,3 @@ class TestEdgeCases:
 
         assert output_path.exists()
         assert "sha256" in result
-

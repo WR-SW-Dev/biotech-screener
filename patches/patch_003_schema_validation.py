@@ -24,12 +24,12 @@ Usage:
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ class SchemaValidationError(Exception):
 @dataclass
 class ValidationResult:
     """Result of schema validation."""
+
     is_valid: bool
     errors: List[str]
     warnings: List[str]
@@ -101,8 +102,15 @@ def validate_trial_record(record: Dict[str, Any], index: int) -> List[str]:
 
     # Validate status
     valid_statuses = {
-        "ACTIVE", "RECRUITING", "COMPLETED", "TERMINATED", "SUSPENDED",
-        "WITHDRAWN", "ENROLLING_BY_INVITATION", "NOT_YET_RECRUITING", "UNKNOWN"
+        "ACTIVE",
+        "RECRUITING",
+        "COMPLETED",
+        "TERMINATED",
+        "SUSPENDED",
+        "WITHDRAWN",
+        "ENROLLING_BY_INVITATION",
+        "NOT_YET_RECRUITING",
+        "UNKNOWN",
     }
     status = record.get("overall_status", "").upper()
     if status and status not in valid_statuses:
@@ -194,8 +202,7 @@ def load_and_validate_trial_records(
 
     if all_errors:
         logger.warning(
-            f"Trial records validation: {len(valid_records)}/{len(records)} valid, "
-            f"{len(all_errors)} errors"
+            f"Trial records validation: {len(valid_records)}/{len(records)} valid, " f"{len(all_errors)} errors"
         )
     else:
         logger.info(f"Trial records validated: {len(valid_records)} records OK")
@@ -212,8 +219,15 @@ FINANCIAL_RECORD_REQUIRED_FIELDS = {
 }
 
 FINANCIAL_RECORD_NUMERIC_FIELDS = {
-    "cash_mm", "Cash", "burn_rate_mm", "NetIncome", "R&D",
-    "CFO", "FCF", "market_cap_mm", "market_cap",
+    "cash_mm",
+    "Cash",
+    "burn_rate_mm",
+    "NetIncome",
+    "R&D",
+    "CFO",
+    "FCF",
+    "market_cap_mm",
+    "market_cap",
 }
 
 
@@ -235,9 +249,7 @@ def validate_financial_record(record: Dict[str, Any], index: int) -> List[str]:
                 try:
                     float(value)  # Allow string numbers
                 except (ValueError, TypeError):
-                    errors.append(
-                        f"{ticker}: Field '{field}' is not numeric: {value}"
-                    )
+                    errors.append(f"{ticker}: Field '{field}' is not numeric: {value}")
 
     # Validate source_date if present
     source_date = record.get("source_date")
@@ -315,6 +327,7 @@ def load_and_validate_financial_records(
 # =============================================================================
 # MODULE OUTPUT VALIDATION
 # =============================================================================
+
 
 def validate_module_output(
     output: Dict[str, Any],
@@ -396,6 +409,7 @@ def validate_module_output(
 # SAFE DICT ACCESS
 # =============================================================================
 
+
 def safe_get(
     data: Dict[str, Any],
     key: str,
@@ -423,8 +437,7 @@ def safe_get(
 
     if expected_type is not None and not isinstance(value, expected_type):
         logger.warning(
-            f"Type mismatch for key '{key}': "
-            f"expected {expected_type.__name__}, got {type(value).__name__}"
+            f"Type mismatch for key '{key}': " f"expected {expected_type.__name__}, got {type(value).__name__}"
         )
         return default
 

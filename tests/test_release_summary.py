@@ -17,10 +17,10 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from generate_release_summary import generate_release_summary
 
-
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 def _make_calibration(
     baseline_a_floor: float = 0.55,
@@ -43,10 +43,38 @@ def _make_calibration(
             "a_floor": baseline_a_floor,
             "tier_distribution": {"A": 8.0, "B": 30.0, "C": 45.0, "D": 17.0},
             "tier_metrics": {
-                "A": {"count": 160, "mean_ret_60d": 6.0, "median_ret_60d": 5.0, "hit_rate_60d": 55.0, "mean_max_dd_60d": -12.0, "median_max_dd_60d": -10.0},
-                "B": {"count": 600, "mean_ret_60d": 3.0, "median_ret_60d": 2.5, "hit_rate_60d": 52.0, "mean_max_dd_60d": -15.0, "median_max_dd_60d": -13.0},
-                "C": {"count": 900, "mean_ret_60d": -1.0, "median_ret_60d": -2.0, "hit_rate_60d": 45.0, "mean_max_dd_60d": -18.0, "median_max_dd_60d": -16.0},
-                "D": {"count": 340, "mean_ret_60d": -5.0, "median_ret_60d": -6.0, "hit_rate_60d": 35.0, "mean_max_dd_60d": -25.0, "median_max_dd_60d": -22.0},
+                "A": {
+                    "count": 160,
+                    "mean_ret_60d": 6.0,
+                    "median_ret_60d": 5.0,
+                    "hit_rate_60d": 55.0,
+                    "mean_max_dd_60d": -12.0,
+                    "median_max_dd_60d": -10.0,
+                },
+                "B": {
+                    "count": 600,
+                    "mean_ret_60d": 3.0,
+                    "median_ret_60d": 2.5,
+                    "hit_rate_60d": 52.0,
+                    "mean_max_dd_60d": -15.0,
+                    "median_max_dd_60d": -13.0,
+                },
+                "C": {
+                    "count": 900,
+                    "mean_ret_60d": -1.0,
+                    "median_ret_60d": -2.0,
+                    "hit_rate_60d": 45.0,
+                    "mean_max_dd_60d": -18.0,
+                    "median_max_dd_60d": -16.0,
+                },
+                "D": {
+                    "count": 340,
+                    "mean_ret_60d": -5.0,
+                    "median_ret_60d": -6.0,
+                    "hit_rate_60d": 35.0,
+                    "mean_max_dd_60d": -25.0,
+                    "median_max_dd_60d": -22.0,
+                },
             },
             "ab_median_ret_60d": 3.0,
             "cd_median_ret_60d": -3.0,
@@ -61,10 +89,38 @@ def _make_calibration(
                 "a_floor": candidate_a_floor,
                 "tier_distribution": {"A": 12.0, "B": 28.0, "C": 42.0, "D": 18.0},
                 "tier_metrics": {
-                    "A": {"count": 240, "mean_ret_60d": 7.0, "median_ret_60d": 6.0, "hit_rate_60d": 58.0, "mean_max_dd_60d": -11.0, "median_max_dd_60d": -9.0},
-                    "B": {"count": 560, "mean_ret_60d": 2.5, "median_ret_60d": 2.0, "hit_rate_60d": 51.0, "mean_max_dd_60d": -14.0, "median_max_dd_60d": -12.0},
-                    "C": {"count": 840, "mean_ret_60d": -1.5, "median_ret_60d": -2.5, "hit_rate_60d": 44.0, "mean_max_dd_60d": -19.0, "median_max_dd_60d": -17.0},
-                    "D": {"count": 360, "mean_ret_60d": -4.0, "median_ret_60d": -5.0, "hit_rate_60d": 36.0, "mean_max_dd_60d": -24.0, "median_max_dd_60d": -21.0},
+                    "A": {
+                        "count": 240,
+                        "mean_ret_60d": 7.0,
+                        "median_ret_60d": 6.0,
+                        "hit_rate_60d": 58.0,
+                        "mean_max_dd_60d": -11.0,
+                        "median_max_dd_60d": -9.0,
+                    },
+                    "B": {
+                        "count": 560,
+                        "mean_ret_60d": 2.5,
+                        "median_ret_60d": 2.0,
+                        "hit_rate_60d": 51.0,
+                        "mean_max_dd_60d": -14.0,
+                        "median_max_dd_60d": -12.0,
+                    },
+                    "C": {
+                        "count": 840,
+                        "mean_ret_60d": -1.5,
+                        "median_ret_60d": -2.5,
+                        "hit_rate_60d": 44.0,
+                        "mean_max_dd_60d": -19.0,
+                        "median_max_dd_60d": -17.0,
+                    },
+                    "D": {
+                        "count": 360,
+                        "mean_ret_60d": -4.0,
+                        "median_ret_60d": -5.0,
+                        "hit_rate_60d": 36.0,
+                        "mean_max_dd_60d": -24.0,
+                        "median_max_dd_60d": -21.0,
+                    },
                 },
                 "ab_median_ret_60d": 3.5,
                 "cd_median_ret_60d": -3.5,
@@ -108,6 +164,7 @@ def _make_walkforward() -> Dict[str, Any]:
 # =============================================================================
 # TESTS
 # =============================================================================
+
 
 class TestReleaseSummary:
     """Tests for release summary generation."""

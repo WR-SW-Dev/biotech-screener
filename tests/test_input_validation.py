@@ -11,24 +11,25 @@ These tests cover:
 - Pipeline-level validation and circuit breakers
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from common.input_validation import (
-    validate_ticker,
-    validate_tickers,
+    InputValidationConfig,
+    PipelineValidationError,
+    RecordValidationResult,
+    TickerValidationResult,
+    ValidationResult,
+    validate_date,
     validate_financial_record,
     validate_market_record,
-    validate_trial_record,
-    validate_date,
     validate_pipeline_inputs,
+    validate_ticker,
+    validate_tickers,
+    validate_trial_record,
     validate_universe_not_empty,
-    InputValidationConfig,
-    TickerValidationResult,
-    RecordValidationResult,
-    ValidationResult,
-    PipelineValidationError,
 )
 
 
@@ -413,11 +414,21 @@ class TestValidateTrialRecord:
         assert result.valid is True  # Warning, not error
         assert any("phase" in w.lower() for w in result.warnings)
 
-    @pytest.mark.parametrize("phase", [
-        "Phase 1", "phase 1", "Phase 2", "Phase 3", "Phase 4",
-        "Phase 1/2", "Phase 2/3", "Approved", "Preclinical",
-        "Early Phase 1",
-    ])
+    @pytest.mark.parametrize(
+        "phase",
+        [
+            "Phase 1",
+            "phase 1",
+            "Phase 2",
+            "Phase 3",
+            "Phase 4",
+            "Phase 1/2",
+            "Phase 2/3",
+            "Approved",
+            "Preclinical",
+            "Early Phase 1",
+        ],
+    )
     def test_recognized_phases(self, phase):
         """Recognized phase formats should not generate warnings."""
         record = {"ticker": "ACME", "nct_id": "NCT12345678", "phase": phase}
@@ -581,7 +592,7 @@ class TestValidatePipelineInputs:
             financial_data=[
                 {"ticker": "A", "Cash": -100},  # Invalid
                 {"ticker": "B", "Cash": -100},  # Invalid
-                {"ticker": "C", "Cash": 100},   # Valid
+                {"ticker": "C", "Cash": 100},  # Valid
             ],
             as_of_date="2026-01-15",
         )

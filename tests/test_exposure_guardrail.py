@@ -4,6 +4,7 @@ Verifies compute_exposure_metrics() and its integration into
 compute_health_gate() via WARN/FAIL thresholds on portfolio-level
 risk concentration metrics.
 """
+
 from __future__ import annotations
 
 import sys
@@ -17,20 +18,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from run_phase2_snapshot_delta import (
+    _EXPOSURE_CHECKS,
     CatalystCoverage,
-    Phase2HealthThresholds,
-    SnapshotData,
-    SingleResult,
     HealthResult,
+    Phase2HealthThresholds,
+    SingleResult,
+    SnapshotData,
     compute_exposure_metrics,
     compute_health_gate,
-    _EXPOSURE_CHECKS,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _portfolio_df(rows: List[Dict[str, Any]]) -> pd.DataFrame:
     """Build a portfolio DataFrame from row dicts."""
@@ -39,13 +40,15 @@ def _portfolio_df(rows: List[Dict[str, Any]]) -> pd.DataFrame:
 
 def _make_rankings(n: int = 5) -> pd.DataFrame:
     """Minimal rankings DataFrame for SnapshotData."""
-    return pd.DataFrame({
-        "ticker": [f"T{i}" for i in range(n)],
-        "composite_score": [50.0] * n,
-        "eligible": ["1"] * n,
-        "tier_any": ["A"] * n,
-        "archetype": ["drug_developer"] * n,
-    })
+    return pd.DataFrame(
+        {
+            "ticker": [f"T{i}" for i in range(n)],
+            "composite_score": [50.0] * n,
+            "eligible": ["1"] * n,
+            "tier_any": ["A"] * n,
+            "archetype": ["drug_developer"] * n,
+        }
+    )
 
 
 def _make_snapshot(
@@ -74,7 +77,10 @@ def _single_result(portfolio_rows: List[Dict[str, Any]]) -> SingleResult:
         tier_in_portfolio={"A": max(n_a, 3), "B": 2},
         size_band={"L": 3, "M": 2},
         catalyst_coverage=CatalystCoverage(
-            n_dev=15, n_specific=10, pct=80.0, mode_dist={"specific_days": 10},
+            n_dev=15,
+            n_specific=10,
+            pct=80.0,
+            mode_dist={"specific_days": 10},
         ),
         top_catalysts=[],
         risk={},
@@ -85,6 +91,7 @@ def _single_result(portfolio_rows: List[Dict[str, Any]]) -> SingleResult:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestExposureMetrics:
     """Tests for compute_exposure_metrics() and health gate integration."""
@@ -139,10 +146,7 @@ class TestExposureMetrics:
             {"ticker": "F", "target_weight_pct": 5.0, "catalyst_days": "6", **base},
             {"ticker": "G", "target_weight_pct": 5.0, "catalyst_days": "4", **base},
             {"ticker": "H", "target_weight_pct": 5.0, "catalyst_days": "7", **base},
-        ] + [
-            {"ticker": f"Z{i}", "target_weight_pct": 5.0, "catalyst_days": "90", **base}
-            for i in range(12)
-        ]
+        ] + [{"ticker": f"Z{i}", "target_weight_pct": 5.0, "catalyst_days": "90", **base} for i in range(12)]
         metrics = compute_exposure_metrics(_portfolio_df(rows))
         assert metrics["catalyst_le_7d_weight_pct"] == 40.0
 
@@ -166,10 +170,7 @@ class TestExposureMetrics:
             {"ticker": "D", "target_weight_pct": 5.0, "risk_flags": "high_vol", **base},
             {"ticker": "E", "target_weight_pct": 4.0, "risk_flags": "high_vol", **base},
             {"ticker": "F", "target_weight_pct": 4.0, "risk_flags": "high_vol|overbought_rsi", **base},
-        ] + [
-            {"ticker": f"Z{i}", "target_weight_pct": 4.5, "risk_flags": "", **base}
-            for i in range(16)
-        ]
+        ] + [{"ticker": f"Z{i}", "target_weight_pct": 4.5, "risk_flags": "", **base} for i in range(16)]
         metrics = compute_exposure_metrics(_portfolio_df(rows))
         assert metrics["high_vol_weight_pct"] == 28.0
 
@@ -182,9 +183,27 @@ class TestExposureMetrics:
         """12% catalyst<=7d AND drawdown_rel_xbi triggers WARN (threshold 10%)."""
         base = {"mom_state": "neutral"}
         rows = [
-            {"ticker": "A", "target_weight_pct": 5.0, "catalyst_days": "5", "risk_flags": "deep_drawdown_rel_xbi", **base},
-            {"ticker": "B", "target_weight_pct": 4.0, "catalyst_days": "3", "risk_flags": "deep_drawdown_rel_xbi", **base},
-            {"ticker": "C", "target_weight_pct": 3.0, "catalyst_days": "7", "risk_flags": "deep_drawdown_rel_xbi", **base},
+            {
+                "ticker": "A",
+                "target_weight_pct": 5.0,
+                "catalyst_days": "5",
+                "risk_flags": "deep_drawdown_rel_xbi",
+                **base,
+            },
+            {
+                "ticker": "B",
+                "target_weight_pct": 4.0,
+                "catalyst_days": "3",
+                "risk_flags": "deep_drawdown_rel_xbi",
+                **base,
+            },
+            {
+                "ticker": "C",
+                "target_weight_pct": 3.0,
+                "catalyst_days": "7",
+                "risk_flags": "deep_drawdown_rel_xbi",
+                **base,
+            },
         ] + [
             {"ticker": f"Z{i}", "target_weight_pct": 4.4, "risk_flags": "", "catalyst_days": "90", **base}
             for i in range(20)
@@ -205,10 +224,7 @@ class TestExposureMetrics:
             {"ticker": "B", "target_weight_pct": 5.0, "mom_state": "headwind", **base},
             {"ticker": "C", "target_weight_pct": 5.0, "mom_state": "headwind", **base},
             {"ticker": "D", "target_weight_pct": 5.0, "mom_state": "headwind", **base},
-        ] + [
-            {"ticker": f"Z{i}", "target_weight_pct": 4.0, "mom_state": "tailwind", **base}
-            for i in range(20)
-        ]
+        ] + [{"ticker": f"Z{i}", "target_weight_pct": 4.0, "mom_state": "tailwind", **base} for i in range(20)]
         metrics = compute_exposure_metrics(_portfolio_df(rows))
         assert metrics["headwind_weight_pct"] == 20.0
 
@@ -243,8 +259,7 @@ class TestExposureMetrics:
         """Clean portfolio (no risk flags, distant catalysts) → no exposure reasons."""
         base = {"risk_flags": ""}
         rows = [
-            {"ticker": f"T{i}", "target_weight_pct": 5.0,
-             "catalyst_days": "90", "mom_state": "tailwind", **base}
+            {"ticker": f"T{i}", "target_weight_pct": 5.0, "catalyst_days": "90", "mom_state": "tailwind", **base}
             for i in range(20)
         ]
         metrics = compute_exposure_metrics(_portfolio_df(rows))

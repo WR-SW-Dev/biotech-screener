@@ -14,32 +14,33 @@ Author: Wake Robin Capital Management
 Version: 2.1.0
 """
 
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
 import pytest
 
 from module_4_clinical_dev_v2 import (
-    compute_module_4_clinical_dev_v2,
-    ValidationError,
-    _validate_as_of_date,
-    _validate_active_tickers,
-    _validate_trial_records,
-    _normalize_conditions,
-    _score_trial_count,
-    _score_design,
-    _safe_string_field,
+    MAX_CONDITION_STRING_LENGTH,
+    MAX_CONDITIONS_DEPTH,
+    MAX_ENDPOINT_LENGTH,
+    MAX_TRIALS_PER_TICKER,
     TrialPITRecord,
     TrialStatus,
-    MAX_ENDPOINT_LENGTH,
-    MAX_CONDITIONS_DEPTH,
-    MAX_CONDITION_STRING_LENGTH,
-    MAX_TRIALS_PER_TICKER,
+    ValidationError,
+    _normalize_conditions,
+    _safe_string_field,
+    _score_design,
+    _score_trial_count,
+    _validate_active_tickers,
+    _validate_as_of_date,
+    _validate_trial_records,
+    compute_module_4_clinical_dev_v2,
 )
-
 
 # ============================================================================
 # AS_OF_DATE VALIDATION TESTS
 # ============================================================================
+
 
 class TestAsOfDateValidation:
     """Tests for as_of_date input validation."""
@@ -88,6 +89,7 @@ class TestAsOfDateValidation:
 # ============================================================================
 # ACTIVE_TICKERS VALIDATION TESTS
 # ============================================================================
+
 
 class TestActiveTickersValidation:
     """Tests for active_tickers input validation."""
@@ -157,6 +159,7 @@ class TestActiveTickersValidation:
 # TRIAL_RECORDS VALIDATION TESTS
 # ============================================================================
 
+
 class TestTrialRecordsValidation:
     """Tests for trial_records input validation."""
 
@@ -190,6 +193,7 @@ class TestTrialRecordsValidation:
 # ============================================================================
 # CONDITIONS PARSING TESTS
 # ============================================================================
+
 
 class TestConditionsParsing:
     """Tests for _normalize_conditions robustness."""
@@ -281,6 +285,7 @@ class TestConditionsParsing:
 # TRIAL COUNT SCORING TESTS
 # ============================================================================
 
+
 class TestTrialCountScoring:
     """Tests for _score_trial_count with upper bounds."""
 
@@ -331,6 +336,7 @@ class TestTrialCountScoring:
 # ============================================================================
 # DESIGN SCORING TESTS
 # ============================================================================
+
 
 class TestDesignScoring:
     """Tests for _score_design with null handling."""
@@ -516,6 +522,7 @@ class TestDesignScoring:
 # SAFE STRING FIELD TESTS
 # ============================================================================
 
+
 class TestSafeStringField:
     """Tests for _safe_string_field utility."""
 
@@ -545,6 +552,7 @@ class TestSafeStringField:
 # ============================================================================
 # FULL MODULE INTEGRATION TESTS
 # ============================================================================
+
 
 class TestModuleIntegration:
     """Integration tests for the full module with robustness checks."""
@@ -578,18 +586,14 @@ class TestModuleIntegration:
             {"ticker": "TEST", "nct_id": "", "phase": "phase 2"},  # Empty NCT ID
             {"nct_id": "NCT002", "phase": "phase 2"},  # Missing ticker (None)
         ]
-        result = compute_module_4_clinical_dev_v2(
-            trials, {"TEST"}, "2026-01-15"
-        )
+        result = compute_module_4_clinical_dev_v2(trials, {"TEST"}, "2026-01-15")
         issues = result["diagnostic_counts"]["validation_issues"]
         assert issues["empty_ticker"] >= 1
         assert issues["empty_nct_id"] >= 1
 
     def test_date_object_accepted(self):
         """date object should be accepted as as_of_date."""
-        result = compute_module_4_clinical_dev_v2(
-            [], {"TEST"}, date(2026, 1, 15)
-        )
+        result = compute_module_4_clinical_dev_v2([], {"TEST"}, date(2026, 1, 15))
         assert result["as_of_date"] == "2026-01-15"
 
     def test_deterministic_output(self):
@@ -632,6 +636,7 @@ class TestModuleIntegration:
 # ============================================================================
 # EDGE CASE TESTS
 # ============================================================================
+
 
 class TestEdgeCases:
     """Tests for various edge cases."""

@@ -9,12 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from run_daily_production import (
-    DriftThresholds,
-    _compute_drift_metrics,
-    _find_prior_snapshot,
-    check_drift_monitoring,
-)
+from run_daily_production import DriftThresholds, _compute_drift_metrics, _find_prior_snapshot, check_drift_monitoring
 
 # Thresholds with FAIL disabled — for tests that only check WARN behavior
 WARN_ONLY_THRESHOLDS = DriftThresholds(
@@ -606,12 +601,7 @@ class TestActionTransitionMatrix:
         assert m["action_change_pct"] == 0.0
         # Diagonal sums to n_common
         matrix = m["action_transition_matrix"]
-        off_diag = sum(
-            cnt
-            for ft, row in matrix.items()
-            for tt, cnt in row.items()
-            if ft != tt
-        )
+        off_diag = sum(cnt for ft, row in matrix.items() for tt, cnt in row.items() if ft != tt)
         assert off_diag == 0
 
     def test_counts_tier_transitions(self, tmp_path):

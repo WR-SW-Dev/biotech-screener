@@ -10,28 +10,27 @@ Covers:
 - Error handling
 """
 
-import pytest
 import json
-import tempfile
-from datetime import date
-from pathlib import Path
-from typing import Dict, Any, List
-from unittest.mock import Mock, patch, MagicMock
 
 # Import module under test
 import sys
+import tempfile
+from datetime import date
+from pathlib import Path
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from governance.pipeline_runner import (
-    GovernedPipeline,
-    PipelineError,
-)
-from governance.audit_log import AuditStage, AuditStatus, AuditErrorCode
-
+from governance.audit_log import AuditErrorCode, AuditStage, AuditStatus
+from governance.pipeline_runner import GovernedPipeline, PipelineError
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def tmp_output_dir(tmp_path):
@@ -60,13 +59,17 @@ def tmp_params_dir(tmp_path):
     params_dir.mkdir()
 
     params_file = params_dir / "v1.json"
-    params_file.write_text(json.dumps({
-        "financial_weight": 0.25,
-        "clinical_weight": 0.40,
-        "catalyst_weight": 0.15,
-        "score_weights": {"clinical": 0.4, "financial": 0.3},
-        "thresholds": {"min_market_cap": 50},
-    }))
+    params_file.write_text(
+        json.dumps(
+            {
+                "financial_weight": 0.25,
+                "clinical_weight": 0.40,
+                "catalyst_weight": 0.15,
+                "score_weights": {"clinical": 0.4, "financial": 0.3},
+                "thresholds": {"min_market_cap": 50},
+            }
+        )
+    )
 
     return params_dir
 
@@ -86,6 +89,7 @@ def basic_pipeline(tmp_input_files, tmp_output_dir, tmp_params_dir):
 # ============================================================================
 # PIPELINE INITIALIZATION
 # ============================================================================
+
 
 class TestPipelineInitialization:
     """Tests for pipeline initialization."""
@@ -154,6 +158,7 @@ class TestPipelineInitialization:
 # INPUT VALIDATION
 # ============================================================================
 
+
 class TestInputValidation:
     """Tests for input validation."""
 
@@ -192,13 +197,7 @@ class TestInputValidation:
         basic_pipeline.initialize()
 
         # Set up mapping with required fields
-        basic_pipeline.mapping = {
-            "source_schemas": {
-                "market_data": {
-                    "required_fields": ["ticker", "price", "volume"]
-                }
-            }
-        }
+        basic_pipeline.mapping = {"source_schemas": {"market_data": {"required_fields": ["ticker", "price", "volume"]}}}
 
         # Data missing required fields
         data = [{"ticker": "ACME"}]  # Missing price, volume
@@ -212,13 +211,7 @@ class TestInputValidation:
         """Schema validation passes when all fields present."""
         basic_pipeline.initialize()
 
-        basic_pipeline.mapping = {
-            "source_schemas": {
-                "market_data": {
-                    "required_fields": ["ticker", "price"]
-                }
-            }
-        }
+        basic_pipeline.mapping = {"source_schemas": {"market_data": {"required_fields": ["ticker", "price"]}}}
 
         data = [{"ticker": "ACME", "price": 50.0, "extra": "ok"}]
 
@@ -237,6 +230,7 @@ class TestInputValidation:
 # ============================================================================
 # OUTPUT WRITING
 # ============================================================================
+
 
 class TestOutputWriting:
     """Tests for output writing."""
@@ -300,6 +294,7 @@ class TestOutputWriting:
 # STAGE LOGGING
 # ============================================================================
 
+
 class TestStageLogging:
     """Tests for stage logging."""
 
@@ -329,6 +324,7 @@ class TestStageLogging:
 # ============================================================================
 # FINALIZATION
 # ============================================================================
+
 
 class TestFinalization:
     """Tests for pipeline finalization."""
@@ -375,6 +371,7 @@ class TestFinalization:
 # RUN METADATA
 # ============================================================================
 
+
 class TestRunMetadata:
     """Tests for run metadata."""
 
@@ -406,6 +403,7 @@ class TestRunMetadata:
 # PIPELINE ERROR
 # ============================================================================
 
+
 class TestPipelineError:
     """Tests for PipelineError class."""
 
@@ -428,6 +426,7 @@ class TestPipelineError:
 # ============================================================================
 # DETERMINISM
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests for deterministic behavior."""
@@ -480,6 +479,7 @@ class TestDeterminism:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests."""
 
@@ -523,4 +523,3 @@ class TestEdgeCases:
 
         pipeline.initialize()
         assert pipeline.run_id != ""
-

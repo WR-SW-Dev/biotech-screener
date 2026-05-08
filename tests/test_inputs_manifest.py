@@ -23,39 +23,59 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import shutil
 import tarfile
 
+from archive_snapshot import sha256_file
 from run_screen import (
-    InputDependency,
     DEPENDENCY_REGISTRY,
     MANIFEST_VERSION,
+    InputDependency,
+    _count_records,
     build_inputs_manifest,
-    verify_inputs_manifest,
-    verify_against_prior_manifest,
     create_replay_bundle,
     extract_replay_bundle,
-    _count_records,
+    verify_against_prior_manifest,
+    verify_inputs_manifest,
 )
-from archive_snapshot import sha256_file
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def data_dir(tmp_path):
     """Create a minimal data_dir with the four required files."""
-    (tmp_path / "universe.json").write_text(json.dumps([
-        {"ticker": "AAPL"}, {"ticker": "GOOG"},
-    ]))
-    (tmp_path / "financial_records.json").write_text(json.dumps([
-        {"ticker": "AAPL", "cash": 100}, {"ticker": "GOOG", "cash": 200},
-    ]))
-    (tmp_path / "trial_records.json").write_text(json.dumps([
-        {"nct_id": "NCT001"}, {"nct_id": "NCT002"}, {"nct_id": "NCT003"},
-    ]))
-    (tmp_path / "market_data.json").write_text(json.dumps([
-        {"ticker": "AAPL", "price": 150},
-    ]))
+    (tmp_path / "universe.json").write_text(
+        json.dumps(
+            [
+                {"ticker": "AAPL"},
+                {"ticker": "GOOG"},
+            ]
+        )
+    )
+    (tmp_path / "financial_records.json").write_text(
+        json.dumps(
+            [
+                {"ticker": "AAPL", "cash": 100},
+                {"ticker": "GOOG", "cash": 200},
+            ]
+        )
+    )
+    (tmp_path / "trial_records.json").write_text(
+        json.dumps(
+            [
+                {"nct_id": "NCT001"},
+                {"nct_id": "NCT002"},
+                {"nct_id": "NCT003"},
+            ]
+        )
+    )
+    (tmp_path / "market_data.json").write_text(
+        json.dumps(
+            [
+                {"ticker": "AAPL", "price": 150},
+            ]
+        )
+    )
     return tmp_path
 
 
@@ -87,20 +107,31 @@ def all_conditions_on():
 # Schema stability (CI gate)
 # ===========================================================================
 
+
 class TestSchemaStability:
     def test_manifest_schema_v1_keys(self, data_dir, all_conditions_off):
         m = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
         expected_keys = {
-            "manifest_version", "as_of_date", "generated_at",
-            "data_dir", "dependencies", "validation",
+            "manifest_version",
+            "as_of_date",
+            "generated_at",
+            "data_dir",
+            "dependencies",
+            "validation",
         }
         assert set(m.keys()) == expected_keys
 
     def test_dependency_entry_keys(self, data_dir, all_conditions_off):
         m = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
         expected_keys = {
-            "key", "path", "required", "exists",
-            "resolved_from", "load_site", "sha256", "record_count",
+            "key",
+            "path",
+            "required",
+            "exists",
+            "resolved_from",
+            "load_site",
+            "sha256",
+            "record_count",
         }
         for dep in m["dependencies"]:
             assert set(dep.keys()) == expected_keys, f"Bad keys for {dep['key']}"
@@ -119,6 +150,7 @@ class TestSchemaStability:
 # Registry integrity
 # ===========================================================================
 
+
 class TestRegistryIntegrity:
     def test_registry_covers_four_required(self):
         required_keys = {d.key for d in DEPENDENCY_REGISTRY if d.required}
@@ -130,9 +162,7 @@ class TestRegistryIntegrity:
 
     def test_registry_load_sites_format(self):
         for dep in DEPENDENCY_REGISTRY:
-            assert re.match(r"\w+\.py:\d+", dep.load_site), (
-                f"Bad load_site format for {dep.key}: {dep.load_site}"
-            )
+            assert re.match(r"\w+\.py:\d+", dep.load_site), f"Bad load_site format for {dep.key}: {dep.load_site}"
 
     def test_registry_has_18_entries(self):
         assert len(DEPENDENCY_REGISTRY) == 18
@@ -141,6 +171,7 @@ class TestRegistryIntegrity:
 # ===========================================================================
 # Functional
 # ===========================================================================
+
 
 class TestFunctional:
     def test_all_required_present(self, data_dir, all_conditions_off):
@@ -245,6 +276,7 @@ class TestFunctional:
 # Verify mode
 # ===========================================================================
 
+
 class TestVerifyMode:
     def test_verify_passes(self, data_dir, all_conditions_off):
         m = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
@@ -259,6 +291,7 @@ class TestVerifyMode:
 # ===========================================================================
 # Drift check (verify against prior manifest)
 # ===========================================================================
+
 
 class TestDriftCheck:
     def test_no_drift_same_inputs(self, data_dir, all_conditions_off):
@@ -343,11 +376,18 @@ class TestDriftCheck:
         """Current has a required dep not present in prior → drift error."""
         prior = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
         current = json.loads(json.dumps(prior))
-        current["dependencies"].append({
-            "key": "new_required_dep", "required": True, "exists": True,
-            "sha256": "0" * 64, "path": "/fake", "resolved_from": "test",
-            "load_site": "test.py:1", "record_count": None,
-        })
+        current["dependencies"].append(
+            {
+                "key": "new_required_dep",
+                "required": True,
+                "exists": True,
+                "sha256": "0" * 64,
+                "path": "/fake",
+                "resolved_from": "test",
+                "load_site": "test.py:1",
+                "record_count": None,
+            }
+        )
         errs = verify_against_prior_manifest(current, prior)
         assert any("new_required_dep" in e and "absent from prior" in e for e in errs)
 
@@ -355,6 +395,7 @@ class TestDriftCheck:
 # ===========================================================================
 # Metadata integration
 # ===========================================================================
+
 
 class TestMetadataIntegration:
     def test_metadata_manifest_block_write(self):
@@ -370,10 +411,12 @@ class TestMetadataIntegration:
             "mode": inputs_manifest_mode,
             "path": "inputs_manifest.json" if inputs_manifest_mode != "off" else None,
             "all_required_present": (
-                results.get("run_metadata", {}).get("inputs_manifest", {}).get(
-                    "validation", {}
-                ).get("all_required_present")
-                if inputs_manifest_mode != "off" else None
+                results.get("run_metadata", {})
+                .get("inputs_manifest", {})
+                .get("validation", {})
+                .get("all_required_present")
+                if inputs_manifest_mode != "off"
+                else None
             ),
         }
         assert meta_block["mode"] == "write"
@@ -397,6 +440,7 @@ class TestMetadataIntegration:
 # Replay bundles
 # ===========================================================================
 
+
 class TestReplayBundle:
     def test_bundle_cache_dir_layout(self, tmp_path):
         """Cache directory deps bundle to cache/<subdir>/... (no extra basename layer)."""
@@ -408,16 +452,18 @@ class TestReplayBundle:
             "as_of_date": "2026-02-17",
             "generated_at": "2026-02-17T00:00:00Z",
             "data_dir": str(tmp_path),
-            "dependencies": [{
-                "key": "ctgov_cache_dir",
-                "path": str(cache_root),
-                "required": False,
-                "exists": True,
-                "resolved_from": "cache/ctgov",
-                "load_site": "run_screen.py:4209",
-                "sha256": None,
-                "record_count": None,
-            }],
+            "dependencies": [
+                {
+                    "key": "ctgov_cache_dir",
+                    "path": str(cache_root),
+                    "required": False,
+                    "exists": True,
+                    "resolved_from": "cache/ctgov",
+                    "load_site": "run_screen.py:4209",
+                    "sha256": None,
+                    "record_count": None,
+                }
+            ],
             "validation": {"all_required_present": True, "errors": [], "warnings": []},
         }
         out = tmp_path / "replay_bundle.tgz"
@@ -459,8 +505,7 @@ class TestReplayBundle:
                     fname = Path(dep["path"]).name
                     extracted = rb["data_dir"] / fname
                     if extracted.exists():
-                        assert sha256_file(extracted) == dep["sha256"], \
-                            f"sha256 mismatch for {dep['key']}"
+                        assert sha256_file(extracted) == dep["sha256"], f"sha256 mismatch for {dep['key']}"
         finally:
             shutil.rmtree(rb["tmp_dir"], ignore_errors=True)
 
@@ -547,16 +592,18 @@ class TestReplayBundle:
         m = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
         rs_file = tmp_path / "my_ruleset.json"
         rs_file.write_text(json.dumps({"ruleset_id": "test123"}))
-        m["dependencies"].append({
-            "key": "decision_ruleset",
-            "path": str(rs_file),
-            "required": False,
-            "exists": True,
-            "resolved_from": "production_data",
-            "load_site": "run_screen.py:6544",
-            "sha256": sha256_file(rs_file),
-            "record_count": None,
-        })
+        m["dependencies"].append(
+            {
+                "key": "decision_ruleset",
+                "path": str(rs_file),
+                "required": False,
+                "exists": True,
+                "resolved_from": "production_data",
+                "load_site": "run_screen.py:6544",
+                "sha256": sha256_file(rs_file),
+                "record_count": None,
+            }
+        )
 
         out = tmp_path / "replay_bundle.tgz"
         create_replay_bundle(m, out)

@@ -13,34 +13,36 @@ Author: Claude
 Date: 2026-01-15
 """
 
-import yfinance as yf
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+import yfinance as yf
 
 # Your top 10 tickers with WRONG volatility from portfolio output
 CURRENT_WRONG_DATA = {
-    'FOLD': 2.00,   # 200% - definitely wrong
-    'INDV': 0.10,   # 10% - definitely wrong  
-    'AZN': 2.00,    # 200% - definitely wrong
-    'MEDP': 2.00,   # 200% - definitely wrong
-    'KRYS': 2.00,   # 200% - definitely wrong
-    'MIRM': 2.00,   # 200% - definitely wrong
-    'AKE': 2.00,    # 200% - definitely wrong
-    'ALKS': 1.844,  # 184% - suspicious
-    'KROS': 1.369,  # 137% - suspicious
-    'ILMN': 2.00,   # 200% - definitely wrong (this is a $6B company!)
+    "FOLD": 2.00,  # 200% - definitely wrong
+    "INDV": 0.10,  # 10% - definitely wrong
+    "AZN": 2.00,  # 200% - definitely wrong
+    "MEDP": 2.00,  # 200% - definitely wrong
+    "KRYS": 2.00,  # 200% - definitely wrong
+    "MIRM": 2.00,  # 200% - definitely wrong
+    "AKE": 2.00,  # 200% - definitely wrong
+    "ALKS": 1.844,  # 184% - suspicious
+    "KROS": 1.369,  # 137% - suspicious
+    "ILMN": 2.00,  # 200% - definitely wrong (this is a $6B company!)
 }
 
-def calculate_correct_volatility(ticker, period='1y', method='log_returns'):
+
+def calculate_correct_volatility(ticker, period="1y", method="log_returns"):
     """
     Calculate annualized volatility CORRECTLY
-    
+
     Args:
         ticker: Stock ticker symbol
         period: Historical period ('1y', '2y', '3y')
         method: 'log_returns' (recommended) or 'simple_returns'
-    
+
     Returns:
         Annual volatility as decimal (e.g., 0.45 = 45%)
     """
@@ -48,30 +50,30 @@ def calculate_correct_volatility(ticker, period='1y', method='log_returns'):
         # Download price history
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period)
-        
+
         if len(hist) < 50:  # Need at least 50 days of data
             print(f"  WARNING: {ticker} only has {len(hist)} days of data")
             return None
-        
+
         # Calculate returns
-        if method == 'log_returns':
+        if method == "log_returns":
             # Log returns (preferred for vol calculation)
-            returns = np.log(hist['Close'] / hist['Close'].shift(1))
+            returns = np.log(hist["Close"] / hist["Close"].shift(1))
         else:
             # Simple returns
-            returns = hist['Close'].pct_change()
-        
+            returns = hist["Close"].pct_change()
+
         # Drop NaN values
         returns = returns.dropna()
-        
+
         # Calculate daily volatility
         daily_vol = returns.std()
-        
+
         # Annualize correctly: multiply by sqrt(trading days), NOT by days!
         annual_vol = daily_vol * np.sqrt(252)
-        
+
         return annual_vol
-        
+
     except Exception as e:
         print(f"  ERROR: {ticker} - {str(e)}")
         return None
@@ -79,7 +81,7 @@ def calculate_correct_volatility(ticker, period='1y', method='log_returns'):
 
 def diagnose_volatility_bug():
     """Main diagnostic function"""
-    
+
     print("=" * 70)
     print("VOLATILITY DIAGNOSTIC REPORT")
     print("=" * 70)
@@ -87,18 +89,18 @@ def diagnose_volatility_bug():
     print(f"Period: 1 year lookback")
     print(f"Method: Log returns, annualized with sqrt(252)")
     print()
-    
+
     results = []
-    
+
     print("Ticker | Current (WRONG) | Correct | Error | Issue")
     print("-" * 70)
-    
+
     for ticker, wrong_vol in CURRENT_WRONG_DATA.items():
         correct_vol = calculate_correct_volatility(ticker)
-        
+
         if correct_vol is not None:
             error = ((wrong_vol - correct_vol) / correct_vol) * 100
-            
+
             # Diagnose the issue
             if wrong_vol == 2.00:
                 issue = "Default/fallback value (200%)"
@@ -110,35 +112,37 @@ def diagnose_volatility_bug():
                 issue = "Calculation bug"
             else:
                 issue = "Within tolerance"
-            
-            results.append({
-                'ticker': ticker,
-                'wrong_vol': wrong_vol,
-                'correct_vol': correct_vol,
-                'error_pct': error,
-                'issue': issue
-            })
-            
+
+            results.append(
+                {
+                    "ticker": ticker,
+                    "wrong_vol": wrong_vol,
+                    "correct_vol": correct_vol,
+                    "error_pct": error,
+                    "issue": issue,
+                }
+            )
+
             print(f"{ticker:6} | {wrong_vol:15.1%} | {correct_vol:7.1%} | {error:+6.0f}% | {issue}")
         else:
             print(f"{ticker:6} | {wrong_vol:15.1%} | ERROR   | N/A    | Data unavailable")
-    
+
     print("=" * 70)
-    
+
     # Summary statistics
     if results:
         df = pd.DataFrame(results)
-        
+
         print("\nSUMMARY STATISTICS:")
         print(f"  Average error: {df['error_pct'].mean():+.0f}%")
         print(f"  Max error: {df['error_pct'].max():+.0f}%")
         print(f"  Tickers with 200% default: {sum(df['wrong_vol'] == 2.00)}/10")
-        
+
         print("\nDIAGNOSED ISSUES:")
-        issue_counts = df['issue'].value_counts()
+        issue_counts = df["issue"].value_counts()
         for issue, count in issue_counts.items():
             print(f"  • {issue}: {count} tickers")
-        
+
         # Export correct values
         print("\n" + "=" * 70)
         print("CORRECTED VOLATILITY VALUES (copy to your code):")
@@ -147,18 +151,19 @@ def diagnose_volatility_bug():
         for _, row in df.iterrows():
             print(f"    '{row['ticker']}': {row['correct_vol']:.4f},  # {row['correct_vol']:.1%}")
         print("}")
-    
+
     return results
 
 
 def suggest_fix():
     """Suggest code fixes based on diagnosis"""
-    
+
     print("\n" + "=" * 70)
     print("SUGGESTED FIX FOR YOUR CODE:")
     print("=" * 70)
-    
-    print("""
+
+    print(
+        """
 In your market_data_provider.py (or wherever you calculate vol), replace with:
 
 ```python
@@ -200,16 +205,17 @@ KEY CHANGES:
 2. ✅ Default to 50% not 200% 
 3. ✅ Add sanity checks (20-150% range)
 4. ✅ Use log returns (more stable)
-""")
+"""
+    )
 
 
 if __name__ == "__main__":
     # Run diagnostic
     results = diagnose_volatility_bug()
-    
+
     # Suggest fix
     suggest_fix()
-    
+
     print("\n" + "=" * 70)
     print("NEXT STEPS:")
     print("=" * 70)

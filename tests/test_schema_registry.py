@@ -9,42 +9,43 @@ Covers:
 - Output schema lookups
 """
 
-import pytest
-from pathlib import Path
-
 # Import module under test
 import sys
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from governance.schema_registry import (
+    DEFAULT_SCORE_VERSION,
+    OUTPUT_SCHEMA_VERSIONS,
     PIPELINE_VERSION,
     SCHEMA_VERSION,
-    OUTPUT_SCHEMA_VERSIONS,
-    DEFAULT_SCORE_VERSION,
     SUPPORTED_SCORE_VERSIONS,
+    get_output_schema_version,
+    get_schema_info,
     validate_schema_version,
     validate_score_version,
-    get_schema_info,
-    get_output_schema_version,
 )
-
 
 # ============================================================================
 # VERSION CONSTANTS
 # ============================================================================
+
 
 class TestVersionConstants:
     """Tests for version constants."""
 
     def test_pipeline_version_format(self):
         """Pipeline version is in X.Y.Z format."""
-        parts = PIPELINE_VERSION.split('.')
+        parts = PIPELINE_VERSION.split(".")
         assert len(parts) == 3
         assert all(part.isdigit() for part in parts)
 
     def test_schema_version_format(self):
         """Schema version is in X.Y.Z format."""
-        parts = SCHEMA_VERSION.split('.')
+        parts = SCHEMA_VERSION.split(".")
         assert len(parts) == 3
         assert all(part.isdigit() for part in parts)
 
@@ -59,13 +60,14 @@ class TestVersionConstants:
     def test_output_schema_versions_format(self):
         """All output schema versions are in X.Y.Z format."""
         for output_type, version in OUTPUT_SCHEMA_VERSIONS.items():
-            parts = version.split('.')
+            parts = version.split(".")
             assert len(parts) == 3, f"Invalid version for {output_type}: {version}"
 
 
 # ============================================================================
 # VALIDATE SCHEMA VERSION
 # ============================================================================
+
 
 class TestValidateSchemaVersion:
     """Tests for schema version validation."""
@@ -131,6 +133,7 @@ class TestValidateSchemaVersion:
 # VALIDATE SCORE VERSION
 # ============================================================================
 
+
 class TestValidateScoreVersion:
     """Tests for score version validation."""
 
@@ -161,6 +164,7 @@ class TestValidateScoreVersion:
 # ============================================================================
 # GET SCHEMA INFO
 # ============================================================================
+
 
 class TestGetSchemaInfo:
     """Tests for get_schema_info function."""
@@ -200,6 +204,7 @@ class TestGetSchemaInfo:
 # GET OUTPUT SCHEMA VERSION
 # ============================================================================
 
+
 class TestGetOutputSchemaVersion:
     """Tests for get_output_schema_version function."""
 
@@ -227,6 +232,7 @@ class TestGetOutputSchemaVersion:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -263,6 +269,7 @@ class TestEdgeCases:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -283,4 +290,3 @@ class TestDeterminism:
         info1 = get_schema_info()
         info2 = get_schema_info()
         assert info1 == info2
-

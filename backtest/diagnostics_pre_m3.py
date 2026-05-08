@@ -25,12 +25,8 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+from backtest.fmb import drop_constant_features, fama_macbeth, zscore_features
 from backtest.metrics_m1 import spearman_rank_ic
-from backtest.fmb import (
-    drop_constant_features,
-    fama_macbeth,
-    zscore_features,
-)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -67,14 +63,16 @@ def coverage_report(
     rows = []
     for col in sorted(feature_cols):
         if col not in panel.columns:
-            rows.append({
-                "feature": col,
-                "pct_nonnull_overall": 0.0,
-                "pct_weeks_present": 0.0,
-                "pct_weeks_constant": 100.0,
-                "median_nonnull_per_week": 0.0,
-                "n_weeks_total": len(dates),
-            })
+            rows.append(
+                {
+                    "feature": col,
+                    "pct_nonnull_overall": 0.0,
+                    "pct_weeks_present": 0.0,
+                    "pct_weeks_constant": 100.0,
+                    "median_nonnull_per_week": 0.0,
+                    "n_weeks_total": len(dates),
+                }
+            )
             continue
         nonnull_per_week = []
         constant_weeks = 0
@@ -93,16 +91,16 @@ def coverage_report(
         total_cells = len(panel)
         nonnull_total = panel[col].notna().sum()
 
-        rows.append({
-            "feature": col,
-            "pct_nonnull_overall": round(100.0 * nonnull_total / total_cells, 2),
-            "pct_weeks_present": round(100.0 * present_weeks / len(dates), 2),
-            "pct_weeks_constant": round(
-                100.0 * constant_weeks / max(present_weeks, 1), 2
-            ),
-            "median_nonnull_per_week": float(np.median(nonnull_per_week)),
-            "n_weeks_total": len(dates),
-        })
+        rows.append(
+            {
+                "feature": col,
+                "pct_nonnull_overall": round(100.0 * nonnull_total / total_cells, 2),
+                "pct_weeks_present": round(100.0 * present_weeks / len(dates), 2),
+                "pct_weeks_constant": round(100.0 * constant_weeks / max(present_weeks, 1), 2),
+                "median_nonnull_per_week": float(np.median(nonnull_per_week)),
+                "n_weeks_total": len(dates),
+            }
+        )
     return pd.DataFrame(rows).sort_values("feature").reset_index(drop=True)
 
 
@@ -135,12 +133,14 @@ def compute_ic_for_subset(
                 if np.isfinite(ic):
                     ics.append(ic)
             if ics:
-                rows.append({
-                    "feature": fcol,
-                    "return_col": rcol,
-                    "mean_ic": round(np.mean(ics), 6),
-                    "n_dates": len(ics),
-                })
+                rows.append(
+                    {
+                        "feature": fcol,
+                        "return_col": rcol,
+                        "mean_ic": round(np.mean(ics), 6),
+                        "n_dates": len(ics),
+                    }
+                )
     return pd.DataFrame(rows)
 
 
@@ -168,10 +168,7 @@ def subperiod_sign_stability(
         suffixes=("_h1", "_h2"),
         how="outer",
     )
-    merged["sign_match"] = (
-        np.sign(merged["mean_ic_h1"].fillna(0))
-        == np.sign(merged["mean_ic_h2"].fillna(0))
-    )
+    merged["sign_match"] = np.sign(merged["mean_ic_h1"].fillna(0)) == np.sign(merged["mean_ic_h2"].fillna(0))
     merged["h1_dates"] = f"{dates[0]}..{dates[mid-1]}"
     merged["h2_dates"] = f"{dates[mid]}..{dates[-1]}"
 
@@ -213,14 +210,16 @@ def rolling_ic(
                     if np.isfinite(ic):
                         ics.append(ic)
                 if ics:
-                    rows.append({
-                        "end_date": end_date,
-                        "window_weeks": window_weeks,
-                        "feature": fcol,
-                        "return_col": rcol,
-                        "mean_ic": round(np.mean(ics), 6),
-                        "n_dates": len(ics),
-                    })
+                    rows.append(
+                        {
+                            "end_date": end_date,
+                            "window_weeks": window_weeks,
+                            "feature": fcol,
+                            "return_col": rcol,
+                            "mean_ic": round(np.mean(ics), 6),
+                            "n_dates": len(ics),
+                        }
+                    )
     return pd.DataFrame(rows)
 
 
@@ -247,9 +246,7 @@ def rolling_fmb(
 
         if return_col not in subset.columns:
             continue
-        valid = subset[[date_col, return_col] + present_features].dropna(
-            subset=[return_col]
-        )
+        valid = subset[[date_col, return_col] + present_features].dropna(subset=[return_col])
         if len(valid) < 100:
             continue
 
@@ -264,15 +261,17 @@ def rolling_fmb(
                 prune_collinear=True,
             )
             for _, row in summary.iterrows():
-                rows.append({
-                    "end_date": end_date,
-                    "window_weeks": window_weeks,
-                    "feature": row["feature"],
-                    "return_col": return_col,
-                    "mean_beta": round(row["mean_beta"], 6),
-                    "t_stat": round(row["t_stat"], 4),
-                    "n_valid_weeks": int(row["n_valid_weeks"]),
-                })
+                rows.append(
+                    {
+                        "end_date": end_date,
+                        "window_weeks": window_weeks,
+                        "feature": row["feature"],
+                        "return_col": return_col,
+                        "mean_beta": round(row["mean_beta"], 6),
+                        "t_stat": round(row["t_stat"], 4),
+                        "n_valid_weeks": int(row["n_valid_weeks"]),
+                    }
+                )
         except Exception as e:
             logger.warning(f"FMB failed for window ending {end_date}: {e}")
     return pd.DataFrame(rows)
@@ -309,10 +308,7 @@ def main(argv=None):
     features_present = [c for c in _FEATURE_COLS if c in panel.columns]
     returns_present = [c for c in _RETURN_COLS if c in panel.columns]
 
-    logger.info(
-        f"  Panel: {len(panel)} rows, {len(dates)} dates, "
-        f"{panel['ticker'].nunique()} tickers"
-    )
+    logger.info(f"  Panel: {len(panel)} rows, {len(dates)} dates, " f"{panel['ticker'].nunique()} tickers")
     logger.info(f"  Features: {features_present}")
     logger.info(f"  Returns: {returns_present}")
 
@@ -333,9 +329,7 @@ def main(argv=None):
 
     # 2. Subperiod sign stability
     logger.info("Computing subperiod sign stability (H1 vs H2)...")
-    stability = subperiod_sign_stability(
-        panel, features_present, returns_present, args.date_col
-    )
+    stability = subperiod_sign_stability(panel, features_present, returns_present, args.date_col)
     stab_path = outdir / "subperiod_sign_stability.csv"
     stability.to_csv(stab_path, index=False)
     logger.info(f"  Wrote {stab_path}")
@@ -345,17 +339,12 @@ def main(argv=None):
         ic2 = row.get("mean_ic_h2", float("nan"))
         ic1_s = f"{ic1:+.4f}" if pd.notna(ic1) else "   N/A"
         ic2_s = f"{ic2:+.4f}" if pd.notna(ic2) else "   N/A"
-        logger.info(
-            f"    {row['feature']:30s} {row['return_col']:10s}  "
-            f"H1={ic1_s}  H2={ic2_s}  match={match}"
-        )
+        logger.info(f"    {row['feature']:30s} {row['return_col']:10s}  " f"H1={ic1_s}  H2={ic2_s}  match={match}")
 
     # 3. Rolling IC (26-week and 52-week)
     for window in [26, 52]:
         logger.info(f"Computing {window}-week rolling IC...")
-        ric = rolling_ic(
-            panel, features_present, returns_present, window, args.date_col
-        )
+        ric = rolling_ic(panel, features_present, returns_present, window, args.date_col)
         ric_path = outdir / f"rolling_ic_{window}w.csv.gz"
         ric.to_csv(ric_path, index=False, compression="gzip")
         logger.info(f"  Wrote {ric_path} ({len(ric)} rows)")
@@ -373,9 +362,7 @@ def main(argv=None):
 
     # 4. Rolling FMB (52-week on fwd_21d)
     logger.info("Computing 52-week rolling FMB (fwd_21d)...")
-    rfmb = rolling_fmb(
-        panel, features_present, "fwd_21d", 52, args.date_col
-    )
+    rfmb = rolling_fmb(panel, features_present, "fwd_21d", 52, args.date_col)
     rfmb_path = outdir / "rolling_fmb_52w_fwd21d.csv.gz"
     rfmb.to_csv(rfmb_path, index=False, compression="gzip")
     logger.info(f"  Wrote {rfmb_path} ({len(rfmb)} rows)")
@@ -394,9 +381,7 @@ def main(argv=None):
 
     # Also run FMB on fwd_5d
     logger.info("Computing 52-week rolling FMB (fwd_5d)...")
-    rfmb5 = rolling_fmb(
-        panel, features_present, "fwd_5d", 52, args.date_col
-    )
+    rfmb5 = rolling_fmb(panel, features_present, "fwd_5d", 52, args.date_col)
     rfmb5_path = outdir / "rolling_fmb_52w_fwd5d.csv.gz"
     rfmb5.to_csv(rfmb5_path, index=False, compression="gzip")
     logger.info(f"  Wrote {rfmb5_path} ({len(rfmb5)} rows)")

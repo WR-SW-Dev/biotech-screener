@@ -14,34 +14,31 @@ Tests:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
-import pytest
+
 from decimal import Decimal
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
-# Module under test
-from module_5_composite_v3 import (
-    compute_module_5_composite_v3,
-    _coalesce,
-    _score_single_ticker_v3,
-    _compute_determinism_hash,
-    ScoringMode,
-    NormalizationMethod,
-    V3_DEFAULT_WEIGHTS,
-    ComponentScore,
-)
-
-from src.modules.ic_enhancements import (
-    compute_interaction_terms,
-    compute_volatility_adjustment,
-    VolatilityBucket,
-)
+import pytest
 
 from backtest.metrics import compute_spearman_ic
 
+# Module under test
+from module_5_composite_v3 import (
+    V3_DEFAULT_WEIGHTS,
+    ComponentScore,
+    NormalizationMethod,
+    ScoringMode,
+    _coalesce,
+    _compute_determinism_hash,
+    _score_single_ticker_v3,
+    compute_module_5_composite_v3,
+)
+from src.modules.ic_enhancements import VolatilityBucket, compute_interaction_terms, compute_volatility_adjustment
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def sample_module_inputs():
@@ -49,27 +46,30 @@ def sample_module_inputs():
     tickers = ["AAAA", "BBBB", "CCCC", "DDDD", "EEEE"]
 
     universe = {
-        "active_securities": [{"ticker": t, "market_cap_mm": 1000 + i*100} for i, t in enumerate(tickers)],
+        "active_securities": [{"ticker": t, "market_cap_mm": 1000 + i * 100} for i, t in enumerate(tickers)],
         "excluded_securities": [],
     }
 
     financial = {
         "scores": [
-            {"ticker": t, "financial_score": str(50 + i*5), "market_cap_mm": 1000 + i*100, "runway_months": 12 + i*3, "severity": "none"}
+            {
+                "ticker": t,
+                "financial_score": str(50 + i * 5),
+                "market_cap_mm": 1000 + i * 100,
+                "runway_months": 12 + i * 3,
+                "severity": "none",
+            }
             for i, t in enumerate(tickers)
         ],
     }
 
     catalyst = {
-        "summaries": {
-            t: {"ticker": t, "scores": {"score_blended": str(40 + i*8)}}
-            for i, t in enumerate(tickers)
-        },
+        "summaries": {t: {"ticker": t, "scores": {"score_blended": str(40 + i * 8)}} for i, t in enumerate(tickers)},
     }
 
     clinical = {
         "scores": [
-            {"ticker": t, "clinical_score": str(60 + i*5), "lead_phase": "phase_2", "severity": "none"}
+            {"ticker": t, "clinical_score": str(60 + i * 5), "lead_phase": "phase_2", "severity": "none"}
             for i, t in enumerate(tickers)
         ],
     }
@@ -97,6 +97,7 @@ def sample_returns():
 # =============================================================================
 # TEST 1: IC Sign / Spread Sign Agreement
 # =============================================================================
+
 
 class TestICSpreadSignAgreement:
     """
@@ -140,14 +141,13 @@ class TestICSpreadSignAgreement:
 
         # CRITICAL: Signs must agree
         if ic is not None and abs(float(ic)) > 0.01:
-            assert (float(ic) > 0) == (spread > 0), (
-                f"IC/Spread sign mismatch! IC={float(ic):.4f}, Spread={spread:.4f}"
-            )
+            assert (float(ic) > 0) == (spread > 0), f"IC/Spread sign mismatch! IC={float(ic):.4f}, Spread={spread:.4f}"
 
 
 # =============================================================================
 # TEST 2: Single-Name Robustness
 # =============================================================================
+
 
 class TestSingleNameRobustness:
     """
@@ -197,14 +197,13 @@ class TestSingleNameRobustness:
             partial_spread = partial_top_mean - full_bottom_mean
 
             # Spread can decrease but should stay non-negative
-            assert partial_spread >= -0.05, (
-                f"Removing {exclude_ticker} flipped spread: {partial_spread:.4f}"
-            )
+            assert partial_spread >= -0.05, f"Removing {exclude_ticker} flipped spread: {partial_spread:.4f}"
 
 
 # =============================================================================
 # TEST 3: Decimal Zero Coalesce
 # =============================================================================
+
 
 class TestDecimalZeroCoalesce:
     """
@@ -246,13 +245,11 @@ class TestDecimalZeroCoalesce:
 
         # Alpha should be +0.10 (stock beat flat benchmark by 10%)
         assert momentum.alpha_60d == Decimal("0.10"), (
-            f"Alpha should be +0.10 when stock=+10% vs flat benchmark, "
-            f"got alpha={momentum.alpha_60d}"
+            f"Alpha should be +0.10 when stock=+10% vs flat benchmark, " f"got alpha={momentum.alpha_60d}"
         )
         # Score should be > 50 (positive alpha = above neutral)
         assert momentum.momentum_score > Decimal("50"), (
-            f"Momentum score should be > 50 for positive alpha, "
-            f"got {momentum.momentum_score}"
+            f"Momentum score should be > 50 for positive alpha, " f"got {momentum.momentum_score}"
         )
 
         # Case 2: None benchmark should result in None alpha
@@ -260,9 +257,7 @@ class TestDecimalZeroCoalesce:
             return_60d=stock_return,
             benchmark_return_60d=None,
         )
-        assert momentum_no_bench.alpha_60d is None, (
-            "Alpha should be None when benchmark is None"
-        )
+        assert momentum_no_bench.alpha_60d is None, "Alpha should be None when benchmark is None"
 
     def test_volatility_252d_zero_is_valid(self):
         """
@@ -321,6 +316,7 @@ class TestDecimalZeroCoalesce:
 # TEST 4: Runway Gate Independence
 # =============================================================================
 
+
 class TestRunwayGateIndependence:
     """
     Runway gate must be computed from runway_months directly,
@@ -354,8 +350,10 @@ class TestRunwayGateIndependence:
 
         # The stage-financial interaction should fire the distress penalty
         # because runway is short despite liquidity being fine
-        assert "late_stage_distress" in interactions.interaction_flags or \
-               interactions.stage_financial_interaction < Decimal("0"), (
+        assert (
+            "late_stage_distress" in interactions.interaction_flags
+            or interactions.stage_financial_interaction < Decimal("0")
+        ), (
             f"Runway distress not detected: flags={interactions.interaction_flags}, "
             f"stage_fin_interaction={interactions.stage_financial_interaction}"
         )
@@ -387,6 +385,7 @@ class TestRunwayGateIndependence:
 # =============================================================================
 # TEST 5: Determinism Hash Stability
 # =============================================================================
+
 
 class TestDeterminismHashStability:
     """
@@ -470,17 +469,25 @@ class TestDeterminismHashStability:
         ]
 
         hash_a = _compute_determinism_hash(
-            ticker="TEST", version="v3.0", mode="default",
-            base_weights=base_weights, effective_weights=effective_weights,
+            ticker="TEST",
+            version="v3.0",
+            mode="default",
+            base_weights=base_weights,
+            effective_weights=effective_weights,
             component_scores=component_scores_a,
-            enhancements={}, final_score=Decimal("45.00"),
+            enhancements={},
+            final_score=Decimal("45.00"),
         )
 
         hash_b = _compute_determinism_hash(
-            ticker="TEST", version="v3.0", mode="default",
-            base_weights=base_weights, effective_weights=effective_weights,
+            ticker="TEST",
+            version="v3.0",
+            mode="default",
+            base_weights=base_weights,
+            effective_weights=effective_weights,
             component_scores=component_scores_b,
-            enhancements={}, final_score=Decimal("45.00"),
+            enhancements={},
+            final_score=Decimal("45.00"),
         )
 
         assert hash_a != hash_b, "Different raw scores should produce different hashes"
@@ -489,6 +496,7 @@ class TestDeterminismHashStability:
 # =============================================================================
 # TEST 6: Full Pipeline Determinism
 # =============================================================================
+
 
 class TestPipelineDeterminism:
     """Ensure full pipeline produces identical results across runs."""
@@ -533,6 +541,7 @@ class TestPipelineDeterminism:
 # TEST 7: Momentum Strong Signal Threshold Boundary Inclusivity
 # =============================================================================
 
+
 class TestMomentumStrongSignalBoundary:
     """
     Regression tests for momentum_strong_signal threshold boundary.
@@ -558,45 +567,31 @@ class TestMomentumStrongSignalBoundary:
 
     def test_boundary_inclusive_at_47_5(self):
         """Score of exactly 47.5 should count as strong (inclusive boundary)."""
-        assert self._is_strong_signal(Decimal("47.5")), (
-            "Score 47.5 should be counted as strong (boundary is inclusive)"
-        )
+        assert self._is_strong_signal(Decimal("47.5")), "Score 47.5 should be counted as strong (boundary is inclusive)"
 
     def test_boundary_inclusive_at_52_5(self):
         """Score of exactly 52.5 should count as strong (inclusive boundary)."""
-        assert self._is_strong_signal(Decimal("52.5")), (
-            "Score 52.5 should be counted as strong (boundary is inclusive)"
-        )
+        assert self._is_strong_signal(Decimal("52.5")), "Score 52.5 should be counted as strong (boundary is inclusive)"
 
     def test_score_47_51_not_strong_delta_2_49(self):
         """Score 47.51 NOT strong: |47.51-50| = 2.49 < 2.5 threshold."""
-        assert not self._is_strong_signal(Decimal("47.51")), (
-            "Score 47.51 should NOT be counted as strong (delta=2.49)"
-        )
+        assert not self._is_strong_signal(Decimal("47.51")), "Score 47.51 should NOT be counted as strong (delta=2.49)"
 
     def test_score_52_49_not_strong_delta_2_49(self):
         """Score 52.49 NOT strong: |52.49-50| = 2.49 < 2.5 threshold."""
-        assert not self._is_strong_signal(Decimal("52.49")), (
-            "Score 52.49 should NOT be counted as strong (delta=2.49)"
-        )
+        assert not self._is_strong_signal(Decimal("52.49")), "Score 52.49 should NOT be counted as strong (delta=2.49)"
 
     def test_neutral_score_not_strong(self):
         """Score of exactly 50 should NOT count as strong."""
-        assert not self._is_strong_signal(Decimal("50")), (
-            "Neutral score (50) should NOT be counted as strong"
-        )
+        assert not self._is_strong_signal(Decimal("50")), "Neutral score (50) should NOT be counted as strong"
 
     def test_boundary_epsilon_below_threshold(self):
         """Score just inside threshold boundary should NOT count as strong."""
         # Use high precision to test boundary
         # 52.4999999 is 2.4999999 away from 50, which is < 2.5
-        assert not self._is_strong_signal(Decimal("52.4999999")), (
-            "Score 52.4999999 should NOT be counted as strong"
-        )
+        assert not self._is_strong_signal(Decimal("52.4999999")), "Score 52.4999999 should NOT be counted as strong"
         # 47.5000001 is 2.4999999 away from 50, which is < 2.5
-        assert not self._is_strong_signal(Decimal("47.5000001")), (
-            "Score 47.5000001 should NOT be counted as strong"
-        )
+        assert not self._is_strong_signal(Decimal("47.5000001")), "Score 47.5000001 should NOT be counted as strong"
 
     def test_extreme_scores_are_strong(self):
         """Extreme scores (near 5 or 95 clamp limits) should count as strong."""
@@ -608,10 +603,10 @@ class TestMomentumStrongSignalBoundary:
     def test_deterministic_threshold(self):
         """Same score should always produce same strong/not-strong classification."""
         test_scores = [
-            Decimal("47.5"),   # Strong (boundary)
+            Decimal("47.5"),  # Strong (boundary)
             Decimal("47.51"),  # Not strong
-            Decimal("50"),     # Neutral
-            Decimal("52.5"),   # Strong (boundary)
+            Decimal("50"),  # Neutral
+            Decimal("52.5"),  # Strong (boundary)
             Decimal("52.49"),  # Not strong
         ]
         for score in test_scores:
@@ -623,6 +618,7 @@ class TestMomentumStrongSignalBoundary:
 # =============================================================================
 # TEST 8: Module Import Graph Smoke Test
 # =============================================================================
+
 
 class TestModuleImportGraph:
     """
@@ -638,43 +634,44 @@ class TestModuleImportGraph:
     def test_scoring_module_imports(self):
         """Scoring module imports cleanly with no composite/diagnostics dependency."""
         from module_5_scoring_v3 import (
-            _score_single_ticker_v3,
-            ComponentScore,
-            ScoreBreakdown,
-            V3ScoringResult,
-            MonotonicCap,
-            ScoringMode,
-            RunStatus,
-            NormalizationMethod,
             SEVERITY_MULTIPLIERS,
+            ComponentScore,
+            MonotonicCap,
+            NormalizationMethod,
+            RunStatus,
+            ScoreBreakdown,
+            ScoringMode,
+            V3ScoringResult,
             _coalesce,
+            _score_single_ticker_v3,
         )
+
         assert callable(_score_single_ticker_v3)
         assert ScoringMode.DEFAULT is not None
 
     def test_diagnostics_module_imports(self):
         """Diagnostics module imports cleanly with no scoring/composite dependency."""
         from module_5_diagnostics_v3 import (
-            compute_momentum_breakdown,
             build_momentum_health,
-            format_momentum_log_lines,
             check_coverage_guardrail,
+            compute_momentum_breakdown,
+            format_momentum_log_lines,
         )
+
         assert callable(compute_momentum_breakdown)
         assert callable(build_momentum_health)
 
     def test_composite_module_imports(self):
         """Composite module imports both scoring and diagnostics."""
-        from module_5_composite_v3 import (
-            compute_module_5_composite_v3,
-            # Re-exports from scoring
-            _score_single_ticker_v3,
+        from module_5_composite_v3 import (  # Re-exports from scoring; Re-exports from diagnostics
             ComponentScore,
             ScoringMode,
-            # Re-exports from diagnostics
-            compute_momentum_breakdown,
+            _score_single_ticker_v3,
             build_momentum_health,
+            compute_module_5_composite_v3,
+            compute_momentum_breakdown,
         )
+
         assert callable(compute_module_5_composite_v3)
 
     def test_no_circular_imports(self):
@@ -688,9 +685,9 @@ class TestModuleImportGraph:
                 del sys.modules[mod]
 
         # Import in various orders - should not raise ImportError
-        import module_5_scoring_v3
-        import module_5_diagnostics_v3
         import module_5_composite_v3
+        import module_5_diagnostics_v3
+        import module_5_scoring_v3
 
         # Verify they're all loaded
         assert "module_5_scoring_v3" in sys.modules
@@ -701,6 +698,7 @@ class TestModuleImportGraph:
 # =============================================================================
 # TEST 9: Dev-Catalyst Guardrail — Off produces identical output
 # =============================================================================
+
 
 class TestDevCatalystGuardrailNonRegression:
     """
@@ -793,6 +791,5 @@ class TestDevCatalystGuardrailNonRegression:
             flags = sec.get("flags", [])
             if "dev_catalyst_guardrail_share_cap" not in flags and "dev_catalyst_guardrail_ceiling" not in flags:
                 assert scores_on[t] == scores_off[t], (
-                    f"{t}: score differs ON={scores_on[t]} vs OFF={scores_off[t]} "
-                    f"despite no guardrail flag"
+                    f"{t}: score differs ON={scores_on[t]} vs OFF={scores_off[t]} " f"despite no guardrail flag"
                 )

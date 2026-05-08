@@ -1,21 +1,17 @@
 """Tests for clinical_alpha_z, clinical_readout_days, and clinical_coverage_flag."""
+
 from __future__ import annotations
 
 import math
 
 import pytest
 
-from run_screen import (
-    _clinical_proximity,
-    _compute_clinical_readout_days,
-    _compute_clinical_alpha_z,
-    _PHASE_NUM,
-)
-
+from run_screen import _PHASE_NUM, _clinical_proximity, _compute_clinical_alpha_z, _compute_clinical_readout_days
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_trial(
     ticker: str = "ACME",
@@ -104,10 +100,9 @@ class TestComputeClinicalReadoutDays:
         """Future PCD → correct positive days."""
         trials = [_make_trial(primary_completion_date="2026-06-15")]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
-        assert result["ACME"] == (
-            __import__("datetime").date(2026, 6, 15)
-            - __import__("datetime").date(2026, 1, 15)
-        ).days
+        assert (
+            result["ACME"] == (__import__("datetime").date(2026, 6, 15) - __import__("datetime").date(2026, 1, 15)).days
+        )
         assert result["ACME"] == 151
 
     def test_past_pcd_no_results_imminent(self):
@@ -118,29 +113,35 @@ class TestComputeClinicalReadoutDays:
 
     def test_past_pcd_with_results_skipped(self):
         """Past PCD + results posted → skip (already known)."""
-        trials = [_make_trial(
-            primary_completion_date="2025-10-01",
-            results_first_posted="2025-12-01",
-        )]
+        trials = [
+            _make_trial(
+                primary_completion_date="2025-10-01",
+                results_first_posted="2025-12-01",
+            )
+        ]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
         assert "ACME" not in result
 
     def test_pit_filter_excludes_future_trial(self):
         """Trial posted after as_of_date should be excluded."""
-        trials = [_make_trial(
-            first_posted="2026-06-01",
-            primary_completion_date="2026-09-01",
-        )]
+        trials = [
+            _make_trial(
+                first_posted="2026-06-01",
+                primary_completion_date="2026-09-01",
+            )
+        ]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
         assert "ACME" not in result
 
     def test_pit_last_update_posted_fallback(self):
         """If first_posted missing, last_update_posted used for PIT gate."""
-        trials = [_make_trial(
-            first_posted=None,
-            last_update_posted="2025-06-01",
-            primary_completion_date="2026-06-15",
-        )]
+        trials = [
+            _make_trial(
+                first_posted=None,
+                last_update_posted="2025-06-01",
+                primary_completion_date="2026-06-15",
+            )
+        ]
         # Remove first_posted entirely
         del trials[0]["first_posted"]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
@@ -150,22 +151,19 @@ class TestComputeClinicalReadoutDays:
         """No PCD but future completion_date → use that."""
         trials = [_make_trial(completion_date="2026-08-01")]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
-        assert result["ACME"] == (
-            __import__("datetime").date(2026, 8, 1)
-            - __import__("datetime").date(2026, 1, 15)
-        ).days
+        assert (
+            result["ACME"] == (__import__("datetime").date(2026, 8, 1) - __import__("datetime").date(2026, 1, 15)).days
+        )
 
     def test_no_qualifying_trials(self):
         """Ticker with no qualifying trials → not in result."""
-        trials = [_make_trial(study_type="OBSERVATIONAL",
-                              primary_completion_date="2026-06-01")]
+        trials = [_make_trial(study_type="OBSERVATIONAL", primary_completion_date="2026-06-01")]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
         assert "ACME" not in result
 
     def test_phase4_excluded(self):
         """Phase 4 trials should be excluded."""
-        trials = [_make_trial(phase="PHASE4",
-                              primary_completion_date="2026-06-01")]
+        trials = [_make_trial(phase="PHASE4", primary_completion_date="2026-06-01")]
         result = _compute_clinical_readout_days(trials, "2026-01-15")
         assert "ACME" not in result
 
@@ -192,8 +190,7 @@ class TestComputeClinicalAlphaZ:
     def test_z_scores_mean_near_zero(self):
         """Z-scores within dev cohort should have mean ≈ 0."""
         rows = [_make_dev_row(f"T{i}", clinical_score=20 + i * 3) for i in range(30)]
-        m4 = {f"T{i}": _make_m4(f"T{i}", clinical_score=20 + i * 3)
-               for i in range(30)}
+        m4 = {f"T{i}": _make_m4(f"T{i}", clinical_score=20 + i * 3) for i in range(30)}
         readout = {f"T{i}": 30 + i * 10 for i in range(30)}
 
         _compute_clinical_alpha_z(rows, m4, readout)
@@ -208,9 +205,9 @@ class TestComputeClinicalAlphaZ:
         rows = [_make_dev_row(f"T{i}", clinical_score=30 + i * 2) for i in range(25)]
         rows.append(_make_dev_row("OUTLIER", clinical_score=100))
 
-        m4 = {r["ticker"]: _make_m4(r["ticker"], lead_phase="phase 2",
-                                     clinical_score=r["clinical_score"])
-               for r in rows}
+        m4 = {
+            r["ticker"]: _make_m4(r["ticker"], lead_phase="phase 2", clinical_score=r["clinical_score"]) for r in rows
+        }
         # Vary readout days for spread; outlier gets extreme proximity
         readout = {f"T{i}": 60 + i * 10 for i in range(25)}
         readout["OUTLIER"] = 0
@@ -228,11 +225,9 @@ class TestComputeClinicalAlphaZ:
         rows = [
             _make_dev_row("DEV1"),
             _make_dev_row("DEV2"),
-            {"ticker": "COMM1", "archetype": "commercial_biotech",
-             "clinical_score": 80.0},
+            {"ticker": "COMM1", "archetype": "commercial_biotech", "clinical_score": 80.0},
         ]
-        m4 = {"DEV1": _make_m4("DEV1"), "DEV2": _make_m4("DEV2"),
-               "COMM1": _make_m4("COMM1", lead_phase="approved")}
+        m4 = {"DEV1": _make_m4("DEV1"), "DEV2": _make_m4("DEV2"), "COMM1": _make_m4("COMM1", lead_phase="approved")}
         readout = {"DEV1": 30, "DEV2": 60, "COMM1": 45}
 
         _compute_clinical_alpha_z(rows, m4, readout)
@@ -244,8 +239,7 @@ class TestComputeClinicalAlphaZ:
         """Tickers without m4 data should not get clinical_alpha_z."""
         rows = [
             _make_dev_row("DEV1"),
-            {"ticker": "NOOM4", "archetype": "platform_devices",
-             "clinical_score": None},
+            {"ticker": "NOOM4", "archetype": "platform_devices", "clinical_score": None},
         ]
         m4 = {"DEV1": _make_m4("DEV1")}
         readout = {"DEV1": 30}
@@ -271,8 +265,7 @@ class TestComputeClinicalAlphaZ:
     def test_all_same_raw_score_z_zero(self):
         """When all raw scores identical → std=0 → z=0.0 for all."""
         rows = [_make_dev_row(f"T{i}", clinical_score=50) for i in range(10)]
-        m4 = {f"T{i}": _make_m4(f"T{i}", lead_phase="phase 2", clinical_score=50)
-               for i in range(10)}
+        m4 = {f"T{i}": _make_m4(f"T{i}", lead_phase="phase 2", clinical_score=50) for i in range(10)}
         readout = {f"T{i}": 45 for i in range(10)}
 
         _compute_clinical_alpha_z(rows, m4, readout)
@@ -300,7 +293,6 @@ class TestComputeClinicalAlphaZ:
 
     def test_phase_num_mapping_coverage(self):
         """All expected lead_phase values should map to a non-zero value."""
-        for phase in ["phase 1", "phase 1/2", "phase 2", "phase 2/3",
-                       "phase 3", "approved", "preclinical"]:
+        for phase in ["phase 1", "phase 1/2", "phase 2", "phase 2/3", "phase 3", "approved", "preclinical"]:
             assert phase in _PHASE_NUM
             assert _PHASE_NUM[phase] > 0

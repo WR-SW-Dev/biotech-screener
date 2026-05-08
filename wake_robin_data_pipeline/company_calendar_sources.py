@@ -9,6 +9,7 @@ Design:
   - Merge is deterministic: output order matches input universe order.
   - Stats track how many URLs were added.
 """
+
 from __future__ import annotations
 
 import json
@@ -45,7 +46,8 @@ def load_company_calendar_sources(path: Path) -> Dict[str, Dict[str, str]]:
     if schema != _SCHEMA:
         logger.warning(
             "Company calendar sources schema mismatch: expected %s, got %s",
-            _SCHEMA, schema,
+            _SCHEMA,
+            schema,
         )
 
     raw_sources = data.get("sources", {})
@@ -76,15 +78,11 @@ def validate_company_calendar_sources(
             if url is None:
                 continue
             if not url.startswith(("http://", "https://")):
-                warnings.append(
-                    f"{ticker}.{field}: URL does not start with http(s): {url[:80]}"
-                )
+                warnings.append(f"{ticker}.{field}: URL does not start with http(s): {url[:80]}")
             if field == "pr_rss_url":
                 url_lower = url.lower()
                 if not any(hint in url_lower for hint in ("rss", "feed", ".xml")):
-                    warnings.append(
-                        f"{ticker}.pr_rss_url: URL lacks rss/feed/.xml hint: {url[:80]}"
-                    )
+                    warnings.append(f"{ticker}.pr_rss_url: URL lacks rss/feed/.xml hint: {url[:80]}")
 
     return warnings
 

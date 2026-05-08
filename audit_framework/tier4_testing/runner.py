@@ -12,23 +12,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
 
-from audit_framework.types import (
-    AuditMetrics,
-    AuditTier,
-    ComplianceGrade,
-    PassCriteria,
-    TierResult,
-)
-
-from audit_framework.tier4_testing.coverage import (
-    validate_test_coverage,
-)
-from audit_framework.tier4_testing.backtesting import (
-    validate_backtest_capability,
-)
-from audit_framework.tier4_testing.explainability import (
-    validate_explainability,
-)
+from audit_framework.tier4_testing.backtesting import validate_backtest_capability
+from audit_framework.tier4_testing.coverage import validate_test_coverage
+from audit_framework.tier4_testing.explainability import validate_explainability
+from audit_framework.types import AuditMetrics, AuditTier, ComplianceGrade, PassCriteria, TierResult
 
 
 @dataclass
@@ -77,9 +64,7 @@ def run_tier4_audit(
     result.findings.extend(cov_result.findings)
     result.test_coverage_passed = cov_result.passed
     result.total_tests = cov_result.metrics.get("total_tests", 0)
-    result.estimated_coverage = Decimal(
-        cov_result.metrics.get("estimated_coverage", "0")
-    )
+    result.estimated_coverage = Decimal(cov_result.metrics.get("estimated_coverage", "0"))
     result.metrics.test_count = result.total_tests
     result.metrics.line_coverage = result.estimated_coverage
 
@@ -100,11 +85,7 @@ def run_tier4_audit(
     result.execution_time_seconds = execution_time.quantize(Decimal("0.001"))
 
     # Determine overall pass/fail
-    result.passed = (
-        result.test_coverage_passed
-        and result.backtest_passed
-        and result.explainability_passed
-    )
+    result.passed = result.test_coverage_passed and result.backtest_passed and result.explainability_passed
 
     # Grade calculation
     critical_count = result.critical_count

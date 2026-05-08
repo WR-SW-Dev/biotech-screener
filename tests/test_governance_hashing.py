@@ -10,27 +10,28 @@ Tests cryptographic hashing functionality:
 - Input hash computation
 """
 
-import pytest
 import json
+import sys
 import tempfile
 from pathlib import Path
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from governance.hashing import (
+    compute_input_hashes,
     hash_bytes,
-    hash_file,
     hash_canonical_json,
     hash_canonical_json_short,
+    hash_file,
     verify_file_hash,
-    compute_input_hashes,
 )
-
 
 # ============================================================================
 # BYTES HASHING TESTS
 # ============================================================================
+
 
 class TestHashBytes:
     """Tests for hash_bytes function."""
@@ -78,6 +79,7 @@ class TestHashBytes:
 # ============================================================================
 # FILE HASHING TESTS
 # ============================================================================
+
 
 class TestHashFile:
     """Tests for hash_file function."""
@@ -135,6 +137,7 @@ class TestHashFile:
 # CANONICAL JSON HASHING TESTS
 # ============================================================================
 
+
 class TestHashCanonicalJson:
     """Tests for hash_canonical_json function."""
 
@@ -155,13 +158,7 @@ class TestHashCanonicalJson:
 
     def test_nested_objects(self):
         """Should handle nested objects."""
-        obj = {
-            "outer": {
-                "inner": {
-                    "value": 42
-                }
-            }
-        }
+        obj = {"outer": {"inner": {"value": 42}}}
         result = hash_canonical_json(obj)
         assert len(result) == 64
 
@@ -182,13 +179,13 @@ class TestHashCanonicalJson:
 
     def test_nan_raises_error(self):
         """NaN values should raise ValueError."""
-        obj = {"value": float('nan')}
+        obj = {"value": float("nan")}
         with pytest.raises(ValueError):
             hash_canonical_json(obj)
 
     def test_infinity_raises_error(self):
         """Infinity values should raise ValueError."""
-        obj = {"value": float('inf')}
+        obj = {"value": float("inf")}
         with pytest.raises(ValueError):
             hash_canonical_json(obj)
 
@@ -228,6 +225,7 @@ class TestHashCanonicalJsonShort:
 # ============================================================================
 # HASH VERIFICATION TESTS
 # ============================================================================
+
 
 class TestVerifyFileHash:
     """Tests for verify_file_hash function."""
@@ -279,6 +277,7 @@ class TestVerifyFileHash:
 # ============================================================================
 # INPUT HASHES TESTS
 # ============================================================================
+
 
 class TestComputeInputHashes:
     """Tests for compute_input_hashes function."""
@@ -347,13 +346,14 @@ class TestComputeInputHashes:
 # EDGE CASES
 # ============================================================================
 
+
 class TestEdgeCases:
     """Edge case tests for hashing functions."""
 
     def test_unicode_file_content(self, tmp_path):
         """Should handle unicode in files."""
         test_file = tmp_path / "unicode.txt"
-        test_file.write_text("Hello, World!", encoding='utf-8')
+        test_file.write_text("Hello, World!", encoding="utf-8")
 
         result = hash_file(test_file)
         assert len(result) == 64
@@ -390,6 +390,7 @@ class TestEdgeCases:
 # DETERMINISM TESTS
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests verifying deterministic behavior across runs."""
 
@@ -417,6 +418,7 @@ class TestDeterminism:
 # ============================================================================
 # KNOWN VALUE TESTS
 # ============================================================================
+
 
 class TestKnownValues:
     """Tests against known SHA256 values."""

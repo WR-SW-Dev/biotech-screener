@@ -172,8 +172,12 @@ def main():
     args = parser.parse_args()
 
     report = build_report(
-        args.as_of, args.price_file, args.universe,
-        args.min_rows_20, args.min_rows_60, args.min_rows_120,
+        args.as_of,
+        args.price_file,
+        args.universe,
+        args.min_rows_20,
+        args.min_rows_60,
+        args.min_rows_120,
     )
 
     with open(args.out, "w") as f:
@@ -182,14 +186,18 @@ def main():
     if not args.quiet:
         s = report["summary"]
         print(f"Gap report for as_of={args.as_of}")
-        print(f"  Universe: {s['universe_tickers']} tickers ({s['real_tickers']} real, {s['synthetic_ignored']} synthetic ignored)")
+        print(
+            f"  Universe: {s['universe_tickers']} tickers ({s['real_tickers']} real, {s['synthetic_ignored']} synthetic ignored)"
+        )
         print(f"  Present in prices: {s['present_in_prices']}")
         print(f"  OK for 120d: {s['ok_120']} | blocking: {s['blocking_120']}")
         print(f"  OK for 60d: {s['ok_60']} | blocking: {s['blocking_60']}")
         print(f"  OK for 20d: {s['ok_20']} | blocking: {s['blocking_20']}")
         print(f"  Missing tickers: {s['missing']}")
         if report["blocking_tickers"]:
-            print(f"  Blocking: {report['blocking_tickers'][:10]}{'...' if len(report['blocking_tickers']) > 10 else ''}")
+            print(
+                f"  Blocking: {report['blocking_tickers'][:10]}{'...' if len(report['blocking_tickers']) > 10 else ''}"
+            )
         if report["synthetic_ignored"]:
             print(f"  Synthetic ignored: {report['synthetic_ignored']}")
         print(f"  Output: {args.out}")

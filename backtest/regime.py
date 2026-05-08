@@ -19,6 +19,7 @@ normalizing away over time.
 
 Thresholds are constants at module level for transparency.
 """
+
 from __future__ import annotations
 
 import sys
@@ -33,8 +34,8 @@ MA_FAST_WINDOW = 50
 MA_SLOW_WINDOW = 200
 VOL_WINDOW = 20
 VOL_PERCENTILE_WINDOW = 252  # rolling window for vol percentile (1 trading year)
-VOL_BULL_THRESHOLD = 60   # percentile; below this = low vol
-VOL_BEAR_THRESHOLD = 40   # percentile; above this = high vol
+VOL_BULL_THRESHOLD = 60  # percentile; below this = low vol
+VOL_BEAR_THRESHOLD = 40  # percentile; above this = high vol
 WARMUP_DAYS = max(MA_SLOW_WINDOW, VOL_PERCENTILE_WINDOW)  # need all indicators stable
 
 BULL = "BULL"
@@ -46,6 +47,7 @@ VOL_CHOP_THRESHOLD = 50  # percentile split within CHOP
 
 
 # ── Price loading ─────────────────────────────────────────────────────
+
 
 def load_price_history(price_csv: Path) -> pd.DataFrame:
     """
@@ -64,6 +66,7 @@ def load_price_history(price_csv: Path) -> pd.DataFrame:
 
 
 # ── Regime computation ────────────────────────────────────────────────
+
 
 def compute_regime_series(
     price_df: pd.DataFrame,
@@ -89,8 +92,7 @@ def compute_regime_series(
     if len(mkt) == 0:
         available = sorted(price_df["ticker"].unique()[:10])
         raise ValueError(
-            f"Market ticker '{market_ticker}' not found in price data. "
-            f"Available tickers (sample): {available}"
+            f"Market ticker '{market_ticker}' not found in price data. " f"Available tickers (sample): {available}"
         )
 
     mkt = mkt.sort_values("date").reset_index(drop=True)
@@ -108,7 +110,8 @@ def compute_regime_series(
     # Uses rolling window so persistent high-vol regimes stay classified as
     # high-vol relative to recent history, not normalized away over time.
     vol_pct = vol.rolling(window=VOL_PERCENTILE_WINDOW, min_periods=VOL_WINDOW).apply(
-        _percentile_rank, raw=True,
+        _percentile_rank,
+        raw=True,
     )
 
     # Classify
@@ -127,10 +130,12 @@ def compute_regime_series(
         else:
             regime.iloc[i] = CHOP
 
-    result = pd.DataFrame({
-        "date": mkt["date"].values,
-        "regime": regime.values,
-    })
+    result = pd.DataFrame(
+        {
+            "date": mkt["date"].values,
+            "regime": regime.values,
+        }
+    )
     return result
 
 
@@ -148,6 +153,7 @@ def _percentile_rank(arr: np.ndarray) -> float:
 
 
 # ── Map to rebalance dates ────────────────────────────────────────────
+
 
 def assign_regime_to_rebalance_dates(
     regime_df: pd.DataFrame,

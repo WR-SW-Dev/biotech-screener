@@ -15,20 +15,21 @@ Security Features (v1.1.0):
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
-from governance.hashing import hash_canonical_json_short
 from governance.canonical_json import canonical_dumps
+from governance.hashing import hash_canonical_json_short
 
 # Import hardening utilities
 try:
     from common.production_hardening import (
+        MAX_CONFIG_FILE_SIZE_MB,
+        FileSizeError,
+        PathTraversalError,
         validate_file_size,
         validate_path_within_base,
-        PathTraversalError,
-        FileSizeError,
-        MAX_CONFIG_FILE_SIZE_MB,
     )
+
     HAS_HARDENING = True
 except ImportError:
     HAS_HARDENING = False
@@ -36,11 +37,10 @@ except ImportError:
 
 # Import schema validation
 try:
-    from common.schema_validation import (
-        validate_params as validate_params_schema,
-        validate_weights_sum,
-        ValidationResult,
-    )
+    from common.schema_validation import ValidationResult
+    from common.schema_validation import validate_params as validate_params_schema
+    from common.schema_validation import validate_weights_sum
+
     HAS_SCHEMA_VALIDATION = True
 except ImportError:
     HAS_SCHEMA_VALIDATION = False
@@ -53,11 +53,13 @@ DEFAULT_PARAMS_DIR = "params_archive"
 
 class ParamsLoadError(Exception):
     """Error loading parameters from archive."""
+
     pass
 
 
 class ParamsValidationError(ParamsLoadError):
     """Error validating parameters against schema."""
+
     pass
 
 
@@ -116,9 +118,7 @@ def load_params(
 
     # SECURITY: Check for symlinks
     if params_path.is_symlink():
-        raise ParamsLoadError(
-            f"Parameters file is a symbolic link (security risk): {params_path}"
-        )
+        raise ParamsLoadError(f"Parameters file is a symbolic link (security risk): {params_path}")
 
     # SECURITY: Validate file size
     if HAS_HARDENING:
@@ -128,7 +128,7 @@ def load_params(
             raise ParamsLoadError(f"Parameters file too large: {e}") from e
 
     try:
-        with open(params_path, 'r', encoding='utf-8') as f:
+        with open(params_path, "r", encoding="utf-8") as f:
             params = json.load(f)
     except json.JSONDecodeError as e:
         raise ParamsLoadError(f"Invalid JSON in {params_path}: {e}")
@@ -147,8 +147,7 @@ def load_params(
         if not result.valid:
             error_messages = result.error_messages()
             raise ParamsValidationError(
-                f"Parameters fail schema validation for {params_path}: "
-                f"{'; '.join(error_messages[:5])}"
+                f"Parameters fail schema validation for {params_path}: " f"{'; '.join(error_messages[:5])}"
             )
         logger.debug(f"Parameters passed schema validation: {params_path}")
 
@@ -200,33 +199,28 @@ def save_params(
         result = validate_params_schema(params, schema_name)
         if not result.valid:
             error_messages = result.error_messages()
-            raise ParamsValidationError(
-                f"Cannot save invalid parameters: {'; '.join(error_messages[:5])}"
-            )
+            raise ParamsValidationError(f"Cannot save invalid parameters: {'; '.join(error_messages[:5])}")
 
     params_path = get_params_path(score_version, params_dir)
 
     # SECURITY: Create directory with restricted permissions
     if HAS_HARDENING:
         from common.production_hardening import safe_mkdir
+
         safe_mkdir(params_path.parent, mode=0o700)
     else:
         params_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write canonical JSON atomically
-    import tempfile
     import os
+    import tempfile
 
     content = canonical_dumps(params)
 
     # Write to temp file first, then atomic rename
-    fd, tmp_path = tempfile.mkstemp(
-        dir=params_path.parent,
-        prefix='.tmp_params_',
-        suffix='.json'
-    )
+    fd, tmp_path = tempfile.mkstemp(dir=params_path.parent, prefix=".tmp_params_", suffix=".json")
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(content)
         os.chmod(tmp_path, 0o600)  # Secure permissions
         Path(tmp_path).replace(params_path)
@@ -337,9 +331,7 @@ def load_and_validate_params(
         result = validate_weights_sum(params, weight_fields, expected_weight_sum)
         if not result.valid:
             error_messages = result.error_messages()
-            raise ParamsValidationError(
-                f"Weight sum validation failed: {'; '.join(error_messages)}"
-            )
+            raise ParamsValidationError(f"Weight sum validation failed: {'; '.join(error_messages)}")
         logger.debug(f"Weight sum validation passed for {weight_fields}")
 
     return params, params_hash

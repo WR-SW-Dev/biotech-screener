@@ -28,11 +28,12 @@ import sys
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 # Check for yfinance
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
@@ -117,11 +118,11 @@ def get_earnings_date(ticker: str) -> Optional[Dict[str, Any]]:
 
         # Get earnings date
         earnings_date = None
-        if 'Earnings Date' in calendar.index:
-            earnings_dates = calendar.loc['Earnings Date']
+        if "Earnings Date" in calendar.index:
+            earnings_dates = calendar.loc["Earnings Date"]
             if isinstance(earnings_dates, (list, tuple)) and len(earnings_dates) > 0:
                 earnings_date = earnings_dates[0]
-            elif hasattr(earnings_dates, 'iloc'):
+            elif hasattr(earnings_dates, "iloc"):
                 earnings_date = earnings_dates.iloc[0] if len(earnings_dates) > 0 else None
             else:
                 earnings_date = earnings_dates
@@ -130,20 +131,20 @@ def get_earnings_date(ticker: str) -> Optional[Dict[str, Any]]:
             return None
 
         # Convert to date string
-        if hasattr(earnings_date, 'strftime'):
-            event_date = earnings_date.strftime('%Y-%m-%d')
-        elif hasattr(earnings_date, 'isoformat'):
+        if hasattr(earnings_date, "strftime"):
+            event_date = earnings_date.strftime("%Y-%m-%d")
+        elif hasattr(earnings_date, "isoformat"):
             event_date = earnings_date.isoformat()[:10]
         else:
             event_date = str(earnings_date)[:10]
 
         return {
-            'ticker': ticker,
-            'event_type': 'EARNINGS_RELEASE',
-            'event_date': event_date,
-            'event_name': 'Quarterly Earnings Release',
-            'confidence': 'MED',
-            'source': 'yfinance',
+            "ticker": ticker,
+            "event_type": "EARNINGS_RELEASE",
+            "event_date": event_date,
+            "event_name": "Quarterly Earnings Release",
+            "confidence": "MED",
+            "source": "yfinance",
         }
 
     except Exception:
@@ -163,27 +164,29 @@ def get_upcoming_conferences(as_of_date: date, lookahead_days: int = 180) -> Lis
         # Check this year and next year
         for y in [year, year + 1]:
             try:
-                start_day = conf['typical_days'][0]
-                end_day = conf['typical_days'][1]
-                conf_start = date(y, conf['typical_month'], start_day)
-                conf_end = date(y, conf['typical_month'], end_day)
+                start_day = conf["typical_days"][0]
+                end_day = conf["typical_days"][1]
+                conf_start = date(y, conf["typical_month"], start_day)
+                conf_end = date(y, conf["typical_month"], end_day)
 
                 # Check if within lookahead window
                 days_until = (conf_start - as_of_date).days
                 if 0 < days_until <= lookahead_days:
-                    conferences.append({
-                        'conference_name': conf['name'],
-                        'conference_abbrev': conf['abbrev'],
-                        'start_date': conf_start.isoformat(),
-                        'end_date': conf_end.isoformat(),
-                        'tier': conf['tier'],
-                        'days_until': days_until,
-                    })
+                    conferences.append(
+                        {
+                            "conference_name": conf["name"],
+                            "conference_abbrev": conf["abbrev"],
+                            "start_date": conf_start.isoformat(),
+                            "end_date": conf_end.isoformat(),
+                            "tier": conf["tier"],
+                            "days_until": days_until,
+                        }
+                    )
             except ValueError:
                 # Invalid date
                 continue
 
-    return sorted(conferences, key=lambda x: x['start_date'])
+    return sorted(conferences, key=lambda x: x["start_date"])
 
 
 def load_pdufa_dates(pdufa_file: Optional[Path] = None) -> Dict[str, List[Dict]]:
@@ -203,12 +206,12 @@ def load_pdufa_dates(pdufa_file: Optional[Path] = None) -> Dict[str, List[Dict]]
     ]
     """
     if pdufa_file and pdufa_file.exists():
-        with open(pdufa_file, 'r', encoding='utf-8') as f:
+        with open(pdufa_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             # Index by ticker
             by_ticker = {}
             for item in data:
-                ticker = item.get('ticker')
+                ticker = item.get("ticker")
                 if ticker:
                     if ticker not in by_ticker:
                         by_ticker[ticker] = []
@@ -234,11 +237,11 @@ def load_data_readouts(readouts_file: Optional[Path] = None) -> Dict[str, List[D
     ]
     """
     if readouts_file and readouts_file.exists():
-        with open(readouts_file, 'r', encoding='utf-8') as f:
+        with open(readouts_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             by_ticker = {}
             for item in data:
-                ticker = item.get('ticker')
+                ticker = item.get("ticker")
                 if ticker:
                     if ticker not in by_ticker:
                         by_ticker[ticker] = []
@@ -288,21 +291,21 @@ def collect_corporate_catalysts(
         print(f"\n[ERROR] Universe file not found: {universe_file}")
         return 1
 
-    with open(universe_file, 'r', encoding='utf-8') as f:
+    with open(universe_file, "r", encoding="utf-8") as f:
         universe = json.load(f)
 
     # Extract tickers
     if isinstance(universe, list):
-        tickers = [s.get('ticker') for s in universe if s.get('ticker')]
+        tickers = [s.get("ticker") for s in universe if s.get("ticker")]
     elif isinstance(universe, dict):
-        securities = universe.get('active_securities', universe.get('securities', []))
-        tickers = [s.get('ticker') for s in securities if s.get('ticker')]
+        securities = universe.get("active_securities", universe.get("securities", []))
+        tickers = [s.get("ticker") for s in securities if s.get("ticker")]
     else:
         print(f"\n[ERROR] Invalid universe format")
         return 1
 
     # Filter out benchmark ticker
-    tickers = [t for t in tickers if not t.startswith('_')]
+    tickers = [t for t in tickers if not t.startswith("_")]
 
     print(f"\nUniverse: {len(tickers)} tickers")
     print(f"Output: {output_file}")
@@ -340,10 +343,10 @@ def collect_corporate_catalysts(
         if earnings:
             # Check if within lookahead window
             try:
-                earnings_date = datetime.strptime(earnings['event_date'], '%Y-%m-%d').date()
+                earnings_date = datetime.strptime(earnings["event_date"], "%Y-%m-%d").date()
                 days_until = (earnings_date - as_of_date).days
                 if 0 < days_until <= lookahead_days:
-                    earnings['days_until'] = days_until
+                    earnings["days_until"] = days_until
                     ticker_events.append(earnings)
                     earnings_count += 1
             except ValueError:
@@ -353,23 +356,25 @@ def collect_corporate_catalysts(
         if ticker in pdufa_data:
             for pdufa in pdufa_data[ticker]:
                 try:
-                    pdufa_date_str = pdufa.get('pdufa_date')
+                    pdufa_date_str = pdufa.get("pdufa_date")
                     if pdufa_date_str:
-                        pdufa_date = datetime.strptime(pdufa_date_str, '%Y-%m-%d').date()
+                        pdufa_date = datetime.strptime(pdufa_date_str, "%Y-%m-%d").date()
                         days_until = (pdufa_date - as_of_date).days
                         if 0 < days_until <= lookahead_days:
-                            ticker_events.append({
-                                'ticker': ticker,
-                                'event_type': 'FDA_PDUFA_DATE',
-                                'event_date': pdufa_date_str,
-                                'event_name': f"PDUFA: {pdufa.get('drug_name', 'Unknown')}",
-                                'drug_name': pdufa.get('drug_name'),
-                                'indication': pdufa.get('indication'),
-                                'submission_type': pdufa.get('submission_type'),
-                                'confidence': 'HIGH' if pdufa.get('confidence') == 'confirmed' else 'MED',
-                                'source': 'pdufa_file',
-                                'days_until': days_until,
-                            })
+                            ticker_events.append(
+                                {
+                                    "ticker": ticker,
+                                    "event_type": "FDA_PDUFA_DATE",
+                                    "event_date": pdufa_date_str,
+                                    "event_name": f"PDUFA: {pdufa.get('drug_name', 'Unknown')}",
+                                    "drug_name": pdufa.get("drug_name"),
+                                    "indication": pdufa.get("indication"),
+                                    "submission_type": pdufa.get("submission_type"),
+                                    "confidence": "HIGH" if pdufa.get("confidence") == "confirmed" else "MED",
+                                    "source": "pdufa_file",
+                                    "days_until": days_until,
+                                }
+                            )
                             pdufa_count += 1
                 except ValueError:
                     pass
@@ -377,10 +382,10 @@ def collect_corporate_catalysts(
         # Add data readouts if available
         if ticker in readouts_data:
             for readout in readouts_data[ticker]:
-                expected = readout.get('expected_date', '')
+                expected = readout.get("expected_date", "")
                 # Handle quarterly dates (e.g., "2026-Q2")
-                if '-Q' in expected:
-                    year_q = expected.split('-Q')
+                if "-Q" in expected:
+                    year_q = expected.split("-Q")
                     if len(year_q) == 2:
                         try:
                             year = int(year_q[0])
@@ -390,39 +395,43 @@ def collect_corporate_catalysts(
                             readout_date = date(year, month, 15)
                             days_until = (readout_date - as_of_date).days
                             if 0 < days_until <= lookahead_days:
-                                ticker_events.append({
-                                    'ticker': ticker,
-                                    'event_type': 'DATA_READOUT',
-                                    'event_date': readout_date.isoformat(),
-                                    'event_name': f"Data: {readout.get('drug_name', 'Unknown')}",
-                                    'drug_name': readout.get('drug_name'),
-                                    'indication': readout.get('indication'),
-                                    'trial_phase': readout.get('trial_phase'),
-                                    'confidence': 'LOW',  # Quarterly estimate
-                                    'source': 'readouts_file',
-                                    'days_until': days_until,
-                                })
+                                ticker_events.append(
+                                    {
+                                        "ticker": ticker,
+                                        "event_type": "DATA_READOUT",
+                                        "event_date": readout_date.isoformat(),
+                                        "event_name": f"Data: {readout.get('drug_name', 'Unknown')}",
+                                        "drug_name": readout.get("drug_name"),
+                                        "indication": readout.get("indication"),
+                                        "trial_phase": readout.get("trial_phase"),
+                                        "confidence": "LOW",  # Quarterly estimate
+                                        "source": "readouts_file",
+                                        "days_until": days_until,
+                                    }
+                                )
                                 readout_count += 1
                         except (ValueError, TypeError):
                             pass
                 else:
                     # Try direct date parsing
                     try:
-                        readout_date = datetime.strptime(expected, '%Y-%m-%d').date()
+                        readout_date = datetime.strptime(expected, "%Y-%m-%d").date()
                         days_until = (readout_date - as_of_date).days
                         if 0 < days_until <= lookahead_days:
-                            ticker_events.append({
-                                'ticker': ticker,
-                                'event_type': 'DATA_READOUT',
-                                'event_date': expected,
-                                'event_name': f"Data: {readout.get('drug_name', 'Unknown')}",
-                                'drug_name': readout.get('drug_name'),
-                                'indication': readout.get('indication'),
-                                'trial_phase': readout.get('trial_phase'),
-                                'confidence': 'MED',
-                                'source': 'readouts_file',
-                                'days_until': days_until,
-                            })
+                            ticker_events.append(
+                                {
+                                    "ticker": ticker,
+                                    "event_type": "DATA_READOUT",
+                                    "event_date": expected,
+                                    "event_name": f"Data: {readout.get('drug_name', 'Unknown')}",
+                                    "drug_name": readout.get("drug_name"),
+                                    "indication": readout.get("indication"),
+                                    "trial_phase": readout.get("trial_phase"),
+                                    "confidence": "MED",
+                                    "source": "readouts_file",
+                                    "days_until": days_until,
+                                }
+                            )
                             readout_count += 1
                     except ValueError:
                         pass
@@ -430,7 +439,7 @@ def collect_corporate_catalysts(
         all_events.extend(ticker_events)
 
         # Progress output
-        event_str = ', '.join([e['event_type'] for e in ticker_events]) if ticker_events else 'None'
+        event_str = ", ".join([e["event_type"] for e in ticker_events]) if ticker_events else "None"
         print(f"[{i+1:>3}/{len(tickers)}] {ticker:<6} Events: {event_str[:50]}")
 
         # Rate limiting
@@ -450,28 +459,28 @@ def collect_corporate_catalysts(
         print(f"  - {conf['conference_abbrev']:<6} {conf['start_date']} - {conf['end_date']}")
 
     # Sort events by date
-    all_events.sort(key=lambda x: (x.get('event_date', '9999-99-99'), x.get('ticker', '')))
+    all_events.sort(key=lambda x: (x.get("event_date", "9999-99-99"), x.get("ticker", "")))
 
     # Build output
     output_data = {
-        'collection_date': as_of_date.isoformat(),
-        'lookahead_days': lookahead_days,
-        'summary': {
-            'total_events': len(all_events),
-            'earnings_events': earnings_count,
-            'pdufa_events': pdufa_count,
-            'readout_events': readout_count,
-            'tickers_with_events': len(set(e['ticker'] for e in all_events)),
+        "collection_date": as_of_date.isoformat(),
+        "lookahead_days": lookahead_days,
+        "summary": {
+            "total_events": len(all_events),
+            "earnings_events": earnings_count,
+            "pdufa_events": pdufa_count,
+            "readout_events": readout_count,
+            "tickers_with_events": len(set(e["ticker"] for e in all_events)),
         },
-        'upcoming_conferences': conferences,
-        'events': all_events,
+        "upcoming_conferences": conferences,
+        "events": all_events,
     }
 
     # Write output
     print(f"\nWriting to {output_file}...")
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2)
 
     print(f"[OK] Saved {len(all_events)} events")
@@ -480,39 +489,19 @@ def collect_corporate_catalysts(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Collect corporate catalyst data (earnings, PDUFA dates, conferences)"
-    )
+    parser = argparse.ArgumentParser(description="Collect corporate catalyst data (earnings, PDUFA dates, conferences)")
     parser.add_argument(
-        "--universe",
-        type=Path,
-        default=Path("production_data/universe.json"),
-        help="Path to universe JSON file"
+        "--universe", type=Path, default=Path("production_data/universe.json"), help="Path to universe JSON file"
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=Path("production_data/corporate_catalysts.json"),
-        help="Output path for corporate catalyst data"
+        help="Output path for corporate catalyst data",
     )
-    parser.add_argument(
-        "--pdufa-file",
-        type=Path,
-        default=None,
-        help="Optional path to PDUFA dates file"
-    )
-    parser.add_argument(
-        "--readouts-file",
-        type=Path,
-        default=None,
-        help="Optional path to data readouts file"
-    )
-    parser.add_argument(
-        "--lookahead-days",
-        type=int,
-        default=180,
-        help="Days to look ahead for events (default: 180)"
-    )
+    parser.add_argument("--pdufa-file", type=Path, default=None, help="Optional path to PDUFA dates file")
+    parser.add_argument("--readouts-file", type=Path, default=None, help="Optional path to data readouts file")
+    parser.add_argument("--lookahead-days", type=int, default=180, help="Days to look ahead for events (default: 180)")
 
     args = parser.parse_args()
 

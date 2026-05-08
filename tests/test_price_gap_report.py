@@ -26,9 +26,7 @@ class TestPriceGapReport:
             # Create universe with GOOD, SHORT, and MISSING
             universe_path = Path(tmpdir) / "universe.json"
             with open(universe_path, "w") as f:
-                json.dump({"active_securities": [
-                    {"ticker": "GOOD"}, {"ticker": "SHORT"}, {"ticker": "MISSING"}
-                ]}, f)
+                json.dump({"active_securities": [{"ticker": "GOOD"}, {"ticker": "SHORT"}, {"ticker": "MISSING"}]}, f)
 
             report = build_report(
                 as_of="2025-12-31",

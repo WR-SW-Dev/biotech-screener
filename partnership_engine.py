@@ -12,26 +12,28 @@ Key signals:
 - Recency and activity level
 """
 
+import re
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-import re
 
 
 class PartnerTier(Enum):
     """Classification of partner quality."""
-    TOP_10_PHARMA = "top_10_pharma"      # JNJ, Pfizer, Roche, etc.
-    MAJOR_PHARMA = "major_pharma"         # Large but not top 10
-    MID_TIER = "mid_tier"                 # Mid-size pharma/biotech
-    SMALL_BIOTECH = "small_biotech"       # Smaller companies
-    ACADEMIC = "academic"                  # Universities, research institutions
+
+    TOP_10_PHARMA = "top_10_pharma"  # JNJ, Pfizer, Roche, etc.
+    MAJOR_PHARMA = "major_pharma"  # Large but not top 10
+    MID_TIER = "mid_tier"  # Mid-size pharma/biotech
+    SMALL_BIOTECH = "small_biotech"  # Smaller companies
+    ACADEMIC = "academic"  # Universities, research institutions
     UNKNOWN = "unknown"
 
 
 class DealType(Enum):
     """Types of partnership deals."""
+
     EXCLUSIVE_LICENSE = "exclusive_license"
     NON_EXCLUSIVE_LICENSE = "non_exclusive_license"
     CO_DEVELOPMENT = "co_development"
@@ -45,22 +47,24 @@ class DealType(Enum):
 
 class PartnershipStrength(Enum):
     """Overall partnership profile strength."""
-    EXCEPTIONAL = "exceptional"    # Multiple top-tier deals
-    STRONG = "strong"              # At least one major deal
-    MODERATE = "moderate"          # Some partnerships
-    WEAK = "weak"                  # Limited or no partnerships
+
+    EXCEPTIONAL = "exceptional"  # Multiple top-tier deals
+    STRONG = "strong"  # At least one major deal
+    MODERATE = "moderate"  # Some partnerships
+    WEAK = "weak"  # Limited or no partnerships
     UNKNOWN = "unknown"
 
 
 @dataclass
 class Partnership:
     """Represents a single partnership deal."""
+
     ticker: str
     partner_name: str
     partner_tier: PartnerTier
     deal_type: DealType
     announcement_date: date
-    upfront_payment: Optional[Decimal] = None      # $MM
+    upfront_payment: Optional[Decimal] = None  # $MM
     total_potential_value: Optional[Decimal] = None  # $MM including milestones
     indication: Optional[str] = None
     asset_name: Optional[str] = None
@@ -71,6 +75,7 @@ class Partnership:
 @dataclass
 class PartnershipProfile:
     """Aggregated partnership profile for a ticker."""
+
     ticker: str
     partnerships: List[Partnership] = field(default_factory=list)
     total_upfront: Decimal = Decimal("0")
@@ -96,50 +101,88 @@ class PartnershipEngine:
 
     # Top 10 pharma companies by market cap/revenue
     TOP_10_PHARMA = {
-        "johnson & johnson", "jnj", "j&j",
-        "pfizer", "pfe",
-        "roche", "rhhby",
-        "novartis", "nvs",
-        "merck", "mrk",
-        "abbvie", "abbv",
-        "eli lilly", "lilly", "lly",
-        "astrazeneca", "azn",
-        "bristol-myers squibb", "bmy", "bristol myers",
-        "sanofi", "sny",
-        "glaxosmithkline", "gsk",
-        "gilead", "gild",
-        "amgen", "amgn",
-        "regeneron", "regn",
-        "vertex", "vrtx",
+        "johnson & johnson",
+        "jnj",
+        "j&j",
+        "pfizer",
+        "pfe",
+        "roche",
+        "rhhby",
+        "novartis",
+        "nvs",
+        "merck",
+        "mrk",
+        "abbvie",
+        "abbv",
+        "eli lilly",
+        "lilly",
+        "lly",
+        "astrazeneca",
+        "azn",
+        "bristol-myers squibb",
+        "bmy",
+        "bristol myers",
+        "sanofi",
+        "sny",
+        "glaxosmithkline",
+        "gsk",
+        "gilead",
+        "gild",
+        "amgen",
+        "amgn",
+        "regeneron",
+        "regn",
+        "vertex",
+        "vrtx",
     }
 
     # Major pharma (not top 10 but significant)
     MAJOR_PHARMA = {
-        "biogen", "biib",
-        "moderna", "mrna",
-        "biontech", "bntx",
-        "takeda", "tak",
-        "novo nordisk", "nvo",
+        "biogen",
+        "biib",
+        "moderna",
+        "mrna",
+        "biontech",
+        "bntx",
+        "takeda",
+        "tak",
+        "novo nordisk",
+        "nvo",
         "astellas",
         "boehringer ingelheim",
-        "bayer", "bayry",
-        "teva", "teva",
-        "allergan", "agn",
+        "bayer",
+        "bayry",
+        "teva",
+        "teva",
+        "allergan",
+        "agn",
         "celgene",  # Now part of BMS
-        "shire",    # Now part of Takeda
-        "alexion", "alxn",
-        "incyte", "incy",
-        "jazz pharmaceuticals", "jazz",
-        "biomarin", "bmrn",
-        "seagen", "sgen",
-        "alnylam", "alny",
+        "shire",  # Now part of Takeda
+        "alexion",
+        "alxn",
+        "incyte",
+        "incy",
+        "jazz pharmaceuticals",
+        "jazz",
+        "biomarin",
+        "bmrn",
+        "seagen",
+        "sgen",
+        "alnylam",
+        "alny",
     }
 
     # Academic/research institutions
     ACADEMIC_PARTNERS = {
-        "university", "college", "institute", "hospital",
-        "nih", "national institutes", "medical center",
-        "research foundation", "cancer center",
+        "university",
+        "college",
+        "institute",
+        "hospital",
+        "nih",
+        "national institutes",
+        "medical center",
+        "research foundation",
+        "cancer center",
     }
 
     # Scoring weights
@@ -166,10 +209,10 @@ class PartnershipEngine:
 
     # Deal value thresholds ($MM)
     DEAL_SIZE_THRESHOLDS = {
-        "mega": Decimal("1000"),      # $1B+ total value
-        "large": Decimal("500"),       # $500M+
-        "significant": Decimal("100"), # $100M+
-        "modest": Decimal("25"),       # $25M+
+        "mega": Decimal("1000"),  # $1B+ total value
+        "large": Decimal("500"),  # $500M+
+        "significant": Decimal("100"),  # $100M+
+        "modest": Decimal("25"),  # $25M+
     }
 
     def __init__(self):
@@ -363,10 +406,7 @@ class PartnershipEngine:
         partnerships = self.partnerships_by_ticker.get(ticker, [])
 
         # Filter to partnerships announced before as_of_date
-        valid_partnerships = [
-            p for p in partnerships
-            if p.announcement_date <= as_of_date
-        ]
+        valid_partnerships = [p for p in partnerships if p.announcement_date <= as_of_date]
 
         profile = PartnershipProfile(ticker=ticker)
         profile.partnerships = valid_partnerships
@@ -407,9 +447,7 @@ class PartnershipEngine:
         self.profiles[ticker] = profile
         return profile
 
-    def _determine_strength(
-        self, profile: PartnershipProfile, as_of_date: date
-    ) -> PartnershipStrength:
+    def _determine_strength(self, profile: PartnershipProfile, as_of_date: date) -> PartnershipStrength:
         """
         Determine overall partnership strength.
 
@@ -495,10 +533,10 @@ class PartnershipEngine:
         # Weighted combination (0-100 scale)
         # Tier: 35%, Value: 30%, Recency: 20%, Diversity: 15%
         raw_score = (
-            tier_score * Decimal("0.35") +
-            value_score * Decimal("0.30") +
-            recency_score * Decimal("0.20") +
-            diversity_score * Decimal("0.15")
+            tier_score * Decimal("0.35")
+            + value_score * Decimal("0.30")
+            + recency_score * Decimal("0.20")
+            + diversity_score * Decimal("0.15")
         )
 
         # Clamp to 0-100
@@ -580,9 +618,7 @@ class PartnershipEngine:
 
         return Decimal("0")
 
-    def _calculate_recency_score(
-        self, profile: PartnershipProfile, as_of_date: date
-    ) -> Decimal:
+    def _calculate_recency_score(self, profile: PartnershipProfile, as_of_date: date) -> Decimal:
         """
         Calculate score based on recency of deals.
 
@@ -645,7 +681,7 @@ class PartnershipEngine:
             key=lambda p: (
                 -list(PartnerTier).index(p.partner_tier),
                 -(p.total_potential_value or Decimal("0")),
-            )
+            ),
         )
 
         seen = set()
@@ -700,18 +736,12 @@ class PartnershipEngine:
             "scores_by_ticker": scores_by_ticker,
             "diagnostic_counts": {
                 "total_scored": len(scores_by_ticker),
-                "with_partnerships": sum(
-                    1 for r in scores_by_ticker.values() if r["partnership_count"] > 0
-                ),
-                "with_top_tier": sum(
-                    1 for r in scores_by_ticker.values() if r["top_tier_partners"] > 0
-                ),
+                "with_partnerships": sum(1 for r in scores_by_ticker.values() if r["partnership_count"] > 0),
+                "with_top_tier": sum(1 for r in scores_by_ticker.values() if r["top_tier_partners"] > 0),
                 "strength_distribution": strength_distribution,
             },
             "summary_stats": {
-                "mean_score": (
-                    sum(scores) / len(scores) if scores else Decimal("0")
-                ).quantize(Decimal("0.01")),
+                "mean_score": (sum(scores) / len(scores) if scores else Decimal("0")).quantize(Decimal("0.01")),
                 "max_score": max(scores) if scores else Decimal("0"),
                 "min_score": min(scores) if scores else Decimal("0"),
             },
@@ -719,9 +749,7 @@ class PartnershipEngine:
                 "engine": "PartnershipEngine",
                 "version": "1.0.0",
                 "as_of_date": as_of_date.isoformat(),
-                "partnerships_loaded": sum(
-                    len(p) for p in self.partnerships_by_ticker.values()
-                ),
+                "partnerships_loaded": sum(len(p) for p in self.partnerships_by_ticker.values()),
             },
         }
 
@@ -753,18 +781,18 @@ class PartnershipEngine:
             for p in partnerships
         ]
 
-    def _add_audit(
-        self, ticker: str, as_of_date: date, result: Dict[str, Any]
-    ) -> None:
+    def _add_audit(self, ticker: str, as_of_date: date, result: Dict[str, Any]) -> None:
         """Add entry to audit trail."""
-        self.audit_trail.append({
-            "ticker": ticker,
-            "as_of_date": as_of_date.isoformat(),
-            "partnership_score": float(result["partnership_score"]),
-            "partnership_strength": result["partnership_strength"],
-            "partnership_count": result["partnership_count"],
-            "top_tier_partners": result["top_tier_partners"],
-        })
+        self.audit_trail.append(
+            {
+                "ticker": ticker,
+                "as_of_date": as_of_date.isoformat(),
+                "partnership_score": float(result["partnership_score"]),
+                "partnership_strength": result["partnership_strength"],
+                "partnership_count": result["partnership_count"],
+                "top_tier_partners": result["top_tier_partners"],
+            }
+        )
 
     def get_audit_trail(self) -> List[Dict[str, Any]]:
         """Return audit trail."""

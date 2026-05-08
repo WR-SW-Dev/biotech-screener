@@ -11,20 +11,21 @@ These tests cover:
 - Batch processing and validation gates
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from ctgov_adapter import (
+    AdapterConfig,
+    AdapterError,
+    AdapterStats,
+    CanonicalTrialRecord,
+    CompletionType,
     CTGovAdapter,
     CTGovStatus,
-    CompletionType,
-    CanonicalTrialRecord,
-    AdapterConfig,
-    AdapterStats,
-    AdapterError,
-    MissingRequiredFieldError,
     FutureDataError,
+    MissingRequiredFieldError,
     process_trial_records_batch,
 )
 
@@ -203,17 +204,10 @@ class TestCTGovAdapterExtraction:
             "ticker": "ACME",
             "ctgov_record": {
                 "protocolSection": {
-                    "identificationModule": {
-                        "nctId": "NCT12345678"
-                    },
-                    "statusModule": {
-                        "overallStatus": "RECRUITING",
-                        "lastUpdatePostDateStruct": {
-                            "date": "2026-01-10"
-                        }
-                    }
+                    "identificationModule": {"nctId": "NCT12345678"},
+                    "statusModule": {"overallStatus": "RECRUITING", "lastUpdatePostDateStruct": {"date": "2026-01-10"}},
                 }
-            }
+            },
         }
 
         canonical = adapter.extract_canonical_record(record, as_of_date=date(2026, 1, 15))
@@ -353,8 +347,7 @@ class TestAdapterStats:
 
         # Successful extraction
         adapter.extract_canonical_record(
-            {"ticker": "ACME", "nct_id": "NCT001", "last_update_posted": "2026-01-10"},
-            as_of_date=date(2026, 1, 15)
+            {"ticker": "ACME", "nct_id": "NCT001", "last_update_posted": "2026-01-10"}, as_of_date=date(2026, 1, 15)
         )
 
         assert adapter.stats.total_records == 1
@@ -364,8 +357,7 @@ class TestAdapterStats:
         """Missing overall_status should be tracked."""
         adapter = CTGovAdapter()
         adapter.extract_canonical_record(
-            {"ticker": "ACME", "nct_id": "NCT001", "last_update_posted": "2026-01-10"},
-            as_of_date=date(2026, 1, 15)
+            {"ticker": "ACME", "nct_id": "NCT001", "last_update_posted": "2026-01-10"}, as_of_date=date(2026, 1, 15)
         )
 
         assert adapter.stats.missing_overall_status == 1
@@ -412,14 +404,17 @@ class TestBatchProcessing:
         """Batch should filter future-dated records by default."""
         records = [
             {"ticker": "ACME", "nct_id": "NCT001", "overall_status": "RECRUITING", "last_update_posted": "2026-01-10"},
-            {"ticker": "BETA", "nct_id": "NCT002", "overall_status": "COMPLETED", "last_update_posted": "2026-01-20"},  # Future
+            {
+                "ticker": "BETA",
+                "nct_id": "NCT002",
+                "overall_status": "COMPLETED",
+                "last_update_posted": "2026-01-20",
+            },  # Future
             {"ticker": "GAMMA", "nct_id": "NCT003", "overall_status": "RECRUITING", "last_update_posted": "2026-01-12"},
         ]
 
         config = AdapterConfig(fail_on_future_data=False)
-        canonical, stats = process_trial_records_batch(
-            records, as_of_date=date(2026, 1, 15), config=config
-        )
+        canonical, stats = process_trial_records_batch(records, as_of_date=date(2026, 1, 15), config=config)
 
         assert len(canonical) == 2  # ACME and GAMMA, BETA filtered
         assert stats.future_data_violations == 1

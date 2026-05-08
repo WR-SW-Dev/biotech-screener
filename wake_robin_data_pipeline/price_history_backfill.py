@@ -7,13 +7,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from wake_robin_data_pipeline.price_gap_report import (
-    load_universe_tickers,
-    load_price_coverage,
-)
+from wake_robin_data_pipeline.price_gap_report import load_price_coverage, load_universe_tickers
 
 try:
     import yfinance as yf
+
     HAS_YFINANCE = True
 except ImportError:
     HAS_YFINANCE = False
@@ -58,15 +56,17 @@ def fetch_prices_yfinance(ticker: str, start_date: str, end_date: str) -> List[D
         rows = []
         for idx, row in df.iterrows():
             date_str = idx.strftime("%Y-%m-%d")
-            rows.append({
-                "date": date_str,
-                "ticker": ticker,
-                "close": row.get("Close"),
-                "open": row.get("Open"),
-                "high": row.get("High"),
-                "low": row.get("Low"),
-                "volume": row.get("Volume"),
-            })
+            rows.append(
+                {
+                    "date": date_str,
+                    "ticker": ticker,
+                    "close": row.get("Close"),
+                    "open": row.get("Open"),
+                    "high": row.get("High"),
+                    "low": row.get("Low"),
+                    "volume": row.get("Volume"),
+                }
+            )
         return rows
     except Exception as e:
         print(f"  Warning: fetch failed for {ticker}: {e}")

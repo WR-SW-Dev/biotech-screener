@@ -9,21 +9,19 @@ Tests edge cases and error scenarios including:
 - Boundary conditions
 """
 
-import pytest
-from datetime import date
 from decimal import Decimal
 
+from common.types import Severity
 from module_2_financial_v2 import (
-    score_financial_health_v2,
-    _to_decimal,
-    _safe_divide,
+    EPS,
+    DilutionRiskBucket,
+    LiquidityGate,
     _clamp,
     _quantize_score,
-    EPS,
-    LiquidityGate,
-    DilutionRiskBucket,
+    _safe_divide,
+    _to_decimal,
+    score_financial_health_v2,
 )
-from common.types import Severity
 
 
 class TestToDecimalEdgeCases:
@@ -68,7 +66,7 @@ class TestToDecimalEdgeCases:
 
     def test_special_float_values(self):
         """Special float values should be handled."""
-        result = _to_decimal(float('inf'))
+        result = _to_decimal(float("inf"))
         # Either None or Infinity is acceptable
         assert result is None or str(result) == "Infinity"
 
@@ -86,8 +84,8 @@ class TestSafeDivideEdgeCases:
 
     def test_divide_by_eps_returns_default(self):
         """Division by EPS (very small) should return default."""
-        result = _safe_divide(Decimal("100"), EPS / 10)
-        # Should handle very small divisors
+        _safe_divide(Decimal("100"), EPS / 10)
+        # Should handle very small divisors without raising
 
     def test_normal_division(self):
         """Normal division should work."""

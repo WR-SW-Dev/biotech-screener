@@ -1,13 +1,13 @@
 """Tests for scripts/generate_ticker_explain_pack.py — ticker explain pack."""
+
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
 import pytest
-
-import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -25,6 +25,7 @@ from generate_ticker_explain_pack import (
     render_dossier_md,
     render_explain_pack_md,
 )
+
 from run_phase2_snapshot_delta import PHASE2_PINNED_RULESET_ID, SnapshotData
 
 
@@ -430,11 +431,16 @@ class TestCli:
 
         output_dir = tmp_path / "output"
 
-        main([
-            "--snapshot-dir", str(current_dir),
-            "--prev-snapshot-dir", str(prior_dir),
-            "--output-dir", str(output_dir),
-        ])
+        main(
+            [
+                "--snapshot-dir",
+                str(current_dir),
+                "--prev-snapshot-dir",
+                str(prior_dir),
+                "--output-dir",
+                str(output_dir),
+            ]
+        )
 
         assert (output_dir / "ticker_explain_pack.json").exists()
         assert (output_dir / "ticker_explain_pack.md").exists()
@@ -584,7 +590,7 @@ class TestPressureHeader:
         # drawdowns that trigger rescued_by_rel (abs breaches, rel passes).
         rankings["eligible"] = "0"
         rankings["ineligible_reasons"] = "fundamental_red_flag"
-        rankings["de_drawdown"] = -0.50       # breaches -0.40 gate
+        rankings["de_drawdown"] = -0.50  # breaches -0.40 gate
         rankings["de_drawdown_rel_xbi"] = 0.0  # passes -0.20 gate
         current = _make_snapshot("2026-02-09", rankings)
         pack = build_explain_pack(current, None, ["T000"])

@@ -9,7 +9,7 @@ Wraps output writing to ensure:
 
 import sys
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from governance.canonical_json import canonical_dumps
 from governance.hashing import hash_bytes, hash_file
@@ -101,11 +101,11 @@ def write_canonical_output(
     content = canonical_dumps(enriched)
 
     # Write
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(content)
 
     # Compute hash
-    output_hash = hash_bytes(content.encode('utf-8'))
+    output_hash = hash_bytes(content.encode("utf-8"))
 
     return {
         "path": str(output_path),

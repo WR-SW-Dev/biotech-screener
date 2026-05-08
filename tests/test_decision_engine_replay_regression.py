@@ -17,36 +17,31 @@ Loads compact fixtures extracted from 3 real archives (2025-04-30, 2025-07-31,
 Fixtures: tests/fixtures/phase2_replays/{2025-04-30,2025-07-31,2025-10-31}.json
 Runtime: <5 seconds (JSON load + engine calls for ~960 tickers total)
 """
+
 from __future__ import annotations
 
 import json
 import statistics
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
-import pytest
 
 # ---------------------------------------------------------------------------
 # Imports from project
 # ---------------------------------------------------------------------------
 import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import (
-    DECISION_COLUMNS,
-    DecisionRuleset,
-    compute_decision_fields,
-)
+from decision_engine import DECISION_COLUMNS, DecisionRuleset, compute_decision_fields
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 FIXTURE_DIR = PROJECT_ROOT / "tests" / "fixtures" / "phase2_replays"
-RULESET_PATH = (
-    PROJECT_ROOT / "production_data" / "decision_rulesets" / "v1.3.0_candidate.json"
-)
+RULESET_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "v1.3.0_candidate.json"
 DATES = ["2025-04-30", "2025-07-31", "2025-10-31"]
 EXPECTED_RULESET_ID = "f3454ef7"
 
@@ -70,9 +65,7 @@ def _load_fixture(date_str: str) -> Dict[str, Any]:
         return json.load(f)
 
 
-def _run_engine(
-    fixture: Dict[str, Any], ruleset: DecisionRuleset
-) -> List[Dict[str, Any]]:
+def _run_engine(fixture: Dict[str, Any], ruleset: DecisionRuleset) -> List[Dict[str, Any]]:
     """Run compute_decision_fields on every ticker in fixture, return results."""
     results = []
     for ticker in fixture["tickers"]:
@@ -136,9 +129,7 @@ class TestRealDataIngest:
     def test_universe_size_in_range(self, all_snapshots, date_str):
         """Universe has 280-400 tickers (historical range)."""
         _, results = all_snapshots[date_str]
-        assert 280 <= len(results) <= 400, (
-            f"{date_str}: {len(results)} tickers outside [280, 400]"
-        )
+        assert 280 <= len(results) <= 400, f"{date_str}: {len(results)} tickers outside [280, 400]"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_all_tickers_produce_output(self, all_snapshots, date_str):
@@ -166,57 +157,49 @@ class TestSchemaOnRealData:
     def test_tier_dev_valid(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["tier_dev"] in VALID_TIERS, (
-                f"{r['ticker']}: invalid tier_dev={r['tier_dev']!r}"
-            )
+            assert r["tier_dev"] in VALID_TIERS, f"{r['ticker']}: invalid tier_dev={r['tier_dev']!r}"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_size_band_valid(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["size_band"] in VALID_BANDS, (
-                f"{r['ticker']}: invalid size_band={r['size_band']!r}"
-            )
+            assert r["size_band"] in VALID_BANDS, f"{r['ticker']}: invalid size_band={r['size_band']!r}"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_eligible_valid(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["eligible"] in VALID_ELIGIBLE, (
-                f"{r['ticker']}: invalid eligible={r['eligible']!r}"
-            )
+            assert r["eligible"] in VALID_ELIGIBLE, f"{r['ticker']}: invalid eligible={r['eligible']!r}"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_mom_state_valid(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["mom_state"] in VALID_MOM_STATES, (
-                f"{r['ticker']}: invalid mom_state={r['mom_state']!r}"
-            )
+            assert r["mom_state"] in VALID_MOM_STATES, f"{r['ticker']}: invalid mom_state={r['mom_state']!r}"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_catalyst_mode_valid(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["catalyst_mode"] in VALID_CATALYST_MODES, (
-                f"{r['ticker']}: invalid catalyst_mode={r['catalyst_mode']!r}"
-            )
+            assert (
+                r["catalyst_mode"] in VALID_CATALYST_MODES
+            ), f"{r['ticker']}: invalid catalyst_mode={r['catalyst_mode']!r}"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_runway_bucket_valid(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["runway_bucket"] in VALID_RUNWAY_BUCKETS, (
-                f"{r['ticker']}: invalid runway_bucket={r['runway_bucket']!r}"
-            )
+            assert (
+                r["runway_bucket"] in VALID_RUNWAY_BUCKETS
+            ), f"{r['ticker']}: invalid runway_bucket={r['runway_bucket']!r}"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_ruleset_id_matches(self, all_snapshots, date_str):
         _, results = all_snapshots[date_str]
         for r in results:
-            assert r["decision_engine_ruleset_id"] == EXPECTED_RULESET_ID, (
-                f"{r['ticker']}: ruleset_id={r['decision_engine_ruleset_id']}"
-            )
+            assert (
+                r["decision_engine_ruleset_id"] == EXPECTED_RULESET_ID
+            ), f"{r['ticker']}: ruleset_id={r['decision_engine_ruleset_id']}"
 
 
 # ============================================================================
@@ -246,9 +229,7 @@ class TestScoreDispersion:
         """Dev-stage optionality has stddev > 0.15 (not degenerate)."""
         fixture, results = all_snapshots[date_str]
         dev = _dev_results(results)
-        opt_vals = [
-            r["optionality"] for r in dev if r["optionality"] is not None
-        ]
+        opt_vals = [r["optionality"] for r in dev if r["optionality"] is not None]
         assert len(opt_vals) >= 10, f"{date_str}: only {len(opt_vals)} opt values"
         std = statistics.stdev(opt_vals)
         assert std > 0.15, f"{date_str}: optionality std={std:.3f} < 0.15"
@@ -258,9 +239,7 @@ class TestScoreDispersion:
         """Not 100% eligible or 100% ineligible."""
         _, results = all_snapshots[date_str]
         eligible_vals = {r["eligible"] for r in results}
-        assert len(eligible_vals) == 2, (
-            f"{date_str}: all tickers have eligible={eligible_vals}"
-        )
+        assert len(eligible_vals) == 2, f"{date_str}: all tickers have eligible={eligible_vals}"
 
 
 # ============================================================================
@@ -298,8 +277,7 @@ class TestTierDistribution:
         for tier, (lo, hi) in bounds.items():
             pct = tier_counts[tier] / n_dev * 100
             assert lo <= pct <= hi, (
-                f"{date_str}: tier {tier} = {pct:.1f}% "
-                f"(count={tier_counts[tier]}/{n_dev}) outside [{lo}, {hi}]"
+                f"{date_str}: tier {tier} = {pct:.1f}% " f"(count={tier_counts[tier]}/{n_dev}) outside [{lo}, {hi}]"
             )
 
     @pytest.mark.parametrize("date_str", DATES)
@@ -334,9 +312,7 @@ class TestCoverageMetrics:
         n_dev = len(dev)
         n_eligible = sum(1 for r in dev if r["eligible"] == "1")
         pct = n_eligible / n_dev * 100 if n_dev else 0
-        assert 15 <= pct <= 40, (
-            f"{date_str}: dev eligibility = {pct:.1f}% ({n_eligible}/{n_dev})"
-        )
+        assert 15 <= pct <= 40, f"{date_str}: dev eligibility = {pct:.1f}% ({n_eligible}/{n_dev})"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_catalyst_coverage(self, all_snapshots, date_str):
@@ -344,13 +320,9 @@ class TestCoverageMetrics:
         _, results = all_snapshots[date_str]
         dev = _dev_results(results)
         n_dev = len(dev)
-        n_with = sum(
-            1 for r in dev if r.get("catalyst_mode") not in ("missing", "")
-        )
+        n_with = sum(1 for r in dev if r.get("catalyst_mode") not in ("missing", ""))
         pct = n_with / n_dev * 100 if n_dev else 0
-        assert 15 <= pct <= 50, (
-            f"{date_str}: catalyst coverage = {pct:.1f}% ({n_with}/{n_dev})"
-        )
+        assert 15 <= pct <= 50, f"{date_str}: catalyst coverage = {pct:.1f}% ({n_with}/{n_dev})"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_sponsor_coverage(self, all_snapshots, date_str):
@@ -358,13 +330,9 @@ class TestCoverageMetrics:
         _, results = all_snapshots[date_str]
         dev = _dev_results(results)
         n_dev = len(dev)
-        n_with = sum(
-            1 for r in dev if r.get("sponsor_tier1_count", "") != ""
-        )
+        n_with = sum(1 for r in dev if r.get("sponsor_tier1_count", "") != "")
         pct = n_with / n_dev * 100 if n_dev else 0
-        assert 60 <= pct <= 100, (
-            f"{date_str}: sponsor coverage = {pct:.1f}% ({n_with}/{n_dev})"
-        )
+        assert 60 <= pct <= 100, f"{date_str}: sponsor coverage = {pct:.1f}% ({n_with}/{n_dev})"
 
     @pytest.mark.parametrize("date_str", DATES)
     def test_momentum_coverage(self, all_snapshots, date_str):
@@ -374,9 +342,7 @@ class TestCoverageMetrics:
         n_dev = len(dev)
         n_with = sum(1 for r in dev if r.get("mom_state", "") != "")
         pct = n_with / n_dev * 100 if n_dev else 0
-        assert 80 <= pct <= 100, (
-            f"{date_str}: momentum coverage = {pct:.1f}% ({n_with}/{n_dev})"
-        )
+        assert 80 <= pct <= 100, f"{date_str}: momentum coverage = {pct:.1f}% ({n_with}/{n_dev})"
 
 
 # ============================================================================
@@ -429,15 +395,10 @@ class TestGoldenTickers:
         match = [r for r in results if r["ticker"] == ticker]
         assert match, f"{date_str}: ticker {ticker} not found in results"
         r = match[0]
-        assert r["tier_dev"] == exp_tier, (
-            f"{date_str}/{ticker}: tier={r['tier_dev']!r}, expected={exp_tier!r}"
-        )
-        assert r["size_band"] == exp_band, (
-            f"{date_str}/{ticker}: band={r['size_band']!r}, expected={exp_band!r}"
-        )
+        assert r["tier_dev"] == exp_tier, f"{date_str}/{ticker}: tier={r['tier_dev']!r}, expected={exp_tier!r}"
+        assert r["size_band"] == exp_band, f"{date_str}/{ticker}: band={r['size_band']!r}, expected={exp_band!r}"
         assert r["tier_reason"] == exp_reason, (
-            f"{date_str}/{ticker}: reason={r['tier_reason']!r}, "
-            f"expected={exp_reason!r}"
+            f"{date_str}/{ticker}: reason={r['tier_reason']!r}, " f"expected={exp_reason!r}"
         )
 
 
@@ -453,11 +414,7 @@ class TestRankStability:
 
     def _ab_set(self, results: List[Dict[str, Any]]) -> set:
         """Return set of A+B tickers."""
-        return {
-            r["ticker"]
-            for r in _dev_results(results)
-            if r["tier_dev"] in ("A", "B")
-        }
+        return {r["ticker"] for r in _dev_results(results) if r["tier_dev"] in ("A", "B")}
 
     def _top_n(self, results: List[Dict[str, Any]], n: int) -> set:
         """Return top-N tickers by tier priority (A first, then B)."""
@@ -514,9 +471,7 @@ class TestRankStability:
 
         for i in range(len(counts) - 1):
             swing = abs(counts[i + 1] - counts[i])
-            assert swing <= 20, (
-                f"{DATES[i]}→{DATES[i+1]}: A+B swing = {swing:.1f}pp > 20pp"
-            )
+            assert swing <= 20, f"{DATES[i]}→{DATES[i+1]}: A+B swing = {swing:.1f}pp > 20pp"
 
     def test_eligible_count_ratio_bounded(self, all_snapshots):
         """Eligible counts across dates shouldn't diverge more than 1.5x."""
@@ -530,7 +485,4 @@ class TestRankStability:
         max_c = max(eligible_counts)
         assert min_c > 0, "At least one date has 0 eligible tickers"
         ratio = max_c / min_c
-        assert ratio <= 1.5, (
-            f"Eligible count ratio = {ratio:.2f} > 1.5 "
-            f"(min={min_c}, max={max_c})"
-        )
+        assert ratio <= 1.5, f"Eligible count ratio = {ratio:.2f} > 1.5 " f"(min={min_c}, max={max_c})"

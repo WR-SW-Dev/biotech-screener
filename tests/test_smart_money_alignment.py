@@ -4,27 +4,28 @@ Tests for Smart Money Alignment changes:
 2. Red-flag suppression: continuous multiplier with smart money attenuation
 3. Thesis gate: smart money attenuation and partial reinforcement
 """
+
 import math
-import pytest
 from decimal import Decimal
 from unittest.mock import patch
 
+import pytest
+
+from defensive_overlay_adapter import apply_red_flag_suppression
 from module_5_scoring_v3 import (
+    SMART_MONEY_REINFORCEMENT_CONFIG,
+    THESIS_GATE_CONFIG,
+    ScoringMode,
     apply_thesis_gate,
     compute_smart_money_reinforcement,
-    ScoringMode,
-    THESIS_GATE_CONFIG,
-    SMART_MONEY_REINFORCEMENT_CONFIG,
 )
-from defensive_overlay_adapter import apply_red_flag_suppression
-
 
 # =============================================================================
 # HELPERS
 # =============================================================================
 
-def _make_scored_record(ticker, composite_score, sm_weight, sm_score,
-                        conviction_overlap=0, coinvest=None):
+
+def _make_scored_record(ticker, composite_score, sm_weight, sm_score, conviction_overlap=0, coinvest=None):
     """Build a minimal scored record dict for composite output tests."""
     return {
         "ticker": ticker,
@@ -35,9 +36,9 @@ def _make_scored_record(ticker, composite_score, sm_weight, sm_score,
     }
 
 
-def _make_ranked_security(ticker, composite_score, tier1_count=0,
-                          is_flagged=False, flag_reasons=None,
-                          smart_money_signal=None):
+def _make_ranked_security(
+    ticker, composite_score, tier1_count=0, is_flagged=False, flag_reasons=None, smart_money_signal=None
+):
     """Build a minimal ranked security dict for red-flag suppression tests."""
     rec = {
         "ticker": ticker,
@@ -58,13 +59,14 @@ def _make_ranked_security(ticker, composite_score, tier1_count=0,
 # TEST 1: smart_money_rank ordering
 # =============================================================================
 
+
 class TestSmartMoneyRank:
     def test_smart_money_rank_ordering(self):
         """Verify sort by sm contribution (desc), not composite."""
         records = [
-            _make_scored_record("AAA", 80, 0.10, 90),   # sm_contrib = 9.0
-            _make_scored_record("BBB", 90, 0.10, 50),   # sm_contrib = 5.0
-            _make_scored_record("CCC", 70, 0.10, 95),   # sm_contrib = 9.5
+            _make_scored_record("AAA", 80, 0.10, 90),  # sm_contrib = 9.0
+            _make_scored_record("BBB", 90, 0.10, 50),  # sm_contrib = 5.0
+            _make_scored_record("CCC", 70, 0.10, 95),  # sm_contrib = 9.5
         ]
 
         # Simulate the sort-and-rank logic from module_5_composite_v3.py
@@ -75,14 +77,19 @@ class TestSmartMoneyRank:
 
         # Smart money rank
         n_scored = len(records)
-        sm_sorted = sorted(records, key=lambda x: (
-            -(x["effective_weights"].get("smart_money", Decimal("0")) *
-              Decimal(str(x.get("smart_money_signal", {}).get("score", 0)
-                         if x.get("smart_money_signal") else 0))),
-            -(x.get("coinvest", {}).get("conviction_overlap", 0)
-              if x.get("coinvest") else 0),
-            x["ticker"],
-        ))
+        sm_sorted = sorted(
+            records,
+            key=lambda x: (
+                -(
+                    x["effective_weights"].get("smart_money", Decimal("0"))
+                    * Decimal(
+                        str(x.get("smart_money_signal", {}).get("score", 0) if x.get("smart_money_signal") else 0)
+                    )
+                ),
+                -(x.get("coinvest", {}).get("conviction_overlap", 0) if x.get("coinvest") else 0),
+                x["ticker"],
+            ),
+        )
         for i, rec in enumerate(sm_sorted):
             rec["smart_money_rank"] = i + 1
             rec["divergence_flag"] = abs(rec["composite_rank"] - rec["smart_money_rank"]) > 0.25 * n_scored
@@ -106,6 +113,7 @@ class TestSmartMoneyRank:
 # TEST 2: divergence_flag
 # =============================================================================
 
+
 class TestDivergenceFlag:
     def test_divergence_flag_triggers_at_25pct_gap(self):
         """Verify divergence triggers when |composite - sm_rank| > 25% of len."""
@@ -124,14 +132,19 @@ class TestDivergenceFlag:
 
         # Smart money rank
         n_scored = len(records)
-        sm_sorted = sorted(records, key=lambda x: (
-            -(x["effective_weights"].get("smart_money", Decimal("0")) *
-              Decimal(str(x.get("smart_money_signal", {}).get("score", 0)
-                         if x.get("smart_money_signal") else 0))),
-            -(x.get("coinvest", {}).get("conviction_overlap", 0)
-              if x.get("coinvest") else 0),
-            x["ticker"],
-        ))
+        sm_sorted = sorted(
+            records,
+            key=lambda x: (
+                -(
+                    x["effective_weights"].get("smart_money", Decimal("0"))
+                    * Decimal(
+                        str(x.get("smart_money_signal", {}).get("score", 0) if x.get("smart_money_signal") else 0)
+                    )
+                ),
+                -(x.get("coinvest", {}).get("conviction_overlap", 0) if x.get("coinvest") else 0),
+                x["ticker"],
+            ),
+        )
         for i, rec in enumerate(sm_sorted):
             rec["smart_money_rank"] = i + 1
             rec["divergence_flag"] = abs(rec["composite_rank"] - rec["smart_money_rank"]) > 0.25 * n_scored
@@ -149,6 +162,7 @@ class TestDivergenceFlag:
 # TEST 3: Red-flag suppression — continuous multiplier (not binary)
 # =============================================================================
 
+
 class TestRedFlagContinuousSuppression:
     @patch("defensive_overlay_adapter.detect_fundamental_red_flags")
     def test_suppression_is_proportional(self, mock_detect):
@@ -157,8 +171,8 @@ class TestRedFlagContinuousSuppression:
         mock_detect.return_value = (True, ["test_reason"])
 
         records = [
-            _make_ranked_security("HIGH", "90"),   # Far above median
-            _make_ranked_security("MID", "70"),    # Closer to median
+            _make_ranked_security("HIGH", "90"),  # Far above median
+            _make_ranked_security("MID", "70"),  # Closer to median
             _make_ranked_security("BELOW", "40"),  # Below median - should not be touched
         ]
 
@@ -190,6 +204,7 @@ class TestRedFlagContinuousSuppression:
 # TEST 4: Red-flag smart money attenuation
 # =============================================================================
 
+
 class TestRedFlagSmAttenuation:
     @patch("defensive_overlay_adapter.detect_fundamental_red_flags")
     def test_tier1_holders_reduce_penalty(self, mock_detect):
@@ -203,8 +218,7 @@ class TestRedFlagSmAttenuation:
             _make_ranked_security("PAD2", "30"),
         ]
         records_with_sm = [
-            _make_ranked_security("WITH_SM", "90",
-                                  smart_money_signal={"tier_breakdown": {"tier1": 8}}),
+            _make_ranked_security("WITH_SM", "90", smart_money_signal={"tier_breakdown": {"tier1": 8}}),
             _make_ranked_security("PAD1", "50"),
             _make_ranked_security("PAD2", "30"),
         ]
@@ -219,13 +233,15 @@ class TestRedFlagSmAttenuation:
         with_sm_score = Decimal(with_sm["composite_score"])
 
         # With smart money should be penalized LESS than without
-        assert with_sm_score > no_sm_score, \
-            f"SM attenuation should reduce penalty: {with_sm_score} should be > {no_sm_score}"
+        assert (
+            with_sm_score > no_sm_score
+        ), f"SM attenuation should reduce penalty: {with_sm_score} should be > {no_sm_score}"
 
 
 # =============================================================================
 # TEST 5: Red-flag attenuation invariant — always penalized
 # =============================================================================
+
 
 class TestRedFlagAttenuationInvariant:
     @patch("defensive_overlay_adapter.detect_fundamental_red_flags")
@@ -235,8 +251,7 @@ class TestRedFlagAttenuationInvariant:
 
         # Max attenuation case: 20 tier1 holders (caps at 0.40)
         records = [
-            _make_ranked_security("MAXSM", "95",
-                                  smart_money_signal={"tier_breakdown": {"tier1": 20}}),
+            _make_ranked_security("MAXSM", "95", smart_money_signal={"tier_breakdown": {"tier1": 20}}),
             _make_ranked_security("PAD", "50"),
             _make_ranked_security("PAD2", "30"),
         ]
@@ -247,42 +262,48 @@ class TestRedFlagAttenuationInvariant:
         post_score = Decimal(maxsm["composite_score"])
         pre_score = Decimal(maxsm["composite_score_pre_suppression"])
 
-        assert post_score < pre_score, \
-            f"Flagged security must always be penalized: {post_score} should be < {pre_score}"
+        assert (
+            post_score < pre_score
+        ), f"Flagged security must always be penalized: {post_score} should be < {pre_score}"
 
 
 # =============================================================================
 # TEST 6: Thesis gate smart money attenuation
 # =============================================================================
 
+
 class TestThesisGateSmAttenuation:
     def test_penalty_lerps_toward_1(self):
         """Verify thesis gate penalty is attenuated by smart_money_strength up to 30%."""
         score = Decimal("80")
         clinical = Decimal("30")  # Low thesis
-        pos = Decimal("30")       # Low thesis -> avg 30, well below any threshold
+        pos = Decimal("30")  # Low thesis -> avg 30, well below any threshold
 
         # Without smart money
         gated_no_sm, flags_no_sm, diag_no_sm = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0"),
         )
 
         # With max smart money strength
         gated_with_sm, flags_with_sm, diag_with_sm = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0.50"),  # Will be capped to 0.30
         )
 
         # Smart money should produce a HIGHER (less penalized) score
-        assert gated_with_sm > gated_no_sm, \
-            f"SM attenuation should reduce penalty: {gated_with_sm} > {gated_no_sm}"
+        assert gated_with_sm > gated_no_sm, f"SM attenuation should reduce penalty: {gated_with_sm} > {gated_no_sm}"
 
         # But still below original score
-        assert gated_with_sm < score, \
-            f"Attenuated score should still be below original: {gated_with_sm} < {score}"
+        assert gated_with_sm < score, f"Attenuated score should still be below original: {gated_with_sm} < {score}"
 
         # Check diagnostics
         assert "thesis_gate_sm_attenuation" in diag_with_sm
@@ -293,6 +314,7 @@ class TestThesisGateSmAttenuation:
 # TEST 7: Thesis gate zero smart money — identical to current behavior
 # =============================================================================
 
+
 class TestThesisGateZeroSm:
     def test_zero_sm_matches_baseline(self):
         """Verify zero smart_money_strength produces identical behavior to None."""
@@ -301,19 +323,24 @@ class TestThesisGateZeroSm:
         pos = Decimal("30")
 
         gated_none, _, diag_none = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=None,
         )
 
         gated_zero, _, diag_zero = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0"),
         )
 
-        assert gated_none == gated_zero, \
-            f"Zero SM should match None: {gated_none} == {gated_zero}"
+        assert gated_none == gated_zero, f"Zero SM should match None: {gated_none} == {gated_zero}"
         assert "thesis_gate_sm_attenuation" not in diag_none
         assert "thesis_gate_sm_attenuation" not in diag_zero
 
@@ -321,6 +348,7 @@ class TestThesisGateZeroSm:
 # =============================================================================
 # TEST 8: Thesis gate + partial reinforcement
 # =============================================================================
+
 
 class TestPartialReinforcement:
     def test_reinforcement_scales_by_attenuation(self):
@@ -367,11 +395,11 @@ class TestPartialReinforcement:
         )
 
         # Full should have the largest multipliers
-        assert cat_full >= cat_partial, \
-            f"Full reinforcement should be >= partial: {cat_full} >= {cat_partial}"
+        assert cat_full >= cat_partial, f"Full reinforcement should be >= partial: {cat_full} >= {cat_partial}"
         # Partial should be between 1.0 and full
-        assert cat_partial > Decimal("1.0") or cat_full == Decimal("1.0"), \
-            f"Partial should provide some reinforcement if full does"
+        assert cat_partial > Decimal("1.0") or cat_full == Decimal(
+            "1.0"
+        ), f"Partial should provide some reinforcement if full does"
         # Blocked should be exactly 1.0
         assert cat_blocked == Decimal("1.00")
         assert mom_blocked == Decimal("1.00")
@@ -383,6 +411,7 @@ class TestPartialReinforcement:
 # =============================================================================
 # TEST 9: Conviction override unchanged
 # =============================================================================
+
 
 class TestConvictionOverrideUnchanged:
     def test_conviction_override_still_bypasses(self):
@@ -415,6 +444,7 @@ class TestConvictionOverrideUnchanged:
 # TEST 10-12: Guardrail A — hard-risk disables SM attenuation
 # =============================================================================
 
+
 class TestGuardrailA:
     """
     Guardrail A tests verify that thesis gate SM attenuation is disabled
@@ -433,15 +463,21 @@ class TestGuardrailA:
 
         # Guardrail A would zero sm_strength for sev2
         gated_sev2, _, diag_sev2 = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0"),  # Guardrail zeroed this
         )
 
         # Compare with no guardrail (full attenuation)
         gated_full, _, diag_full = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0.80"),  # Would be 0.30 capped normally
         )
 
@@ -460,15 +496,21 @@ class TestGuardrailA:
 
         # sev1: guardrail caps sm_strength at 0.10
         gated_sev1, _, diag_sev1 = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0.10"),  # Guardrail capped at 0.10
         )
 
         # No guardrail: full 0.30 attenuation
         gated_full, _, diag_full = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0.50"),  # Capped to 0.30 by apply_thesis_gate
         )
 
@@ -480,8 +522,11 @@ class TestGuardrailA:
         assert gated_sev1 < gated_full, "sev1 should be penalized more than full attenuation"
         # But sev1 should still get SOME attenuation (it's not zero)
         gated_zero, _, _ = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0"),
         )
         assert gated_sev1 > gated_zero, "sev1 should get some (reduced) attenuation"
@@ -515,22 +560,31 @@ class TestGuardrailA:
 
         # A2 guardrail caps sm_strength at 0.05 for red-flag eligible names
         gated_rf, _, diag_rf = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0.05"),  # Guardrail capped at 0.05
         )
 
         # Full attenuation (no guardrail)
         gated_full, _, diag_full = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0.50"),  # Would be 0.30 capped
         )
 
         # No attenuation at all
         gated_zero, _, _ = apply_thesis_gate(
-            score=score, clinical_normalized=clinical, pos_normalized=pos,
-            stage_bucket="poc", mode=ScoringMode.BAKER_STYLE,
+            score=score,
+            clinical_normalized=clinical,
+            pos_normalized=pos,
+            stage_bucket="poc",
+            mode=ScoringMode.BAKER_STYLE,
             smart_money_strength=Decimal("0"),
         )
 

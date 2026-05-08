@@ -16,36 +16,37 @@ T5: Integration with TickerCatalystSummaryV2
 Run with: pytest tests/test_activity_proxy.py -v
 """
 
-import pytest
+import sys
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
-import sys
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from ctgov_adapter import CanonicalTrialRecord, CompletionType, CTGovStatus
 from event_detector import (
+    CatalystEvent,
     EventDetector,
     EventDetectorConfig,
     EventType,
-    CatalystEvent,
-    detect_activity_proxy_from_lookback,
     compute_activity_proxy_score,
+    detect_activity_proxy_from_lookback,
 )
-from ctgov_adapter import CanonicalTrialRecord, CTGovStatus, CompletionType
 from module_3_schema import (
-    EventType as SchemaEventType,
-    EventSeverity,
-    ConfidenceLevel,
-    EVENT_SEVERITY_MAP,
     EVENT_DEFAULT_CONFIDENCE,
+    EVENT_SEVERITY_MAP,
     EVENT_TYPE_WEIGHT,
+    ConfidenceLevel,
+    EventSeverity,
 )
-
+from module_3_schema import EventType as SchemaEventType
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def as_of_date() -> date:
@@ -150,6 +151,7 @@ def sample_trial_records_for_lookback(as_of_date) -> list[CanonicalTrialRecord]:
 # T1: ACTIVITY PROXY EVENT DETECTION
 # =============================================================================
 
+
 class TestActivityProxyEventDetection:
     """Tests for activity proxy event detection when only last_update_posted changes."""
 
@@ -157,20 +159,14 @@ class TestActivityProxyEventDetection:
         self, event_detector, sample_trial_record, prior_trial_record, as_of_date
     ):
         """Activity proxy event should be generated when only last_update_posted changed."""
-        events = event_detector.detect_events(
-            sample_trial_record,
-            prior_trial_record,
-            as_of_date
-        )
+        events = event_detector.detect_events(sample_trial_record, prior_trial_record, as_of_date)
 
         assert len(events) == 1
         assert events[0].event_type == EventType.CT_ACTIVITY_PROXY
-        assert events[0].direction == 'NEUTRAL'
+        assert events[0].direction == "NEUTRAL"
         assert events[0].nct_id == "NCT12345678"
 
-    def test_activity_proxy_not_detected_when_status_changes(
-        self, event_detector, as_of_date
-    ):
+    def test_activity_proxy_not_detected_when_status_changes(self, event_detector, as_of_date):
         """Activity proxy should NOT be generated when status changes (other event takes precedence)."""
         current = CanonicalTrialRecord(
             ticker="ACME",
@@ -203,9 +199,7 @@ class TestActivityProxyEventDetection:
         assert EventType.CT_ACTIVITY_PROXY not in event_types
         assert EventType.CT_STATUS_UPGRADE in event_types
 
-    def test_activity_proxy_not_detected_for_stale_update(
-        self, event_detector, as_of_date
-    ):
+    def test_activity_proxy_not_detected_for_stale_update(self, event_detector, as_of_date):
         """Activity proxy should NOT be generated for updates > 120 days old."""
         current = CanonicalTrialRecord(
             ticker="ACME",
@@ -239,18 +233,12 @@ class TestActivityProxyEventDetection:
         self, event_detector, sample_trial_record, prior_trial_record, as_of_date
     ):
         """Activity proxy events should have low confidence (0.30)."""
-        events = event_detector.detect_events(
-            sample_trial_record,
-            prior_trial_record,
-            as_of_date
-        )
+        events = event_detector.detect_events(sample_trial_record, prior_trial_record, as_of_date)
 
         assert len(events) == 1
         assert events[0].confidence == 0.30
 
-    def test_activity_proxy_impact_scales_with_recency(
-        self, event_detector, as_of_date
-    ):
+    def test_activity_proxy_impact_scales_with_recency(self, event_detector, as_of_date):
         """Activity proxy impact should be higher for more recent updates."""
         # Very recent (3 days ago) - should have impact 2
         recent_current = CanonicalTrialRecord(
@@ -286,12 +274,11 @@ class TestActivityProxyEventDetection:
 # T2: ACTIVITY PROXY SCORE COMPUTATION
 # =============================================================================
 
+
 class TestActivityProxyScoreComputation:
     """Tests for activity proxy score computation with time decay."""
 
-    def test_activity_proxy_score_basic(
-        self, sample_trial_records_for_lookback, as_of_date
-    ):
+    def test_activity_proxy_score_basic(self, sample_trial_records_for_lookback, as_of_date):
         """Basic activity proxy score computation."""
         result = compute_activity_proxy_score(
             sample_trial_records_for_lookback,
@@ -300,69 +287,70 @@ class TestActivityProxyScoreComputation:
         )
 
         # Should count 3 trials within 120 days (NCT1, NCT2, NCT3 - NCT4 is at 130 days)
-        assert result['activity_count_120d'] == 3
+        assert result["activity_count_120d"] == 3
         # Should count 2 trials within 30 days (NCT1, NCT2)
-        assert result['activity_count_30d'] == 2
+        assert result["activity_count_30d"] == 2
         # Score should be positive
-        assert result['activity_proxy_score'] > 0
+        assert result["activity_proxy_score"] > 0
         # Should have 3 NCT IDs
-        assert len(result['recent_nct_ids']) == 3
+        assert len(result["recent_nct_ids"]) == 3
 
-    def test_activity_proxy_score_time_decay(
-        self, as_of_date
-    ):
+    def test_activity_proxy_score_time_decay(self, as_of_date):
         """Activity proxy score should decay with time."""
         # Recent trial (5 days ago)
-        recent = [CanonicalTrialRecord(
-            ticker="ACME",
-            nct_id="NCT00000001",
-            overall_status=CTGovStatus.RECRUITING,
-            last_update_posted=as_of_date - timedelta(days=5),
-            primary_completion_date=as_of_date + timedelta(days=90),
-            primary_completion_type=CompletionType.ESTIMATED,
-            completion_date=None,
-            completion_type=None,
-            results_first_posted=None,
-        )]
+        recent = [
+            CanonicalTrialRecord(
+                ticker="ACME",
+                nct_id="NCT00000001",
+                overall_status=CTGovStatus.RECRUITING,
+                last_update_posted=as_of_date - timedelta(days=5),
+                primary_completion_date=as_of_date + timedelta(days=90),
+                primary_completion_type=CompletionType.ESTIMATED,
+                completion_date=None,
+                completion_type=None,
+                results_first_posted=None,
+            )
+        ]
 
         # Old trial (110 days ago)
-        old = [CanonicalTrialRecord(
-            ticker="ACME",
-            nct_id="NCT00000002",
-            overall_status=CTGovStatus.RECRUITING,
-            last_update_posted=as_of_date - timedelta(days=110),
-            primary_completion_date=as_of_date + timedelta(days=90),
-            primary_completion_type=CompletionType.ESTIMATED,
-            completion_date=None,
-            completion_type=None,
-            results_first_posted=None,
-        )]
+        old = [
+            CanonicalTrialRecord(
+                ticker="ACME",
+                nct_id="NCT00000002",
+                overall_status=CTGovStatus.RECRUITING,
+                last_update_posted=as_of_date - timedelta(days=110),
+                primary_completion_date=as_of_date + timedelta(days=90),
+                primary_completion_type=CompletionType.ESTIMATED,
+                completion_date=None,
+                completion_type=None,
+                results_first_posted=None,
+            )
+        ]
 
         recent_result = compute_activity_proxy_score(recent, as_of_date, 120)
         old_result = compute_activity_proxy_score(old, as_of_date, 120)
 
         # Recent should score higher due to time decay
-        assert recent_result['activity_proxy_score'] > old_result['activity_proxy_score']
+        assert recent_result["activity_proxy_score"] > old_result["activity_proxy_score"]
 
     def test_activity_proxy_score_empty_trials(self, as_of_date):
         """Empty trial list should return zero score."""
         result = compute_activity_proxy_score([], as_of_date, 120)
 
-        assert result['activity_count_120d'] == 0
-        assert result['activity_count_30d'] == 0
-        assert result['activity_proxy_score'] == 0
+        assert result["activity_count_120d"] == 0
+        assert result["activity_count_30d"] == 0
+        assert result["activity_proxy_score"] == 0
 
 
 # =============================================================================
 # T3: ACTIVITY PROXY LOOKBACK DETECTION
 # =============================================================================
 
+
 class TestActivityProxyLookbackDetection:
     """Tests for activity proxy detection from current records (lookback method)."""
 
-    def test_detect_activity_proxy_from_lookback(
-        self, sample_trial_records_for_lookback, as_of_date
-    ):
+    def test_detect_activity_proxy_from_lookback(self, sample_trial_records_for_lookback, as_of_date):
         """Detect activity proxy events from lookback window."""
         events_by_ticker = detect_activity_proxy_from_lookback(
             sample_trial_records_for_lookback,
@@ -381,9 +369,7 @@ class TestActivityProxyLookbackDetection:
         for event in events:
             assert event.event_type == EventType.CT_ACTIVITY_PROXY
 
-    def test_lookback_excludes_old_trials(
-        self, sample_trial_records_for_lookback, as_of_date
-    ):
+    def test_lookback_excludes_old_trials(self, sample_trial_records_for_lookback, as_of_date):
         """Lookback should exclude trials older than lookback window."""
         events_by_ticker = detect_activity_proxy_from_lookback(
             sample_trial_records_for_lookback,
@@ -396,9 +382,7 @@ class TestActivityProxyLookbackDetection:
         nct_ids = [e.nct_id for e in events]
         assert "NCT00000004" not in nct_ids
 
-    def test_lookback_with_custom_window(
-        self, sample_trial_records_for_lookback, as_of_date
-    ):
+    def test_lookback_with_custom_window(self, sample_trial_records_for_lookback, as_of_date):
         """Lookback with shorter window should return fewer events."""
         events_30d = detect_activity_proxy_from_lookback(
             sample_trial_records_for_lookback,
@@ -419,12 +403,13 @@ class TestActivityProxyLookbackDetection:
 # T4: SCHEMA INTEGRATION
 # =============================================================================
 
+
 class TestActivityProxySchemaIntegration:
     """Tests for activity proxy integration with module_3_schema."""
 
     def test_activity_proxy_event_type_exists(self):
         """CT_ACTIVITY_PROXY should exist in schema EventType."""
-        assert hasattr(SchemaEventType, 'CT_ACTIVITY_PROXY')
+        assert hasattr(SchemaEventType, "CT_ACTIVITY_PROXY")
         assert SchemaEventType.CT_ACTIVITY_PROXY.value == "CT_ACTIVITY_PROXY"
 
     def test_activity_proxy_severity_mapping(self):
@@ -447,12 +432,13 @@ class TestActivityProxySchemaIntegration:
 # T5: INTEGRATION WITH TICKER SUMMARY
 # =============================================================================
 
+
 class TestActivityProxySummaryIntegration:
     """Tests for activity proxy integration with TickerCatalystSummaryV2."""
 
     def test_summary_has_activity_proxy_fields(self):
         """TickerCatalystSummaryV2 should have activity proxy fields."""
-        from module_3_schema import TickerCatalystSummaryV2, CatalystWindowBucket
+        from module_3_schema import CatalystWindowBucket, TickerCatalystSummaryV2
 
         summary = TickerCatalystSummaryV2(
             ticker="ACME",
@@ -474,9 +460,9 @@ class TestActivityProxySummaryIntegration:
         )
 
         # Check activity proxy fields exist
-        assert hasattr(summary, 'activity_proxy_score')
-        assert hasattr(summary, 'activity_proxy_count_120d')
-        assert hasattr(summary, 'activity_proxy_count_30d')
+        assert hasattr(summary, "activity_proxy_score")
+        assert hasattr(summary, "activity_proxy_count_120d")
+        assert hasattr(summary, "activity_proxy_count_30d")
 
         # Check default values
         assert summary.activity_proxy_score == Decimal("0")
@@ -485,7 +471,7 @@ class TestActivityProxySummaryIntegration:
 
     def test_summary_serialization_includes_activity_proxy(self):
         """Summary to_dict() should include activity proxy fields."""
-        from module_3_schema import TickerCatalystSummaryV2, CatalystWindowBucket
+        from module_3_schema import CatalystWindowBucket, TickerCatalystSummaryV2
 
         summary = TickerCatalystSummaryV2(
             ticker="ACME",
@@ -512,16 +498,17 @@ class TestActivityProxySummaryIntegration:
         serialized = summary.to_dict()
 
         # Check scores section
-        assert serialized['scores']['activity_proxy_score'] == "5.5"
+        assert serialized["scores"]["activity_proxy_score"] == "5.5"
 
         # Check event_summary section
-        assert serialized['event_summary']['activity_proxy_count_120d'] == 3
-        assert serialized['event_summary']['activity_proxy_count_30d'] == 2
+        assert serialized["event_summary"]["activity_proxy_count_120d"] == 3
+        assert serialized["event_summary"]["activity_proxy_count_30d"] == 2
 
 
 # =============================================================================
 # EDGE CASES
 # =============================================================================
+
 
 class TestActivityProxyEdgeCases:
     """Edge case tests for activity proxy detection."""
@@ -533,11 +520,7 @@ class TestActivityProxyEdgeCases:
 
     def test_identical_records(self, event_detector, sample_trial_record, as_of_date):
         """Should not generate activity proxy when records are identical."""
-        events = event_detector.detect_events(
-            sample_trial_record,
-            sample_trial_record,  # Same record
-            as_of_date
-        )
+        events = event_detector.detect_events(sample_trial_record, sample_trial_record, as_of_date)  # Same record
         assert len(events) == 0
 
     def test_missing_last_update_posted(self, event_detector, as_of_date):

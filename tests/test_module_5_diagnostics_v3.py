@@ -9,14 +9,15 @@ Tests cover:
 - check_coverage_guardrail warnings
 """
 
-import pytest
 from decimal import Decimal
 
+import pytest
+
 from module_5_diagnostics_v3 import (
-    compute_momentum_breakdown,
     build_momentum_health,
-    format_momentum_log_lines,
     check_coverage_guardrail,
+    compute_momentum_breakdown,
+    format_momentum_log_lines,
 )
 
 
@@ -47,9 +48,7 @@ class TestComputeMomentumBreakdown:
         }
         total_rankable = 3
 
-        result = compute_momentum_breakdown(
-            ranked_securities, diagnostic_counts, total_rankable
-        )
+        result = compute_momentum_breakdown(ranked_securities, diagnostic_counts, total_rankable)
 
         assert result["missing"] == 1
         assert result["low_conf"] == 0

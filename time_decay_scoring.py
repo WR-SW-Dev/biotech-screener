@@ -18,21 +18,20 @@ Window Configuration:
 Version: 1.0.0
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Tuple, Any
-import logging
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Tuple
 
 from module_3_schema_v2 import (
-    CatalystEventV2,
-    EventSeverity,
-    ConfidenceLevel,
-    SEVERITY_SCORE_CONTRIBUTION,
     CONFIDENCE_WEIGHTS,
+    SEVERITY_SCORE_CONTRIBUTION,
+    CatalystEventV2,
+    ConfidenceLevel,
+    EventSeverity,
     compute_date_uncertainty_factor,
 )
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,9 +41,11 @@ logger = logging.getLogger(__name__)
 # TIME-DECAY WINDOW CONFIGURATION
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class TimeDecayWindow:
     """Configuration for a single lookback window."""
+
     name: str
     lookback_days: int
     weight: Decimal
@@ -57,23 +58,10 @@ class TimeDecayWindow:
 
 # Default time-decay windows
 DEFAULT_TIME_DECAY_WINDOWS: Tuple[TimeDecayWindow, ...] = (
+    TimeDecayWindow(name="7d", lookback_days=7, weight=Decimal("1.00"), description="Fresh events - full weight"),
+    TimeDecayWindow(name="30d", lookback_days=30, weight=Decimal("0.50"), description="Recent events - 50% weight"),
     TimeDecayWindow(
-        name="7d",
-        lookback_days=7,
-        weight=Decimal("1.00"),
-        description="Fresh events - full weight"
-    ),
-    TimeDecayWindow(
-        name="30d",
-        lookback_days=30,
-        weight=Decimal("0.50"),
-        description="Recent events - 50% weight"
-    ),
-    TimeDecayWindow(
-        name="90d",
-        lookback_days=90,
-        weight=Decimal("0.25"),
-        description="Historical context - 25% weight"
+        name="90d", lookback_days=90, weight=Decimal("0.25"), description="Historical context - 25% weight"
     ),
 )
 
@@ -81,32 +69,35 @@ DEFAULT_TIME_DECAY_WINDOWS: Tuple[TimeDecayWindow, ...] = (
 @dataclass
 class TimeDecayConfig:
     """Configuration for time-decay scoring."""
+
     windows: Tuple[TimeDecayWindow, ...] = DEFAULT_TIME_DECAY_WINDOWS
     use_max_across_windows: bool = True  # Take max vs sum
-    enable_cluster_bonus: bool = True    # Bonus for events across multiple windows
+    enable_cluster_bonus: bool = True  # Bonus for events across multiple windows
     cluster_bonus_factor: Decimal = Decimal("1.15")  # 15% bonus for cluster
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'TimeDecayConfig':
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "TimeDecayConfig":
         """Create config from dictionary."""
         config = cls()
-        if 'use_max_across_windows' in config_dict:
-            config.use_max_across_windows = config_dict['use_max_across_windows']
-        if 'enable_cluster_bonus' in config_dict:
-            config.enable_cluster_bonus = config_dict['enable_cluster_bonus']
-        if 'cluster_bonus_factor' in config_dict:
-            config.cluster_bonus_factor = Decimal(str(config_dict['cluster_bonus_factor']))
+        if "use_max_across_windows" in config_dict:
+            config.use_max_across_windows = config_dict["use_max_across_windows"]
+        if "enable_cluster_bonus" in config_dict:
+            config.enable_cluster_bonus = config_dict["enable_cluster_bonus"]
+        if "cluster_bonus_factor" in config_dict:
+            config.cluster_bonus_factor = Decimal(str(config_dict["cluster_bonus_factor"]))
 
         # Custom windows
-        if 'windows' in config_dict:
+        if "windows" in config_dict:
             custom_windows = []
-            for w in config_dict['windows']:
-                custom_windows.append(TimeDecayWindow(
-                    name=w['name'],
-                    lookback_days=w['lookback_days'],
-                    weight=Decimal(str(w['weight'])),
-                    description=w.get('description', '')
-                ))
+            for w in config_dict["windows"]:
+                custom_windows.append(
+                    TimeDecayWindow(
+                        name=w["name"],
+                        lookback_days=w["lookback_days"],
+                        weight=Decimal(str(w["weight"])),
+                        description=w.get("description", ""),
+                    )
+                )
             config.windows = tuple(custom_windows)
 
         return config
@@ -116,9 +107,11 @@ class TimeDecayConfig:
 # WINDOW SCORE RESULT
 # =============================================================================
 
+
 @dataclass
 class WindowScoreResult:
     """Score result for a single time window."""
+
     window_name: str
     lookback_days: int
     window_weight: Decimal
@@ -144,6 +137,7 @@ class WindowScoreResult:
 @dataclass
 class TimeDecayScoreResult:
     """Complete time-decay scoring result for a ticker."""
+
     ticker: str
     as_of_date: str
     final_score: Decimal
@@ -172,6 +166,7 @@ class TimeDecayScoreResult:
 # TIME-DECAY SCORING ENGINE
 # =============================================================================
 
+
 def compute_event_score(
     event: CatalystEventV2,
     as_of_date: date,
@@ -182,18 +177,14 @@ def compute_event_score(
     Uses severity contribution weighted by confidence and recency.
     """
     # Base severity contribution
-    severity_contrib = SEVERITY_SCORE_CONTRIBUTION.get(
-        event.event_severity, Decimal("0.0")
-    )
+    severity_contrib = SEVERITY_SCORE_CONTRIBUTION.get(event.event_severity, Decimal("0.0"))
 
     # Confidence weight
-    confidence_weight = CONFIDENCE_WEIGHTS.get(
-        event.confidence, Decimal("0.5")
-    )
+    confidence_weight = CONFIDENCE_WEIGHTS.get(event.confidence, Decimal("0.5"))
 
     # Certainty score (includes source reliability, date specificity, staleness)
     # Handle events that may not have compute_certainty_score method
-    if hasattr(event, 'compute_certainty_score'):
+    if hasattr(event, "compute_certainty_score"):
         certainty = event.compute_certainty_score(as_of_date)
     else:
         # Fallback: use confidence weight as certainty proxy
@@ -201,7 +192,8 @@ def compute_event_score(
 
     # Date-uncertainty penalty (defensive: older event objects may lack field)
     from module_3_schema_v2 import DateSpecificity as _DS
-    ds = getattr(event, 'date_specificity', _DS.UNKNOWN)
+
+    ds = getattr(event, "date_specificity", _DS.UNKNOWN)
     uncertainty_factor = compute_date_uncertainty_factor(ds)
 
     # Combined score
@@ -281,9 +273,9 @@ def score_window(
         severity_counts[sev] = severity_counts.get(sev, 0) + 1
 
         # Get event ID - handle different event formats
-        if hasattr(event, 'event_id_short'):
+        if hasattr(event, "event_id_short"):
             event_ids.append(event.event_id_short)
-        elif hasattr(event, 'event_id'):
+        elif hasattr(event, "event_id"):
             eid = event.event_id
             event_ids.append(eid[:16] if len(eid) > 16 else eid)
         else:
@@ -296,9 +288,7 @@ def score_window(
         dominant_severity = max(severity_counts, key=severity_counts.get).value
 
     # Apply window weight
-    weighted_score = (raw_score * window.weight).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
-    )
+    weighted_score = (raw_score * window.weight).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     return WindowScoreResult(
         window_name=window.name,
@@ -371,9 +361,7 @@ def compute_time_decay_score(
 
     if config.enable_cluster_bonus and cluster_detected:
         # Apply cluster bonus for sustained momentum
-        final_score = (final_score * config.cluster_bonus_factor).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        final_score = (final_score * config.cluster_bonus_factor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         cluster_bonus_applied = True
 
     return TimeDecayScoreResult(
@@ -392,6 +380,7 @@ def compute_time_decay_score(
 # =============================================================================
 # BATCH SCORING
 # =============================================================================
+
 
 def score_all_tickers_with_time_decay(
     events_by_ticker: Dict[str, List[CatalystEventV2]],
@@ -458,15 +447,15 @@ def score_all_tickers_with_time_decay(
 
     # Compute average
     if diagnostics["tickers_scored"] > 0:
-        diagnostics["avg_score"] = (
-            total_score / Decimal(diagnostics["tickers_scored"])
-        ).quantize(Decimal("0.01"))
+        diagnostics["avg_score"] = (total_score / Decimal(diagnostics["tickers_scored"])).quantize(Decimal("0.01"))
 
     # Convert Decimals for JSON serialization
     diagnostics["avg_score"] = str(diagnostics["avg_score"])
 
-    logger.info(f"Time-decay scoring complete: {diagnostics['tickers_scored']} tickers, "
-                f"{diagnostics['tickers_with_cluster']} with clusters")
+    logger.info(
+        f"Time-decay scoring complete: {diagnostics['tickers_scored']} tickers, "
+        f"{diagnostics['tickers_with_cluster']} with clusters"
+    )
 
     return (results, diagnostics)
 
@@ -474,6 +463,7 @@ def score_all_tickers_with_time_decay(
 # =============================================================================
 # INTEGRATION HELPER
 # =============================================================================
+
 
 def integrate_time_decay_into_summary(
     time_decay_result: TimeDecayScoreResult,

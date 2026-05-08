@@ -12,16 +12,12 @@ Covers:
 - Integration helper function
 """
 
-import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 
-from dilution_risk_engine import (
-    DilutionRiskEngine,
-    DataQualityState,
-    RiskBucket,
-    integrate_dilution_risk,
-)
+import pytest
+
+from dilution_risk_engine import DataQualityState, DilutionRiskEngine, RiskBucket, integrate_dilution_risk
 
 
 class TestDilutionRiskEngineInit:
@@ -134,7 +130,7 @@ class TestCalculateDilutionRisk:
             ticker="FUNDED",
             quarterly_cash=Decimal("500000000"),  # $500M
             quarterly_burn=Decimal("-30000000"),  # $30M/quarter = $10M/month
-            next_catalyst_date="2026-07-15",       # 6 months away
+            next_catalyst_date="2026-07-15",  # 6 months away
             market_cap=Decimal("2000000000"),
             avg_daily_volume_90d=2_000_000,
             as_of_date=as_of_date,
@@ -149,10 +145,10 @@ class TestCalculateDilutionRisk:
         """Underfunded company should have HIGH_RISK."""
         result = engine.calculate_dilution_risk(
             ticker="BURNING",
-            quarterly_cash=Decimal("30000000"),   # $30M cash
+            quarterly_cash=Decimal("30000000"),  # $30M cash
             quarterly_burn=Decimal("-45000000"),  # $15M/month burn
-            next_catalyst_date="2026-12-15",      # 11 months away
-            market_cap=Decimal("100000000"),      # $100M market cap
+            next_catalyst_date="2026-12-15",  # 11 months away
+            market_cap=Decimal("100000000"),  # $100M market cap
             avg_daily_volume_90d=500_000,
             shelf_capacity=Decimal("0"),
             atm_remaining=Decimal("0"),
@@ -167,11 +163,11 @@ class TestCalculateDilutionRisk:
         """Company with ATM capacity should have reduced risk."""
         result = engine.calculate_dilution_risk(
             ticker="ATMUSER",
-            quarterly_cash=Decimal("40000000"),   # $40M
+            quarterly_cash=Decimal("40000000"),  # $40M
             quarterly_burn=Decimal("-36000000"),  # $12M/month
-            next_catalyst_date="2026-09-15",      # 8 months away
+            next_catalyst_date="2026-09-15",  # 8 months away
             market_cap=Decimal("300000000"),
-            atm_remaining=Decimal("50000000"),    # $50M ATM capacity
+            atm_remaining=Decimal("50000000"),  # $50M ATM capacity
             atm_active=True,
             avg_daily_volume_90d=1_000_000,
             as_of_date=as_of_date,
@@ -460,8 +456,8 @@ class TestRiskBucketClassification:
         result = engine.calculate_dilution_risk(
             ticker="TEST",
             quarterly_cash=Decimal("1000000000"),  # $1B cash
-            quarterly_burn=Decimal("-10000000"),    # $3.3M/month
-            next_catalyst_date="2026-03-15",        # 2 months
+            quarterly_burn=Decimal("-10000000"),  # $3.3M/month
+            next_catalyst_date="2026-03-15",  # 2 months
             as_of_date=as_of_date,
         )
 

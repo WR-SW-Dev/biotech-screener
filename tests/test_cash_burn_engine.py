@@ -3,15 +3,12 @@
 Tests for Cash Burn Trajectory Engine
 """
 
-import pytest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
-from cash_burn_engine import (
-    CashBurnEngine,
-    BurnTrajectory,
-    BurnRiskLevel,
-)
+import pytest
+
+from cash_burn_engine import BurnRiskLevel, BurnTrajectory, CashBurnEngine
 
 
 class TestCashBurnEngine:
@@ -30,7 +27,7 @@ class TestCashBurnEngine:
         """Decelerating burn with good runway gets positive modifier."""
         financial = {
             "burn_rate_current": 20,  # $20M/quarter
-            "burn_rate_prior": 30,    # $30M/quarter (was higher)
+            "burn_rate_prior": 30,  # $30M/quarter (was higher)
             "runway_months": 36,
         }
         clinical = {"lead_phase": "phase_2"}
@@ -47,8 +44,8 @@ class TestCashBurnEngine:
         """Accelerating burn with short runway gets large penalty."""
         financial = {
             "burn_rate_current": 40,  # $40M/quarter
-            "burn_rate_prior": 25,    # $25M/quarter (was lower)
-            "runway_months": 8,       # Short runway
+            "burn_rate_prior": 25,  # $25M/quarter (was lower)
+            "runway_months": 8,  # Short runway
         }
         clinical = {"lead_phase": "phase_2"}
         as_of = date(2026, 1, 26)
@@ -141,7 +138,7 @@ class TestCashBurnEngine:
 
         # Should only use Q3 and Q4 2025 (Q1 2026 is in future)
         assert result.current_quarterly_burn == Decimal("35")  # Dec 2025
-        assert result.prior_quarterly_burn == Decimal("30")    # Sep 2025
+        assert result.prior_quarterly_burn == Decimal("30")  # Sep 2025
 
     def test_change_pct_calculation(self, engine):
         """Burn change percentage is calculated correctly."""
@@ -199,8 +196,8 @@ class TestCashBurnEngine:
         """Score modifier is always within [-2.0, +2.0]."""
         # Test extreme cases
         for burn_current, burn_prior, runway in [
-            (100, 10, 3),   # Extreme acceleration + critical runway
-            (5, 50, 60),    # Extreme deceleration + great runway
+            (100, 10, 3),  # Extreme acceleration + critical runway
+            (5, 50, 60),  # Extreme deceleration + great runway
         ]:
             financial = {
                 "burn_rate_current": burn_current,

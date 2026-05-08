@@ -17,18 +17,19 @@ These tests cover:
 - Ensemble classification
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from regime_engine import (
-    RegimeDetectionEngine,
+    EnsembleRegimeClassifier,
     MarketRegime,
+    RegimeDetectionEngine,
+    RegimeHMM,
     RegimeTransitionCallback,
     RegimeTransitionEvent,
     VIXKalmanFilter,
-    RegimeHMM,
-    EnsembleRegimeClassifier,
 )
 
 
@@ -171,8 +172,8 @@ class TestRegimeDetectionVolatilitySpike:
         adj = result["signal_adjustments"]
         # Both BEAR and VOLATILITY_SPIKE reduce momentum and boost quality/financial
         assert adj["momentum"] <= Decimal("0.80")  # Reduced from 1.0
-        assert adj["quality"] >= Decimal("1.20")   # Boosted from 1.0
-        assert adj["financial"] >= Decimal("1.20") # Boosted from 1.0
+        assert adj["quality"] >= Decimal("1.20")  # Boosted from 1.0
+        assert adj["financial"] >= Decimal("1.20")  # Boosted from 1.0
 
     def test_vol_spike_flags(self):
         """Extreme VIX should generate crisis/volatility warning flags."""
@@ -185,10 +186,7 @@ class TestRegimeDetectionVolatilitySpike:
         # VIX >= 40 generates CRISIS_VOLATILITY flag
         assert "CRISIS_VOLATILITY" in result["flags"]
         # Either VOLATILITY_SPIKE or BEAR flags should be present
-        has_defensive_flag = (
-            "REDUCE_POSITION_SIZE" in result["flags"] or
-            "DEFENSIVE_POSITIONING" in result["flags"]
-        )
+        has_defensive_flag = "REDUCE_POSITION_SIZE" in result["flags"] or "DEFENSIVE_POSITIONING" in result["flags"]
         assert has_defensive_flag
 
 
@@ -559,7 +557,7 @@ class TestNewRegimeTypes:
             vix_current=Decimal("22.0"),
             xbi_vs_spy_30d=Decimal("-2.0"),
             yield_curve_slope=Decimal("-60"),  # Deeply inverted
-            hy_credit_spread=Decimal("450"),   # Elevated
+            hy_credit_spread=Decimal("450"),  # Elevated
             as_of_date=date(2026, 1, 15),
         )
         assert result["regime"] == "RECESSION_RISK"
@@ -725,8 +723,7 @@ class TestCallbackSystem:
         engine = RegimeDetectionEngine()
 
         class TestCallback:
-            def on_transition(self, old_regime, new_regime, transition_date,
-                            days_in_prior_regime, trigger_values):
+            def on_transition(self, old_regime, new_regime, transition_date, days_in_prior_regime, trigger_values):
                 pass
 
         callback = TestCallback()
@@ -738,8 +735,7 @@ class TestCallbackSystem:
         engine = RegimeDetectionEngine()
 
         class TestCallback:
-            def on_transition(self, old_regime, new_regime, transition_date,
-                            days_in_prior_regime, trigger_values):
+            def on_transition(self, old_regime, new_regime, transition_date, days_in_prior_regime, trigger_values):
                 pass
 
         callback = TestCallback()
@@ -753,8 +749,7 @@ class TestCallbackSystem:
         engine = RegimeDetectionEngine()
 
         class TestCallback:
-            def on_transition(self, old_regime, new_regime, transition_date,
-                            days_in_prior_regime, trigger_values):
+            def on_transition(self, old_regime, new_regime, transition_date, days_in_prior_regime, trigger_values):
                 pass
 
         callback = TestCallback()

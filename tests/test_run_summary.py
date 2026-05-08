@@ -12,11 +12,12 @@ Tests cover:
 """
 
 import json
-import pytest
 import tempfile
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from common.run_summary import (
     compute_coverage_stats,
@@ -79,7 +80,7 @@ class TestComputeCoverageStats:
         result = compute_coverage_stats(snapshots, returns_by_date)
 
         assert result["with_returns"] == 2
-        assert result["return_coverage_rate"] == round(2/3, 4)
+        assert result["return_coverage_rate"] == round(2 / 3, 4)
 
     def test_computes_rankable_rate(self):
         """Should compute rankable rate correctly."""
@@ -145,7 +146,7 @@ class TestComputeFallbackStats:
         assert result["total_securities"] == 15
         assert result["normal_securities"] == 10
         assert result["fallback_securities"] == 5
-        assert result["fallback_rate"] == round(5/15, 4)
+        assert result["fallback_rate"] == round(5 / 15, 4)
 
     def test_tracks_fallback_reasons(self):
         """Should track fallback reasons."""
@@ -413,9 +414,7 @@ class TestGenerateRunSummary:
                 "excluded_securities": [],
             }
         ]
-        returns_by_date = {
-            "2024-01-01": {f"T{i}": "0.10" for i in range(9)}  # 90% coverage
-        }
+        returns_by_date = {"2024-01-01": {f"T{i}": "0.10" for i in range(9)}}  # 90% coverage
 
         result = generate_run_summary(
             **minimal_inputs,

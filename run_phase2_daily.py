@@ -28,12 +28,17 @@ def build_command(args: argparse.Namespace, extra: list[str]) -> list[str]:
     cmd = [
         sys.executable,
         str(SCRIPT_DIR / "run_screen.py"),
-        "--as-of-date", args.as_of_date,
-        "--data-dir", str(args.data_dir),
-        "--output", str(output_path),
-        "--decision-mode", "phase2",
+        "--as-of-date",
+        args.as_of_date,
+        "--data-dir",
+        str(args.data_dir),
+        "--output",
+        str(output_path),
+        "--decision-mode",
+        "phase2",
         "--strict",
-        "--snapshot-dir", str(args.snapshot_dir),
+        "--snapshot-dir",
+        str(args.snapshot_dir),
     ]
     if args.health_thresholds:
         cmd.extend(["--health-thresholds", str(args.health_thresholds)])
@@ -72,8 +77,7 @@ def read_health_json(snapshot_dir: Path, as_of_date: str) -> dict | None:
         return None
 
 
-def format_summary(as_of_date: str, status: str, reasons: list[str],
-                   snapshot_dir: Path) -> str:
+def format_summary(as_of_date: str, status: str, reasons: list[str], snapshot_dir: Path) -> str:
     """Build the one-line summary."""
     reason_str = f" [{', '.join(reasons)}]" if reasons else ""
     snap_path = snapshot_dir / as_of_date
@@ -156,8 +160,7 @@ def main(argv: list[str] | None = None) -> int:
         reasons = ["pipeline_error"]
         summary = format_summary(args.as_of_date, status, reasons, args.snapshot_dir)
         print(summary)
-        print(f"[PHASE2] Pipeline exited {rc} but no health JSON found. "
-              f"Log: {args.log_file}", file=sys.stderr)
+        print(f"[PHASE2] Pipeline exited {rc} but no health JSON found. " f"Log: {args.log_file}", file=sys.stderr)
         return 1
 
     status = health.get("status", "UNKNOWN")
@@ -167,13 +170,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if rc not in (0, 1, 2):
         # Unexpected exit code — treat as FAIL
-        print(f"[PHASE2] Unexpected exit code {rc}. Log: {args.log_file}",
-              file=sys.stderr)
+        print(f"[PHASE2] Unexpected exit code {rc}. Log: {args.log_file}", file=sys.stderr)
         return 1
 
     if rc != 0:
-        print(f"[PHASE2] Health {status}: {', '.join(reasons)}. "
-              f"Log: {args.log_file}", file=sys.stderr)
+        print(f"[PHASE2] Health {status}: {', '.join(reasons)}. " f"Log: {args.log_file}", file=sys.stderr)
 
     return rc
 

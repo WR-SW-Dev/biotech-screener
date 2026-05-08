@@ -10,37 +10,38 @@ Covers:
 - Determinism guarantees
 """
 
-import pytest
-from datetime import date
-from pathlib import Path
-from decimal import Decimal
-
 # Import module under test
 import sys
+from datetime import date
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from manager_momentum_v1 import (
+    COORDINATED_ADD_MIN,
+    CROWDING_THRESHOLD,
+    SHARE_CHANGE_THRESHOLD,
     ConvictionChange,
     CrowdingLevel,
     ManagerPosition,
     TickerMomentum,
-    _to_decimal,
-    _quantize_score,
-    _compute_change_pct,
     _classify_change,
+    _compute_change_pct,
     _compute_determinism_hash,
+    _quantize_score,
+    _to_decimal,
     analyze_ticker_momentum,
     compute_manager_momentum,
     get_momentum_validation,
-    SHARE_CHANGE_THRESHOLD,
-    COORDINATED_ADD_MIN,
-    CROWDING_THRESHOLD,
 )
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def manager_registry():
@@ -146,6 +147,7 @@ def holdings_data_coordinated(manager_registry):
 # HELPER FUNCTIONS
 # ============================================================================
 
+
 class TestHelperFunctions:
     """Tests for helper functions."""
 
@@ -202,22 +204,21 @@ class TestHelperFunctions:
 # CHANGE CLASSIFICATION
 # ============================================================================
 
+
 class TestChangeClassification:
     """Tests for position change classification."""
 
     def test_classify_new_position(self):
         """Classifies new position."""
         change, share_pct, value_pct = _classify_change(
-            current_shares=10000, prior_shares=None,
-            current_value=500, prior_value=None
+            current_shares=10000, prior_shares=None, current_value=500, prior_value=None
         )
         assert change == ConvictionChange.NEW
 
     def test_classify_exit_position(self):
         """Classifies exited position."""
         change, share_pct, value_pct = _classify_change(
-            current_shares=0, prior_shares=10000,
-            current_value=0, prior_value=500
+            current_shares=0, prior_shares=10000, current_value=0, prior_value=500
         )
         assert change == ConvictionChange.EXIT
         assert share_pct == Decimal("-100")
@@ -225,32 +226,28 @@ class TestChangeClassification:
     def test_classify_add_position(self):
         """Classifies added position (>10% increase)."""
         change, share_pct, value_pct = _classify_change(
-            current_shares=12000, prior_shares=10000,  # 20% increase
-            current_value=600, prior_value=500
+            current_shares=12000, prior_shares=10000, current_value=600, prior_value=500  # 20% increase
         )
         assert change == ConvictionChange.ADD
 
     def test_classify_trim_position(self):
         """Classifies trimmed position (>10% decrease)."""
         change, share_pct, value_pct = _classify_change(
-            current_shares=8000, prior_shares=10000,  # 20% decrease
-            current_value=400, prior_value=500
+            current_shares=8000, prior_shares=10000, current_value=400, prior_value=500  # 20% decrease
         )
         assert change == ConvictionChange.TRIM
 
     def test_classify_hold_position(self):
         """Classifies held position (<10% change)."""
         change, share_pct, value_pct = _classify_change(
-            current_shares=10500, prior_shares=10000,  # 5% increase
-            current_value=525, prior_value=500
+            current_shares=10500, prior_shares=10000, current_value=525, prior_value=500  # 5% increase
         )
         assert change == ConvictionChange.HOLD
 
     def test_classify_unknown_with_zero_prior(self):
         """Classifies as unknown when prior is zero but current is also zero."""
         change, share_pct, value_pct = _classify_change(
-            current_shares=0, prior_shares=0,
-            current_value=0, prior_value=0
+            current_shares=0, prior_shares=0, current_value=0, prior_value=0
         )
         assert change == ConvictionChange.UNKNOWN
 
@@ -259,16 +256,13 @@ class TestChangeClassification:
 # TICKER MOMENTUM ANALYSIS
 # ============================================================================
 
+
 class TestTickerMomentumAnalysis:
     """Tests for analyze_ticker_momentum function."""
 
     def test_new_position_analysis(self, holdings_data_new_position, manager_registry):
         """Analyzes new position correctly."""
-        result = analyze_ticker_momentum(
-            "ACME",
-            holdings_data_new_position["ACME"],
-            manager_registry
-        )
+        result = analyze_ticker_momentum("ACME", holdings_data_new_position["ACME"], manager_registry)
 
         assert result.ticker == "ACME"
         assert result.new_count == 1
@@ -276,54 +270,34 @@ class TestTickerMomentumAnalysis:
 
     def test_add_position_analysis(self, holdings_data_add_position, manager_registry):
         """Analyzes added position correctly."""
-        result = analyze_ticker_momentum(
-            "ACME",
-            holdings_data_add_position["ACME"],
-            manager_registry
-        )
+        result = analyze_ticker_momentum("ACME", holdings_data_add_position["ACME"], manager_registry)
 
         assert result.add_count == 1
         assert result.momentum_score > 0
 
     def test_trim_position_analysis(self, holdings_data_trim_position, manager_registry):
         """Analyzes trimmed position correctly."""
-        result = analyze_ticker_momentum(
-            "ACME",
-            holdings_data_trim_position["ACME"],
-            manager_registry
-        )
+        result = analyze_ticker_momentum("ACME", holdings_data_trim_position["ACME"], manager_registry)
 
         assert result.trim_count == 1
         assert result.momentum_score < 0
 
     def test_exit_position_analysis(self, holdings_data_exit_position, manager_registry):
         """Analyzes exited position correctly."""
-        result = analyze_ticker_momentum(
-            "ACME",
-            holdings_data_exit_position["ACME"],
-            manager_registry
-        )
+        result = analyze_ticker_momentum("ACME", holdings_data_exit_position["ACME"], manager_registry)
 
         assert result.exit_count == 1
         assert result.momentum_score < 0
 
     def test_coordinated_buying_detection(self, holdings_data_coordinated, manager_registry):
         """Detects coordinated buying."""
-        result = analyze_ticker_momentum(
-            "ACME",
-            holdings_data_coordinated["ACME"],
-            manager_registry
-        )
+        result = analyze_ticker_momentum("ACME", holdings_data_coordinated["ACME"], manager_registry)
 
         assert result.coordinated_buying is True
 
     def test_crowding_level_calculation(self, holdings_data_coordinated, manager_registry):
         """Calculates crowding level."""
-        result = analyze_ticker_momentum(
-            "ACME",
-            holdings_data_coordinated["ACME"],
-            manager_registry
-        )
+        result = analyze_ticker_momentum("ACME", holdings_data_coordinated["ACME"], manager_registry)
 
         assert result.total_managers == 3
         assert result.crowding_level in [CrowdingLevel.LOW, CrowdingLevel.MODERATE]
@@ -333,27 +307,20 @@ class TestTickerMomentumAnalysis:
 # COMPUTE MANAGER MOMENTUM
 # ============================================================================
 
+
 class TestComputeManagerMomentum:
     """Tests for compute_manager_momentum function."""
 
     def test_computes_for_all_tickers(self, holdings_data_coordinated, manager_registry):
         """Computes momentum for all tickers."""
-        result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         assert result["tickers_analyzed"] == 1
         assert "ACME" in result["signals"]
 
     def test_result_structure(self, holdings_data_coordinated, manager_registry):
         """Result has expected structure."""
-        result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         assert "as_of_date" in result
         assert "schema_version" in result
@@ -364,11 +331,7 @@ class TestComputeManagerMomentum:
 
     def test_summary_aggregation(self, holdings_data_coordinated, manager_registry):
         """Summary aggregates signals correctly."""
-        result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         summary = result["summary"]
         assert "coordinated_buys" in summary
@@ -379,42 +342,32 @@ class TestComputeManagerMomentum:
     def test_target_tickers_filter(self, holdings_data_coordinated, manager_registry):
         """Respects target_tickers filter."""
         result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15",
-            target_tickers=["ACME"]
+            holdings_data_coordinated, manager_registry, "2026-01-15", target_tickers=["ACME"]
         )
 
         assert result["tickers_analyzed"] == 1
 
     def test_rankings_sorted_by_momentum(self, holdings_data_coordinated, manager_registry):
         """Rankings are sorted by momentum score descending."""
-        result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         rankings = result["rankings"]
         if len(rankings) > 1:
             for i in range(1, len(rankings)):
-                assert Decimal(rankings[i-1]["momentum_score"]) >= Decimal(rankings[i]["momentum_score"])
+                assert Decimal(rankings[i - 1]["momentum_score"]) >= Decimal(rankings[i]["momentum_score"])
 
 
 # ============================================================================
 # MOMENTUM VALIDATION
 # ============================================================================
 
+
 class TestMomentumValidation:
     """Tests for get_momentum_validation function."""
 
     def test_validation_structure(self, holdings_data_coordinated, manager_registry):
         """Validation result has expected structure."""
-        momentum_result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        momentum_result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         validation = get_momentum_validation("ACME", momentum_result)
 
@@ -425,11 +378,7 @@ class TestMomentumValidation:
 
     def test_unknown_ticker_returns_zero(self, holdings_data_coordinated, manager_registry):
         """Unknown ticker returns zero values."""
-        momentum_result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        momentum_result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         validation = get_momentum_validation("UNKNOWN", momentum_result)
 
@@ -438,11 +387,7 @@ class TestMomentumValidation:
 
     def test_adjustment_bounded(self, holdings_data_coordinated, manager_registry):
         """Adjustment is bounded to +/- 5."""
-        momentum_result = compute_manager_momentum(
-            holdings_data_coordinated,
-            manager_registry,
-            "2026-01-15"
-        )
+        momentum_result = compute_manager_momentum(holdings_data_coordinated, manager_registry, "2026-01-15")
 
         validation = get_momentum_validation("ACME", momentum_result)
 
@@ -452,6 +397,7 @@ class TestMomentumValidation:
 # ============================================================================
 # DATA CLASSES
 # ============================================================================
+
 
 class TestDataClasses:
     """Tests for data classes."""
@@ -483,6 +429,7 @@ class TestDataClasses:
 # DETERMINISM
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
@@ -512,6 +459,7 @@ class TestDeterminism:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -567,4 +515,3 @@ class TestEdgeCases:
 
         assert result.exit_count == 2
         assert result.momentum_score < 0
-

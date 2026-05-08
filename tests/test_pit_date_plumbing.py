@@ -13,17 +13,16 @@ import csv
 import json
 import sys
 import tempfile
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from collect_ctgov_data import _normalize_date
-from export_results_csv import export_to_csv, CLINICAL_PIT_COLUMNS
+from export_results_csv import CLINICAL_PIT_COLUMNS, export_to_csv
 from module_4_clinical_dev import _select_pit_date, compute_module_4_clinical_dev
-
 
 # ---------------------------------------------------------------------------
 # Unit tests: _normalize_date
@@ -144,7 +143,8 @@ class TestPitSafetyHole:
     def test_trial_with_date_admitted(self):
         """A trial with a valid PIT date should pass through."""
         trial_ok = self._make_trial(
-            "BBBB", "NCT00000002",
+            "BBBB",
+            "NCT00000002",
             last_update_posted="2025-12-01",
         )
         result = compute_module_4_clinical_dev(

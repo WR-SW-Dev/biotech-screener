@@ -11,15 +11,12 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from datetime import date
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Union
 
-from common.accuracy_improvements import (
-    compute_competition_penalty,
-    CompetitiveLandscapeResult,
-)
+from common.accuracy_improvements import CompetitiveLandscapeResult, compute_competition_penalty
 
 __version__ = "1.0.0"
 
@@ -27,6 +24,7 @@ __version__ = "1.0.0"
 @dataclass
 class TickerCompetitiveScore:
     """Competitive pressure score for a ticker."""
+
     ticker: str
     competitive_pressure_score: Decimal  # 0-100, higher=less competition
     competitor_count: int
@@ -130,14 +128,16 @@ class CompetitivePressureEngine:
         )
 
         # Add to audit trail
-        self.audit_trail.append({
-            "ticker": ticker,
-            "as_of_date": as_of_date.isoformat(),
-            "competitive_pressure_score": str(ticker_score.competitive_pressure_score),
-            "competitor_count": result.competitor_count,
-            "competition_level": result.competition_level,
-            "confidence": confidence,
-        })
+        self.audit_trail.append(
+            {
+                "ticker": ticker,
+                "as_of_date": as_of_date.isoformat(),
+                "competitive_pressure_score": str(ticker_score.competitive_pressure_score),
+                "competitor_count": result.competitor_count,
+                "competition_level": result.competition_level,
+                "confidence": confidence,
+            }
+        )
 
         return ticker_score
 
@@ -188,14 +188,16 @@ class CompetitivePressureEngine:
                 as_of_date=as_of_date,
             )
 
-            scores.append({
-                "ticker": ticker,
-                "competitive_pressure_score": str(result.competitive_pressure_score),
-                "competitor_count": result.competitor_count,
-                "competition_level": result.competition_level,
-                "confidence": result.confidence,
-                "flags": result.flags,
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "competitive_pressure_score": str(result.competitive_pressure_score),
+                    "competitor_count": result.competitor_count,
+                    "competition_level": result.competition_level,
+                    "confidence": result.confidence,
+                    "flags": result.flags,
+                }
+            )
 
         # Diagnostics
         total = len(scores)
@@ -223,8 +225,7 @@ class CompetitivePressureEngine:
 
         total = len(self.audit_trail)
         high_competition = sum(
-            1 for a in self.audit_trail
-            if a.get("competition_level") in ("high", "hyper_competitive")
+            1 for a in self.audit_trail if a.get("competition_level") in ("high", "hyper_competitive")
         )
 
         return {
@@ -236,6 +237,7 @@ class CompetitivePressureEngine:
 # =============================================================================
 # SELF-CHECKS
 # =============================================================================
+
 
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify engine correctness."""

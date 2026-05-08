@@ -10,13 +10,11 @@ and prevention of look-ahead bias. These tests cover:
 - Edge cases: leap years, year boundaries, None handling
 """
 
-import pytest
 from datetime import date
-from common.pit_enforcement import (
-    compute_pit_cutoff,
-    is_pit_admissible,
-    filter_pit_admissible,
-)
+
+import pytest
+
+from common.pit_enforcement import compute_pit_cutoff, filter_pit_admissible, is_pit_admissible
 
 
 class TestComputePitCutoff:

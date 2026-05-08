@@ -27,16 +27,18 @@ from typing import Any, Dict, List, Optional, Tuple
 
 class PhaseMomentum(Enum):
     """Classification of phase transition momentum."""
-    STRONG_POSITIVE = "strong_positive"    # Recent phase advancement + active pipeline
-    POSITIVE = "positive"                   # Active progression, new trials
-    NEUTRAL = "neutral"                     # Stable, no recent changes
-    NEGATIVE = "negative"                   # Stalled trials, slow progress
-    STRONG_NEGATIVE = "strong_negative"    # Setbacks, terminated trials
+
+    STRONG_POSITIVE = "strong_positive"  # Recent phase advancement + active pipeline
+    POSITIVE = "positive"  # Active progression, new trials
+    NEUTRAL = "neutral"  # Stable, no recent changes
+    NEGATIVE = "negative"  # Stalled trials, slow progress
+    STRONG_NEGATIVE = "strong_negative"  # Setbacks, terminated trials
     UNKNOWN = "unknown"
 
 
 class PhaseLevel(Enum):
     """Clinical trial phases with numeric values for comparison."""
+
     PRECLINICAL = 0
     PHASE_1 = 1
     PHASE_1_2 = 2
@@ -50,16 +52,17 @@ class PhaseLevel(Enum):
 @dataclass
 class PhaseTransitionResult:
     """Result of phase transition momentum analysis."""
+
     ticker: str
     momentum: PhaseMomentum
     current_lead_phase: str
     phase_level: int
     phase_velocity_score: Decimal  # 0-100, higher = faster progression
-    recent_advancements: int       # Count of phase advancements in lookback
-    recent_initiations: int        # New trials started in lookback
-    stalled_trials: int            # Trials without progress
-    terminated_trials: int         # Recent terminated/withdrawn
-    score_modifier: Decimal        # [-2.0, +2.0]
+    recent_advancements: int  # Count of phase advancements in lookback
+    recent_initiations: int  # New trials started in lookback
+    stalled_trials: int  # Trials without progress
+    terminated_trials: int  # Recent terminated/withdrawn
+    score_modifier: Decimal  # [-2.0, +2.0]
     confidence: Decimal
     flags: List[str]
 
@@ -142,6 +145,7 @@ class PhaseTransitionEngine:
 
         if as_of_date is None:
             import logging
+
             logging.getLogger(__name__).warning(
                 "compute_phase_momentum called without as_of_date; "
                 "defaulting to date.today(). Pass as_of_date explicitly for determinism."
@@ -171,19 +175,13 @@ class PhaseTransitionEngine:
         lead_phase, phase_level = self._find_lead_phase(pit_trials)
 
         # Calculate phase velocity
-        velocity_score = self._calculate_velocity_score(
-            pit_trials, historical_phases, as_of_date
-        )
+        velocity_score = self._calculate_velocity_score(pit_trials, historical_phases, as_of_date)
 
         # Count recent activity
-        recent_initiations = self._count_recent_initiations(
-            pit_trials, as_of_date
-        )
+        recent_initiations = self._count_recent_initiations(pit_trials, as_of_date)
 
         # Detect recent phase advancements
-        recent_advancements = self._detect_advancements(
-            pit_trials, historical_phases, as_of_date
-        )
+        recent_advancements = self._detect_advancements(pit_trials, historical_phases, as_of_date)
 
         # Count stalled trials
         stalled_trials = self._count_stalled_trials(pit_trials, as_of_date)
@@ -219,14 +217,10 @@ class PhaseTransitionEngine:
             flags.append("low_velocity")
 
         # Calculate confidence
-        confidence = self._calculate_confidence(
-            len(pit_trials), recent_initiations, phase_level
-        )
+        confidence = self._calculate_confidence(len(pit_trials), recent_initiations, phase_level)
 
         # Calculate score modifier
-        score_modifier = self._calculate_score_modifier(
-            momentum, confidence, velocity_score
-        )
+        score_modifier = self._calculate_score_modifier(momentum, confidence, velocity_score)
 
         result = PhaseTransitionResult(
             ticker=ticker,
@@ -619,6 +613,7 @@ class PhaseTransitionEngine:
         """
         if as_of_date is None:
             import logging
+
             logging.getLogger(__name__).warning(
                 "score_universe called without as_of_date; "
                 "defaulting to date.today(). Pass as_of_date explicitly for determinism."
@@ -636,9 +631,7 @@ class PhaseTransitionEngine:
             trials = trials_by_ticker.get(ticker, [])
             hist = historical_phases.get(ticker) if historical_phases else None
 
-            result = self.compute_momentum(
-                ticker, trials, hist, as_of_date
-            )
+            result = self.compute_momentum(ticker, trials, hist, as_of_date)
 
             scores_by_ticker[ticker] = {
                 "ticker": ticker,
@@ -678,13 +671,15 @@ class PhaseTransitionEngine:
         result: PhaseTransitionResult,
     ) -> None:
         """Add entry to audit trail."""
-        self.audit_trail.append({
-            "ticker": ticker,
-            "as_of_date": as_of_date.isoformat(),
-            "momentum": result.momentum.value,
-            "score_modifier": str(result.score_modifier),
-            "lead_phase": result.current_lead_phase,
-        })
+        self.audit_trail.append(
+            {
+                "ticker": ticker,
+                "as_of_date": as_of_date.isoformat(),
+                "momentum": result.momentum.value,
+                "score_modifier": str(result.score_modifier),
+                "lead_phase": result.current_lead_phase,
+            }
+        )
 
     def get_audit_trail(self) -> List[Dict[str, Any]]:
         """Return audit trail."""

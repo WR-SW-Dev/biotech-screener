@@ -1,15 +1,16 @@
 """Tests for Decision Engine Phase 2 — Actionable ordering and target weights."""
 
 import pytest
+
 from decision_engine import (
+    ACTIONABLE_COLUMNS,
+    SIZING_WEIGHTS,
+    SORT_CONTRIB_KEYS,
+    DecisionRuleset,
     compute_actionable_sort_key,
     compute_sort_contribs,
     compute_target_weights,
     resolve_catalyst_priority,
-    DecisionRuleset,
-    SIZING_WEIGHTS,
-    SORT_CONTRIB_KEYS,
-    ACTIONABLE_COLUMNS,
 )
 
 
@@ -38,8 +39,15 @@ def _make_fields(
     }
 
 
-def _sort_key(fields, archetype="drug_developer", optionality=0.50,
-              composite_rank=100, ticker="TEST", tiebreaker_pct=None, **kwargs):
+def _sort_key(
+    fields,
+    archetype="drug_developer",
+    optionality=0.50,
+    composite_rank=100,
+    ticker="TEST",
+    tiebreaker_pct=None,
+    **kwargs,
+):
     return compute_actionable_sort_key(
         decision_fields=fields,
         archetype=archetype,
@@ -53,51 +61,116 @@ def _sort_key(fields, archetype="drug_developer", optionality=0.50,
 
 # ── Test 1: Ordering stability with 10 synthetic tickers ──
 
+
 def test_ordering_stability_10_tickers():
     """10 synthetic tickers with known fields produce exact expected order."""
     tickers = [
         # (ticker, archetype, fields_kwargs, optionality, composite_rank)
-        ("ALPHA", "drug_developer", dict(eligible="1", tier_dev="A", catalyst_mode="specific_days", catalyst_days=30), 0.80, 5),
-        ("BRAVO", "drug_developer", dict(eligible="1", tier_dev="A", catalyst_mode="specific_days", catalyst_days=90), 0.70, 10),
-        ("CHARLIE", "drug_developer", dict(eligible="1", tier_dev="B", catalyst_mode="blended_window", catalyst_days=0), 0.50, 15),
-        ("DELTA", "drug_developer", dict(eligible="1", tier_dev="B", catalyst_mode="no_upcoming", catalyst_days=0), 0.40, 20),
-        ("ECHO", "drug_developer", dict(eligible="1", tier_dev="C", catalyst_mode="missing", catalyst_days=""), 0.20, 25),
-        ("FOXTROT", "commercial_biotech", dict(eligible="1", tier_dev="", catalyst_mode="missing", catalyst_days=""), None, 2),
-        ("GOLF", "commercial_biotech", dict(eligible="1", tier_dev="", catalyst_mode="missing", catalyst_days=""), None, 8),
-        ("HOTEL", "drug_developer", dict(eligible="0", tier_dev="D", catalyst_mode="missing", catalyst_days=""), 0.10, 50),
-        ("INDIA", "drug_developer", dict(eligible="0", tier_dev="D", catalyst_mode="missing", catalyst_days=""), 0.05, 60),
-        ("JULIET", "commercial_biotech", dict(eligible="0", tier_dev="", catalyst_mode="missing", catalyst_days=""), None, 3),
+        (
+            "ALPHA",
+            "drug_developer",
+            dict(eligible="1", tier_dev="A", catalyst_mode="specific_days", catalyst_days=30),
+            0.80,
+            5,
+        ),
+        (
+            "BRAVO",
+            "drug_developer",
+            dict(eligible="1", tier_dev="A", catalyst_mode="specific_days", catalyst_days=90),
+            0.70,
+            10,
+        ),
+        (
+            "CHARLIE",
+            "drug_developer",
+            dict(eligible="1", tier_dev="B", catalyst_mode="blended_window", catalyst_days=0),
+            0.50,
+            15,
+        ),
+        (
+            "DELTA",
+            "drug_developer",
+            dict(eligible="1", tier_dev="B", catalyst_mode="no_upcoming", catalyst_days=0),
+            0.40,
+            20,
+        ),
+        (
+            "ECHO",
+            "drug_developer",
+            dict(eligible="1", tier_dev="C", catalyst_mode="missing", catalyst_days=""),
+            0.20,
+            25,
+        ),
+        (
+            "FOXTROT",
+            "commercial_biotech",
+            dict(eligible="1", tier_dev="", catalyst_mode="missing", catalyst_days=""),
+            None,
+            2,
+        ),
+        (
+            "GOLF",
+            "commercial_biotech",
+            dict(eligible="1", tier_dev="", catalyst_mode="missing", catalyst_days=""),
+            None,
+            8,
+        ),
+        (
+            "HOTEL",
+            "drug_developer",
+            dict(eligible="0", tier_dev="D", catalyst_mode="missing", catalyst_days=""),
+            0.10,
+            50,
+        ),
+        (
+            "INDIA",
+            "drug_developer",
+            dict(eligible="0", tier_dev="D", catalyst_mode="missing", catalyst_days=""),
+            0.05,
+            60,
+        ),
+        (
+            "JULIET",
+            "commercial_biotech",
+            dict(eligible="0", tier_dev="", catalyst_mode="missing", catalyst_days=""),
+            None,
+            3,
+        ),
     ]
 
     rows = []
     for ticker, arch, kwargs, opt, cr in tickers:
         fields = _make_fields(**kwargs)
-        key = _sort_key(fields, archetype=arch, optionality=opt,
-                        composite_rank=cr, ticker=ticker)
+        key = _sort_key(fields, archetype=arch, optionality=opt, composite_rank=cr, ticker=ticker)
         rows.append((ticker, key))
 
     sorted_rows = sorted(rows, key=lambda x: x[1])
     result_order = [t for t, _ in sorted_rows]
 
     expected = [
-        "ALPHA", "BRAVO",      # A-tier dev, specific_days, days 30 < 90
-        "CHARLIE", "DELTA",    # B-tier dev, blended < no_upcoming
-        "ECHO",                # C-tier dev
-        "FOXTROT", "GOLF",     # eligible non-dev, composite_rank 2 < 8
-        "HOTEL", "INDIA",      # ineligible dev
-        "JULIET",              # ineligible non-dev
+        "ALPHA",
+        "BRAVO",  # A-tier dev, specific_days, days 30 < 90
+        "CHARLIE",
+        "DELTA",  # B-tier dev, blended < no_upcoming
+        "ECHO",  # C-tier dev
+        "FOXTROT",
+        "GOLF",  # eligible non-dev, composite_rank 2 < 8
+        "HOTEL",
+        "INDIA",  # ineligible dev
+        "JULIET",  # ineligible non-dev
     ]
     assert result_order == expected
 
 
 # ── Test 2: Tier priority ──
 
+
 def test_tier_priority_a_above_b():
     """A-tier ticker always ranks above B-tier regardless of other fields."""
-    a_fields = _make_fields(tier_dev="A", catalyst_mode="no_upcoming", catalyst_days=0,
-                            sponsor_tier1_count=0)
-    b_fields = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=10,
-                            sponsor_tier1_count=5, mom_state="tailwind")
+    a_fields = _make_fields(tier_dev="A", catalyst_mode="no_upcoming", catalyst_days=0, sponsor_tier1_count=0)
+    b_fields = _make_fields(
+        tier_dev="B", catalyst_mode="specific_days", catalyst_days=10, sponsor_tier1_count=5, mom_state="tailwind"
+    )
 
     key_a = _sort_key(a_fields, optionality=0.30, composite_rank=200, ticker="AAA")
     key_b = _sort_key(b_fields, optionality=0.90, composite_rank=1, ticker="BBB")
@@ -107,13 +180,15 @@ def test_tier_priority_a_above_b():
 
 # ── Test 3: Catalyst tiebreak within same tier ──
 
+
 def test_catalyst_tiebreak_within_tier():
     """specific_days < blended_window < far_window < no_upcoming < missing within same tier."""
     modes = ["specific_days", "blended_window", "far_window", "no_upcoming", "missing"]
     keys = []
     for mode in modes:
-        f = _make_fields(tier_dev="B", catalyst_mode=mode,
-                         catalyst_days=60 if mode in ("specific_days", "far_window") else "")
+        f = _make_fields(
+            tier_dev="B", catalyst_mode=mode, catalyst_days=60 if mode in ("specific_days", "far_window") else ""
+        )
         keys.append(_sort_key(f, ticker=mode.upper()[:3]))
 
     for i in range(len(keys) - 1):
@@ -121,6 +196,7 @@ def test_catalyst_tiebreak_within_tier():
 
 
 # ── Test 4: Days tiebreak within catalyst_mode ──
+
 
 def test_days_tiebreak_within_mode():
     """days=30 sorts before days=90 within specific_days mode."""
@@ -135,6 +211,7 @@ def test_days_tiebreak_within_mode():
 
 # ── Test 5: Optionality tiebreak ──
 
+
 def test_optionality_tiebreak():
     """Higher optionality wins within same tier+catalyst."""
     f_high = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
@@ -148,26 +225,25 @@ def test_optionality_tiebreak():
 
 # ── Test 6: Non-dev after dev ──
 
+
 def test_nondev_after_dev():
     """commercial_biotech ticker sorts after all drug_developer tickers."""
     dev_fields = _make_fields(tier_dev="D", catalyst_mode="missing")
     comm_fields = _make_fields(tier_dev="", catalyst_mode="missing")
 
-    key_dev = _sort_key(dev_fields, archetype="drug_developer",
-                        optionality=0.01, composite_rank=999, ticker="ZZZ")
-    key_comm = _sort_key(comm_fields, archetype="commercial_biotech",
-                         optionality=0.99, composite_rank=1, ticker="AAA")
+    key_dev = _sort_key(dev_fields, archetype="drug_developer", optionality=0.01, composite_rank=999, ticker="ZZZ")
+    key_comm = _sort_key(comm_fields, archetype="commercial_biotech", optionality=0.99, composite_rank=1, ticker="AAA")
 
     assert key_dev < key_comm
 
 
 # ── Test 7: Ineligible at bottom ──
 
+
 def test_ineligible_at_bottom():
     """Ineligible tickers sort last regardless of tier."""
     elig = _make_fields(eligible="1", tier_dev="D", catalyst_mode="missing")
-    inelig = _make_fields(eligible="0", tier_dev="A", catalyst_mode="specific_days",
-                          catalyst_days=10)
+    inelig = _make_fields(eligible="0", tier_dev="A", catalyst_mode="specific_days", catalyst_days=10)
 
     key_elig = _sort_key(elig, optionality=0.01, composite_rank=999, ticker="ZZZ")
     key_inelig = _sort_key(inelig, optionality=0.99, composite_rank=1, ticker="AAA")
@@ -176,6 +252,7 @@ def test_ineligible_at_bottom():
 
 
 # ── Test 8: Target weights sum to 100% ──
+
 
 def test_target_weights_sum_to_100():
     """Eligible rows' target_weight_pct sums to 100.0."""
@@ -193,6 +270,7 @@ def test_target_weights_sum_to_100():
 
 
 # ── Test 9: Weight proportionality ──
+
 
 def test_weight_proportionality():
     """L weight > M weight > S weight > XS weight."""
@@ -214,6 +292,7 @@ def test_weight_proportionality():
 
 # ── Test 10: Determinism ──
 
+
 def test_determinism():
     """Sorting same input twice gives identical result."""
     tickers_data = [
@@ -226,8 +305,7 @@ def test_determinism():
         items = []
         for ticker, arch, kwargs, opt, cr in tickers_data:
             fields = _make_fields(**kwargs)
-            key = _sort_key(fields, archetype=arch, optionality=opt,
-                            composite_rank=cr, ticker=ticker)
+            key = _sort_key(fields, archetype=arch, optionality=opt, composite_rank=cr, ticker=ticker)
             items.append((ticker, key))
         return [t for t, _ in sorted(items, key=lambda x: x[1])]
 
@@ -237,6 +315,7 @@ def test_determinism():
 
 
 # ── Test 11: Observe mode keeps composite_rank order ──
+
 
 def test_observe_mode_composite_rank_order():
     """In observe mode the CSV would be sorted by composite_rank.
@@ -266,6 +345,7 @@ def test_observe_mode_composite_rank_order():
 
 # ── Additional: ACTIONABLE_COLUMNS export ──
 
+
 def test_actionable_columns_export():
     """ACTIONABLE_COLUMNS contains expected column names."""
     assert "actionable_rank" in ACTIONABLE_COLUMNS
@@ -275,12 +355,14 @@ def test_actionable_columns_export():
 
 # ── Additional: SIZING_WEIGHTS values ──
 
+
 def test_sizing_weights_values():
     """SIZING_WEIGHTS has expected keys and values."""
     assert SIZING_WEIGHTS == {"L": 1.00, "M": 0.60, "S": 0.30, "XS": 0.15}
 
 
 # ── Edge case: all same size_band ──
+
 
 def test_target_weights_uniform_band():
     """When all rows have the same band, weights are equal."""
@@ -297,6 +379,7 @@ def test_target_weights_uniform_band():
 
 # ── Edge case: empty eligible list ──
 
+
 def test_target_weights_empty_list():
     """Empty list returns empty list."""
     result = compute_target_weights([])
@@ -304,6 +387,7 @@ def test_target_weights_empty_list():
 
 
 # ── Edge case: missing optionality ──
+
 
 def test_sort_key_missing_optionality():
     """None optionality uses 0.0 fallback (sorts after real values)."""
@@ -318,6 +402,7 @@ def test_sort_key_missing_optionality():
 
 # ── Catalyst source/type priority tests ──
 
+
 def _priority_ruleset():
     """Ruleset with catalyst priority enabled (tiebreaker mode)."""
     return DecisionRuleset(catalyst_priority_mode="tiebreaker")
@@ -329,6 +414,7 @@ def _disabled_ruleset():
 
 
 # -- resolve_catalyst_priority unit tests --
+
 
 class TestResolveCatalystPriority:
     """Unit tests for resolve_catalyst_priority()."""
@@ -454,6 +540,7 @@ class TestResolveCatalystPriority:
 
 # -- Sort key integration tests with catalyst priority --
 
+
 class TestCatalystPriorityOrdering:
     """Integration tests: catalyst priority in sort key."""
 
@@ -463,12 +550,12 @@ class TestCatalystPriorityOrdering:
         f_fda = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_ctgov = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_fda = _sort_key(f_fda, ticker="FDA_TICK",
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
-        key_ctgov = _sort_key(f_ctgov, ticker="CTG_TICK",
-                              catalyst_event_type="DATA_READOUT",
-                              catalyst_source="CTGOV_CALENDAR", ruleset=rs)
+        key_fda = _sort_key(
+            f_fda, ticker="FDA_TICK", catalyst_event_type="FDA_DECISION", catalyst_source="FDA_CALENDAR", ruleset=rs
+        )
+        key_ctgov = _sort_key(
+            f_ctgov, ticker="CTG_TICK", catalyst_event_type="DATA_READOUT", catalyst_source="CTGOV_CALENDAR", ruleset=rs
+        )
         assert key_fda < key_ctgov
 
     def test_unknown_sinks_below_dated(self):
@@ -477,12 +564,12 @@ class TestCatalystPriorityOrdering:
         f_dated = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
         f_unknown = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_dated = _sort_key(f_dated, ticker="DATED",
-                              catalyst_event_type="DATA_READOUT",
-                              catalyst_source="CTGOV_CALENDAR", ruleset=rs)
-        key_unknown = _sort_key(f_unknown, ticker="UNK",
-                                catalyst_event_type="unknown",
-                                catalyst_source="unknown", ruleset=rs)
+        key_dated = _sort_key(
+            f_dated, ticker="DATED", catalyst_event_type="DATA_READOUT", catalyst_source="CTGOV_CALENDAR", ruleset=rs
+        )
+        key_unknown = _sort_key(
+            f_unknown, ticker="UNK", catalyst_event_type="unknown", catalyst_source="unknown", ruleset=rs
+        )
         assert key_dated < key_unknown
 
     def test_no_catalyst_below_dated(self):
@@ -491,12 +578,10 @@ class TestCatalystPriorityOrdering:
         f_dated = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
         f_none = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_dated = _sort_key(f_dated, ticker="DATED",
-                              catalyst_event_type="DATA_READOUT",
-                              catalyst_source="CTGOV_CALENDAR", ruleset=rs)
-        key_none = _sort_key(f_none, ticker="NONE_TICK",
-                             catalyst_event_type="", catalyst_source="",
-                             ruleset=rs)
+        key_dated = _sort_key(
+            f_dated, ticker="DATED", catalyst_event_type="DATA_READOUT", catalyst_source="CTGOV_CALENDAR", ruleset=rs
+        )
+        key_none = _sort_key(f_none, ticker="NONE_TICK", catalyst_event_type="", catalyst_source="", ruleset=rs)
         assert key_dated < key_none
 
     def test_disabled_no_effect_on_ordering(self):
@@ -505,12 +590,12 @@ class TestCatalystPriorityOrdering:
         f1 = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
         f2 = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_fda = _sort_key(f1, ticker="FDA_TICK",
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
-        key_ctgov = _sort_key(f2, ticker="CTG_TICK",
-                              catalyst_event_type="DATA_READOUT",
-                              catalyst_source="CTGOV_CALENDAR", ruleset=rs)
+        key_fda = _sort_key(
+            f1, ticker="FDA_TICK", catalyst_event_type="FDA_DECISION", catalyst_source="FDA_CALENDAR", ruleset=rs
+        )
+        key_ctgov = _sort_key(
+            f2, ticker="CTG_TICK", catalyst_event_type="DATA_READOUT", catalyst_source="CTGOV_CALENDAR", ruleset=rs
+        )
         # cat_priority is 0 for both when disabled — order falls through
         # to cat_mode_ord (same) → cat_days (same) → ticker alpha
         assert key_ctgov < key_fda  # CTG_TICK < FDA_TICK alphabetically
@@ -522,16 +607,15 @@ class TestCatalystPriorityOrdering:
         f_b = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
 
         # B-tier has FDA (priority=1), A-tier has generic (priority=9)
-        key_a = _sort_key(f_a, ticker="A_TICK",
-                          catalyst_event_type="", catalyst_source="",
-                          ruleset=rs)
-        key_b = _sort_key(f_b, ticker="B_TICK",
-                          catalyst_event_type="FDA_DECISION",
-                          catalyst_source="FDA_CALENDAR", ruleset=rs)
+        key_a = _sort_key(f_a, ticker="A_TICK", catalyst_event_type="", catalyst_source="", ruleset=rs)
+        key_b = _sort_key(
+            f_b, ticker="B_TICK", catalyst_event_type="FDA_DECISION", catalyst_source="FDA_CALENDAR", ruleset=rs
+        )
         assert key_a < key_b  # A-tier wins despite worse catalyst priority
 
 
 # ── Catalyst Priority Mode tests ──
+
 
 def _mode_ruleset(mode, **kwargs):
     """Build a ruleset with a specific catalyst_priority_mode."""
@@ -548,12 +632,22 @@ class TestCatalystPriorityModes:
 
         f = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_off = _sort_key(f, ticker="X", composite_rank=10,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs_off)
-        key_dis = _sort_key(f, ticker="X", composite_rank=10,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs_disabled)
+        key_off = _sort_key(
+            f,
+            ticker="X",
+            composite_rank=10,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs_off,
+        )
+        key_dis = _sort_key(
+            f,
+            ticker="X",
+            composite_rank=10,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs_disabled,
+        )
         assert key_off == key_dis
 
     def test_tiebreaker_comp_rank_dominates(self):
@@ -562,12 +656,22 @@ class TestCatalystPriorityModes:
         f_fda = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_gen = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_fda = _sort_key(f_fda, ticker="FDA_T", composite_rank=20,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
-        key_gen = _sort_key(f_gen, ticker="GEN_T", composite_rank=10,
-                            catalyst_event_type="DATA_READOUT",
-                            catalyst_source="CTGOV_CALENDAR", ruleset=rs)
+        key_fda = _sort_key(
+            f_fda,
+            ticker="FDA_T",
+            composite_rank=20,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
+        key_gen = _sort_key(
+            f_gen,
+            ticker="GEN_T",
+            composite_rank=10,
+            catalyst_event_type="DATA_READOUT",
+            catalyst_source="CTGOV_CALENDAR",
+            ruleset=rs,
+        )
         assert key_gen < key_fda  # rank 10 beats rank 20 despite FDA priority
 
     def test_tiebreaker_same_rank_fda_wins(self):
@@ -576,12 +680,22 @@ class TestCatalystPriorityModes:
         f_fda = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_ctgov = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_fda = _sort_key(f_fda, ticker="FDA_T", composite_rank=10,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
-        key_ctgov = _sort_key(f_ctgov, ticker="CTG_T", composite_rank=10,
-                              catalyst_event_type="DATA_READOUT",
-                              catalyst_source="CTGOV_CALENDAR", ruleset=rs)
+        key_fda = _sort_key(
+            f_fda,
+            ticker="FDA_T",
+            composite_rank=10,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
+        key_ctgov = _sort_key(
+            f_ctgov,
+            ticker="CTG_T",
+            composite_rank=10,
+            catalyst_event_type="DATA_READOUT",
+            catalyst_source="CTGOV_CALENDAR",
+            ruleset=rs,
+        )
         assert key_fda < key_ctgov  # same rank, FDA priority 1 < CTGOV priority 2
 
     def test_blended_small_rank_jump(self):
@@ -590,12 +704,17 @@ class TestCatalystPriorityModes:
         f_fda = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_gen = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_fda = _sort_key(f_fda, ticker="FDA_T", composite_rank=12,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
-        key_gen = _sort_key(f_gen, ticker="GEN_T", composite_rank=10,
-                            catalyst_event_type="", catalyst_source="",
-                            ruleset=rs)
+        key_fda = _sort_key(
+            f_fda,
+            ticker="FDA_T",
+            composite_rank=12,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
+        key_gen = _sort_key(
+            f_gen, ticker="GEN_T", composite_rank=10, catalyst_event_type="", catalyst_source="", ruleset=rs
+        )
         # FDA: effective_rank = 12 - 5 = 7.0; generic: 10 - 0 = 10.0
         assert key_fda < key_gen
 
@@ -605,12 +724,17 @@ class TestCatalystPriorityModes:
         f_fda = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_gen = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_fda = _sort_key(f_fda, ticker="FDA_T", composite_rank=20,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
-        key_gen = _sort_key(f_gen, ticker="GEN_T", composite_rank=10,
-                            catalyst_event_type="", catalyst_source="",
-                            ruleset=rs)
+        key_fda = _sort_key(
+            f_fda,
+            ticker="FDA_T",
+            composite_rank=20,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
+        key_gen = _sort_key(
+            f_gen, ticker="GEN_T", composite_rank=10, catalyst_event_type="", catalyst_source="", ruleset=rs
+        )
         # FDA: effective_rank = 20 - 5 = 15.0; generic: 10 - 0 = 10.0
         assert key_gen < key_fda
 
@@ -621,12 +745,17 @@ class TestCatalystPriorityModes:
             f_a = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
             f_b = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
 
-            key_a = _sort_key(f_a, ticker="A_T", composite_rank=50,
-                              catalyst_event_type="", catalyst_source="",
-                              ruleset=rs)
-            key_b = _sort_key(f_b, ticker="B_T", composite_rank=1,
-                              catalyst_event_type="FDA_DECISION",
-                              catalyst_source="FDA_CALENDAR", ruleset=rs)
+            key_a = _sort_key(
+                f_a, ticker="A_T", composite_rank=50, catalyst_event_type="", catalyst_source="", ruleset=rs
+            )
+            key_b = _sort_key(
+                f_b,
+                ticker="B_T",
+                composite_rank=1,
+                catalyst_event_type="FDA_DECISION",
+                catalyst_source="FDA_CALENDAR",
+                ruleset=rs,
+            )
             assert key_a < key_b, f"A-tier should beat B-tier in mode={mode}"
 
     def test_no_tier_changes_tiebreaker(self):
@@ -643,24 +772,28 @@ class TestCatalystPriorityModes:
     def test_mode_validation_rejects_invalid(self):
         """Invalid catalyst_priority_mode raises ValueError."""
         import pytest as _pytest
+
         with _pytest.raises(ValueError, match="catalyst_priority_mode"):
             DecisionRuleset(catalyst_priority_mode="invalid")
 
     def test_from_json_migration_enable_to_tiebreaker(self):
         """Old JSON with enable_catalyst_priority=true migrates to mode='tiebreaker'."""
         import json
-        import tempfile
         import os
+        import tempfile
 
         # Build a minimal valid ruleset JSON with enable_catalyst_priority=true
         # but NO catalyst_priority_mode key
         base = DecisionRuleset(enable_catalyst_priority=True)
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False,
+            mode="w",
+            suffix=".json",
+            delete=False,
         )
         try:
             d = {}
             from dataclasses import fields as dc_fields
+
             for f in dc_fields(base):
                 val = getattr(base, f.name)
                 if f.name == "sizing_weights":
@@ -682,10 +815,10 @@ class TestCatalystPriorityModes:
 
 # ── sort_anchor="optionality_pct" tests ──
 
+
 def _opt_ruleset(mode="off", **kwargs):
     """Ruleset with sort_anchor='optionality_pct'."""
-    return DecisionRuleset(sort_anchor="optionality_pct",
-                           catalyst_priority_mode=mode, **kwargs)
+    return DecisionRuleset(sort_anchor="optionality_pct", catalyst_priority_mode=mode, **kwargs)
 
 
 class TestSortAnchorOptionalityPct:
@@ -697,18 +830,15 @@ class TestSortAnchorOptionalityPct:
         f_high = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_low = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_high = _sort_key(f_high, ticker="HIGH", composite_rank=None,
-                             tiebreaker_pct=0.90, ruleset=rs)
-        key_low = _sort_key(f_low, ticker="LOW", composite_rank=None,
-                            tiebreaker_pct=0.30, ruleset=rs)
+        key_high = _sort_key(f_high, ticker="HIGH", composite_rank=None, tiebreaker_pct=0.90, ruleset=rs)
+        key_low = _sort_key(f_low, ticker="LOW", composite_rank=None, tiebreaker_pct=0.30, ruleset=rs)
         assert key_high < key_low
 
     def test_none_composite_rank_no_crash(self):
         """composite_rank=None with optionality anchor does not crash."""
         rs = _opt_ruleset()
         f = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=60)
-        key = _sort_key(f, ticker="TEST", composite_rank=None,
-                        tiebreaker_pct=0.50, ruleset=rs)
+        key = _sort_key(f, ticker="TEST", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
         assert isinstance(key, tuple)
 
     def test_none_tiebreaker_pct_treated_as_zero(self):
@@ -716,10 +846,8 @@ class TestSortAnchorOptionalityPct:
         rs = _opt_ruleset()
         f = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_with = _sort_key(f, ticker="WITH", composite_rank=None,
-                             tiebreaker_pct=0.50, ruleset=rs)
-        key_none = _sort_key(f, ticker="NONE", composite_rank=None,
-                             tiebreaker_pct=None, ruleset=rs)
+        key_with = _sort_key(f, ticker="WITH", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
+        key_none = _sort_key(f, ticker="NONE", composite_rank=None, tiebreaker_pct=None, ruleset=rs)
         assert key_with < key_none
 
     def test_tiebreaker_mode_with_optionality_anchor(self):
@@ -729,14 +857,24 @@ class TestSortAnchorOptionalityPct:
         f2 = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
         # Higher pct → lower anchor → sorts first
-        key_high = _sort_key(f1, ticker="H", composite_rank=None,
-                             tiebreaker_pct=0.80,
-                             catalyst_event_type="DATA_READOUT",
-                             catalyst_source="CTGOV_CALENDAR", ruleset=rs)
-        key_low = _sort_key(f2, ticker="L", composite_rank=None,
-                            tiebreaker_pct=0.40,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
+        key_high = _sort_key(
+            f1,
+            ticker="H",
+            composite_rank=None,
+            tiebreaker_pct=0.80,
+            catalyst_event_type="DATA_READOUT",
+            catalyst_source="CTGOV_CALENDAR",
+            ruleset=rs,
+        )
+        key_low = _sort_key(
+            f2,
+            ticker="L",
+            composite_rank=None,
+            tiebreaker_pct=0.40,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
         assert key_high < key_low  # pct dominates over priority
 
     def test_blended_mode_with_optionality_anchor(self):
@@ -746,15 +884,25 @@ class TestSortAnchorOptionalityPct:
         f2 = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
         # pct=0.50 with FDA bonus(5) → anchor = -0.50 - 5 = -5.50
-        key_fda = _sort_key(f1, ticker="FDA", composite_rank=None,
-                            tiebreaker_pct=0.50,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
+        key_fda = _sort_key(
+            f1,
+            ticker="FDA",
+            composite_rank=None,
+            tiebreaker_pct=0.50,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
         # pct=0.50 no bonus → anchor = -0.50
-        key_gen = _sort_key(f2, ticker="GEN", composite_rank=None,
-                            tiebreaker_pct=0.50,
-                            catalyst_event_type="", catalyst_source="",
-                            ruleset=rs)
+        key_gen = _sort_key(
+            f2,
+            ticker="GEN",
+            composite_rank=None,
+            tiebreaker_pct=0.50,
+            catalyst_event_type="",
+            catalyst_source="",
+            ruleset=rs,
+        )
         assert key_fda < key_gen  # bonus makes FDA sort first
 
     def test_tier_still_dominates_optionality_anchor(self):
@@ -763,10 +911,8 @@ class TestSortAnchorOptionalityPct:
         f_a = _make_fields(tier_dev="A", catalyst_mode="missing")
         f_b = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=10)
 
-        key_a = _sort_key(f_a, ticker="A_T", composite_rank=None,
-                          tiebreaker_pct=0.10, ruleset=rs)
-        key_b = _sort_key(f_b, ticker="B_T", composite_rank=None,
-                          tiebreaker_pct=0.99, ruleset=rs)
+        key_a = _sort_key(f_a, ticker="A_T", composite_rank=None, tiebreaker_pct=0.10, ruleset=rs)
+        key_b = _sort_key(f_b, ticker="B_T", composite_rank=None, tiebreaker_pct=0.99, ruleset=rs)
         assert key_a < key_b
 
     def test_commercial_vs_dev_tiebreaker_pct(self):
@@ -775,10 +921,12 @@ class TestSortAnchorOptionalityPct:
         f_dev = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_comm = _make_fields(tier_dev="", catalyst_mode="missing")
 
-        key_dev = _sort_key(f_dev, archetype="drug_developer", ticker="DEV",
-                            composite_rank=None, tiebreaker_pct=0.70, ruleset=rs)
-        key_comm = _sort_key(f_comm, archetype="commercial_biotech", ticker="COMM",
-                             composite_rank=None, tiebreaker_pct=0.90, ruleset=rs)
+        key_dev = _sort_key(
+            f_dev, archetype="drug_developer", ticker="DEV", composite_rank=None, tiebreaker_pct=0.70, ruleset=rs
+        )
+        key_comm = _sort_key(
+            f_comm, archetype="commercial_biotech", ticker="COMM", composite_rank=None, tiebreaker_pct=0.90, ruleset=rs
+        )
         # Dev sorts before commercial (is_dev=0 < is_dev=1 in prefix)
         assert key_dev < key_comm
 
@@ -791,21 +939,17 @@ class TestSortAnchorOptionalityPct:
             clinical_sort_weight=1.0,
             clinical_positive_only=True,
         )
-        f_clin = _make_fields(tier_dev="A", catalyst_mode="specific_days",
-                              catalyst_days=60)
+        f_clin = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_clin["clinical_score_z_tier"] = 1.5
         f_clin["stage_bucket"] = "mid"
 
-        f_noclin = _make_fields(tier_dev="A", catalyst_mode="specific_days",
-                                catalyst_days=60)
+        f_noclin = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_noclin["clinical_score_z_tier"] = 0.0
         f_noclin["stage_bucket"] = "mid"
 
         # Same pct, but clinical signal boosts f_clin
-        key_clin = _sort_key(f_clin, ticker="CLIN", composite_rank=None,
-                             tiebreaker_pct=0.50, ruleset=rs)
-        key_noclin = _sort_key(f_noclin, ticker="NOCL", composite_rank=None,
-                               tiebreaker_pct=0.50, ruleset=rs)
+        key_clin = _sort_key(f_clin, ticker="CLIN", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
+        key_noclin = _sort_key(f_noclin, ticker="NOCL", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
         assert key_clin < key_noclin
 
     def test_default_sort_anchor_is_composite_rank(self):
@@ -820,6 +964,7 @@ class TestSortAnchorOptionalityPct:
 
 
 # ── Far-window catalyst mode ordering tests ──
+
 
 class TestFarWindowOrdering:
     """Tests for far_window catalyst mode in sort key ordering."""
@@ -870,9 +1015,7 @@ class TestFarWindowOrdering:
             key_far = _sort_key(f_far, ticker="FAR", ruleset=rs)
             key_no_up = _sort_key(f_no_up, ticker="NOU", ruleset=rs)
 
-            assert key_far < key_no_up, (
-                f"far_window should sort before no_upcoming in mode={mode}"
-            )
+            assert key_far < key_no_up, f"far_window should sort before no_upcoming in mode={mode}"
 
     def test_full_mode_ordering_with_far_window(self):
         """Complete mode ordering: specific < blended < far_window < no_upcoming < missing."""
@@ -880,23 +1023,22 @@ class TestFarWindowOrdering:
         keys = []
         for mode in modes:
             f = _make_fields(
-                tier_dev="B", catalyst_mode=mode,
+                tier_dev="B",
+                catalyst_mode=mode,
                 catalyst_days=60 if mode in ("specific_days", "far_window") else "",
             )
             keys.append(_sort_key(f, ticker=mode.upper()[:3]))
 
         for i in range(len(keys) - 1):
-            assert keys[i] < keys[i + 1], (
-                f"{modes[i]} should sort before {modes[i+1]}"
-            )
+            assert keys[i] < keys[i + 1], f"{modes[i]} should sort before {modes[i+1]}"
 
 
 # ── sort_anchor="alpha_cohort" tests ──
 
+
 def _alpha_ruleset(mode="off", **kwargs):
     """Ruleset with sort_anchor='alpha_cohort'."""
-    return DecisionRuleset(sort_anchor="alpha_cohort",
-                           catalyst_priority_mode=mode, **kwargs)
+    return DecisionRuleset(sort_anchor="alpha_cohort", catalyst_priority_mode=mode, **kwargs)
 
 
 class TestSortAnchorAlphaCohort:
@@ -908,10 +1050,8 @@ class TestSortAnchorAlphaCohort:
         f_high = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_low = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_high = _sort_key(f_high, ticker="HIGH", composite_rank=None,
-                             tiebreaker_pct=0.90, ruleset=rs)
-        key_low = _sort_key(f_low, ticker="LOW", composite_rank=None,
-                            tiebreaker_pct=0.30, ruleset=rs)
+        key_high = _sort_key(f_high, ticker="HIGH", composite_rank=None, tiebreaker_pct=0.90, ruleset=rs)
+        key_low = _sort_key(f_low, ticker="LOW", composite_rank=None, tiebreaker_pct=0.30, ruleset=rs)
         assert key_high < key_low
 
     def test_tier_still_dominates(self):
@@ -920,10 +1060,8 @@ class TestSortAnchorAlphaCohort:
         f_a = _make_fields(tier_dev="A", catalyst_mode="missing")
         f_b = _make_fields(tier_dev="B", catalyst_mode="specific_days", catalyst_days=10)
 
-        key_a = _sort_key(f_a, ticker="A_T", composite_rank=None,
-                          tiebreaker_pct=0.10, ruleset=rs)
-        key_b = _sort_key(f_b, ticker="B_T", composite_rank=None,
-                          tiebreaker_pct=0.99, ruleset=rs)
+        key_a = _sort_key(f_a, ticker="A_T", composite_rank=None, tiebreaker_pct=0.10, ruleset=rs)
+        key_b = _sort_key(f_b, ticker="B_T", composite_rank=None, tiebreaker_pct=0.99, ruleset=rs)
         assert key_a < key_b
 
     def test_none_tiebreaker_pct_treated_as_zero(self):
@@ -931,10 +1069,8 @@ class TestSortAnchorAlphaCohort:
         rs = _alpha_ruleset()
         f = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_with = _sort_key(f, ticker="WITH", composite_rank=None,
-                             tiebreaker_pct=0.50, ruleset=rs)
-        key_none = _sort_key(f, ticker="NONE", composite_rank=None,
-                             tiebreaker_pct=None, ruleset=rs)
+        key_with = _sort_key(f, ticker="WITH", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
+        key_none = _sort_key(f, ticker="NONE", composite_rank=None, tiebreaker_pct=None, ruleset=rs)
         assert key_with < key_none
 
     def test_tiebreaker_mode_with_alpha_cohort(self):
@@ -943,14 +1079,24 @@ class TestSortAnchorAlphaCohort:
         f1 = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f2 = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
-        key_high = _sort_key(f1, ticker="H", composite_rank=None,
-                             tiebreaker_pct=0.80,
-                             catalyst_event_type="DATA_READOUT",
-                             catalyst_source="CTGOV_CALENDAR", ruleset=rs)
-        key_low = _sort_key(f2, ticker="L", composite_rank=None,
-                            tiebreaker_pct=0.40,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
+        key_high = _sort_key(
+            f1,
+            ticker="H",
+            composite_rank=None,
+            tiebreaker_pct=0.80,
+            catalyst_event_type="DATA_READOUT",
+            catalyst_source="CTGOV_CALENDAR",
+            ruleset=rs,
+        )
+        key_low = _sort_key(
+            f2,
+            ticker="L",
+            composite_rank=None,
+            tiebreaker_pct=0.40,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
         assert key_high < key_low  # pct dominates over priority
 
     def test_blended_mode_with_alpha_cohort(self):
@@ -960,15 +1106,25 @@ class TestSortAnchorAlphaCohort:
         f2 = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
         # pct=0.50 with FDA bonus(5) → anchor = -0.50 - 5 = -5.50
-        key_fda = _sort_key(f1, ticker="FDA", composite_rank=None,
-                            tiebreaker_pct=0.50,
-                            catalyst_event_type="FDA_DECISION",
-                            catalyst_source="FDA_CALENDAR", ruleset=rs)
+        key_fda = _sort_key(
+            f1,
+            ticker="FDA",
+            composite_rank=None,
+            tiebreaker_pct=0.50,
+            catalyst_event_type="FDA_DECISION",
+            catalyst_source="FDA_CALENDAR",
+            ruleset=rs,
+        )
         # pct=0.50 no bonus → anchor = -0.50
-        key_gen = _sort_key(f2, ticker="GEN", composite_rank=None,
-                            tiebreaker_pct=0.50,
-                            catalyst_event_type="", catalyst_source="",
-                            ruleset=rs)
+        key_gen = _sort_key(
+            f2,
+            ticker="GEN",
+            composite_rank=None,
+            tiebreaker_pct=0.50,
+            catalyst_event_type="",
+            catalyst_source="",
+            ruleset=rs,
+        )
         assert key_fda < key_gen  # bonus makes FDA sort first
 
     def test_clinical_sort_blends_with_alpha_cohort(self):
@@ -980,21 +1136,17 @@ class TestSortAnchorAlphaCohort:
             clinical_sort_weight=1.0,
             clinical_positive_only=True,
         )
-        f_clin = _make_fields(tier_dev="A", catalyst_mode="specific_days",
-                              catalyst_days=60)
+        f_clin = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_clin["clinical_score_z_tier"] = 1.5
         f_clin["stage_bucket"] = "mid"
 
-        f_noclin = _make_fields(tier_dev="A", catalyst_mode="specific_days",
-                                catalyst_days=60)
+        f_noclin = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
         f_noclin["clinical_score_z_tier"] = 0.0
         f_noclin["stage_bucket"] = "mid"
 
         # Same pct, but clinical signal boosts f_clin
-        key_clin = _sort_key(f_clin, ticker="CLIN", composite_rank=None,
-                             tiebreaker_pct=0.50, ruleset=rs)
-        key_noclin = _sort_key(f_noclin, ticker="NOCL", composite_rank=None,
-                               tiebreaker_pct=0.50, ruleset=rs)
+        key_clin = _sort_key(f_clin, ticker="CLIN", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
+        key_noclin = _sort_key(f_noclin, ticker="NOCL", composite_rank=None, tiebreaker_pct=0.50, ruleset=rs)
         assert key_clin < key_noclin
 
     def test_off_mode_with_alpha_cohort(self):
@@ -1004,10 +1156,8 @@ class TestSortAnchorAlphaCohort:
         f2 = _make_fields(tier_dev="A", catalyst_mode="specific_days", catalyst_days=60)
 
         # In off mode, anchor is in a trailing position but still matters
-        key_high = _sort_key(f1, ticker="H", composite_rank=None,
-                             tiebreaker_pct=0.80, ruleset=rs)
-        key_low = _sort_key(f2, ticker="L", composite_rank=None,
-                            tiebreaker_pct=0.30, ruleset=rs)
+        key_high = _sort_key(f1, ticker="H", composite_rank=None, tiebreaker_pct=0.80, ruleset=rs)
+        key_low = _sort_key(f2, ticker="L", composite_rank=None, tiebreaker_pct=0.30, ruleset=rs)
         # With same catalyst_mode/days, optionality breaks tie before anchor
         # but if optionality also same, anchor differentiates
         assert isinstance(key_high, tuple)
@@ -1042,6 +1192,7 @@ def test_nan_in_sort_key_fields_produces_comparable_tuple():
 # =============================================================================
 # CLINICAL SIZING WIRING
 # =============================================================================
+
 
 class TestClinicalSizingWeight:
     """compute_target_weights() applies sizing_multiplier_clinical."""
@@ -1095,6 +1246,7 @@ class TestClinicalSizingWeight:
 # SORT_CONTRIB_KEYS — alpha_cohort_tb presence
 # =============================================================================
 
+
 class TestSortContribKeys:
     """SORT_CONTRIB_KEYS includes all contributions from _build_sort_contributions."""
 
@@ -1108,7 +1260,10 @@ class TestSortContribKeys:
         rs = DecisionRuleset(alpha_cohort_tiebreak_weight=0.05)
         fields["alpha_cohort_pct"] = 0.75
         _, cmap = compute_sort_contribs(
-            fields, "drug_developer", ruleset=rs, tiebreaker_pct=0.5,
+            fields,
+            "drug_developer",
+            ruleset=rs,
+            tiebreaker_pct=0.5,
         )
         for k in SORT_CONTRIB_KEYS:
             assert k in cmap, f"Missing key: {k}"
@@ -1119,6 +1274,9 @@ class TestSortContribKeys:
         fields["alpha_cohort_pct"] = 0.80
         rs = DecisionRuleset(alpha_cohort_tiebreak_weight=0.10)
         _, cmap = compute_sort_contribs(
-            fields, "drug_developer", ruleset=rs, tiebreaker_pct=0.5,
+            fields,
+            "drug_developer",
+            ruleset=rs,
+            tiebreaker_pct=0.5,
         )
         assert cmap["alpha_cohort_tb"] > 0.0

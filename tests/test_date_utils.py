@@ -10,15 +10,11 @@ Covers:
 - Edge cases and error handling
 """
 
-import pytest
 from datetime import date
-from common.date_utils import (
-    normalize_date,
-    to_date_string,
-    to_date_object,
-    validate_as_of_date,
-    DateLike,
-)
+
+import pytest
+
+from common.date_utils import DateLike, normalize_date, to_date_object, to_date_string, validate_as_of_date
 
 
 class TestNormalizeDate:
@@ -225,13 +221,16 @@ class TestValidateAsOfDate:
 class TestLeapYearHandling:
     """Tests specifically for leap year edge cases."""
 
-    @pytest.mark.parametrize("year,is_leap", [
-        (2020, True),   # Divisible by 4
-        (2024, True),   # Divisible by 4
-        (2025, False),  # Not divisible by 4
-        (2100, False),  # Divisible by 100 but not 400
-        (2000, True),   # Divisible by 400
-    ])
+    @pytest.mark.parametrize(
+        "year,is_leap",
+        [
+            (2020, True),  # Divisible by 4
+            (2024, True),  # Divisible by 4
+            (2025, False),  # Not divisible by 4
+            (2100, False),  # Divisible by 100 but not 400
+            (2000, True),  # Divisible by 400
+        ],
+    )
     def test_leap_year_detection(self, year, is_leap):
         """Verify leap year handling for Feb 28/29."""
         if is_leap:
@@ -251,10 +250,23 @@ class TestLeapYearHandling:
 class TestDateBoundaries:
     """Tests for date boundary conditions."""
 
-    @pytest.mark.parametrize("month,max_day", [
-        (1, 31), (2, 28), (3, 31), (4, 30), (5, 31), (6, 30),
-        (7, 31), (8, 31), (9, 30), (10, 31), (11, 30), (12, 31),
-    ])
+    @pytest.mark.parametrize(
+        "month,max_day",
+        [
+            (1, 31),
+            (2, 28),
+            (3, 31),
+            (4, 30),
+            (5, 31),
+            (6, 30),
+            (7, 31),
+            (8, 31),
+            (9, 30),
+            (10, 31),
+            (11, 30),
+            (12, 31),
+        ],
+    )
     def test_month_max_days_non_leap(self, month, max_day):
         """Each month's max day should be valid in non-leap year."""
         date_str = f"2025-{month:02d}-{max_day:02d}"

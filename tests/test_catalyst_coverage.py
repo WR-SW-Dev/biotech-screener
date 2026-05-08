@@ -19,21 +19,16 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ctgov_adapter import CanonicalTrialRecord, CTGovStatus, CompletionType
-from state_management import StateSnapshot
-from catalyst_diagnostics import detect_calendar_catalysts, EventRuleID
+from catalyst_diagnostics import EventRuleID, detect_calendar_catalysts
+from ctgov_adapter import CanonicalTrialRecord, CompletionType, CTGovStatus
+from module_3_schema import CatalystEventV2, ConfidenceLevel, EventSeverity, EventType
 from module_3_scoring import compute_proximity_score
-from module_3_schema import (
-    CatalystEventV2,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-)
-
+from state_management import StateSnapshot
 
 # ============================================================================
 # HELPERS
 # ============================================================================
+
 
 def _make_record(
     ticker: str = "ACME",
@@ -89,6 +84,7 @@ def _make_event_v2(
 # TEST: Extended windows produce events for 180D and 270D trials
 # ============================================================================
 
+
 class TestExtendedCalendarWindows:
 
     def test_180d_pcd_generates_event(self):
@@ -101,9 +97,9 @@ class TestExtendedCalendarWindows:
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
         assert len(catalysts) >= 1
-        pcd_cats = [c for c in catalysts if c.event_type == 'UPCOMING_PCD']
+        pcd_cats = [c for c in catalysts if c.event_type == "UPCOMING_PCD"]
         assert len(pcd_cats) == 1
-        assert pcd_cats[0].window == '180D'
+        assert pcd_cats[0].window == "180D"
         assert pcd_cats[0].rule_id == EventRuleID.M3_CAL_PCD_180D
 
     def test_270d_pcd_generates_event(self):
@@ -115,9 +111,9 @@ class TestExtendedCalendarWindows:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        pcd_cats = [c for c in catalysts if c.event_type == 'UPCOMING_PCD']
+        pcd_cats = [c for c in catalysts if c.event_type == "UPCOMING_PCD"]
         assert len(pcd_cats) == 1
-        assert pcd_cats[0].window == '270D'
+        assert pcd_cats[0].window == "270D"
         assert pcd_cats[0].rule_id == EventRuleID.M3_CAL_PCD_270D
 
     def test_180d_scd_generates_event(self):
@@ -132,9 +128,9 @@ class TestExtendedCalendarWindows:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        scd_cats = [c for c in catalysts if c.event_type == 'UPCOMING_SCD']
+        scd_cats = [c for c in catalysts if c.event_type == "UPCOMING_SCD"]
         assert len(scd_cats) == 1
-        assert scd_cats[0].window == '180D'
+        assert scd_cats[0].window == "180D"
         assert scd_cats[0].rule_id == EventRuleID.M3_CAL_SCD_180D
 
     def test_270d_scd_generates_event(self):
@@ -149,9 +145,9 @@ class TestExtendedCalendarWindows:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        scd_cats = [c for c in catalysts if c.event_type == 'UPCOMING_SCD']
+        scd_cats = [c for c in catalysts if c.event_type == "UPCOMING_SCD"]
         assert len(scd_cats) == 1
-        assert scd_cats[0].window == '270D'
+        assert scd_cats[0].window == "270D"
 
     def test_no_event_beyond_270d(self):
         """Trial with PCD 300 days out should NOT generate an event."""
@@ -162,7 +158,7 @@ class TestExtendedCalendarWindows:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        pcd_cats = [c for c in catalysts if c.event_type == 'UPCOMING_PCD']
+        pcd_cats = [c for c in catalysts if c.event_type == "UPCOMING_PCD"]
         assert len(pcd_cats) == 0
 
     def test_old_windows_still_work(self):
@@ -170,7 +166,7 @@ class TestExtendedCalendarWindows:
         as_of = date(2026, 1, 15)
 
         results = {}
-        for days, expected_window in [(20, '30D'), (45, '60D'), (75, '90D')]:
+        for days, expected_window in [(20, "30D"), (45, "60D"), (75, "90D")]:
             pcd = as_of + timedelta(days=days)
             record = _make_record(
                 nct_id=f"NCT{days:08d}",
@@ -178,21 +174,20 @@ class TestExtendedCalendarWindows:
             )
             snapshot = _make_snapshot([record], as_of)
             cats = detect_calendar_catalysts(snapshot, as_of)
-            pcd_cats = [c for c in cats if c.event_type == 'UPCOMING_PCD']
+            pcd_cats = [c for c in cats if c.event_type == "UPCOMING_PCD"]
             assert len(pcd_cats) == 1, f"Expected 1 PCD event at {days}d"
             results[days] = pcd_cats[0].window
 
-        assert results[20] == '30D'
-        assert results[45] == '60D'
-        assert results[75] == '90D'
+        assert results[20] == "30D"
+        assert results[45] == "60D"
+        assert results[75] == "90D"
 
     def test_confidence_decreases_with_distance(self):
         """Confidence should decrease: 30D > 60D > 90D > 180D > 270D."""
         as_of = date(2026, 1, 15)
         confidences = {}
 
-        for days, window_label in [(15, '30D'), (45, '60D'), (75, '90D'),
-                                    (120, '180D'), (200, '270D')]:
+        for days, window_label in [(15, "30D"), (45, "60D"), (75, "90D"), (120, "180D"), (200, "270D")]:
             pcd = as_of + timedelta(days=days)
             record = _make_record(
                 nct_id=f"NCT{days:08d}",
@@ -200,19 +195,20 @@ class TestExtendedCalendarWindows:
             )
             snapshot = _make_snapshot([record], as_of)
             cats = detect_calendar_catalysts(snapshot, as_of)
-            pcd_cats = [c for c in cats if c.event_type == 'UPCOMING_PCD']
+            pcd_cats = [c for c in cats if c.event_type == "UPCOMING_PCD"]
             assert len(pcd_cats) == 1
             confidences[window_label] = pcd_cats[0].confidence
 
-        assert confidences['30D'] > confidences['60D']
-        assert confidences['60D'] > confidences['90D']
-        assert confidences['90D'] > confidences['180D']
-        assert confidences['180D'] > confidences['270D']
+        assert confidences["30D"] > confidences["60D"]
+        assert confidences["60D"] > confidences["90D"]
+        assert confidences["90D"] > confidences["180D"]
+        assert confidences["180D"] > confidences["270D"]
 
 
 # ============================================================================
 # TEST: Recent results detection
 # ============================================================================
+
 
 class TestRecentResultsDetection:
 
@@ -229,7 +225,7 @@ class TestRecentResultsDetection:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        results_cats = [c for c in catalysts if c.event_type == 'RESULTS_RECENT']
+        results_cats = [c for c in catalysts if c.event_type == "RESULTS_RECENT"]
         assert len(results_cats) == 1
         assert results_cats[0].rule_id == EventRuleID.M3_CAL_RESULTS_RECENT
         assert results_cats[0].confidence == 0.90
@@ -249,7 +245,7 @@ class TestRecentResultsDetection:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        results_cats = [c for c in catalysts if c.event_type == 'RESULTS_RECENT']
+        results_cats = [c for c in catalysts if c.event_type == "RESULTS_RECENT"]
         assert len(results_cats) == 0
 
     def test_results_today_generates_event(self):
@@ -264,7 +260,7 @@ class TestRecentResultsDetection:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        results_cats = [c for c in catalysts if c.event_type == 'RESULTS_RECENT']
+        results_cats = [c for c in catalysts if c.event_type == "RESULTS_RECENT"]
         assert len(results_cats) == 1
 
     def test_terminal_negative_skipped(self):
@@ -286,6 +282,7 @@ class TestRecentResultsDetection:
 # TEST: PIT exclusion
 # ============================================================================
 
+
 class TestPITExclusion:
 
     def test_results_from_future_excluded(self):
@@ -300,13 +297,14 @@ class TestPITExclusion:
 
         catalysts = detect_calendar_catalysts(snapshot, as_of)
 
-        results_cats = [c for c in catalysts if c.event_type == 'RESULTS_RECENT']
+        results_cats = [c for c in catalysts if c.event_type == "RESULTS_RECENT"]
         assert len(results_cats) == 0
 
 
 # ============================================================================
 # TEST: Proximity score nonzero at 180-day horizon
 # ============================================================================
+
 
 class TestProximityScoreExtended:
 
@@ -348,6 +346,7 @@ class TestProximityScoreExtended:
 # TEST: Monotonicity — closer events produce higher proximity scores
 # ============================================================================
 
+
 class TestProximityMonotonicity:
 
     def test_closer_events_score_higher(self):
@@ -363,9 +362,7 @@ class TestProximityMonotonicity:
 
         # Strict monotonic decrease
         for d1, d2 in zip([30, 60, 90, 120, 180], [60, 90, 120, 180, 250]):
-            assert scores[d1] > scores[d2], (
-                f"Expected score at {d1}d ({scores[d1]}) > score at {d2}d ({scores[d2]})"
-            )
+            assert scores[d1] > scores[d2], f"Expected score at {d1}d ({scores[d1]}) > score at {d2}d ({scores[d2]})"
 
     def test_multiple_events_score_higher_than_single(self):
         """Two upcoming events should score higher than one at same distance."""

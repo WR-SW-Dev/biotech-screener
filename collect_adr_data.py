@@ -27,15 +27,16 @@ import argparse
 import json
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 # Check for yfinance
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     YFINANCE_AVAILABLE = False
@@ -292,11 +293,62 @@ SEC_COUNTRY_CODES = {
 
 # US state codes (not foreign)
 US_STATE_CODES = {
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID",
-    "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO",
-    "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA",
-    "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "PR",
-    "VI", "GU", "AS", "MP",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "PR",
+    "VI",
+    "GU",
+    "AS",
+    "MP",
 }
 
 
@@ -311,20 +363,17 @@ def get_sec_fpi_data(cik: str) -> Optional[Dict[str, Any]]:
         return None
 
     # Ensure CIK is zero-padded to 10 digits
-    cik_padded = cik.lstrip('0').zfill(10)
+    cik_padded = cik.lstrip("0").zfill(10)
     url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
 
     try:
-        req = urllib.request.Request(
-            url,
-            headers={'User-Agent': 'BiotechScreener/1.0 (research)'}
-        )
+        req = urllib.request.Request(url, headers={"User-Agent": "BiotechScreener/1.0 (research)"})
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.load(resp)
 
         # Get incorporation info
-        state_code = data.get('stateOfIncorporation', '')
-        state_desc = data.get('stateOfIncorporationDescription', '')
+        state_code = data.get("stateOfIncorporation", "")
+        state_desc = data.get("stateOfIncorporationDescription", "")
 
         # Determine if foreign incorporation
         is_foreign_incorporation = False
@@ -342,28 +391,28 @@ def get_sec_fpi_data(cik: str) -> Optional[Dict[str, Any]]:
                 is_foreign_incorporation = state_code not in US_STATE_CODES
 
         # Check recent filings for FPI forms (20-F, 6-K) vs US forms (10-K, 10-Q)
-        filings = data.get('filings', {}).get('recent', {})
-        forms = filings.get('form', [])[:100]  # Check last 100 filings
+        filings = data.get("filings", {}).get("recent", {})
+        forms = filings.get("form", [])[:100]  # Check last 100 filings
 
-        has_20f = any(f in ['20-F', '20-F/A'] for f in forms)
-        has_6k = any(f in ['6-K', '6-K/A'] for f in forms)
-        has_40f = any(f in ['40-F', '40-F/A'] for f in forms)  # Canadian FPI
-        has_10k = any(f in ['10-K', '10-K/A'] for f in forms)
-        has_10q = any(f in ['10-Q', '10-Q/A'] for f in forms)
+        has_20f = any(f in ["20-F", "20-F/A"] for f in forms)
+        has_6k = any(f in ["6-K", "6-K/A"] for f in forms)
+        has_40f = any(f in ["40-F", "40-F/A"] for f in forms)  # Canadian FPI
+        has_10k = any(f in ["10-K", "10-K/A"] for f in forms)
+        has_10q = any(f in ["10-Q", "10-Q/A"] for f in forms)
 
         # FPI if files 20-F/6-K/40-F and NOT 10-K/10-Q
         is_fpi = (has_20f or has_6k or has_40f) and not (has_10k or has_10q)
 
         return {
-            'incorporation_country': incorporation_country,
-            'incorporation_code': state_code,
-            'is_foreign_incorporation': is_foreign_incorporation,
-            'is_fpi_by_filings': is_fpi,
-            'has_20f': has_20f,
-            'has_6k': has_6k,
-            'has_40f': has_40f,
-            'has_10k': has_10k,
-            'has_10q': has_10q,
+            "incorporation_country": incorporation_country,
+            "incorporation_code": state_code,
+            "is_foreign_incorporation": is_foreign_incorporation,
+            "is_fpi_by_filings": is_fpi,
+            "has_20f": has_20f,
+            "has_6k": has_6k,
+            "has_40f": has_40f,
+            "has_10k": has_10k,
+            "has_10q": has_10q,
         }
 
     except urllib.error.HTTPError as e:
@@ -385,27 +434,27 @@ def get_yfinance_country_data(ticker: str) -> Optional[Dict[str, Any]]:
         stock = yf.Ticker(ticker)
         info = stock.info
 
-        country = info.get('country')
-        financial_currency = info.get('financialCurrency')
-        city = info.get('city')
-        exchange = info.get('exchange')
-        market = info.get('market')
-        quote_type = info.get('quoteType')
+        country = info.get("country")
+        financial_currency = info.get("financialCurrency")
+        city = info.get("city")
+        exchange = info.get("exchange")
+        market = info.get("market")
+        quote_type = info.get("quoteType")
 
         # Determine if this looks like an ADR
         # Foreign country + US market = ADR
         is_foreign_by_yf = country and country != "United States"
-        is_us_market = market == "us_market" or exchange in ['NMS', 'NYQ', 'NGM', 'NCM', 'ASE']
+        is_us_market = market == "us_market" or exchange in ["NMS", "NYQ", "NGM", "NCM", "ASE"]
 
         return {
-            'country': country,
-            'financial_currency': financial_currency,
-            'city': city,
-            'exchange': exchange,
-            'market': market,
-            'quote_type': quote_type,
-            'is_foreign_by_yfinance': is_foreign_by_yf,
-            'is_us_market': is_us_market,
+            "country": country,
+            "financial_currency": financial_currency,
+            "city": city,
+            "exchange": exchange,
+            "market": market,
+            "quote_type": quote_type,
+            "is_foreign_by_yfinance": is_foreign_by_yf,
+            "is_us_market": is_us_market,
         }
 
     except Exception:
@@ -446,22 +495,22 @@ def collect_adr_data(
         print(f"\n[ERROR] Universe file not found: {universe_file}")
         return 1
 
-    with open(universe_file, 'r', encoding='utf-8') as f:
+    with open(universe_file, "r", encoding="utf-8") as f:
         universe = json.load(f)
 
     # Extract tickers and CIKs
     if isinstance(universe, list):
         securities = universe
     elif isinstance(universe, dict):
-        securities = universe.get('active_securities', universe.get('securities', []))
+        securities = universe.get("active_securities", universe.get("securities", []))
     else:
         print(f"\n[ERROR] Invalid universe format")
         return 1
 
     ticker_cik_map = {}
     for sec in securities:
-        ticker = sec.get('ticker')
-        cik = sec.get('cik')
+        ticker = sec.get("ticker")
+        cik = sec.get("cik")
         if ticker:
             ticker_cik_map[ticker] = cik
 
@@ -497,54 +546,54 @@ def collect_adr_data(
 
         # Merge and determine ADR status
         record = {
-            'ticker': ticker,
-            'cik': cik,
-            'collection_date': date.today().isoformat(),
+            "ticker": ticker,
+            "cik": cik,
+            "collection_date": date.today().isoformat(),
         }
 
         # Country determination (prefer Yahoo Finance, fallback to SEC)
         country = None
-        if yf_data and yf_data.get('country'):
-            country = yf_data['country']
-            record['country_source'] = 'yfinance'
-        elif sec_data and sec_data.get('incorporation_country'):
-            country = sec_data['incorporation_country']
-            record['country_source'] = 'sec_edgar'
+        if yf_data and yf_data.get("country"):
+            country = yf_data["country"]
+            record["country_source"] = "yfinance"
+        elif sec_data and sec_data.get("incorporation_country"):
+            country = sec_data["incorporation_country"]
+            record["country_source"] = "sec_edgar"
 
-        record['country_of_origin'] = country
-        record['reporting_currency'] = yf_data.get('financial_currency') if yf_data else None
-        record['headquarters_city'] = yf_data.get('city') if yf_data else None
-        record['exchange'] = yf_data.get('exchange') if yf_data else None
+        record["country_of_origin"] = country
+        record["reporting_currency"] = yf_data.get("financial_currency") if yf_data else None
+        record["headquarters_city"] = yf_data.get("city") if yf_data else None
+        record["exchange"] = yf_data.get("exchange") if yf_data else None
 
         # SEC-specific fields
         if sec_data:
-            record['incorporation_country'] = sec_data.get('incorporation_country')
-            record['incorporation_code'] = sec_data.get('incorporation_code')
-            record['has_20f'] = sec_data.get('has_20f', False)
-            record['has_6k'] = sec_data.get('has_6k', False)
-            record['has_40f'] = sec_data.get('has_40f', False)
+            record["incorporation_country"] = sec_data.get("incorporation_country")
+            record["incorporation_code"] = sec_data.get("incorporation_code")
+            record["has_20f"] = sec_data.get("has_20f", False)
+            record["has_6k"] = sec_data.get("has_6k", False)
+            record["has_40f"] = sec_data.get("has_40f", False)
 
         # Determine ADR status
         is_foreign = country and country != "United States"
-        is_us_market = yf_data.get('is_us_market', True) if yf_data else True
-        is_fpi = sec_data.get('is_fpi_by_filings', False) if sec_data else False
+        is_us_market = yf_data.get("is_us_market", True) if yf_data else True
+        is_fpi = sec_data.get("is_fpi_by_filings", False) if sec_data else False
 
         # ADR = foreign company trading on US market
         is_adr = is_foreign and is_us_market
 
         # Detection method
         detection_methods = []
-        if yf_data and yf_data.get('is_foreign_by_yfinance'):
-            detection_methods.append('yfinance_country')
-        if sec_data and sec_data.get('is_foreign_incorporation'):
-            detection_methods.append('sec_incorporation')
+        if yf_data and yf_data.get("is_foreign_by_yfinance"):
+            detection_methods.append("yfinance_country")
+        if sec_data and sec_data.get("is_foreign_incorporation"):
+            detection_methods.append("sec_incorporation")
         if is_fpi:
-            detection_methods.append('sec_fpi_filings')
+            detection_methods.append("sec_fpi_filings")
 
-        record['is_adr'] = is_adr
-        record['is_foreign_private_issuer'] = is_fpi
-        record['is_foreign_company'] = is_foreign
-        record['adr_detection_method'] = detection_methods if detection_methods else None
+        record["is_adr"] = is_adr
+        record["is_foreign_private_issuer"] = is_fpi
+        record["is_foreign_company"] = is_foreign
+        record["adr_detection_method"] = detection_methods if detection_methods else None
 
         results.append(record)
 
@@ -565,7 +614,7 @@ def collect_adr_data(
         else:
             status = "US"
 
-        currency = record.get('reporting_currency', 'N/A')
+        currency = record.get("reporting_currency", "N/A")
         print(f"[{i+1:>3}/{len(tickers)}] {ticker:<6} {status:<25} Currency: {currency}")
 
         # Rate limiting for Yahoo Finance
@@ -584,7 +633,7 @@ def collect_adr_data(
     # Country breakdown
     countries = {}
     for r in results:
-        c = r.get('country_of_origin') or 'Unknown'
+        c = r.get("country_of_origin") or "Unknown"
         countries[c] = countries.get(c, 0) + 1
 
     print(f"\nCountry breakdown:")
@@ -595,8 +644,8 @@ def collect_adr_data(
     # Currency breakdown for non-USD
     currencies = {}
     for r in results:
-        curr = r.get('reporting_currency')
-        if curr and curr != 'USD':
+        curr = r.get("reporting_currency")
+        if curr and curr != "USD":
             currencies[curr] = currencies.get(curr, 0) + 1
 
     if currencies:
@@ -605,23 +654,23 @@ def collect_adr_data(
             print(f"  {curr:<6} {count:>4}")
 
     # Sort results by ticker
-    results.sort(key=lambda x: x.get('ticker', ''))
+    results.sort(key=lambda x: x.get("ticker", ""))
 
     # Write output
     print(f"\nWriting to {output_file}...")
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     output_data = {
-        'collection_date': date.today().isoformat(),
-        'total_securities': len(tickers),
-        'adr_count': adr_count,
-        'fpi_count': fpi_count,
-        'foreign_count': foreign_count,
-        'country_breakdown': countries,
-        'records': results,
+        "collection_date": date.today().isoformat(),
+        "total_securities": len(tickers),
+        "adr_count": adr_count,
+        "fpi_count": fpi_count,
+        "foreign_count": foreign_count,
+        "country_breakdown": countries,
+        "records": results,
     }
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2)
 
     print(f"[OK] Saved {len(results)} records")
@@ -637,18 +686,16 @@ def main():
         "--universe",
         type=Path,
         default=Path("production_data/universe.json"),
-        help="Path to universe JSON file (default: production_data/universe.json)"
+        help="Path to universe JSON file (default: production_data/universe.json)",
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=Path("production_data/adr_data.json"),
-        help="Output path for ADR data (default: production_data/adr_data.json)"
+        help="Output path for ADR data (default: production_data/adr_data.json)",
     )
     parser.add_argument(
-        "--skip-sec",
-        action="store_true",
-        help="Skip SEC EDGAR lookups (faster but less accurate FPI detection)"
+        "--skip-sec", action="store_true", help="Skip SEC EDGAR lookups (faster but less accurate FPI detection)"
     )
 
     args = parser.parse_args()

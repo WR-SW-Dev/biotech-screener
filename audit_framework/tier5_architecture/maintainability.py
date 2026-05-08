@@ -16,11 +16,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -176,13 +172,15 @@ class MaintainabilityValidator:
         expected_dirs = ["common", "governance", "backtest"]
         for dir_name in expected_dirs:
             if not (self.codebase_path / dir_name).exists():
-                issues.append(ArchitectureIssue(
-                    file_path=dir_name,
-                    issue_type="missing_module",
-                    description=f"Expected module directory '{dir_name}' not found",
-                    severity="medium",
-                    recommendation=f"Create {dir_name}/ directory for better organization",
-                ))
+                issues.append(
+                    ArchitectureIssue(
+                        file_path=dir_name,
+                        issue_type="missing_module",
+                        description=f"Expected module directory '{dir_name}' not found",
+                        severity="medium",
+                        recommendation=f"Create {dir_name}/ directory for better organization",
+                    )
+                )
 
         # Check for god objects (files > 1000 lines)
         for py_file in self.codebase_path.glob("*.py"):
@@ -192,13 +190,15 @@ class MaintainabilityValidator:
 
                 if len(lines) > 1000:
                     has_modularity = False
-                    issues.append(ArchitectureIssue(
-                        file_path=str(py_file.relative_to(self.codebase_path)),
-                        issue_type="god_object",
-                        description=f"File has {len(lines)} lines (> 1000)",
-                        severity="high",
-                        recommendation="Split into smaller, focused modules",
-                    ))
+                    issues.append(
+                        ArchitectureIssue(
+                            file_path=str(py_file.relative_to(self.codebase_path)),
+                            issue_type="god_object",
+                            description=f"File has {len(lines)} lines (> 1000)",
+                            severity="high",
+                            recommendation="Split into smaller, focused modules",
+                        )
+                    )
 
             except Exception:
                 continue
@@ -215,13 +215,15 @@ class MaintainabilityValidator:
         if readme.exists():
             has_docs = True
         else:
-            issues.append(ArchitectureIssue(
-                file_path="README.md",
-                issue_type="missing_readme",
-                description="No README.md found",
-                severity="medium",
-                recommendation="Add README with project overview and setup instructions",
-            ))
+            issues.append(
+                ArchitectureIssue(
+                    file_path="README.md",
+                    issue_type="missing_readme",
+                    description="No README.md found",
+                    severity="medium",
+                    recommendation="Add README with project overview and setup instructions",
+                )
+            )
 
         # Check for CLAUDE.md (project-specific)
         claude_md = self.codebase_path / "CLAUDE.md"
@@ -244,13 +246,15 @@ class MaintainabilityValidator:
                 continue
 
         if module_files and modules_with_docstrings < len(module_files) * 0.8:
-            issues.append(ArchitectureIssue(
-                file_path="module_*.py",
-                issue_type="missing_docstrings",
-                description=f"Only {modules_with_docstrings}/{len(module_files)} modules have docstrings",
-                severity="low",
-                recommendation="Add module-level docstrings explaining purpose",
-            ))
+            issues.append(
+                ArchitectureIssue(
+                    file_path="module_*.py",
+                    issue_type="missing_docstrings",
+                    description=f"Only {modules_with_docstrings}/{len(module_files)} modules have docstrings",
+                    severity="low",
+                    recommendation="Add module-level docstrings explaining purpose",
+                )
+            )
 
         return has_docs, issues
 
@@ -280,31 +284,37 @@ class MaintainabilityValidator:
 
                     # Check for issues
                     if metrics.max_function_length > self.MAX_FUNCTION_LENGTH:
-                        all_issues.append(ArchitectureIssue(
-                            file_path=metrics.file_path,
-                            issue_type="long_function",
-                            description=f"Function with {metrics.max_function_length} lines",
-                            severity="medium",
-                            recommendation="Break into smaller functions",
-                        ))
+                        all_issues.append(
+                            ArchitectureIssue(
+                                file_path=metrics.file_path,
+                                issue_type="long_function",
+                                description=f"Function with {metrics.max_function_length} lines",
+                                severity="medium",
+                                recommendation="Break into smaller functions",
+                            )
+                        )
 
                     if metrics.cyclomatic_complexity > self.MAX_COMPLEXITY:
-                        all_issues.append(ArchitectureIssue(
-                            file_path=metrics.file_path,
-                            issue_type="high_complexity",
-                            description=f"Cyclomatic complexity of {metrics.cyclomatic_complexity}",
-                            severity="medium",
-                            recommendation="Simplify logic or extract helper functions",
-                        ))
+                        all_issues.append(
+                            ArchitectureIssue(
+                                file_path=metrics.file_path,
+                                issue_type="high_complexity",
+                                description=f"Cyclomatic complexity of {metrics.cyclomatic_complexity}",
+                                severity="medium",
+                                recommendation="Simplify logic or extract helper functions",
+                            )
+                        )
 
                     if metrics.max_nesting_depth > self.MAX_NESTING:
-                        all_issues.append(ArchitectureIssue(
-                            file_path=metrics.file_path,
-                            issue_type="deep_nesting",
-                            description=f"Nesting depth of {metrics.max_nesting_depth}",
-                            severity="medium",
-                            recommendation="Use early returns or extract functions",
-                        ))
+                        all_issues.append(
+                            ArchitectureIssue(
+                                file_path=metrics.file_path,
+                                issue_type="deep_nesting",
+                                description=f"Nesting depth of {metrics.max_nesting_depth}",
+                                severity="medium",
+                                recommendation="Use early returns or extract functions",
+                            )
+                        )
 
         # Check modularity
         has_modularity, modularity_issues = self._check_modularity()
@@ -381,9 +391,9 @@ def validate_maintainability(codebase_path: str) -> AuditResult:
     # Add findings for architecture issues
     for issue in report.architecture_issues:
         severity = (
-            AuditSeverity.HIGH if issue.severity == "high"
-            else AuditSeverity.MEDIUM if issue.severity == "medium"
-            else AuditSeverity.LOW
+            AuditSeverity.HIGH
+            if issue.severity == "high"
+            else AuditSeverity.MEDIUM if issue.severity == "medium" else AuditSeverity.LOW
         )
 
         result.add_finding(

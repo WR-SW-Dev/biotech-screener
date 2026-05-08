@@ -18,47 +18,30 @@ from pathlib import Path
 
 import pytest
 
-from governance.canonical_json import (
-    canonical_dumps,
-    canonical_dump,
-    validate_canonical_json,
-    CanonicalJSONEncoder,
-)
+from governance.audit_log import AuditErrorCode, AuditLog, AuditStage, AuditStatus, StageIO, load_audit_log
+from governance.canonical_json import CanonicalJSONEncoder, canonical_dump, canonical_dumps, validate_canonical_json
 from governance.hashing import (
+    compute_input_hashes,
     hash_bytes,
-    hash_file,
     hash_canonical_json,
     hash_canonical_json_short,
-    compute_input_hashes,
-)
-from governance.run_id import compute_run_id, validate_run_id
-from governance.audit_log import (
-    AuditLog,
-    AuditStage,
-    AuditStatus,
-    AuditErrorCode,
-    StageIO,
-    load_audit_log,
-)
-from governance.params_loader import (
-    load_params,
-    compute_parameters_hash,
-    save_params,
-    ParamsLoadError,
+    hash_file,
 )
 from governance.mapping_loader import (
-    load_mapping,
-    compute_mapping_hash,
-    save_mapping,
-    validate_source_schema,
     MappingLoadError,
     SchemaMismatchError,
+    compute_mapping_hash,
+    load_mapping,
+    save_mapping,
+    validate_source_schema,
 )
-
+from governance.params_loader import ParamsLoadError, compute_parameters_hash, load_params, save_params
+from governance.run_id import compute_run_id, validate_run_id
 
 # =============================================================================
 # CANONICAL JSON TESTS
 # =============================================================================
+
 
 class TestCanonicalJSON:
     """Tests for canonical JSON serialization."""
@@ -88,20 +71,20 @@ class TestCanonicalJSON:
     def test_nan_rejected(self):
         """NaN values raise ValueError."""
         with pytest.raises(ValueError, match="NaN"):
-            canonical_dumps({"value": float('nan')})
+            canonical_dumps({"value": float("nan")})
 
     def test_inf_rejected(self):
         """Infinity values raise ValueError."""
         with pytest.raises(ValueError, match="Infinity"):
-            canonical_dumps({"value": float('inf')})
+            canonical_dumps({"value": float("inf")})
 
         with pytest.raises(ValueError, match="Infinity"):
-            canonical_dumps({"value": float('-inf')})
+            canonical_dumps({"value": float("-inf")})
 
     def test_trailing_newline(self):
         """Output ends with newline."""
         result = canonical_dumps({"key": "value"})
-        assert result.endswith('\n')
+        assert result.endswith("\n")
 
     def test_decimal_handling(self):
         """Decimal values are handled."""
@@ -127,6 +110,7 @@ class TestCanonicalJSON:
 # =============================================================================
 # HASHING TESTS
 # =============================================================================
+
 
 class TestHashing:
     """Tests for hashing functions."""
@@ -174,10 +158,12 @@ class TestHashing:
         (tmp_path / "b.json").write_text('{"key": "b"}')
         (tmp_path / "a.json").write_text('{"key": "a"}')
 
-        hashes = compute_input_hashes([
-            tmp_path / "b.json",
-            tmp_path / "a.json",
-        ])
+        hashes = compute_input_hashes(
+            [
+                tmp_path / "b.json",
+                tmp_path / "a.json",
+            ]
+        )
 
         # Should be sorted by path
         assert hashes[0]["path"] == "a.json"
@@ -187,6 +173,7 @@ class TestHashing:
 # =============================================================================
 # RUN ID TESTS
 # =============================================================================
+
 
 class TestRunId:
     """Tests for run ID generation."""
@@ -275,6 +262,7 @@ class TestRunId:
 # AUDIT LOG TESTS
 # =============================================================================
 
+
 class TestAuditLog:
     """Tests for audit log."""
 
@@ -335,6 +323,7 @@ class TestAuditLog:
 
     def test_audit_record_deterministic(self, tmp_path):
         """Audit records are deterministic."""
+
         def write_log():
             audit_path = tmp_path / f"audit_{id(write_log)}.jsonl"
             log = AuditLog(
@@ -356,6 +345,7 @@ class TestAuditLog:
 # =============================================================================
 # PARAMS LOADER TESTS
 # =============================================================================
+
 
 class TestParamsLoader:
     """Tests for params loading."""
@@ -395,6 +385,7 @@ class TestParamsLoader:
 # =============================================================================
 # MAPPING LOADER TESTS
 # =============================================================================
+
 
 class TestMappingLoader:
     """Tests for mapping loading."""
@@ -445,6 +436,7 @@ class TestMappingLoader:
 # =============================================================================
 # INTEGRATION TESTS
 # =============================================================================
+
 
 class TestGovernanceIntegration:
     """Integration tests for governance module."""

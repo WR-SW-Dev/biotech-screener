@@ -8,11 +8,6 @@ Tests that the pipeline handles:
 - Edge cases (NaN, None, zero values)
 - PIT enforcement
 """
-import pytest
-from decimal import Decimal
-from pathlib import Path
-import json
-import tempfile
 
 from module_1_universe import compute_module_1_universe
 from module_2_financial import compute_module_2_financial
@@ -87,6 +82,7 @@ class TestErrorHandlingModule2:
     def test_empty_financial_records(self):
         """Handle empty financial data."""
         import os
+
         # Disable validation for this edge case test
         os.environ["IC_VALIDATION_MODE"] = "off"
         try:
@@ -122,8 +118,7 @@ class TestErrorHandlingModule2:
     def test_zero_burn_rate(self):
         """Zero burn rate should not cause division by zero."""
         records = [
-            {"ticker": "NOBURN", "cash_mm": 500, "debt_mm": 0,
-             "burn_rate_mm": 0, "source_date": "2023-12-30"},
+            {"ticker": "NOBURN", "cash_mm": 500, "debt_mm": 0, "burn_rate_mm": 0, "source_date": "2023-12-30"},
         ]
         result = compute_module_2_financial(records, ["NOBURN"], "2024-01-01")
 
@@ -157,8 +152,7 @@ class TestErrorHandlingModule4:
     def test_invalid_phase(self):
         """Handle trials with invalid phase string."""
         records = [
-            {"ticker": "BADPHASE", "nct_id": "NCT123",
-             "phase": "invalid_phase", "status": "recruiting"},
+            {"ticker": "BADPHASE", "nct_id": "NCT123", "phase": "invalid_phase", "status": "recruiting"},
         ]
         result = compute_module_4_clinical_dev(records, ["BADPHASE"], "2024-01-01")
 
@@ -178,8 +172,7 @@ class TestErrorHandlingModule5:
 
         # validate_inputs=False for minimal test fixtures
         result = compute_module_5_composite(
-            universe, financial, catalyst, clinical, "2024-01-01",
-            validate_inputs=False
+            universe, financial, catalyst, clinical, "2024-01-01", validate_inputs=False
         )
 
         assert result["ranked_securities"] == []
@@ -189,13 +182,12 @@ class TestErrorHandlingModule5:
         """Handle when some modules have no scores for a ticker."""
         universe = {"active_securities": [{"ticker": "TEST"}]}
         financial = {"scores": []}  # No financial data
-        catalyst = {"scores": []}   # No catalyst data
-        clinical = {"scores": []}   # No clinical data
+        catalyst = {"scores": []}  # No catalyst data
+        clinical = {"scores": []}  # No clinical data
 
         # validate_inputs=False for minimal test fixtures
         result = compute_module_5_composite(
-            universe, financial, catalyst, clinical, "2024-01-01",
-            validate_inputs=False
+            universe, financial, catalyst, clinical, "2024-01-01", validate_inputs=False
         )
 
         # Should still rank with available data (with uncertainty penalty)
@@ -205,12 +197,8 @@ class TestErrorHandlingModule5:
     def test_mismatched_tickers(self):
         """Handle when modules have different tickers."""
         universe = {"active_securities": [{"ticker": "A"}, {"ticker": "B"}]}
-        financial = {
-            "scores": [{"ticker": "A", "financial_score": "70", "severity": "none", "flags": []}]
-        }
-        catalyst = {
-            "scores": [{"ticker": "B", "catalyst_score": "50", "severity": "none", "flags": []}]
-        }
+        financial = {"scores": [{"ticker": "A", "financial_score": "70", "severity": "none", "flags": []}]}
+        catalyst = {"scores": [{"ticker": "B", "catalyst_score": "50", "severity": "none", "flags": []}]}
         clinical = {
             "scores": [
                 {"ticker": "A", "clinical_score": "60", "lead_phase": "phase 2", "severity": "none", "flags": []},
@@ -220,8 +208,7 @@ class TestErrorHandlingModule5:
 
         # validate_inputs=False for minimal test fixtures
         result = compute_module_5_composite(
-            universe, financial, catalyst, clinical, "2024-01-01",
-            validate_inputs=False
+            universe, financial, catalyst, clinical, "2024-01-01", validate_inputs=False
         )
 
         # Both should be ranked but with penalties for missing data
@@ -237,9 +224,7 @@ class TestPITEnforcement:
             {"ticker": "PAST", "cash_mm": 100, "source_date": "2023-12-30"},
             {"ticker": "FUTURE", "cash_mm": 200, "source_date": "2024-01-02"},
         ]
-        result = compute_module_2_financial(
-            records, ["PAST", "FUTURE"], "2024-01-01"
-        )
+        result = compute_module_2_financial(records, ["PAST", "FUTURE"], "2024-01-01")
 
         scored_tickers = [s["ticker"] for s in result["scores"] if s.get("cash_mm")]
         assert "PAST" in scored_tickers or len([s for s in result["scores"] if s["ticker"] == "PAST"]) > 0
@@ -261,9 +246,7 @@ class TestEdgeCases:
         ]
         result = compute_module_1_universe(records, "2024-01-01")
 
-        # Should not crash, deduplicate somehow
-        active_tickers = [s["ticker"] for s in result["active_securities"]]
-        # Either one DUP or both, but no crash
+        # Should not crash — either one DUP or both is acceptable
         assert result is not None
 
     def test_special_characters_in_ticker(self):
@@ -291,36 +274,32 @@ class TestEdgeCases:
         """Ensure Decimal precision is maintained."""
         universe = {"active_securities": [{"ticker": "PREC"}]}
         financial = {
-            "scores": [{
-                "ticker": "PREC",
-                "financial_score": "67.123456789",  # High precision
-                "market_cap_mm": "1234.5678",
-                "severity": "none",
-                "flags": []
-            }]
+            "scores": [
+                {
+                    "ticker": "PREC",
+                    "financial_score": "67.123456789",  # High precision
+                    "market_cap_mm": "1234.5678",
+                    "severity": "none",
+                    "flags": [],
+                }
+            ]
         }
-        catalyst = {
-            "scores": [{
-                "ticker": "PREC",
-                "catalyst_score": "45.987654321",
-                "severity": "none",
-                "flags": []
-            }]
-        }
+        catalyst = {"scores": [{"ticker": "PREC", "catalyst_score": "45.987654321", "severity": "none", "flags": []}]}
         clinical = {
-            "scores": [{
-                "ticker": "PREC",
-                "clinical_score": "78.111111111",
-                "lead_phase": "phase 2",
-                "severity": "none",
-                "flags": []
-            }]
+            "scores": [
+                {
+                    "ticker": "PREC",
+                    "clinical_score": "78.111111111",
+                    "lead_phase": "phase 2",
+                    "severity": "none",
+                    "flags": [],
+                }
+            ]
         }
 
         # validate_inputs=False for minimal test fixtures
         result = compute_module_5_composite(
-            universe, financial, catalyst, clinical, "2024-01-01",
-            validate_inputs=False
+            universe, financial, catalyst, clinical, "2024-01-01", validate_inputs=False
         )
 
         # Should maintain precision (at least 2 decimal places)
@@ -348,33 +327,35 @@ class TestDeterminism:
 
     def test_ordering_is_stable(self):
         """Output ordering should be stable across runs."""
-        universe = {"active_securities": [
-            {"ticker": "Z"}, {"ticker": "A"}, {"ticker": "M"}
-        ]}
-        financial = {"scores": [
-            {"ticker": "Z", "financial_score": "50", "market_cap_mm": "5000", "severity": "none", "flags": []},
-            {"ticker": "A", "financial_score": "50", "market_cap_mm": "5000", "severity": "none", "flags": []},
-            {"ticker": "M", "financial_score": "50", "market_cap_mm": "5000", "severity": "none", "flags": []},
-        ]}
-        catalyst = {"scores": [
-            {"ticker": "Z", "catalyst_score": "50", "severity": "none", "flags": []},
-            {"ticker": "A", "catalyst_score": "50", "severity": "none", "flags": []},
-            {"ticker": "M", "catalyst_score": "50", "severity": "none", "flags": []},
-        ]}
-        clinical = {"scores": [
-            {"ticker": "Z", "clinical_score": "50", "lead_phase": "phase 2", "severity": "none", "flags": []},
-            {"ticker": "A", "clinical_score": "50", "lead_phase": "phase 2", "severity": "none", "flags": []},
-            {"ticker": "M", "clinical_score": "50", "lead_phase": "phase 2", "severity": "none", "flags": []},
-        ]}
+        universe = {"active_securities": [{"ticker": "Z"}, {"ticker": "A"}, {"ticker": "M"}]}
+        financial = {
+            "scores": [
+                {"ticker": "Z", "financial_score": "50", "market_cap_mm": "5000", "severity": "none", "flags": []},
+                {"ticker": "A", "financial_score": "50", "market_cap_mm": "5000", "severity": "none", "flags": []},
+                {"ticker": "M", "financial_score": "50", "market_cap_mm": "5000", "severity": "none", "flags": []},
+            ]
+        }
+        catalyst = {
+            "scores": [
+                {"ticker": "Z", "catalyst_score": "50", "severity": "none", "flags": []},
+                {"ticker": "A", "catalyst_score": "50", "severity": "none", "flags": []},
+                {"ticker": "M", "catalyst_score": "50", "severity": "none", "flags": []},
+            ]
+        }
+        clinical = {
+            "scores": [
+                {"ticker": "Z", "clinical_score": "50", "lead_phase": "phase 2", "severity": "none", "flags": []},
+                {"ticker": "A", "clinical_score": "50", "lead_phase": "phase 2", "severity": "none", "flags": []},
+                {"ticker": "M", "clinical_score": "50", "lead_phase": "phase 2", "severity": "none", "flags": []},
+            ]
+        }
 
         # validate_inputs=False for minimal test fixtures
         result1 = compute_module_5_composite(
-            universe, financial, catalyst, clinical, "2024-01-01",
-            validate_inputs=False
+            universe, financial, catalyst, clinical, "2024-01-01", validate_inputs=False
         )
         result2 = compute_module_5_composite(
-            universe, financial, catalyst, clinical, "2024-01-01",
-            validate_inputs=False
+            universe, financial, catalyst, clinical, "2024-01-01", validate_inputs=False
         )
 
         # Ordering should be identical (all tied scores, sorted by ticker)

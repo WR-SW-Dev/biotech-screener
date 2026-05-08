@@ -91,14 +91,16 @@ def get_latest_screen_results(top_n: int = 20) -> str:
         meta = data.get("run_metadata", {})
         summary = data.get("summary", {})
 
-        return json.dumps({
-            "as_of_date": meta.get("as_of_date", "unknown"),
-            "total_ranked": len(ranked),
-            "total_evaluated": summary.get("total_evaluated"),
-            "regime": summary.get("regime"),
-            "top_n": top_n,
-            "results": top,
-        })
+        return json.dumps(
+            {
+                "as_of_date": meta.get("as_of_date", "unknown"),
+                "total_ranked": len(ranked),
+                "total_evaluated": summary.get("total_evaluated"),
+                "regime": summary.get("regime"),
+                "top_n": top_n,
+                "results": top,
+            }
+        )
     except Exception as e:
         logger.exception("get_latest_screen_results failed")
         return json.dumps({"error": str(e)})
@@ -122,10 +124,12 @@ def get_ticker_detail(ticker: str) -> str:
         match = [r for r in ranked if r.get("ticker", "").upper() == ticker.upper()]
 
         if not match:
-            return json.dumps({
-                "ticker": ticker,
-                "error": f"Ticker {ticker} not found in screen results",
-            })
+            return json.dumps(
+                {
+                    "ticker": ticker,
+                    "error": f"Ticker {ticker} not found in screen results",
+                }
+            )
 
         rec = match[0]
         # Serialise Decimal-like objects

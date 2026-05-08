@@ -1,4 +1,5 @@
 """Tests for replay bundle packaging and verification."""
+
 from __future__ import annotations
 
 import csv
@@ -39,12 +40,7 @@ from tools.make_replay_bundle import (
     _stable_json,
     make_replay_bundle,
 )
-from tools.replay_bundle import (
-    extract_bundle,
-    verify_bundle_integrity,
-    verify_invariants,
-)
-
+from tools.replay_bundle import extract_bundle, verify_bundle_integrity, verify_invariants
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -118,27 +114,35 @@ def _make_synthetic_snapshot(
     tickers = [f"TK{i:02d}" for i in range(1, n_tickers + 1)]
     rows = []
     for i, ticker in enumerate(tickers):
-        rows.append({
-            "ticker": ticker,
-            "company_name": f"Company {ticker}",
-            "actionable_rank": str(i + 1),
-            "target_weight_pct": str(round(100 / n_tickers, 2)),
-            "tier_dev": "A" if i < 5 else "B",
-        })
+        rows.append(
+            {
+                "ticker": ticker,
+                "company_name": f"Company {ticker}",
+                "actionable_rank": str(i + 1),
+                "target_weight_pct": str(round(100 / n_tickers, 2)),
+                "tier_dev": "A" if i < 5 else "B",
+            }
+        )
     _write_csv(date_dir / "rankings.csv", rows)
 
     # Cache health
-    _write_json(date_dir / "cache_health.json", {
-        "schema": "cache_health.v1",
-        "overall_status": "ok",
-    })
+    _write_json(
+        date_dir / "cache_health.json",
+        {
+            "schema": "cache_health.v1",
+            "overall_status": "ok",
+        },
+    )
 
     # Decision portfolio (contains ruleset_path provenance)
-    _write_json(date_dir / "decision_portfolio.json", {
-        "ruleset_id": "test1234",
-        "ruleset_path": "production_data/decision_rulesets/v1.0.0_test.json",
-        "n_securities": n_tickers,
-    })
+    _write_json(
+        date_dir / "decision_portfolio.json",
+        {
+            "ruleset_id": "test1234",
+            "ruleset_path": "production_data/decision_rulesets/v1.0.0_test.json",
+            "n_securities": n_tickers,
+        },
+    )
 
     return date_dir
 
@@ -151,10 +155,13 @@ def _make_project_structure(root: Path, as_of_date: str = "2026-01-15") -> None:
 
     # Price history (tiny)
     price_path = root / "production_data" / "price_history.csv"
-    _write_csv(price_path, [
-        {"date": as_of_date, "ticker": "TK01", "close": "10.0"},
-        {"date": as_of_date, "ticker": "TK02", "close": "20.0"},
-    ])
+    _write_csv(
+        price_path,
+        [
+            {"date": as_of_date, "ticker": "TK01", "close": "10.0"},
+            {"date": as_of_date, "ticker": "TK02", "close": "20.0"},
+        ],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -308,9 +315,7 @@ class TestMakeReplayBundle:
 
         extract_dir = tmp_path / "extracted"
         bundle_dir = extract_bundle(out, extract_dir)
-        topk = json.loads(
-            (bundle_dir / "replay" / "expected" / "topk_tickers.json").read_text()
-        )
+        topk = json.loads((bundle_dir / "replay" / "expected" / "topk_tickers.json").read_text())
         assert topk["top_k"] == 5
         assert len(topk["tickers"]) == 5
         assert topk["tickers"][0] == "TK01"
@@ -332,9 +337,7 @@ class TestMakeReplayBundle:
 
         extract_dir = tmp_path / "extracted"
         bundle_dir = extract_bundle(out, extract_dir)
-        fp = json.loads(
-            (bundle_dir / "replay" / "expected" / "metadata_fingerprint.json").read_text()
-        )
+        fp = json.loads((bundle_dir / "replay" / "expected" / "metadata_fingerprint.json").read_text())
         assert "fingerprint_sha256" in fp
         assert len(fp["fingerprint_sha256"]) == 64
         assert fp["keys"] == FINGERPRINT_KEYS
@@ -412,10 +415,13 @@ class TestMakeReplayBundle:
         _make_project_structure(root, "2026-01-15")
 
         # Create cache refresh sidecar
-        _write_json(root / "cache" / "cache_refresh_2026-01-15.json", {
-            "schema": "cache_refresh.v1",
-            "results": [],
-        })
+        _write_json(
+            root / "cache" / "cache_refresh_2026-01-15.json",
+            {
+                "schema": "cache_refresh.v1",
+                "results": [],
+            },
+        )
 
         out = tmp_path / "bundle.tgz"
         make_replay_bundle("2026-01-15", snap_dir, out, top_k=5, project_root=root)
@@ -433,9 +439,12 @@ class TestMakeReplayBundle:
         # Create SEC 8-K cache file
         sec_dir = root / "cache" / "sec" / "8k_catalysts"
         sec_dir.mkdir(parents=True)
-        _write_json(sec_dir / "8k_catalysts_2026-01-15_abcd1234.json", [
-            {"ticker": "TK01", "event": "8-K"},
-        ])
+        _write_json(
+            sec_dir / "8k_catalysts_2026-01-15_abcd1234.json",
+            [
+                {"ticker": "TK01", "event": "8-K"},
+            ],
+        )
 
         out = tmp_path / "bundle.tgz"
         make_replay_bundle("2026-01-15", snap_dir, out, top_k=5, project_root=root)
@@ -606,12 +615,18 @@ class TestMakeBundleCLI:
     def test_missing_snapshot_exits_1(self, tmp_path):
         from tools.make_replay_bundle import main
 
-        rc = main([
-            "--as-of-date", "2099-01-01",
-            "--snapshot-dir", str(tmp_path / "nonexistent"),
-            "--out", str(tmp_path / "out.tgz"),
-            "--project-root", str(tmp_path),
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2099-01-01",
+                "--snapshot-dir",
+                str(tmp_path / "nonexistent"),
+                "--out",
+                str(tmp_path / "out.tgz"),
+                "--project-root",
+                str(tmp_path),
+            ]
+        )
         assert rc == 1
 
     def test_valid_snapshot_exits_0(self, tmp_path):
@@ -622,13 +637,20 @@ class TestMakeBundleCLI:
 
         from tools.make_replay_bundle import main
 
-        rc = main([
-            "--as-of-date", "2026-01-15",
-            "--snapshot-dir", str(snap_dir),
-            "--out", str(tmp_path / "out.tgz"),
-            "--project-root", str(root),
-            "--top-k", "3",
-        ])
+        rc = main(
+            [
+                "--as-of-date",
+                "2026-01-15",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--out",
+                str(tmp_path / "out.tgz"),
+                "--project-root",
+                str(root),
+                "--top-k",
+                "3",
+            ]
+        )
         assert rc == 0
         assert (tmp_path / "out.tgz").exists()
 
@@ -651,10 +673,14 @@ class TestReplayBundleCLI:
 
         from tools.replay_bundle import main
 
-        rc = main([
-            "--bundle", str(bundle_path),
-            "--workdir", str(tmp_path / "work"),
-        ])
+        rc = main(
+            [
+                "--bundle",
+                str(bundle_path),
+                "--workdir",
+                str(tmp_path / "work"),
+            ]
+        )
         assert rc == 0
 
 

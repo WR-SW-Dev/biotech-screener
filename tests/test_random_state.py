@@ -12,13 +12,14 @@ Covers:
 """
 
 import pytest
+
 from common.random_state import (
     DeterministicRNG,
     RNGAudit,
+    _sha256_hex,
     derive_base_seed,
     derive_component_seed_int,
     to_uint32,
-    _sha256_hex,
 )
 
 
@@ -342,12 +343,9 @@ class TestNumpyIntegration:
         rng = DeterministicRNG("seed", "ctx")
         np_rng = rng.numpy()
         # Either numpy is available and returns Generator, or None
-        assert np_rng is None or hasattr(np_rng, 'random')
+        assert np_rng is None or hasattr(np_rng, "random")
 
-    @pytest.mark.skipif(
-        not DeterministicRNG("s", "c")._np,
-        reason="NumPy not available"
-    )
+    @pytest.mark.skipif(not DeterministicRNG("s", "c")._np, reason="NumPy not available")
     def test_numpy_deterministic(self):
         """numpy RNG should be deterministic when available."""
         rng1 = DeterministicRNG("seed", "ctx")

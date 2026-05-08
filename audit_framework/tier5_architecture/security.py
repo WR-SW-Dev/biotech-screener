@@ -17,11 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from audit_framework.types import (
-    AuditResult,
-    AuditSeverity,
-    ValidationCategory,
-)
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass
@@ -76,25 +72,25 @@ class SecurityValidator:
         (r'password\s*[=:]\s*["\'][^"\']+["\']', "Hardcoded password"),
         (r'secret\s*[=:]\s*["\'][^"\']{16,}["\']', "Hardcoded secret"),
         (r'token\s*[=:]\s*["\'][^"\']{20,}["\']', "Hardcoded token"),
-        (r'aws[_-]?secret[_-]?access[_-]?key', "AWS secret key"),
-        (r'AKIA[0-9A-Z]{16}', "AWS access key ID"),
+        (r"aws[_-]?secret[_-]?access[_-]?key", "AWS secret key"),
+        (r"AKIA[0-9A-Z]{16}", "AWS access key ID"),
     ]
 
     # Patterns for injection risks
     INJECTION_PATTERNS: List[tuple] = [
-        (r'subprocess\.(call|run|Popen)\([^)]*\+', "Command injection risk"),
-        (r'os\.system\([^)]*\+', "OS command injection"),
-        (r'eval\s*\(', "Dangerous eval usage"),
-        (r'exec\s*\(', "Dangerous exec usage"),
-        (r'\.format\([^)]*user|\.format\([^)]*input', "Format string injection"),
+        (r"subprocess\.(call|run|Popen)\([^)]*\+", "Command injection risk"),
+        (r"os\.system\([^)]*\+", "OS command injection"),
+        (r"eval\s*\(", "Dangerous eval usage"),
+        (r"exec\s*\(", "Dangerous exec usage"),
+        (r"\.format\([^)]*user|\.format\([^)]*input", "Format string injection"),
         (r'f["\'][^"\']*\{[^}]*user[^}]*\}', "F-string with user input"),
     ]
 
     # Patterns for SQL injection
     SQL_PATTERNS: List[tuple] = [
-        (r'execute\([^)]*%s[^)]*%', "SQL injection via string formatting"),
-        (r'execute\([^)]*\+', "SQL injection via concatenation"),
-        (r'cursor\.execute\([^)]*\.format', "SQL injection via format"),
+        (r"execute\([^)]*%s[^)]*%", "SQL injection via string formatting"),
+        (r"execute\([^)]*\+", "SQL injection via concatenation"),
+        (r"cursor\.execute\([^)]*\.format", "SQL injection via format"),
     ]
 
     def __init__(self, codebase_path: str):
@@ -116,7 +112,7 @@ class SecurityValidator:
 
         for pattern, description in self.SECRET_PATTERNS:
             for match in re.finditer(pattern, content, re.IGNORECASE):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
                 # Skip if it's in a comment or looks like a placeholder
@@ -125,15 +121,17 @@ class SecurityValidator:
                 if any(p in snippet.lower() for p in ["example", "placeholder", "xxx", "your_"]):
                     continue
 
-                findings.append(SecurityFinding(
-                    file_path=rel_path,
-                    line_number=line_num,
-                    finding_type="exposed_secret",
-                    severity="critical",
-                    description=description,
-                    code_snippet=snippet.strip()[:60] + "...",
-                    recommendation="Use environment variables or secret management service",
-                ))
+                findings.append(
+                    SecurityFinding(
+                        file_path=rel_path,
+                        line_number=line_num,
+                        finding_type="exposed_secret",
+                        severity="critical",
+                        description=description,
+                        code_snippet=snippet.strip()[:60] + "...",
+                        recommendation="Use environment variables or secret management service",
+                    )
+                )
 
         return findings
 
@@ -153,40 +151,44 @@ class SecurityValidator:
         # Check command injection
         for pattern, description in self.INJECTION_PATTERNS:
             for match in re.finditer(pattern, content, re.IGNORECASE):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
                 if snippet.strip().startswith("#"):
                     continue
 
-                findings.append(SecurityFinding(
-                    file_path=rel_path,
-                    line_number=line_num,
-                    finding_type="injection_risk",
-                    severity="high",
-                    description=description,
-                    code_snippet=snippet.strip()[:60],
-                    recommendation="Use parameterized commands or input sanitization",
-                ))
+                findings.append(
+                    SecurityFinding(
+                        file_path=rel_path,
+                        line_number=line_num,
+                        finding_type="injection_risk",
+                        severity="high",
+                        description=description,
+                        code_snippet=snippet.strip()[:60],
+                        recommendation="Use parameterized commands or input sanitization",
+                    )
+                )
 
         # Check SQL injection
         for pattern, description in self.SQL_PATTERNS:
             for match in re.finditer(pattern, content, re.IGNORECASE):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 snippet = lines[line_num - 1] if line_num <= len(lines) else ""
 
                 if snippet.strip().startswith("#"):
                     continue
 
-                findings.append(SecurityFinding(
-                    file_path=rel_path,
-                    line_number=line_num,
-                    finding_type="sql_injection",
-                    severity="critical",
-                    description=description,
-                    code_snippet=snippet.strip()[:60],
-                    recommendation="Use parameterized queries",
-                ))
+                findings.append(
+                    SecurityFinding(
+                        file_path=rel_path,
+                        line_number=line_num,
+                        finding_type="sql_injection",
+                        severity="critical",
+                        description=description,
+                        code_snippet=snippet.strip()[:60],
+                        recommendation="Use parameterized queries",
+                    )
+                )
 
         return findings
 
@@ -295,9 +297,7 @@ class SecurityValidator:
 
         # Count by type
         secrets_exposed = sum(1 for f in all_findings if f.finding_type == "exposed_secret")
-        injection_risks = sum(
-            1 for f in all_findings if f.finding_type in ["injection_risk", "sql_injection"]
-        )
+        injection_risks = sum(1 for f in all_findings if f.finding_type in ["injection_risk", "sql_injection"])
 
         # Calculate score
         score = 100
@@ -308,10 +308,7 @@ class SecurityValidator:
         score += 10 if has_audit_logging else 0
         score = max(0, min(100, score))
 
-        passed = (
-            sum(1 for f in all_findings if f.severity == "critical") == 0
-            and score >= 70
-        )
+        passed = sum(1 for f in all_findings if f.severity == "critical") == 0 and score >= 70
 
         return SecurityReport(
             findings=all_findings,
@@ -356,9 +353,9 @@ def validate_security(codebase_path: str) -> AuditResult:
     # Add findings
     for finding in report.findings:
         severity = (
-            AuditSeverity.CRITICAL if finding.severity == "critical"
-            else AuditSeverity.HIGH if finding.severity == "high"
-            else AuditSeverity.MEDIUM
+            AuditSeverity.CRITICAL
+            if finding.severity == "critical"
+            else AuditSeverity.HIGH if finding.severity == "high" else AuditSeverity.MEDIUM
         )
 
         result.add_finding(

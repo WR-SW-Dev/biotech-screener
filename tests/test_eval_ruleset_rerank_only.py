@@ -1,26 +1,21 @@
 """Tests for rerank-only evaluation mode."""
+
 from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pytest
-import sys
 
 _root = str(Path(__file__).resolve().parent.parent)
 if _root not in sys.path:
     sys.path.insert(0, _root)
 
 from decision_engine import DecisionRuleset
-from scripts.eval_ruleset import (
-    compute_top_shifts,
-    evaluate_ruleset_rerank_only,
-    rerank_rows,
-    main,
-)
-
+from scripts.eval_ruleset import compute_top_shifts, evaluate_ruleset_rerank_only, main, rerank_rows
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -67,10 +62,13 @@ def _make_snapshot(
     d.mkdir(parents=True, exist_ok=True)
     _write_csv(d / "rankings.csv", rows)
     if degraded:
-        _write_json(d / "cache_health.json", {
-            "overall_status": "bad",
-            "degraded_run": True,
-        })
+        _write_json(
+            d / "cache_health.json",
+            {
+                "overall_status": "bad",
+                "degraded_run": True,
+            },
+        )
     return d
 
 
@@ -78,11 +76,13 @@ def _minimal_rows(tickers: List[str], eligible: bool = True) -> List[Dict[str, s
     """Create minimal rankings rows with only ticker + eligible + tier_dev."""
     rows = []
     for i, t in enumerate(tickers):
-        rows.append({
-            "ticker": t,
-            "eligible": "1" if eligible else "0",
-            "tier_dev": "A" if i < len(tickers) // 2 else "B",
-        })
+        rows.append(
+            {
+                "ticker": t,
+                "eligible": "1" if eligible else "0",
+                "tier_dev": "A" if i < len(tickers) // 2 else "B",
+            }
+        )
     return rows
 
 
@@ -91,19 +91,21 @@ def _rich_rows(tickers: List[str]) -> List[Dict[str, str]]:
     rows = []
     n = len(tickers)
     for i, t in enumerate(tickers):
-        rows.append({
-            "ticker": t,
-            "eligible": "1",
-            "archetype": "drug_developer",
-            "tier_dev": "A" if i < n // 2 else "B",
-            "composite_rank": str(i + 1),
-            # Optionality in reverse order of composite_rank
-            "clinical_optionality_pct_dev": str(round((n - i) / n, 4)),
-            "clinical_score": str(round((n - i) * 10 / n, 2)),
-            "catalyst_mode": "specific_days",
-            "catalyst_days": str(90 + i * 10),
-            "mom_state": "neutral",
-        })
+        rows.append(
+            {
+                "ticker": t,
+                "eligible": "1",
+                "archetype": "drug_developer",
+                "tier_dev": "A" if i < n // 2 else "B",
+                "composite_rank": str(i + 1),
+                # Optionality in reverse order of composite_rank
+                "clinical_optionality_pct_dev": str(round((n - i) / n, 4)),
+                "clinical_score": str(round((n - i) * 10 / n, 2)),
+                "catalyst_mode": "specific_days",
+                "catalyst_days": str(90 + i * 10),
+                "mom_state": "neutral",
+            }
+        )
     return rows
 
 
@@ -456,16 +458,25 @@ class TestCLIRerankOnly:
         rs_path = _make_ruleset_file(tmp_path / "ruleset.json")
         out_dir = tmp_path / "output"
 
-        rc = main([
-            "--candidate", str(rs_path),
-            "--baseline", str(rs_path),
-            "--start", "2026-02-10",
-            "--end", "2026-02-11",
-            "--k", "5",
-            "--snapshot-dir", str(snap_dir),
-            "--out-dir", str(out_dir),
-            "--rerank-only",
-        ])
+        rc = main(
+            [
+                "--candidate",
+                str(rs_path),
+                "--baseline",
+                str(rs_path),
+                "--start",
+                "2026-02-10",
+                "--end",
+                "2026-02-11",
+                "--k",
+                "5",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--out-dir",
+                str(out_dir),
+                "--rerank-only",
+            ]
+        )
         assert rc == 0
 
         json_files = list(out_dir.glob("**/ruleset_eval.json"))
@@ -491,22 +502,29 @@ class TestCLIRerankOnly:
         rs_path = _make_ruleset_file(tmp_path / "ruleset.json")
         out_dir = tmp_path / "output"
 
-        rc = main([
-            "--candidate", str(rs_path),
-            "--baseline", str(rs_path),
-            "--start", "2026-02-10",
-            "--end", "2026-02-11",
-            "--k", "5",
-            "--snapshot-dir", str(snap_dir),
-            "--out-dir", str(out_dir),
-            "--rerank-only",
-            "--gate",
-        ])
+        rc = main(
+            [
+                "--candidate",
+                str(rs_path),
+                "--baseline",
+                str(rs_path),
+                "--start",
+                "2026-02-10",
+                "--end",
+                "2026-02-11",
+                "--k",
+                "5",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--out-dir",
+                str(out_dir),
+                "--rerank-only",
+                "--gate",
+            ]
+        )
         assert rc == 0
 
-        data = json.loads(
-            list(out_dir.glob("**/ruleset_eval.json"))[0].read_text()
-        )
+        data = json.loads(list(out_dir.glob("**/ruleset_eval.json"))[0].read_text())
         assert data["gate"]["verdict"] == "PASS"
 
     def test_rerank_only_no_dates_exits_1(self, tmp_path):
@@ -516,12 +534,19 @@ class TestCLIRerankOnly:
 
         rs_path = _make_ruleset_file(tmp_path / "ruleset.json")
 
-        rc = main([
-            "--candidate", str(rs_path),
-            "--start", "2099-01-01",
-            "--end", "2099-12-31",
-            "--snapshot-dir", str(snap_dir),
-            "--out-dir", str(tmp_path / "out"),
-            "--rerank-only",
-        ])
+        rc = main(
+            [
+                "--candidate",
+                str(rs_path),
+                "--start",
+                "2099-01-01",
+                "--end",
+                "2099-12-31",
+                "--snapshot-dir",
+                str(snap_dir),
+                "--out-dir",
+                str(tmp_path / "out"),
+                "--rerank-only",
+            ]
+        )
         assert rc == 1

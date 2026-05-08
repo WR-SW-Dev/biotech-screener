@@ -11,35 +11,28 @@ These tests cover:
 - Penalty application (apply_penalty, apply_multiplier)
 """
 
-import pytest
 from decimal import Decimal
 
-from common.score_utils import (
-    # Type conversion
-    to_decimal,
-    to_float_safe,
-    # Score clamping
+import pytest
+
+from common.score_utils import (  # Type conversion; Score clamping; Score normalization; Score aggregation; Penalty application; Validation; Constants; Piecewise-linear interpolation
+    DEFAULT_MAX_SCORE,
+    DEFAULT_MIN_SCORE,
+    SCORE_PRECISION,
+    apply_multiplier,
+    apply_penalty,
+    clamp_all_scores,
+    clamp_in_place,
     clamp_score,
     clamp_weight,
-    clamp_in_place,
-    clamp_all_scores,
-    # Score normalization
-    normalize_to_range,
-    rank_normalize,
-    # Score aggregation
-    weighted_average,
     hybrid_aggregate,
-    # Penalty application
-    apply_penalty,
-    apply_multiplier,
-    # Validation
-    validate_score_bounds,
-    # Constants
-    DEFAULT_MIN_SCORE,
-    DEFAULT_MAX_SCORE,
-    SCORE_PRECISION,
-    # Piecewise-linear interpolation
+    normalize_to_range,
     piecewise_lerp,
+    rank_normalize,
+    to_decimal,
+    to_float_safe,
+    validate_score_bounds,
+    weighted_average,
 )
 
 
@@ -242,8 +235,7 @@ class TestNormalizeToRange:
     def test_custom_output_range(self):
         """Custom output range should be respected."""
         result = normalize_to_range(
-            500, input_min=0, input_max=1000,
-            output_min=Decimal("20"), output_max=Decimal("80")
+            500, input_min=0, input_max=1000, output_min=Decimal("20"), output_max=Decimal("80")
         )
         assert result == Decimal("50.00")  # Midpoint of 20-80 is 50
 
@@ -275,7 +267,7 @@ class TestRankNormalize:
         """Basic ranking should work."""
         values = [10, 20, 30]
         result = rank_normalize(values)
-        assert result[0] == Decimal("0.00")   # Lowest
+        assert result[0] == Decimal("0.00")  # Lowest
         assert result[2] == Decimal("100.00")  # Highest
 
     def test_handles_ties(self):
@@ -534,10 +526,7 @@ class TestValidateScoreBounds:
 
     def test_custom_score_name(self):
         """Custom score name should appear in error."""
-        is_valid, error = validate_score_bounds(
-            Decimal("-10"),
-            score_name="clinical_score"
-        )
+        is_valid, error = validate_score_bounds(Decimal("-10"), score_name="clinical_score")
         assert "clinical_score" in error
 
 

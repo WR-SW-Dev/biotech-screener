@@ -29,8 +29,7 @@ import urllib.request
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -84,9 +83,9 @@ def fetch_url(url: str, timeout: int = 30) -> bytes:
     request = urllib.request.Request(
         url,
         headers={
-            'User-Agent': 'Mozilla/5.0 (compatible; WakeRobinDataFeed/1.0)',
-            'Accept': 'text/plain,*/*;q=0.8',
-        }
+            "User-Agent": "Mozilla/5.0 (compatible; WakeRobinDataFeed/1.0)",
+            "Accept": "text/plain,*/*;q=0.8",
+        },
     )
 
     with urllib.request.urlopen(request, timeout=timeout, context=ctx) as response:
@@ -126,7 +125,7 @@ def download_finra_short_volume(
 
             # Save raw file
             output_file = output_dir / f"{trade_date.isoformat()}.txt"
-            with open(output_file, 'wb') as f:
+            with open(output_file, "wb") as f:
                 f.write(data)
 
             # Compute hash
@@ -147,7 +146,7 @@ def download_finra_short_volume(
                 "download_version": __version__,
             }
 
-            with open(meta_file, 'w') as f:
+            with open(meta_file, "w") as f:
                 json.dump(meta, f, indent=2)
 
             return {
@@ -156,7 +155,7 @@ def download_finra_short_volume(
                 "file_path": str(output_file),
                 "sha256": data_hash,
                 "source_url": url,
-                "records_hint": data.count(b'\n'),
+                "records_hint": data.count(b"\n"),
             }
 
         except urllib.error.HTTPError as e:
@@ -178,10 +177,7 @@ def download_finra_short_volume(
     }
 
 
-def parse_finra_short_volume_file(
-    file_path: Path,
-    trade_date: date
-) -> List[Dict[str, Any]]:
+def parse_finra_short_volume_file(file_path: Path, trade_date: date) -> List[Dict[str, Any]]:
     """
     Parse a FINRA daily short volume file into records.
 
@@ -193,22 +189,22 @@ def parse_finra_short_volume_file(
     """
     records = []
 
-    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
     # Detect delimiter
-    if '|' in content[:500]:
-        delimiter = '|'
+    if "|" in content[:500]:
+        delimiter = "|"
     else:
-        delimiter = ','
+        delimiter = ","
 
-    lines = content.strip().split('\n')
+    lines = content.strip().split("\n")
 
     # Find header row
     header_idx = 0
     for i, line in enumerate(lines):
         lower = line.lower()
-        if 'symbol' in lower or 'date' in lower:
+        if "symbol" in lower or "date" in lower:
             header_idx = i
             break
 
@@ -224,14 +220,14 @@ def parse_finra_short_volume_file(
                 return header.index(n)
         return -1
 
-    idx_date = find_col(['DATE', 'TRADEDATE'])
-    idx_symbol = find_col(['SYMBOL', 'TICKER'])
-    idx_short = find_col(['SHORTVOLUME', 'SHORT_VOLUME', 'SHORTVOL'])
-    idx_exempt = find_col(['SHORTEXEMPTVOLUME', 'SHORT_EXEMPT_VOLUME', 'EXEMPTVOLUME'])
-    idx_total = find_col(['TOTALVOLUME', 'TOTAL_VOLUME', 'TOTALVOL'])
-    idx_market = find_col(['MARKET', 'MARKETCENTER', 'EXCHANGE'])
+    idx_date = find_col(["DATE", "TRADEDATE"])
+    idx_symbol = find_col(["SYMBOL", "TICKER"])
+    idx_short = find_col(["SHORTVOLUME", "SHORT_VOLUME", "SHORTVOL"])
+    idx_exempt = find_col(["SHORTEXEMPTVOLUME", "SHORT_EXEMPT_VOLUME", "EXEMPTVOLUME"])
+    idx_total = find_col(["TOTALVOLUME", "TOTAL_VOLUME", "TOTALVOL"])
+    idx_market = find_col(["MARKET", "MARKETCENTER", "EXCHANGE"])
 
-    for line in lines[header_idx + 1:]:
+    for line in lines[header_idx + 1 :]:
         if not line.strip():
             continue
 
@@ -247,8 +243,8 @@ def parse_finra_short_volume_file(
             def parse_int(idx, default=0):
                 if idx < 0 or idx >= len(parts):
                     return default
-                val = parts[idx].strip().replace(',', '')
-                if not val or val == '-':
+                val = parts[idx].strip().replace(",", "")
+                if not val or val == "-":
                     return default
                 try:
                     return int(float(val))
@@ -307,10 +303,7 @@ def get_available_trade_dates() -> List[date]:
 
 
 def compute_short_volume_stats(
-    records_by_date: Dict[date, List[Dict[str, Any]]],
-    symbol: str,
-    as_of_date: date,
-    lookback_days: int = 20
+    records_by_date: Dict[date, List[Dict[str, Any]]], symbol: str, as_of_date: date, lookback_days: int = 20
 ) -> Dict[str, Any]:
     """
     Compute rolling short volume statistics for a symbol.
@@ -335,12 +328,14 @@ def compute_short_volume_stats(
         if current in records_by_date:
             for rec in records_by_date[current]:
                 if rec["symbol"].upper() == symbol:
-                    data_points.append({
-                        "date": current,
-                        "short_vol_ratio": rec["short_vol_ratio"],
-                        "short_volume": rec["short_volume"],
-                        "total_volume": rec["total_volume"],
-                    })
+                    data_points.append(
+                        {
+                            "date": current,
+                            "short_vol_ratio": rec["short_vol_ratio"],
+                            "short_volume": rec["short_volume"],
+                            "total_volume": rec["total_volume"],
+                        }
+                    )
                     break
         current = prev_business_day(current)
         dates_checked += 1
@@ -363,7 +358,7 @@ def compute_short_volume_stats(
     # Compute std dev
     if len(ratios) > 1 and avg_ratio is not None:
         variance = sum((r - avg_ratio) ** 2 for r in ratios) / len(ratios)
-        std_ratio = variance ** 0.5
+        std_ratio = variance**0.5
     else:
         std_ratio = None
 

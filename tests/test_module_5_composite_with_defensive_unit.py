@@ -10,25 +10,26 @@ Tests production wrapper for Module 5 with defensive overlays:
 - Feature flag handling
 """
 
-import pytest
+import sys
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, Any
-import sys
+from typing import Any, Dict
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from module_5_composite_with_defensive import (
-    compute_module_5_composite_with_defensive,
-    _apply_sanity_overrides,
     DEFAULT_UNIVERSE_PATHS,
     __version__,
+    _apply_sanity_overrides,
+    compute_module_5_composite_with_defensive,
 )
-
 
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def as_of_date():
@@ -129,6 +130,7 @@ def sample_clinical_result():
 # VERSION AND EXPORTS TESTS
 # ============================================================================
 
+
 class TestVersionAndExports:
     """Tests for module version and exports."""
 
@@ -145,6 +147,7 @@ class TestVersionAndExports:
 # ============================================================================
 # BASIC FUNCTIONALITY TESTS
 # ============================================================================
+
 
 class TestBasicFunctionality:
     """Tests for basic wrapper functionality."""
@@ -194,7 +197,9 @@ class TestBasicFunctionality:
 
         assert "ranked_securities" in result
 
-    @pytest.mark.skip(reason="V1 scoring requires legacy fixture schema (pre-v2 field names); code path still exists as fallback but fixtures are v2+")
+    @pytest.mark.skip(
+        reason="V1 scoring requires legacy fixture schema (pre-v2 field names); code path still exists as fallback but fixtures are v2+"
+    )
     def test_basic_scoring_v1(
         self,
         as_of_date,
@@ -221,6 +226,7 @@ class TestBasicFunctionality:
 # ============================================================================
 # SCORING MODE SELECTION TESTS
 # ============================================================================
+
 
 class TestScoringModeSelection:
     """Tests for scoring mode selection."""
@@ -251,6 +257,7 @@ class TestScoringModeSelection:
 # ============================================================================
 # SANITY OVERRIDE TESTS
 # ============================================================================
+
 
 class TestSanityOverride:
     """Tests for sanity override mechanism."""
@@ -288,6 +295,7 @@ class TestSanityOverride:
 # ============================================================================
 # DEFENSIVE OVERLAY TESTS
 # ============================================================================
+
 
 class TestDefensiveOverlay:
     """Tests for defensive overlay integration."""
@@ -341,6 +349,7 @@ class TestDefensiveOverlay:
 # DETERMINISM TESTS
 # ============================================================================
 
+
 class TestDeterminism:
     """Tests verifying deterministic behavior."""
 
@@ -371,12 +380,16 @@ class TestDeterminism:
             assert len(results[0]["ranked_securities"]) == len(results[i]["ranked_securities"])
             for j in range(len(results[0]["ranked_securities"])):
                 assert results[0]["ranked_securities"][j]["ticker"] == results[i]["ranked_securities"][j]["ticker"]
-                assert results[0]["ranked_securities"][j]["composite_score"] == results[i]["ranked_securities"][j]["composite_score"]
+                assert (
+                    results[0]["ranked_securities"][j]["composite_score"]
+                    == results[i]["ranked_securities"][j]["composite_score"]
+                )
 
 
 # ============================================================================
 # ENHANCEMENT RESULT TESTS
 # ============================================================================
+
 
 class TestEnhancementResult:
     """Tests for enhancement result handling."""
@@ -412,6 +425,7 @@ class TestEnhancementResult:
 # ============================================================================
 # EDGE CASE TESTS
 # ============================================================================
+
 
 class TestEdgeCases:
     """Edge case tests for the defensive wrapper."""
@@ -452,7 +466,15 @@ class TestEdgeCases:
         }
         single_catalyst = {"summaries": {"ONLY": {"scores": {"score_blended": "60"}}}}
         single_clinical = {
-            "scores": [{"ticker": "ONLY", "clinical_score": "65", "lead_phase": "phase 2", "trial_count": 1, "severity": "none"}],
+            "scores": [
+                {
+                    "ticker": "ONLY",
+                    "clinical_score": "65",
+                    "lead_phase": "phase 2",
+                    "trial_count": 1,
+                    "severity": "none",
+                }
+            ],
         }
 
         result = compute_module_5_composite_with_defensive(

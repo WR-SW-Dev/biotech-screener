@@ -9,25 +9,25 @@ Tests the momentum signal calculation improvements:
 - PIT integrity requirements
 """
 
-import unittest
-from decimal import Decimal
-from datetime import date
-
 import sys
+import unittest
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.modules.ic_enhancements import (
-    compute_momentum_signal,
-    compute_momentum_signal_with_fallback,
-    compute_alpha_for_score_delta,
-    MomentumSignal,
-    MultiWindowMomentumInput,
-    MOMENTUM_SLOPE,
-    MOMENTUM_SCORE_MIN,
     MOMENTUM_SCORE_MAX,
+    MOMENTUM_SCORE_MIN,
+    MOMENTUM_SLOPE,
     MOMENTUM_STRONG_THRESHOLD,
     VOLATILITY_BASELINE,
+    MomentumSignal,
+    MultiWindowMomentumInput,
+    compute_alpha_for_score_delta,
+    compute_momentum_signal,
+    compute_momentum_signal_with_fallback,
 )
 
 
@@ -326,13 +326,13 @@ class TestMomentumSignalDataclass(unittest.TestCase):
             benchmark_return_60d=Decimal("0.05"),
             annualized_vol=Decimal("0.50"),
         )
-        self.assertTrue(hasattr(result, 'momentum_score'))
-        self.assertTrue(hasattr(result, 'alpha_60d'))
-        self.assertTrue(hasattr(result, 'alpha_vol_adjusted'))
-        self.assertTrue(hasattr(result, 'return_60d'))
-        self.assertTrue(hasattr(result, 'benchmark_return_60d'))
-        self.assertTrue(hasattr(result, 'confidence'))
-        self.assertTrue(hasattr(result, 'data_completeness'))
+        self.assertTrue(hasattr(result, "momentum_score"))
+        self.assertTrue(hasattr(result, "alpha_60d"))
+        self.assertTrue(hasattr(result, "alpha_vol_adjusted"))
+        self.assertTrue(hasattr(result, "return_60d"))
+        self.assertTrue(hasattr(result, "benchmark_return_60d"))
+        self.assertTrue(hasattr(result, "confidence"))
+        self.assertTrue(hasattr(result, "data_completeness"))
 
 
 class TestZeroBenchmarkFalsyBug(unittest.TestCase):
@@ -363,10 +363,10 @@ class TestZeroBenchmarkFalsyBug(unittest.TestCase):
         )
 
         # CRITICAL: alpha should be computed, not None
-        self.assertIsNotNone(result.alpha_60d, (
-            "alpha_60d is None when benchmark=0.0! "
-            "This is the falsy bug: 0.0 is being treated as missing data."
-        ))
+        self.assertIsNotNone(
+            result.alpha_60d,
+            ("alpha_60d is None when benchmark=0.0! " "This is the falsy bug: 0.0 is being treated as missing data."),
+        )
 
         # Alpha should equal stock return (10% - 0% = 10%)
         self.assertEqual(result.alpha_60d, Decimal("0.1000"))
@@ -524,9 +524,9 @@ class TestMultiWindowMomentumFallback(unittest.TestCase):
         """Should only use window if both stock and benchmark available."""
         inputs = MultiWindowMomentumInput(
             return_60d=Decimal("0.10"),  # Stock has 60d
-            benchmark_60d=None,           # But no XBI 60d
-            return_20d=Decimal("0.05"),   # Stock has 20d
-            benchmark_20d=Decimal("0.02"), # XBI has 20d
+            benchmark_60d=None,  # But no XBI 60d
+            return_20d=Decimal("0.05"),  # Stock has 20d
+            benchmark_20d=Decimal("0.02"),  # XBI has 20d
         )
         result = compute_momentum_signal_with_fallback(inputs)
 
@@ -1162,7 +1162,8 @@ class TestVolatilityAdjustment(unittest.TestCase):
     """Tests for volatility-based adjustment calculation."""
 
     def setUp(self):
-        from src.modules.ic_enhancements import compute_volatility_adjustment, VolatilityBucket
+        from src.modules.ic_enhancements import VolatilityBucket, compute_volatility_adjustment
+
         self.compute_volatility_adjustment = compute_volatility_adjustment
         self.VolatilityBucket = VolatilityBucket
 
@@ -1230,10 +1231,8 @@ class TestApplyVolatilityToScore(unittest.TestCase):
     """Tests for applying volatility adjustment to scores."""
 
     def setUp(self):
-        from src.modules.ic_enhancements import (
-            apply_volatility_to_score,
-            compute_volatility_adjustment,
-        )
+        from src.modules.ic_enhancements import apply_volatility_to_score, compute_volatility_adjustment
+
         self.apply_volatility_to_score = apply_volatility_to_score
         self.compute_volatility_adjustment = compute_volatility_adjustment
 
@@ -1267,10 +1266,11 @@ class TestCatalystDecay(unittest.TestCase):
 
     def setUp(self):
         from src.modules.ic_enhancements import (
-            compute_catalyst_decay,
-            apply_catalyst_decay,
             CATALYST_OPTIMAL_WINDOW_DAYS,
+            apply_catalyst_decay,
+            compute_catalyst_decay,
         )
+
         self.compute_catalyst_decay = compute_catalyst_decay
         self.apply_catalyst_decay = apply_catalyst_decay
         self.optimal_window = CATALYST_OPTIMAL_WINDOW_DAYS
@@ -1358,6 +1358,7 @@ class TestSmartMoneySignal(unittest.TestCase):
 
     def setUp(self):
         from src.modules.ic_enhancements import compute_smart_money_signal
+
         self.compute_smart_money_signal = compute_smart_money_signal
 
     def test_empty_holders(self):
@@ -1459,10 +1460,8 @@ class TestInteractionTerms(unittest.TestCase):
     """Tests for non-linear interaction terms calculation."""
 
     def setUp(self):
-        from src.modules.ic_enhancements import (
-            compute_interaction_terms,
-            compute_volatility_adjustment,
-        )
+        from src.modules.ic_enhancements import compute_interaction_terms, compute_volatility_adjustment
+
         self.compute_interaction_terms = compute_interaction_terms
         self.compute_volatility_adjustment = compute_volatility_adjustment
 
@@ -1562,6 +1561,7 @@ class TestShrinkageNormalize(unittest.TestCase):
 
     def setUp(self):
         from src.modules.ic_enhancements import shrinkage_normalize
+
         self.shrinkage_normalize = shrinkage_normalize
 
     def test_empty_list(self):
@@ -1620,10 +1620,8 @@ class TestRegimeSignalImportance(unittest.TestCase):
     """Tests for regime-specific signal importance."""
 
     def setUp(self):
-        from src.modules.ic_enhancements import (
-            get_regime_signal_importance,
-            apply_regime_to_weights,
-        )
+        from src.modules.ic_enhancements import apply_regime_to_weights, get_regime_signal_importance
+
         self.get_regime_signal_importance = get_regime_signal_importance
         self.apply_regime_to_weights = apply_regime_to_weights
 
@@ -1681,6 +1679,7 @@ class TestValuationSignal(unittest.TestCase):
 
     def setUp(self):
         from src.modules.ic_enhancements import compute_valuation_signal
+
         self.compute_valuation_signal = compute_valuation_signal
 
     def test_missing_market_cap(self):
@@ -1755,13 +1754,8 @@ class TestHelperFunctions(unittest.TestCase):
     """Tests for internal helper functions."""
 
     def setUp(self):
-        from src.modules.ic_enhancements import (
-            _to_decimal,
-            _quantize_score,
-            _clamp,
-            _safe_divide,
-            _stage_bucket,
-        )
+        from src.modules.ic_enhancements import _clamp, _quantize_score, _safe_divide, _stage_bucket, _to_decimal
+
         self._to_decimal = _to_decimal
         self._quantize_score = _quantize_score
         self._clamp = _clamp
@@ -1913,9 +1907,15 @@ class TestSmartMoneyV4Fixes(unittest.TestCase):
 
         # Build holder lists of increasing size (all tier1 for simplicity)
         tier1_names = [
-            "Baker Bros", "OrbiMed", "RA Capital", "Foresite Capital",
-            "Perceptive Advisors", "Redmile Group", "Cormorant Asset",
-            "RTW Investments", "Deerfield Management",
+            "Baker Bros",
+            "OrbiMed",
+            "RA Capital",
+            "Foresite Capital",
+            "Perceptive Advisors",
+            "Redmile Group",
+            "Cormorant Asset",
+            "RTW Investments",
+            "Deerfield Management",
         ]
 
         scores = []
@@ -1932,10 +1932,7 @@ class TestSmartMoneyV4Fixes(unittest.TestCase):
         for i in range(len(scores) - 1):
             n1, s1 = scores[i]
             n2, s2 = scores[i + 1]
-            self.assertLessEqual(
-                s1, s2,
-                f"Score should not decrease: {n1} holders ({s1}) vs {n2} holders ({s2})"
-            )
+            self.assertLessEqual(s1, s2, f"Score should not decrease: {n1} holders ({s1}) vs {n2} holders ({s2})")
 
     def test_smart_money_high_overlap_reaches_high_score(self):
         """
@@ -1945,9 +1942,15 @@ class TestSmartMoneyV4Fixes(unittest.TestCase):
         from src.modules.ic_enhancements import compute_smart_money_signal
 
         tier1_names = [
-            "Baker Bros", "OrbiMed", "RA Capital", "Foresite Capital",
-            "Perceptive Advisors", "Redmile Group", "Cormorant Asset",
-            "RTW Investments", "Deerfield Management",
+            "Baker Bros",
+            "OrbiMed",
+            "RA Capital",
+            "Foresite Capital",
+            "Perceptive Advisors",
+            "Redmile Group",
+            "Cormorant Asset",
+            "RTW Investments",
+            "Deerfield Management",
         ]
 
         result = compute_smart_money_signal(
@@ -1959,8 +1962,7 @@ class TestSmartMoneyV4Fixes(unittest.TestCase):
 
         # Should be in the 70-80 range, not compressed to 50-60
         self.assertGreaterEqual(
-            float(result.smart_money_score), 70.0,
-            f"9 tier1 holders should score >=70, got {result.smart_money_score}"
+            float(result.smart_money_score), 70.0, f"9 tier1 holders should score >=70, got {result.smart_money_score}"
         )
 
     def test_smart_money_conditional_cap_preserved(self):
@@ -1973,8 +1975,12 @@ class TestSmartMoneyV4Fixes(unittest.TestCase):
         # Mix of elite and conditional
         elite_names = ["Baker Bros", "OrbiMed", "RA Capital"]
         conditional_names = [
-            "Millennium Management", "D.E. Shaw", "Two Sigma",
-            "Renaissance Technologies", "Citadel", "Balyasny Asset Management",
+            "Millennium Management",
+            "D.E. Shaw",
+            "Two Sigma",
+            "Renaissance Technologies",
+            "Citadel",
+            "Balyasny Asset Management",
         ]
 
         result = compute_smart_money_signal(
@@ -1997,15 +2003,14 @@ class TestSmartMoneyV4Fixes(unittest.TestCase):
         self.assertLessEqual(
             float(result.smart_money_score),
             float(all_elite_result.smart_money_score),
-            "Mixed elite+conditional should not exceed all-elite score"
+            "Mixed elite+conditional should not exceed all-elite score",
         )
 
 
 class TestEnhancedSmartMoneySignalContinuity(unittest.TestCase):
     """Tests that compute_enhanced_smart_money_signal_v2 produces continuous scores."""
 
-    def _make_coinvest(self, conviction=0.0, overlap=0, tier1_count=0,
-                       max_tier1_pct=None, increasing=0, decreasing=0):
+    def _make_coinvest(self, conviction=0.0, overlap=0, tier1_count=0, max_tier1_pct=None, increasing=0, decreasing=0):
         """Helper to build coinvest_data dict."""
         holders = [f"Fund_{i}" for i in range(overlap)]
         changes = {}
@@ -2035,21 +2040,19 @@ class TestEnhancedSmartMoneySignalContinuity(unittest.TestCase):
         scores = []
         for conv in [0.0, 0.5, 1.0, 2.0, 4.0, 8.0]:
             data = self._make_coinvest(conviction=conv, overlap=max(1, int(conv)))
-            result = compute_enhanced_smart_money_signal_v2(
-                data, "pivotal", "small", cohort_stats=None)
+            result = compute_enhanced_smart_money_signal_v2(data, "pivotal", "small", cohort_stats=None)
             scores.append((conv, float(result["score"])))
 
         for i in range(len(scores) - 1):
             c1, s1 = scores[i]
             c2, s2 = scores[i + 1]
-            self.assertLessEqual(
-                s1, s2,
-                f"Score should not decrease: conviction {c1} ({s1}) vs {c2} ({s2})")
+            self.assertLessEqual(s1, s2, f"Score should not decrease: conviction {c1} ({s1}) vs {c2} ({s2})")
 
     def test_uniqueness_with_varied_conviction(self):
         """200 evenly spaced conviction values should produce >100 unique scores."""
-        from module_5_scoring_v3 import compute_enhanced_smart_money_signal_v2
         from decimal import Decimal
+
+        from module_5_scoring_v3 import compute_enhanced_smart_money_signal_v2
 
         # Build cohort stats so z-score actually differentiates
         cohort_stats = {("pivotal", "small"): (Decimal("2.0"), Decimal("1.5"))}
@@ -2058,34 +2061,28 @@ class TestEnhancedSmartMoneySignalContinuity(unittest.TestCase):
         for i in range(200):
             conv = i * 0.05  # 0.0 to 10.0
             data = self._make_coinvest(
-                conviction=conv, overlap=max(1, int(conv)),
-                max_tier1_pct=conv * 0.3 if conv > 0 else None)
-            result = compute_enhanced_smart_money_signal_v2(
-                data, "pivotal", "small", cohort_stats=cohort_stats)
+                conviction=conv, overlap=max(1, int(conv)), max_tier1_pct=conv * 0.3 if conv > 0 else None
+            )
+            result = compute_enhanced_smart_money_signal_v2(data, "pivotal", "small", cohort_stats=cohort_stats)
             scores.append(float(result["score"]))
 
         n_unique = len(set(scores))
-        self.assertGreater(
-            n_unique, 100,
-            f"Expected >100 unique scores from 200 inputs, got {n_unique}")
+        self.assertGreater(n_unique, 100, f"Expected >100 unique scores from 200 inputs, got {n_unique}")
 
     def test_tier1_pct_continuous_boost(self):
         """max_tier1_position_pct piecewise-linear mapping correctness."""
         from module_5_scoring_v3 import compute_enhanced_smart_money_signal_v2
 
         def _boost(pct):
-            data = self._make_coinvest(
-                conviction=2.0, overlap=2, tier1_count=1,
-                max_tier1_pct=pct)
-            result = compute_enhanced_smart_money_signal_v2(
-                data, "pivotal", "small", cohort_stats=None)
+            data = self._make_coinvest(conviction=2.0, overlap=2, tier1_count=1, max_tier1_pct=pct)
+            result = compute_enhanced_smart_money_signal_v2(data, "pivotal", "small", cohort_stats=None)
             return Decimal(result["tier1_boost"])
 
         # Breakpoint correctness
-        self.assertEqual(_boost(1.0), Decimal("2.5"))   # Pct=1.0 → exactly 2.5
-        self.assertEqual(_boost(3.0), Decimal("7.5"))   # Pct=3.0 → exactly 7.5
-        self.assertEqual(_boost(5.0), Decimal("15"))    # Pct=5.0 → capped at 15
-        self.assertEqual(_boost(7.0), Decimal("15"))    # Pct=7.0 → still capped
+        self.assertEqual(_boost(1.0), Decimal("2.5"))  # Pct=1.0 → exactly 2.5
+        self.assertEqual(_boost(3.0), Decimal("7.5"))  # Pct=3.0 → exactly 7.5
+        self.assertEqual(_boost(5.0), Decimal("15"))  # Pct=5.0 → capped at 15
+        self.assertEqual(_boost(7.0), Decimal("15"))  # Pct=7.0 → still capped
 
         # Midpoint interpolation
         mid = _boost(2.0)  # midpoint of [1,3] segment: 2.5 + 0.5*(7.5-2.5) = 5.0
@@ -2094,18 +2091,14 @@ class TestEnhancedSmartMoneySignalContinuity(unittest.TestCase):
         # Monotonicity within continuous path
         boosts = [_boost(pct) for pct in [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]]
         for i in range(len(boosts) - 1):
-            self.assertLessEqual(
-                boosts[i], boosts[i + 1],
-                f"Boost should be monotonically non-decreasing")
+            self.assertLessEqual(boosts[i], boosts[i + 1], f"Boost should be monotonically non-decreasing")
 
     def test_tier1_pct_fallback(self):
         """When max_tier1_position_pct is None, falls back to count-based boost."""
         from module_5_scoring_v3 import compute_enhanced_smart_money_signal_v2
 
-        data = self._make_coinvest(conviction=2.0, overlap=2, tier1_count=2,
-                                   max_tier1_pct=None)
-        result = compute_enhanced_smart_money_signal_v2(
-            data, "pivotal", "small", cohort_stats=None)
+        data = self._make_coinvest(conviction=2.0, overlap=2, tier1_count=2, max_tier1_pct=None)
+        result = compute_enhanced_smart_money_signal_v2(data, "pivotal", "small", cohort_stats=None)
         # Fallback: 2 * 2.5 = 5.0
         self.assertEqual(Decimal(result["tier1_boost"]), Decimal("5"))
 
@@ -2114,30 +2107,38 @@ class TestEnhancedSmartMoneySignalContinuity(unittest.TestCase):
         from module_5_scoring_v3 import compute_enhanced_smart_money_signal_v2
 
         data = self._make_coinvest(conviction=0.0, overlap=0)
-        result = compute_enhanced_smart_money_signal_v2(
-            data, "pivotal", "small", cohort_stats=None)
+        result = compute_enhanced_smart_money_signal_v2(data, "pivotal", "small", cohort_stats=None)
         score = float(result["score"])
-        self.assertAlmostEqual(score, 50.0, delta=5.0,
-                               msg=f"Zero-data score should be near 50, got {score}")
+        self.assertAlmostEqual(score, 50.0, delta=5.0, msg=f"Zero-data score should be near 50, got {score}")
 
     def test_schema_preserved(self):
         """Output dict must contain all expected keys."""
         from module_5_scoring_v3 import compute_enhanced_smart_money_signal_v2
 
-        data = self._make_coinvest(conviction=3.0, overlap=3, tier1_count=1,
-                                   max_tier1_pct=2.0)
-        result = compute_enhanced_smart_money_signal_v2(
-            data, "poc", "small", cohort_stats=None)
+        data = self._make_coinvest(conviction=3.0, overlap=3, tier1_count=1, max_tier1_pct=2.0)
+        result = compute_enhanced_smart_money_signal_v2(data, "poc", "small", cohort_stats=None)
         required_keys = {
-            "score", "weight", "confidence", "tier1_count", "tier1_holders",
-            "increasing_holders", "decreasing_holders", "overlap_count",
-            "conviction_metric", "cohort_z_score", "cohort_key", "base_score",
-            "tier1_boost", "increase_boost", "decrease_penalty", "final_score",
+            "score",
+            "weight",
+            "confidence",
+            "tier1_count",
+            "tier1_holders",
+            "increasing_holders",
+            "decreasing_holders",
+            "overlap_count",
+            "conviction_metric",
+            "cohort_z_score",
+            "cohort_key",
+            "base_score",
+            "tier1_boost",
+            "increase_boost",
+            "decrease_penalty",
+            "final_score",
             "flags",
         }
         self.assertTrue(
-            required_keys.issubset(set(result.keys())),
-            f"Missing keys: {required_keys - set(result.keys())}")
+            required_keys.issubset(set(result.keys())), f"Missing keys: {required_keys - set(result.keys())}"
+        )
 
 
 class TestMomentumV4Fixes(unittest.TestCase):
@@ -2148,11 +2149,9 @@ class TestMomentumV4Fixes(unittest.TestCase):
         After V4 log-dampening fix, we should not have scores clustering at 92.75.
         With slope=80 and log-dampening, extreme alphas are differentiated but dampened.
         """
-        from src.modules.ic_enhancements import (
-            compute_momentum_signal_multiwindow,
-            MultiWindowMomentumInput,
-        )
         from decimal import Decimal
+
+        from src.modules.ic_enhancements import MultiWindowMomentumInput, compute_momentum_signal_multiwindow
 
         # Test with extreme alpha (100% return vs 0% benchmark)
         inputs = MultiWindowMomentumInput(
@@ -2168,32 +2167,22 @@ class TestMomentumV4Fixes(unittest.TestCase):
 
         # Should NOT be exactly 92.75 (old ceiling)
         self.assertNotAlmostEqual(
-            float(result.momentum_score), 92.75,
-            places=1,
-            msg="Score should not be at old 92.75 ceiling"
+            float(result.momentum_score), 92.75, places=1, msg="Score should not be at old 92.75 ceiling"
         )
 
         # With V4 slope=80: 100% alpha is dampened and scaled appropriately
         # Score should be high (>75) but not at old ceiling
-        self.assertGreater(
-            float(result.momentum_score), 75.0,
-            "Extreme positive alpha should score >75"
-        )
-        self.assertLess(
-            float(result.momentum_score), 93.0,
-            "Score should not be at old ceiling cluster"
-        )
+        self.assertGreater(float(result.momentum_score), 75.0, "Extreme positive alpha should score >75")
+        self.assertLess(float(result.momentum_score), 93.0, "Score should not be at old ceiling cluster")
 
     def test_momentum_differentiation_at_extremes(self):
         """
         Different extreme alphas should produce different scores (not cluster).
         This is the key V4 fix - log-dampening preserves differentiation.
         """
-        from src.modules.ic_enhancements import (
-            compute_momentum_signal_multiwindow,
-            MultiWindowMomentumInput,
-        )
         from decimal import Decimal
+
+        from src.modules.ic_enhancements import MultiWindowMomentumInput, compute_momentum_signal_multiwindow
 
         def score_for_alpha(alpha: str) -> float:
             inputs = MultiWindowMomentumInput(
@@ -2218,8 +2207,7 @@ class TestMomentumV4Fixes(unittest.TestCase):
 
         # Verify differentiation (not all clustered at same score)
         self.assertGreater(
-            score_60 - score_30, 2.0,
-            "There should be meaningful differentiation between 30% and 60% alpha"
+            score_60 - score_30, 2.0, "There should be meaningful differentiation between 30% and 60% alpha"
         )
 
 

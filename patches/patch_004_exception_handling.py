@@ -24,17 +24,18 @@ import logging
 import traceback
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
 class ExceptionRecord:
     """Record of a caught exception."""
+
     location: str
     exception_type: str
     message: str
@@ -113,8 +114,7 @@ class ExceptionAccumulator:
             ctx_str = ", ".join(f"{k}={v}" for k, v in (context or {}).items())
             logger.log(
                 self.log_level,
-                f"{self.context}: {record.exception_type}: {record.message}"
-                f"{f' [{ctx_str}]' if ctx_str else ''}"
+                f"{self.context}: {record.exception_type}: {record.message}" f"{f' [{ctx_str}]' if ctx_str else ''}",
             )
 
     def increment_processed(self, count: int = 1) -> None:
@@ -217,10 +217,7 @@ def safe_decimal_convert(
 
     except (InvalidOperation, ValueError, TypeError) as e:
         if context:
-            logger.debug(
-                f"Failed to convert {context}={value!r} to Decimal: {e}. "
-                f"Using default={default}"
-            )
+            logger.debug(f"Failed to convert {context}={value!r} to Decimal: {e}. " f"Using default={default}")
         return default
 
 
@@ -264,9 +261,7 @@ def safe_divide(
         return default
 
 
-def log_exception(
-    func: Callable[..., T]
-) -> Callable[..., T]:
+def log_exception(func: Callable[..., T]) -> Callable[..., T]:
     """
     Decorator that logs exceptions before re-raising.
 
@@ -277,6 +272,7 @@ def log_exception(
         def calculate_score(record):
             ...
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> T:
         try:
@@ -306,6 +302,7 @@ def with_fallback(
         def calculate_correlation(prices):
             ...
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         def wrapper(*args, **kwargs) -> T:
@@ -314,9 +311,7 @@ def with_fallback(
             except Exception as e:
                 if log_errors:
                     ctx = context or func.__name__
-                    logger.warning(
-                        f"{ctx}: {type(e).__name__}: {e}. Using default={default}"
-                    )
+                    logger.warning(f"{ctx}: {type(e).__name__}: {e}. Using default={default}")
                 return default
 
         return wrapper
@@ -328,9 +323,8 @@ def with_fallback(
 # FIXED defensive_overlay_adapter.sanitize_corr
 # =============================================================================
 
-def sanitize_corr_fixed(
-    defensive_features: Dict[str, str]
-) -> tuple[Optional[Decimal], List[str]]:
+
+def sanitize_corr_fixed(defensive_features: Dict[str, str]) -> tuple[Optional[Decimal], List[str]]:
     """
     Fixed version of sanitize_corr that logs errors instead of swallowing them.
 
@@ -357,10 +351,7 @@ def sanitize_corr_fixed(
         corr = Decimal(str(corr_s))
     except (InvalidOperation, ValueError, TypeError) as e:
         # Log the actual error instead of just swallowing it
-        logger.debug(
-            f"Failed to parse correlation value '{corr_s}': "
-            f"{type(e).__name__}: {e}"
-        )
+        logger.debug(f"Failed to parse correlation value '{corr_s}': " f"{type(e).__name__}: {e}")
         flags.append(f"def_corr_parse_fail:{type(e).__name__}")
         return None, flags
 
@@ -386,6 +377,7 @@ def sanitize_corr_fixed(
 # =============================================================================
 # EXAMPLE: Fixed pattern for batch processing
 # =============================================================================
+
 
 def process_batch_with_error_tracking(
     records: List[Dict[str, Any]],

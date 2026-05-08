@@ -1,4 +1,5 @@
 """Tests for scripts/build_catalyst_events_pit.py — PIT-safe catalyst events."""
+
 from __future__ import annotations
 
 import json
@@ -30,14 +31,15 @@ from scripts.build_catalyst_events_pit import (
     validate_catalyst_events_schema,
 )
 
-
 # ---------------------------------------------------------------------------
 # Minimal LedgerEntry stub for testing (avoids importing event_ledger)
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class FakeLedgerEntry:
     """Minimal LedgerEntry for test fixtures."""
+
     event_id: str = "evt_001"
     ticker: str = "ACAD"
     event_type: str = "DATA_READOUT"
@@ -93,6 +95,7 @@ def _fake_query_nearest(ledger, ticker, as_of_date):
 # TestCatalystModeDerivation
 # ===================================================================
 
+
 class TestCatalystModeDerivation:
     """Catalyst mode derivation from days_to_catalyst."""
 
@@ -138,6 +141,7 @@ class TestCatalystModeDerivation:
 # TestDecayWeight
 # ===================================================================
 
+
 class TestDecayWeight:
     """Catalyst decay weight tests."""
 
@@ -165,6 +169,7 @@ class TestDecayWeight:
 # ===================================================================
 # TestDeriveFeatures
 # ===================================================================
+
 
 class TestDeriveFeatures:
     """Full feature derivation from nearest catalyst."""
@@ -202,6 +207,7 @@ class TestDeriveFeatures:
 # ===================================================================
 # TestSourceMix
 # ===================================================================
+
 
 class TestSourceMix:
     """Source mix counting tests."""
@@ -247,6 +253,7 @@ class TestSourceMix:
 # TestBuildCatalystEvents (integration with fake ledger)
 # ===================================================================
 
+
 class TestBuildCatalystEvents:
     """Integration tests using fake ledger entries."""
 
@@ -272,18 +279,23 @@ class TestBuildCatalystEvents:
         """Ledger with entries → correct per-ticker features."""
         ledger = [
             FakeLedgerEntry(
-                ticker="ACAD", event_date="2026-03-01",
-                source="SEC_8K", event_type="DATA_READOUT",
+                ticker="ACAD",
+                event_date="2026-03-01",
+                source="SEC_8K",
+                event_type="DATA_READOUT",
                 disclosed_at="2026-01-10",
             ),
             FakeLedgerEntry(
-                ticker="ACAD", event_date="2026-06-15",
-                source="CTGOV", event_type="CT_PRIMARY_COMPLETION",
+                ticker="ACAD",
+                event_date="2026-06-15",
+                source="CTGOV",
+                event_type="CT_PRIMARY_COMPLETION",
                 disclosed_at="2025-06-01",
             ),
         ]
         features = self._build_with_fake_ledger(
-            ledger, {"ACAD", "AARD"},
+            ledger,
+            {"ACAD", "AARD"},
         )
         # ACAD should have nearest catalyst at 2026-03-01
         acad = features["tickers"]["ACAD"]
@@ -308,7 +320,8 @@ class TestBuildCatalystEvents:
         """Ticker not in ledger → 'missing' mode."""
         ledger = [FakeLedgerEntry(ticker="ACAD", event_date="2026-03-01")]
         features = self._build_with_fake_ledger(
-            ledger, {"AARD"},
+            ledger,
+            {"AARD"},
         )
         assert features["tickers"]["AARD"]["catalyst_mode"] == "missing"
 
@@ -316,11 +329,14 @@ class TestBuildCatalystEvents:
         """LOW confidence events skipped by query_nearest_catalyst."""
         ledger = [
             FakeLedgerEntry(
-                ticker="ACAD", event_date="2026-03-01", confidence="LOW",
+                ticker="ACAD",
+                event_date="2026-03-01",
+                confidence="LOW",
             ),
         ]
         features = self._build_with_fake_ledger(
-            ledger, {"ACAD"},
+            ledger,
+            {"ACAD"},
         )
         assert features["tickers"]["ACAD"]["catalyst_mode"] == "missing"
 
@@ -328,16 +344,19 @@ class TestBuildCatalystEvents:
         """Multiple events same ticker → nearest selected."""
         ledger = [
             FakeLedgerEntry(
-                ticker="ACAD", event_date="2026-06-15",
+                ticker="ACAD",
+                event_date="2026-06-15",
                 event_id="far",
             ),
             FakeLedgerEntry(
-                ticker="ACAD", event_date="2026-02-01",
+                ticker="ACAD",
+                event_date="2026-02-01",
                 event_id="near",
             ),
         ]
         features = self._build_with_fake_ledger(
-            ledger, {"ACAD"},
+            ledger,
+            {"ACAD"},
         )
         acad = features["tickers"]["ACAD"]
         expected_days = (date(2026, 2, 1) - AS_OF_DATE).days
@@ -347,6 +366,7 @@ class TestBuildCatalystEvents:
 # ===================================================================
 # TestSchemaValidation
 # ===================================================================
+
 
 class TestSchemaValidation:
     """Schema validation tests."""
@@ -358,7 +378,9 @@ class TestSchemaValidation:
             side_effect=lambda lg, tk, d: _fake_query_nearest(lg, tk, d),
         ):
             features = build_catalyst_events(
-                AS_OF, {"ACAD"}, ledger=[],
+                AS_OF,
+                {"ACAD"},
+                ledger=[],
             )
         ok, reason = validate_catalyst_events_schema(features)
         assert ok, reason
@@ -370,7 +392,9 @@ class TestSchemaValidation:
             side_effect=lambda lg, tk, d: _fake_query_nearest(lg, tk, d),
         ):
             features = build_catalyst_events(
-                AS_OF, {"ACAD", "AARD"}, ledger=[],
+                AS_OF,
+                {"ACAD", "AARD"},
+                ledger=[],
             )
         n_uni = features["tickers_in_universe"]
         n_cat = features["tickers_with_catalyst"]
@@ -384,7 +408,9 @@ class TestSchemaValidation:
             side_effect=lambda lg, tk, d: _fake_query_nearest(lg, tk, d),
         ):
             features = build_catalyst_events(
-                AS_OF, {"ACAD"}, ledger=[],
+                AS_OF,
+                {"ACAD"},
+                ledger=[],
             )
         prov = features["provenance"]
         assert prov["catalyst_near_days"] == DEFAULT_CATALYST_NEAR_DAYS
@@ -398,7 +424,9 @@ class TestSchemaValidation:
             side_effect=lambda lg, tk, d: _fake_query_nearest(lg, tk, d),
         ):
             features = build_catalyst_events(
-                AS_OF, {"ACAD"}, ledger=[],
+                AS_OF,
+                {"ACAD"},
+                ledger=[],
             )
         del features["schema_version"]
         ok, reason = validate_catalyst_events_schema(features)
@@ -409,6 +437,7 @@ class TestSchemaValidation:
 # ===================================================================
 # TestEdgeCases
 # ===================================================================
+
 
 class TestEdgeCases:
     """Edge case tests."""
@@ -432,7 +461,9 @@ class TestEdgeCases:
             side_effect=lambda lg, tk, d: _fake_query_nearest(lg, tk, d),
         ):
             features = build_catalyst_events(
-                AS_OF, {"ACAD"}, ledger=ledger,
+                AS_OF,
+                {"ACAD"},
+                ledger=ledger,
             )
         assert features["tickers_with_catalyst"] == 0
 

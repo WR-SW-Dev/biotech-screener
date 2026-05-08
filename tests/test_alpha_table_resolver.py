@@ -6,6 +6,7 @@ Guards against the forward-looking alpha table leak in PIT bundles:
   - Static fallback when no per-date tables exist at all
   - Policy "never" always returns static
 """
+
 from __future__ import annotations
 
 import json
@@ -16,16 +17,12 @@ from typing import Any
 
 import pytest
 
-from common.alpha_table import (
-    check_artifact_marker,
-    resolve_alpha_table_path,
-    _find_nearest_earlier_table,
-)
-
+from common.alpha_table import _find_nearest_earlier_table, check_artifact_marker, resolve_alpha_table_path
 
 # ---------------------------------------------------------------------------
 # Minimal ruleset stub (avoids importing DecisionRuleset for unit tests)
 # ---------------------------------------------------------------------------
+
 
 class _StubRuleset:
     """Minimal ruleset with the 3 fields the resolver uses."""
@@ -51,6 +48,7 @@ class _StubRuleset:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def project_root(tmp_path: Path) -> Path:
     """Create a temp project root with static + daily alpha tables."""
@@ -58,10 +56,14 @@ def project_root(tmp_path: Path) -> Path:
     static_dir = tmp_path / "production_data" / "alpha_cohort_tables"
     static_dir.mkdir(parents=True)
     static_path = static_dir / "v1.json"
-    static_path.write_text(json.dumps({
-        "cells": {"early|near|pos": {"mean_excess_ret_6m": 0.05, "n": 10}},
-        "_build_info": {"as_of_date": "2026-02-17", "source": "static"},
-    }))
+    static_path.write_text(
+        json.dumps(
+            {
+                "cells": {"early|near|pos": {"mean_excess_ret_6m": 0.05, "n": 10}},
+                "_build_info": {"as_of_date": "2026-02-17", "source": "static"},
+            }
+        )
+    )
 
     # Daily tables
     daily_dir = static_dir / "daily"
@@ -80,15 +82,14 @@ def project_root(tmp_path: Path) -> Path:
         "sha256": _sha256_hex(daily_dir / f"v1_{dt_with_marker}.json"),
         "source": "ci_pipeline",
     }
-    (daily_dir / f"v1_{dt_with_marker}.artifact.json").write_text(
-        json.dumps(marker)
-    )
+    (daily_dir / f"v1_{dt_with_marker}.artifact.json").write_text(json.dumps(marker))
 
     return tmp_path
 
 
 def _sha256_hex(path: Path) -> str:
     import hashlib
+
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
@@ -101,11 +102,15 @@ def logger() -> logging.Logger:
 # Tests: policy = "never" → always static
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyNever:
     def test_always_returns_static(self, project_root: Path, logger: logging.Logger):
         ruleset = _StubRuleset(policy="never")
         path, source = resolve_alpha_table_path(
-            ruleset, "2024-06-28", project_root, logger,
+            ruleset,
+            "2024-06-28",
+            project_root,
+            logger,
         )
         assert source == "static"
         assert path.name == "v1.json"
@@ -114,7 +119,10 @@ class TestPolicyNever:
         """Even when a per-date table exists, policy=never returns static."""
         ruleset = _StubRuleset(policy="never")
         path, source = resolve_alpha_table_path(
-            ruleset, "2025-01-31", project_root, logger,
+            ruleset,
+            "2025-01-31",
+            project_root,
+            logger,
         )
         assert source == "static"
 
@@ -123,12 +131,16 @@ class TestPolicyNever:
 # Tests: policy = "if_missing" → prefer dated, then nearest, then static
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyIfMissing:
     def test_exact_match_with_artifact(self, project_root: Path, logger: logging.Logger):
         """Dated table with valid artifact marker → source='artifact'."""
         ruleset = _StubRuleset(policy="if_missing")
         path, source = resolve_alpha_table_path(
-            ruleset, "2025-01-31", project_root, logger,
+            ruleset,
+            "2025-01-31",
+            project_root,
+            logger,
         )
         assert source == "artifact"
         assert path.name == "v1_2025-01-31.json"
@@ -137,7 +149,10 @@ class TestPolicyIfMissing:
         """Dated table without artifact marker → source='preexisting_local'."""
         ruleset = _StubRuleset(policy="if_missing")
         path, source = resolve_alpha_table_path(
-            ruleset, "2024-06-28", project_root, logger,
+            ruleset,
+            "2024-06-28",
+            project_root,
+            logger,
         )
         assert source == "preexisting_local"
         assert path.name == "v1_2024-06-28.json"
@@ -146,7 +161,11 @@ class TestPolicyIfMissing:
         """No exact match but earlier dated tables exist → nearest earlier."""
         ruleset = _StubRuleset(policy="if_missing")
         path, source = resolve_alpha_table_path(
-            ruleset, "2024-06-30", project_root, logger, allow_rebuild=False,
+            ruleset,
+            "2024-06-30",
+            project_root,
+            logger,
+            allow_rebuild=False,
         )
         assert source == "nearest_earlier:2024-06-28"
         assert path.name == "v1_2024-06-28.json"
@@ -155,7 +174,11 @@ class TestPolicyIfMissing:
         """Nearest earlier must not select a table after as_of_date."""
         ruleset = _StubRuleset(policy="if_missing")
         path, source = resolve_alpha_table_path(
-            ruleset, "2024-06-10", project_root, logger, allow_rebuild=False,
+            ruleset,
+            "2024-06-10",
+            project_root,
+            logger,
+            allow_rebuild=False,
         )
         # No tables exist on or before 2024-06-10 → static fallback
         assert "static" in source
@@ -170,7 +193,11 @@ class TestPolicyIfMissing:
 
         ruleset = _StubRuleset(policy="if_missing")
         path, source = resolve_alpha_table_path(
-            ruleset, "2024-06-28", tmp_path, logger, allow_rebuild=False,
+            ruleset,
+            "2024-06-28",
+            tmp_path,
+            logger,
+            allow_rebuild=False,
         )
         assert source == "static_fallback"
         assert path.name == "v1.json"
@@ -180,13 +207,18 @@ class TestPolicyIfMissing:
 # Tests: allow_rebuild=False (bundle mode)
 # ---------------------------------------------------------------------------
 
+
 class TestAllowRebuildFalse:
     def test_no_rebuild_in_bundle_mode(self, project_root: Path, logger: logging.Logger):
         """With allow_rebuild=False and daily policy, should NOT attempt OOS build."""
         ruleset = _StubRuleset(policy="daily")
         # Date that doesn't have exact table → would normally rebuild
         path, source = resolve_alpha_table_path(
-            ruleset, "2024-06-30", project_root, logger, allow_rebuild=False,
+            ruleset,
+            "2024-06-30",
+            project_root,
+            logger,
+            allow_rebuild=False,
         )
         # Should fall back to nearest earlier, not rebuild
         assert source == "nearest_earlier:2024-06-28"
@@ -196,6 +228,7 @@ class TestAllowRebuildFalse:
 # ---------------------------------------------------------------------------
 # Tests: check_artifact_marker
 # ---------------------------------------------------------------------------
+
 
 class TestCheckArtifactMarker:
     def test_valid_marker(self, project_root: Path):
@@ -228,6 +261,7 @@ class TestCheckArtifactMarker:
 # Tests: _find_nearest_earlier_table
 # ---------------------------------------------------------------------------
 
+
 class TestFindNearestEarlier:
     def test_finds_nearest(self, project_root: Path):
         daily_dir = project_root / "production_data" / "alpha_cohort_tables" / "daily"
@@ -250,6 +284,7 @@ class TestFindNearestEarlier:
 # Tests: bundle pipeline integration (end-to-end with _resolve_alpha_table_for_bundle)
 # ---------------------------------------------------------------------------
 
+
 class TestBundlePipelineIntegration:
     """Verify the bundle pipeline's _resolve_alpha_table_for_bundle
     delegates to the shared resolver correctly."""
@@ -257,13 +292,15 @@ class TestBundlePipelineIntegration:
     def test_import_works(self):
         """The bundle module can import the resolver."""
         from scripts.run_screen_from_bundle import _resolve_alpha_table_for_bundle
+
         assert callable(_resolve_alpha_table_for_bundle)
 
     def test_resolver_uses_if_missing_policy(self, monkeypatch, logger: logging.Logger):
         """When policy is if_missing, dated tables are preferred."""
-        from scripts import run_screen_from_bundle as mod
-        from decision_engine import DecisionRuleset
         import dataclasses
+
+        from decision_engine import DecisionRuleset
+        from scripts import run_screen_from_bundle as mod
 
         ruleset = dataclasses.replace(
             DecisionRuleset(),

@@ -1,4 +1,5 @@
 """Golden fixture tests for SEC 8-K timing/downside extraction and diagnostics."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -6,11 +7,11 @@ from datetime import date
 import pytest
 
 from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-    _extract_timing_events,
     _extract_downside_events,
+    _extract_timing_events,
     _strip_boilerplate,
-    reset_extraction_diagnostics,
     get_extraction_diagnostics,
+    reset_extraction_diagnostics,
 )
 
 AS_OF = date(2026, 2, 28)
@@ -86,10 +87,7 @@ class TestGoldenTimingExtraction:
         assert ev["event_date_end"] == "2026-12-31"
 
     def test_pdufa_day(self):
-        text = (
-            "The FDA has assigned a PDUFA date of March 15, 2026 for "
-            "our NDA for drug candidate DEF-789."
-        )
+        text = "The FDA has assigned a PDUFA date of March 15, 2026 for " "our NDA for drug candidate DEF-789."
         events = _extract_timing_events(text, "ACME", FILING, AS_OF)
         assert len(events) >= 1
         ev = events[0]
@@ -169,10 +167,7 @@ class TestDiagnosticCounters:
         reset_extraction_diagnostics()
 
     def test_diag_counters_year_guard(self):
-        text = (
-            "The Company expects topline data in Q1 2035 from its "
-            "Phase 3 study in advanced melanoma."
-        )
+        text = "The Company expects topline data in Q1 2035 from its " "Phase 3 study in advanced melanoma."
         _extract_timing_events(text, "ACME", FILING, AS_OF)
         diag = get_extraction_diagnostics()
         assert diag["counters"]["year_guard_dropped"] > 0
@@ -180,19 +175,13 @@ class TestDiagnosticCounters:
     def test_diag_counters_staleness(self):
         # Q2 2025: year 2025 passes year guard (min=2025) but
         # end 2025-06-30 < staleness cutoff 2025-08-31
-        text = (
-            "The Company expects topline data in Q2 2025 from its "
-            "Phase 2 trial evaluating novel therapy."
-        )
+        text = "The Company expects topline data in Q2 2025 from its " "Phase 2 trial evaluating novel therapy."
         _extract_timing_events(text, "ACME", FILING, AS_OF)
         diag = get_extraction_diagnostics()
         assert diag["counters"]["staleness_dropped"] > 0
 
     def test_diag_reset_clears(self):
-        text = (
-            "The Company expects topline data in Q1 2035 from its "
-            "Phase 3 study."
-        )
+        text = "The Company expects topline data in Q1 2035 from its " "Phase 3 study."
         _extract_timing_events(text, "ACME", FILING, AS_OF)
         diag = get_extraction_diagnostics()
         assert diag["counters"]["year_guard_dropped"] > 0

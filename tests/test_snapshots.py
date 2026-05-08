@@ -16,34 +16,28 @@ from pathlib import Path
 
 import pytest
 
-from src.history.snapshots import (
-    # Quarter arithmetic
-    get_quarter_end_for_date,
+from src.history.snapshots import (  # Quarter arithmetic; Loading; Writing; Validation; Errors; Constants
+    MANIFEST_SCHEMA_VERSION,
+    SNAPSHOT_SCHEMA_VERSION,
+    SchemaValidationError,
+    SnapshotError,
     get_prior_quarter,
+    get_quarter_end_for_date,
     get_quarter_sequence,
     is_valid_quarter_end,
-    # Loading
     list_quarters,
-    load_snapshot,
     load_manifest,
-    # Writing
-    write_snapshot,
-    write_manifest,
-    # Validation
-    validate_snapshot_schema,
+    load_snapshot,
     validate_manifest_schema,
-    # Errors
-    SnapshotError,
-    SchemaValidationError,
-    # Constants
-    SNAPSHOT_SCHEMA_VERSION,
-    MANIFEST_SCHEMA_VERSION,
+    validate_snapshot_schema,
+    write_manifest,
+    write_snapshot,
 )
-
 
 # =============================================================================
 # QUARTER ARITHMETIC TESTS
 # =============================================================================
+
 
 class TestQuarterArithmetic:
     """Tests for quarter date calculations."""
@@ -143,6 +137,7 @@ class TestQuarterArithmetic:
 # SNAPSHOT SCHEMA VALIDATION TESTS
 # =============================================================================
 
+
 class TestSnapshotSchemaValidation:
     """Tests for snapshot schema validation."""
 
@@ -230,6 +225,7 @@ class TestSnapshotSchemaValidation:
 # MANIFEST SCHEMA VALIDATION TESTS
 # =============================================================================
 
+
 class TestManifestSchemaValidation:
     """Tests for manifest schema validation."""
 
@@ -273,6 +269,7 @@ class TestManifestSchemaValidation:
 # =============================================================================
 # SNAPSHOT READ/WRITE TESTS
 # =============================================================================
+
 
 class TestSnapshotReadWrite:
     """Tests for snapshot read/write operations."""
@@ -324,7 +321,7 @@ class TestSnapshotReadWrite:
         assert content.index('"a_key"') < content.index('"z_key"')
 
         # Trailing newline
-        assert content.endswith('\n')
+        assert content.endswith("\n")
 
     def test_write_snapshot_deterministic(self, tmp_path):
         """Same snapshot produces identical output."""
@@ -362,11 +359,11 @@ class TestSnapshotReadWrite:
 
         for q in quarters:
             filepath = tmp_path / f"holdings_{q.isoformat()}.json"
-            filepath.write_text('{}')
+            filepath.write_text("{}")
 
         # Also add a non-snapshot file
-        (tmp_path / "manifest.json").write_text('{}')
-        (tmp_path / "other.txt").write_text('')
+        (tmp_path / "manifest.json").write_text("{}")
+        (tmp_path / "other.txt").write_text("")
 
         result = list_quarters(tmp_path)
 
@@ -380,6 +377,7 @@ class TestSnapshotReadWrite:
 # =============================================================================
 # MANIFEST READ/WRITE TESTS
 # =============================================================================
+
 
 class TestManifestReadWrite:
     """Tests for manifest read/write operations."""
@@ -427,6 +425,7 @@ class TestManifestReadWrite:
 # INTEGRATION TESTS
 # =============================================================================
 
+
 class TestSnapshotIntegration:
     """Integration tests for snapshot system."""
 
@@ -456,8 +455,7 @@ class TestSnapshotIntegration:
             "run_id": "integration_test",
             "params": {"quarters": 3},
             "quarters": [
-                {"quarter_end": q_end.isoformat(), "sha256": h}
-                for (q_end, _), h in zip(quarters_data, hashes)
+                {"quarter_end": q_end.isoformat(), "sha256": h} for (q_end, _), h in zip(quarters_data, hashes)
             ],
             "input_hashes": [],
         }

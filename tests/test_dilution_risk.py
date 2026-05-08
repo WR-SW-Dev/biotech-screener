@@ -27,17 +27,12 @@ import pytest
 # Add parent to path for module imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from dilution_risk_engine import (
-    DilutionRiskEngine,
-    DataQualityState,
-    RiskBucket,
-    integrate_dilution_risk,
-)
-
+from dilution_risk_engine import DataQualityState, DilutionRiskEngine, RiskBucket, integrate_dilution_risk
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def engine() -> DilutionRiskEngine:
@@ -58,8 +53,8 @@ def well_funded_company(as_of_date) -> dict:
         "ticker": "FUNDED",
         "quarterly_cash": Decimal("500000000"),  # $500M
         "quarterly_burn": Decimal("-30000000"),  # $30M quarterly = $10M/month
-        "next_catalyst_date": "2026-07-15",      # 6 months away
-        "market_cap": Decimal("2000000000"),     # $2B
+        "next_catalyst_date": "2026-07-15",  # 6 months away
+        "market_cap": Decimal("2000000000"),  # $2B
         "avg_daily_volume_90d": 2_000_000,
     }
 
@@ -69,10 +64,10 @@ def underfunded_company(as_of_date) -> dict:
     """Company that will run out of cash before catalyst."""
     return {
         "ticker": "BURNING",
-        "quarterly_cash": Decimal("30000000"),   # $30M
+        "quarterly_cash": Decimal("30000000"),  # $30M
         "quarterly_burn": Decimal("-45000000"),  # $45M quarterly = $15M/month
-        "next_catalyst_date": "2026-12-15",      # 11 months away
-        "market_cap": Decimal("100000000"),      # $100M
+        "next_catalyst_date": "2026-12-15",  # 11 months away
+        "market_cap": Decimal("100000000"),  # $100M
         "avg_daily_volume_90d": 500_000,
         "shelf_capacity": Decimal("0"),
         "atm_remaining": Decimal("0"),
@@ -84,11 +79,11 @@ def company_with_atm(as_of_date) -> dict:
     """Company with ATM program providing additional capacity."""
     return {
         "ticker": "ATMUSER",
-        "quarterly_cash": Decimal("60000000"),   # $60M cash
+        "quarterly_cash": Decimal("60000000"),  # $60M cash
         "quarterly_burn": Decimal("-30000000"),  # $30M quarterly = $10M/month
-        "next_catalyst_date": "2026-06-15",      # 5 months away ($50M needed)
-        "market_cap": Decimal("400000000"),      # $400M
-        "atm_remaining": Decimal("40000000"),    # $40M ATM capacity (28M usable)
+        "next_catalyst_date": "2026-06-15",  # 5 months away ($50M needed)
+        "market_cap": Decimal("400000000"),  # $400M
+        "atm_remaining": Decimal("40000000"),  # $40M ATM capacity (28M usable)
         "atm_active": True,
         "avg_daily_volume_90d": 1_500_000,
     }
@@ -108,6 +103,7 @@ def minimal_data_company(as_of_date) -> dict:
 # ============================================================================
 # NO RISK TESTS
 # ============================================================================
+
 
 class TestNoRiskCase:
     """Tests for companies with sufficient funding."""
@@ -146,6 +142,7 @@ class TestNoRiskCase:
 # HIGH RISK TESTS
 # ============================================================================
 
+
 class TestHighRiskCase:
     """Tests for companies with significant funding gaps."""
 
@@ -182,11 +179,11 @@ class TestHighRiskCase:
         """Company with <3 month runway should have maximum risk."""
         result = engine.calculate_dilution_risk(
             ticker="IMMINENT",
-            quarterly_cash=Decimal("10000000"),    # $10M
-            quarterly_burn=Decimal("-60000000"),   # $60M quarterly = $20M/month
-            next_catalyst_date="2026-12-15",       # 11 months away
-            market_cap=Decimal("50000000"),        # $50M (tiny market cap)
-            avg_daily_volume_90d=100_000,          # Low volume
+            quarterly_cash=Decimal("10000000"),  # $10M
+            quarterly_burn=Decimal("-60000000"),  # $60M quarterly = $20M/month
+            next_catalyst_date="2026-12-15",  # 11 months away
+            market_cap=Decimal("50000000"),  # $50M (tiny market cap)
+            avg_daily_volume_90d=100_000,  # Low volume
             as_of_date=as_of_date,
         )
 
@@ -197,6 +194,7 @@ class TestHighRiskCase:
 # ============================================================================
 # MEDIUM RISK / FINANCING CAPACITY TESTS
 # ============================================================================
+
 
 class TestMediumRiskCase:
     """Tests for companies with moderate risk and financing options."""
@@ -245,6 +243,7 @@ class TestMediumRiskCase:
 # ============================================================================
 # DETERMINISM TESTS
 # ============================================================================
+
 
 class TestDeterminism:
     """Tests ensuring identical inputs produce identical outputs."""
@@ -299,6 +298,7 @@ class TestDeterminism:
 # PIT DISCIPLINE TESTS
 # ============================================================================
 
+
 class TestPITDiscipline:
     """Tests for Point-in-Time enforcement."""
 
@@ -344,6 +344,7 @@ class TestPITDiscipline:
 # ============================================================================
 # FAIL-CLOSED BEHAVIOR TESTS
 # ============================================================================
+
 
 class TestFailClosed:
     """Tests for explicit error handling on missing data."""
@@ -408,6 +409,7 @@ class TestFailClosed:
 # CONFIDENCE SCORING TESTS
 # ============================================================================
 
+
 class TestConfidenceScoring:
     """Tests for data completeness confidence scoring."""
 
@@ -463,6 +465,7 @@ class TestConfidenceScoring:
 # DATA QUALITY STATE TESTS
 # ============================================================================
 
+
 class TestDataQualityState:
     """Tests for data quality classification."""
 
@@ -511,6 +514,7 @@ class TestDataQualityState:
 # INTEGRATION TESTS
 # ============================================================================
 
+
 class TestIntegration:
     """Tests for integration with composite scoring."""
 
@@ -531,10 +535,10 @@ class TestIntegration:
         # Create extreme high risk scenario
         extreme_risk = engine.calculate_dilution_risk(
             ticker="EXTREME",
-            quarterly_cash=Decimal("5000000"),     # $5M
-            quarterly_burn=Decimal("-90000000"),   # $90M quarterly
+            quarterly_cash=Decimal("5000000"),  # $5M
+            quarterly_burn=Decimal("-90000000"),  # $90M quarterly
             next_catalyst_date="2026-12-15",
-            market_cap=Decimal("20000000"),        # $20M
+            market_cap=Decimal("20000000"),  # $20M
             avg_daily_volume_90d=10_000,
             as_of_date=as_of_date,
         )
@@ -590,6 +594,7 @@ class TestIntegration:
 # ============================================================================
 # UNIVERSE SCORING TESTS
 # ============================================================================
+
 
 class TestUniverseScoring:
     """Tests for batch scoring of universe."""
@@ -667,6 +672,7 @@ class TestUniverseScoring:
 # AUDIT TRAIL TESTS
 # ============================================================================
 
+
 class TestAuditTrail:
     """Tests for audit trail functionality."""
 
@@ -708,6 +714,7 @@ class TestAuditTrail:
 # EDGE CASE TESTS
 # ============================================================================
 
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
@@ -745,7 +752,7 @@ class TestEdgeCases:
         result = engine.calculate_dilution_risk(
             ticker="MEGACASH",
             quarterly_cash=Decimal("10000000000"),  # $10B
-            quarterly_burn=Decimal("-100000000"),   # $100M quarterly
+            quarterly_burn=Decimal("-100000000"),  # $100M quarterly
             next_catalyst_date="2026-12-15",
             market_cap=Decimal("50000000000"),
             as_of_date=as_of_date,
@@ -757,11 +764,11 @@ class TestEdgeCases:
         """Very small market cap increases dilution difficulty."""
         result = engine.calculate_dilution_risk(
             ticker="MICROCAP",
-            quarterly_cash=Decimal("5000000"),      # $5M
-            quarterly_burn=Decimal("-10000000"),    # $10M quarterly
+            quarterly_cash=Decimal("5000000"),  # $5M
+            quarterly_burn=Decimal("-10000000"),  # $10M quarterly
             next_catalyst_date="2026-12-15",
-            market_cap=Decimal("10000000"),         # $10M market cap
-            avg_daily_volume_90d=10_000,            # Low volume
+            market_cap=Decimal("10000000"),  # $10M market cap
+            avg_daily_volume_90d=10_000,  # Low volume
             as_of_date=as_of_date,
         )
 
@@ -790,7 +797,7 @@ class TestEdgeCases:
             quarterly_cash="100000000",  # String
             quarterly_burn="-25000000",  # String
             next_catalyst_date="2026-07-15",
-            market_cap="500000000",      # String
+            market_cap="500000000",  # String
             as_of_date=as_of_date,
         )
 
@@ -803,7 +810,7 @@ class TestEdgeCases:
             quarterly_cash=100000000.50,  # Float
             quarterly_burn=-25000000.25,  # Float
             next_catalyst_date="2026-07-15",
-            market_cap=500000000.0,       # Float
+            market_cap=500000000.0,  # Float
             as_of_date=as_of_date,
         )
 
@@ -813,6 +820,7 @@ class TestEdgeCases:
 # ============================================================================
 # SCORE BOUNDS TESTS
 # ============================================================================
+
 
 class TestScoreBounds:
     """Tests ensuring scores stay within valid ranges."""
@@ -841,8 +849,9 @@ class TestScoreBounds:
             )
 
             if result["dilution_risk_score"] is not None:
-                assert Decimal("0") <= result["dilution_risk_score"] <= Decimal("1"), \
-                    f"Score {result['dilution_risk_score']} out of bounds for scenario {i}"
+                assert (
+                    Decimal("0") <= result["dilution_risk_score"] <= Decimal("1")
+                ), f"Score {result['dilution_risk_score']} out of bounds for scenario {i}"
 
     def test_confidence_bounded_zero_to_one(self, engine, as_of_date):
         """Confidence should always be between 0 and 1."""
