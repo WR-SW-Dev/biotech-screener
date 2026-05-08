@@ -30,8 +30,10 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
+import statistics
 import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
@@ -90,6 +92,104 @@ def _current_git_sha() -> Optional[str]:
         return result.stdout.strip()
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return None
+
+
+COINVEST_SD_FLOOR = 0.10
+CATALYST_QUALITY_MIN_COVERAGE_PCT = 90.0
+
+
+def _safe_float_col(v: Any) -> Optional[float]:
+    if v in (None, "", "nan", "None"):
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _check_column_content(rankings_path: Path) -> List[CheckResult]:
+    """Guard against all-null or all-zero collapse in key output columns.
+
+    Checks (in order):
+      - coinvest_score_z: SD > 0.10 (collapse → selector signal flat)
+      - catalyst_quality: ≥90% of rows with has_catalyst_signal=1 must have a
+        non-blank bucket (collapse → Spec 078 classification broken)
+    """
+    checks: List[CheckResult] = []
+    try:
+        with rankings_path.open(newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    except OSError as e:
+        checks.append(CheckResult("column_content", "FAIL", f"cannot read rankings.csv: {e}"))
+        return checks
+
+    if len(rows) < 10:
+        checks.append(CheckResult("column_content", "FAIL", f"too few rows ({len(rows)}) — cannot check collapse"))
+        return checks
+
+    # coinvest_score_z SD floor
+    cz_vals = [_safe_float_col(r.get("coinvest_score_z")) for r in rows]
+    cz_vals = [v for v in cz_vals if v is not None]
+    if len(cz_vals) < 10:
+        checks.append(
+            CheckResult(
+                "coinvest_score_z_collapse",
+                "FAIL",
+                f"only {len(cz_vals)} non-null coinvest_score_z values — column may be missing",
+            )
+        )
+    else:
+        sd = statistics.stdev(cz_vals)
+        if sd <= COINVEST_SD_FLOOR:
+            checks.append(
+                CheckResult(
+                    "coinvest_score_z_collapse",
+                    "FAIL",
+                    f"sd={sd:.4f} ≤ {COINVEST_SD_FLOOR}: selector signal flat — pipeline fallback suspected",
+                )
+            )
+        else:
+            checks.append(
+                CheckResult(
+                    "coinvest_score_z_collapse",
+                    "PASS",
+                    f"sd={sd:.4f} (n={len(cz_vals)})",
+                )
+            )
+
+    # catalyst_quality coverage among tickers that have a catalyst signal
+    with_signal = [r for r in rows if r.get("has_catalyst_signal") == "1"]
+    if not with_signal:
+        checks.append(
+            CheckResult(
+                "catalyst_quality_collapse",
+                "WARN",
+                "no rows with has_catalyst_signal=1 — cannot check classification coverage",
+            )
+        )
+    else:
+        n_classified = sum(1 for r in with_signal if r.get("catalyst_quality", "") not in ("", None))
+        pct = n_classified / len(with_signal) * 100
+        if pct < CATALYST_QUALITY_MIN_COVERAGE_PCT:
+            checks.append(
+                CheckResult(
+                    "catalyst_quality_collapse",
+                    "FAIL",
+                    f"{n_classified}/{len(with_signal)} ({pct:.1f}%) classified — expected ≥{CATALYST_QUALITY_MIN_COVERAGE_PCT:.0f}% (Spec 078 broken?)",
+                    extra={"n_with_signal": len(with_signal), "n_classified": n_classified, "pct": round(pct, 1)},
+                )
+            )
+        else:
+            checks.append(
+                CheckResult(
+                    "catalyst_quality_collapse",
+                    "PASS",
+                    f"{n_classified}/{len(with_signal)} ({pct:.1f}%) catalyst rows classified",
+                    extra={"n_with_signal": len(with_signal), "n_classified": n_classified, "pct": round(pct, 1)},
+                )
+            )
+
+    return checks
 
 
 def verify(as_of_date: str, snapshot_dir: Path) -> List[CheckResult]:
@@ -247,6 +347,9 @@ def verify(as_of_date: str, snapshot_dir: Path) -> List[CheckResult]:
         results.append(CheckResult("git_sha", "WARN", "current git sha unavailable — comparison skipped"))
     else:
         results.append(CheckResult("git_sha", "WARN", "run_manifest has no git.commit_sha"))
+
+    # 4. Column-content collapse guard
+    results.extend(_check_column_content(rankings_path))
 
     return results
 
