@@ -69,8 +69,8 @@ RETIRED_AGENTS = [
     "shadow_monitor",  # merged into shadow_watch
 ]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
-EXPECTED_RULESET_ID = "2a3e79eb"
-EXPECTED_RULESET_VERSION = "v1.13.0"
+EXPECTED_RULESET_ID = "8887576e"
+EXPECTED_RULESET_VERSION = "v1.14.0"
 EXPECTED_MODEL = "claude-sonnet-4-6"
 
 
