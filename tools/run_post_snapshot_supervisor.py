@@ -149,13 +149,15 @@ def task_aact(as_of: str) -> TaskOutcome:
 
 
 def _herald_done(as_of: str) -> bool:
-    """Done predicate: deduped jsonl exists.
+    """Done predicate: deduped and classified jsonl both exist.
 
-    Implies fetch produced output and dedupe ran. Classification is fast and
-    rarely the kill point; if it fails, the dedupe artifact is still present,
-    Herald is considered done, and classify gets re-attempted on the next run.
+    Dedupe alone is not terminal: if classification failed or timed out after
+    dedupe, the next supervisor run must retry classification instead of
+    skipping Herald for the day.
     """
-    return (REPO_ROOT / "data" / "press_releases" / "deduped" / f"deduped_{as_of}.jsonl").exists()
+    deduped = REPO_ROOT / "data" / "press_releases" / "deduped" / f"deduped_{as_of}.jsonl"
+    classified = REPO_ROOT / "data" / "press_releases" / "classified" / f"classified_{as_of}.jsonl"
+    return deduped.exists() and classified.exists()
 
 
 def task_herald(as_of: str) -> TaskOutcome:
@@ -166,77 +168,78 @@ def task_herald(as_of: str) -> TaskOutcome:
     started = _now_iso()
     t0 = time.time()
     releases_path = REPO_ROOT / "data" / "press_releases" / f"releases_{as_of}.jsonl"
-
-    # Stage 1: fetch (always re-run if deduped missing — partial files
-    # from a killed prior fetch can't be trusted)
-    try:
-        r = _run_subprocess(
-            [
-                sys.executable,
-                str(REPO_ROOT / "tools" / "fetch_company_press_releases.py"),
-                "--as-of-date",
-                as_of,
-            ],
-            timeout=1800,
-            label="herald-fetch",
-        )
-    except subprocess.TimeoutExpired:
-        return TaskOutcome(
-            name=name,
-            status="timeout",
-            started_at=started,
-            duration_s=time.time() - t0,
-            detail="fetch_company_press_releases timed out after 1800s",
-        )
-    if r.returncode != 0:
-        return TaskOutcome(
-            name=name,
-            status="fail",
-            started_at=started,
-            duration_s=time.time() - t0,
-            exit_code=r.returncode,
-            detail=f"fetch exit {r.returncode}: {(r.stderr or '')[-300:]}",
-        )
-    if not (releases_path.exists() and releases_path.stat().st_size > 0):
-        return TaskOutcome(
-            name=name,
-            status="fail",
-            started_at=started,
-            duration_s=time.time() - t0,
-            detail="fetch produced no releases jsonl",
-        )
-
-    # Stage 2: dedupe
-    try:
-        r = _run_subprocess(
-            [
-                sys.executable,
-                str(REPO_ROOT / "tools" / "dedupe_press_releases.py"),
-                "--input",
-                str(releases_path),
-            ],
-            timeout=120,
-            label="herald-dedupe",
-        )
-    except subprocess.TimeoutExpired:
-        return TaskOutcome(
-            name=name,
-            status="timeout",
-            started_at=started,
-            duration_s=time.time() - t0,
-            detail="dedupe timed out after 120s",
-        )
-    if r.returncode != 0:
-        return TaskOutcome(
-            name=name,
-            status="fail",
-            started_at=started,
-            duration_s=time.time() - t0,
-            exit_code=r.returncode,
-            detail=f"dedupe exit {r.returncode}: {(r.stderr or '')[-300:]}",
-        )
-
     deduped_path = REPO_ROOT / "data" / "press_releases" / "deduped" / f"deduped_{as_of}.jsonl"
+
+    if not deduped_path.exists():
+        # Stage 1: fetch (always re-run if deduped missing — partial files
+        # from a killed prior fetch can't be trusted)
+        try:
+            r = _run_subprocess(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "fetch_company_press_releases.py"),
+                    "--as-of-date",
+                    as_of,
+                ],
+                timeout=1800,
+                label="herald-fetch",
+            )
+        except subprocess.TimeoutExpired:
+            return TaskOutcome(
+                name=name,
+                status="timeout",
+                started_at=started,
+                duration_s=time.time() - t0,
+                detail="fetch_company_press_releases timed out after 1800s",
+            )
+        if r.returncode != 0:
+            return TaskOutcome(
+                name=name,
+                status="fail",
+                started_at=started,
+                duration_s=time.time() - t0,
+                exit_code=r.returncode,
+                detail=f"fetch exit {r.returncode}: {(r.stderr or '')[-300:]}",
+            )
+        if not (releases_path.exists() and releases_path.stat().st_size > 0):
+            return TaskOutcome(
+                name=name,
+                status="fail",
+                started_at=started,
+                duration_s=time.time() - t0,
+                detail="fetch produced no releases jsonl",
+            )
+
+        # Stage 2: dedupe
+        try:
+            r = _run_subprocess(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "dedupe_press_releases.py"),
+                    "--input",
+                    str(releases_path),
+                ],
+                timeout=120,
+                label="herald-dedupe",
+            )
+        except subprocess.TimeoutExpired:
+            return TaskOutcome(
+                name=name,
+                status="timeout",
+                started_at=started,
+                duration_s=time.time() - t0,
+                detail="dedupe timed out after 120s",
+            )
+        if r.returncode != 0:
+            return TaskOutcome(
+                name=name,
+                status="fail",
+                started_at=started,
+                duration_s=time.time() - t0,
+                exit_code=r.returncode,
+                detail=f"dedupe exit {r.returncode}: {(r.stderr or '')[-300:]}",
+            )
+
     if not deduped_path.exists():
         return TaskOutcome(
             name=name,

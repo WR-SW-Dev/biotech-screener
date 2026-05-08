@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import date, datetime
@@ -24,6 +25,7 @@ ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 LOGS_DIR = REPO_ROOT / "logs"
 OPENCLAW = REPO_ROOT / "tools" / "run_openclaw.sh"
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
+TERMINAL_UNSUPERVISED_AGENTS = {"ops_supervisor"}
 
 # Date-bounded carried-alert muffle for ic_health_monitor.
 # When a signal in this list is at ALERT/CRITICAL AND today is on or before
@@ -325,27 +327,24 @@ def check_shadow_monitor(dt: date) -> CheckResult:
         try:
             lines = perf_path.read_text().strip().split("\n")
             if len(lines) > 3:
-                # Simple: check last 5 days for consecutive losses
-                recent = lines[-6:]  # header + 5 rows
-                if len(recent) > 1:
-                    header = recent[0].split(",")
-                    pnl_idx = next(
-                        (i for i, h in enumerate(header) if "pnl" in h.lower() or "return" in h.lower()), None
-                    )
-                    if pnl_idx is not None:
-                        losses = 0
-                        for row in recent[1:]:
-                            cols = row.split(",")
-                            if len(cols) > pnl_idx:
-                                try:
-                                    if float(cols[pnl_idx]) < 0:
-                                        losses += 1
-                                    else:
-                                        losses = 0
-                                except ValueError:
-                                    pass
-                        if losses >= 3:
-                            anomalies.append(f"DRAWDOWN_STREAK: {losses} consecutive losing days")
+                # Use the true file header, then inspect the latest rows.
+                header = lines[0].split(",")
+                recent = lines[-5:]
+                pnl_idx = next((i for i, h in enumerate(header) if "pnl" in h.lower() or "return" in h.lower()), None)
+                if pnl_idx is not None:
+                    losses = 0
+                    for row in recent:
+                        cols = row.split(",")
+                        if len(cols) > pnl_idx:
+                            try:
+                                if float(cols[pnl_idx]) < 0:
+                                    losses += 1
+                                else:
+                                    losses = 0
+                            except ValueError:
+                                pass
+                    if losses >= 3:
+                        anomalies.append(f"DRAWDOWN_STREAK: {losses} consecutive losing days")
         except Exception:
             pass
 
@@ -455,8 +454,9 @@ def check_news_digest(dt: date) -> CheckResult:
         pr_files = sorted(pr_dir.iterdir(), reverse=True)
         if pr_files:
             latest_name = pr_files[0].name
+            match = re.search(r"(\d{4}-\d{2}-\d{2})", latest_name)
             try:
-                latest_date = date.fromisoformat(latest_name[:10])
+                latest_date = date.fromisoformat(match.group(1) if match else latest_name[:10])
                 age = (dt - latest_date).days
                 if age > 2:
                     anomalies.append(f"STALE_SOURCE: press_releases last updated {age}d ago")
@@ -774,7 +774,16 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
     deprecated_count = sum(1 for e in registry.values() if e.get("status") == "deprecated")
 
     supervised = {n: e for n, e in active.items() if e.get("supervised_by_orchestrator", True)}
-    opted_out = {n: e for n, e in active.items() if not e.get("supervised_by_orchestrator", True)}
+    terminal_unsupervised = {
+        n: e
+        for n, e in active.items()
+        if n in TERMINAL_UNSUPERVISED_AGENTS and not e.get("supervised_by_orchestrator", True)
+    }
+    opted_out = {
+        n: e
+        for n, e in active.items()
+        if not e.get("supervised_by_orchestrator", True) and n not in TERMINAL_UNSUPERVISED_AGENTS
+    }
 
     results: list[CheckResult] = []
     for name in sorted(supervised):
@@ -788,7 +797,11 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
 
     for name in sorted(opted_out):
         note = opted_out[name].get("notes", "")[:80]
-        results.append(CheckResult(name, "SKIP", f"unsupervised: {note}"))
+        results.append(CheckResult(name, "SKIP", f"unsupervised coverage gap: {note}"))
+
+    for name in sorted(terminal_unsupervised):
+        note = terminal_unsupervised[name].get("notes", "")[:80]
+        results.append(CheckResult(name, "SKIP", f"terminal unsupervised: {note}"))
 
     counts = {
         "monitored_count": len(supervised),

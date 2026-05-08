@@ -295,9 +295,16 @@ def evaluate_health(
 
     status = "WARN" if warn_reasons else "OK"
 
-    # Load history and compute consecutive warns
+    # Load history and compute consecutive warns. Same-day reruns replace
+    # today's existing entry instead of counting it as an additional day.
     history = _load_history(history_path) if history_path else []
-    consecutive = _count_consecutive_warns(history, active_id)
+    current_date = drift_report.get("current_date", "")
+    history_without_today = [
+        entry
+        for entry in history
+        if not (entry.get("active_ruleset_id") == active_id and entry.get("date") == current_date)
+    ]
+    consecutive = _count_consecutive_warns(history_without_today, active_id)
     if status == "WARN":
         consecutive += 1  # include today
     else:
@@ -323,7 +330,7 @@ def evaluate_health(
     # Append to history
     if history_path is not None:
         history_entry = {
-            "date": drift_report.get("current_date", ""),
+            "date": current_date,
             "active_ruleset_id": active_id,
             "status": status,
             "top60_overlap_pct": today_overlap,
@@ -331,9 +338,11 @@ def evaluate_health(
             "consecutive_warn_days": consecutive,
             "recommend_rollback": recommend_rollback,
         }
+        updated_history = history_without_today + [history_entry]
         history_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(history_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(history_entry, separators=(",", ":")) + "\n")
+        with open(history_path, "w", encoding="utf-8") as f:
+            for entry in updated_history:
+                f.write(json.dumps(entry, separators=(",", ":")) + "\n")
 
     return result
 

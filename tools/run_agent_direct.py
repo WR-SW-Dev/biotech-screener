@@ -25,6 +25,7 @@ import argparse
 import json
 import os
 import re
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -222,11 +223,13 @@ def main():
 
     # Log
     args.log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = args.log_dir / f"{args.agent}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    log_file = args.log_dir / f"{args.agent}_{stamp}_{uuid.uuid4().hex[:8]}.json"
     with open(log_file, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nLogged: {log_file}")
+    return 0 if result.get("status") == "success" else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

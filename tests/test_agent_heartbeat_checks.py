@@ -97,6 +97,40 @@ def test_production_qa_corrupt_report_is_flagged(hb_mod, tmp_path):
     assert "CORRUPT" in joined
 
 
+def test_news_digest_press_release_freshness_parses_releases_prefix(hb_mod, tmp_path):
+    """Press-release source freshness should parse releases_YYYY-MM-DD.jsonl."""
+    digest_dir = tmp_path / "artifacts" / "news_digest"
+    digest_dir.mkdir(parents=True)
+    (digest_dir / "biotech_news_digest_2026-05-07_evening.json").write_text("{}")
+    pr_dir = tmp_path / "data" / "press_releases"
+    pr_dir.mkdir(parents=True)
+    (pr_dir / "releases_2026-05-01.jsonl").write_text("{}\n")
+
+    result = hb_mod.check_news_digest(date.fromisoformat("2026-05-08"))
+
+    assert result.status == "WARN"
+    assert any("STALE_SOURCE" in a and "7d" in a for a in result.anomalies)
+
+
+def test_shadow_monitor_performance_csv_fallback_uses_real_header(hb_mod, tmp_path):
+    """CSV fallback should use first line as header even when file has many rows."""
+    ds = "2026-05-08"
+    monitor_dir = tmp_path / "artifacts" / "shadow_monitor"
+    monitor_dir.mkdir(parents=True)
+    (monitor_dir / f"{ds}_monitor.json").write_text(json.dumps({"attention": "LOW", "alerts": []}))
+    perf_dir = tmp_path / "artifacts" / "live_shadow"
+    perf_dir.mkdir(parents=True)
+    rows = ["date,pnl"]
+    rows.extend([f"2026-05-0{i},0.01" for i in range(1, 4)])
+    rows.extend([f"2026-05-0{i},-0.01" for i in range(4, 9)])
+    (perf_dir / "performance.csv").write_text("\n".join(rows) + "\n")
+
+    result = hb_mod.check_shadow_monitor(date.fromisoformat(ds))
+
+    assert result.status == "WARN"
+    assert any("DRAWDOWN_STREAK" in a for a in result.anomalies)
+
+
 # ── Fleet receipt (Fix #3) ────────────────────────────────────
 
 
@@ -117,6 +151,61 @@ def test_derive_verdict_red_on_fail(hb_mod):
 def test_derive_verdict_red_on_coverage_gap(hb_mod):
     results = [_mk_result(hb_mod, "qa", "OK")]
     assert hb_mod._derive_verdict(results, {"missing_count": 3}, snapshot_ok=True) == "RED"
+
+
+def test_terminal_unsupervised_agent_does_not_create_coverage_gap(hb_mod, tmp_path, monkeypatch):
+    """ops_supervisor is the terminal layer and should not RED fleet coverage."""
+    registry = {
+        "agents": {
+            "qa": {
+                "status": "active",
+                "cadence": "daily_after_production",
+                "artifact_paths": ["agents/qa/memory/"],
+                "supervised_by_orchestrator": True,
+            },
+            "ops_supervisor": {
+                "status": "active",
+                "cadence": "daily_after_production",
+                "artifact_paths": ["artifacts/ops_supervisor/"],
+                "supervised_by_orchestrator": False,
+                "notes": "terminal interpretive layer",
+            },
+        }
+    }
+    (tmp_path / "agents" / "qa" / "memory").mkdir(parents=True)
+    (tmp_path / "agents" / "qa" / "memory" / "2026-05-08.md").write_text("ok")
+    reg_path = tmp_path / "agents" / "AGENT_REGISTRY.json"
+    reg_path.write_text(json.dumps(registry), encoding="utf-8")
+    monkeypatch.setattr(hb_mod, "REGISTRY_PATH", reg_path)
+    monkeypatch.setattr(hb_mod, "SPECIALIZED_CHECKS", {})
+
+    results, counts = hb_mod.run_registry_checks(date.fromisoformat("2026-05-08"))
+
+    assert counts["missing_count"] == 0
+    assert any(r.agent == "ops_supervisor" and r.status == "SKIP" for r in results)
+    assert hb_mod._derive_verdict(results, counts, snapshot_ok=True) == "GREEN"
+
+
+def test_nonterminal_active_unsupervised_agent_still_counts_as_coverage_gap(hb_mod, tmp_path, monkeypatch):
+    registry = {
+        "agents": {
+            "some_agent": {
+                "status": "active",
+                "cadence": "daily_after_production",
+                "artifact_paths": ["artifacts/some_agent/"],
+                "supervised_by_orchestrator": False,
+            }
+        }
+    }
+    reg_path = tmp_path / "agents" / "AGENT_REGISTRY.json"
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_text(json.dumps(registry), encoding="utf-8")
+    monkeypatch.setattr(hb_mod, "REGISTRY_PATH", reg_path)
+    monkeypatch.setattr(hb_mod, "SPECIALIZED_CHECKS", {})
+
+    _results, counts = hb_mod.run_registry_checks(date.fromisoformat("2026-05-08"))
+
+    assert counts["missing_count"] == 1
 
 
 def test_derive_verdict_yellow_on_warn_or_stale(hb_mod):

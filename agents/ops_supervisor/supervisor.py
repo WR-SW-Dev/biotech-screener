@@ -16,6 +16,7 @@ Outputs:
 
 Exit codes: 0=GREEN/YELLOW, 1=ORANGE, 2=RED.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -235,9 +236,15 @@ def classify_anomaly(
             "fix_prompt": None,
         }
 
-    # Did this anomaly appear yesterday?
+    # Did this exact anomaly appear yesterday?
     prior_match = next(
-        (p for p in prior_anomalies if p.get("agent") == a["agent"] and p.get("raw_status") == a["raw_status"]),
+        (
+            p
+            for p in prior_anomalies
+            if p.get("agent") == a["agent"]
+            and p.get("raw_status") == a["raw_status"]
+            and p.get("raw_text") == a.get("raw_text")
+        ),
         None,
     )
     if prior_match is None:
@@ -590,6 +597,7 @@ def main() -> int:
                 {
                     "agent": a.get("agent"),
                     "raw_status": a.get("raw_status"),
+                    "raw_text": a.get("raw_text"),
                     "classification": a.get("classification"),
                 }
             )

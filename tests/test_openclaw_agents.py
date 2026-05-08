@@ -68,6 +68,10 @@ RETIRED_AGENTS = [
     "policy_shadow_watch",  # merged into shadow_watch
     "shadow_monitor",  # merged into shadow_watch
 ]
+# Terminal supervisor workspace: intentionally active but unsupervised and
+# does not carry a HEARTBEAT.md because tools/agent_supervisor_sentinel.py is
+# the final watchdog above it.
+TERMINAL_AGENTS = ["ops_supervisor"]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
 EXPECTED_RULESET_ID = "8887576e"
 EXPECTED_RULESET_VERSION = "v1.14.0"
@@ -423,7 +427,9 @@ class TestIncompleteAgents:
 
     def test_total_agent_count(self):
         """All agent workspaces are accounted for (compliant + partial + incomplete + retired)."""
-        all_agents = set(AGENT_NAMES) | set(PARTIAL_AGENTS) | set(INCOMPLETE_AGENTS) | set(RETIRED_AGENTS)
+        all_agents = (
+            set(AGENT_NAMES) | set(PARTIAL_AGENTS) | set(INCOMPLETE_AGENTS) | set(RETIRED_AGENTS) | set(TERMINAL_AGENTS)
+        )
         actual = {d.name for d in AGENTS_DIR.iterdir() if d.is_dir()}
         untracked = actual - all_agents
         assert not untracked, f"Agent workspace(s) not in any agent list: {untracked}"

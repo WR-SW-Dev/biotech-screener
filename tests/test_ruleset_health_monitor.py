@@ -185,7 +185,7 @@ class TestNoReceiptGraceful:
 
 class TestHistoryAppended:
     def test_history_appended(self, tmp_path):
-        """JSONL history grows with each evaluation."""
+        """JSONL history grows with each new evaluation date."""
         receipt = _make_receipt()
         history = tmp_path / "history.jsonl"
         drift = _make_drift_report()
@@ -198,6 +198,56 @@ class TestHistoryAppended:
         evaluate_health(drift2, receipt, history)
         lines = history.read_text().strip().splitlines()
         assert len(lines) == 2
+
+    def test_same_day_rerun_replaces_history_entry(self, tmp_path):
+        """Same-day reruns replace the existing entry instead of appending duplicates."""
+        receipt = _make_receipt()
+        history = tmp_path / "history.jsonl"
+
+        first = _make_drift_report(
+            top60_overlap_pct=80.0,
+            mean_abs_rank_delta_top60=5.0,
+            current_date="2026-02-28",
+        )
+        second = _make_drift_report(
+            top60_overlap_pct=79.0,
+            mean_abs_rank_delta_top60=6.0,
+            current_date="2026-02-28",
+        )
+
+        first_result = evaluate_health(first, receipt, history)
+        second_result = evaluate_health(second, receipt, history)
+
+        assert first_result["status"] == "WARN"
+        assert second_result["status"] == "WARN"
+        assert second_result["consecutive_warn_days"] == 1
+
+        lines = history.read_text().strip().splitlines()
+        assert len(lines) == 1
+        entry = json.loads(lines[0])
+        assert entry["date"] == "2026-02-28"
+        assert entry["active_ruleset_id"] == "abc12345"
+        assert entry["top60_overlap_pct"] == 79.0
+        assert entry["consecutive_warn_days"] == 1
+
+    def test_same_day_rerun_does_not_inflate_rollback_counter(self, tmp_path):
+        """Repeated WARN reruns for one date do not count as multiple consecutive days."""
+        receipt = _make_receipt()
+        history = tmp_path / "history.jsonl"
+        drift = _make_drift_report(
+            top60_overlap_pct=80.0,
+            mean_abs_rank_delta_top60=5.0,
+            current_date="2026-02-28",
+        )
+
+        evaluate_health(drift, receipt, history)
+        result = evaluate_health(drift, receipt, history)
+        result = evaluate_health(drift, receipt, history)
+
+        assert result["status"] == "WARN"
+        assert result["consecutive_warn_days"] == 1
+        assert result["recommend_rollback"] is False
+        assert len(history.read_text().strip().splitlines()) == 1
 
 
 class TestFirstDayAfterPromotion:
