@@ -28,7 +28,7 @@
 | 3 | Catalyst-timing ranker (catalyst_decay_w; Spec 080) | YES — catalyst_decay_w=299/299 | YES | YES | n=12 post-PIT HIT/MISS vs ≥30 threshold; Spec 071 Lane 2 must ship first; post-13F window required | ≥30 post-PIT HIT/MISS post-13F | ~2026-07-15 | BLOCKED — sample insufficient (12/30) |
 | 4 | Catalyst-quality ranker (catalyst_quality, catalyst_score) | YES — catalyst_quality=261/299; catalyst_score=299/299 | YES | YES | Same ≥30 outcome threshold as #3; Spec 079 calibration gate not met | ≥30 post-PIT resolved with catalyst_quality pre-event | ~2026-07-15 | BLOCKED — sample insufficient |
 | 5 | Financial-stress/upside ranker (financial_score primary) | YES — financial_score=299/299; runway_severity_score=299/299 | YES | YES | Sign-direction unverified (Spec 074); 90d rolling window needs ~50 snapshots; Checklist v2 required | Checklist v2 battery | ~2026-07-31 | SHADOW_RESEARCH_ONLY |
-| 6 | Event-EV ranker (event_ev_p_hit; Spec 077/079) | NO — event_ev_score=0/299 in rankings.csv; event_ev_p_hit=null in all 17 post-PIT resolution files | YES (forward-only) | YES | Binder not writing values; 0/30 bound records required for calibration | ≥30 post-PIT HIT/MISS with non-null event_ev_p_hit | ~2026-07-01 (estimated) | BLOCKED — 0/30 bound records |
+| 6 | Event-EV ranker (event_ev_p_hit; Spec 077/079) | MATURING — binder shipped (forward-only); 0 non-null bound records; prospective sample accumulation pending | YES (forward-only) | YES | Binder operational but prospective EV artifact coverage has not yet reached post-PIT resolved events; 0/30 bound records accumulated | ≥30 post-PIT HIT/MISS with non-null event_ev_p_hit | ~2026-07-01 (estimated) | BLOCKED — 0/30 bound records (sample accumulation) |
 | 7 | Expectation-gap ranker (conditional_misprice_score, EES v3) | PRESENT but invalid | NO | N/A | EES v3 closed 2026-04-30: pmv-derived (Spearman -0.978), IC≈0 after pmv control; do not revive | Requires non-pmv external inputs not available | Not determinable | BLOCKED — formulation closed; do not revive |
 | 8 | Risk-adjusted ranker (short_interest, vol, runway) | PARTIAL — short_interest_pct=294/299; vol_classification=251/299; runway_severity_score=299/299 | UNCERTAIN for short interest | YES | Risk management is NOT alpha per standing policy; Checklist v2 required; no prior evidence | Checklist v2; standing policy blocks | Not determinable | BLOCKED — policy prohibition; no evidence basis |
 | 9 | Hybrid two-stage ranker (Spec 072 vNext) | PARTIAL — coinvest_score_z=299/299; catalyst_quality=261/299; clinical_design_quality=225/299 | YES | POST_13F_ONLY — prereq: cohort-window close ~2026-05-15 | Spec 072 diagnostic-only (D1–D9); non-negotiable orthogonality constraint; 13F refresh pending | ~30 post-13F snapshots minimum | ~2026-07-01 | BLOCKED — 13F refresh pending |
@@ -86,13 +86,17 @@ Postmortem pipeline broken April 3 – May 2 (detection fix 2026-05-02); 80 back
 
 Bound non-null event_ev_p_hit records: **0**.
 
-Spec 077 wired the schema field into ResolutionRecord (shipped 2026-05-06). Field exists in all 17 post-PIT resolution files. All 17 values are null.
+Spec 077 shipped the `_bind_event_ev_p_hit` binder (2026-05-06, forward-only). Field exists in all 17 post-PIT resolution files as of the check date. All values are null.
 
-Root cause: (ticker, date±30d) join fails for ~70% of records because EV `expected_date` diverges from CRT `catalyst_date` by 36–62+ days. Only 4/43 post-PIT CRT records get an exact match. Binder is not yet writing non-null values.
+**Binder is operational.** The binder ran correctly on 37 resolution records and recorded null where no matching EV artifact was found — this is correct behavior, not a binder failure. The binding logic uses: (1) exact node_id match; (2) (ticker, expected_date ±7d) fallback if unambiguous. Historical backfill was intentionally not performed because the join failure rate (~70% on pre-PIT records) made backfilled values unsafe. No backfill was done and none should be done without exact node_id evidence.
 
-ev_validation_ledger.jsonl: 581 matched records total (HIT=504, MISS=77), spanning 2020–2026. None are bound in postmortem resolution records with event_ev_p_hit.
+**Root cause of 0 non-null:** EV artifact coverage for the specific events that resolved 2026-04-27 to 2026-05-01 is not present in `artifacts/event_ev/`. For a non-null binding, an EV artifact must exist with (a) matching node_id or (b) unambiguous (ticker, expected_date ±7d) match. The prospective EV artifact pipeline has not yet produced artifacts covering those resolved events.
 
-**Gap to ≥30 threshold: 30/30 records missing.** Estimated arrival ~2026-07-01 per Spec 079 (requires binder operational + ~3–4 new HIT/MISS per week).
+**The blocker is prospective sample accumulation / EV artifact coverage — not a missing join fix.** As new events resolve and the event_ev pipeline produces artifacts for those events, forward-only bindings will populate. The 70% historical join failure rate is historical context for why backfill is unsafe; it is NOT the current production blocker.
+
+ev_validation_ledger.jsonl: 581 matched records total (HIT=504, MISS=77), spanning 2020–2026. None are bound in postmortem resolution records with event_ev_p_hit (these are pre-binder records; backfill not applied per policy).
+
+**Gap to ≥30 threshold: 30/30 records missing.** Estimated arrival ~2026-07-01 per Spec 079 (requires prospective EV artifact coverage to reach 30 new post-PIT resolved events at ~3–4 HIT/MISS per month). Monthly binder health check per Spec 096.
 
 ---
 
@@ -177,7 +181,7 @@ No explicit `is_false_catalyst` column in rankings.csv. `binary_alpha` (87 ticke
 
 1. **Post-PIT sample too small for Checklist v2** — 17 snapshots, 12 HIT/MISS events. All promotion-grade testing requires Checklist v2 (FM + bootstrap + FDR + LOSO + year stability). Earliest meaningful formal testing: ~2026-07-01.
 
-2. **event_ev_p_hit binder not writing values** — field wired (Spec 077) but 0 non-null values in 17 post-PIT resolution files. The calibration clock (Spec 079) has not started. Binder join logic has ~70% failure rate; blocks event-EV ranker completely.
+2. **event_ev_p_hit prospective sample not yet accumulated** — binder shipped and operational (Spec 077, forward-only). 0 non-null values because EV artifact coverage has not yet reached post-PIT resolved events. The calibration clock (Spec 079) has not started. Blocker is prospective accumulation, not binder infrastructure. Monthly monitoring via Spec 096.
 
 3. **13F quarantine through ~2026-05-15** — inst_delta_regime='transition' for all 299 rows. Quarantine clears ~2026-05-20 (one-cycle buffer after refresh). Blocks Spec 072 vNext and any inst_delta-dependent alternative.
 

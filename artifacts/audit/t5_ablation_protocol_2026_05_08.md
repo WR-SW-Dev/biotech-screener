@@ -21,7 +21,7 @@ All seven gates must be explicitly verified (with artifact evidence) before any 
 **Required for:** All alternatives (production correctness; affects interpretation of the current baseline and all alternatives containing financial_score as a component or comparator).
 **Verification method:** Read `docs/MODEL_DOCUMENTATION.md` Module 5 rank-norm section and confirm: (a) whether high financial_score = financially safe / solvent OR financially stressed / distressed; (b) whether the -0.0533 coefficient in `production_data/ranker_v2_model.json` is intentional stress-upside penalization or a directional error. Cross-reference Spec 074 §2 hypothesis statement. Record conclusion as CONFIRMED_CORRECT, CONFIRMED_WRONG, or STILL_UNCERTAIN with evidence citation.
 **Blocking condition:** If CONFIRMED_WRONG, halt. This is a production correctness issue requiring operator sign-off before any ablation proceeds. Route to T8 with [URGENT FINDING] classification.
-**If STILL_UNCERTAIN:** Treat as CONFIRMED_CORRECT for ablation design purposes but mark all financial_score results [UNCERTAIN — sign unverified] throughout.
+**If STILL_UNCERTAIN:** Do not run or interpret any ablation where financial_score direction affects the result, except descriptive membership/overlap analysis with a clear [DIRECTION UNCERTAIN — results not interpretable] label on every output. No return/IC interpretation until direction is resolved. financial_score sign direction is a production-correctness gate, not a modeling assumption that can be waived.
 **Estimated resolution date:** Immediate (readable from documentation; no additional data collection required).
 **Spec reference:** Spec 074; T4 §3.5.
 
@@ -51,12 +51,13 @@ All seven gates must be explicitly verified (with artifact evidence) before any 
 **Estimated resolution date:** ~2026-07-31 (accumulating at ~5–6 snapshots/week).
 **Spec reference:** `policy_alpha_freeze_2026_04_04.md` (Checklist v2 components); T3 §post-PIT snapshots.
 
-### Gate 6 — event_ev_p_hit binder writing non-null values (n ≥ 30 bound records)
+### Gate 6 — prospective non-null event_ev_p_hit sample gate (n ≥ 30 bound records)
 **Required for:** Alternative 6 (event-EV ranker) only.
-**Verification method:** (a) Spec 077 binder operational: check that `data/snapshots/resolutions/` resolution files for HIT/MISS outcomes show non-null `event_ev_p_hit` values. Current count: 0/12 non-null. (b) Confirm join failure rate has improved from current ~70% baseline. (c) Count non-null bound records across ALL post-PIT resolution files. Target: ≥30.
-**Selection bias note:** Verify that the 30 bound records are not systematically biased toward near-term catalysts or specific catalyst families versus the 70% that fail to join. Document family distribution of bound vs unbound at the time this gate is assessed.
-**Estimated resolution date:** ~2026-07-01 per Spec 079 (requires binder operational AND ~3–4 new HIT/MISS/week).
-**Spec reference:** Spec 077; Spec 079; T3 §event_ev_p_hit bound records.
+**Verification method:** (a) Spec 077 binder health confirmed: `_bind_event_ev_p_hit` ran on resolution files; verify via Spec 096 monthly monitoring log. The binder shipped forward-only (2026-05-06); no join-fix is required — the binder is operational. (b) Count non-null bound records across ALL post-PIT resolution files. Current count: 0. Target: ≥30. Non-null values will appear as prospective EV artifacts are produced for newly resolved events. (c) Do NOT require join failure rate to improve — historical ~70% rate was the rationale for forward-only design; it is not a current gate condition.
+**Selection bias note:** Document the catalyst-family distribution of the first non-null bound records when they arrive. Early records may be biased toward events with EV artifact coverage (high-visibility, near-term catalysts). If > 50% of first 30 bound records come from a single catalyst family, flag as [PROSPECTIVE_SELECTION_BIAS_RISK].
+**Monthly check:** Run Spec 096 binder population check on the first of each month (or after each new HIT/MISS resolution). Next check: 2026-06-08.
+**Estimated resolution date:** ~2026-07-01 per Spec 079 (requires prospective EV artifact coverage to reach ~30 new post-PIT resolved events, accumulating at ~3–4 HIT/MISS per month).
+**Spec reference:** Spec 077; Spec 079; Spec 096; T3 §event_ev_p_hit bound records.
 
 ### Gate 7 — False-catalyst contamination rate confirmed ≤ 5% in the test sample
 **Required for:** Alternatives 3 and 4 specifically; advisory for all alternatives using catalyst-adjacent features.
@@ -74,7 +75,7 @@ All seven gates must be explicitly verified (with artifact evidence) before any 
 | 3 | 13F refresh complete + quarantine lifted | All (regime stability) | ~2026-05-20 |
 | 4 | n ≥ 30 post-PIT HIT/MISS | Alternatives 3, 4; formal descriptive | ~2026-07-15 |
 | 5 | n ≥ 50 post-PIT clean snapshots | Checklist v2 for all alternatives | ~2026-07-31 |
-| 6 | n ≥ 30 bound event_ev_p_hit records | Alternative 6 | ~2026-07-01 |
+| 6 | n ≥ 30 prospective non-null event_ev_p_hit records (binder operational; sample accumulation gate) | Alternative 6 | ~2026-07-01 |
 | 7 | False-catalyst rate ≤ 5% in test sample | Alternatives 3, 4 | Contingent on Gate 2 |
 
 ---
@@ -131,7 +132,7 @@ All seven gates must be explicitly verified (with artifact evidence) before any 
 ### Baseline 7 — Current ranker + event_ev_p_hit (Spec 079; after Gate 6)
 
 **Definition:** Production ranker augmented with `event_ev_p_hit` from resolution records as a third pairwise feature. Applied only to top-60 cohort members that have a non-null, Spec-077-bound event_ev_p_hit value. For cohort members with null event_ev_p_hit, the two-feature production score is used unchanged. Pre-specified weight: w=0.02 initially.
-**Data source:** `data/snapshots/resolutions/{year}/{month}/{TICKER}_{DATE}.json`, field `event_ev_p_hit`. Current: 0/12 non-null. This baseline CANNOT be instantiated until Gate 6 is met.
+**Data source:** `data/snapshots/resolutions/{year}/{month}/{TICKER}_{DATE}.json`, field `event_ev_p_hit`. Current: 0 non-null (binder operational; prospective EV artifacts not yet covering post-PIT resolved events). This baseline CANNOT be instantiated until Gate 6 is met (≥30 non-null bound records).
 **How to compute:** At each snapshot date, identify top-60 cohort members with non-null event_ev_p_hit. For those members only, compute a modified pairwise score using all three features. For non-null coverage below 50% of the top-60 cohort, mark results [PARTIAL COVERAGE — n={count}].
 **Gate requirement:** Gates 1, 3, 6. Gate 6 is the binding constraint.
 **Calibration pre-check:** Before running Baseline 7, verify Spec 079 calibration review has been completed. If event_ev_p_hit has Brier score ≥ 0.25 at n≥30, this baseline must be held until calibration improves.
@@ -446,7 +447,7 @@ The following rules are binding for all ablation analysts. Rules may not be waiv
 
 9. **Turnover increase without return improvement = NO_GO.** Compute return per unit of turnover for each alternative. If an alternative increases turnover by > 50% without proportional increase in excess return, classify NO_GO.
 
-10. **Hit rate improvement (event-EV) does not transfer to ranker without return evidence.** If Alternative 7 shows improved Brier score but does not improve within-cohort IC vs production, classify as Event EV diagnostic improvement only — not a ranker candidate.
+10. **Hit rate improvement (event-EV) does not transfer to ranker without return evidence.** If Alternative 7 (event_ev_p_hit; Spec 079) shows improved Brier score but does not improve within-cohort IC vs production, classify as Event EV diagnostic improvement only — not a ranker candidate. Note: Alternative 7 requires Gate 6 (≥30 non-null prospective bound records); do not run until that gate is met regardless of calibration results on earlier smaller samples.
 
 11. **No implementation on positive ablation result alone.** PROMOTION_ELIGIBLE classification is a necessary but not sufficient condition for any production change.
 

@@ -204,15 +204,15 @@ This is the highest-severity finding in the entire T4 analysis. The Spec 074 cau
 
 **Overfitting risk: LOW now** (cannot overfit with 0 observations; risk deferred to calibration phase).
 
-**Data availability: BLOCKED.** T3 confirms 0 non-null event_ev_p_hit records. Spec 077 binder wired but ~70% join failure rate (EV `expected_date` vs CRT `catalyst_date` divergence of 36-62+ days). Calibration clock has not started.
+**Data availability: BLOCKED (sample accumulation).** T3 confirms 0 non-null event_ev_p_hit records. The Spec 077 binder is **shipped and operational** (forward-only, 2026-05-06). The binder correctly writes null where no EV artifact match exists — this is correct behavior. The 70% historical join rate was historical context for why backfill is unsafe and was not performed; it is NOT the current production blocker. Current blocker: prospective EV artifact coverage has not yet reached post-PIT resolved events. As new events resolve and the event_ev pipeline produces artifacts for those events, forward-only bindings will populate. Calibration clock (Spec 079) has not started. Monthly monitoring: Spec 096.
 
 **When unblocked — future overfitting risks:** At n=30 (earliest evaluable), fitting a pairwise logistic with `event_ev_p_hit` leaves ~10 independent effective observations after within-cohort dependence. Heavily underpowered. Expected false positive rate for any IC-positive finding at n=30 is high.
 
 **Calibration bias risk: MEDIUM-HIGH.** Event_ev Bayesian priors are derived from FDA historical precedent and endpoint type, fit before the post-PIT-fix period. If those priors are miscalibrated (e.g., FDA approval rates shifted with accelerated-approval scrutiny), `event_ev_p_hit` values may be systematically biased. Spec 079 calibration review is the correct gate — but requires n≥30 resolved records before it can run.
 
-**Binder selection bias:** The 30% of records that successfully join the binder may be systematically different from the 70% that do not (e.g., only events with exact date matches, biased toward near-term catalysts or specific catalyst families). If so, the calibration sample will not be representative of the general event universe.
+**Prospective selection bias:** First non-null bound records will be those where EV artifacts happen to exist for the resolved event. Early records may be biased toward events that the EV pipeline covered (e.g., near-term, high-visibility catalysts) rather than the general event universe. Document family distribution of bound vs unbound records when Gate 6 is assessed.
 
-**Overall risk level: BLOCKED (0/30 records). Future risk: MEDIUM-HIGH (underpowered at first evaluable sample; calibration bias possible).**
+**Overall risk level: BLOCKED (0/30 bound records — sample accumulation). Future risk: MEDIUM-HIGH (underpowered at first evaluable sample; calibration bias possible).**
 
 ---
 
@@ -388,7 +388,7 @@ This should be the first item addressed before T5, T6, or T7 proceed.
 | Spec 071 Lane 2 not implemented | T3 detail §5 |
 | inst_delta_z weight = 0.00 since 2026-05-04 | Scoring model identity update |
 | 13F quarantine through ~2026-05-15 | T3 detail §4 |
-| Spec 077 binder: 0 non-null values, 70% join failure | T3 detail §3 |
+| Spec 077 binder: operational (forward-only, shipped 2026-05-06); 0 non-null because EV artifact coverage not yet reaching post-PIT resolved events; 70% historical join failure = backfill-unsafe rationale, not current blocker | T3 detail §3; Spec 096 monitoring |
 | Policy: pairwise ordinal only, no rank-weighting | `policy_alpha_freeze_2026_04_04.md` |
 | Architecture frozen since 2026-04-19 | `policy_freeze_architecture_2026_04_19.md` |
 | Demotion path: 5-element governed | `policy_demotion_path_2026_05_06.md` |
