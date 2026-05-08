@@ -322,3 +322,113 @@ fresh-start turnover (shown as `—`).
 Pass `--relaxed` to generate a packet for a non-production run (e.g., a backtest
 snapshot or a manual re-run). The output gets a prominent `⚠ RELAXED MODE` banner
 and is not suitable for governance review. Relaxed packets are never uploaded by CI.
+
+---
+
+## 11. WSL2 sleep-cliff mitigation
+
+The daily cron runs 16:30–19:30 ET on weekdays. If the Windows host suspends during
+that window, crons are silently missed, OAuth tokens drift, and the fleet goes blind.
+
+### Stopgap: disable AC sleep (run once as Administrator in Windows)
+
+```
+powercfg /change standby-timeout-ac 0
+```
+
+Verify:
+```
+powercfg /query SCHEME_CURRENT SUB_SLEEP STANDBYIDLE
+```
+Expected: `Power Setting Index: 0x00000000`
+
+To restore sleep (e.g. on a laptop you carry home):
+```
+powercfg /change standby-timeout-ac 30
+```
+
+### Confirming WSL2 was awake for a given run
+
+Check cron.log for the 16:30 ET entry:
+```
+grep "16:3" logs/cron.log | tail -5
+```
+If the line is absent for a weekday, the host was asleep. The `@reboot` catch-up
+cron re-runs on next WSL2 startup (up to 23:59 ET same day).
+
+### Known failure signature
+
+A missed cron produces a 24–48h gap in `data/snapshots/`. Downstream symptoms:
+- `institutional_summary_delta.json` absent → `inst_delta_z = 0.0` for entire universe
+- OAuth tokens expire after 24h silence → agent fleet loses auth on restart
+- Sentinel may emit false `ROLLBACK_RECOMMENDED` due to missing comparison baseline
+
+### Durable fix (VPS migration — planned, not yet executed)
+
+Move cron + production pipeline to a $15/mo Linux VPS (DigitalOcean / Hetzner).
+WSL2 remains the dev environment. No timeline set.
+
+---
+
+## 12. May 15 13F refresh — operator checklist
+
+Q1 2026 13F filings begin landing ~May 13–15, 2026 (45-day SEC deadline from
+March 31 quarter-end).
+
+### Pre-refresh (run by May 13)
+
+```bash
+source .env && python3 tools/prep_13f_refresh.py
+```
+
+Expected: all 5 checks PASS; artifact at `artifacts/13f_pre_refresh_baseline_YYYY-MM-DD.json`.
+Note the `--pre-date` value (most recent snapshot, e.g. `2026-05-14`).
+
+### During refresh window (May 15–22)
+
+Monitor `data/snapshots/<date>/institutional_summary_delta.json` for `prior_date`
+advancing from `2025-12-31` → `2026-03-31`. This is the primary refresh signal.
+
+```bash
+python3 -c "
+import json, pathlib
+d = json.loads(pathlib.Path('data/snapshots/<POST_DATE>/institutional_summary_delta.json').read_text())
+print('prior_date:', d['prior_date'], '  tickers:', d['tickers_in_current'])
+"
+```
+
+### Post-refresh quarantine check (run once prior_date advances)
+
+```bash
+source .env && python3 -m tools.check_13f_cohort_quarantine \
+    --pre-date 2026-05-14 \
+    --post-date <POST_DATE> \
+    --output artifacts/13f_diff_<POST_DATE>.md
+```
+
+Verdicts and required actions:
+
+| Verdict | Meaning | Action |
+|---|---|---|
+| `NO_QUARANTINE` | Clean refresh, Jaccard ≥ 0.85 | Normal operation |
+| `STANDARD_COHORT_WINDOW` | Jaccard 0.70–0.85, expected | Attribution-only for ~10 days |
+| `QUARANTINE` | Jaccard < 0.70 | Attribution-only until ~10 trading days post-refresh |
+| `PRODUCER_AUDIT_REQUIRED` | Coverage dropped ≥ 10pp | Audit `institutional_summary.json` producer |
+
+Telegram alert fires automatically on QUARANTINE or PRODUCER_AUDIT_REQUIRED.
+
+### Collapse guard
+
+If `coinvest_score_z` SD near zero after refresh:
+
+```bash
+python3 -c "
+import csv, statistics, pathlib
+rows = list(csv.DictReader(open('data/snapshots/<DATE>/rankings.csv')))
+vals = [float(r['coinvest_score_z']) for r in rows if r.get('coinvest_score_z') not in ('', None, 'nan')]
+print(f'n={len(vals)} sd={statistics.stdev(vals):.4f}')
+"
+```
+
+SD < 0.10 indicates the selector signal collapsed — run_screen.py DEFAULT_ROW fallback.
+Check `institutional_summary_delta.json` producer freshness (G2 in quarantine script).

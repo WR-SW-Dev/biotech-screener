@@ -207,6 +207,63 @@ def guardrails_g3_attribution_check(pre_date: str, post_date: str) -> Tuple[bool
 # ---------------------------------------------------------------------------
 
 
+def diff_section_a_managers(pre_date: str, post_date: str) -> dict:
+    """A. Manager-level diff: compare filing counts and coverage from per-snapshot
+    institutional_summary.json, and record registry snapshot for audit trail."""
+    registry = _load_registry() or {}
+    n_elite_core = len(registry.get("elite_core", []))
+    n_conditional = len(registry.get("conditional", []))
+    reg_meta = registry.get("metadata", {})
+
+    def _load_snap_summary(snap_date: str) -> Optional[dict]:
+        p = SNAP_ROOT / snap_date / "institutional_summary.json"
+        if not p.exists():
+            return None
+        try:
+            return json.loads(p.read_text())
+        except (json.JSONDecodeError, OSError):
+            return None
+
+    pre_sum = _load_snap_summary(pre_date)
+    post_sum = _load_snap_summary(post_date)
+
+    def _extract(s: Optional[dict]) -> dict:
+        if s is None:
+            return {}
+        return {
+            "elite_managers_total": s.get("elite_managers_total"),
+            "elite_managers_with_filing": s.get("elite_managers_with_filing"),
+            "tickers_with_signal": s.get("tickers_with_signal"),
+            "signal_coverage_pct": s.get("signal_coverage_pct"),
+            "cache_as_of_date": s.get("cache_as_of_date"),
+        }
+
+    pre_ext = _extract(pre_sum)
+    post_ext = _extract(post_sum)
+
+    # Detect manager-count change (registry mismatch = new manager added/removed)
+    manager_delta = None
+    if pre_ext.get("elite_managers_with_filing") is not None and post_ext.get("elite_managers_with_filing") is not None:
+        manager_delta = post_ext["elite_managers_with_filing"] - pre_ext["elite_managers_with_filing"]
+
+    return {
+        "registry": {
+            "n_elite_core": n_elite_core,
+            "n_conditional": n_conditional,
+            "version": reg_meta.get("version"),
+            "last_updated": reg_meta.get("last_updated"),
+        },
+        "pre": pre_ext,
+        "post": post_ext,
+        "managers_with_filing_delta": manager_delta,
+        "coverage_pct_delta": (
+            round(post_ext["signal_coverage_pct"] - pre_ext["signal_coverage_pct"], 2)
+            if post_ext.get("signal_coverage_pct") is not None and pre_ext.get("signal_coverage_pct") is not None
+            else None
+        ),
+    }
+
+
 def diff_section_b_coverage(pre_delta: dict, post_delta: dict) -> dict:
     """B. Coverage diff from delta JSONs."""
     return {
@@ -348,7 +405,7 @@ def quarantine_decision(diff: dict) -> Tuple[str, List[str]]:
 # ---------------------------------------------------------------------------
 
 
-def run(pre_date: str, post_date: str, output: Optional[Path] = None) -> int:
+def run(pre_date: str, post_date: str, output: Optional[Path] = None, no_alert: bool = False) -> int:
     log.info(f"13F cohort-quarantine diff: pre={pre_date} post={post_date}")
 
     # Guardrails
@@ -385,6 +442,7 @@ def run(pre_date: str, post_date: str, output: Optional[Path] = None) -> int:
     diff = {
         "pre_date": pre_date,
         "post_date": post_date,
+        "managers": diff_section_a_managers(pre_date, post_date),
         "coverage": diff_section_b_coverage(pre_delta, post_delta),
         "scores": diff_section_c_scores(pre_rows, post_rows),
         "top30": diff_section_d_top30(pre_rows, post_rows),
@@ -396,6 +454,7 @@ def run(pre_date: str, post_date: str, output: Optional[Path] = None) -> int:
     diff["verdict_reasons"] = reasons
 
     # Markdown output
+    mgr = diff["managers"]
     md_lines = [
         f"# 13F Cohort-Quarantine Diff — {pre_date} → {post_date}",
         "",
@@ -403,6 +462,13 @@ def run(pre_date: str, post_date: str, output: Optional[Path] = None) -> int:
         "",
         "**Reasons:**",
         *[f"- {r}" for r in reasons or ["(no triggers fired)"]],
+        "",
+        "## Manager-level context (Section A)",
+        "",
+        f"- Registry: {mgr['registry'].get('n_elite_core')} elite_core + {mgr['registry'].get('n_conditional')} conditional (v{mgr['registry'].get('version')}, updated {mgr['registry'].get('last_updated')})",
+        f"- Pre managers_with_filing: {mgr['pre'].get('elite_managers_with_filing')} / {mgr['pre'].get('elite_managers_total')}  coverage={mgr['pre'].get('signal_coverage_pct')}%",
+        f"- Post managers_with_filing: {mgr['post'].get('elite_managers_with_filing')} / {mgr['post'].get('elite_managers_total')}  coverage={mgr['post'].get('signal_coverage_pct')}%",
+        f"- managers_with_filing Δ: {mgr.get('managers_with_filing_delta')}  coverage_pct Δ: {mgr.get('coverage_pct_delta')}pp",
         "",
         "## Top-30 churn",
         "",
@@ -434,6 +500,26 @@ def run(pre_date: str, post_date: str, output: Optional[Path] = None) -> int:
     else:
         print(md)
 
+    # Telegram alert on action-required verdicts
+    if not no_alert and verdict in ("QUARANTINE", "PRODUCER_AUDIT_REQUIRED"):
+        try:
+            from common.alerts import send_operator_alert
+
+            j = diff["top30"]["jaccard"]
+            entered = diff["top30"]["entered"]
+            left = diff["top30"]["left"]
+            alert_text = (
+                f"13F COHORT QUARANTINE — {verdict}\n"
+                f"Refresh window: {pre_date} → {post_date}\n"
+                f"Top-30 Jaccard: {j:.2f} (threshold {TOP30_JACCARD_QUARANTINE})\n"
+                f"Entered: {entered}\nLeft: {left}\n"
+                f"Action: attribution-only until quarantine window closes."
+            )
+            send_operator_alert(f"13F {verdict}", alert_text, level="WARN")
+            log.info("Telegram alert sent")
+        except Exception as exc:
+            log.warning("Telegram alert failed (non-blocking): %s", exc)
+
     return 1 if verdict in ("QUARANTINE", "PRODUCER_AUDIT_REQUIRED") else 0
 
 
@@ -442,8 +528,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--pre-date", required=True, help="Last clean pre-refresh snapshot YYYY-MM-DD")
     p.add_argument("--post-date", required=True, help="First post-refresh snapshot YYYY-MM-DD")
     p.add_argument("--output", type=Path, default=None, help="Output Markdown path (default stdout)")
+    p.add_argument("--no-alert", action="store_true", help="Suppress Telegram alerts (dry-run mode)")
     args = p.parse_args(argv)
-    return run(args.pre_date, args.post_date, args.output)
+    return run(args.pre_date, args.post_date, args.output, no_alert=args.no_alert)
 
 
 if __name__ == "__main__":
