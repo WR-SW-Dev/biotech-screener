@@ -19,7 +19,7 @@ A secondary urgent finding: `common/ranker_active_contract.py`, referenced in fi
 2. **[URGENT — THIS WEEK]** Document the absence of `ranker_active_contract.py` and decide whether to create the module or accept manual enforcement.
 3. **[NOW — DIAGNOSTIC]** Compute Alt 10 (no-ranker selector_score comparator) divergent-snapshot analysis. This requires no gate clearance and frames all subsequent alternatives.
 4. **[NOW — DIAGNOSTIC]** Shadow-track catalyst_decay_w and binary_quality_score distributions (Alts 3/4) as descriptive-only; no IC claims.
-5. **[ESCALATE — HIGH]** Prioritize Spec 077 join fix. At 70% join failure, Alt 6 (Event-EV) is analytically unreachable.
+5. **[MONITOR — HIGH]** Verify Spec 077 binder is populating. The forward-only `event_ev_p_hit` binder has shipped (`_bind_event_ev_p_hit`, node_id exact + ticker/date ±7d fallback). 37 postmortems carry the field; 0 non-null to date — EV artifacts do not yet cover those events. Define the sample-size gate: how many bound post-PIT HIT/MISS records with non-null `event_ev_p_hit` are required before a calibration/return-discrimination audit can run?
 
 ---
 
@@ -79,9 +79,9 @@ Top-30: sorted(eligible_rows, key=-final_score)[:30]
 - **Training:** 36 dates, 12,400 pairs; **train_accuracy = 1.0 [OVERFITTING FLAG]**
 - **Rollback artifact:** ranker_v2_model_5feat_rollback.json (5-feature set, not in production)
 
-### Urgent Infrastructure Finding
+### Governance Finding
 
-**`common/ranker_active_contract.py` does not exist on disk.** Five audit documents reference this module as enforcing 21 drift tests on production ranker inputs. The enforcement layer is absent. Downstream audit work in T4/T5 that assumed drift-test enforcement must be treated as unverified.
+**`common/ranker_active_contract.py` is on an unmerged branch.** The module (21 drift tests, commit `e7c0ee47`) was developed on `hygiene/ranker-active-contract-2026-04-30` and has not been merged to main. Production code on main does not import or call it. This is a merge/governance gap — not a missing enforcement layer that is breaking anything in production. Five audit documents reference it as live enforcement; those references are stale and should be corrected. Decision required: merge the branch, or formally accept manual enforcement and update the audit documents.
 
 ### Coinvest Double-Count Confirmed
 
@@ -127,7 +127,7 @@ The table below shows all 10 alternatives with their T6 category assignments and
 | 3 | Catalyst timing (catalyst_decay_w) | **HIGH_POTENTIAL_BUT_BLOCKED** | 2026-Q4 (Lane 2 + Gate 4) | ρ=+0.19 across 17 snapshots — descriptive only, NOT alpha evidence [REGIME_CAVEAT]. Blocked on Spec 071 Lane 2 (false-catalyst classifier). |
 | 4 | Catalyst quality (binary_quality_score) | **HIGH_POTENTIAL_BUT_BLOCKED** | 2026-Q4 (Lane 2 + Gate 4) | D9 conditional IC ~+0.20 within top coinvest — PRELIMINARY [REGIME_CAVEAT]. Same Lane 2 blocker as Alt 3. |
 | 5 | Revised financial_score | **NEEDS_HUMAN_REVIEW** | After Gate 1 (financial_score sign direction) | Cannot assess until production correctness question resolved. Category may change to LOW_POTENTIAL, MEDIUM, or HIGH depending on Gate 1 outcome. |
-| 6 | Event-EV (event_ev_p_hit) | **HIGH_POTENTIAL_BUT_BLOCKED** | 2026-Q4 at earliest (if Spec 077 fixed June 2026) | 6-layer Bayesian framework exists; 0 non-null bound records; 70% join failure. Infrastructure blocked. Thesis is strongest of the 10 if data problem solved. |
+| 6 | Event-EV (event_ev_p_hit) | **HIGH_POTENTIAL_BUT_BLOCKED** | 2026-Q4 at earliest (prospective accumulation) | 6-layer Bayesian framework exists. Spec 077 binder shipped (node_id exact + ±7d fallback). 37 postmortems carry the field; 0 non-null — EV artifacts not yet covering those events. Blocker is prospective sample accumulation, not binder infrastructure. |
 | 7 | EES v3 (conditional_misprice_score) | **NO_GO PERMANENT** | N/A | Spearman -0.978 with pmv; monotonic transform; IC ~0 after pmv control. Cannot extract expectation error from expectation alone. Do not reopen. |
 | 8 | Clinical design quality | **NO_GO** | N/A (Phase A verdict review 2026-05-22 only) | Phase A verdict NO_GO for selector; all clinical ranker use prohibited. Verdict review 2026-05-22 is a scheduled checkpoint, not a promotion path. |
 | 9 | Hybrid composite | **NO_GO** | ≥2027 (after individual signals clear Checklist v2) | n=12 HIT/MISS is fatally underpowered for composite evaluation. Replicates EES v3 methodological path. Do not build until each component individually clears Checklist v2. |
@@ -141,7 +141,7 @@ The table below shows all 10 alternatives with their T6 category assignments and
 
 **NO_GO:** Alt 8. The Phase A verdict for clinical lanes is explicit: selector NO_GO, ranker SHADOW for clinical_design_quality only within the clinical block (which carries 0% weight in production). Applying clinical features to the main ranker is prohibited.
 
-**HIGH_POTENTIAL_BUT_BLOCKED (Alts 3, 4, 6):** These are the most promising alternatives by thesis strength. The blockers are infrastructure (Spec 077 join failure for Alt 6) and data quality (Spec 071 Lane 2 for Alts 3, 4). No amount of descriptive analysis can substitute for resolving the blockers before formal IC testing.
+**HIGH_POTENTIAL_BUT_BLOCKED (Alts 3, 4, 6):** These are the most promising alternatives by thesis strength. For Alt 6: the Spec 077 binder infrastructure is shipped; the blocker is prospective EV artifact accumulation (0 non-null binds to date). For Alts 3 and 4: data quality (Spec 071 Lane 2 false-catalyst classifier). No descriptive analysis substitutes for resolving these blockers before formal IC testing.
 
 ---
 
@@ -163,7 +163,7 @@ The table below shows all 10 alternatives with their T6 category assignments and
 |---------|-------|-------------------|
 | Gate 1: financial_score sign direction | Alt 5; ablation baseline integrity | Unscheduled; T8 Escalation 1 required |
 | Gate 2: Spec 071 Lane 2 (false-catalyst classifier) | Alts 3, 4 formal IC | ~2026-Q3 |
-| Gate 3: Spec 077 join fix + n≥1 bound EV record | Alt 6 (Event-EV) | No timeline; T8 Escalation 3 required |
+| Gate 3: n≥N bound post-PIT HIT/MISS with non-null event_ev_p_hit | Alt 6 (Event-EV) formal IC | Prospective accumulation; binder shipped; 0 non-null to date |
 | Gate 4: n≥30 post-PIT HIT/MISS | All formal IC tests | ~2026-07-15 at ~3-4 events/month |
 | Gate 5: 13F quarantine lifted | Alt 2 (inst_delta_z) | ~2026-05-20 |
 | Gate 6: ≥30 non-overlapping snapshots post-cohort-change | Catalog-level comparisons | ~2026-06-15 |
@@ -213,11 +213,11 @@ Full risk analysis in T4. The five highest-priority risks for this research prog
 - **Mitigation:** Formal IC tests must use block bootstrap with NW-corrected t (≥5 lags) and pre-registered hypotheses. No post-hoc significance claims on descriptive distributions.
 - **Current status:** No formal tests have been run. Risk is prospective.
 
-### Risk 5: IC Tool Misconfiguration (Gate 7) [HIGH]
+### Risk 5: IC Evaluation Scope Gap (Gate 7) [HIGH]
 
-- **Nature:** Running IC on the full ~297-ticker universe rather than the top-60 cohort produces a statistic that does not correspond to what the ranker affects. The -0.031 pooled IC from T3 may be measuring a different population than intended.
-- **Mitigation:** Fix `ic_decomposition.py` to filter to top-60 cohort before any formal ranker IC test is reported.
-- **Current status:** Bug documented (T5 Gate 7). Not yet fixed. No formal IC tests have been run post-identification.
+- **Nature:** `ic_decomposition.py` was designed to measure `coinvest_score_z` IC across all eligible tickers — that is its correct designed purpose. For ranker-specific IC measurement (final_score or an alternative signal within the top-60 cohort), a different evaluation scope is required. The current tool cannot directly answer "does this ranker signal add value within the top-60?" without modification.
+- **Mitigation:** Before running any formal ranker alternative IC test, confirm the evaluation is filtered to the top-60 cohort and measures the appropriate signal (final_score or the alternative, not coinvest_score_z alone).
+- **Current status:** Evaluation scope gap documented. The tool is not broken; it is measuring what it was designed to measure. Ranker IC testing requires a different or extended scope.
 
 ---
 
@@ -233,7 +233,7 @@ Full risk analysis in T4. The five highest-priority risks for this research prog
 | G4 | n≥30 post-PIT HIT/MISS | 12/30 (~2026-07-15) | All formal IC tests |
 | G5 | 13F quarantine lifted | ~2026-05-20 | Alt 2 (inst_delta_z) |
 | G6 | ≥30 non-overlapping snapshots post-cohort-change | ~2026-06-15 | Catalog-level IC |
-| G7 | IC tool fixed (top-60 cohort, not full universe) | BUG OPEN | All formal ranker IC tests |
+| G7 | IC evaluation scoped to top-60 cohort (not full eligible universe) | SCOPE GAP | All formal ranker alternative IC tests |
 
 ### The 4 Evaluation Phases
 
@@ -291,11 +291,11 @@ Actions are ordered by urgency. "NOW" means within 48 hours. "THIS WEEK" means b
 
 1. **Escalate financial_score sign direction to T8 (Escalation 1).** Provide: (a) production weight = -0.0533; (b) feature definition = Module 5 composite rank-norm, higher = stronger financials; (c) the two competing interpretations; (d) the training run configuration or contact for the person who ran it. Decision must be documented in writing before any ablation test proceeds.
 
-2. **Document the absence of `ranker_active_contract.py`.** This module is referenced in 5 audit documents as the enforcement layer for 21 drift tests. It does not exist. Either create it, accept manual enforcement, or update the audit documents to reflect its absence. Do not leave the discrepancy unresolved.
+2. **Resolve `ranker_active_contract.py` merge gap.** The module (21 drift tests, commit `e7c0ee47`) exists on branch `hygiene/ranker-active-contract-2026-04-30` but is not on main. Decision: (a) merge the branch, (b) formally accept manual enforcement and update the 5 stale audit documents, or (c) scope a replacement. Do not leave the discrepancy unresolved — 5 audit documents currently assert enforcement that is not running.
 
 3. **Compute Alt 10 descriptive analysis.** Using `forward_returns_panel.csv` and the 17 post-PIT canonical snapshots: identify all snapshots where selector_score top-30 ≠ final_score top-30 (divergent snapshots); for each divergent snapshot, compute excess_return_5d for the selector-only tickers vs. ranker-override tickers. This is a descriptive comparison, not a formal IC test. No significance claims. Report counts and median return differentials only.
 
-4. **Fix `ic_decomposition.py` to filter to top-60 cohort before any IC is computed.** This is a tool correctness fix, not a model change. Log the fix with a test that verifies the filtered population matches the ranker input cohort.
+4. **Define the IC evaluation scope for ranker testing.** `ic_decomposition.py` correctly measures `coinvest_score_z` IC across all eligible tickers (its designed purpose). For ranker alternative IC tests (final_score or alternative signal within top-60 cohort), a separate evaluation scope is needed. Document this as a Gate 7 precondition before any formal ranker IC test is reported — no code change required now, but the scope must be specified before Phase 2 opens.
 
 ### THIS WEEK (before 2026-05-15)
 
@@ -359,17 +359,19 @@ These four items require human decision. They are not resolvable by further anal
 
 ---
 
-### Escalation 3: Spec 077 Join Fix Prioritization [HIGH]
+### Escalation 3: Event-EV Calibration Sample-Size Gate [HIGH]
 
-**Question:** What is the timeline for fixing the Spec 077 join failure (70% failure rate for event_ev_p_hit binding), and should it be prioritized above other infrastructure work?
+**Question:** (a) What count of bound post-PIT HIT/MISS records with non-null `event_ev_p_hit` is required before a calibration / return-discrimination audit can run for Alt 6? (b) What monitoring should confirm the binder is populating future records correctly?
 
-**Decision owner:** Infrastructure lead.
+**Decision owner:** Research lead.
 
-**Evidence:** Alt 6 (Event-EV) has the strongest theoretical alpha thesis of the 10 alternatives. The 6-layer Bayesian framework exists. The only reason Alt 6 is HIGH_POTENTIAL_BUT_BLOCKED rather than FORMAL_CANDIDATE is the 70% join failure — 0 non-null bound records exist in production. If Spec 077 is deprioritized, Alt 6 cannot be evaluated before 2026-Q4 at the earliest, and the most promising ranker alternative remains untestable.
+**Evidence:** The Spec 077 forward-only binder has shipped (`_bind_event_ev_p_hit` in `catalyst_resolution_tracker.py`; node_id exact match + ticker/date ±7d fallback; no unsafe historical backfill). The field `event_ev_p_hit` is present in 37 postmortem records under `resolution_source`; all 37 are currently null because EV artifacts do not yet cover those specific events. The binder architecture is correct; the blocker is prospective EV artifact accumulation.
 
-**Blocker consequence:** Every month of delay pushes the Alt 6 formal IC test (which itself requires G3 + G4 + G7) further into 2027.
+**Blocker consequence:** Alt 6 cannot contribute to any formal IC test until enough bound HIT/MISS records accumulate. Without a defined sample-size gate, there is no clear trigger for when the first calibration audit runs.
 
-**Urgency: HIGH — timeline decision needed before 2026-05-20.**
+**Recommended next step:** Define the minimum n of bound records required (suggested: n≥15 for first calibration look, n≥30 for formal IC). Verify the postmortem pipeline is producing new EV artifacts post-binder-ship to ensure prospective population is happening.
+
+**Urgency: HIGH — gate definition needed before 2026-05-20. No code change needed.**
 
 ---
 
@@ -413,7 +415,7 @@ The calendar below covers the period through 2027-04-17 (year stability gate for
 | Date | Milestone |
 |------|-----------|
 | ~2026-07-01 | Phase 2 opens: formal descriptive IC for Alt 10 + Alt 2 (if G4 + G7 cleared) |
-| ~2026-07-01 | If Spec 077 fixed in June: first bound EV records available; verify G3 |
+| ~2026-07-01 | Check event_ev_p_hit binder population: how many postmortems now have non-null records? Gate 3 progress update. |
 | ~2026-07-15 | **Gate 4: n≥30 post-PIT HIT/MISS** [HARD GATE for all formal IC tests] |
 | ~2026-07-21 | inst_delta forward shadow final verdict |
 | ~2026-07-31 | Phase 4 opens: first Checklist v2 eligible test (if Phase 2 produced FORMAL_CANDIDATE) |
@@ -424,7 +426,7 @@ The calendar below covers the period through 2027-04-17 (year stability gate for
 
 | Date | Milestone |
 |------|-----------|
-| ~2026-Q4 | Alt 6 (Event-EV) formal IC (if G3 + G4 + G7 all cleared) |
+| ~2026-Q4 | Alt 6 (Event-EV) formal IC (if G3 — bound EV sample gate — + G4 + G7 all cleared) |
 | ~2026-Q4 | Year stability gate eligible for any signal promoted in Q3 2026 |
 | ~2026-12-31 | Review which alternatives have reached FORMAL_CANDIDATE or PROMOTION_ELIGIBLE |
 | **2027-04-17** | **Year stability gate for any signal trained on 2026 data** [Checklist v2 requirement] |

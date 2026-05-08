@@ -29,7 +29,7 @@ Of the 10 alternatives evaluated, **one is permanently closed (Alt 7)**, **one i
 | 3 | Catalyst timing ranker | HIGH_POTENTIAL_BUT_BLOCKED | Spec 071 Lane 2 (false-catalyst classifier) not implemented; est. ~2026-Q3 |
 | 4 | Catalyst quality ranker | HIGH_POTENTIAL_BUT_BLOCKED | Same Lane 2 blocker; mild double-count; REGIME_CAVEAT on conditional IC +0.20 |
 | 5 | Revised financial_score weighting | NEEDS_HUMAN_REVIEW | Sign direction unresolved; Gate 1 (Spec 074 / code audit) required first |
-| 6 | Event-EV integration | HIGH_POTENTIAL_BUT_BLOCKED | Spec 077: 70% join failure; 0 non-null bound records; calibration clock at zero |
+| 6 | Event-EV integration | HIGH_POTENTIAL_BUT_BLOCKED | Binder shipped (Spec 077); 0 non-null bound records to date; blocker is prospective EV artifact accumulation, not binder infrastructure |
 | 7 | EES v3 (conditional_misprice_score) | NO_GO | Spearman -0.978 with pmv; monotonic transform; IC ~0 after pmv control. PERMANENT |
 | 8 | Clinical design quality | NO_GO | Closed lane policy (selector NO_GO, Phase A verdict 2026-05-04); all clinical ranker use prohibited |
 | 9 | Hybrid composite ranker | NO_GO | Fatally underpowered (n=12); replicates EES v3 construction path; cannot evaluate until individual signals clear Checklist v2 (>=2027) |
@@ -209,35 +209,33 @@ Of the 10 alternatives evaluated, **one is permanently closed (Alt 7)**, **one i
 
 **Independence from selector:** VERY HIGH. EV integration is conceptually orthogonal to ownership concentration. The selector answers "who believes in this?" and EV answers "what is it actually worth?"
 
-**Data readiness:** BLOCKED — CRITICAL. Current state:
-- `event_ev_p_hit` field exists in ResolutionRecord schema (Spec 077)
-- Join failure rate: 70% (EV expected_date vs CRT catalyst_date divergence of 36-62+ days)
-- Non-null bound records in production: 0
-- Calibration clock: not started
-- n(HIT/MISS with bound EV): 0
+**Data readiness:** MATURING — PROSPECTIVE ACCUMULATION. Current state:
+- `event_ev_p_hit` field wired via `_bind_event_ev_p_hit` in `catalyst_resolution_tracker.py` (Spec 077 shipped; node_id exact match + ticker/date ±7d fallback; no unsafe historical backfill)
+- Field present in 37 postmortem records (under `resolution_source.event_ev_p_hit`); all 37 null — EV artifacts do not yet cover those specific events
+- Calibration clock: started in principle, but no non-null records yet — EV artifact coverage must catch up to postmortem population
+- Blocker is prospective EV artifact accumulation, NOT binder infrastructure
 
-Until the Spec 077 join failure is resolved, this alternative has zero data. The join failure is the single most important infrastructure issue for the entire ranker roadmap.
+The binder is not missing. The data is accumulating forward-only. Gate 3 is redefined as: n≥N bound post-PIT HIT/MISS records with non-null `event_ev_p_hit` (N to be confirmed by operator — suggested n≥15 for first calibration look, n≥30 for formal IC).
 
 **PIT safety:** HIGH RISK if external EV priors (PubMed citations, HINT benchmark) are not frozen at snapshot time. Must confirm that the 6-layer prior construction uses only information available as of the snapshot date. PubMed 24h cache may introduce partial look-ahead on recent publications.
 
 **Robustness risk:** HIGH conceptually (Bayesian priors are calibration-sensitive), but cannot assess empirically until join is fixed.
 
-**Implementation risk:** HIGH. Spec 077 join logic requires architectural changes to the CRT-EV linkage. The divergence between expected_date (EV node) and catalyst_date (CRT node) is a structural mismatch, not a simple field mapping fix.
+**Implementation risk:** LOW for infrastructure (binder is shipped). MODERATE for calibration (must accumulate enough bound records before any IC test is meaningful).
 
-**Calibration readiness:** ZERO. Cannot accumulate evidence until join is fixed. Even after fix: forward-only, no backfill safe (T3 memo: 30% historical join rate makes backfill unreliable). Calibration clock starts only after first clean bound HIT/MISS records appear.
+**Calibration readiness:** ACCUMULATING. Binder is live; no backfill (unsafe without exact node_id evidence). Calibration clock starts only when first non-null bound HIT/MISS records appear. Currently 0 non-null. Accumulation rate depends on EV artifact coverage of future events — monitor monthly.
 
 **Production risk:** LOW currently (the field is not in the ranker). HIGH if deployed before calibration.
 
 **Explainability:** EXCELLENT once operational. "We rank by expected value of catalyst resolution" is the most analytically defensible ranker rationale.
 
-**Time to valid test:** Spec 077 join fix (no timeline; escalated to T8) → first clean bound records → Gate 4 equivalent for bound subset (n≥30 bound HIT/MISS) → formal IC test. Minimum total: 2026-Q4 if Spec 077 is resolved in June 2026; more likely 2027.
+**Time to valid test:** Gate 3 (n≥N bound records, operator-defined) → Gate 4 (n≥30 post-PIT HIT/MISS total) → G7 (top-60 IC scope) → formal IC test. Minimum total: 2026-Q4 if EV artifact coverage accelerates; more likely 2027.
 
 **Blocker details:**
-- Spec 077 join failure: EV expected_date vs CRT catalyst_date divergence 36-62+ days. Fix requires either: (a) fuzzy date matching with +/-N-day window and disambiguation logic, or (b) shared node_id assignment at CRT entry time. Option (b) is architecturally cleaner. No timeline estimate available.
-- No backfill: 30% historical join rate makes backfill unreliable; forward-only accumulation.
-- PIT audit of prior construction: must confirm 6-layer prior frozen at snapshot time.
+- Gate 3 (EV sample accumulation): Binder is live. EV artifact coverage of future events determines accumulation rate. No backfill unless exact node_id evidence. Gate 3 threshold (n for first calibration look) should be defined by operator.
+- PIT audit of prior construction: must confirm 6-layer prior frozen at snapshot time before any IC claim.
 
-**Conclusion:** Strongest conceptual mechanism of all alternatives. Infrastructure fix is the critical path. Escalate Spec 077 join resolution to T8 as the highest-priority infrastructure ask.
+**Conclusion:** Strongest conceptual mechanism of all alternatives. Binder infrastructure is resolved. The critical path is now prospective EV artifact accumulation, not join logic. Define the Gate 3 sample threshold and monitor monthly.
 
 ---
 
@@ -323,7 +321,7 @@ None of these conditions are met. Do not revisit until all individual alternativ
 | Rank | Alt | Category | Next Action | Est. First Valid Test |
 |------|-----|----------|-------------|----------------------|
 | 1 | 10 — No-ranker comparator | MEDIUM_POTENTIAL_SHADOW | Compute selector vs. final_score divergent-snapshot comparison from existing panel | Now (descriptive); 2026-07-15 (powered) |
-| 2 | 6 — Event-EV | HIGH_POTENTIAL_BUT_BLOCKED | Escalate Spec 077 join fix to T8; define fix spec (fuzzy match vs. shared node_id); get timeline commitment | 2026-Q4 at earliest (if fix begins June 2026) |
+| 2 | 6 — Event-EV | HIGH_POTENTIAL_BUT_BLOCKED | Define Gate 3 sample-size threshold (n for first calibration look); verify binder is populating future postmortems; monitor monthly | 2026-Q4 at earliest (prospective accumulation) |
 | 3 | 3 — Catalyst timing | HIGH_POTENTIAL_BUT_BLOCKED | Shadow-track catalyst_decay_w distribution diagnostics; no scoring. Wait for Spec 071 Lane 2 (~2026-Q3) | 2026-Q4 (Lane 2 complete AND Gate 4) |
 | 4 | 4 — Catalyst quality | HIGH_POTENTIAL_BUT_BLOCKED | Same as Alt 3; shadow-track binary_quality_score distribution within top-60 | 2026-Q4 (same blockers as Alt 3) |
 | 5 | 5 — financial_score direction | NEEDS_HUMAN_REVIEW | Gate 1: operator resolves sign-direction question via Spec 074 or code audit | Unblocks only after Gate 1 |
@@ -349,11 +347,12 @@ None of these conditions are met. Do not revisit until all individual alternativ
 - **Decision owner:** Operator sign-off
 - **Urgency:** LOW. Confirm once; then archive. No future T-series memo needs to assess this.
 
-### Escalation 3 (New — T6): Spec 077 join failure prioritization [HIGH — INFRASTRUCTURE]
-- **Question:** What is the timeline for resolving the 70% Spec 077 join failure? Is the preferred fix (a) fuzzy date matching +/-N-day window, or (b) shared node_id assigned at CRT entry time?
-- **Decision owner:** Infrastructure/engineering owner
-- **Blocker consequence:** Alt 6 (Event-EV) is the highest-potential alternative; zero evidence accumulation is possible until this fix ships. Every month of delay is ~3-4 lost HIT/MISS calibration records.
-- **Urgency:** HIGH. If fix is targeted for June 2026, the first clean bound records could appear before Gate 4 (~2026-07-15), enabling an early read. If fix slips to Q4, Event-EV cannot contribute to any 2026 analysis.
+### Escalation 3 (New — T6): Event-EV calibration sample-size gate [HIGH — MONITORING]
+- **Question:** (a) What count of bound post-PIT HIT/MISS records with non-null `event_ev_p_hit` is required before a calibration / return-discrimination audit can run? (b) What monitoring confirms the binder is populating future records correctly?
+- **Decision owner:** Research lead
+- **Context:** Spec 077 binder is shipped. 37 postmortems carry the field; 0 non-null (EV artifacts not yet covering those events). Blocker is prospective accumulation, not join logic.
+- **Blocker consequence:** Without a defined sample-size threshold, Alt 6 has no clear trigger for its first calibration audit. No backfill unless exact node_id evidence exists.
+- **Urgency:** HIGH. Gate definition needed before 2026-05-20. No code change required.
 
 ### Escalation 4 (New — T6): Spec 071 Lane 2 timeline confirmation
 - **Question:** Is the ~2026-Q3 estimate for Spec 071 Lane 2 (false-catalyst OLE/PK classifier) firm? What are the specific dependencies (data labeling, model training, validation)?
@@ -390,10 +389,10 @@ Alt 5 (financial_score direction)
   [No timeline estimate; escalated to T8]
 
 Alt 6 (Event-EV)
-  Spec 077 join failure fix (no timeline; escalated to T8)
+  Gate 3: n>=N bound post-PIT HIT/MISS with non-null event_ev_p_hit (N operator-defined; binder shipped)
   PIT audit of 6-layer prior construction
-  Forward accumulation: n>=30 bound HIT/MISS (starts counting only after join fix)
-  [Total pipeline: likely 2026-Q4 at earliest]
+  Gate 4: n>=30 post-PIT HIT/MISS total
+  [Total pipeline: likely 2026-Q4 at earliest, prospective accumulation dependent]
 
 Alt 1 (momentum)     -> NO ACTION
 Alt 7 (EES v3)       -> PERMANENT NO_GO
