@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Run OpenClaw agents directly via Anthropic SDK, bypassing the gateway.
+"""Run OpenClaw agents directly via Llama 3.3 70B (Together AI) or Claude (Anthropic).
+
+Auto-routes based on model name:
+- "claude-*" → Anthropic SDK (uses ANTHROPIC_API_KEY)
+- "meta-llama/*" → Together AI API (uses TOGETHER_API_KEY)
 
 Workaround for OpenClaw gateway billing issue (OPENCLAW_SETUP_TOKEN
-triggers "third-party apps" rejection). Uses ANTHROPIC_API_KEY directly.
+triggers "third-party apps" rejection). Uses direct API keys instead.
 
 Reads the agent's IDENTITY.md + SOUL.md + memory, constructs a system
 prompt, sends the message, and logs the response.
 
 Usage:
     python3 tools/run_agent_direct.py --agent ops --message "HEARTBEAT"
-    python3 tools/run_agent_direct.py --agent sentinel --message "HEARTBEAT"
+    python3 tools/run_agent_direct.py --agent sentinel --message "HEARTBEAT" --model meta-llama/Llama-3.3-70B-Instruct-Turbo
     python3 tools/run_agent_direct.py --agent catalyst_delta --message "DAILY" --write-memory
     python3 tools/run_agent_direct.py --agent shadow_monitor --message "DAILY" --write-memory
 
@@ -66,16 +70,22 @@ def maybe_write_memory(agent_name: str, response_text: str) -> Path | None:
     return mem_path
 
 
-# Per-agent model overrides. Agents not listed default to Sonnet.
-# Haiku is used for routine/deterministic tasks (file checks, structured capture).
+# Per-agent model overrides. Agents not listed default to Llama 3.3 70B.
+# Llama is used for all agents via Together AI API.
+# Model format: "llama-3.3-70b" (auto-routed to Together)
 AGENT_MODELS = {
-    "aact_trial_ingest": "claude-haiku-4-5-20251001",
-    "company_news_ingest": "claude-haiku-4-5-20251001",
-    "postmortem": "claude-haiku-4-5-20251001",
-    "ctgov_poller": "claude-haiku-4-5-20251001",
-    "price_action_watch": "claude-haiku-4-5-20251001",
-    "biotech_news_digest": "claude-haiku-4-5-20251001",
-    "shadow_monitor": "claude-haiku-4-5-20251001",
+    "aact_trial_ingest": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "company_news_ingest": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "postmortem": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "ctgov_poller": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "price_action_watch": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "biotech_news_digest": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "shadow_monitor": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "ops": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "sentinel": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "data_auditor": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "ic_health_monitor": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "fleet_steward": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
 }
 
 
@@ -112,19 +122,44 @@ def load_agent_context(agent_name: str) -> str:
 
 
 def resolve_model(agent_name: str, cli_model: str | None = None) -> str:
-    """Resolve model for an agent: CLI override > AGENT_MODELS > default Sonnet."""
-    if cli_model and cli_model != "claude-sonnet-4-6":
+    """Resolve model for an agent: CLI override > AGENT_MODELS > default Llama 3.3 70B."""
+    if cli_model:
         return cli_model  # explicit CLI override takes precedence
-    return AGENT_MODELS.get(agent_name, "claude-sonnet-4-6")
+    return AGENT_MODELS.get(agent_name, "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 
 
-def run_agent(agent_name: str, message: str, model: str = "claude-sonnet-4-6", max_tokens: int = 4096) -> dict:
-    """Run an agent via direct Anthropic SDK call."""
+def run_agent(
+    agent_name: str, message: str, model: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo", max_tokens: int = 4096
+) -> dict:
+    """Run an agent via Anthropic SDK (Claude) or Together API (Llama).
+
+    Auto-detects model type and routes to appropriate provider:
+    - "claude-*" → Anthropic SDK
+    - "meta-llama/*" → Together AI API (OpenAI-compatible)
+    """
+    system_prompt = load_agent_context(agent_name)
+    if not system_prompt:
+        return {"error": f"No context loaded for agent {agent_name}"}
+
+    # Add current date and project context
+    now = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    system_prompt += f"\n\n---\n\nCurrent time: {now}\nProject root: {PROJECT_ROOT}\n"
+
+    # Route to appropriate provider
+    if "llama" in model.lower():
+        return _run_agent_together(agent_name, message, model, max_tokens, system_prompt, now)
+    else:
+        return _run_agent_anthropic(agent_name, message, model, max_tokens, system_prompt, now)
+
+
+def _run_agent_anthropic(
+    agent_name: str, message: str, model: str, max_tokens: int, system_prompt: str, now: str
+) -> dict:
+    """Run agent via Anthropic SDK (Claude models)."""
     import anthropic
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        # Try loading from .env
         env_path = PROJECT_ROOT / ".env"
         if env_path.exists():
             for line in env_path.read_text().splitlines():
@@ -134,14 +169,6 @@ def run_agent(agent_name: str, message: str, model: str = "claude-sonnet-4-6", m
 
     if not api_key:
         return {"error": "ANTHROPIC_API_KEY not found"}
-
-    system_prompt = load_agent_context(agent_name)
-    if not system_prompt:
-        return {"error": f"No context loaded for agent {agent_name}"}
-
-    # Add current date and project context
-    now = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    system_prompt += f"\n\n---\n\nCurrent time: {now}\nProject root: {PROJECT_ROOT}\n"
 
     client = anthropic.Anthropic(api_key=api_key)
 
@@ -177,11 +204,79 @@ def run_agent(agent_name: str, message: str, model: str = "claude-sonnet-4-6", m
         }
 
 
+def _run_agent_together(
+    agent_name: str, message: str, model: str, max_tokens: int, system_prompt: str, now: str
+) -> dict:
+    """Run agent via Together AI API (Llama models, OpenAI-compatible)."""
+    from openai import OpenAI
+
+    api_key = os.environ.get("TOGETHER_API_KEY")
+    if not api_key:
+        env_path = PROJECT_ROOT / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                if line.startswith("TOGETHER_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip()
+                    break
+
+    if not api_key:
+        return {"error": "TOGETHER_API_KEY not found"}
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.together.xyz/v1",
+    )
+
+    try:
+        # Build messages with system prompt as first message (OpenAI format)
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": message},
+        ]
+
+        # Note: Together API supports additional params via extra_body if needed
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=max_tokens,
+            temperature=0.2,  # Deterministic for governance tasks
+            top_p=0.95,
+            frequency_penalty=0.1,
+            messages=messages,
+        )
+
+        result_text = response.choices[0].message.content if response.choices else ""
+
+        return {
+            "agent": agent_name,
+            "model": model,
+            "message": message,
+            "response": result_text,
+            "usage": {
+                "input_tokens": response.usage.prompt_tokens,
+                "output_tokens": response.usage.completion_tokens,
+            },
+            "timestamp": now,
+            "status": "success",
+        }
+
+    except Exception as e:
+        return {
+            "agent": agent_name,
+            "error": str(e),
+            "timestamp": now,
+            "status": "error",
+        }
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Run agent directly via Anthropic SDK")
+    parser = argparse.ArgumentParser(description="Run agent directly via Anthropic SDK or Together AI (Llama)")
     parser.add_argument("--agent", required=True, help="Agent name (e.g., ops, sentinel)")
     parser.add_argument("--message", default="HEARTBEAT", help="Message to send")
-    parser.add_argument("--model", default="claude-sonnet-4-6")
+    parser.add_argument(
+        "--model",
+        default="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        help="Model to use (auto-routes to Anthropic or Together based on model name)",
+    )
     parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--log-dir", type=Path, default=PROJECT_ROOT / "logs" / "agents_direct")
     parser.add_argument(
