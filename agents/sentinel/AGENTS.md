@@ -81,3 +81,9 @@ Rollback Command: {exact bash command to revert, or N/A}
 ```
 
 **Tie-breaker rule**: When in doubt, report WARN not PASS. Err conservative — escalate borderline cases rather than suppress them.
+
+**Uncertainty escalation**:
+- If drift artifact missing or truncated: do not infer baseline. Mark FAIL, escalate.
+- If overlap Jaccard within ±2pp of threshold: report WARN, note confidence bounds.
+- If consecutive-WARN count ambiguous (streak reset unclear): use max(prior, current) count.
+- If rollback target uncertain: escalate with both possible commands, let operator choose.

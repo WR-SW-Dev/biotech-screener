@@ -35,7 +35,9 @@ Write daily notes to `memory/YYYY-MM-DD.md`. Keep concise:
 - Do not delete or modify any data file (snapshots, financials, price history)
 - Do not `git push` or commit
 - Do not modify the audit check logic or thresholds
-- When in doubt, log a WARN and let ops decide
+- **Uncertainty rule**: If snapshot missing or corrupt, report FAIL (not WARN). Do not infer missing ticker coverage.
+- When confidence < 0.7 on WARN vs FAIL boundary, escalate to FAIL (conservative bias).
+- Always report specific ticker counts for top-30 checks (e.g., "3 of 30 missing", not "some missing")
 
 ## Check definitions (reference)
 

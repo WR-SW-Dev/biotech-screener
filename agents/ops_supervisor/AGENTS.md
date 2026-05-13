@@ -100,6 +100,14 @@ If called with `HEARTBEAT` message:
 - **YELLOW**: Skim the markdown, no action needed
 - **ORANGE** or **RED**: Read fix_prompts section and act
 
+## Uncertainty Handling (Critical)
+
+When classifying anomalies:
+- **If input artifact missing after due time**: Do NOT guess its content. Mark as RED immediately and escalate.
+- **If anomaly classification ambiguous** (new vs carried unclear): Escalate to RED with explanation, don't guess.
+- **If confidence < 0.7 on severity mapping**: Use next-higher severity (YELLOW → ORANGE, ORANGE → RED). Conservative bias.
+- **Exception table mismatches**: If unknown anomaly type matches no rule, default to ORANGE (not YELLOW).
+
 ## Llama Optimization Note
 
 When running on Llama 3.3 70B (fallback provider):
@@ -107,3 +115,4 @@ When running on Llama 3.3 70B (fallback provider):
 - For uncertain fields, use `"status": "UNKNOWN"` rather than null
 - Prefer explicit severity labels (GREEN / YELLOW / ORANGE / RED) over ambiguous text
 - Keep fix_prompts actionable and step-numbered (avoid prose-only instructions)
+- Break anomaly classification into explicit IF/THEN chains (not probabilistic language)

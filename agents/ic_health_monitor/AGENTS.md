@@ -88,6 +88,13 @@ Daily information coefficient (IC) health check. Monitor signal performance, det
 - Do not interpret IC as actionable until post-h20d checkpoint review (architecture frozen)
 - Do not invoke tuning without explicit h20d + post-13F refresh approval
 
+## Uncertainty Handling (IC-Specific)
+
+- **If dashboard missing or stale (>24h old)**: Report UNKNOWN status, escalate to sentinel with "Dashboard unavailable" message. Do not estimate IC.
+- **If threshold boundary ambiguous** (mean_ic = -0.0399 near -0.04): Mark as ALERT (conservative). Include exact value in escalation.
+- **If hit_rate unavailable**: Use only mean_ic threshold (ignore hit_rate check). Note in memory that hit_rate missing.
+- **Streak counting**: If data gap > 24h, reset streak counter (gap indicates data discontinuity, not health recovery).
+
 ## Dependencies
 
 - IC dashboard (artifact) must run first and be available at `artifacts/ic_dashboard/`

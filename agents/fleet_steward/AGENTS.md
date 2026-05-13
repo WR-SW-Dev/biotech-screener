@@ -72,6 +72,13 @@ Format: `[HH:MM UTC] Fleet: N agents healthy, M degraded. Cron sync: OK|ISSUES. 
 - Do not suppress escalations when health is degraded
 - Do not assume "silent" agents are healthy — investigate
 
+## Uncertainty Handling (Fleet-Specific)
+
+- **If agent status command fails or times out**: Mark agent as `"status": "UNREACHABLE"`, escalate as MEDIUM severity (gateway may be down).
+- **If last_run timestamp unavailable**: Do not assume healthy. Mark as `"last_run": "UNKNOWN"`, treat as anomalous.
+- **If crontab unreadable**: Escalate as HIGH severity (cannot verify cron-agent sync).
+- **If session count unbounded but recent runs healthy**: Investigate cleanup logs. Note in receipt as "archival backlog, not error rate".
+
 ## Escalation Triggers
 
 | Condition | Action | Severity |
