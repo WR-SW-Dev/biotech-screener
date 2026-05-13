@@ -2342,9 +2342,11 @@ def run_hedge_report(
     snap_dir: Optional[Path] = None,
     options_source: str = OPTIONS_SOURCE_AUTO,
     backtest_mode: str = BACKTEST_AUTO,
+    research_mode: bool = False,
 ) -> Dict[str, Any]:
     """Run the full hedge report pipeline.  Returns the report data dict."""
-    logger.info("=== Biotech Portfolio Hedge Report — %s ===", as_of_date)
+    mode_label = "[RESEARCH_BACKFILL]" if research_mode else ""
+    logger.info("=== Biotech Portfolio Hedge Report — %s %s ===", as_of_date, mode_label)
 
     # Spec 087 B1a — resolve --portfolio-csv first; fail closed before any work.
     portfolio_csv = resolve_portfolio_csv(
@@ -2758,8 +2760,13 @@ def run_hedge_report(
     os.replace(tmp_name, str(json_path))
     logger.info("Phase 5: Wrote %s", json_path)
 
-    # --- Weekly archive + diff ---
-    archive_dir = REPO_ROOT / "output" / "hedge_report" / "archive"
+    # --- Weekly archive + diff (isolation in research mode) ---
+    if research_mode:
+        archive_dir = output_dir / "archive"
+        report_data["mode"] = "research_backfill"
+    else:
+        archive_dir = REPO_ROOT / "output" / "hedge_report" / "archive"
+
     archive_dir.mkdir(parents=True, exist_ok=True)
     archive_json = archive_dir / f"hedge_report_{as_of_date}.json"
     with tempfile.NamedTemporaryFile(
@@ -2805,7 +2812,7 @@ def run_hedge_report(
     logger.info("  Archived to %s", archive_json)
 
     # --- Verdict artifact ---
-    _write_verdict(report_data, output_dir, as_of_date)
+    _write_verdict(report_data, output_dir, as_of_date, research_mode=research_mode)
 
     return report_data
 
@@ -2814,8 +2821,9 @@ def _write_verdict(
     report_data: Dict[str, Any],
     output_dir: Path,
     as_of_date: str,
+    research_mode: bool = False,
 ) -> None:
-    """Write governed BIOSHORT_VERDICT.json and .md."""
+    """Write governed BIOSHORT_VERDICT.json and .md. In research mode, writes only to output_dir."""
     ic = report_data.get("ic_decision", {})
     if not ic:
         return
@@ -2828,6 +2836,7 @@ def _write_verdict(
         "schema": "bioshort_verdict.v1",
         "as_of_date": as_of_date,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "mode": "research_backfill" if research_mode else "operational",
         "verdict": ic.get("policy_action", "WATCH"),
         "recommendation": ic.get("primary_hedge", "none"),
         "secondary": ic.get("secondary_hedge", "none"),
@@ -2983,6 +2992,12 @@ def main() -> int:
         default="auto",
         help="Backtest pricing: auto (historical if S3 creds, else BS), historical, or bs",
     )
+    parser.add_argument(
+        "--research-mode",
+        action="store_true",
+        default=False,
+        help="Isolation mode for research backfill (redirects archive writes to output_dir only, no production mutations)",
+    )
     args = parser.parse_args()
 
     report = run_hedge_report(
@@ -2994,6 +3009,7 @@ def main() -> int:
         snap_dir=args.snap_dir,
         options_source=args.options_source,
         backtest_mode=args.backtest_mode,
+        research_mode=args.research_mode,
     )
 
     if report.get("error"):
