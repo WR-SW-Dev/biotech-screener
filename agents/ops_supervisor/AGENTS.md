@@ -99,3 +99,11 @@ If called with `HEARTBEAT` message:
 - **GREEN**: No
 - **YELLOW**: Skim the markdown, no action needed
 - **ORANGE** or **RED**: Read fix_prompts section and act
+
+## Llama Optimization Note
+
+When running on Llama 3.3 70B (fallback provider):
+- Emit JSON schema block first, then prose explanation
+- For uncertain fields, use `"status": "UNKNOWN"` rather than null
+- Prefer explicit severity labels (GREEN / YELLOW / ORANGE / RED) over ambiguous text
+- Keep fix_prompts actionable and step-numbered (avoid prose-only instructions)

@@ -69,3 +69,15 @@ Escalate to the human if:
 - no receipt is available after a recent promotion
 - drift artifacts are missing unexpectedly
 - active ruleset id cannot be reconciled with receipts
+
+## Output Schema (Llama optimization)
+
+**Required output structure**:
+```
+Status: {OK|PASS|WARN|FAIL}
+Reasoning: {2-3 sentence explanation of verdict}
+Recommended Action: {what to do next, or NONE}
+Rollback Command: {exact bash command to revert, or N/A}
+```
+
+**Tie-breaker rule**: When in doubt, report WARN not PASS. Err conservative — escalate borderline cases rather than suppress them.

@@ -67,6 +67,29 @@ python3 agents/data_auditor/run_audit.py --weekly-only --as-of-date YYYY-MM-DD
 
 Exit codes: 0=PASS, 1=FAIL, 2=WARN
 
+## Output Format (Llama optimization)
+
+**Always emit verdict as first line**:
+```
+VERDICT: {PASS|WARN|FAIL}
+```
+
+**Check notation**:
+Use explicit notation for each check: `PASS [description]` or `FAIL [description]` or `WARN [severity]`
+
+**Example**:
+```
+VERDICT: WARN
+
+Checks:
+- PASS: snapshot_completeness (all 299 tickers present)
+- FAIL: market_data_freshness (4 tickers missing today's close)
+- PASS: trial_records validation (no schema violations)
+- WARN: institutional_summary stale (>6h old, acceptable)
+
+Summary: 2/4 checks passing. Market data refresh incomplete.
+```
+
 ## On heartbeat
 
 If called with `HEARTBEAT` message:
@@ -74,3 +97,4 @@ If called with `HEARTBEAT` message:
 2. If report missing and past 18:30 ET: reply with HEARTBEAT status and report missing
 3. If report present: brief summary of checks passed/failed
 4. Use HEARTBEAT_OK template for clean runs
+5. Always emit VERDICT line first for clarity
