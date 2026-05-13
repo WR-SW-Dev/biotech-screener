@@ -62,6 +62,7 @@ class PreflightResult:
 # (var_name, required_for_feature, is_hard_requirement)
 _ENV_SCHEMA = [
     ("AS_OF_DATE", "pipeline date override", False),
+    ("SEC_USER_AGENT", "SEC EDGAR API compliance (prevents rate-limiting; SEC policy)", False),
     ("FRED_API_KEY", "macro data collection (Fed funds, yield curve)", False),
     ("MD_AUTH_TOKEN", "Morningstar Direct integration", False),
     ("XAI_API_KEY", "Herald event classification (xAI Grok)", False),
