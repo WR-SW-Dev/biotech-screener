@@ -91,6 +91,8 @@ Insider form 4 filing data is currently wired as a **diagnostic pass-through onl
 - [ ] No collapsing of blank and zero confirmed
 - [ ] Insider NOT in alpha feature registry
 - [ ] Insider NOT contributing to final scores
+- [ ] Code review confirms: `insider_net_buy_value_90d` is NOT passed as input to `ExpectationErrorModel`
+- [ ] Grep/test confirms `expectation_error_model.py` does not read `insider_net_buy_value_90d` in feature-fetch logic
 - [ ] Report generated: "Insider signal ready for future research (diagnostic only)"
 
 ---

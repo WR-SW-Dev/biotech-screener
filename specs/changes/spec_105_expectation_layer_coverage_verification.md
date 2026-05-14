@@ -1,4 +1,4 @@
-# Spec 100: Expectation Layer Coverage Verification
+# Spec 105: Expectation Layer Coverage Verification
 
 **Status:** Design  
 **Priority:** P0 (Production gating)  
@@ -30,9 +30,14 @@ This spec ensures the wiring is real, coverage is measurable, and production fai
 
 2. **Coverage Gate Validation**
    - Measure % of universe with non-null values for each field
-   - Establish floor thresholds (e.g., ≥90% non-null for core fields)
-   - Gate passes if all required fields meet floor
-   - Emit coverage report: field → coverage % → pass/fail
+   - Apply field-specific thresholds per `tools/production_qa_check.py` FEATURE_COVERAGE_REQUIREMENTS:
+     - `short_interest_pct`: ≥0.90 (required)
+     - `close_price`: ≥0.99 (required)
+     - `market_cap_mm`: ≥0.95 (required)
+     - `priced_move_pct`: ≥0.80 (required)
+     - `insider_net_buy_value_90d`: ≥0.30 (tracked_nonblocking)
+   - Gate passes if all required fields meet floor; track non-required fields without failing
+   - Emit coverage report: field → coverage % → threshold → pass/fail
 
 3. **Expectation Model Consumption**
    - Verify expectation model actually reads these columns, not just exports them
@@ -53,7 +58,8 @@ This spec ensures the wiring is real, coverage is measurable, and production fai
 1. **Coverage Report Test**
    - Load recent `rankings.csv`
    - Compute coverage % for each field
-   - Assert all fields ≥90% non-null
+   - Assert required fields meet thresholds: short_interest ≥90%, close_price ≥99%, market_cap ≥95%, priced_move ≥80%
+   - Assert insider ≥30% (non-failing report)
    - Test file: `tests/test_expectation_coverage.py`
 
 2. **Schema Presence Test**
@@ -68,7 +74,7 @@ This spec ensures the wiring is real, coverage is measurable, and production fai
 
 4. **Regression: Coverage on 05-14 Production**
    - Load `data/snapshots/2026-05-14/rankings.csv`
-   - Verify 299 records with ≥90% coverage on core fields
+   - Verify 299 records with required-field coverage: short_interest ≥90%, close_price ≥99%, market_cap ≥95%, priced_move ≥80%
    - Artifact: regression report
 
 ---
@@ -76,7 +82,7 @@ This spec ensures the wiring is real, coverage is measurable, and production fai
 ## Acceptance Criteria
 
 - [ ] Fresh production snapshot contains all 4 core expectation fields
-- [ ] Coverage report shows ≥90% non-null for `short_interest_pct`, `close_price`, `market_cap_mm`, `priced_move_pct`
+- [ ] Coverage report shows required thresholds met: short_interest ≥90%, close_price ≥99%, market_cap ≥95%, priced_move ≥80%
 - [ ] Code trace confirms expectation module reads these fields (not dead)
 - [ ] Production pipeline has explicit gate: missing/low-coverage fields → fail loudly
 - [ ] Ops can see coverage report in production_qa output
@@ -87,10 +93,10 @@ This spec ensures the wiring is real, coverage is measurable, and production fai
 
 ## Non-Scope
 
-- Backfilling historical snapshots (Spec 103)
+- Backfilling historical snapshots (Spec 102: Historical Backfill for Expectation Research)
 - Adding new expectation fields beyond the 4 core
 - Changing expectation model logic
-- Insider promotion to alpha (Spec 104)
+- Insider promotion to alpha (Spec 104: Insider Diagnostic Stabilization)
 
 ---
 

@@ -92,8 +92,12 @@ Tomorrow-forward production is fine without historical expectation fields. But h
    - File: `tests/test_backfill_expectation.py`
 
 2. **Coverage Validation**
-   - Backfilled snapshot has ≥85% non-null for `short_interest_pct`, `close_price`, `market_cap_mm`
-   - `priced_move_pct` may be lower (optional, data-dependent)
+   - Backfilled snapshot reaches required thresholds per FEATURE_COVERAGE_REQUIREMENTS:
+     - `short_interest_pct`: ≥90%
+     - `close_price`: ≥99%
+     - `market_cap_mm`: ≥95%
+     - `priced_move_pct`: ≥80%
+   - If historical backfill cannot meet thresholds, document gaps and flag in manifest
    - File: `tests/test_backfill_coverage.py`
 
 3. **Manifest Generation**
@@ -118,7 +122,7 @@ Tomorrow-forward production is fine without historical expectation fields. But h
 
 - [ ] Backfill script runs without errors on 2026-05-13
 - [ ] All 4 core fields added to snapshot
-- [ ] Coverage ≥85% for `short_interest_pct`, `close_price`, `market_cap_mm`
+- [ ] Coverage meets FEATURE_COVERAGE_REQUIREMENTS: short_interest ≥90%, close_price ≥99%, market_cap ≥95%, priced_move ≥80%
 - [ ] Original ranks/actions preserved (no recomputation)
 - [ ] Manifest JSON created with correct metadata
 - [ ] Guard flag (`.backfill_metadata.json`) created

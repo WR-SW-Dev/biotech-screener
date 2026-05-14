@@ -109,9 +109,9 @@ size_multiplier = max(0.40, 1 - 0.60 * X)
 ## Non-Scope
 
 - Changing ev_severity_score computation logic
-- Historical backfill (Spec 103)
-- Expectation model wiring (Spec 100)
-- Insider signal promotion (Spec 104)
+- Historical backfill (Spec 102: Historical Backfill for Expectation Research)
+- Expectation model wiring (Spec 105: Expectation Layer Coverage Verification)
+- Insider signal promotion (Spec 104: Insider Diagnostic Stabilization)
 
 ---
 
