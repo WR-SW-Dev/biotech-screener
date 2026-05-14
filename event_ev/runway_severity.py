@@ -485,6 +485,7 @@ class RunwaySeverityModel:
 
 RUNWAY_SEVERITY_CSV_COLUMNS = [
     "runway_severity_score",
+    "ev_severity_score",
     "runway_buffer_months",
     "financing_truth_gate",
     "dilution_haircut",
@@ -507,6 +508,7 @@ def enrich_csv_rows(
 
     for row, ov in zip(csv_rows, overlays):
         row["runway_severity_score"] = ov.runway_severity_score
+        row["ev_severity_score"] = ov.ev_severity_score
         row["runway_buffer_months"] = ov.runway_buffer_months
         row["financing_truth_gate"] = ov.financing_truth_gate
         row["dilution_haircut"] = ov.dilution_haircut

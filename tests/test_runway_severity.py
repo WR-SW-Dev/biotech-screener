@@ -437,3 +437,54 @@ class TestOverlayShape:
         assert len(results) == 2
         assert results[0].ticker == "A"
         assert results[1].ticker == "B"
+
+
+# ── CSV Export (Spec 101) ────────────────────────────────────────────────
+
+
+class TestCSVExport:
+    def test_enrich_csv_rows_exports_ev_severity_score(self):
+        """enrich_csv_rows should inject ev_severity_score into each row."""
+        from event_ev.runway_severity import RUNWAY_SEVERITY_CSV_COLUMNS, enrich_csv_rows
+
+        rows = [_row(ticker="TEST", runway_months="12"), _row(ticker="TEST2", runway_months="6")]
+        overlays = enrich_csv_rows(rows, "2026-04-15")
+
+        # Check that ev_severity_score was added to each row
+        assert "ev_severity_score" in rows[0]
+        assert "ev_severity_score" in rows[1]
+        assert isinstance(rows[0]["ev_severity_score"], float)
+        assert isinstance(rows[1]["ev_severity_score"], float)
+
+        # Check that ev_severity_score is in the column list
+        assert "ev_severity_score" in RUNWAY_SEVERITY_CSV_COLUMNS
+
+        # Check that injected values match the overlay scores
+        assert rows[0]["ev_severity_score"] == overlays[0].ev_severity_score
+        assert rows[1]["ev_severity_score"] == overlays[1].ev_severity_score
+
+    def test_csv_columns_include_ev_severity_score(self):
+        """RUNWAY_SEVERITY_CSV_COLUMNS should include ev_severity_score."""
+        from event_ev.runway_severity import RUNWAY_SEVERITY_CSV_COLUMNS
+
+        assert "ev_severity_score" in RUNWAY_SEVERITY_CSV_COLUMNS
+        assert "runway_severity_score" in RUNWAY_SEVERITY_CSV_COLUMNS
+        # ev_severity_score should be near runtime_severity_score for readability
+        idx_ev = RUNWAY_SEVERITY_CSV_COLUMNS.index("ev_severity_score")
+        idx_run = RUNWAY_SEVERITY_CSV_COLUMNS.index("runway_severity_score")
+        assert abs(idx_ev - idx_run) <= 2, "ev_severity_score should be near runway_severity_score"
+
+
+# ── Schema Registration (Spec 101) ───────────────────────────────────────
+
+
+class TestSchemaRegistration:
+    def test_ev_severity_score_in_snapshot_columns(self):
+        """SNAPSHOT_COLUMNS should include ev_severity_score in Runway Severity block."""
+        from run_screen_columns import SNAPSHOT_COLUMNS
+
+        assert "ev_severity_score" in SNAPSHOT_COLUMNS
+        # Should be placed near runway_severity_score
+        idx_ev = SNAPSHOT_COLUMNS.index("ev_severity_score")
+        idx_run = SNAPSHOT_COLUMNS.index("runway_severity_score")
+        assert abs(idx_ev - idx_run) <= 2, "ev_severity_score should be near runway_severity_score in schema"

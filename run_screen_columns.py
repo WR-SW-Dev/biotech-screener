@@ -237,6 +237,7 @@ SNAPSHOT_COLUMNS = (
         "execution_notes",
         # --- Runway Severity (financing-truth cross-layer, diagnostic overlay) ---
         "runway_severity_score",
+        "ev_severity_score",
         "runway_buffer_months",
         "financing_truth_gate",
         "dilution_haircut",

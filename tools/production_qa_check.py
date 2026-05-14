@@ -89,6 +89,7 @@ V3_COLUMNS = [
 
 SEVERITY_COLUMNS = [
     "runway_severity_score",
+    "ev_severity_score",
     "financing_truth_gate",
     "dilution_haircut",
     "size_multiplier",
@@ -286,6 +287,71 @@ def check_schema_drift(as_of_date: str) -> Dict[str, Any]:
     return _check("schema", True, detail)
 
 
+def check_severity_formulas(as_of_date: str) -> Dict[str, Any]:
+    """Validate runway severity numeric bounds and formula relationships.
+
+    Checks:
+      1. ev_severity_score in [0.0, 1.0] and finite
+      2. runway_severity_score in [0.0, 1.0] and finite
+      3. dilution_haircut ≈ 0.35 * ev_severity_score (±0.001)
+      4. size_multiplier ≈ max(0.40, 1 - 0.60 * ev_severity_score) (±0.001)
+    """
+    rankings = SNAPSHOTS_DIR / as_of_date / "rankings.csv"
+    if not rankings.exists():
+        return _check("severity_formulas", False, "No rankings.csv")
+
+    import csv
+    import math
+
+    issues = []
+    tolerance = 0.001
+
+    with open(rankings) as f:
+        reader = csv.DictReader(f)
+        for i, row in enumerate(reader, 1):
+            ev_sev = row.get("ev_severity_score")
+            run_sev = row.get("runway_severity_score")
+            dil_hair = row.get("dilution_haircut")
+            size_mult = row.get("size_multiplier")
+
+            # Skip if not present (caught by schema drift check)
+            if not all([ev_sev, run_sev, dil_hair, size_mult]):
+                continue
+
+            try:
+                ev_sev = float(ev_sev)
+                run_sev = float(run_sev)
+                dil_hair = float(dil_hair)
+                size_mult = float(size_mult)
+            except (ValueError, TypeError):
+                issues.append(f"Row {i}: non-numeric severity field")
+                continue
+
+            # Check bounds
+            if not (0.0 <= ev_sev <= 1.0) or not math.isfinite(ev_sev):
+                issues.append(f"Row {i}: ev_severity_score {ev_sev} out of bounds [0, 1]")
+            if not (0.0 <= run_sev <= 1.0) or not math.isfinite(run_sev):
+                issues.append(f"Row {i}: runway_severity_score {run_sev} out of bounds [0, 1]")
+
+            # Check formulas
+            expected_dil = 0.35 * ev_sev
+            if math.isfinite(dil_hair) and abs(dil_hair - expected_dil) > tolerance:
+                issues.append(f"Row {i}: dilution_haircut {dil_hair} != 0.35*{ev_sev}={expected_dil}")
+
+            expected_size = max(0.40, 1.0 - 0.60 * ev_sev)
+            if math.isfinite(size_mult) and abs(size_mult - expected_size) > tolerance:
+                issues.append(f"Row {i}: size_multiplier {size_mult} != max(0.40, 1-0.60*{ev_sev})={expected_size}")
+
+    if issues:
+        # Report first 5 issues; more just means systemic problem
+        detail = "; ".join(issues[:5])
+        if len(issues) > 5:
+            detail += f" (... {len(issues)-5} more)"
+        return _check("severity_formulas", False, detail)
+
+    return _check("severity_formulas", True, "All formula checks passed")
+
+
 def check_readiness(as_of_date: str) -> Dict[str, Any]:
     scorecard = ARTIFACTS_DIR / "readiness" / f"scorecard_{as_of_date}.json"
     if not scorecard.exists():
@@ -470,6 +536,7 @@ def run_qa(as_of_date: str) -> Dict[str, Any]:
         check_sidecars(as_of_date),
         check_herald_digest(as_of_date),
         check_schema_drift(as_of_date),
+        check_severity_formulas(as_of_date),
         check_feature_coverage(as_of_date),
         check_readiness(as_of_date),
         check_lint(),
