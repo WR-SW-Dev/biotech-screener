@@ -184,4 +184,50 @@ else
     log "Trapops artifact present for $TODAY — skipping recovery"
 fi
 
+# Evening cron recovery — jobs that run 17:45–20:40 ET and stalled 05-09→05-13.
+# Check for artifacts; if missing, re-run the scripts.
+# These jobs fire every weekday in evening windows and do not self-heal on reboot.
+EVENING_JOBS=(
+    "inst_delta_forward_shadow:19:30:/mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_inst_delta_forward_compare.sh:logs/inst_delta_forward_shadow.log"
+    "cross_signal_forward_shadow:19:40:/mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_cross_signal_forward_logger.sh:logs/cross_signal_forward_shadow.log"
+    "blast_radius_daily:19:15:/mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_blast_radius_daily.sh:logs/blast_radius.log"
+    "build_event_feedback:17:45:/mnt/c/Projects/biotech_screener/biotech-screener/tools/build_event_feedback.py:logs/event_feedback.log"
+    "build_policy_shadow_compare:18:05:/mnt/c/Projects/biotech_screener/biotech-screener/tools/build_policy_shadow_compare.py:logs/agents_direct_cron.log"
+)
+
+EVENING_MARKER_DIR="$REPO/artifacts/evening_recovery_done"
+EVENING_MARKER="$EVENING_MARKER_DIR/$TODAY.complete"
+mkdir -p "$EVENING_MARKER_DIR"
+
+# Only attempt evening recovery if production ran successfully today
+# Evening jobs are sentinel jobs — they depend on today's snapshot existing
+if [ "$PROD_RAN" = true ] && [ ! -f "$EVENING_MARKER" ]; then
+    log "Checking evening cron jobs for $TODAY..."
+
+    for job_spec in "${EVENING_JOBS[@]}"; do
+        IFS=':' read -r job_name job_time job_script job_log <<< "$job_spec"
+        job_log="$REPO/$job_log"
+
+        # Simple check: if the log file has recent output (today), assume job ran
+        # More robust: check for specific artifact files, but evening jobs vary in their outputs
+        if [ -f "$job_log" ] && grep -q "$TODAY" "$job_log" 2>/dev/null; then
+            log "Evening job $job_name OK (log shows $TODAY)"
+        else
+            log "MISSED evening job $job_name for $TODAY — recovering"
+            if [ "$job_script" = *.sh ]; then
+                bash "$job_script" >> "$job_log" 2>&1 || log "Evening job $job_name recovery failed (exit $?)"
+            else
+                # Python script
+                (cd "$REPO" && source .env 2>/dev/null && $PYTHON "$job_script" --as-of-date "$TODAY" >> "$job_log" 2>&1) \
+                    || log "Evening job $job_name recovery failed (exit $?)"
+            fi
+        fi
+    done
+
+    # Write marker to prevent repeated recovery on same date
+    echo "evening_recovery_complete: $TODAY" > "$EVENING_MARKER"
+    echo "recovery_timestamp: $(date '+%Y-%m-%dT%H:%M:%S%z')" >> "$EVENING_MARKER"
+    log "Evening cron recovery complete for $TODAY"
+fi
+
 log "Recovery complete for $TODAY"
