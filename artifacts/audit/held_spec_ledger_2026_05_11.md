@@ -13,7 +13,7 @@ Next automated run: Monday 2026-05-18 08:45 ET (job: hermes-held-spec-ledger)
 | Spec 088 Phase B (catalyst_delta filtered artifacts) | Spec 087 active branch must close first | After 087 closes: implement raw+filtered companion artifacts |
 | score_rank_pct SPEC_REQUIRED | Day 7+ WARN streak (mean_ic=-0.0195, hit_rate=24% as of 2026-05-08). CRT+IC+PIT+Checklist v2 required before any weight change | Operator must read Spec 091 and confirm OBSERVE vs. escalate |
 | Ranking Alternatives Research (Specs 093–097) | Alt 10 INCONCLUSIVE at n=11; no formal action until Gate 4 (n≥30 HIT/MISS ~2026-07-15); Spec 071 Lane 2 for Alts 3+4; Spec 077 EV join for Alt 6 | Review Alt 10 status at each weekly cadence; no production changes |
-| ranker_active_contract.py missing | Referenced in 5 audit docs as enforcing 21 drift tests; confirmed absent from disk | Decide: create module or accept manual enforcement; document in audit memo |
+| ranker_active_contract.py merge gap (resolved 2026-05-13) | Branch exists (`hygiene/ranker-active-contract-2026-04-30`, commit `e7c0ee47`) but unapplied; manual enforcement accepted; see disposition memo | ✓ Resolved: defer merge until next ranker retrain or Spec-driven promotion |
 
 ---
 
@@ -114,14 +114,14 @@ Next automated run: Monday 2026-05-18 08:45 ET (job: hermes-held-spec-ledger)
 
 ---
 
-### ranker_active_contract.py — missing enforcement module
-- **Status**: NEEDS_OPERATOR_DECISION
-- **Last evidence**: ranking_alternatives_research_2026_05_08.md; `common/ranker_active_contract.py` referenced in 5 audit docs as enforcing 21 drift tests; confirmed absent from disk
-- **Blocker**: Operator decision required: create module or document that manual enforcement is accepted
-- **Next allowed**: audit memo documenting decision
-- **Explicitly not allowed**: assuming tests are running when they are not
-- **Runtime risk**: MEDIUM — no automatic enforcement of ranker input drift contract
-- **Alert condition**: any ranker feature drift observed in monitoring without an active contract → HIGH
+### ranker_active_contract.py — merge gap (RESOLVED 2026-05-13)
+- **Status**: RESOLVED — manual enforcement accepted; merge deferred
+- **Last evidence**: `artifacts/audit/ranker_active_contract_disposition_decision_2026_05_13.md` + `artifacts/audit/ranker_active_contract_status_review_2026_05_14.md`
+- **Details**: Module exists on `hygiene/ranker-active-contract-2026-04-30` (commit `e7c0ee47`, 21 drift tests) but is NOT on main. Disposition: Accept manual enforcement (ranker is frozen; active fields static; drift shows in dashboards same-day). Defer module merge until next ranker retrain or Spec-driven promotion.
+- **Next allowed**: Monitor production dashboards for field drift; no code changes needed until unfreezing
+- **Explicitly not allowed**: Merging the branch before h20d checkpoint (2026-05-26) clearance
+- **Runtime risk**: MEDIUM-LOW — manual enforcement is adequate given frozen ranker (Spec 086) and static active fields
+- **Alert condition**: (a) unintended field added to ranker, OR (b) production run fails on field name change → escalate immediately
 
 ---
 
