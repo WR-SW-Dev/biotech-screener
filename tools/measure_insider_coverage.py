@@ -1,241 +1,301 @@
-"""
-Spec 104: Insider Signal Stabilization
-Measurement script for insider_net_buy_value_90d coverage tracking.
+#!/usr/bin/env python3
+"""Spec 104: Measure insider_net_buy_value_90d coverage across production snapshots.
 
-Reads production snapshots, measures blank vs zero vs activity,
-emits per-snapshot JSON + stabilization report.
+Standalone CLI that reads production rankings.csv snapshots and reports
+coverage statistics for the insider diagnostic column. Emits per-snapshot
+JSON artifacts and a summary markdown report with a stability verdict.
+
+Semantics (CRITICAL — never collapse these categories):
+    blank / "" / None / NaN = no coverage / not fetched
+    0.0                     = fetched, no insider activity
+    positive                = net insider buying
+    negative                = net insider selling
+
+Usage:
+    python tools/measure_insider_coverage.py \
+        --start-date 2026-05-01 --end-date 2026-05-14
+
+    python tools/measure_insider_coverage.py \
+        --start-date 2026-05-01 --end-date 2026-05-14 \
+        --snapshot-dir data/snapshots
 """
+
+from __future__ import annotations
 
 import argparse
-import csv
 import json
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+import pandas as pd
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+COLUMN = "insider_net_buy_value_90d"
+DEFAULT_SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
+ARTIFACTS_DIR = REPO_ROOT / "artifacts" / "insider_diagnostics"
+
+# Stability threshold: max-min spread of nonblank_pct across snapshots
+STABILITY_THRESHOLD_PP = 5.0  # percentage points
 
 
-def generate_date_range(start_date: str, end_date: str) -> List[str]:
-    """Generate list of business days (M-F) between start and end dates."""
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
-
-    dates = []
-    current = start
-    while current <= end:
-        # Only include weekdays (0=Mon, 6=Sun)
-        if current.weekday() < 5:
-            dates.append(current.strftime("%Y-%m-%d"))
-        current += timedelta(days=1)
-
-    return dates
-
-
-def measure_snapshot(snapshot_path: Path) -> Dict:
-    """
-    Measure insider coverage for a single snapshot.
-
-    Returns dict with:
-    - snapshot_date
-    - total_tickers
-    - blank, zero, positive, negative counts
-    - blank_pct, zero_pct, nonblank_pct, activity_pct
-    """
-
-    rankings_csv = snapshot_path / "rankings.csv"
-    if not rankings_csv.exists():
-        raise FileNotFoundError(f"rankings.csv not found: {rankings_csv}")
-
-    total_tickers = 0
-    blank_count = 0
-    zero_count = 0
-    positive_count = 0
-    negative_count = 0
-
-    with open(rankings_csv, "r") as f:
-        reader = csv.DictReader(f)
-
-        # Verify column exists
-        if "insider_net_buy_value_90d" not in reader.fieldnames:
-            raise ValueError("insider_net_buy_value_90d column not found in rankings.csv")
-
-        for row in reader:
-            total_tickers += 1
-            value_str = row["insider_net_buy_value_90d"].strip()
-
-            # Classify as blank (missing/empty) or numeric
-            if not value_str or value_str.lower() in ["none", "nan", ""]:
-                blank_count += 1
-            else:
-                try:
-                    value = float(value_str)
-                    if value == 0.0:
-                        zero_count += 1
-                    elif value > 0:
-                        positive_count += 1
-                    else:  # value < 0
-                        negative_count += 1
-                except ValueError:
-                    # Invalid numeric - treat as blank
-                    blank_count += 1
-
-    activity_count = positive_count + negative_count
-    nonblank_count = zero_count + activity_count
-
-    result = {
-        "snapshot_date": snapshot_path.name,
-        "total_tickers": total_tickers,
-        "coverage": {
-            "blank": blank_count,
-            "zero": zero_count,
-            "positive": positive_count,
-            "negative": negative_count,
-            "blank_pct": round(100 * blank_count / total_tickers, 2),
-            "zero_pct": round(100 * zero_count / total_tickers, 2),
-            "nonblank_pct": round(100 * nonblank_count / total_tickers, 2),
-            "activity_pct": round(100 * activity_count / total_tickers, 2),
-        },
-    }
-
-    return result
-
-
-def emit_stabilization_report(measurements: List[Dict], output_path: Path, end_date: str) -> None:
-    """
-    Generate markdown stabilization report from measurement list.
-    Includes coverage table and stability verdict.
-    """
-
-    if not measurements:
-        return
-
-    # Extract nonblank percentages for stability calc
-    nonblank_pcts = [m["coverage"]["nonblank_pct"] for m in measurements]
-    spread = max(nonblank_pcts) - min(nonblank_pcts)
-
-    # Build coverage table
-    table_rows = []
-    for m in measurements:
-        date = m["snapshot_date"]
-        blank = m["coverage"]["blank"]
-        zero = m["coverage"]["zero"]
-        activity = m["coverage"]["positive"] + m["coverage"]["negative"]
-        nonblank_pct = m["coverage"]["nonblank_pct"]
-
-        # Stability column shows spread from first measurement
-        if table_rows:
-            prev_nonblank = measurements[0]["coverage"]["nonblank_pct"]
-            diff = nonblank_pct - prev_nonblank
-            stability_str = f"±{abs(diff):.1f}%" if diff != 0 else "—"
-        else:
-            stability_str = "—"
-
-        table_rows.append(f"| {date} | {blank} | {zero} | {activity} | {nonblank_pct}% | {stability_str} |")
-
-    report = f"""# Insider Signal Stabilization Report
-
-**Date:** {end_date}
-**Measurement Period:** {measurements[0]['snapshot_date']} through {measurements[-1]['snapshot_date']} ({len(measurements)} trading days)
-
-## Coverage Summary
-
-| Date | Blank | Zero | Activity | Nonblank % | Stability |
-|------|-------|------|----------|-----------|-----------|
-{chr(10).join(table_rows)}
-
-## Verdict
-
-- [{'x' if spread <= 5 else ' '}] Coverage stable (variance <5%, actual {spread:.1f}%)
-- [x] Blank/zero semantics preserved
-- [x] Insider remains diagnostic-only (not in alpha registry)
-- [x] Ready for future research promotion (if decided)
-
-## Recommendation
-
-Insider signal **stabilized and ready for research use**. Do not promote to alpha without explicit decision and new Checklist v2 evaluation.
-"""
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
-        f.write(report)
-
-
-def main():
-    """
-    Main entry point: measure insider coverage across date range.
-    Emits per-snapshot JSON + stabilization report.
-    """
-
+def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Measure insider_net_buy_value_90d coverage across production snapshots"
+        description="Measure insider_net_buy_value_90d coverage across production snapshots.",
     )
     parser.add_argument(
         "--start-date",
-        default="2026-05-10",
-        help="Start date (YYYY-MM-DD), default: 2026-05-10",
+        required=True,
+        help="Start date (YYYY-MM-DD, inclusive)",
     )
     parser.add_argument(
         "--end-date",
-        default="2026-05-15",
-        help="End date (YYYY-MM-DD), default: 2026-05-15",
+        required=True,
+        help="End date (YYYY-MM-DD, inclusive)",
     )
     parser.add_argument(
         "--snapshot-dir",
-        default="data/snapshots",
-        help="Path to snapshots directory, default: data/snapshots",
+        default=str(DEFAULT_SNAPSHOT_DIR),
+        help="Path to snapshot root directory (default: data/snapshots)",
     )
-    parser.add_argument(
-        "--artifacts-dir",
-        default="artifacts/insider_diagnostics",
-        help="Path to artifacts output directory, default: artifacts/insider_diagnostics",
+    return parser.parse_args(argv)
+
+
+def _date_range(start: str, end: str) -> List[str]:
+    """Return list of YYYY-MM-DD strings from start to end inclusive."""
+    start_dt = datetime.strptime(start, "%Y-%m-%d")
+    end_dt = datetime.strptime(end, "%Y-%m-%d")
+    dates: List[str] = []
+    current = start_dt
+    while current <= end_dt:
+        dates.append(current.strftime("%Y-%m-%d"))
+        current += timedelta(days=1)
+    return dates
+
+
+def measure_snapshot(rankings_path: Path) -> Optional[Dict[str, Any]]:
+    """Measure insider coverage for a single rankings.csv.
+
+    Returns None if the file does not exist or lacks the target column.
+    """
+    if not rankings_path.exists():
+        return None
+
+    df = pd.read_csv(rankings_path)
+
+    if COLUMN not in df.columns:
+        return None
+
+    series = df[COLUMN]
+    total_rows = len(series)
+
+    if total_rows == 0:
+        return None
+
+    # blank = NaN / None / empty string (after read_csv, empty strings become NaN,
+    # but be defensive about mixed types)
+    blank_mask = series.isna()
+    # Also catch literal empty strings if the CSV wasn't parsed cleanly
+    if series.dtype == object:
+        blank_mask = blank_mask | (series.astype(str).str.strip() == "")
+
+    # Convert to numeric for value comparisons (non-numeric -> NaN)
+    numeric = pd.to_numeric(series, errors="coerce")
+    nonblank = numeric.dropna()
+
+    blank_count = int(blank_mask.sum())
+    zero_count = int((nonblank == 0.0).sum())
+    positive_count = int((nonblank > 0).sum())
+    negative_count = int((nonblank < 0).sum())
+
+    blank_pct = round(blank_count / total_rows * 100, 2)
+    zero_pct = round(zero_count / total_rows * 100, 2)
+    positive_pct = round(positive_count / total_rows * 100, 2)
+    negative_pct = round(negative_count / total_rows * 100, 2)
+    nonblank_pct = round(100 - blank_pct, 2)
+    activity_pct = round((positive_count + negative_count) / total_rows * 100, 2)
+
+    return {
+        "total_rows": total_rows,
+        "blank_count": blank_count,
+        "blank_pct": blank_pct,
+        "zero_count": zero_count,
+        "zero_pct": zero_pct,
+        "positive_count": positive_count,
+        "positive_pct": positive_pct,
+        "negative_count": negative_count,
+        "negative_pct": negative_pct,
+        "nonblank_pct": nonblank_pct,
+        "activity_pct": activity_pct,
+    }
+
+
+def _write_per_snapshot_artifact(date_str: str, stats: Dict[str, Any]) -> Path:
+    """Write per-snapshot JSON artifact."""
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    safe_date = date_str.replace("-", "_")
+    path = ARTIFACTS_DIR / f"coverage_{safe_date}.json"
+    payload = {"date": date_str, "column": COLUMN, **stats}
+    path.write_text(json.dumps(payload, indent=2) + "\n")
+    return path
+
+
+def _generate_report(
+    all_stats: List[Dict[str, Any]],
+    start_date: str,
+    end_date: str,
+) -> str:
+    """Generate the summary markdown report."""
+    lines: List[str] = []
+    lines.append("# Insider Diagnostic Stabilization Report")
+    lines.append("")
+    lines.append(f"**Column:** `{COLUMN}`")
+    lines.append(f"**Date range:** {start_date} to {end_date}")
+    lines.append(f"**Snapshots measured:** {len(all_stats)}")
+    lines.append("")
+
+    if not all_stats:
+        lines.append("## Result")
+        lines.append("")
+        lines.append("No snapshots found in the specified date range.")
+        lines.append("")
+        lines.append("**Verdict:** NO DATA")
+        return "\n".join(lines)
+
+    # --- Per-snapshot table ---
+    lines.append("## Per-Snapshot Coverage")
+    lines.append("")
+    lines.append(
+        "| Date | Rows | Blank% | Zero% | Positive% | Negative% | Nonblank% | Activity% |"
     )
+    lines.append(
+        "|------|------|--------|-------|-----------|-----------|-----------|-----------|"
+    )
+    for s in all_stats:
+        lines.append(
+            f"| {s['date']} "
+            f"| {s['total_rows']} "
+            f"| {s['blank_pct']:.1f} "
+            f"| {s['zero_pct']:.1f} "
+            f"| {s['positive_pct']:.1f} "
+            f"| {s['negative_pct']:.1f} "
+            f"| {s['nonblank_pct']:.1f} "
+            f"| {s['activity_pct']:.1f} |"
+        )
+    lines.append("")
 
-    args = parser.parse_args()
+    # --- Stability calculation ---
+    nonblank_values = [s["nonblank_pct"] for s in all_stats]
+    nb_min = min(nonblank_values)
+    nb_max = max(nonblank_values)
+    nb_spread = round(nb_max - nb_min, 2)
+    spread_pass = nb_spread <= STABILITY_THRESHOLD_PP
 
-    start_date = args.start_date
-    end_date = args.end_date
-    data_dir = Path(args.snapshot_dir)
-    artifacts_dir = Path(args.artifacts_dir)
-    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    lines.append("## Stability Analysis")
+    lines.append("")
+    lines.append(f"- **Nonblank% range:** {nb_min:.1f}% to {nb_max:.1f}%")
+    lines.append(f"- **Max-min spread:** {nb_spread:.1f} pp")
+    lines.append(
+        f"- **Spread threshold:** {STABILITY_THRESHOLD_PP:.1f} pp"
+    )
+    lines.append(
+        f"- **Spread check:** {'PASS' if spread_pass else 'FAIL'} "
+        f"({nb_spread:.1f} pp {'<=' if spread_pass else '>'} {STABILITY_THRESHOLD_PP:.1f} pp)"
+    )
+    lines.append("")
 
-    # Generate date range
-    dates = generate_date_range(start_date, end_date)
-    print(f"Measuring {len(dates)} trading days: {dates[0]} through {dates[-1]}")
+    # --- Blank/zero ratio stability ---
+    blank_pcts = [s["blank_pct"] for s in all_stats]
+    zero_pcts = [s["zero_pct"] for s in all_stats]
+    blank_spread = round(max(blank_pcts) - min(blank_pcts), 2)
+    zero_spread = round(max(zero_pcts) - min(zero_pcts), 2)
 
-    # Measure each snapshot
-    measurements = []
-    for date in dates:
-        snapshot_path = data_dir / date
-        if not snapshot_path.exists():
-            print(f"  {date}: snapshot not found, skipping")
+    lines.append("### Blank/Zero Ratio Stability")
+    lines.append("")
+    lines.append(f"- **Blank% spread:** {blank_spread:.1f} pp")
+    lines.append(f"- **Zero% spread:** {zero_spread:.1f} pp")
+    lines.append("")
+
+    # --- Verdict ---
+    lines.append("## Verdict")
+    lines.append("")
+
+    # Determine end_date relative to the 2026-05-15 final snapshot date
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    final_snapshot_dt = datetime(2026, 5, 15)
+
+    if end_dt < final_snapshot_dt:
+        verdict = "MEASURED / pending 2026-05-15 final snapshot"
+    elif spread_pass:
+        verdict = "STABLE"
+    else:
+        verdict = "UNSTABLE"
+
+    lines.append(f"**{verdict}**")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = _parse_args(argv)
+    snapshot_dir = Path(args.snapshot_dir)
+    dates = _date_range(args.start_date, args.end_date)
+
+    if not dates:
+        print("ERROR: start-date must be <= end-date", file=sys.stderr)
+        return 1
+
+    print(f"Scanning {len(dates)} dates from {args.start_date} to {args.end_date}")
+    print(f"Snapshot directory: {snapshot_dir}")
+    print(f"Target column: {COLUMN}")
+    print()
+
+    all_stats: List[Dict[str, Any]] = []
+    skipped = 0
+
+    for date_str in dates:
+        rankings_path = snapshot_dir / date_str / "rankings.csv"
+        stats = measure_snapshot(rankings_path)
+
+        if stats is None:
+            skipped += 1
             continue
 
-        try:
-            measurement = measure_snapshot(snapshot_path)
-            measurements.append(measurement)
+        stats_with_date = {"date": date_str, **stats}
+        all_stats.append(stats_with_date)
 
-            # Emit per-snapshot JSON
-            json_path = artifacts_dir / f"coverage_{date.replace('-', '_')}.json"
-            with open(json_path, "w") as f:
-                json.dump(measurement, f, indent=2)
+        # Write per-snapshot artifact
+        artifact_path = _write_per_snapshot_artifact(date_str, stats)
+        print(
+            f"  {date_str}: nonblank={stats['nonblank_pct']:.1f}% "
+            f"activity={stats['activity_pct']:.1f}% "
+            f"-> {artifact_path.name}"
+        )
 
-            print(
-                f"  {date}: {measurement['coverage']['nonblank_pct']}% nonblank "
-                f"({measurement['coverage']['blank']} blank, "
-                f"{measurement['coverage']['zero']} zero, "
-                f"{measurement['coverage']['positive'] + measurement['coverage']['negative']} activity)"
-            )
+    print()
+    print(f"Measured: {len(all_stats)} snapshots, skipped: {skipped} (missing/no column)")
 
-        except Exception as e:
-            print(f"  {date}: ERROR - {e}")
+    # Write summary report
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    report = _generate_report(all_stats, args.start_date, args.end_date)
+    safe_end = args.end_date.replace("-", "_")
+    report_path = ARTIFACTS_DIR / f"stabilization_report_{safe_end}.md"
+    report_path.write_text(report)
+    print(f"Report: {report_path}")
 
-    if measurements:
-        # Emit stabilization report
-        report_path = artifacts_dir / f"stabilization_report_{end_date.replace('-', '_')}.md"
-        emit_stabilization_report(measurements, report_path, end_date)
-        print(f"\nStabilization report: {report_path}")
+    # Print summary to stdout
+    if all_stats:
+        nonblank_values = [s["nonblank_pct"] for s in all_stats]
+        spread = round(max(nonblank_values) - min(nonblank_values), 2)
+        print()
+        print(f"Nonblank% spread: {spread:.1f} pp (threshold: {STABILITY_THRESHOLD_PP:.1f} pp)")
+        print(f"Spread check: {'PASS' if spread <= STABILITY_THRESHOLD_PP else 'FAIL'}")
 
-    print(f"\nMeasured {len(measurements)} snapshots")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
