@@ -1,7 +1,7 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.1 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-04-27 (ruleset reference refreshed 2026-05-06)
+**Last updated:** 2026-05-14 (Specs 101-105 production work + Spec 072/091/096/100 research roadmap documented in Section 14.6)
 **Status:** Production — A4 selector + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
@@ -2040,6 +2040,188 @@ They remain on the roadmap with their existing constraints:
 - Aggregator (Benzinga / RTTNews / TheraRadar / PDUFA.bio) recall-audit feed
 - Any change to ranker_v2 weights, eligibility rules, or decision rulesets
 - Any change to selector / Module 5 composite / financial penalty / clinical filter
+
+---
+
+## 14.6 — May 2026 Production Specs & Ranker Research Roadmap
+
+### 14.6.1 Recent Production Work (2026-05-01 through 2026-05-14)
+
+Four production specs completed. All work is additive; no scoring, ranker, selector,
+or eligibility changes.
+
+**Spec 101: Runway Severity Export**
+- `ev_severity_score` now exported to rankings.csv
+- Registered in `run_screen_columns.py` under Runway Severity block
+- QA check validates formula bounds:
+  - `dilution_haircut ≈ 0.35 × ev_severity_score ±0.001`
+  - `size_multiplier ≈ max(0.40, 1 - 0.60 × ev_severity_score) ±0.001`
+- **Status: CLOSED**
+
+**Spec 102: Historical Backfill**
+- Backfill script (`tools/backfill_expectation_fields.py`) and tests shipped
+- Expectation fields backfilled to 19 snapshots (2026-04-20 through 2026-05-13)
+- Coverage improvements per FEATURE_COVERAGE_REQUIREMENTS thresholds:
+  - `short_interest_pct`: improved to ≥90%
+  - `close_price`: ≥99% (already at floor)
+  - `market_cap_mm`: ≥95% (already at floor)
+  - `priced_move_pct`: ≥80% (left as-is; no historical options source available)
+  - `insider_net_buy_value_90d`: diagnostic-only / tracked-nonblocking; early snapshots may lack the column and it is not required for Spec 102 closure
+- Data sources: PIT price cache, per-snapshot inputs/short_interest.json, market_data.json
+- Committed `18cd13b1`
+- **Status: CLOSED**
+
+**Spec 104: Insider Diagnostic Coverage**
+- Coverage measurement executed on 4 trading days (2026-05-11 through 2026-05-14)
+- Results: 100% nonblank, 0.00% variance
+- Phase A shipped + hardened. Phase B (5-day insider stabilization closure) pending 2026-05-15 snapshot
+- Committed `b98ffbac`
+
+**Spec 105: Expectation Coverage Verification**
+- Harness completed; verifies FEATURE_COVERAGE_REQUIREMENTS thresholds exact match
+- Insider explicitly NOT consumed by ExpectationErrorModel (verified via code inspection and tests)
+- Code-closed. Live QA pending 2026-05-15 snapshot
+- Committed `0ddbb509`
+
+**Next operational gate: 2026-05-15 snapshot.** Run Spec 105 live QA and Spec 104 5-day
+insider stabilization closure before treating the May 14 production-spec block as fully closed.
+
+### 14.6.2 Current Production Ranker Status (Frozen)
+
+The production model continues unchanged per alpha-freeze policy (2026-04-04):
+
+- **Selector (gate):** 0.65 × `coinvest_score_z` + 0.35 × `inst_delta_z`
+  - Gate-only function; does NOT rank survivors, only selects/excludes
+- **Ranker:** 2-feature pairwise (`financial_score_z`, `coinvest_score_z`)
+  - Ordinal-only (no rank-weighting; ECE=0.19)
+  - Deployed as capped Family C live-pilot vector
+  - See `production_data/ranker_v2_model.json` → `provenance` block for deployed vs trained delta
+- **Construction:** Top-30 equal-weight from eligible post-gate universe
+- **Promotion path blocked:** No changes authorized until Specs 094/095/100 close and Checklist v2 passes
+
+**Known Distortion (Cohort Expansion):**
+- Event: 2026-04-25, four new institutional managers added to coinvest universe
+- Effect: `inst_delta_z` locked at mean=0.743 through ~2026-05-15
+- Self-healing: Expected post-13F-Q1-refresh (expected ~2026-05-15)
+- Implication: Spec 072 verification (D7/D8/D9) gates must re-run post-13F-refresh on clean data
+
+### 14.6.3 Active Research Pipeline (2026-05-22 Review + Beyond)
+
+Three active specs under governance. All are research-only; no production code changes.
+
+**Spec 072 — vNext Ranker Candidate (clinical_score_v2_z)**
+- Frozen candidate set: PRIMARY=`clinical_score_v2_z`, BACKUP=`endpoint_strength_score`
+- Verification gates (D7/D8/D9):
+  - **D7 (Orthogonality):** |r| < 0.40 with coinvest_score_z; residualized IC ≥ +0.04
+  - **D8 (Within-Quintile IC):** T+5 ≥ +0.06, T+20 ≥ +0.04, n ≥ 30 in top-coinvest quintile
+  - **D9 (Bin-Residualized IC):** T+5 ≥ +0.04, T+20 ≥ +0.03, sign consistent post-residualization
+- Critical constraint: D7/D8/D9 must re-run **post-13F-refresh** (pre-refresh D-quintile membership corrupted by cohort distortion)
+- Full assessment: D1–D6 diagnostics (composition, block delta, forward-return, stability, trap pass-through,
+  self-dominance) **if and only if** D7/D8/D9 all pass
+- Review date: **2026-05-22** (post-13F-refresh, cohort-distortion cleared)
+- Expected outcomes: PASS (proceed to D1–D6) / FAIL PRIMARY (eval BACKUP or close research)
+
+**Spec 091 — WARN Governance (score_rank_pct)**
+- Assessment: Is `score_rank_pct` WARN streak cohort-driven or true degradation?
+- Cohort-Rejection Test (CRT): Compares WARN onset vs 2026-04-25 cohort expansion; determines root cause
+- Fallback: If CRT=FAIL (true degradation), run Multi-Horizon IC test
+  - Horizons: T+5, T+20, T+60
+  - Threshold: at least 2 horizons with IC ≥ +0.04 (t > 1.5)
+- Contingency: If Multi-Horizon=PASS, run PIT Integrity Audit + prepare Checklist v2
+- Review date: **2026-05-22** (verdict same-day or 2026-05-24 for Multi-Horizon if needed)
+
+**Spec 096 — Gate/Ranker Separation Doctrine (Enforced)**
+- Non-negotiable requirements:
+  - Requirement 1: Selector gates exclude names; ranker orders survivors only
+  - Requirement 2: Risk controls are post-ranking overlays only (no in-ranker gating)
+  - Requirement 3: Marginal value proof required (satisfied via D8 test for Spec 072)
+  - Requirement 4: Correct IC scope (ranker IC on eligible universe only, not full universe)
+- Blockers: Specs 094/095/100 must close before any production ranker change
+  - Spec 094: Marginal value test (satisfied by D8 diagnostic)
+  - Spec 095: Correct IC scope (composite_score IC ≠ ranker IC on eligible universe)
+  - Spec 100: Ranker IC tooling (see below)
+
+**Spec 100 — True Ranker IC Measurement Tooling (Research-Only)**
+- Design + scaffold shipped; implementation pending
+- Current state:
+  - `load_forward_returns()` returns empty dict (stub)
+  - `measure_ranker_ic()` returns placeholder zeros for all horizons
+  - **NOT YET USABLE** for promotion evidence
+- Required for completion: forward-return loading + real IC computation + tests + closure memo
+- Expected completion: narrow commit post-2026-05-15 snapshot (when forward returns available)
+- Purpose: Measure ranker IC on eligible universe only (distinct from composite_score IC on full universe)
+
+### 14.6.4 2026-05-22 Review Readiness
+
+**Pre-Gates (must all clear before 2026-05-22):**
+```
+[ ] 13F Q1 2026 refresh published (~2026-05-15)
+[ ] Cohort distortion clearance verified (inst_delta_z normalization check)
+[ ] Forward-return window ≥5 snapshots (research data sufficiency)
+```
+
+**2026-05-22 Review Agenda (4-hour session):**
+
+| Section | Duration | Topic |
+|---------|----------|-------|
+| A | 90 min | Spec 072 D7/D8/D9 verdict (5 steps: pre-validation, D7, D8, D9 thresholds, go/BACKUP/close) |
+| B | 60 min | Spec 091 WARN status (CRT result, Multi-Horizon IC if needed, PIT audit if passing) |
+| C | 30 min | Spec 096 doctrine enforcement (gate/ranker/risk separation; blocker acknowledgment) |
+| D | 30 min | Forward-return test (production vs coinvest-eligible baseline; data sufficiency) |
+
+**Post-Verdict Timeline (2026-05-23 through 2026-06-01):**
+
+If **Spec 072 D7/D8/D9 PASS:**
+- D1–D6 diagnostics: 2026-05-24/25
+- Expected D1–D6 verdict: 2026-05-27
+- Checklist v2 prep: 3–5 days
+- Target: Spec 072 shadow-ready by 2026-06-01
+
+If **Spec 091 CRT FAIL** (true degradation):
+- Multi-Horizon IC test: 2026-05-24/25
+- If Multi-Horizon=PASS: PIT Integrity Audit → Checklist v2 prep
+- If Multi-Horizon=FAIL: Retire signal; no further action
+
+Post-review (2026-05-28 onward):
+- Spec 100 forward-return completion
+- Candidate IC measurement on correct universe
+- Promotion eligibility determination (Checklist v2 readiness)
+
+### 14.6.5 Governance and Constraints
+
+- **Alpha Freeze Enforced:** No selector/ranker/sizing changes without Checklist v2
+  (FM + bootstrap + FDR + LOSO + year stab + domain audit)
+
+- **Composite_score IC ≠ Ranker IC:** Prior IC claims on full universe INVALIDATED
+  - Reason: Composite_score measures selection quality (full 299-ticker universe)
+  - Ranker IC measures ranking quality (eligible post-gate ~60-ticker universe)
+  - Spec 100 tool required for correct ranker IC measurement on eligible universe only
+
+- **Cohort Distortion Window:** 2026-04-25 through ~2026-05-15
+  - `inst_delta_z` contaminated during this period
+  - D7/D8/D9 re-run post-13F-refresh on clean data (non-negotiable)
+  - Top-30 changes (RVMD-in/ERAS-out) treated as cohort artifact; attribution lane only
+
+- **Spec 072 Frozen Candidates:** Only clinical_score_v2_z (PRIMARY) and endpoint_strength_score (BACKUP)
+  - No new candidates without explicit operator approval
+  - No promotions without evidence + Checklist v2
+
+- **Spec 072 Prohibited Actions:**
+  - No feature additions to candidate set
+  - No tuning / hyperparameter search
+  - No composite construction (that's how EES v3 failed)
+  - No shadow-ship before verification gates pass
+
+### 14.6.6 Commits Referenced
+
+- `18cd13b1` — Spec 102 backfill script + tests
+- `b98ffbac` — Spec 104 insider diagnostic measurement
+- `0ddbb509` — Spec 105 expectation coverage harness
+- `9d6c33c8` — Ranker Research Prep Pack (4 memos)
+- `1e41e539` — 13F Q1 2026 cohort distortion preflight
+- `d2d1a207` — 2026-05-22 review pack (pre-agenda + post-verdict roadmap)
+- `baf514b9` — Spec 100 design + scaffold (forward-return wiring pending)
+- `41f2987f` — Status clarification memos (Spec 100 + Markov transition model)
 
 ---
 
