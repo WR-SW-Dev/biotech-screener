@@ -29,6 +29,7 @@ Architecture:
     Module 4: Clinical development
     Module 5: Composite ranking
 """
+
 from __future__ import annotations
 
 import argparse
@@ -6460,6 +6461,19 @@ def save_validation_snapshot(
     except Exception as _runway_exc:
         logger.warning("Runway severity enrichment failed: %s", _runway_exc, exc_info=True)
 
+    # --- Runway Transition Model: shadow-only state transition probabilities (Phase 1) ---
+    # Markov Chain state transitions for runway financing risk.
+    # Emits shadow columns only: transition_runway_state, transition_p_runway_worse_60d, etc.
+    # No effect on ranking/selector/truth gate in v0.
+    _transition_overlays_for_sidecar = None
+    try:
+        from event_ev.transition_model import enrich_csv_rows as _enrich_transition
+
+        _snap_dir = Path(__file__).resolve().parent / "data" / "snapshots"
+        _transition_overlays_for_sidecar = _enrich_transition(csv_rows, as_of_date, snap_dir=_snap_dir)
+    except Exception as _transition_exc:
+        logger.warning("Runway transition enrichment failed: %s", _transition_exc, exc_info=True)
+
     # --- Insider Form 4: diagnostic pass-through (scoring lane closed 2026-04-05) ---
     # Computes insider_net_buy_value_90d on demand from data/form4/raw/{ticker}.json
     # at this exact as_of_date (PIT-safe filing_date windowing). Missing raw file
@@ -6948,6 +6962,40 @@ def save_validation_snapshot(
             )
     except Exception as _rwy_sidecar_exc:
         logger.debug("Runway severity sidecar skipped: %s", _rwy_sidecar_exc)
+
+    # --- Runway Transition Model sidecar (Phase 1 shadow columns) ---
+    try:
+        if _transition_overlays_for_sidecar:
+            _trans_dicts = [o.to_dict() for o in _transition_overlays_for_sidecar]
+            _trans_dicts.sort(key=lambda d: d.get("p_distress_90d", 0), reverse=True)
+            _state_dist = {}
+            for d in _trans_dicts:
+                s = d.get("current_state", "?")
+                _state_dist[s] = _state_dist.get(s, 0) + 1
+            _n_pooled = sum(1 for d in _trans_dicts if d.get("is_pooled_estimate"))
+            with open(snap_path / "transition_model_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "model_version": "transition_model_v0.1",
+                        "phase": "Phase 1 (runway chain shadow-only)",
+                        "n_scored": len(_trans_dicts),
+                        "n_using_pooled_estimate": _n_pooled,
+                        "state_distribution": _state_dist,
+                        "highest_distress_risk_10": _trans_dicts[:10],
+                        "all_results": _trans_dicts,
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[RunwayTransition] Sidecar: %d scored, %d pooled, state dist: %s",
+                len(_trans_dicts),
+                _n_pooled,
+                " ".join(f"{k}={v}" for k, v in sorted(_state_dist.items())),
+            )
+    except Exception as _trans_sidecar_exc:
+        logger.debug("Transition model sidecar skipped: %s", _trans_sidecar_exc)
 
     # --- Write eligibility summary sidecar ---
     try:
