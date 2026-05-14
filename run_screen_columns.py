@@ -244,6 +244,11 @@ SNAPSHOT_COLUMNS = (
         "size_multiplier",
         "severity_bucket",
         "severity_notes",
+        # --- Runway Transition Model (Markov Chain Phase 1, shadow-only diagnostic) ---
+        "transition_runway_state",
+        "transition_p_runway_worse_60d",
+        "transition_p_financing_90d",
+        "transition_p_distress_90d",
         # --- Straddle mispricing (from event_move_table + chain/IV) ---
         "cheap_vol_score",
         "vol_classification",

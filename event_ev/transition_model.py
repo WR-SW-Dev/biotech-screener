@@ -18,7 +18,12 @@ Design:
 Phase 1 (Runway Chain):
   States: SAFE → WATCH → STRESSED → FINANCING_LIKELY → DISTRESS
   Inputs: runway_buffer_months, ev_severity_score, months_to_cash_out
-  Outputs: p_runway_worse_60d, p_financing_90d, p_distress_90d
+  Outputs:
+    - transition_runway_state: current state (categorical)
+    - transition_p_runway_worse_60d: P(STRESSED ∪ FINANCING_LIKELY ∪ DISTRESS at T+60d)
+      Note: "worse" means any of the three elevated-risk states, even if already in STRESSED.
+    - transition_p_financing_90d: P(FINANCING_LIKELY ∪ DISTRESS at T+90d)
+    - transition_p_distress_90d: P(DISTRESS at T+90d)
 
 Policy:
   - DIAGNOSTIC OVERLAY only. No effect on ranking/selector/truth gate in v0.
