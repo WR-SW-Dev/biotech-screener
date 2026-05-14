@@ -36,7 +36,7 @@ Stop rule **not triggered**: the producer reads `rankings.csv` read-only (for fa
 | `tools/build_bioshort_watch.py` | `output/hedge_report/hedge_report_*.json` (line 50–51) | Sorts by date desc; loads latest + prior; produces `artifacts/bioshort_watch/{date}_watch.{json,md}` (date stamp follows upstream `as_of_date` when no CLI override — Spec 083 §2.5) |
 | `bioshort_watch` LLM agent (via Friday 18:10 cron) | Invokes `build_bioshort_watch.py` and / or reads `output/hedge_report/` directly per its `SOUL.md` boundaries (`Read: output/hedge_report/, artifacts/bioshort_watch/, ...`) | Surfaces verdict / structure changes for human review |
 | `dashboard/app.py:706,724` | `output/hedge_report/hedge_report_*.json` | Dashboard display |
-| Consumers — production scoring path? | NONE | Confirmed by grep against `run_screen.py`, `module_3*.py`, `module_5*.py`, `ranker_*.py`, `selector_engine.py`, `decision_engine.py`, `event_ev/`, `common/ranker_active_contract.py` — empty |
+| Consumers — production scoring path? | NONE | Confirmed by grep against `run_screen.py`, `module_3*.py`, `module_5*.py`, `ranker_*.py`, `selector_engine.py`, `decision_engine.py`, `event_ev/` — empty. Note: `common/ranker_active_contract.py` is on unmerged hygiene branch (not in production). |
 
 ## 4. Is `output/hedge_report/` current or stale?
 

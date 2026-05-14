@@ -327,7 +327,7 @@ This should be the first item addressed before T5, T6, or T7 proceed.
 | 9 | Alternative 4 (catalyst quality) selector double-count | HIGH | Blocked. Residualize vs selector_score before testing | ~2026-07-15 |
 | 10 | Training on pre-PIT contaminated data | MEDIUM-HIGH | Cap partially mitigates. Full retrain deferred | Post n≥50 snapshots |
 | 11 | Alternative 6 (event-EV) calibration risk at first evaluable n | MEDIUM-HIGH | Spec 079 calibration protocol is the correct gate | ~2026-07-01 |
-| 12 | Missing ranker_active_contract.py enforcement | MEDIUM | Document manually; add to governance checklist | Next governance session |
+| 12 | ranker_active_contract.py merge gap (resolved 2026-05-13) | LOW | Manual enforcement accepted. Defer merge until next ranker retrain | Post-retrain |
 | 13 | Small-sample overconfidence (n=17 snapshots, n=12 HIT/MISS) | MEDIUM | All results labeled PRELIMINARY; Checklist v2 required | Ongoing |
 | 14 | Alternative 10 (null) removal without governance review | MEDIUM | Any removal decision requires operator sign-off | 2026-05-22 re-run |
 | 15 | Regime conflation in IC estimates | MEDIUM | Wait for regime-stable window (≥2026-05-20) | 13F refresh |
@@ -375,7 +375,7 @@ This should be the first item addressed before T5, T6, or T7 proceed.
 | Coinvest cap: +0.02 deployed vs +0.0613 trained | `ranker_v2_model.json` via T1 |
 | financial_score weight: -0.0533 (not capped) | `ranker_v2_model.json` via T1, Spec 074 |
 | financial_score directionality: [UNCERTAIN] | Spec 074 §2, T1 ambiguity list #2 |
-| common/ranker_active_contract.py missing | T1 URGENT FINDING |
+| ~~common/ranker_active_contract.py missing~~ ranker_active_contract.py merge gap (resolved 2026-05-13) | Manual enforcement accepted (see disposition memo) |
 | 17 post-PIT clean snapshots | T3 detail §1 |
 | 12 post-PIT HIT/MISS (7 HIT, 5 MISS) | T3 detail §2 |
 | 0 bound event_ev_p_hit records | T3 detail §3 |

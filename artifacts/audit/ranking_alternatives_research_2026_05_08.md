@@ -12,11 +12,11 @@ This memo synthesizes a structured, multi-agent audit of the production ranker a
 
 **The single most urgent output of this study is not a research finding — it is a production correctness question.** The financial_score feature in the production ranker carries a negative weight (-0.0533), meaning higher Module 5 composite rank-norm yields a lower pairwise win probability. Two competing interpretations exist: (a) intentional "stress-upside" selection, or (b) coefficient sign inversion during training. This cannot be resolved by further descriptive analysis. It requires direct human review of the training configuration and intent. Until Gate 1 (financial_score sign direction documented) is resolved, Alternative 5 (revised financial_score) is blocked, and any ablation test that uses financial_score as a baseline comparison is methodologically compromised.
 
-A secondary urgent finding: `common/ranker_active_contract.py`, referenced in five audit documents as enforcing 21 drift tests on production ranker inputs, does not exist on disk. No automatic enforcement of the ranker active contract is currently running.
+A secondary finding (resolved 2026-05-13): `common/ranker_active_contract.py` is on an unmerged hygiene branch (not missing). It contains 21 drift tests but is not active in production. **Disposition: accept manual enforcement.** The ranker is frozen; active fields are static; any drift shows up in production dashboards. Merge deferred until next ranker retrain or Spec-driven promotion.
 
 **Recommended immediate actions, in order:**
 1. **[CRITICAL — TODAY]** Resolve financial_score sign direction (T8 Escalation 1). Human decision required; no code analysis can substitute.
-2. **[URGENT — THIS WEEK]** Document the absence of `ranker_active_contract.py` and decide whether to create the module or accept manual enforcement.
+2. **[DONE — 2026-05-13]** ~~Document the absence of `ranker_active_contract.py`~~ Disposition decided; manual enforcement accepted; update in progress.
 3. **[NOW — DIAGNOSTIC]** Compute Alt 10 (no-ranker selector_score comparator) divergent-snapshot analysis. This requires no gate clearance and frames all subsequent alternatives.
 4. **[NOW — DIAGNOSTIC]** Shadow-track catalyst_decay_w and binary_quality_score distributions (Alts 3/4) as descriptive-only; no IC claims.
 5. **[MONITOR — HIGH]** Verify Spec 077 binder is populating. The forward-only `event_ev_p_hit` binder has shipped (`_bind_event_ev_p_hit`, node_id exact + ticker/date ±7d fallback). 37 postmortems carry the field; 0 non-null to date — EV artifacts do not yet cover those events. Define the sample-size gate: how many bound post-PIT HIT/MISS records with non-null `event_ev_p_hit` are required before a calibration/return-discrimination audit can run?
@@ -79,9 +79,11 @@ Top-30: sorted(eligible_rows, key=-final_score)[:30]
 - **Training:** 36 dates, 12,400 pairs; **train_accuracy = 1.0 [OVERFITTING FLAG]**
 - **Rollback artifact:** ranker_v2_model_5feat_rollback.json (5-feature set, not in production)
 
-### Governance Finding
+### Governance Finding — ranker_active_contract.py (RESOLVED 2026-05-13)
 
-**`common/ranker_active_contract.py` is on an unmerged branch.** The module (21 drift tests, commit `e7c0ee47`) was developed on `hygiene/ranker-active-contract-2026-04-30` and has not been merged to main. Production code on main does not import or call it. This is a merge/governance gap — not a missing enforcement layer that is breaking anything in production. Five audit documents reference it as live enforcement; those references are stale and should be corrected. Decision required: merge the branch, or formally accept manual enforcement and update the audit documents.
+**`common/ranker_active_contract.py` is on an unmerged branch.** The module (21 drift tests, commit `e7c0ee47`) was developed on `hygiene/ranker-active-contract-2026-04-30` and has not been merged to main. Production code on main does not import or call it. This is a merge/governance gap — not a missing enforcement layer that is breaking anything in production.
+
+**Disposition (2026-05-13):** Accept manual enforcement. The ranker is frozen (Spec 086 v1.14.0); active fields (coinvest_score_z, financial_score) are static; drift would show up in production monitor dashboards same-day. Defer module merge until next ranker retrain or Spec-driven promotion. Five audit documents previously referenced it as live enforcement; references have been corrected (see `artifacts/audit/ranker_active_contract_status_review_2026_05_14.md`).
 
 ### Coinvest Double-Count Confirmed
 

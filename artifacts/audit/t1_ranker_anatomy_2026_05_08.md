@@ -117,15 +117,15 @@ M2 raw
 
 ---
 
-## [URGENT FINDING] — common/ranker_active_contract.py does not exist
+## ranker_active_contract.py — Merge Gap (Resolved 2026-05-13)
 
-**Classification: data integrity / documentation gap — not a code defect.**
+**Classification: governance gap — merge status resolved.**
 
-The file `common/ranker_active_contract.py` is referenced in at least 5 audit documents and project memory as enforcing active ranker field contracts with 21 drift tests. **The file does not exist on disk.** There is no runtime enforcement layer beyond the model artifact's `feature_names` list in `ranker_v2_model.json`.
+The file `common/ranker_active_contract.py` (21 drift tests, commit `e7c0ee47`) exists on unmerged branch `hygiene/ranker-active-contract-2026-04-30` but is not on main. **Production code does not import or call it.** This is a merge/governance gap, not a missing enforcement layer breaking anything.
 
-**T4/T5/T7 must not assume any drift-test enforcement from this module is active.** If drift tests exist, they are in a different location not found in the `tests/` search.
+**Disposition (2026-05-13):** Accept manual enforcement. The ranker is frozen (Spec 086); active fields are static; any drift shows up in production monitor dashboards same-day. Defer module merge until next ranker retrain or Spec-driven promotion.
 
-This finding does not constitute a scoring bug (the model artifact's feature_names list still constrains which features are used). It is a documentation/governance gap: the assumed enforcement layer is absent.
+**T4/T5/T7 note:** No automatic drift-test enforcement is active. Manual enforcement via audit-memo code diffs is the current standard. This does not constitute a scoring bug (the model artifact's `feature_names` list still constrains which features are used). See `artifacts/audit/ranker_active_contract_status_review_2026_05_14.md` for full disposition.
 
 ---
 
@@ -133,13 +133,13 @@ This finding does not constitute a scoring bug (the model artifact's feature_nam
 
 1. `selector_engine.py` docstring and `DEFAULT_SELECTOR_CONFIG` describe old block weights (clinical=35%, catalyst=25%) which differ from the production A4 config (clinical=0%, institutional=65%).
 2. `spec_080` references "Ruleset: 2a3e79eb (v1.13.0)" — current is v1.14.0 (8887576e).
-3. `common/ranker_active_contract.py` referenced throughout as a live module — does not exist on disk.
+3. ~~`common/ranker_active_contract.py` referenced throughout as a live module — does not exist on disk.~~ **RESOLVED 2026-05-13**: Confirmed on hygiene branch; manual enforcement accepted; references updated in 5 audit docs.
 
 ---
 
 ## Ambiguity list
 
-1. `common/ranker_active_contract.py` missing — no runtime field contract enforcement confirmed. [URGENT FINDING above]
+1. ~~`common/ranker_active_contract.py` missing~~ **RESOLVED 2026-05-13**: On hygiene branch; manual enforcement accepted per disposition memo.
 2. `financial_score` negative coefficient rationale — [UNCERTAIN] whether intentional stress-upside thesis or artifact of training data. Spec 074 may resolve.
 3. Accuracy enhancement multiplier on `financial_normalized` — [UNCERTAIN] if active in production path.
 4. Temporary vs final `actionable_rank` — ranker cohort uses temporary selector-score-based rank; final rank differs post-ranker.
