@@ -9,6 +9,7 @@ Guards the four fixes that got daily production to promote cleanly:
 
 These tests do NOT require live credentials or network access.
 """
+
 from __future__ import annotations
 
 import json

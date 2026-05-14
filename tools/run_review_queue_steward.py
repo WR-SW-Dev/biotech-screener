@@ -7,6 +7,7 @@ Reads today's review_queue.csv from the snapshot, triages into
 immediate/monitor/watch buckets, and writes a memory file.
 No LLM call — deterministic, fast, always produces an artifact.
 """
+
 import csv
 import sys
 from datetime import date, datetime, timezone

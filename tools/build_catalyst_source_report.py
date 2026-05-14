@@ -8,6 +8,7 @@ Usage:
     python3 tools/build_catalyst_source_report.py
     python3 tools/build_catalyst_source_report.py --as-of-date 2026-04-10
 """
+
 from __future__ import annotations
 
 import argparse

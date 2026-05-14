@@ -10,6 +10,7 @@ This script automates the entire deployment process:
 
 Run this ONCE in your production environment to verify everything works.
 """
+
 import json
 import subprocess
 import sys

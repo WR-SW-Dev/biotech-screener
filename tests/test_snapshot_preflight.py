@@ -14,6 +14,7 @@ Covers:
   - Skip reason format
   - Audited backtest runner: smoke test
 """
+
 from __future__ import annotations
 
 import csv

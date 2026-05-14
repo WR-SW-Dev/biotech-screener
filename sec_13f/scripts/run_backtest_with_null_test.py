@@ -261,8 +261,7 @@ def main():
     print("\n" + "=" * 70)
     print("INTERPRETATION")
     print("=" * 70)
-    print(
-        """
+    print("""
 With SYNTHETIC price data (random walks) and MOCK scores (stage+mcap based):
 - IC ≈ 0 is the CORRECT null result
 - No actual alpha to detect (scores don't predict random returns)
@@ -274,8 +273,7 @@ To detect real signal:
 3. Re-run and compare IC to null distribution
 
 If IC > 2σ above null with real data → signal detected
-"""
-    )
+""")
 
 
 if __name__ == "__main__":

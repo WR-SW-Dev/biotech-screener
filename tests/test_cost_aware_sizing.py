@@ -10,6 +10,7 @@ Invariants:
 6. Band step-down only fires at heavy haircut (cost_mult <= 0.70)
 7. Weight haircut propagates through compute_target_weights
 """
+
 from __future__ import annotations
 
 import sys

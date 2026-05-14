@@ -18,6 +18,7 @@ Outputs:
     ic_summary.csv          - mean IC, hit rate per component x horizon
     run_metadata.json       - run config + diagnostics
 """
+
 from __future__ import annotations
 
 import argparse

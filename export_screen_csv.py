@@ -6,6 +6,7 @@ Usage:
     python export_screen_csv.py production_data/screen_2026-01-31.json
     python export_screen_csv.py production_data/screen_2026-01-31.json -o custom_output.csv
 """
+
 import argparse
 import csv
 import json

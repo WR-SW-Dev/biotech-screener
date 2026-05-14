@@ -168,8 +168,7 @@ def diagnose_pit_coverage(trial_records_path="production_data/trial_records.json
         print()
 
         print("Add to collect_clinical_data():")
-        print(
-            """
+        print("""
     status_module = protocol.get('statusModule', {})
     trial = {
         'nct_id': ...,
@@ -181,8 +180,7 @@ def diagnose_pit_coverage(trial_records_path="production_data/trial_records.json
         'study_first_posted': status_module.get('studyFirstPostDate'),
         'results_first_posted': status_module.get('resultsFirstPostDate'),
     }
-"""
-        )
+""")
 
     elif pct_any < 80:
         print("⚠️  PARTIAL: Some trials have dates but coverage is incomplete")

@@ -7,6 +7,7 @@ Works with pipeline structure:
 - clinical_dev_normalized/clinical_dev_raw (scores exist)
 - catalyst_normalized/catalyst_raw (scores exist)
 """
+
 from __future__ import annotations
 
 import hashlib

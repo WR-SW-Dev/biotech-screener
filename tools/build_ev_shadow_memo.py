@@ -14,6 +14,7 @@ Output per day:
 Usage:
     python3 tools/build_ev_shadow_memo.py --as-of-date 2026-04-09
 """
+
 from __future__ import annotations
 
 import argparse

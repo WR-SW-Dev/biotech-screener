@@ -6,6 +6,7 @@ Simulates data collection to demonstrate pipeline functionality
 when network access is restricted. In production, use collect_universe_data.py
 with real data sources.
 """
+
 import json
 import random
 import sys

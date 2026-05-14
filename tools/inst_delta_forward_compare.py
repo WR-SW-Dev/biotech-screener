@@ -13,6 +13,7 @@ Run daily ~19:30 ET. Writes:
 
 Read-only. No production state modified. PIT-safe (T0 prices frozen in lock).
 """
+
 from __future__ import annotations
 
 import argparse

@@ -269,8 +269,7 @@ class TestTier1Determinism:
         """Create temporary codebase structure."""
         # Create module with float violation
         module_file = tmp_path / "module_2_financial.py"
-        module_file.write_text(
-            """
+        module_file.write_text("""
 from decimal import Decimal
 
 def calculate_score(value):
@@ -282,21 +281,18 @@ def calculate_score(value):
 def proper_calculation(value):
     ratio = Decimal("1.5")
     return value * ratio
-"""
-        )
+""")
 
         # Create common directory
         common_dir = tmp_path / "common"
         common_dir.mkdir()
 
         pit_file = common_dir / "pit_enforcement.py"
-        pit_file.write_text(
-            """
+        pit_file.write_text("""
 def compute_pit_cutoff(as_of_date):
     '''Compute PIT cutoff.'''
     return as_of_date
-"""
-        )
+""")
 
         return tmp_path
 
@@ -315,15 +311,13 @@ def compute_pit_cutoff(as_of_date):
         """Test non-deterministic source detection."""
         # Create file with datetime.now()
         bad_file = temp_codebase / "bad_module.py"
-        bad_file.write_text(
-            """
+        bad_file.write_text("""
 from datetime import datetime
 
 def get_data():
     current_time = datetime.now()
     return current_time
-"""
-        )
+""")
 
         from audit_framework.tier1_determinism.reproducibility import ReproducibilityValidator
 
@@ -404,8 +398,7 @@ class TestTier3Performance:
     def temp_codebase(self, tmp_path):
         """Create temporary codebase."""
         module_file = tmp_path / "module.py"
-        module_file.write_text(
-            """
+        module_file.write_text("""
 import logging
 
 logger = logging.getLogger(__name__)
@@ -420,8 +413,7 @@ def process():
 
 def compute():
     return 42
-"""
-        )
+""")
         return tmp_path
 
     def test_performance_validator(self, temp_codebase):
@@ -463,8 +455,7 @@ class TestTier4Testing:
         tests_dir.mkdir()
 
         test_file = tests_dir / "test_module.py"
-        test_file.write_text(
-            """
+        test_file.write_text("""
 import pytest
 
 def test_one():
@@ -476,16 +467,14 @@ def test_two():
 def test_determinism_check():
     # Golden test for determinism
     assert True
-"""
-        )
+""")
 
         # Create backtest directory
         backtest_dir = tmp_path / "backtest"
         backtest_dir.mkdir()
 
         metrics_file = backtest_dir / "metrics.py"
-        metrics_file.write_text(
-            """
+        metrics_file.write_text("""
 def calculate_sharpe_ratio(returns):
     '''Calculate Sharpe ratio.'''
     return 1.5
@@ -493,8 +482,7 @@ def calculate_sharpe_ratio(returns):
 def calculate_ic(predictions, actuals):
     '''Calculate information coefficient.'''
     return 0.05
-"""
-        )
+""")
 
         return tmp_path
 
@@ -526,8 +514,7 @@ class TestTier5Architecture:
         """Create temporary codebase."""
         # Create a module
         module_file = tmp_path / "module.py"
-        module_file.write_text(
-            '''
+        module_file.write_text('''
 """Module docstring."""
 
 def simple_function():
@@ -546,21 +533,18 @@ def complex_function(x, y, z):
         else:
             result = x
     return result
-'''
-        )
+''')
 
         # Create governance directory
         gov_dir = tmp_path / "governance"
         gov_dir.mkdir()
 
         audit_log = gov_dir / "audit_log.py"
-        audit_log.write_text(
-            """
+        audit_log.write_text("""
 class AuditLog:
     '''Audit logging.'''
     pass
-"""
-        )
+""")
 
         # Create README
         readme = tmp_path / "README.md"
@@ -596,14 +580,12 @@ class TestTier6Deployment:
         """Create temporary codebase."""
         # Create pyproject.toml
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text(
-            """
+        pyproject.write_text("""
 [project]
 name = "test-project"
 version = "1.0.0"
 requires-python = ">=3.10"
-"""
-        )
+""")
 
         # Create README
         readme = tmp_path / "README.md"

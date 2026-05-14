@@ -13,6 +13,7 @@ regressions, module score bugs) that wouldn't show up in unit tests.
 Pinned on: 2026-03-07
 Baseline:  tests/golden/ic_baseline.json
 """
+
 from __future__ import annotations
 
 import csv

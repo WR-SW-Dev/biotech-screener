@@ -28,6 +28,7 @@ Constraints:
 - No production logic modified.
 - Forward evidence only — bucket memberships are forward-collection seeds.
 """
+
 from __future__ import annotations
 
 import argparse

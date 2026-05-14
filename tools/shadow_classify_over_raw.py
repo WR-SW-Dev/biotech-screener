@@ -15,6 +15,7 @@ Usage:
     python tools/shadow_classify_over_raw.py --dates 2026-04-17 2026-04-16
     python tools/shadow_classify_over_raw.py --min-date 2026-04-07
 """
+
 from __future__ import annotations
 
 import argparse

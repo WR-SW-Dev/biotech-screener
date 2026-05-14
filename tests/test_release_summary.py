@@ -2,6 +2,7 @@
 """
 Tests for scripts/generate_release_summary.py
 """
+
 from __future__ import annotations
 
 import json

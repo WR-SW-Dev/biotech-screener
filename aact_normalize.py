@@ -6,7 +6,7 @@ This module normalizes raw AACT values to canonical internal values.
 
 Usage:
     from wake_robin.providers.aact.normalize import normalize_phase, normalize_status
-    
+
     canonical_phase = normalize_phase(raw_phase)  # "PHASE2" -> "Phase 2"
 """
 

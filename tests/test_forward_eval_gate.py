@@ -6,6 +6,7 @@ Covers:
   - Split exclusion
   - Gate integration with run_daily_production
 """
+
 from __future__ import annotations
 
 import csv

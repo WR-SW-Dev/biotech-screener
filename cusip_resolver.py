@@ -1,7 +1,7 @@
 """
 CUSIP to Ticker Resolver for Wake Robin Biotech Alpha System
 
-13F filings report holdings by CUSIP (Committee on Uniform Securities 
+13F filings report holdings by CUSIP (Committee on Uniform Securities
 Identification Procedures), but we need tickers for display and cross-referencing.
 
 This module provides:
@@ -17,7 +17,7 @@ Point-in-time safety note:
 
 Usage:
     from wake_robin.providers.sec_13f.cusip_resolver import CUSIPResolver
-    
+
     resolver = CUSIPResolver(cache_path='data/cusip_cache.json')
     ticker = resolver.resolve('594918104')  # Returns 'MSFT'
 """

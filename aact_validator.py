@@ -5,10 +5,10 @@ Run locally, paste output to Claude for analysis.
 
 Usage:
     python aact_validator.py <path_to_aact_folder>
-    
+
 Example:
     python aact_validator.py C:\\data\\aact\\20260105
-    
+
 The folder should contain the .txt files from an AACT daily snapshot.
 """
 

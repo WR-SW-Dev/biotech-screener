@@ -20,6 +20,7 @@ Usage:
     --top-k-holdout N     Evaluate top-K rulesets from early period on late (default: 10)
     --dry-run             Print grid size + archive count, don't run
 """
+
 from __future__ import annotations
 
 import argparse

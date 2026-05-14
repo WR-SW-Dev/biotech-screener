@@ -14,6 +14,7 @@ Ruleset:   v1.9.0 (ID: e966af9d, institutional sort candidate, sort_anchor=optio
            a_floor=0.60, calendar_alpha_sort w=0.3, institutional_delta_sort w=0.3)
 Policy:    tier_filter=[A,B], top_k=20
 """
+
 from __future__ import annotations
 
 import sys

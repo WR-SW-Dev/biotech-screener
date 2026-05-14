@@ -4,6 +4,7 @@ test_module3_pit_filter.py - Verify Module 3 PIT Filter
 
 Tests that Module 3 correctly rejects future trials and accepts past trials.
 """
+
 import json
 import sys
 import tempfile

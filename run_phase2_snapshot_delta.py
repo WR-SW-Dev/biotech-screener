@@ -11,6 +11,7 @@ Handles three cases:
   2. Current has portfolio, prior has only rankings.csv with tier_dev (reconstruct)
   3. No comparable prior exists (single-snapshot summary mode)
 """
+
 from __future__ import annotations
 
 import argparse

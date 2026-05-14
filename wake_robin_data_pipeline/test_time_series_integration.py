@@ -1,7 +1,7 @@
 """
 test_time_series_integration.py - Test time-series collector integration
 
-Run this BEFORE modifying collect_universe_data.py to verify the 
+Run this BEFORE modifying collect_universe_data.py to verify the
 time_series_collector works independently.
 """
 

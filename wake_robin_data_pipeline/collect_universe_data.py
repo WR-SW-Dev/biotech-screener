@@ -15,6 +15,7 @@ Usage:
     python collect_universe_data.py                          # Use full universe (346 tickers)
     python collect_universe_data.py --universe path/to/file  # Use custom universe file
 """
+
 import argparse
 import json
 import sys

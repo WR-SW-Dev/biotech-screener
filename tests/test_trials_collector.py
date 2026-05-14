@@ -14,6 +14,7 @@ Covers:
 - collect_trials_data caching entry point
 - collect_batch rate-limited batch collection
 """
+
 from __future__ import annotations
 
 import json

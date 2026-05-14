@@ -108,8 +108,7 @@ def utcnow() -> datetime:
 
 
 def init_db(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS alerts (
             fingerprint TEXT PRIMARY KEY,
             created_at_utc TEXT NOT NULL,
@@ -119,16 +118,13 @@ def init_db(conn: sqlite3.Connection) -> None:
             headline TEXT NOT NULL,
             payload_json TEXT NOT NULL
         )
-        """
-    )
-    conn.execute(
-        """
+        """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS meta (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         )
-        """
-    )
+        """)
     conn.commit()
 
 

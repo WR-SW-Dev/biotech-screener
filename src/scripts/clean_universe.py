@@ -3,6 +3,7 @@
 Clean biotech universe files and remove ineligible securities.
 Implements fail-loud validation to prevent data contamination.
 """
+
 import argparse
 import json
 import sys

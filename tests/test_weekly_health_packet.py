@@ -8,6 +8,7 @@ Covers the two bugs fixed at initial commit:
   4. Turnover spike label shows ">2.5x"
   5. Explicit cache WARN/FAIL does trigger action item
 """
+
 from __future__ import annotations
 
 import csv

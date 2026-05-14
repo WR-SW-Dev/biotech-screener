@@ -5,6 +5,7 @@ Unit tests for run_decision_strategy_backtest.py
 Tests portfolio construction, baseline building, evaluation, turnover,
 and aggregation using synthetic data (no archive I/O).
 """
+
 from __future__ import annotations
 
 import sys

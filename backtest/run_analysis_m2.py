@@ -19,6 +19,7 @@ Usage:
         --outdir output/backtest_m2 \
         --fmb-only
 """
+
 from __future__ import annotations
 
 import argparse

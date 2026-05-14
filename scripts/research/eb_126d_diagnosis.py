@@ -510,15 +510,13 @@ def main() -> None:
         delta = mr - me if not (math.isnan(me) or math.isnan(mr)) else float("nan")
         print(f"{h:>8}d | {fmt_pct(me):>10} | {fmt_pct(mr):>13} | {fmt_pct(delta):>10}")
 
-    print(
-        """
+    print("""
 ### Interpretation
 - If resid spread ≈ E spread at 126d → residualization successfully decouples the clinical tilt
   from optionality correlation → worth productizing as a clinical sort signal
 - If resid spread still regresses → the correlation is not the root cause; the issue is
   purely that clinical_alpha_z pushes overexposed names into top-K regardless of residualization
-"""
-    )
+""")
 
 
 if __name__ == "__main__":

@@ -162,8 +162,7 @@ def suggest_fix():
     print("SUGGESTED FIX FOR YOUR CODE:")
     print("=" * 70)
 
-    print(
-        """
+    print("""
 In your market_data_provider.py (or wherever you calculate vol), replace with:
 
 ```python
@@ -205,8 +204,7 @@ KEY CHANGES:
 2. ✅ Default to 50% not 200% 
 3. ✅ Add sanity checks (20-150% range)
 4. ✅ Use log returns (more stable)
-"""
-    )
+""")
 
 
 if __name__ == "__main__":

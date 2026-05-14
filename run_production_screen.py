@@ -14,6 +14,7 @@ Usage:
     python run_production_screen.py --as-of-date 2024-12-15 --archive
     python run_production_screen.py --as-of-date 2024-12-15 --no-csv
 """
+
 from __future__ import annotations
 
 import argparse

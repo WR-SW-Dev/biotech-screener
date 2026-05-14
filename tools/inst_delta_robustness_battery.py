@@ -13,6 +13,7 @@ Outputs:
   artifacts/audit/inst_delta_robustness_battery_2026-04-28.md
   artifacts/audit/inst_delta_robustness_battery_2026-04-28.json
 """
+
 from __future__ import annotations
 
 import csv

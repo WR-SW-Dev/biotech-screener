@@ -9,6 +9,7 @@ Auth: BPIQ_API_KEY in .env. Output: artifacts/bpiq_trial/.
 
 Read-only. 14-day-trial probe. No production wiring.
 """
+
 from __future__ import annotations
 
 import argparse

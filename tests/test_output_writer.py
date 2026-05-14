@@ -520,7 +520,7 @@ class TestEdgeCases:
         """Handles special characters in data."""
         data = {
             "unicode": "\u4e2d\u6587",  # Chinese characters
-            "emoji": "\U0001F4C8",  # Chart emoji
+            "emoji": "\U0001f4c8",  # Chart emoji
             "quotes": 'He said "hello"',
         }
 

@@ -8,6 +8,7 @@ Covers:
   - Provenance injection into walkforward / calibration JSON
   - Fingerprint determinism gate
 """
+
 from __future__ import annotations
 
 import csv

@@ -7,6 +7,7 @@ Covers:
   - Schema validation: 12 invariants
   - Backfill-all: iterates dirs, skips filled/immature
 """
+
 from __future__ import annotations
 
 import csv

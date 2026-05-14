@@ -1,4 +1,5 @@
 """Spec 087 B2 — bioshort dashboard freshness envelope tests."""
+
 import json
 from datetime import date, timedelta
 from unittest.mock import patch
@@ -6,11 +7,7 @@ from unittest.mock import patch
 import pytest
 
 try:
-    from dashboard.app import (
-        _FRESHNESS_ERROR_DAYS,
-        _FRESHNESS_WARN_DAYS,
-        _bioshort_freshness_meta,
-    )
+    from dashboard.app import _FRESHNESS_ERROR_DAYS, _FRESHNESS_WARN_DAYS, _bioshort_freshness_meta
 
     HAS_DASHBOARD = True
 except ImportError:
@@ -26,9 +23,7 @@ def test_freshness_fresh(tmp_path):
 
     # 1 day old
     report_date = date.today() - timedelta(days=1)
-    (verdict_dir / "BIOSHORT_VERDICT.json").write_text(
-        json.dumps({"as_of_date": report_date.isoformat()})
-    )
+    (verdict_dir / "BIOSHORT_VERDICT.json").write_text(json.dumps({"as_of_date": report_date.isoformat()}))
 
     with patch("dashboard.app.REPO_ROOT", tmp_path):
         meta = _bioshort_freshness_meta()
@@ -44,9 +39,7 @@ def test_freshness_stale_warning(tmp_path):
 
     # 10 days old
     report_date = date.today() - timedelta(days=10)
-    (verdict_dir / "BIOSHORT_VERDICT.json").write_text(
-        json.dumps({"as_of_date": report_date.isoformat()})
-    )
+    (verdict_dir / "BIOSHORT_VERDICT.json").write_text(json.dumps({"as_of_date": report_date.isoformat()}))
 
     with patch("dashboard.app.REPO_ROOT", tmp_path):
         meta = _bioshort_freshness_meta()
@@ -62,9 +55,7 @@ def test_freshness_stale_error(tmp_path):
 
     # 20 days old
     report_date = date.today() - timedelta(days=20)
-    (verdict_dir / "BIOSHORT_VERDICT.json").write_text(
-        json.dumps({"as_of_date": report_date.isoformat()})
-    )
+    (verdict_dir / "BIOSHORT_VERDICT.json").write_text(json.dumps({"as_of_date": report_date.isoformat()}))
 
     with patch("dashboard.app.REPO_ROOT", tmp_path):
         meta = _bioshort_freshness_meta()

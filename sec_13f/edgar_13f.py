@@ -14,10 +14,10 @@ Point-in-time safety:
 
 Usage:
     from wake_robin.providers.sec_13f.edgar_13f import SEC13FFetcher
-    
+
     fetcher = SEC13FFetcher()
     filings = fetcher.get_recent_filings(cik='1263508', count=4)  # Baker Bros
-    
+
     for filing in filings:
         holdings = fetcher.parse_holdings(filing)
         for h in holdings:

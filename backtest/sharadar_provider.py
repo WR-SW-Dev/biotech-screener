@@ -14,7 +14,7 @@ Sharadar Schema (SEP table):
 Usage:
     # From local CSV export
     provider = SharadarReturnsProvider.from_csv("path/to/SEP.csv")
-    
+
     # With API (requires QUANDL_API_KEY)
     provider = SharadarReturnsProvider.from_api(api_key="...")
 """

@@ -19,6 +19,7 @@ sufficient forward return data (HS793 ends 2026-02-05).
 Usage:
     python run_rank_ic_backtest.py
 """
+
 from __future__ import annotations
 
 import csv

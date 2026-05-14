@@ -312,8 +312,7 @@ def main():
     print("\n" + "=" * 70)
     print("INTERPRETATION")
     print("=" * 70)
-    print(
-        """
+    print("""
 This backtest uses:
 - REAL pipeline scores (Modules 1-5 with sample biotech data)
 - SYNTHETIC price returns (random walks)
@@ -333,8 +332,7 @@ Pipeline Flow:
   Module 4 (Clinical) → Phase, design, execution scores
   Module 5 (Composite) → Weighted combination with cohort normalization
   Backtest → IC, quintile spreads, monotonicity
-"""
-    )
+""")
 
     print(f"\nProvenance:")
     print(f"  Metrics Version: {result['provenance']['metrics_version']}")

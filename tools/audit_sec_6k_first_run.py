@@ -17,6 +17,7 @@ Exits non-zero if any check hard-fails (missing snapshot, zero events,
 no SEC_6K_FILING records). Prints PASS/WARN/FAIL summary and writes
 artifacts/audit/sec_6k_first_run_{target_date}.json.
 """
+
 from __future__ import annotations
 
 import argparse

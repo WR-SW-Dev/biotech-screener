@@ -23,6 +23,7 @@ the following fields are enriched from price history + trials + holdings:
   - momentum alpha_60d                       → from price history
   - catalyst days_to_catalyst                → from trial_records + pdufa_dates
 """
+
 from __future__ import annotations
 
 import csv

@@ -11,6 +11,7 @@ Three scenarios:
   - Haircut disabled               → cost_mult == 1.0
   - Haircut enabled, no market data → graceful degradation (cost_mult == 1.0)
 """
+
 from __future__ import annotations
 
 import sys

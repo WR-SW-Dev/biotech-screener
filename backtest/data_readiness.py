@@ -8,12 +8,12 @@ SCHEMA CONTRACT:
     - ticker: string, uppercased, stripped
     - date: YYYY-MM-DD format
     - closeadj: Decimal, positive (adjusted close price)
-    
+
   Column name mappings (auto-normalized):
     - "adj_close" -> "closeadj"
     - "close_adj" -> "closeadj"
     - "adjclose" -> "closeadj"
-    
+
   Validation rules:
     - Reject non-positive prices
     - Reject malformed dates

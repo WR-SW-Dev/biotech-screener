@@ -19,6 +19,7 @@ Outputs
 - artifacts/audit/false_clinical_catalyst_audit_<date>.md
 - artifacts/audit/false_clinical_catalyst_audit_<date>.json
 """
+
 from __future__ import annotations
 
 import argparse

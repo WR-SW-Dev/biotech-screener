@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests for hedge_regime_classifier.py."""
+
 from __future__ import annotations
 
 import sys

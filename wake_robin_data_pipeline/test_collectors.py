@@ -2,6 +2,7 @@
 """
 Quick test of data collectors on a single ticker.
 """
+
 import sys
 from pathlib import Path
 

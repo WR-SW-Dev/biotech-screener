@@ -1,5 +1,6 @@
 ﻿#!/usr/bin/env python3
 """collect_all_universe_data.py - Real data collection"""
+
 import json
 import sys
 import time

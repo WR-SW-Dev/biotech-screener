@@ -20,6 +20,7 @@ Governance: per CLAUDE.md North Star Rule this script produces evidence
 only. The side-dir is NOT promoted to canonical automatically; a separate,
 reviewed step is required to cut over.
 """
+
 from __future__ import annotations
 
 import argparse

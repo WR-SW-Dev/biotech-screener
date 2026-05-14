@@ -23,6 +23,7 @@ extractor over filings already discovered by the production collector
 (useful when SEC is unreachable; will yield fewer matches because the cache
 only contains pre-extracted events, not raw filing text).
 """
+
 from __future__ import annotations
 
 import argparse

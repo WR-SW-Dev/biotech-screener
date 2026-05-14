@@ -16,6 +16,7 @@ Usage:
       --out-csv production_data/perf_vs_rank_2y.csv \
       --out-json production_data/perf_vs_rank_2y.summary.json
 """
+
 from __future__ import annotations
 
 import argparse

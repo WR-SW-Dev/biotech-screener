@@ -14,6 +14,7 @@ Usage:
 
 Dependencies: pandas, numpy only (no scipy/sklearn/statsmodels).
 """
+
 from __future__ import annotations
 
 import argparse

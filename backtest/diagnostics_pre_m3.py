@@ -7,6 +7,7 @@ Usage:
         --panel output/backtest_m1_full/panel_weekly.csv.gz \
         --outdir output/diagnostics_pre_m3
 """
+
 from __future__ import annotations
 
 import argparse

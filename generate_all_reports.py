@@ -3,6 +3,7 @@
 WAKE ROBIN - REPORT GENERATOR
 Generates all reports from screening results JSON
 """
+
 import csv
 import json
 import sys

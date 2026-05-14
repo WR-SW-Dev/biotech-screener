@@ -21,6 +21,7 @@ Usage:
     python tools/audit_escalation_pool.py --compare             # A/B numeric compare
     python tools/audit_escalation_pool.py --n 30 --seed 20260419
 """
+
 from __future__ import annotations
 
 import argparse

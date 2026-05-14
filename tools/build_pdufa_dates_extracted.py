@@ -21,6 +21,7 @@ Usage:
   python -m tools.build_pdufa_dates_extracted --as-of-date 2026-04-27
   python -m tools.build_pdufa_dates_extracted --as-of-date 2026-04-27 --max-stale-days 7
 """
+
 from __future__ import annotations
 
 import argparse

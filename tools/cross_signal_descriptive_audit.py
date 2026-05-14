@@ -23,6 +23,7 @@ Caveats locked in the output:
 Outputs:
   artifacts/audit/cross_signal_forward_shadow/descriptive_audit_2026-04-28.{md,json}
 """
+
 from __future__ import annotations
 
 import csv

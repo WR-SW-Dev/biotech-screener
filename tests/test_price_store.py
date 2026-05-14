@@ -12,9 +12,7 @@ from common.price_store import PriceStore
 def csv_file(tmp_path):
     """Write a small price CSV and return its path."""
     p = tmp_path / "price_history.csv"
-    p.write_text(
-        textwrap.dedent(
-            """\
+    p.write_text(textwrap.dedent("""\
             date,ticker,close,open,high,low,volume
             2024-01-02,AAAA,10.5,,,,
             2024-01-03,AAAA,11.0,,,,
@@ -22,9 +20,7 @@ def csv_file(tmp_path):
             2024-01-03,BBBB,21.5,,,,
             2024-01-04,BBBB,22.0,,,,
             2024-01-02,CCCC,,,,,
-        """
-        )
-    )
+        """))
     return str(p)
 
 

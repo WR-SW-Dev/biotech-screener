@@ -17,6 +17,7 @@ PIT safety:
   - PDUFA: only use entries where pdufa_date > as_of_date
   - Holdings: static Q3 2025 (known limitation)
 """
+
 from __future__ import annotations
 
 import csv

@@ -4,7 +4,7 @@ collect_all_data.py - Master Data Collection Script
 
 Runs all data collection scripts in optimal order:
 1. Market data (fast, ~5 min)
-2. Clinical trials (medium, ~10-15 min)  
+2. Clinical trials (medium, ~10-15 min)
 3. Financial data (slow, ~30-60 min due to SEC rate limits)
 
 Usage:

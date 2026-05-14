@@ -8,6 +8,7 @@ Covers:
 - Output writing with correct FILLS_COLUMNS
 - End-to-end integration
 """
+
 from __future__ import annotations
 
 import csv

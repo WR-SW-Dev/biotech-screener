@@ -4,6 +4,7 @@ Tests for scripts/calibrate_ruleset_from_panel.py
 
 Tests re-tier logic, candidate evaluation, scoring, and constraint checking.
 """
+
 from __future__ import annotations
 
 import json

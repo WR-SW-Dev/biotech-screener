@@ -4,6 +4,7 @@ validate_pipeline.py - Comprehensive validation for Wake Robin data pipeline
 
 Tests all components and generates deployment readiness report.
 """
+
 import json
 import sys
 from datetime import datetime

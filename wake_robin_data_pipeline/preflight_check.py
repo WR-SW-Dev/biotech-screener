@@ -5,6 +5,7 @@ preflight_check.py - Pre-flight verification before running production collectio
 Tests network connectivity to all data sources and validates API access.
 Run this BEFORE collect_universe_data.py to catch issues early.
 """
+
 import sys
 import time
 from datetime import datetime

@@ -29,6 +29,7 @@ values in raw USD (not thousands). This module treats the field as raw USD throu
 Author: Wake Robin Capital Management
 Version: 1.1.0
 """
+
 from __future__ import annotations
 
 import logging

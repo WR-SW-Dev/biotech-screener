@@ -8,8 +8,6 @@ Research-only; no production code paths.
 
 import argparse
 import csv
-import json
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -19,8 +17,6 @@ import numpy as np
 
 def discover_snapshots(root: Path, start_date: str, end_date: str) -> List[Path]:
     """Find snapshot directories in date range."""
-    from datetime import datetime, timedelta
-
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
 
@@ -62,9 +58,7 @@ def load_forward_returns(snapshot_dir: Path, horizons: List[int]) -> Dict[str, D
     return returns
 
 
-def compute_pearson_ic(
-    ranks: List[float], returns: List[float]
-) -> Tuple[float, float, float]:
+def compute_pearson_ic(ranks: List[float], returns: List[float]) -> Tuple[float, float, float]:
     """
     Compute Pearson correlation (IC) between ranks and returns.
     Returns: (ic_value, t_stat, p_value)
@@ -102,9 +96,7 @@ def compute_pearson_ic(
     return (float(ic), float(t_stat), float(p_value))
 
 
-def measure_ranker_ic(
-    snapshot: Dict, candidate_name: str = None
-) -> Dict[str, Dict]:
+def measure_ranker_ic(snapshot: Dict, candidate_name: str = None) -> Dict[str, Dict]:
     """
     Measure ranker IC on eligible universe.
 
@@ -120,9 +112,7 @@ def measure_ranker_ic(
 
     # Filter to eligible universe
     eligible_rows = [
-        r
-        for r in rows
-        if r.get("eligible") and str(r["eligible"]).strip().lower() in ("1", "true", "yes")
+        r for r in rows if r.get("eligible") and str(r["eligible"]).strip().lower() in ("1", "true", "yes")
     ]
 
     if len(eligible_rows) < 30:
@@ -133,7 +123,9 @@ def measure_ranker_ic(
 
     # Extract ranks and candidate values
     try:
-        final_ranks = [float(r.get("final_rank", r.get("actionable_rank", 0))) for r in eligible_rows]
+        # Validate that final_rank/actionable_rank exists
+        for r in eligible_rows:
+            _ = float(r.get("final_rank", r.get("actionable_rank", 0)))
     except (ValueError, TypeError):
         return {"error": "Cannot parse final_rank/actionable_rank as float"}
 
@@ -147,7 +139,9 @@ def measure_ranker_ic(
 
         if candidate_name:
             try:
-                candidate_values = [float(r.get(candidate_name, 0)) for r in eligible_rows]
+                # Validate that candidate feature exists
+                for r in eligible_rows:
+                    _ = float(r.get(candidate_name, 0))
                 results["candidate_ic"] = {5: 0.0, 10: 0.0, 20: 0.0, 60: 0.0}
             except (ValueError, TypeError):
                 results["candidate_ic"] = {"error": f"Cannot parse {candidate_name}"}
@@ -159,9 +153,7 @@ def measure_ranker_ic(
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Measure true ranker IC on eligible universe (Spec 100)"
-    )
+    parser = argparse.ArgumentParser(description="Measure true ranker IC on eligible universe (Spec 100)")
     parser.add_argument(
         "--start-date",
         default="2026-05-01",
@@ -201,9 +193,7 @@ def main():
 
     snapshots = discover_snapshots(data_dir, args.start_date, args.end_date)
 
-    print(
-        f"Measuring ranker IC: {args.start_date} through {args.end_date} ({len(snapshots)} snapshots)"
-    )
+    print(f"Measuring ranker IC: {args.start_date} through {args.end_date} ({len(snapshots)} snapshots)")
     if args.candidates:
         print(f"  Candidates: {', '.join(args.candidates)}")
     if args.dry_run:
@@ -211,7 +201,6 @@ def main():
 
     # Results aggregation
     baseline_results = []
-    selector_results = []
     candidate_results = {cand: [] for cand in args.candidates}
 
     for snapshot_path in snapshots:
@@ -236,9 +225,7 @@ def main():
 
             for cand in args.candidates:
                 if "candidate_ic" in result:
-                    candidate_results[cand].append(
-                        {"date": date, **result.get("candidate_ic", {})}
-                    )
+                    candidate_results[cand].append({"date": date, **result.get("candidate_ic", {})})
 
         except Exception as e:
             print(f"  {date}: ERROR — {e}")

@@ -16,6 +16,7 @@ Severity:
 
 Exit codes: 0=GREEN, 1=YELLOW, 2=RED.
 """
+
 from __future__ import annotations
 
 import argparse

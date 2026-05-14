@@ -22,6 +22,7 @@ Usage:
     --end DATE           Archive end date filter
     --dry-run            Print matrix + archive count, exit
 """
+
 from __future__ import annotations
 
 import argparse

@@ -5,6 +5,7 @@ Unit tests for run_gate_ablation.py
 Tests gate ablation logic, promoted-name detection, frequency counting,
 inert gate detection, and percentile computation.
 """
+
 from __future__ import annotations
 
 import sys

@@ -23,6 +23,7 @@ Usage:
     --end DATE           Archive end date filter
     --dry-run            Print config + archive count, exit
 """
+
 from __future__ import annotations
 
 import argparse

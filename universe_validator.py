@@ -9,7 +9,7 @@ This prevents universe contamination (NAME, USD, CCCC, etc.) from polluting back
 
 Usage:
     from universe_validator import validate_universe, load_etf_constituents
-    
+
     valid_universe = load_etf_constituents()
     filtered = validate_universe(tickers, valid_universe)
 """

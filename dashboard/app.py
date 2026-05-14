@@ -165,6 +165,7 @@ def _bioshort_freshness_meta() -> dict:
         }
     try:
         from datetime import date
+
         report_date = date.fromisoformat(as_of_date_str)
         age_days = (date.today() - report_date).days
     except (ValueError, TypeError):

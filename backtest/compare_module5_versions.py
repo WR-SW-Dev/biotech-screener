@@ -19,6 +19,7 @@ Usage:
     python backtest/compare_module5_versions.py
     python backtest/compare_module5_versions.py --start-date 2023-01-01 --end-date 2024-12-31
 """
+
 import argparse
 import json
 import math

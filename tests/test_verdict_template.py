@@ -3,6 +3,7 @@
 
 Covers _compute_verdict (pure function) and _write_verdict (file output).
 """
+
 from __future__ import annotations
 
 import json

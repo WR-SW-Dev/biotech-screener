@@ -21,6 +21,7 @@ Usage:
     --end DATE            End date filter for archives
     --dry-run             Print archive count + scenario names, don't run
 """
+
 from __future__ import annotations
 
 import argparse

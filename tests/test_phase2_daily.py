@@ -9,6 +9,7 @@ Covers:
   - Atomic promotion: staging → final, backup of existing
   - Audit exit code mapping
 """
+
 from __future__ import annotations
 
 import csv

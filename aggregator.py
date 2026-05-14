@@ -12,10 +12,10 @@ Core signals:
 
 Usage:
     from wake_robin.providers.sec_13f.aggregator import ElitePositionAggregator
-    
+
     agg = ElitePositionAggregator()
     signals = agg.compute_signals(as_of_date='2025-09-30')
-    
+
     for ticker, signal in signals.items():
         print(f"{ticker}: {signal['overlap_count']} managers, score={signal['conviction_score']:.2f}")
 """

@@ -11,6 +11,7 @@ DETERMINISM GUARANTEES:
 - No time-dependencies
 - Auditable calculations
 """
+
 from __future__ import annotations
 
 import hashlib

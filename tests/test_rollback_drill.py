@@ -10,6 +10,7 @@ Covers:
   - Exit code: 2 if recommended, 0 otherwise
   - render_text includes rollback command when recommended
 """
+
 from __future__ import annotations
 
 import csv
