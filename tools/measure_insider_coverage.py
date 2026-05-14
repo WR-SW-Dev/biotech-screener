@@ -6,6 +6,7 @@ Reads production snapshots, measures blank vs zero vs activity,
 emits per-snapshot JSON + stabilization report.
 """
 
+import argparse
 import csv
 import json
 from datetime import datetime, timedelta
@@ -164,12 +165,36 @@ def main():
     Emits per-snapshot JSON + stabilization report.
     """
 
-    # Configuration
-    start_date = "2026-05-10"
-    end_date = "2026-05-15"
+    parser = argparse.ArgumentParser(
+        description="Measure insider_net_buy_value_90d coverage across production snapshots"
+    )
+    parser.add_argument(
+        "--start-date",
+        default="2026-05-10",
+        help="Start date (YYYY-MM-DD), default: 2026-05-10",
+    )
+    parser.add_argument(
+        "--end-date",
+        default="2026-05-15",
+        help="End date (YYYY-MM-DD), default: 2026-05-15",
+    )
+    parser.add_argument(
+        "--snapshot-dir",
+        default="data/snapshots",
+        help="Path to snapshots directory, default: data/snapshots",
+    )
+    parser.add_argument(
+        "--artifacts-dir",
+        default="artifacts/insider_diagnostics",
+        help="Path to artifacts output directory, default: artifacts/insider_diagnostics",
+    )
 
-    data_dir = Path("data/snapshots")
-    artifacts_dir = Path("artifacts/insider_diagnostics")
+    args = parser.parse_args()
+
+    start_date = args.start_date
+    end_date = args.end_date
+    data_dir = Path(args.snapshot_dir)
+    artifacts_dir = Path(args.artifacts_dir)
     artifacts_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate date range

@@ -100,7 +100,7 @@ class TestInsiderNotInExpectationModel:
     def test_expectation_model_does_not_read_insider(self):
         """Code review: ExpectationErrorModel feature list excludes insider."""
         try:
-            from expectation_error_model import ExpectationErrorModel
+            from event_ev.expectation_error_model import ExpectationErrorModel
 
             model = ExpectationErrorModel()
             required_features = getattr(model, "REQUIRED_FEATURES", [])
@@ -116,7 +116,7 @@ class TestInsiderNotInExpectationModel:
         import inspect
 
         try:
-            from expectation_error_model import ExpectationErrorModel
+            from event_ev.expectation_error_model import ExpectationErrorModel
 
             model = ExpectationErrorModel()
 
