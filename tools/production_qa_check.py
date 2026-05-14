@@ -290,11 +290,13 @@ def check_schema_drift(as_of_date: str) -> Dict[str, Any]:
 def check_severity_formulas(as_of_date: str) -> Dict[str, Any]:
     """Validate runway severity numeric bounds and formula relationships.
 
-    Checks:
-      1. ev_severity_score in [0.0, 1.0] and finite
-      2. runway_severity_score in [0.0, 1.0] and finite
+    Enforces that all severity fields are present, numeric, finite, and satisfy:
+      1. runway_severity_score in [0.0, 1.0]
+      2. ev_severity_score in [0.0, 1.0]
       3. dilution_haircut ≈ 0.35 * ev_severity_score (±0.001)
       4. size_multiplier ≈ max(0.40, 1 - 0.60 * ev_severity_score) (±0.001)
+
+    Blank / None / NaN / Inf values are treated as failures, not skipped.
     """
     rankings = SNAPSHOTS_DIR / as_of_date / "rankings.csv"
     if not rankings.exists():
@@ -309,37 +311,63 @@ def check_severity_formulas(as_of_date: str) -> Dict[str, Any]:
     with open(rankings) as f:
         reader = csv.DictReader(f)
         for i, row in enumerate(reader, 1):
-            ev_sev = row.get("ev_severity_score")
-            run_sev = row.get("runway_severity_score")
-            dil_hair = row.get("dilution_haircut")
-            size_mult = row.get("size_multiplier")
+            ev_sev_raw = row.get("ev_severity_score")
+            run_sev_raw = row.get("runway_severity_score")
+            dil_hair_raw = row.get("dilution_haircut")
+            size_mult_raw = row.get("size_multiplier")
 
-            # Skip if not present (caught by schema drift check)
-            if not all([ev_sev, run_sev, dil_hair, size_mult]):
+            # Check presence: blank or None is a failure
+            for field_name, field_val in [
+                ("ev_severity_score", ev_sev_raw),
+                ("runway_severity_score", run_sev_raw),
+                ("dilution_haircut", dil_hair_raw),
+                ("size_multiplier", size_mult_raw),
+            ]:
+                if not field_val or str(field_val).strip() == "":
+                    issues.append(f"Row {i}: {field_name} is blank")
+
+            # Try to convert all fields to float
+            try:
+                ev_sev = float(ev_sev_raw)
+                run_sev = float(run_sev_raw)
+                dil_hair = float(dil_hair_raw)
+                size_mult = float(size_mult_raw)
+            except (ValueError, TypeError):
+                issues.append(f"Row {i}: one or more severity fields are non-numeric")
                 continue
 
-            try:
-                ev_sev = float(ev_sev)
-                run_sev = float(run_sev)
-                dil_hair = float(dil_hair)
-                size_mult = float(size_mult)
-            except (ValueError, TypeError):
-                issues.append(f"Row {i}: non-numeric severity field")
+            # Check finiteness (NaN, Inf, -Inf are failures)
+            if not math.isfinite(ev_sev):
+                issues.append(f"Row {i}: ev_severity_score {ev_sev} is not finite")
+            if not math.isfinite(run_sev):
+                issues.append(f"Row {i}: runway_severity_score {run_sev} is not finite")
+            if not math.isfinite(dil_hair):
+                issues.append(f"Row {i}: dilution_haircut {dil_hair} is not finite")
+            if not math.isfinite(size_mult):
+                issues.append(f"Row {i}: size_multiplier {size_mult} is not finite")
+
+            # Skip formula checks if any field failed finiteness above
+            if not (
+                math.isfinite(ev_sev)
+                and math.isfinite(run_sev)
+                and math.isfinite(dil_hair)
+                and math.isfinite(size_mult)
+            ):
                 continue
 
             # Check bounds
-            if not (0.0 <= ev_sev <= 1.0) or not math.isfinite(ev_sev):
+            if not (0.0 <= ev_sev <= 1.0):
                 issues.append(f"Row {i}: ev_severity_score {ev_sev} out of bounds [0, 1]")
-            if not (0.0 <= run_sev <= 1.0) or not math.isfinite(run_sev):
+            if not (0.0 <= run_sev <= 1.0):
                 issues.append(f"Row {i}: runway_severity_score {run_sev} out of bounds [0, 1]")
 
-            # Check formulas
+            # Check formulas only if all fields are valid
             expected_dil = 0.35 * ev_sev
-            if math.isfinite(dil_hair) and abs(dil_hair - expected_dil) > tolerance:
+            if abs(dil_hair - expected_dil) > tolerance:
                 issues.append(f"Row {i}: dilution_haircut {dil_hair} != 0.35*{ev_sev}={expected_dil}")
 
             expected_size = max(0.40, 1.0 - 0.60 * ev_sev)
-            if math.isfinite(size_mult) and abs(size_mult - expected_size) > tolerance:
+            if abs(size_mult - expected_size) > tolerance:
                 issues.append(f"Row {i}: size_multiplier {size_mult} != max(0.40, 1-0.60*{ev_sev})={expected_size}")
 
     if issues:
