@@ -438,16 +438,25 @@ def send_alert_email(
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_pass = os.environ.get("SMTP_PASSWORD", "")
-    to = to_addr or os.environ.get("ALERT_EMAIL_TO", "dschulz@wakerobin.co")
+    to_str = to_addr or os.environ.get("ALERT_EMAIL_TO") or os.environ.get("ALERT_RECIPIENT", "")
+
+    if not to_str:
+        logger.warning("No recipient configured — skipping email")
+        return False
 
     if not smtp_user or not smtp_pass:
         logger.warning("SMTP credentials not configured — skipping email")
         return False
 
+    recipients = [e.strip() for e in to_str.split(",") if e.strip()]
+    if not recipients:
+        logger.warning("No valid recipients — skipping email")
+        return False
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = smtp_user
-    msg["To"] = to
+    msg["To"] = to_str
     msg.attach(MIMEText(body_text, "plain"))
     msg.attach(MIMEText(body_html, "html"))
 
@@ -455,8 +464,8 @@ def send_alert_email(
         with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
             server.starttls()
             server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [to], msg.as_string())
-        logger.info("Email sent to %s: %s", to, subject)
+            server.sendmail(smtp_user, recipients, msg.as_string())
+        logger.info("Email sent to %s: %s", ", ".join(recipients), subject)
         return True
     except Exception as exc:
         logger.warning("Email send failed: %s", exc)

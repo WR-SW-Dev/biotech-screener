@@ -286,6 +286,11 @@ def send_email(subject: str, body_html: str, body_text: str) -> bool:
         print("ERROR: SMTP credentials not configured in .env")
         return False
 
+    recipients = [e.strip() for e in ALERT_RECIPIENT.split(",") if e.strip()]
+    if not recipients:
+        print("ERROR: No recipients configured")
+        return False
+
     msg = MIMEMultipart("alternative")
     msg["From"] = f"Herald Digest <{SMTP_USER}>"
     msg["To"] = ALERT_RECIPIENT
@@ -298,7 +303,7 @@ def send_email(subject: str, body_html: str, body_text: str) -> bool:
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_USER, ALERT_RECIPIENT, msg.as_string())
+            server.sendmail(SMTP_USER, recipients, msg.as_string())
         return True
     except Exception as e:
         print(f"ERROR: Email send failed: {e}")

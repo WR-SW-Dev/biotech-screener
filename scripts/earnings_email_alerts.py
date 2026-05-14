@@ -38,6 +38,8 @@ ALERT_RECIPIENT = os.environ.get("ALERT_RECIPIENT", "")
 
 
 def send_email(subject: str, body_html: str, body_text: str) -> None:
+    recipients = [e.strip() for e in ALERT_RECIPIENT.split(",") if e.strip()]
+
     msg = MIMEMultipart("alternative")
     msg["From"] = f"Bellringer <{SMTP_USER}>"
     msg["To"] = ALERT_RECIPIENT
@@ -49,7 +51,7 @@ def send_email(subject: str, body_html: str, body_text: str) -> None:
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_USER, ALERT_RECIPIENT, msg.as_string())
+        server.sendmail(SMTP_USER, recipients, msg.as_string())
 
     print(f"Sent: {subject} -> {ALERT_RECIPIENT}")
 

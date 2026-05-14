@@ -39,9 +39,15 @@ def is_smtp_configured() -> bool:
     return bool(os.environ.get("SMTP_USER") and os.environ.get("SMTP_PASSWORD"))
 
 
-def resolve_recipient(to_addr: Optional[str] = None) -> Optional[str]:
-    """Pick the first defined recipient in: param → ALERT_EMAIL_TO → ALERT_RECIPIENT."""
-    return to_addr or os.environ.get("ALERT_EMAIL_TO") or os.environ.get("ALERT_RECIPIENT") or None
+def resolve_recipient(to_addr: Optional[str] = None) -> Optional[list[str]]:
+    """Pick recipients from: param → ALERT_EMAIL_TO → ALERT_RECIPIENT.
+
+    Supports comma-separated email addresses. Returns list of emails or None.
+    """
+    recipients_str = to_addr or os.environ.get("ALERT_EMAIL_TO") or os.environ.get("ALERT_RECIPIENT")
+    if not recipients_str:
+        return None
+    return [e.strip() for e in recipients_str.split(",") if e.strip()]
 
 
 def send_email(
@@ -59,7 +65,7 @@ def send_email(
     subject : str
     body_text : str   plain-text body (required)
     body_html : Optional[str]   optional HTML alternative
-    to_addr : Optional[str]   override the default recipient
+    to_addr : Optional[str]   override the default recipient(s); comma-separated supported
     smtp_cls : type   injection point for tests; defaults to smtplib.SMTP
 
     Soft failure modes (return False, log a warning):
@@ -74,8 +80,8 @@ def send_email(
         logger.warning("SMTP credentials not configured — skipping email: %s", subject)
         return False
 
-    recipient = resolve_recipient(to_addr)
-    if not recipient:
+    recipients = resolve_recipient(to_addr)
+    if not recipients:
         logger.warning("no recipient resolvable — skipping email: %s", subject)
         return False
 
@@ -87,7 +93,7 @@ def send_email(
     msg = MIMEMultipart("alternative") if body_html else MIMEMultipart()
     msg["Subject"] = subject
     msg["From"] = smtp_user
-    msg["To"] = recipient
+    msg["To"] = ", ".join(recipients)
     msg.attach(MIMEText(body_text, "plain"))
     if body_html:
         msg.attach(MIMEText(body_html, "html"))
@@ -97,8 +103,8 @@ def send_email(
         with transport(smtp_host, smtp_port, timeout=SMTP_TIMEOUT_S) as server:
             server.starttls()
             server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [recipient], msg.as_string())
-        logger.info("email sent to %s: %s", recipient, subject)
+            server.sendmail(smtp_user, recipients, msg.as_string())
+        logger.info("email sent to %s: %s", ", ".join(recipients), subject)
         return True
     except Exception as exc:  # noqa: BLE001
         logger.warning("email send failed (%s): %s", subject, exc)

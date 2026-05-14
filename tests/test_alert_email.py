@@ -40,25 +40,37 @@ def test_is_smtp_configured_false_when_partial(monkeypatch):
 def test_resolve_recipient_prefers_param(monkeypatch):
     _clear_env(monkeypatch)
     monkeypatch.setenv("ALERT_EMAIL_TO", "env@example.com")
-    assert resolve_recipient("override@example.com") == "override@example.com"
+    assert resolve_recipient("override@example.com") == ["override@example.com"]
 
 
 def test_resolve_recipient_falls_back_to_alert_email_to(monkeypatch):
     _clear_env(monkeypatch)
     monkeypatch.setenv("ALERT_EMAIL_TO", "a@example.com")
     monkeypatch.setenv("ALERT_RECIPIENT", "b@example.com")
-    assert resolve_recipient() == "a@example.com"
+    assert resolve_recipient() == ["a@example.com"]
 
 
 def test_resolve_recipient_falls_back_to_alert_recipient(monkeypatch):
     _clear_env(monkeypatch)
     monkeypatch.setenv("ALERT_RECIPIENT", "b@example.com")
-    assert resolve_recipient() == "b@example.com"
+    assert resolve_recipient() == ["b@example.com"]
 
 
 def test_resolve_recipient_none_when_nothing_set(monkeypatch):
     _clear_env(monkeypatch)
     assert resolve_recipient() is None
+
+
+def test_resolve_recipient_splits_comma_separated(monkeypatch):
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("ALERT_RECIPIENT", "a@example.com,b@example.com")
+    assert resolve_recipient() == ["a@example.com", "b@example.com"]
+
+
+def test_resolve_recipient_trims_whitespace(monkeypatch):
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("ALERT_RECIPIENT", "a@example.com, b@example.com , c@example.com")
+    assert resolve_recipient() == ["a@example.com", "b@example.com", "c@example.com"]
 
 
 # ---------------------------------------------------------------------------
