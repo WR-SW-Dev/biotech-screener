@@ -6457,9 +6457,14 @@ def save_validation_snapshot(
     try:
         from event_ev.runway_severity import enrich_csv_rows as _enrich_runway
 
+        logger.info("Starting runway severity enrichment for %d rows", len(csv_rows))
         _runway_overlays_for_sidecar = _enrich_runway(csv_rows, as_of_date)
+        # Verify enrichment was successful
+        _ev_sev_populated = sum(1 for r in csv_rows if "ev_severity_score" in r and r.get("ev_severity_score"))
+        logger.info("Runway severity enrichment complete: %d rows with ev_severity_score", _ev_sev_populated)
     except Exception as _runway_exc:
         logger.warning("Runway severity enrichment failed: %s", _runway_exc, exc_info=True)
+        logger.info("Proceeding without runway severity enrichment")
 
     # --- Runway Transition Model: shadow-only state transition probabilities (Phase 1) ---
     # Markov Chain state transitions for runway financing risk.
@@ -6469,10 +6474,18 @@ def save_validation_snapshot(
     try:
         from event_ev.transition_model import enrich_csv_rows as _enrich_transition
 
+        logger.info("Starting runway transition enrichment for %d rows", len(csv_rows))
         _snap_dir = Path(__file__).resolve().parent / "data" / "snapshots"
         _transition_overlays_for_sidecar = _enrich_transition(csv_rows, as_of_date, snap_dir=_snap_dir)
+        _transition_populated = sum(
+            1 for r in csv_rows if "transition_runway_state" in r and r.get("transition_runway_state")
+        )
+        logger.info(
+            "Runway transition enrichment complete: %d rows with transition_runway_state", _transition_populated
+        )
     except Exception as _transition_exc:
         logger.warning("Runway transition enrichment failed: %s", _transition_exc, exc_info=True)
+        logger.info("Proceeding without runway transition enrichment")
 
     # --- Insider Form 4: diagnostic pass-through (scoring lane closed 2026-04-05) ---
     # Computes insider_net_buy_value_90d on demand from data/form4/raw/{ticker}.json
@@ -6524,6 +6537,54 @@ def save_validation_snapshot(
             )
     except Exception as _churn_exc:  # pragma: no cover — defensive
         logger.warning(f"Cohort churn alert generation failed: {_churn_exc}")
+
+    # --- Safety check: ensure missing enrichment columns have default values ---
+    # If enrichment functions fail silently, ensure columns exist before write.
+    # This should not happen if enrichments are working, but provides a safety net.
+    _missing_col_count = {}
+    for row in csv_rows:
+        # Ensure severity columns exist (should be set by enrich_csv_rows)
+        if "ev_severity_score" not in row:
+            row["ev_severity_score"] = ""  # QA will flag as blank, surfacing the bug
+            _missing_col_count["ev_severity_score"] = _missing_col_count.get("ev_severity_score", 0) + 1
+        if "runway_buffer_months" not in row:
+            row["runway_buffer_months"] = ""
+            _missing_col_count["runway_buffer_months"] = _missing_col_count.get("runway_buffer_months", 0) + 1
+        if "financing_truth_gate" not in row:
+            row["financing_truth_gate"] = ""
+            _missing_col_count["financing_truth_gate"] = _missing_col_count.get("financing_truth_gate", 0) + 1
+        if "dilution_haircut" not in row:
+            row["dilution_haircut"] = ""
+            _missing_col_count["dilution_haircut"] = _missing_col_count.get("dilution_haircut", 0) + 1
+        if "size_multiplier" not in row:
+            row["size_multiplier"] = ""
+            _missing_col_count["size_multiplier"] = _missing_col_count.get("size_multiplier", 0) + 1
+        if "severity_bucket" not in row:
+            row["severity_bucket"] = ""
+            _missing_col_count["severity_bucket"] = _missing_col_count.get("severity_bucket", 0) + 1
+        if "severity_notes" not in row:
+            row["severity_notes"] = ""
+            _missing_col_count["severity_notes"] = _missing_col_count.get("severity_notes", 0) + 1
+        # Ensure transition columns exist (should be set by enrich_csv_rows)
+        if "transition_runway_state" not in row:
+            row["transition_runway_state"] = ""
+            _missing_col_count["transition_runway_state"] = _missing_col_count.get("transition_runway_state", 0) + 1
+        if "transition_p_runway_worse_60d" not in row:
+            row["transition_p_runway_worse_60d"] = ""
+            _missing_col_count["transition_p_runway_worse_60d"] = (
+                _missing_col_count.get("transition_p_runway_worse_60d", 0) + 1
+            )
+        if "transition_p_financing_90d" not in row:
+            row["transition_p_financing_90d"] = ""
+            _missing_col_count["transition_p_financing_90d"] = (
+                _missing_col_count.get("transition_p_financing_90d", 0) + 1
+            )
+        if "transition_p_distress_90d" not in row:
+            row["transition_p_distress_90d"] = ""
+            _missing_col_count["transition_p_distress_90d"] = _missing_col_count.get("transition_p_distress_90d", 0) + 1
+
+    if _missing_col_count:
+        logger.warning("Missing enrichment columns added with empty defaults: %s", _missing_col_count)
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
