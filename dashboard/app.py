@@ -146,6 +146,50 @@ def _load_bioshort_watch() -> Optional[Dict]:
     return _load_json(files[0]) if files else None
 
 
+_FRESHNESS_WARN_DAYS = 7
+_FRESHNESS_ERROR_DAYS = 14
+
+
+def _bioshort_freshness_meta() -> dict:
+    """Compute freshness metadata for the four bioshort endpoints."""
+    verdict_path = REPO_ROOT / "output" / "hedge_report" / "BIOSHORT_VERDICT.json"
+    data = _load_json(verdict_path)
+    as_of_date_str = (data or {}).get("as_of_date")
+    if not as_of_date_str:
+        return {
+            "report_as_of_date": None,
+            "report_age_days": None,
+            "freshness_status": "FRESHNESS_UNKNOWN",
+            "freshness_warn_days": _FRESHNESS_WARN_DAYS,
+            "freshness_error_days": _FRESHNESS_ERROR_DAYS,
+        }
+    try:
+        from datetime import date
+        report_date = date.fromisoformat(as_of_date_str)
+        age_days = (date.today() - report_date).days
+    except (ValueError, TypeError):
+        return {
+            "report_as_of_date": as_of_date_str,
+            "report_age_days": None,
+            "freshness_status": "FRESHNESS_UNKNOWN",
+            "freshness_warn_days": _FRESHNESS_WARN_DAYS,
+            "freshness_error_days": _FRESHNESS_ERROR_DAYS,
+        }
+    if age_days <= _FRESHNESS_WARN_DAYS:
+        status = "FRESH"
+    elif age_days <= _FRESHNESS_ERROR_DAYS:
+        status = "STALE_WARNING"
+    else:
+        status = "STALE_ERROR"
+    return {
+        "report_as_of_date": as_of_date_str,
+        "report_age_days": age_days,
+        "freshness_status": status,
+        "freshness_warn_days": _FRESHNESS_WARN_DAYS,
+        "freshness_error_days": _FRESHNESS_ERROR_DAYS,
+    }
+
+
 def _load_ops_digest(date: str) -> Optional[str]:
     path = REPO_ROOT / "artifacts" / "ops_digest" / f"{date}_digest.md"
     if path.exists():
@@ -694,7 +738,9 @@ async def api_shadow_performance():
 async def api_bioshort_verdict():
     """Latest bioshort verdict."""
     path = REPO_ROOT / "output" / "hedge_report" / "BIOSHORT_VERDICT.json"
-    return _load_json(path) or {"error": "No bioshort verdict"}
+    data = _load_json(path) or {"error": "No bioshort verdict"}
+    data["_freshness"] = _bioshort_freshness_meta()
+    return data
 
 
 @app.get("/api/bioshort/report")
@@ -702,17 +748,21 @@ async def api_bioshort_report():
     """Latest bioshort hedge report detail."""
     report_dir = REPO_ROOT / "output" / "hedge_report"
     if not report_dir.exists():
-        return {"error": "No hedge reports"}
+        return {"error": "No hedge reports", "_freshness": _bioshort_freshness_meta()}
     files = sorted(report_dir.glob("hedge_report_*.json"), reverse=True)
     if not files:
-        return {"error": "No hedge report files"}
-    return _load_json(files[0]) or {"error": "Failed to load report"}
+        return {"error": "No hedge report files", "_freshness": _bioshort_freshness_meta()}
+    data = _load_json(files[0]) or {"error": "Failed to load report"}
+    data["_freshness"] = _bioshort_freshness_meta()
+    return data
 
 
 @app.get("/api/bioshort/watch")
 async def api_bioshort_watch():
     """Latest bioshort watch alerts."""
-    return _load_bioshort_watch() or {"error": "No bioshort watch"}
+    data = _load_bioshort_watch() or {"error": "No bioshort watch"}
+    data["_freshness"] = _bioshort_freshness_meta()
+    return data
 
 
 @app.get("/api/bioshort/archive")
@@ -720,7 +770,7 @@ async def api_bioshort_archive():
     """List of archived bioshort reports."""
     report_dir = REPO_ROOT / "output" / "hedge_report"
     if not report_dir.exists():
-        return []
+        return {"reports": [], "_freshness": _bioshort_freshness_meta()}
     files = sorted(report_dir.glob("hedge_report_*.json"), reverse=True)
     archive = []
     for f in files[:20]:
@@ -732,7 +782,7 @@ async def api_bioshort_archive():
                     "file": f.name,
                 }
             )
-    return archive
+    return {"reports": archive, "_freshness": _bioshort_freshness_meta()}
 
 
 @app.get("/api/options_quality/{date}")
