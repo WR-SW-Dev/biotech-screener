@@ -12,6 +12,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from tools.build_catalyst_delta import (
     SCHEMA_VERSION,
+    apply_v2_filter,
     build_catalyst_delta,
     classify_change,
     format_delta_md,
@@ -359,3 +360,92 @@ class TestFormatMd:
         }
         md = format_delta_md(d)
         assert "No material catalyst changes" in md
+
+
+# ---------------------------------------------------------------------------
+# Spec 088 Phase B v2 filter
+# ---------------------------------------------------------------------------
+class TestApplyV2Filter:
+    def test_exited_held_kept(self):
+        delta = {"ticker": "RVMD", "codes": ["EXITED"], "catalyst_days": ""}
+        passed, _ = apply_v2_filter([delta], held_tickers={"RVMD"})
+        assert len(passed) == 1
+
+    def test_exited_not_held_dropped(self):
+        delta = {"ticker": "RVMD", "codes": ["EXITED"], "catalyst_days": ""}
+        _, suppressed = apply_v2_filter([delta], held_tickers=set())
+        assert len(suppressed) == 1
+
+    def test_nan_catalyst_days_dropped(self):
+        delta = {"ticker": "ABC", "codes": ["DATE_SHIFTED"], "catalyst_days": "", "catalyst_family": "REGULATORY"}
+        _, suppressed = apply_v2_filter([delta], held_tickers=set())
+        assert len(suppressed) == 1
+
+    def test_hard_event_within_60d_kept(self):
+        delta = {"ticker": "ABC", "codes": ["DATE_SHIFTED"], "catalyst_days": "45", "catalyst_family": "REGULATORY"}
+        passed, _ = apply_v2_filter([delta], held_tickers=set())
+        assert len(passed) == 1
+
+    def test_hard_event_boundary_60d_kept(self):
+        delta = {"ticker": "ABC", "codes": ["DATE_SHIFTED"], "catalyst_days": "60", "catalyst_family": "CLINICAL"}
+        passed, _ = apply_v2_filter([delta], held_tickers=set())
+        assert len(passed) == 1
+
+    def test_hard_event_over_60d_dropped(self):
+        delta = {"ticker": "ABC", "codes": ["DATE_SHIFTED"], "catalyst_days": "61", "catalyst_family": "REGULATORY"}
+        _, suppressed = apply_v2_filter([delta], held_tickers=set())
+        assert len(suppressed) == 1
+
+    def test_soft_nonfamily_change_dropped(self):
+        delta = {"ticker": "ABC", "codes": ["SOURCE_CHANGED"], "catalyst_days": "20", "catalyst_family": "CONFERENCE"}
+        _, suppressed = apply_v2_filter([delta], held_tickers=set())
+        assert len(suppressed) == 1
+
+    def test_ctgov_family_changed_kept(self):
+        # CTGOV_ prefix stripped; treats as FAMILY_CHANGED
+        delta = {
+            "ticker": "ABC",
+            "codes": ["CTGOV_FAMILY_CHANGED"],
+            "catalyst_days": "30",
+            "catalyst_family": "CONFERENCE",
+        }
+        passed, _ = apply_v2_filter([delta], held_tickers=set())
+        assert len(passed) == 1
+
+    def test_companion_artifact_emitted_and_raw_unchanged(self, tmp_path):
+        snaps = tmp_path / "snapshots"
+        artifacts = tmp_path / "artifacts"
+
+        prior_rows = [
+            _row(ticker="AAA", catalyst_days="30"),
+            _row(ticker="BBB", catalyst_days="45", catalyst_family="REGULATORY"),
+            _row(ticker="CCC", catalyst_days="75", catalyst_family="REGULATORY"),
+        ]
+        current_rows = [
+            _row(ticker="AAA", catalyst_days="29"),
+            _row(ticker="BBB", catalyst_days="40", catalyst_family="REGULATORY"),
+            _row(ticker="CCC", catalyst_days="70", catalyst_family="REGULATORY"),
+        ]
+        _write_rankings(snaps / "2026-03-26", prior_rows)
+        _write_rankings(snaps / "2026-03-27", current_rows)
+
+        # Capture baseline raw artifact content before build
+        result = build_catalyst_delta(
+            "2026-03-27", prior_date="2026-03-26", snapshots_dir=snaps, artifacts_dir=artifacts
+        )
+
+        # Verify raw artifact exists and contains expected schema
+        raw_json_path = artifacts / "catalyst_delta" / "2026-03-27_delta.json"
+        assert raw_json_path.exists()
+        raw_content = json.loads(raw_json_path.read_text())
+        assert raw_content["schema"] == "catalyst_delta.v1"
+
+        # Verify filtered companion exists with correct schema
+        filtered_json_path = artifacts / "catalyst_delta" / "2026-03-27_delta_filtered.json"
+        assert filtered_json_path.exists()
+        filtered_content = json.loads(filtered_json_path.read_text())
+        assert filtered_content["schema"] == "catalyst_delta.v1.filtered"
+
+        # Verify result keys include filtered paths
+        assert "_filtered_json_path" in result
+        assert "_filtered_md_path" in result

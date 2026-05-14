@@ -47,6 +47,15 @@ DATE_SHIFT_MATERIAL = 3  # days
 HARD_FAMILIES = {"REGULATORY", "CLINICAL"}
 SOFT_FAMILIES = {"IR_EVENTS", "CONFERENCE"}
 
+# Spec 088 Phase B v2 filter constants
+V2_DAYS_THRESHOLD = 60
+V2_SCHEMA = "catalyst_delta.v1.filtered"
+V2_FILTER_DEFINITION = (
+    "EXITED→drop_unless_held "
+    "AND catalyst_days<=60 "
+    "AND (family in {REGULATORY,CLINICAL} OR CTGOV-aware family-changing code)"
+)
+
 # Fields to compare per ticker
 CATALYST_FIELDS = [
     "catalyst_days",
@@ -243,6 +252,49 @@ def passes_noise_filter(
     return False
 
 
+def _passes_v2_filter(delta: Dict[str, Any], held_tickers: Set[str]) -> bool:
+    """Return True if delta passes the Spec 088 v2 filter.
+
+    Gate logic (AND):
+    1. in_universe: EXITED rows dropped unless ticker in held_tickers
+    2. catalyst_days <= V2_DAYS_THRESHOLD (NaN → excluded)
+    3. HARD family OR family-changing codes (CTGOV-prefix-stripped)
+    """
+    codes = delta.get("codes", [])
+    ticker = delta.get("ticker", "")
+
+    # EXITED: pass only if held; bypass remaining checks for held exits
+    if "EXITED" in codes:
+        return ticker in held_tickers
+
+    # catalyst_days <= 60 (NaN excluded)
+    days = _sf(delta.get("catalyst_days", ""))
+    if math.isnan(days) or days > V2_DAYS_THRESHOLD:
+        return False
+
+    # Hard family
+    if delta.get("catalyst_family", "") in HARD_FAMILIES:
+        return True
+
+    # Family-changing codes (CTGOV-prefix-aware)
+    normalized = {c[len("CTGOV_") :] if c.startswith("CTGOV_") else c for c in codes}
+    if normalized & {"FAMILY_CHANGED", "BECAME_HARD", "BECAME_SOFT"}:
+        return True
+
+    return False
+
+
+def apply_v2_filter(
+    deltas: List[Dict[str, Any]],
+    held_tickers: Set[str],
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Split deltas into (passed, suppressed) per v2 filter."""
+    passed, suppressed = [], []
+    for delta in deltas:
+        (passed if _passes_v2_filter(delta, held_tickers) else suppressed).append(delta)
+    return passed, suppressed
+
+
 # ---------------------------------------------------------------------------
 # Builder
 # ---------------------------------------------------------------------------
@@ -391,6 +443,45 @@ def build_catalyst_delta(
 
     result["_json_path"] = str(json_path)
     result["_md_path"] = str(md_path)
+
+    # --- Spec 088 Phase B: filtered companion artifact ---
+    held_tickers = position_tickers | trade_plan_tickers
+    v2_passed, _v2_suppressed = apply_v2_filter(filtered, held_tickers)
+
+    filtered_result = {
+        "schema": V2_SCHEMA,
+        "as_of_date": as_of_date,
+        "prior_date": prior_date,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_raw_changes": len(raw_changes),
+        "n_filtered": len(v2_passed),
+        "n_noise_suppressed": len(raw_changes) - len(filtered),
+        "n_v2_filtered": len(v2_passed),
+        "n_v2_suppressed": len(filtered) - len(v2_passed),
+        "v2_filter_definition": V2_FILTER_DEFINITION,
+        "code_counts": dict(Counter(code for c in v2_passed for code in c.get("codes", [])).most_common()),
+        "context": result["context"],
+        "deltas": v2_passed,
+    }
+
+    filtered_json_path = delta_dir / f"{as_of_date}_delta_filtered.json"
+    filtered_md_path = delta_dir / f"{as_of_date}_delta_filtered.md"
+
+    with open(filtered_json_path, "w", encoding="utf-8") as f:
+        json.dump(filtered_result, f, indent=2, default=str)
+    logger.info(
+        "Wrote %s (v2: %d kept, %d suppressed)",
+        filtered_json_path,
+        len(v2_passed),
+        len(filtered) - len(v2_passed),
+    )
+
+    filtered_md_path.write_text(format_delta_md(filtered_result), encoding="utf-8")
+    logger.info("Wrote %s", filtered_md_path)
+
+    result["_filtered_json_path"] = str(filtered_json_path)
+    result["_filtered_md_path"] = str(filtered_md_path)
+
     return result
 
 
