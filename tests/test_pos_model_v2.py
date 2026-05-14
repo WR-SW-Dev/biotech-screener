@@ -99,6 +99,7 @@ def test_enum_parsing():
     )
     results.record("Parse 'car_t' to CAR_T", MechanismClass.from_string("car_t") == MechanismClass.CAR_T)
 
+    assert results.summary()
     return results
 
 
@@ -146,6 +147,7 @@ def test_base_rate_lookup():
         f"Got: {result3.base_pos_lookup}",
     )
 
+    assert results.summary()
     return results
 
 
@@ -222,6 +224,7 @@ def test_modifier_calculations():
         f"Expected: {expected_neg}, Got: {result4.trial_modifier_product}",
     )
 
+    assert results.summary()
     return results
 
 
@@ -280,6 +283,7 @@ def test_boundary_conditions():
         f"Got: {result2.total_modifier_product}",
     )
 
+    assert results.summary()
     return results
 
 
@@ -319,6 +323,7 @@ def test_decimal_precision():
         f"Expected: {expected}, Got: {result.adjusted_pos}",
     )
 
+    assert results.summary()
     return results
 
 
@@ -378,6 +383,7 @@ def test_audit_trail():
     except Exception as e:
         results.record("JSON serialization round-trip works", False, str(e))
 
+    assert results.summary()
     return results
 
 
@@ -423,6 +429,7 @@ def test_integration_helpers():
     # With blend_factor=0.70: 100 * (0.3 + 0.7 * 0.5) = 100 * 0.65 = 65
     results.record("EV weight at PoS=0.5 = 65 (with default blend)", ev_mid == Decimal("65"), f"Got: {ev_mid}")
 
+    assert results.summary()
     return results
 
 
@@ -439,6 +446,7 @@ def test_model_validation():
     results.record("Has coverage stats", "coverage_stats" in validation)
     results.record("Has stage averages", "stage_averages" in validation)
 
+    assert results.summary()
     return results
 
 
@@ -466,6 +474,7 @@ def test_string_input_convenience():
         "Parses trial characteristics", TrialCharacteristic.BIOMARKER_SELECTED in result.trial_characteristics
     )
 
+    assert results.summary()
     return results
 
 
@@ -544,6 +553,7 @@ def test_fixture_loading():
     finally:
         fixture_path.unlink()
 
+    assert results.summary()
     return results
 
 
@@ -656,6 +666,7 @@ def test_fixture_validation_errors():
     finally:
         path4.unlink()
 
+    assert results.summary()
     return results
 
 
@@ -727,6 +738,7 @@ def test_fixture_roundtrip():
     results.record("Fixture model has provenance", fixture_model.provenance is not None)
     results.record("Default model has no provenance", default_model.provenance is None)
 
+    assert results.summary()
     return results
 
 
@@ -767,6 +779,7 @@ def test_fixture_provenance_in_results():
     hash2 = result.get_audit_hash()
     results.record("Audit hash still deterministic with provenance", hash1 == hash2)
 
+    assert results.summary()
     return results
 
 
