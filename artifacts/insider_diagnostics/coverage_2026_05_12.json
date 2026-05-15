@@ -1,14 +1,15 @@
 {
-  "snapshot_date": "2026-05-12",
-  "total_tickers": 299,
-  "coverage": {
-    "blank": 0,
-    "zero": 121,
-    "positive": 88,
-    "negative": 90,
-    "blank_pct": 0.0,
-    "zero_pct": 40.47,
-    "nonblank_pct": 100.0,
-    "activity_pct": 59.53
-  }
+  "date": "2026-05-12",
+  "column": "insider_net_buy_value_90d",
+  "total_rows": 298,
+  "blank_count": 0,
+  "blank_pct": 0.0,
+  "zero_count": 94,
+  "zero_pct": 31.54,
+  "positive_count": 31,
+  "positive_pct": 10.4,
+  "negative_count": 173,
+  "negative_pct": 58.05,
+  "nonblank_pct": 100.0,
+  "activity_pct": 68.46
 }
