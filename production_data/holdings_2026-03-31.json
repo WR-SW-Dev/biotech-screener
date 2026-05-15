@@ -1,0 +1,6665 @@
+{
+  "_governance": {
+    "input_lineage": [
+      {
+        "path": "cusip_static_map.json",
+        "sha256": "d365334982834af17500f02b155b07d99d61bff3f07bd91ae0ec617cf6582a45"
+      },
+      {
+        "path": "manager_registry.json",
+        "sha256": "f76ba4f3c4cad4f94393e7106694bb44bc9d19b88aaea481d960ae84c8c7a0c7"
+      },
+      {
+        "path": "universe.json",
+        "sha256": "bd03908b1534c5fb5ada6cf0d4aa2a2f054e61aab490c2145ffad58d88851d2c"
+      }
+    ],
+    "parameters_hash": "e5f093a371494081",
+    "run_id": "2dafbbb00ebfd54a",
+    "score_version": "v1"
+  },
+  "_schema": {
+    "created_by": "extract_13f_history.py",
+    "prior_quarter_end": "2025-12-31",
+    "quarter_end": "2026-03-31",
+    "version": "13f_holdings_snapshot_v1"
+  },
+  "managers": {
+    "0001493215": {
+      "name": "RTW INVESTMENTS, LP",
+      "cik": "0001493215",
+      "tier": 1
+    },
+    "0001791827": {
+      "name": "Avidity Partners Management LP",
+      "cik": "0001791827",
+      "tier": 1
+    },
+    "0001609251": {
+      "name": "Krensavage Asset Management, LLC",
+      "cik": "0001609251",
+      "tier": 1
+    },
+    "0001633313": {
+      "name": "Avoro Capital Advisors LLC",
+      "cik": "0001633313",
+      "tier": 1
+    },
+    "0001802630": {
+      "name": "Soleus Capital Management, L.P.",
+      "cik": "0001802630",
+      "tier": 1
+    },
+    "0001037389": {
+      "name": "RENAISSANCE TECHNOLOGIES LLC",
+      "cik": "0001037389",
+      "tier": 2
+    }
+  },
+  "stats": {
+    "managers_count": 6,
+    "tickers_count": 210,
+    "total_positions": 345
+  },
+  "tickers": {
+    "FDMT": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 475737,
+            "value_kusd": 4429111,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 578265,
+            "value_kusd": 5383647,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ACAD": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 7144524,
+            "value_kusd": 159037104,
+            "put_call": ""
+          },
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 12967,
+            "value_kusd": 291109,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1940,
+            "value_kusd": 543627,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ALKS": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1672356,
+            "value_kusd": 59134508,
+            "put_call": ""
+          },
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 107822,
+            "value_kusd": 3813,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1200000,
+            "value_kusd": 42432000,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1970864,
+            "value_kusd": 69689751,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6160428,
+            "value_kusd": 217832734,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "APLS": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3685045,
+            "value_kusd": 148249360,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 12222222,
+            "value_kusd": 491699991,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 935958,
+            "value_kusd": 37653590,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "APGE": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2782097,
+            "value_kusd": 234169104,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "AQST": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 7426471,
+            "value_kusd": 30819855,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ARGX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 709446,
+            "value_kusd": 518072942,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1000000,
+            "value_kusd": 730250000,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3500,
+            "value_kusd": 2555875,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ARWR": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 585682,
+            "value_kusd": 36722261,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10699999,
+            "value_kusd": 670889937,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 28479,
+            "value_kusd": 1785633,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1036495,
+            "value_kusd": 64988237,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "AVLO": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 856962,
+            "value_kusd": 12794443,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1410000,
+            "value_kusd": 21051300,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 441978,
+            "value_kusd": 6598732,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 120114,
+            "value_kusd": 1793302,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BXIA": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2000000,
+            "value_kusd": 20040000,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4354501,
+            "value_kusd": 43632100,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CELC": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3039621,
+            "value_kusd": 346942341,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3375000,
+            "value_kusd": 385222500,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1284378,
+            "value_kusd": 146598905,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CNTA": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2054175,
+            "value_kusd": 81591831,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 11430455,
+            "value_kusd": 454017673,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 185000,
+            "value_kusd": 7348200,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CGON": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6984808,
+            "value_kusd": 472731805,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 20000,
+            "value_kusd": 1353600,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CRBN": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 372856,
+            "value_kusd": 6849365,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 24262,
+            "value_kusd": 445693,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CRNX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1451326,
+            "value_kusd": 52712160,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "DNTH": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 248063,
+            "value_kusd": 20817447,
+            "put_call": ""
+          },
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2104184,
+            "value_kusd": 184747355,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IRON": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 30000,
+            "value_kusd": 1918200,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 31820,
+            "value_kusd": 2034571,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GHRS": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5933815,
+            "value_kusd": 83429439,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1800000,
+            "value_kusd": 25308000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 20614,
+            "value_kusd": 289833,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "HFLO": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 495000,
+            "value_kusd": 12043350,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IMTX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 12869340,
+            "value_kusd": 126634306,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IMCR": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4869798,
+            "value_kusd": 146824410,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 164000,
+            "value_kusd": 4944600,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IMVT": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3177849,
+            "value_kusd": 78937769,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 230000,
+            "value_kusd": 5713200,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 192500,
+            "value_kusd": 4781700,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "INSM": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4842880,
+            "value_kusd": 791907738,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10250,
+            "value_kusd": 1676080,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 20300,
+            "value_kusd": 3319456,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ISRG": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 220000,
+            "value_kusd": 101417800,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 139402,
+            "value_kusd": 64262928,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IRTC": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1668500,
+            "value_kusd": 196916370,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 53800,
+            "value_kusd": 6349476,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "KOD": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1487934,
+            "value_kusd": 56720044,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 294300,
+            "value_kusd": 11218716,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "KYMR": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 240000,
+            "value_kusd": 19989600,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 7474747,
+            "value_kusd": 622571678,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "LRMR": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1500000,
+            "value_kusd": 6750000,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1066960,
+            "value_kusd": 4801320,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 739942,
+            "value_kusd": 3329739,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MDGL": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1993687,
+            "value_kusd": 1043635334,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1818181,
+            "value_kusd": 951763208,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 71870,
+            "value_kusd": 37621789,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NTRA": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1250000,
+            "value_kusd": 249987500,
+            "put_call": ""
+          },
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 9000,
+            "value_kusd": 1855440,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 119000,
+            "value_kusd": 23798810,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 197500,
+            "value_kusd": 39498025,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NBIX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1062072,
+            "value_kusd": 139917365,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2418897,
+            "value_kusd": 318665491,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NGNE": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1362456,
+            "value_kusd": 27467113,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 43400,
+            "value_kusd": 874944,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ORKA": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2058148,
+            "value_kusd": 100952159,
+            "put_call": ""
+          },
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 760424,
+            "value_kusd": 52020606,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5000,
+            "value_kusd": 245250,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PTGX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5059053,
+            "value_kusd": 533224186,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PTCT": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 7746415,
+            "value_kusd": 527763254,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1942413,
+            "value_kusd": 12412019,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RCKT": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 17687772,
+            "value_kusd": 63322224,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 637174,
+            "value_kusd": 2281083,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SYRE": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4171996,
+            "value_kusd": 210435478,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "STOK": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5623525,
+            "value_kusd": 183101974,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TNGX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 13300620,
+            "value_kusd": 278248970,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 450000,
+            "value_kusd": 9414000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TARS": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3346025,
+            "value_kusd": 234723654,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 73400,
+            "value_kusd": 5149010,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TENX": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 370246,
+            "value_kusd": 5920234,
+            "put_call": ""
+          },
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 265934,
+            "value_kusd": 3486395,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 152600,
+            "value_kusd": 2440074,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RARE": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3648795,
+            "value_kusd": 76442255,
+            "put_call": ""
+          },
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 390879,
+            "value_kusd": 8189,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 561700,
+            "value_kusd": 11767615,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "QURE": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2586356,
+            "value_kusd": 42286921,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5959595,
+            "value_kusd": 97439378,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "URGN": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4543895,
+            "value_kusd": 81699232,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 727000,
+            "value_kusd": 13071460,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "WVE": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1350000,
+            "value_kusd": 9787500,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 597220,
+            "value_kusd": 4329845,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "XNCR": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6777461,
+            "value_kusd": 81736180,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 18723,
+            "value_kusd": 225799,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ZLAB": {
+      "filings_metadata": {
+        "0001493215": {
+          "accession": "000149321526000130",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001493215": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6574032,
+            "value_kusd": 123657542,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 14300,
+            "value_kusd": 268983,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ABT": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 907900,
+            "put_call": ""
+          },
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5000,
+            "value_kusd": 513,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1238666,
+            "value_kusd": 127173838,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BSX": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 60000,
+            "value_kusd": 3456600,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3152005,
+            "value_kusd": 197788314,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BIOR": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 43853,
+            "value_kusd": 368804,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 101900,
+            "value_kusd": 912005,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BBIO": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 711100,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 365772,
+            "value_kusd": 27162229,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CRVS": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 115000,
+            "value_kusd": 1746850,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 81310,
+            "value_kusd": 1189565,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "DXCM": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 100000,
+            "value_kusd": 5955000,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 140000,
+            "value_kusd": 8792000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1582996,
+            "value_kusd": 99412149,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ELVN": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 400000,
+            "value_kusd": 16492000,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 230869,
+            "value_kusd": 9050065,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GILD": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 20000,
+            "value_kusd": 2616800,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2152528,
+            "value_kusd": 299997827,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NTLA": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 75000,
+            "value_kusd": 1011000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MLTX": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 50000,
+            "value_kusd": 819000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 276772,
+            "value_kusd": 5159030,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PVLA": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 70000,
+            "value_kusd": 8982400,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 17970,
+            "value_kusd": 2239961,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GPCR": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 48000,
+            "value_kusd": 1989600,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6555555,
+            "value_kusd": 315977751,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 80000,
+            "value_kusd": 3856000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 55800,
+            "value_kusd": 2689560,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TEM": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 65000,
+            "value_kusd": 3606200,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TRVI": {
+      "filings_metadata": {
+        "0001791827": {
+          "accession": "000179182726000003",
+          "filed_at": "2026-05-13",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001791827": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6660,
+            "value_kusd": 91642,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1620000,
+            "value_kusd": 19326600,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ARDX": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 500000,
+            "value_kusd": 2995,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1272441,
+            "value_kusd": 7621922,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BIIB": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 20000,
+            "value_kusd": 3667,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 203396,
+            "value_kusd": 37288589,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BMRN": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 524786,
+            "value_kusd": 29645,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 650572,
+            "value_kusd": 36750812,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1024871,
+            "value_kusd": 57894963,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BNTX": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 59523,
+            "value_kusd": 5290,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "EMBC": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 735340,
+            "value_kusd": 6500,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 144287,
+            "value_kusd": 1275497,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ENTA": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2866138,
+            "value_kusd": 36199,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 59400,
+            "value_kusd": 10318968,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "EOLS": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 157985,
+            "value_kusd": 649,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2245360,
+            "value_kusd": 9228430,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 339025,
+            "value_kusd": 1393393,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "EXEL": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 415693,
+            "value_kusd": 17829,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 13726993,
+            "value_kusd": 588750730,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GSK": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 96729,
+            "value_kusd": 5338,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 311292,
+            "value_kusd": 17180205,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "INDV": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 339532,
+            "value_kusd": 10349,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1274000,
+            "value_kusd": 38831520,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "JAZZ": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 167816,
+            "value_kusd": 31726,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 819374,
+            "value_kusd": 154902655,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "REGN": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4000,
+            "value_kusd": 3091,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 66802,
+            "value_kusd": 51613897,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SNY": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 323946,
+            "value_kusd": 15608,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SUPN": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 280681,
+            "value_kusd": 14508,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1705222,
+            "value_kusd": 88142925,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "UTHR": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 84282,
+            "value_kusd": 49978,
+            "put_call": ""
+          },
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 180000,
+            "value_kusd": 4608000,
+            "put_call": "Call"
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 187187,
+            "value_kusd": 110998147,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1787019,
+            "value_kusd": 1059666527,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "VNDA": {
+      "filings_metadata": {
+        "0001609251": {
+          "accession": "000160925126000004",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001609251": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1180388,
+            "value_kusd": 8156,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3759559,
+            "value_kusd": 25978553,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ASND": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5062500,
+            "value_kusd": 1157945625,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 117332,
+            "value_kusd": 26837348,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "DMRA": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3783000,
+            "value_kusd": 97979700,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "KRYS": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2888888,
+            "value_kusd": 746257548,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1153087,
+            "value_kusd": 297865434,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 9600,
+            "value_kusd": 2479872,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "LXEO": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1875000,
+            "value_kusd": 10762500,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MNKD": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2200000,
+            "value_kusd": 5390000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1868442,
+            "value_kusd": 4577683,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "OCUL": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 12315000,
+            "value_kusd": 104308050,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1147982,
+            "value_kusd": 9723408,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RVMD": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2344444,
+            "value_kusd": 227997179,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6200,
+            "value_kusd": 602950,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SEPN": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1337500,
+            "value_kusd": 32140125,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 275000,
+            "value_kusd": 6608250,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 37700,
+            "value_kusd": 905931,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SLNO": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2300000,
+            "value_kusd": 77004000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 447300,
+            "value_kusd": 14975604,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "430": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5695000,
+            "value_kusd": 300240400,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 169034,
+            "value_kusd": 8911472,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "VERA": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5888888,
+            "value_kusd": 236909964,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 457300,
+            "value_kusd": 18397179,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "VRDN": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1500000,
+            "value_kusd": 29340000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 203100,
+            "value_kusd": 3972636,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "WHWK": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2849402,
+            "value_kusd": 9830437,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 428622,
+            "value_kusd": 1478746,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "XENE": {
+      "filings_metadata": {
+        "0001633313": {
+          "accession": "000110465926061754",
+          "filed_at": "2026-05-15",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001633313": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 5777777,
+            "value_kusd": 335977733,
+            "put_call": ""
+          },
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 292000,
+            "value_kusd": 16979800,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 300500,
+            "value_kusd": 17474075,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ALNY": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 131650,
+            "value_kusd": 43559036,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ANAB": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 6000,
+            "value_kusd": 332760,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 90900,
+            "value_kusd": 5041314,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RCUS": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 451983,
+            "value_kusd": 9762833,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 424700,
+            "value_kusd": 9173520,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BDSX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 416599,
+            "value_kusd": 6040686,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 11948,
+            "value_kusd": 173246,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CERS": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10753700,
+            "value_kusd": 19571734,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 578900,
+            "value_kusd": 1053598,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CTMX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 300000,
+            "value_kusd": 1410000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "EWTX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1449915,
+            "value_kusd": 45672323,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ETON": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 166381,
+            "value_kusd": 4106283,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 163321,
+            "value_kusd": 4030762,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IKT": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10875000,
+            "value_kusd": 18270000,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 16500,
+            "value_kusd": 27720,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "INBX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 131000,
+            "value_kusd": 8807130,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 50183,
+            "value_kusd": 3373803,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IOVA": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1000000,
+            "value_kusd": 3510000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "KNSA": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 521353,
+            "value_kusd": 25103147,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "LBRX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 246600,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MBX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 178897,
+            "value_kusd": 5340075,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MRK": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 203000,
+            "value_kusd": 24418870,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MIRM": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 400306,
+            "value_kusd": 36980268,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 582085,
+            "value_kusd": 53773012,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NVCR": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10492391,
+            "value_kusd": 114367062,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1551554,
+            "value_kusd": 16911939,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NRIX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 938163,
+            "value_kusd": 14541527,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 118000,
+            "value_kusd": 1829000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PHVS": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 702052,
+            "value_kusd": 19832969,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PRAX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 330517,
+            "value_kusd": 106489272,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PRTA": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2067000,
+            "value_kusd": 35097660,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 607515,
+            "value_kusd": 5905046,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RAPP": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 312900,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 9700,
+            "value_kusd": 303513,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RIGL": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 270400,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 338441,
+            "value_kusd": 9151445,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SION": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 293500,
+            "value_kusd": 11766415,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TGTX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 4029319,
+            "value_kusd": 133853977,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 340900,
+            "value_kusd": 11324698,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TVTX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 546000,
+            "value_kusd": 16221660,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1966779,
+            "value_kusd": 58433004,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TYRA": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 383000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PCVX": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        },
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 385472,
+            "value_kusd": 22399778,
+            "put_call": ""
+          },
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 54734,
+            "value_kusd": 3180593,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ZYME": {
+      "filings_metadata": {
+        "0001802630": {
+          "accession": "000180263026000003",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001802630": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 10000,
+            "value_kusd": 250400,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ABCL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1510629,
+            "value_kusd": 5272095,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ABEO": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 161082,
+            "value_kusd": 721647,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ACRS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 502631,
+            "value_kusd": 1884866,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ABOS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 473946,
+            "value_kusd": 1118513,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ADGI": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 16557,
+            "value_kusd": 19041,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ADCT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 299278,
+            "value_kusd": 1122293,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ADBE": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 925270,
+            "value_kusd": 224914836,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ALDX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 863187,
+            "value_kusd": 1458786,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GOOGL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 542471,
+            "value_kusd": 155991409,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GOOG": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 201002,
+            "value_kusd": 57659521,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ALMS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 75167,
+            "value_kusd": 1655929,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "FOLD": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1872893,
+            "value_kusd": 27082033,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "AAPL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3075638,
+            "value_kusd": 780569445,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ACLX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 96400,
+            "value_kusd": 11068648,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ARQT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 440999,
+            "value_kusd": 10389936,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ARTV": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 80038,
+            "value_kusd": 515445,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "AUTL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 91500,
+            "value_kusd": 17866290,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "AXSM": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 164300,
+            "value_kusd": 27769986,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BEONE": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 65456,
+            "value_kusd": 19438468,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BCYC": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 979300,
+            "value_kusd": 4543952,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BIOA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 138588,
+            "value_kusd": 2423904,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BHVN": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 160952,
+            "value_kusd": 1361654,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BMEA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1312798,
+            "value_kusd": 2008581,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "BMY": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 793797,
+            "value_kusd": 245685342,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CABA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2036663,
+            "value_kusd": 5478623,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CDNA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1184398,
+            "value_kusd": 20561149,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CRIS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 449900,
+            "value_kusd": 8044212,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CLYM": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 217300,
+            "value_kusd": 1488505,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CDMO": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 34800,
+            "value_kusd": 10278180,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CDXS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 198733,
+            "value_kusd": 323935,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CTNM": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 69400,
+            "value_kusd": 906364,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "CRBP": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 346998,
+            "value_kusd": 3258311,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "DVAX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2800,
+            "value_kusd": 366632,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "DYN": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 533600,
+            "value_kusd": 9674168,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "EDIT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3972160,
+            "value_kusd": 9811235,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ELDN": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 24600,
+            "value_kusd": 75768,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "LLY": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 71788,
+            "value_kusd": 66028597,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ENGN": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 156100,
+            "value_kusd": 1063041,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TRDA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 202084,
+            "value_kusd": 2550300,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "EYPT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 117300,
+            "value_kusd": 1511997,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "FULC": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 13600,
+            "value_kusd": 104312,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GLPG": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 315400,
+            "value_kusd": 9462000,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GERN": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 913340,
+            "value_kusd": 68043947,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GOSS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1217868,
+            "value_kusd": 400070,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GRAL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 55200,
+            "value_kusd": 2852736,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "HALO": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 731811,
+            "value_kusd": 47296945,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "HROW": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 84579,
+            "value_kusd": 2982256,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "HEWG": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3584342,
+            "value_kusd": 85343183,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "HZNP": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 911713,
+            "value_kusd": 17468421,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IMNM": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 68902,
+            "value_kusd": 1506887,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "INCY": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 3651532,
+            "value_kusd": 343682192,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "INSP": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 21260,
+            "value_kusd": 5637089,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "INTC": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 7399394,
+            "value_kusd": 326535257,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "IONS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 305549,
+            "value_kusd": 22943674,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "DERM": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 242500,
+            "value_kusd": 1137325,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "KRTX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 235700,
+            "value_kusd": 12197475,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "KRBP": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 136227,
+            "value_kusd": 1542090,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "LGND": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 20100,
+            "value_kusd": 2471898,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "LQDA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 8100,
+            "value_kusd": 305694,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MASI": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 167100,
+            "value_kusd": 27568158,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "META": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 253373,
+            "value_kusd": 144961379,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MSFT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 9485,
+            "value_kusd": 3517796,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MLYS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 382800,
+            "value_kusd": 10370052,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "MRNA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 881200,
+            "value_kusd": 44764960,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "GLUE": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 379100,
+            "value_kusd": 6236195,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NAUT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 265700,
+            "value_kusd": 1030916,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NKTX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1732372,
+            "value_kusd": 3655305,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NUVL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 89000,
+            "value_kusd": 9118050,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NUVB": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 559180,
+            "value_kusd": 2398882,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "NVDA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2526948,
+            "value_kusd": 440696066,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "OPUS": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 73209,
+            "value_kusd": 333101,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PEN": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 2160,
+            "value_kusd": 709279,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PEPG": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 56800,
+            "value_kusd": 100536,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PLRX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1387394,
+            "value_kusd": 3856955,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "PLX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1224800,
+            "value_kusd": 2657816,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RZLT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 157711,
+            "value_kusd": 481019,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "RYTM": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 258011,
+            "value_kusd": 22439217,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SRPT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1665078,
+            "value_kusd": 36232097,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SI": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 81301,
+            "value_kusd": 1350410,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SLDB": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 124272,
+            "value_kusd": 894758,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "SPY": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 83059,
+            "value_kusd": 35739457,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TSLA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 211290,
+            "value_kusd": 78547058,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TSVT": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 590319,
+            "value_kusd": 19876041,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TSHA": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 19780,
+            "value_kusd": 22924229,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "TMCI": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 522900,
+            "value_kusd": 700686,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "UNH": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 1158428,
+            "value_kusd": 313459071,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "VRTX": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 421688,
+            "value_kusd": 188300560,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "VCEL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 967990,
+            "value_kusd": 242558934,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "HOWL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 516218,
+            "value_kusd": 429803,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    },
+    "ZNTL": {
+      "filings_metadata": {
+        "0001037389": {
+          "accession": "000103738926000033",
+          "filed_at": "2026-05-14",
+          "is_amendment": false,
+          "quarter_end": "2026-03-31",
+          "total_value_kusd": 0
+        }
+      },
+      "holdings": {
+        "current": {
+          "0001037389": {
+            "quarter_end": "2026-03-31",
+            "state": "KNOWN",
+            "shares": 60536,
+            "value_kusd": 5473665,
+            "put_call": ""
+          }
+        },
+        "prior": {}
+      }
+    }
+  },
+  "warnings": [
+    "No filing found for Boxer Capital (0001465837) Q2025-12-31",
+    "No filing found for Ghost Tree Capital (0001595851) Q2025-12-31",
+    "No filing found for Krensavage Asset Management (0001609251) Q2025-12-31"
+  ]
+}

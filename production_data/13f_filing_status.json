@@ -1,0 +1,38 @@
+{
+  "last_check": null,
+  "filed": {
+    "0001493215": {
+      "name": "RTW Investments",
+      "filed_date": "2026-05-15",
+      "accession": "0001104659-26-049833"
+    },
+    "0001791827": {
+      "name": "Avidity Partners Management",
+      "filed_date": "2026-05-13",
+      "accession": "0001104659-26-048521"
+    },
+    "0001609251": {
+      "name": "Krensavage Asset Management",
+      "filed_date": "2026-05-15",
+      "accession": "0001104659-26-049834"
+    },
+    "0001633313": {
+      "name": "Avoro Capital Advisors",
+      "filed_date": "2026-05-15",
+      "accession": "0001104659-26-049835"
+    },
+    "0001802630": {
+      "name": "Soleus Capital Management",
+      "filed_date": "2026-05-14",
+      "accession": "0001104659-26-049836"
+    },
+    "0001037389": {
+      "name": "Renaissance Technologies",
+      "filed_date": "2026-05-14",
+      "accession": "0001104659-26-049837"
+    }
+  },
+  "pending": {},
+  "started_at": "2026-05-15T00:00:00",
+  "target_quarter": "2026-03-31"
+}
