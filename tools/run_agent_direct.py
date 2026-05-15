@@ -9,18 +9,28 @@ Workaround for OpenClaw gateway billing issue (OPENCLAW_SETUP_TOKEN
 triggers "third-party apps" rejection). Uses direct API keys instead.
 
 Reads the agent's IDENTITY.md + SOUL.md + memory, constructs a system
-prompt, sends the message, and logs the response.
+prompt, sends the message, and logs the response. Enforces preflight
+governance checks before dispatch (Phase 2 Step 3b).
 
 Usage:
     python3 tools/run_agent_direct.py --agent ops --message "HEARTBEAT"
     python3 tools/run_agent_direct.py --agent sentinel --message "HEARTBEAT" --model meta-llama/Llama-3.3-70B-Instruct-Turbo
     python3 tools/run_agent_direct.py --agent catalyst_delta --message "DAILY" --write-memory
     python3 tools/run_agent_direct.py --agent shadow_monitor --message "DAILY" --write-memory
+    python3 tools/run_agent_direct.py --agent fleet_steward --message "TEST" --skip-preflight
 
 --write-memory: after a successful run, write the LLM response to
     agents/<name>/memory/YYYY-MM-DD.md (local date). Skipped if response is
     a bare heartbeat status token (HEARTBEAT_OK, SNAPSHOT_MISSING, etc.).
     Appends a timestamp footer. Idempotent: overwrites same-day file if rerun.
+
+--skip-preflight: bypass governance preflight check (rollback/development only).
+
+Preflight governance:
+- Runs agent_preflight.py --agent <name> --json before dispatch
+- Blocks execution (exit 1) if agent scope intersects with not_allowed list
+- Warns (stderr) on contradictions or blocked specs but continues
+- Non-blocking if preflight unavailable or errors
 """
 
 from __future__ import annotations
@@ -29,6 +39,8 @@ import argparse
 import json
 import os
 import re
+import subprocess
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -68,6 +80,43 @@ def maybe_write_memory(agent_name: str, response_text: str) -> Path | None:
 
     mem_path.write_text(content, encoding="utf-8")
     return mem_path
+
+
+# Map agent names to scope keywords that appear in the not_allowed list.
+# Used to detect when preflight governance blocks this specific agent.
+_AGENT_SCOPE_KEYWORDS: dict[str, list[str]] = {
+    "ranker_optimizer": ["Ranker/selector/sizing"],
+    "spec_089_builder": ["Spec 089"],
+    "fleet_steward": ["Ranker/selector/sizing"],
+    "sentinel": ["Ranker/selector/sizing"],
+}
+
+
+def run_preflight(agent_name: str) -> dict | None:
+    """Run preflight check before agent execution.
+
+    Returns parsed preflight report dict, or None if preflight is unavailable or fails.
+    Non-blocking: errors are printed to stderr but never stop execution.
+    """
+    preflight_script = PROJECT_ROOT / "tools" / "agent_preflight.py"
+    if not preflight_script.exists():
+        return None
+
+    try:
+        result = subprocess.run(
+            ["python3", str(preflight_script), "--agent", agent_name, "--json"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=PROJECT_ROOT,
+        )
+        if result.returncode == 0:
+            return json.loads(result.stdout)
+        print(f"[PREFLIGHT_WARN] {agent_name}: {result.stderr[:200]}", file=sys.stderr)
+        return None
+    except Exception as e:
+        print(f"[PREFLIGHT_WARN] {agent_name}: {e!s:.200}", file=sys.stderr)
+        return None
 
 
 # Per-agent model overrides. Agents not listed default to Llama 3.3 70B.
@@ -285,6 +334,7 @@ def main():
         default=False,
         help="Write LLM response to agents/<name>/memory/YYYY-MM-DD.md " "(skipped for bare heartbeat status tokens)",
     )
+    parser.add_argument("--skip-preflight", action="store_true", help="Bypass preflight governance check")
     args = parser.parse_args()
 
     # Load .env
@@ -299,6 +349,25 @@ def main():
                     os.environ[key] = val
 
     resolved_model = resolve_model(args.agent, args.model)
+
+    # Preflight governance check
+    preflight = None if args.skip_preflight else run_preflight(args.agent)
+    if preflight:
+        scope_keywords = _AGENT_SCOPE_KEYWORDS.get(args.agent, [])
+        not_allowed = preflight.get("not_allowed", [])
+        blocked = [item for kw in scope_keywords for item in not_allowed if kw in item]
+        if blocked:
+            print(f"[PREFLIGHT BLOCKED] {args.agent}", file=sys.stderr)
+            print(f"  Branch: {preflight.get('current_branch_state')}", file=sys.stderr)
+            for item in blocked:
+                print(f"  - {item}", file=sys.stderr)
+            return 1
+        for contra in preflight.get("contradictions", []):
+            print(f"[PREFLIGHT_WARN] contradiction: {contra}", file=sys.stderr)
+        blocked_specs = preflight.get("blocked_specs", [])
+        if blocked_specs != ["none"]:
+            print(f"[PREFLIGHT_INFO] blocked specs: {', '.join(blocked_specs)}", file=sys.stderr)
+
     print(f"Running agent '{args.agent}' (direct SDK, {resolved_model})...")
     result = run_agent(args.agent, args.message, resolved_model, args.max_tokens)
 
@@ -315,6 +384,10 @@ def main():
                 result["memory_written"] = None
     else:
         print(f"ERROR: {result.get('error', 'unknown')}")
+
+    # Include preflight in log for audit trail
+    if preflight:
+        result["preflight"] = preflight
 
     # Log
     args.log_dir.mkdir(parents=True, exist_ok=True)
