@@ -6565,7 +6565,7 @@ def save_validation_snapshot(
     for row in csv_rows:
         # Ensure severity columns exist (should be set by enrich_csv_rows)
         if "ev_severity_score" not in row:
-            row["ev_severity_score"] = ""  # QA will flag as blank, surfacing the bug
+            row["ev_severity_score"] = ""  # Empty indicates enrichment failed
             _missing_col_count["ev_severity_score"] = _missing_col_count.get("ev_severity_score", 0) + 1
         if "runway_buffer_months" not in row:
             row["runway_buffer_months"] = ""
