@@ -29,6 +29,11 @@
       "write_artifacts",
       "mutate_data",
       "mutate_config"
+    ],
+    "llm_policy": [
+      "none",
+      "direct_llama_on_anomaly",
+      "manual_only"
     ]
   },
   "agents": {
@@ -43,6 +48,8 @@
         "agents/aact_trial_ingest/memory/"
       ],
       "authority_level": "observe_only",
+      "llm_policy": "none",
+      "requires_preflight": true,
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
       "notes": ""
@@ -58,7 +65,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "SUPPRESSED_ORPHANED_UPSTREAM 2026-05-06 (bioshort P2 disposition). Weekly Friday cron `10 18 * * 5 ... bioshort_watch HEARTBEAT` commented out under header '# SUPPRESSED 2026-05-06 (bioshort upstream P2)'. Reason: upstream output/hedge_report/ unscheduled and 41-day stale (last write hedge_report_2026-03-26 17:55). Producer tools/biotech_hedge_report.py preserved. ops_supervisor.SUPPRESSED_AGENTS records the disposition. output/hedge_report/ historical artifacts preserved. Manual invocation via tools/run_agent_direct.py --agent bioshort_watch is preserved (will still read stale upstream until producer is restored). Reactivation requires separate spec: restore upstream producer wiring + confirm hedge governance is still desired + flip status=active. NO scoring / ranker / EV / sizing / Module 3 / Module 5 dependency on this agent — confirmed by grep against run_screen.py, module_3*.py, module_5*.py, ranker_*.py, selector_engine.py, decision_engine.py, event_ev/, common/ranker_active_contract.py."
+      "notes": "SUPPRESSED_ORPHANED_UPSTREAM 2026-05-06 (bioshort P2 disposition). Weekly Friday cron `10 18 * * 5 ... bioshort_watch HEARTBEAT` commented out under header '# SUPPRESSED 2026-05-06 (bioshort upstream P2)'. Reason: upstream output/hedge_report/ unscheduled and 41-day stale (last write hedge_report_2026-03-26 17:55). Producer tools/biotech_hedge_report.py preserved. ops_supervisor.SUPPRESSED_AGENTS records the disposition. output/hedge_report/ historical artifacts preserved. Manual invocation via tools/run_agent_direct.py --agent bioshort_watch is preserved (will still read stale upstream until producer is restored). Reactivation requires separate spec: restore upstream producer wiring + confirm hedge governance is still desired + flip status=active. NO scoring / ranker / EV / sizing / Module 3 / Module 5 dependency on this agent \u2014 confirmed by grep against run_screen.py, module_3*.py, module_5*.py, ranker_*.py, selector_engine.py, decision_engine.py, event_ev/, common/ranker_active_contract.py.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": false
     },
     "biotech_news_digest": {
       "role": "generate and email biotech news briefs 3x daily",
@@ -71,7 +80,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Overlaps with herald on digest output path; scope boundary to clarify in Fix #5 follow-up."
+      "notes": "Overlaps with herald on digest output path; scope boundary to clarify in Fix #5 follow-up.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "calibration": {
       "role": "ruleset evaluator, evidence accumulator, promotion recommender",
@@ -84,7 +95,9 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": ""
+      "notes": "",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "calibration_evidence": {
       "role": "read-only evidence builder on resolved events",
@@ -97,7 +110,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Shares artifact path with calibration; downstream consumer."
+      "notes": "Shares artifact path with calibration; downstream consumer.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "catalyst_delta": {
       "role": "detect new, changed, or reclassified catalyst events",
@@ -110,7 +125,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:20. LLM elevation rule narrowed 2026-05-06 (P1 #2, partial closure — LLM-side only): narrative names only deltas where ticker is in-universe AND catalyst_days<=60 AND change-code is HARD or family-changing; suppressed deltas are rollup-summarized, not erased. Deterministic artifact tools/build_catalyst_delta.py and downstream consumer tools/build_options_watch.py UNCHANGED — the raw artifact remains the source of truth. catalyst_delta_score scoring field (module_3_scoring*.py, module_5_composite.py) UNCHANGED. Artifact-level filtering deferred to a separate explicit change with before/after artifact diffs."
+      "notes": "Crontab: 18:20. LLM elevation rule narrowed 2026-05-06 (P1 #2, partial closure \u2014 LLM-side only): narrative names only deltas where ticker is in-universe AND catalyst_days<=60 AND change-code is HARD or family-changing; suppressed deltas are rollup-summarized, not erased. Deterministic artifact tools/build_catalyst_delta.py and downstream consumer tools/build_options_watch.py UNCHANGED \u2014 the raw artifact remains the source of truth. catalyst_delta_score scoring field (module_3_scoring*.py, module_5_composite.py) UNCHANGED. Artifact-level filtering deferred to a separate explicit change with before/after artifact diffs.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "company_news_ingest": {
       "role": "guaranteed company press release coverage via polling",
@@ -123,7 +140,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "RETIRED 2026-05-06 (P1 #5 disposition; was 'deprecated' as transitional status). Cron retired (consolidated into herald: see crontab '# RETIRED: company_news_ingest' block). Watchdog does not auto-recover. ops_supervisor.py SUPPRESSED_AGENTS records reason 'agent retired (replaced by tier-2 heartbeat checks)'. herald (status=active, daily) is the canonical news ingest agent and writes to data/press_releases/ — historical artifacts under that path are PRESERVED, not deleted. Directory agents/company_news_ingest/ retained for git history; SOUL.md carries a RETIRED header. Manual invocation NOT supported (no production path); reactivation requires a new spec."
+      "notes": "RETIRED 2026-05-06 (P1 #5 disposition; was 'deprecated' as transitional status). Cron retired (consolidated into herald: see crontab '# RETIRED: company_news_ingest' block). Watchdog does not auto-recover. ops_supervisor.py SUPPRESSED_AGENTS records reason 'agent retired (replaced by tier-2 heartbeat checks)'. herald (status=active, daily) is the canonical news ingest agent and writes to data/press_releases/ \u2014 historical artifacts under that path are PRESERVED, not deleted. Directory agents/company_news_ingest/ retained for git history; SOUL.md carries a RETIRED header. Manual invocation NOT supported (no production path); reactivation requires a new spec.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": false
     },
     "crt_resolution_watcher": {
       "role": "monitor for new CRT resolutions, update join tables",
@@ -136,7 +155,9 @@
       "authority_level": "mutate_data",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:00."
+      "notes": "Crontab: 18:00.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "ctgov_poller": {
       "role": "clinical trial status monitor, detect transitions",
@@ -149,7 +170,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 14:30."
+      "notes": "Crontab: 14:30.",
+      "llm_policy": "none",
+      "requires_preflight": true
     },
     "data_auditor": {
       "role": "read-only judge monitoring data input integrity",
@@ -162,7 +185,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Doc gap: TOOLS.md and AGENTS.md missing per 2026-04-24 audit; HEARTBEAT marks workspace as PENDING."
+      "notes": "Doc gap: TOOLS.md and AGENTS.md missing per 2026-04-24 audit; HEARTBEAT marks workspace as PENDING.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "earnings_calendar_sync": {
       "role": "fetch and keep work calendar in sync with earnings",
@@ -175,7 +200,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": ""
+      "notes": "",
+      "llm_policy": "none",
+      "requires_preflight": true
     },
     "event_analyst": {
       "role": "event-resolution pattern analyst, synthesize lessons",
@@ -188,7 +215,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Weekly Friday cadence (P1 #4 reduction landed 2026-05-06). LLM agent fires Fri 18:55 ET; deterministic builder fires Fri 19:10 ET. Was previously daily Mon-Fri (both entries); reduced to Friday-only after ROI/noise audit. Watchdog event_analyst auto-recovery removed in the same change to prevent re-firing on Mon-Thu. Manual invocation path preserved: tools/run_agent_direct.py --agent event_analyst, tools/build_event_analyst.py --as-of-date YYYY-MM-DD."
+      "notes": "Weekly Friday cadence (P1 #4 reduction landed 2026-05-06). LLM agent fires Fri 18:55 ET; deterministic builder fires Fri 19:10 ET. Was previously daily Mon-Fri (both entries); reduced to Friday-only after ROI/noise audit. Watchdog event_analyst auto-recovery removed in the same change to prevent re-firing on Mon-Thu. Manual invocation path preserved: tools/run_agent_direct.py --agent event_analyst, tools/build_event_analyst.py --as-of-date YYYY-MM-DD.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "fleet_steward": {
       "role": "control-plane agent, fleet health and dispatch",
@@ -202,7 +231,9 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Director role. Last receipt 2026-04-03; daily-receipt successor pending in Fix #3."
+      "notes": "Director role. Last receipt 2026-04-03; daily-receipt successor pending in Fix #3.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     },
     "grok_biotech_watch": {
       "role": "watchlist-scoped Grok/xAI search monitor",
@@ -215,7 +246,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": ""
+      "notes": "",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "herald": {
       "role": "biotech news collection, classification, and digests",
@@ -229,7 +262,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 14:35. Absorbs company_news_ingest."
+      "notes": "Crontab: 14:35. Absorbs company_news_ingest.",
+      "llm_policy": "none",
+      "requires_preflight": true
     },
     "ic_health_monitor": {
       "role": "signal health watchdog, detect IC degradation",
@@ -242,7 +277,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": ""
+      "notes": "",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "intraday_mover_watch": {
       "role": "real-time intraday mover monitor, price and IV moves",
@@ -255,7 +292,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Doc gap: memory/ directory missing per 2026-04-24 audit."
+      "notes": "Doc gap: memory/ directory missing per 2026-04-24 audit.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "ops": {
       "role": "production operator and health monitor",
@@ -269,7 +308,9 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 17:00. Duty Officer role."
+      "notes": "Crontab: 17:00. Duty Officer role.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     },
     "options_watch": {
       "role": "post-packet options surface monitor",
@@ -282,7 +323,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:40."
+      "notes": "Crontab: 18:40.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "policy_shadow_watch": {
       "role": "hold-discipline and policy-comparison monitor",
@@ -295,7 +338,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Partial scope overlap with shadow_monitor; boundary review pending."
+      "notes": "Partial scope overlap with shadow_monitor; boundary review pending.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "postmortem": {
       "role": "event-resolution evidence capture agent",
@@ -308,7 +353,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:35."
+      "notes": "Crontab: 18:35.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "price_action_watch": {
       "role": "stock and options big-move monitor",
@@ -321,7 +368,9 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:30."
+      "notes": "Crontab: 18:30.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "production_qa": {
       "role": "daily post-production codebase reviewer",
@@ -335,7 +384,9 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Inspector role. Feature-coverage check (short_interest_pct, close_price, market_cap_mm, priced_move_pct, insider_net_buy_value_90d) pending in Fix #4."
+      "notes": "Inspector role. Feature-coverage check (short_interest_pct, close_price, market_cap_mm, priced_move_pct, insider_net_buy_value_90d) pending in Fix #4.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     },
     "qa": {
       "role": "regression-triage and failure classifier",
@@ -348,7 +399,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": ""
+      "notes": "",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     },
     "review_queue_steward": {
       "role": "triage daily review queue into immediate vs monitor",
@@ -359,7 +412,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Chat-mode only \u2014 no artifact files by design. Freshness checked via logs/agents_direct/review_queue_steward_*.json (specialized check_review_queue_steward in agent_heartbeat_checks.py). Crontab: 18:50."
+      "notes": "Chat-mode only \u2014 no artifact files by design. Freshness checked via logs/agents_direct/review_queue_steward_*.json (specialized check_review_queue_steward in agent_heartbeat_checks.py). Crontab: 18:50.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     },
     "sentinel": {
       "role": "post-promotion health sentinel, drift monitor",
@@ -372,7 +427,9 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 17:15."
+      "notes": "Crontab: 17:15.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     },
     "shadow_monitor": {
       "role": "shadow portfolio performance monitor",
@@ -386,7 +443,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Daily deterministic build via tools/build_shadow_monitor.py invoked by run_daily_production.py — writes artifacts/shadow_monitor/{date}_monitor.{json,md}. Supervised by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py:check_shadow_monitor. LLM cron entry retired 2026-05-06 (P1 #6 cadence reduction): the prior `25 18 * * 1-5 run_agent_direct.py --agent shadow_monitor --message DAILY --write-memory` was redundant — deterministic build + Tier 2 heartbeat already cover the surface. Manual invocation preserved: tools/run_agent_direct.py --agent shadow_monitor."
+      "notes": "Daily deterministic build via tools/build_shadow_monitor.py invoked by run_daily_production.py \u2014 writes artifacts/shadow_monitor/{date}_monitor.{json,md}. Supervised by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py:check_shadow_monitor. LLM cron entry retired 2026-05-06 (P1 #6 cadence reduction): the prior `25 18 * * 1-5 run_agent_direct.py --agent shadow_monitor --message DAILY --write-memory` was redundant \u2014 deterministic build + Tier 2 heartbeat already cover the surface. Manual invocation preserved: tools/run_agent_direct.py --agent shadow_monitor.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "shadow_watch": {
       "role": "merged shadow portfolio + policy comparison read-only judge",
@@ -400,7 +459,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "SUPPRESSED PLACEHOLDER — not active. Intended as merged successor of shadow_monitor + policy_shadow_watch but never wired into cron, has no memory/ writes, and produces no artifacts. shadow_monitor and policy_shadow_watch remain the live agents. Activate only after: cron entry added, memory-write verified, artifact_paths confirmed, supervised_by_orchestrator=true. 2026-05-06: classified suppressed_placeholder in governance audit."
+      "notes": "SUPPRESSED PLACEHOLDER \u2014 not active. Intended as merged successor of shadow_monitor + policy_shadow_watch but never wired into cron, has no memory/ writes, and produces no artifacts. shadow_monitor and policy_shadow_watch remain the live agents. Activate only after: cron entry added, memory-write verified, artifact_paths confirmed, supervised_by_orchestrator=true. 2026-05-06: classified suppressed_placeholder in governance audit.",
+      "llm_policy": "direct_llama_on_anomaly",
+      "requires_preflight": true
     },
     "universe_maintenance": {
       "role": "read-only monitor for universe health",
@@ -413,7 +474,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": ""
+      "notes": "",
+      "llm_policy": "none",
+      "requires_preflight": true
     },
     "ops_supervisor": {
       "role": "daily ops triage \u2014 heartbeat anomalies \u2192 severity verdict",
@@ -427,7 +490,9 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "Last interpretive layer. Sentinel (tools/agent_supervisor_sentinel.py) verifies its output. Per feedback_no_recursive_supervision, no further layer above this."
+      "notes": "Last interpretive layer. Sentinel (tools/agent_supervisor_sentinel.py) verifies its output. Per feedback_no_recursive_supervision, no further layer above this.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true
     }
   }
 }
