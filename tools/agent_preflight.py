@@ -58,7 +58,13 @@ def get_latest_snapshot():
     if not snapshots_dir.exists():
         return {"latest": None, "status": "unknown"}
 
-    snapshots = sorted(snapshots_dir.glob("*/"), reverse=True)
+    # Filter to date-based snapshots only (YYYY-MM-DD format)
+    snapshots = [
+        d
+        for d in snapshots_dir.glob("*/")
+        if d.is_dir() and len(d.name) == 10 and d.name[4] == "-" and d.name[7] == "-"
+    ]
+    snapshots = sorted(snapshots, reverse=True)
     if not snapshots:
         return {"latest": None, "status": "no snapshots"}
 
@@ -67,11 +73,11 @@ def get_latest_snapshot():
 
     if drift_report.exists():
         content = drift_report.read_text()
-        if "Status: PASS" in content:
+        if "**Status**: PASS" in content or "Status: PASS" in content:
             qa_status = "PASS"
-        elif "Status: YELLOW" in content:
+        elif "**Status**: YELLOW" in content or "Status: YELLOW" in content:
             qa_status = "YELLOW"
-        elif "Status: FAIL" in content:
+        elif "**Status**: FAIL" in content or "Status: FAIL" in content:
             qa_status = "FAIL"
         else:
             qa_status = "unknown"
