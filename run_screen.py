@@ -6461,7 +6461,20 @@ def save_validation_snapshot(
         _runway_overlays_for_sidecar = _enrich_runway(csv_rows, as_of_date)
         # Verify enrichment was successful
         _ev_sev_populated = sum(1 for r in csv_rows if "ev_severity_score" in r and r.get("ev_severity_score"))
-        logger.info("Runway severity enrichment complete: %d rows with ev_severity_score", _ev_sev_populated)
+        _ev_sev_col_exists = sum(1 for r in csv_rows if "ev_severity_score" in r)
+        logger.info(
+            "Runway severity enrichment: %d/%d rows with column; %d with value",
+            _ev_sev_col_exists,
+            len(csv_rows),
+            _ev_sev_populated,
+        )
+
+        if _ev_sev_col_exists == 0:
+            logger.error(
+                "CRITICAL: Runway enrichment added 0 columns. csv_rows type=%s, sample row keys=%s",
+                type(csv_rows),
+                list(csv_rows[0].keys())[:5] if csv_rows else "EMPTY",
+            )
     except Exception as _runway_exc:
         logger.warning("Runway severity enrichment failed: %s", _runway_exc, exc_info=True)
         logger.info("Proceeding without runway severity enrichment")
@@ -6477,12 +6490,19 @@ def save_validation_snapshot(
         logger.info("Starting runway transition enrichment for %d rows", len(csv_rows))
         _snap_dir = Path(__file__).resolve().parent / "data" / "snapshots"
         _transition_overlays_for_sidecar = _enrich_transition(csv_rows, as_of_date, snap_dir=_snap_dir)
+        _trans_col_exists = sum(1 for r in csv_rows if "transition_runway_state" in r)
         _transition_populated = sum(
             1 for r in csv_rows if "transition_runway_state" in r and r.get("transition_runway_state")
         )
         logger.info(
-            "Runway transition enrichment complete: %d rows with transition_runway_state", _transition_populated
+            "Runway transition enrichment: %d/%d rows with column; %d with value",
+            _trans_col_exists,
+            len(csv_rows),
+            _transition_populated,
         )
+
+        if _trans_col_exists == 0:
+            logger.error("CRITICAL: Transition enrichment added 0 columns. csv_rows type=%s", type(csv_rows))
     except Exception as _transition_exc:
         logger.warning("Runway transition enrichment failed: %s", _transition_exc, exc_info=True)
         logger.info("Proceeding without runway transition enrichment")
