@@ -1084,12 +1084,15 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
                         pass
 
             # Extract signal scores (new format only)
+            # Spec 100: Added final_score and selector_score for ranker IC measurement
             for sig_field in (
                 "score_rank_pct",
                 "score_z",
                 "score_rank_pct_attn",
                 "score_z_attn",
                 "composite_score_attn",
+                "final_score",
+                "selector_score",
                 "clinical_score",
                 "clinical_optionality_pct_dev",
                 "clinical_score_v2_z",
@@ -1227,12 +1230,15 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
                     except ValueError:
                         pass
 
+            # Spec 100: Added final_score and selector_score for ranker IC measurement
             for sig_field in (
                 "score_rank_pct",
                 "score_z",
                 "score_rank_pct_attn",
                 "score_z_attn",
                 "composite_score_attn",
+                "final_score",
+                "selector_score",
                 "clinical_score",
                 "clinical_optionality_pct_dev",
                 "clinical_score_v2_z",
@@ -2316,9 +2322,12 @@ def run_backtest(
         inv_tickers = list(inv_rankings.keys())
 
         # Determine which rankings to use for IC: signal field or composite_rank
+        # Spec 100: Added final_score and selector_score for ranker IC measurement
         _KNOWN_SIGNALS = (
             "score_rank_pct",
             "score_z",
+            "final_score",
+            "selector_score",
             "score_rank_pct_attn",
             "score_z_attn",
             "composite_score_attn",
@@ -2335,8 +2344,11 @@ def run_backtest(
             inv_signal = {
                 t: signal_scores_data[signal_field][t] for t in inv_tickers if t in signal_scores_data[signal_field]
             }
+            # Spec 100: final_score and selector_score are higher-is-better
             sig_higher_is_better = signal_field in (
                 "score_z",
+                "final_score",
+                "selector_score",
                 "score_z_attn",
                 "composite_score_attn",
                 "clinical_score",
@@ -2525,7 +2537,7 @@ def run_backtest(
     # Pooled interaction regression across all snapshots
     pooled_reg = run_pooled_interaction_regression(per_snapshot)
 
-    agg = _aggregate(per_snapshot)
+    agg = _aggregate(per_snapshot, signal_field=signal_field)
     if pooled_reg:
         agg["pooled_interaction_regression"] = pooled_reg
 
@@ -2551,17 +2563,45 @@ def run_backtest(
 # =============================================================================
 
 
-def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Compute aggregate statistics from per-snapshot IC results."""
+def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_rank_pct") -> Dict[str, Any]:
+    """Compute aggregate statistics from per-snapshot IC results.
+
+    Spec 100: Added signal_field metadata for labeling composite_score vs final_score IC.
+    """
     n_snapshots = len(per_snapshot)
     if n_snapshots == 0:
-        return {"error": "No usable snapshots"}
+        return {
+            "error": "No usable snapshots",
+            "metadata": {
+                "tool": "run_rank_ic_backtest.py",
+                "signal_field": signal_field,
+                "deprecation_warning": (
+                    "⚠️ COMPOSITE_SCORE_IC (not production ranker IC)"
+                    if signal_field == "composite_score"
+                    else (
+                        "⚠️ Spec 100 preliminary (final_score IC measurement)"
+                        if signal_field == "final_score"
+                        else None
+                    )
+                ),
+            },
+        }
 
     result: Dict[str, Any] = {
         "n_snapshots": n_snapshots,
         "date_range": [per_snapshot[0]["date"], per_snapshot[-1]["date"]],
         "return_source": "HS793 total return index + price_history.csv fallback",
         "methodology": "investable-universe filtering with dense re-ranking",
+        # Spec 100: Add metadata for clarity on IC scope
+        "metadata": {
+            "tool": "run_rank_ic_backtest.py",
+            "signal_field": signal_field,
+            "deprecation_warning": (
+                "⚠️ COMPOSITE_SCORE_IC (not production ranker IC)"
+                if signal_field == "composite_score"
+                else ("⚠️ Spec 100 preliminary (final_score IC measurement)" if signal_field == "final_score" else None)
+            ),
+        },
         "per_snapshot": [],
     }
 
@@ -3859,6 +3899,8 @@ def main() -> None:
             "score_rank_pct",
             "score_z",
             "composite_score",
+            "final_score",
+            "selector_score",
             "score_rank_pct_attn",
             "score_z_attn",
             "composite_score_attn",
