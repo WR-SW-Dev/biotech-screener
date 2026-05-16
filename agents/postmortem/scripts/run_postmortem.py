@@ -9,6 +9,7 @@ import json
 import os
 import re
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SNAPS_DIR = os.path.join(REPO, "data/snapshots")
@@ -441,6 +442,7 @@ def main():
         f.write(f"- Skipped (T+3 not ready): {skipped}\n")
         f.write(f"- Gaps (no data): {gaps}\n")
         f.write(f"- Total postmortems to date: {len(already) + len(written)}\n")
+    Path(MEM_DIR).touch()
     print(f"\n[postmortem] written={written}  skipped={skipped}  gaps={gaps}")
     print(f"[postmortem] memory → {mem_path}")
     if skipped:
