@@ -57,6 +57,25 @@ If burn rate is zero or positive (cash-generating), `runway_months = 1200` (100 
 | 12-18 months | SEV1 | 10% penalty (caution) |
 | >= 18 months | NONE | No penalty |
 
+
+### Dual Severity Paths (v1.1, Spec 101 -- RESOLVED)
+
+The codebase computes two distinct runway severity signals:
+
+1. **Truth-gate severity** (`runway_severity_score`): "Can they survive to the catalyst?" Used by financing truth gate.
+2. **EV/sizing severity** (`ev_severity_score`): "What financing damage even if they do?" Used by EV stack for dilution haircut and position sizing.
+
+Both are co-computed (non-null on the same rows). `ev_severity_score` range: [0.0, 1.0].
+
+**Derived field contracts (must hold for all non-null rows):**
+
+```
+dilution_haircut == 0.35 * ev_severity_score       (tolerance 1e-6)
+size_multiplier == max(0.40, 1.0 - 0.60 * ev_severity_score)  (tolerance 1e-6)
+```
+
+**Export status (RESOLVED, Spec 101, commits eaa4ea87 + cba4ee0f):** Both `runway_severity_score` and `ev_severity_score` now export to CSV and `SNAPSHOT_COLUMNS`. `check_severity_formulas()` QA validation runs every snapshot, validates finiteness before formula checks, fails explicitly on blank/NaN/Inf. Pre-v1.1 snapshot readers default `ev_severity_score` to NaN (not fail).
+
 ### Runway Score (v1, tier-based)
 
 | Runway | Score |

@@ -411,6 +411,81 @@ After a pipeline run completes, verify:
 
 ---
 
+
+## Gate 11: Snapshot Content Collapse Guards (added 2026-05-08)
+
+Post-hash/manifest checks that detect content-level signal collapse:
+
+| Check | Threshold | Verdict | Rationale |
+|-------|-----------|---------|-----------|
+| coinvest_score_z SD | <= 0.10 | FAIL | Selector signal flat, pipeline fallback suspected |
+| catalyst_quality classification | < 90% classified among has_catalyst_signal=1 rows | FAIL | Spec 078 classification broken |
+| No has_catalyst_signal=1 rows | n/a | WARN | Non-blocking (possible but unusual) |
+
+**Tool**: `tools/verify_snapshot_integrity.py` (Section 4)
+
+These guards run AFTER the existing hash/manifest checks and catch silent degradation that hash-level validation cannot detect (e.g., all tickers receiving identical coinvest scores due to a fallback path).
+
+Verified against production: SD = 0.6833 (PASS), 261/261 (100%) catalyst rows classified (PASS).
+
+---
+
+## Gate 12: Expectation Layer Coverage Gate (Spec 105, 2026-05-14)
+
+**QA file**: `production_qa_check.py`
+**Status:** CODE-CLOSED (commit 0ddbb509). Pending live production snapshot QA.
+
+Production pipeline hard-fails if market-expectation fields are missing or under-covered in `rankings.csv`. Thresholds sourced from `FEATURE_COVERAGE_REQUIREMENTS` (not hardcoded).
+
+### Required Expectation Fields
+
+| Field | Required Coverage | Source |
+|-------|------------------|--------|
+| `short_interest_pct` | 0.90 | Market data provider |
+| `close_price` | 0.99 | Market data provider |
+| `market_cap_mm` | 0.95 | Market data provider |
+| `priced_move_pct` | 0.80 | Derived (catalyst pricing model) |
+| `insider_net_buy_value_90d` | 0.30 | Form 4 (tracked nonblocking / diagnostic only) |
+
+### Gate Behavior
+
+- Runs every pipeline execution at Step 5 (Gates)
+- Hard fail if any required field is missing from DataFrame
+- Hard fail if any field falls below its per-field threshold
+- Error message includes: field name, actual coverage, required threshold
+- Coverage stats logged every run regardless of pass/fail
+- `FEATURE_COVERAGE_REQUIREMENTS` is the single source of truth
+
+---
+
+## Diagnostic Fields Registry (Spec 104, 2026-05-14)
+
+Fields tracked for observability but explicitly excluded from scoring, ranking, and selection.
+
+### Current Diagnostic Fields
+
+| Field | Status | Meaning of Null | Meaning of 0.0 |
+|-------|--------|----------------|-----------------|
+| `insider_net_buy_value_90d` | DIAGNOSTIC ONLY | Not fetched / no Form 4 coverage | Fetched, no insider buy activity in 90d |
+
+### Insider Model Isolation Guard (CRITICAL)
+
+`insider_net_buy_value_90d` must NOT enter the expectation model's `market_features` input. The model has an `insider_net_buy_z` weight that activates silently if the field flows upstream. Guard with at least one of:
+
+1. **Input exclusion (preferred):** Runtime assert that `insider_net_buy_value_90d` is NOT in `market_features` DataFrame at inference
+2. **Weight zeroing:** `insider_net_buy_z` weight = 0.0 with test
+3. **Drop guard:** Pre-inference step that drops the field if present, with logged warning
+
+### Diagnostic Field Rules
+
+- Never collapse blank (NaN) and zero (0.0) -- they have different semantics
+- Never impute zero for missing or blank for zero
+- CI check: flag suspicious if column is ALL zero or ALL null
+- Field must remain in `DIAGNOSTIC_FIELDS`, NOT in `ALPHA_FEATURE_REGISTRY`
+- Does not affect ranks, actions, or position sizing
+- Promotion requires: 20+ stable snapshots, >= 60% coverage, IC > 0 at p < 0.05, Checklist v2 pass, explicit written approval
+
+
 ## Source Files
 
 | Component | File |
