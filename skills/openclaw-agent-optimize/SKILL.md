@@ -1,40 +1,40 @@
-# OpenClaw Agent Optimization
+# Agent Optimization Skill
 
-Tune OpenClaw workspaces for cost-aware routing, parallel-first delegation,
-and lean context. Source: clawhub.ai/phenomenoner/openclaw-agent-optimize
+Tune agent workspaces for cost-aware routing, parallel-first delegation, and lean context.
 
 ## Default Posture
 
 This skill is **advisory first**. It produces:
-- audit → options → recommended plan → exact patch → rollback → verification
+
+- audit -> options -> recommended plan -> exact patch -> rollback -> verification
 - No persistent mutations without explicit approval.
 
 ## Quick Start
 
-### 1) Full audit (safe, no changes)
-> Audit my OpenClaw setup for cost, reliability, and context bloat. Output a
-> prioritized plan with rollback notes. Do NOT apply changes.
+### 1\) Full audit \(safe, no changes\)
 
-### 2) Context bloat / transcript noise
-> My OpenClaw context is bloating. Identify the top offenders (tools, crons,
-> bootstrap files, skills) and propose the smallest reversible fixes first.
+> Audit my agent setup for cost, reliability, and context bloat. Output a prioritized plan with rollback notes. Do NOT apply changes.
 
-### 3) Model routing / delegation posture
-> Propose a model routing plan for (a) coding/engineering, (b) short
-> notifications, (c) reasoning-heavy research. Include config patch + rollback.
+### 2\) Context bloat / transcript noise
+
+> My agent context is bloating. Identify the top offenders and propose the smallest reversible fixes first.
+
+### 3\) Routine/delegation posture
+
+> Review my routines for delegation efficiency. Which could be consolidated, simplified, or run less frequently?
 
 ## What Good Output Looks Like
 
 - Executive summary
-- Top drivers (cost, context, reliability, operator friction)
+- Top drivers \(cost, context, reliability, operator friction\)
 - Options A/B/C with tradeoffs
-- Recommended plan (smallest safe change first)
+- Recommended plan \(smallest safe change first\)
 - Exact proposals + rollback + verify
 
 ## Safety Contract
 
 - Do not mutate persistent settings without explicit approval.
-- Do not create/update/remove cron jobs without explicit approval.
+- Do not create/update/remove scheduled actions without explicit approval.
 - If optimization reduces monitoring coverage, present options and require choice.
 - Before any approved change, show:
   1. Exact change
@@ -44,41 +44,63 @@ This skill is **advisory first**. It produces:
 
 ## High-ROI Optimization Levers
 
-### 1) Output discipline for automation
-Make maintenance loops truly silent on success. Only surface errors and
-state changes. Suppress verbose success output from crons/heartbeats.
+### 1\) Output discipline for automation
 
-### 2) Separate work from notification
-Do the work quietly; notify out-of-band with a short human receipt.
-Keep interactive context lean.
+Make maintenance routines truly silent on success. Only surface errors and state changes. Use `[@suppress-notification]` for routine completions that don't need user attention.
 
-### 3) Bootstrap discipline
-Keep always-injected files short and load-bearing only. Move long runbooks
-into `references/` or adjacent notes. SKILL.md should be concise; detail
-goes in reference files.
+### 2\) Separate work from notification
 
-### 4) Ambient specialist surface reduction
-A common hidden tax is too many always-visible specialist skills.
-- Prefer on-demand worker/subagent usage
-- Do not keep specialists permanently ambient in main-chat prompt surface
-- Trim ambient skills before touching tool surface
+Do the work quietly; notify out-of-band with a short human receipt. Keep interactive context lean.
 
-### 5) Measure optimizations authoritatively
-Prefer fresh-session `/context json` or equivalent receipts over "feels better."
-High-signal fields:
-- `eligible skills` / `skills.promptChars`
-- `projectContextChars`
-- `systemPrompt.chars`
-- `promptTokens`
+### 3\) Skill discipline
 
-### 6) Verification-first ops hygiene
+Keep skills concise and load-bearing. Move long runbooks into companion reference files. SKILL.md should be the entry point; detail goes in reference files read on demand.
+
+### 4\) Ambient skill surface reduction
+
+A common hidden tax is too many always-visible skills in the catalog.
+
+- Prefer on-demand activation via `use_skill` over ambient injection
+- Audit whether all installed skills are actively used
+- Trim unused skills before tuning routine tool lists
+
+### 5\) Memory hygiene
+
+- Audit global vs routine-specific memories for duplication
+- Remove stale memories that reference deprecated behavior
+- Keep memories actionable and specific, not vague preferences
+
+### 6\) Routine consolidation
+
+- Look for routines that could share triggers or be merged
+- Identify routines running more frequently than needed
+- Check for redundant tool grants across routines
+
+### 7\) Measure optimizations authoritatively
+
+For Town: check routine run frequency, token usage via `get_analytics`, and skill catalog size.
+For OpenClaw: prefer fresh-session `/context json` or equivalent receipts over "feels better."
+
+### 8\) Verification-first ops hygiene
+
 After any approved optimization, verify:
-- Core chat still works
+
+- Core functionality still works
 - Recall/behavior did not degrade
 - New session actually picks up the change
 - Rollback path is proven, not theoretical
 
 ## Audit Workflow
+
+### Town Environment
+
+1. Audit memories: `get_memories()` \+ per-routine memories for active routines
+2. Audit skills: `town_ls skills://` \- identify unused or oversized skills
+3. Audit routines: `list_routines()` \- check for redundancy, frequency, tool bloat
+4. Audit analytics: `get_analytics(period_days=7)` \- identify high-cost routines
+5. Recommend the smallest viable change first
+
+### OpenClaw/Hermes Environment
 
 1. Audit rules + memory: keep restart-critical facts only
 2. Audit skill surface: trim ambient specialists before touching tool surface
@@ -89,6 +111,6 @@ After any approved optimization, verify:
 
 ## Notes
 
-- Some runtimes snapshot skills/config per session — start new session after changes
-- Prefer short `SKILL.md` + `references/` for long runbooks
+- Some runtimes snapshot skills/config per session - start new session after changes
+- Prefer short SKILL.md + companion reference files for long runbooks
 - If context bloat is the main complaint, audit ambient skills first
