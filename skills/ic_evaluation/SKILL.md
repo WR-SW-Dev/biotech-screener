@@ -252,6 +252,29 @@ Any IC research on expectation-gap features against historical snapshots must ve
 
 ## Forward Shadow Status
 
-*Accumulating since: 2026-04-03. As of 2026-05-16, approximately 30+ trading days accumulated.*
+*Accumulating since: 2026-04-03. As of 2026-05-17, approximately 30+ trading days accumulated.*
 
 Should be at or past the 30-day evaluation threshold. Architecture freeze in effect until post-h20d checkpoint (2026-05-26). Evaluate per the rules in Section 1 once confirmed >= 30 trading days of true-PIT daily production data.
+
+---
+
+## Governance Freeze Status (2026-05-17)
+
+**Architecture Freeze** — Active through ~2026-05-26 (h20d checkpoint)
+- No model logic changes, feature promotions, or ranking modifications authorized
+- Deterministic tooling (preflight, monitoring, verification) permitted
+- Spec 100 ranker IC evaluation deferred post-freeze
+
+**13F Q1 2026 Cohort Quarantine** — Active
+- 6/48 managers filed (as of 2026-05-15)
+- Validation trigger: ~2026-05-23 (when ≥34 managers filed)
+- Clearance decision: ~2026-05-26 (requires Jaccard ≥0.70 + all 6 gates pass)
+- No selector/ranker/sizing changes authorized until cohort clears
+
+**Decision Gates Ahead**
+- **May 19**: Phase 2 Step 3 verification (evening cron watchdog)
+- **~May 23**: 13F refresh validation rerun (filings ≥34)
+- **~May 26**: Architecture freeze lift + cohort clearance decision
+- **Post-May 26**: Spec 100 corrected final_score IC evaluation + Checklist v2 battery
+
+**Interpretation**: All IC evaluation and ranker promotion decisions are deferred until post-freeze when full validation battery can be applied. Current Spec 100 baseline is ready but explicitly labeled for deferred interpretation.

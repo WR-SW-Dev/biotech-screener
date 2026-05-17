@@ -193,7 +193,7 @@ size_multiplier = max(0.40, 1.0 - 0.60 * ev_severity_score)
 
 ## Ranker Alternatives Research \(T1-T8, updated Specs 093-100\)
 
-*Last reviewed: 2026-05-13. Refresh as blocked specs resolve.*
+*Last reviewed: 2026-05-17 (governance freeze update). Spec implementation status updated.*
 
 ### Key Findings \(2026-05-13 audit cycle\)
 
@@ -203,7 +203,7 @@ size_multiplier = max(0.40, 1.0 - 0.60 * ev_severity_score)
 
 **Spec 095 \(evaluation scope\)**: CURRENT\_TOOLS\_CONFLATED. IC backtest measures composite\_score, NOT production final\_score. Ranker IC is UNMEASURED. See ic-evaluation skill for full details.
 
-**Spec 100 \(ranker IC tooling correction\)**: Spec written, no implementation. Blocks all future ranker IC claims until fixed. Highest-priority code change post-architecture-freeze.
+**Spec 100 \(ranker IC tooling correction\)**: ✓ IMPLEMENTED (commit 2faa88e6, 2026-05-17). IC backtest now measures `final_score` (production ranker) by default. Prior composite_score IC claims invalidated; final_score IC baseline established. Interpretation deferred until post-freeze Checklist v2 evaluation.
 
 > **Numbering note \(2026-05-14\):** "Spec 100" remains the ranker IC tooling correction. The expectation layer coverage verification spec was renumbered to Spec 105 \(commit cb242311\) to resolve the collision. No ambiguity remains.
 
@@ -232,3 +232,25 @@ size_multiplier = max(0.40, 1.0 - 0.60 * ev_severity_score)
 | 097 | Event-EV prospective monitoring | Brier <= 0.08, n >= 30 | Monthly |
 | 098 | Catalyst timing prospective monitor | Correlation > 0.15 | Monthly |
 | 099 | Clinical orthogonality audit | Pre-promotion gate | Before any clinical signal promotion |
+
+---
+
+## Governance Freeze & Quarantine Status (2026-05-17)
+
+**Architecture Freeze** — Active through ~2026-05-26 (h20d checkpoint)
+- No selector/ranker/sizing changes authorized
+- Production ruleset frozen at `8887576e` (v1.14.0)
+- ranker_active_contract.py remains on unmerged branch (deferred post-freeze)
+- Spec 100 ranker IC evaluation ready but interpretation deferred
+
+**13F Q1 2026 Cohort Quarantine** — Active
+- 6/48 managers filed (2026-05-15)
+- Validation trigger: ~2026-05-23 (≥34 managers filed)
+- Clearance decision: ~2026-05-26 (requires Jaccard ≥0.70 + all gates pass)
+- No selector/ranker changes until cohort clears
+
+**Next Milestones**
+- **May 19**: Phase 2 Step 3 verification (evening cron watchdog)
+- **~May 23**: 13F refresh validation rerun
+- **~May 26**: Architecture freeze lift + cohort clearance decision
+- **Post-May 26**: Spec 100 ranker IC evaluation + Checklist v2 battery (if cohort clears)
