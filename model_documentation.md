@@ -1,8 +1,38 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.0 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-04-15 (ruleset reference refreshed 2026-05-06)
-**Status:** Production — A4 selector + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30
+**Last updated:** 2026-05-17 (Spec 100 IC tooling corrected, Module 4 denominator verified, 13F quarantine + architecture freeze active)
+**Status:** Production — A4 selector + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30 | **FROZEN** (architecture freeze ~2026-05-26, 13F quarantine until cohort Jaccard ≥0.70)
+
+---
+
+## Recent Corrections & Governance Status (2026-05-17)
+
+**Spec 100 IC Tooling Correction (Commit 2faa88e6)**
+- **Change:** `run_rank_ic_backtest.py` now measures `final_score` (production ranker) instead of `composite_score`
+- **Reason:** Prior IC claims using `composite_score` were measuring the wrong signal; ranker IC was unmeasurable
+- **Status:** ✓ Corrected. Prior composite_score IC claims invalidated; final_score baseline established
+- **Interpretation:** Deferred until post-freeze Checklist v2 battery
+
+**Module 4 Clinical Score Denominator Fix (Commit 3ad7b904)**
+- **Change:** Clinical normalization denominator corrected from 120 → 117
+- **Reason:** Execution_score max is 22 (not 25); total raw max = 117, not 120
+- **Effect:** clinical_score increases by factor 120/117 (~+2.56%); hard ceiling now 100.0 (was 97.5)
+- **Tests:** 27/27 clinical tests pass; synthetic max case validates 100.0
+- **Status:** ✓ Verified and merged (PR #288, awaiting review)
+
+**13F Q1 2026 Cohort Quarantine (Active)**
+- **Status:** Quarantine ACTIVE — 6/48 managers filed (as of 2026-05-15)
+- **Trigger for clearance:** ≥34 managers filed + all 6 validation gates pass
+- **Expected:** ~2026-05-23 (fuller filing coverage) → validation rerun → ~2026-05-26 clearance decision or extension
+- **Enforcement:** No selector/ranker/sizing changes authorized until cohort Jaccard ≥0.70 and distortion clears
+- **Monitoring:** Cron active weekdays 6:22 PM ET through 2026-06-20
+
+**Architecture Freeze (Active)**
+- **Period:** ~2026-04-25 through h20d checkpoint ~2026-05-26
+- **Scope:** No model logic changes, no feature promotions, no ranking modifications
+- **Exceptions:** Deterministic tooling (preflight, monitoring, verification) permitted; no alpha changes
+- **Unblock:** Post-h20d checkpoint, pending 13F cohort clearance + Checklist v2 validation
 
 ---
 
