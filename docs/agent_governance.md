@@ -505,16 +505,292 @@ Ranker governance layer (vNext conditional ranking)
 
 ---
 
-## XI. Contact & Escalation
+## XI. Agent Catalog
+
+**Total Fleet**: 30 agents (27 active, 1 shadow, 1 suppressed, 1 retired)
+
+### Lane A — Deterministic Production (5 agents)
+
+No LLM, deterministic execution. If it fails, it's a code bug.
+
+#### aact_trial_ingest
+- **Role**: Bulk historical trial ingest, normalization, delta detection
+- **Category**: data_ingestion
+- **Cadence**: Weekly
+- **Authority**: observe_only (reads input, audits quality, no writes)
+- **Supervised**: ✓ (daily heartbeat checks)
+- **Governance**: Preflight required. No model changes. PIT-safe only.
+
+#### ctgov_poller
+- **Role**: ClinicalTrials.gov monitor, detect trial status transitions
+- **Category**: data_ingestion
+- **Cadence**: Daily (premarket, 14:30 ET)
+- **Authority**: write_artifacts (trial records, deltas)
+- **Supervised**: ✓
+- **Governance**: Deterministic trial parsing. No LLM. Preflight required.
+
+#### earnings_calendar_sync
+- **Role**: Fetch and keep work calendar in sync with earnings announcements
+- **Category**: data_ingestion
+- **Cadence**: Daily (premarket)
+- **Authority**: write_artifacts (calendar events)
+- **Supervised**: ✓
+- **Governance**: External API call (no authentication drift risk). Preflight required.
+
+#### herald
+- **Role**: Biotech news collection, classification, digesting (replaced company_news_ingest)
+- **Category**: data_ingestion
+- **Cadence**: Daily (premarket, 14:35 ET)
+- **Authority**: write_artifacts (press releases, news digest)
+- **Supervised**: ✓
+- **Governance**: Deterministic news ingest + LLM-free digest. No model changes. Preflight required.
+
+#### universe_maintenance
+- **Role**: Read-only monitor for universe health (investor cohort, entity registry)
+- **Category**: data_ingestion
+- **Cadence**: Weekly
+- **Authority**: observe_only (monitors, audits, proposes)
+- **Supervised**: ✓
+- **Governance**: No writes. Preflight required.
+
+---
+
+### Lane B — Monitoring + Escalation (18 agents)
+
+Tier 0 deterministic checks → Tier 1 Llama escalation (if anomaly). Cost: ~$0.20/1M tokens.
+
+#### biotech_news_digest
+- **Role**: Generate and email biotech news briefs 3x daily
+- **Category**: signal_monitor
+- **Cadence**: Daily (post-production)
+- **Authority**: write_artifacts (digests, email payloads)
+- **Supervised**: ✓
+- **Notes**: Overlaps with herald on digest path; boundary to clarify.
+- **Escalation**: Tier 1 on digest format anomalies, coverage gaps.
+
+#### calibration
+- **Role**: Ruleset evaluator, evidence accumulator, promotion recommender
+- **Category**: research
+- **Cadence**: Weekly
+- **Authority**: observe_and_propose (generates evidence, recommends promotion)
+- **Supervised**: ✓
+- **Governance**: Promotion recommendations require human sign-off. No auto-deployment.
+- **Escalation**: Tier 1 on statistical gate failures, evidence gaps.
+
+#### calibration_evidence
+- **Role**: Read-only evidence builder on resolved events
+- **Category**: research
+- **Cadence**: Weekly
+- **Authority**: observe_only (builds evidence, no promotion recommendation)
+- **Supervised**: ✓
+- **Notes**: Downstream of calibration. Shares artifact path.
+- **Escalation**: Tier 1 on join failures, missing outcomes.
+
+#### catalyst_delta
+- **Role**: Detect new, changed, or reclassified catalyst events
+- **Category**: signal_monitor
+- **Cadence**: Daily (post-production, 18:20 ET)
+- **Authority**: write_artifacts (delta summaries)
+- **Supervised**: ✓
+- **Governance**: LLM elevation rule narrowed 2026-05-06. Only narrative deltas where ticker in-universe AND catalyst_days≤60 AND change is HARD/family-changing.
+- **Escalation**: Tier 1 on classification anomalies, coverage gaps.
+
+#### crt_resolution_watcher
+- **Role**: Monitor for new CRT resolutions, update join tables
+- **Category**: research
+- **Cadence**: Daily (post-production, 18:00 ET)
+- **Authority**: mutate_data (updates outcome join tables)
+- **Supervised**: ✓
+- **Governance**: Data mutation requires preflight + post-write audit. No model changes.
+- **Escalation**: Tier 1 on join failures, dangling refs.
+
+#### data_auditor
+- **Role**: Read-only judge monitoring data input integrity
+- **Category**: control_plane
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (audits, flags anomalies)
+- **Supervised**: ✓
+- **Notes**: Doc gap identified 2026-04-24 (TOOLS.md, AGENTS.md missing).
+- **Escalation**: Tier 1 on schema violations, freshness anomalies.
+
+#### event_analyst
+- **Role**: Event-resolution pattern analyst, synthesize lessons learned
+- **Category**: research
+- **Cadence**: Weekly (Friday 18:55 ET)
+- **Authority**: observe_only (analyzes, proposes patterns)
+- **Supervised**: ✓
+- **Notes**: Rebuilt 2026-05-13 with 174 postmortems. Clinical 53% hit T+1/52% T+5.
+- **Escalation**: Tier 1 on outcome join failures, anomaly spikes.
+
+#### grok_biotech_watch
+- **Role**: Watchlist-scoped Grok/xAI search monitor
+- **Category**: signal_monitor
+- **Cadence**: Intraday
+- **Authority**: write_artifacts (search results, alerts)
+- **Supervised**: ✓
+- **Escalation**: Tier 1 on external API failures, relevance drift.
+
+#### ic_health_monitor
+- **Role**: Signal health watchdog, detect IC degradation
+- **Category**: signal_monitor
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (monitors, flags degradation)
+- **Supervised**: ✓
+- **Governance**: Spec 100 ranker IC measurement now available; interpretation deferred post-freeze.
+- **Escalation**: Tier 1 on IC threshold breach, statistical anomalies.
+
+#### intraday_mover_watch
+- **Role**: Real-time intraday mover monitor (price moves, IV spikes)
+- **Category**: signal_monitor
+- **Cadence**: Intraday
+- **Authority**: write_artifacts (mover lists, alerts)
+- **Supervised**: ✓
+- **Notes**: Doc gap identified 2026-04-24 (memory/ directory missing).
+- **Escalation**: Tier 1 on market data gaps, outlier anomalies.
+
+#### options_watch
+- **Role**: Post-packet options surface monitor (liquidity, IV surface)
+- **Category**: signal_monitor
+- **Cadence**: Daily (post-production, 18:40 ET)
+- **Authority**: write_artifacts (surface diagnostics)
+- **Supervised**: ✓
+- **Escalation**: Tier 1 on surface anomalies, liquidity gaps.
+
+#### policy_shadow_watch
+- **Role**: Hold-discipline and policy-comparison monitor
+- **Category**: portfolio_risk
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (audits policy compliance)
+- **Supervised**: ✓
+- **Notes**: Scope overlap with shadow_monitor; boundary review pending.
+- **Escalation**: Tier 1 on policy violations, tracking divergence.
+
+#### postmortem
+- **Role**: Event-resolution evidence capture agent
+- **Category**: research
+- **Cadence**: Daily (post-production, 18:35 ET)
+- **Authority**: write_artifacts (postmortem records)
+- **Supervised**: ✓
+- **Governance**: Links CRT outcomes to catalyst events. No model changes.
+- **Escalation**: Tier 1 on join failures, outcome validation.
+
+#### price_action_watch
+- **Role**: Stock and options big-move monitor
+- **Category**: signal_monitor
+- **Cadence**: Daily (post-production, 18:30 ET)
+- **Authority**: write_artifacts (move alerts)
+- **Supervised**: ✓
+- **Escalation**: Tier 1 on market data anomalies, distribution shifts.
+
+#### shadow_monitor
+- **Role**: Shadow portfolio performance monitor and diagnostics
+- **Category**: portfolio_risk
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (tracks, audits)
+- **Supervised**: ✓
+- **Governance**: Deterministic build via tools/build_shadow_monitor.py. No LLM. Forward shadow T0=2026-04-28.
+- **Escalation**: Tier 1 on tracking divergence, statistical anomalies.
+
+---
+
+### Lane C — Manual Engineering (7 agents)
+
+Manual sessions only. Opus (Tier 3, ~$3.00/1M tokens) or Sonnet (Tier 2, ~$1.20/1M tokens).
+
+#### fleet_steward
+- **Role**: Control-plane agent, fleet health and dispatch orchestration
+- **Category**: control_plane
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_and_propose (proposes remediation, no auto-fix)
+- **Supervised**: ✓
+- **Governance**: Director role. Receipt model pending (last 2026-04-03). Manual only.
+- **Constraints**: Architecture freeze active, 13F quarantine active.
+
+#### ops
+- **Role**: Production operator and health monitor, Duty Officer
+- **Category**: control_plane
+- **Cadence**: Daily (post-production, 17:00 ET)
+- **Authority**: observe_and_propose (triage, escalation)
+- **Supervised**: ✓
+- **Governance**: Manual only. No automated remediation. Preflight gate enforced.
+- **Constraints**: Architecture freeze blocks selector/ranker changes.
+
+#### ops_supervisor
+- **Role**: Daily ops triage, heartbeat anomalies → severity verdict
+- **Category**: control_plane
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (interpretive layer, reads heartbeat)
+- **Supervised**: ✗ (output verified by sentinel, not auto-supervised)
+- **Governance**: Last interpretive layer before human. Manual only.
+
+#### production_qa
+- **Role**: Daily post-production codebase reviewer, feature coverage check
+- **Category**: control_plane
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_and_propose (reviews, proposes fixes)
+- **Supervised**: ✓
+- **Governance**: Spec 105 gates on expectation-model fields. Manual only.
+- **Notes**: Checks short_interest_pct, close_price, market_cap_mm, priced_move_pct coverage.
+
+#### qa
+- **Role**: Regression-triage and failure classifier
+- **Category**: control_plane
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (classifies failures, proposes root causes)
+- **Supervised**: ✓
+- **Governance**: Manual only. No automated fixes. Feeds sentinel + fleet_steward.
+
+#### review_queue_steward
+- **Role**: Triage daily review queue into immediate vs monitor lanes
+- **Category**: signal_monitor
+- **Cadence**: Daily (post-production)
+- **Authority**: observe_only (sorts queue, no mutations)
+- **Supervised**: ✓
+- **Notes**: Chat-mode only (no artifact files by design).
+- **Governance**: Manual only. Preflight required.
+
+#### sentinel
+- **Role**: Post-promotion health sentinel, drift monitor
+- **Category**: control_plane
+- **Cadence**: Daily (post-production, 17:15 ET)
+- **Authority**: observe_and_propose (detects drift, proposes demotion)
+- **Supervised**: ✓
+- **Governance**: Verifies ops_supervisor output. No auto-demotion. Manual only.
+
+---
+
+### Deprecated/Suppressed Agents
+
+#### company_news_ingest (RETIRED)
+- **Status**: Retired 2026-05-06 (replaced by herald)
+- **Reason**: P1 #5 disposition. Cron entry removed.
+- **Resurrection**: Requires new spec to restore producer + confirm governance still desired.
+- **Note**: Directory retained for git history.
+
+#### bioshort_watch (SUPPRESSED)
+- **Status**: Suppressed 2026-05-06 (orphaned upstream)
+- **Reason**: P1 #2 disposition. Upstream hedge_report producer unscheduled (41 days stale).
+- **Resurrection**: Requires restoration of upstream producer + confirmation of hedge governance.
+- **Impact**: Zero scoring/ranker/EV/sizing/Module 3–5 dependency. Safe to leave suppressed.
+
+#### shadow_watch (SHADOW/PLACEHOLDER)
+- **Status**: Placeholder, not active
+- **Intended Role**: Merged successor of shadow_monitor + policy_shadow_watch
+- **Status**: Awaiting scope consolidation (Fix #6+).
+- **Supervision**: Disabled pending activation spec.
+
+---
+
+## XII. Contact & Escalation
 
 **Questions about governance?**
-- Check this doc first (you're reading it!)
+- Check this doc first
 - Check memory system: `/home/arrenchulz/.claude/projects/*/memory/`
-- Check agent_roster.md for agent metadata
+- Check agents/AGENT_REGISTRY.json for agent metadata
 
 **Issues with specific agents?**
 - Check agent_preflight.py output for blockers
-- Review git history for recent changes
+- Review git history for recent changes  
 - Check artifacts/audit/ for diagnostics
 
 **Blocked by freeze/quarantine?**
@@ -528,7 +804,7 @@ Ranker governance layer (vNext conditional ranking)
 
 ---
 
-## XII. References
+## XIII. References
 
 **Primary governance docs**:
 - `docs/ops/hermes_openclaw_routing_policy.md`
