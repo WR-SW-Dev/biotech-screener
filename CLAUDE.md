@@ -179,6 +179,79 @@ python3 scripts/research/build_selection_benchmark.py --pit-mode survivorship --
 - Manual spot-checks via snapshot_integrity verifier in the interim
 - Spec 100 (ranker IC tooling correction) is highest-priority code change post-freeze
 
+## Governance Artifacts (PR #286, merged May 16, 2026)
+
+### governance/AGENT_ROUTING_POLICY.md
+Tier 0-4 routing policy classifying every part of the codebase by governance sensitivity. Defines allowed tools, review requirements, and merge rules per tier. The policy itself is Tier 4 — changes require a memo, not a direct edit. Quarterly review required.
+
+**Tier Summary:**
+- **Tier 0 (Deterministic Production Hot Path):** Scripts, cron, tests, static checks only. No LLM may supervise, decide, mutate, or deploy production state.
+- **Tier 1 (Low-Governance Utility):** Codex CLI, OpenClaw low-risk agents. Documentation, CLI ergonomics, non-scoring utilities.
+- **Tier 2 (Medium-Governance Engineering):** Codex first draft + Claude Code review when output feeds Tier 3 code. Non-production analytics, validation scripts, ingestion plumbing.
+- **Tier 3 (High-Governance Production/Evidence):** Claude Code for implementation or mandatory review. CCFT, selector, ranker, scoring, catalyst, CRT, shadow, walk-forward harness, production hashes. Tests asserting Tier 3 behavior are themselves Tier 3.
+- **Tier 4 (Governance/Research Judgment):** Claude Chat/project chat + human approval. Architecture changes, signal admission/retirement, catalyst taxonomy, ablation interpretation, this policy itself.
+
+**Walk-Forward Harness:** Permanent Tier 3 surface. Evidence-breaking migrations are Tier 4 decisions requiring a memo with cutover date, affected outputs, disposition of pre-migration evidence, and PM sign-off.
+
+**Production Hash Rotation Rule:** Any diff changing a production hash requires a corresponding entry in `governance/HASH_ROTATIONS.md` with old hash, new hash, effective date, affected surface, reason, downstream impact, and reviewer.
+
+**Merge Rule:** Highest affected tier governs review requirements. Patch size is not evidence of safety.
+
+### governance/STATUS.md
+Enforcement status: AGENT_ROUTING_POLICY.md is live. Pending enforcement layers: agent_registry.yml (PR 2), AGENT_DIRECTORY_MAP.md, CI registry validation, import-graph validation. Until enforcement layers are live, routing classifications applied manually.
+
+### governance/HASH_ROTATIONS.md
+Empty rotation log (policy effective date 2026-05-16). Required fields defined. No rotations recorded.
+
+### Compliance Memo (Content Library)
+"Why the DEM 27-Agent Fleet Is Insulated from Model-Output-as-Control-Signal Failures" — Final version, repo-verified. Cites Texas A&M SUCCESS Lab taxonomy of 470 OpenClaw advisories (arXiv:2603.27517). Available in Content Library at ai-projects/.
+
+## External AI Landscape (May 2026)
+
+### OpenClaw Security Posture
+- Texas A&M SUCCESS Lab (arXiv:2603.27517, April 2026): 470 advisories organized by 7 architectural layers and 5 attack types
+- Three Moderate/High-severity advisories compose into complete unauthenticated RCE from LLM tool call to host process
+- Exec allowlist bypass via line continuation, busybox multiplexing, GNU long-option abbreviation
+- Malicious skill executed two-stage dropper within LLM context, bypassing exec pipeline entirely
+- DEM insulation: no agent has authority to modify production weights without traversing the full multi-gate promotion path
+
+### Hermes Agent (Competitive Frame)
+- Nous Research, launched February 2026, MIT license, $70M funded ($1B valuation)
+- 153K GitHub stars (May 16, 2026 — single dated data point from GitHub)
+- Core differentiator: self-learning Skill Documents (Markdown files created after 5+ tool calls, 40% efficiency gains)
+- Self-evolving skill loop is governance-incompatible with CCFT unless every skill mutation is versioned, reviewed, and approved
+- Recommendation: Monitor, do not adopt. hermes_claw_migrate command indicates Nous targeting OpenClaw installed base.
+
+### ODIN Engine (External Benchmark for Clinical Scoring)
+- L2-regularized logistic regression, 51 engineered features, 8 signal categories
+- AUC: 0.9363 on 2,210 historical FDA events (2000-2025); verified 96.2% accuracy on 53 outcomes
+- ODIN feature categories not in DEM: manufacturing/CMC risk, FDA era effects, options market implied probability, sponsor historical approval rate by therapeutic area
+- These are Tier 4 evaluation candidates through T5 promotion path
+
+### BiotechEdge (External Benchmark for Institutional Signals)
+- Tracks 20 specialist biotech hedge funds, $46.5B+ total assets, 1,558+ companies, 2,318+ catalysts
+- Fund convergence signal (3+ independent funds buying same stock) validates DEM's coinvest_score_z methodology
+- Open-source alternative: pr124/Biotech_Fund_Tracker (GitHub) parsing 38-40 specialist funds
+
+### FDA Real-Time Clinical Trial Initiative (April 2026)
+- Two RTCT proof-of-concept studies launched: AstraZeneca TRAVERSE (MCL), Amgen STREAM-SCLC
+- AI-Enabled Early-Phase Trial Pilot Program RFI (comments due May 29, 2026; selections August 2026)
+- Projected 20-40% trial duration reduction, $120M annual savings
+- If trials become continuous rather than phase-gated, binary catalyst model evolves — affects catalyst_decay_w and catalyst_quality calibration. Monitor as Tier 4 governance question.
+
+### AI Drug Pipeline (Q1 2026)
+- 173+ AI-originated programs in clinical trials (94 Phase I, 56 Phase II, 15 Phase III) — 7x increase since 2022
+- Pre-clinical compression: 4-6 years to 12-24 months. Clinical timelines unchanged.
+- Insilico Medicine Rentosertib: first fully AI-designed drug with Phase IIa results (Nature Medicine, June 2025)
+- Isomorphic Labs: $2.1B Series B (May 2026). Recursion: fifth Sanofi milestone ($134M cumulative)
+- 2026 is definitive validation year — Phase III results determine if AI improves beyond ~90% historical failure rate
+
+### Industry AI Adoption
+- 92% of hedge funds with $1B+ AUM use AI/ML (up from 56% in 2022); 67% describe as "integral"
+- AI-integrated funds outperform traditional systematic strategies by 3-4pp annually
+- NBIM ($2.1T): ~50% of 680 staff code own AI tools using Claude; all employees use AI daily
+- Only 21% of organizations deploying AI have formal governance frameworks — DEM's merged governance artifacts place it in the leading minority
+
 ## 13F Cycle Status (Q1 2026 — COMPLETE)
 
 *Updated: 2026-05-16*
@@ -274,6 +347,8 @@ Routes Hermes events to Town via structured email to `djschulz@gmail.com`. Town 
 - [ ] Architecture freeze status (lift date, post-freeze priorities)
 - [ ] Active spec status (newly resolved, newly blocked)
 - [ ] Forward shadow & IC status (trading days accumulated, next checkpoint)
+- [ ] Governance artifact status (PRs merged, enforcement layers pending)
+- [ ] External AI landscape updates (ODIN accuracy, Hermes releases, FDA RTCT progress)
 
 ## Decision Engine Architecture (v1.14.0)
 
@@ -302,6 +377,7 @@ All downstream consumers use `actionable_rank` (now driven by selector/ranker, n
 - **Promote script**: `scripts/promote_ruleset.py` — blocks promotion unless battery PASS
 - **Health monitor**: `tools/ruleset_health_monitor.py` — post-promotion drift detection
 - **Rollback**: `scripts/promote_ruleset.py --rollback --reason "..."` — first-class with auto-LKG discovery
+- **Governance policy**: `governance/AGENT_ROUTING_POLICY.md` — Tier 3/4 review required for all promotion-adjacent changes
 
 ## Event Ledger & Cache Warming
 - **Event ledger**: `build_event_ledger()` in `event_ledger.py` — 7+ sources (CTGov, merged trials, SEC 8-K, SEC multi-form, FDA ADCOM, FDA regulatory, PDUFA manual, EMA)
@@ -323,7 +399,7 @@ All downstream consumers use `actionable_rank` (now driven by selector/ranker, n
 - **Role**: read-mostly operator — runs pipeline, reads digest, surfaces action items, refuses to modify rulesets
 - **Gateway**: 127.0.0.1:18789, loopback only, auth via setup token
 - **Model**: Llama 3.3 70B Instruct Turbo via Together AI (switched 2026-05-13, was OpenRouter). Inference tuning: temperature 0.2, frequency penalty 0.1, repetition penalty 1.2, API timeout 2400s.
-- **Fleet**: ops_supervisor, sentinel, data_auditor, ic_health_monitor, fleet_steward. Terminal agents (ops_supervisor) intentionally unsupervised.
+- **Fleet**: 27 active agents per AGENT_REGISTRY.json (schema v1.0, as-of 2026-04-28). Authority levels: observe_only, observe_and_propose, write_artifacts, mutate_data, mutate_config. Only crt_resolution_watcher holds mutate_data. Three-lane routing per docs/ops/hermes_openclaw_routing_policy.md (Lane A deterministic, Lane B cheap monitoring, Lane C manual engineering). No cron job may depend on a gateway token. Terminal agents (ops_supervisor) intentionally unsupervised.
 
 ## Shadow Portfolio
 - **File**: `tools/live_shadow_portfolio.py` (902 lines)
@@ -349,6 +425,7 @@ All downstream consumers use `actionable_rank` (now driven by selector/ranker, n
 2. Identify whether this is a new signal, validation change, or infrastructure change
 3. Write the failing test FIRST — show me the red test before any implementation
 4. Confirm no look-ahead bias: what is the data_available_timestamp?
+5. Classify the diff by governance tier (Tier 0-4 per governance/AGENT_ROUTING_POLICY.md)
 
 ## Coding Standards
 - All outputs: encoding='utf-8', lineterminator='\n', quoting=csv.QUOTE_MINIMAL
@@ -501,6 +578,11 @@ ticker:
 | Expression Attribution | `event_ev/expression_attribution.py` |
 | Data Explorer | `tools/data_explorer/agent.py` |
 | Spec 062 | `specs/changes/spec_062_options_expression_layer.md` |
+| Governance Policy | `governance/AGENT_ROUTING_POLICY.md` |
+| Governance Status | `governance/STATUS.md` |
+| Hash Rotations | `governance/HASH_ROTATIONS.md` |
+| Routing Policy (ops) | `docs/ops/hermes_openclaw_routing_policy.md` |
+| Agent Registry | `agents/AGENT_REGISTRY.json` |
 
 ## Developer Profile
 
@@ -522,7 +604,7 @@ This system is maintained by an institutional SFO investment professional (CFA, 
 - **Alternatives & derivatives** — options strategies, index futures, structured products, tail risk hedging
 
 ### Technical AI/Automation
-- **AI agent fleet architecture** — Hermes/OpenClaw fleet (ops_supervisor, sentinel, data_auditor, ic_health_monitor, fleet_steward) on Llama 3.3 70B via Together AI. Per-agent SOUL.md, four-layer monitoring, Knowledge Layer (Spec 089)
+- **AI agent fleet architecture** — 27-agent Hermes/OpenClaw fleet (per AGENT_REGISTRY.json schema v1.0, as-of 2026-04-28: 27 active, 1 suppressed, 1 retired, 1 shadow) on Llama 3.3 70B via Together AI. Per-agent SOUL.md, four-layer monitoring, Knowledge Layer (Spec 089). Governed by governance/AGENT_ROUTING_POLICY.md (Tier 0-4, merged PR #286 May 16, 2026). Authority levels: observe_only, observe_and_propose, write_artifacts, mutate_data, mutate_config. Only crt_resolution_watcher holds mutate_data. Three-lane operational routing (Lane A deterministic, Lane B cheap monitoring, Lane C manual engineering). No cron job may depend on a gateway token.
 - **Production pipeline engineering** — 13-step daily biotech screener (cron 5:30 PM ET), timeout optimization, race condition resolution, sleep-cliff mitigation, determinism enforcement (byte-identical outputs)
 - **Town AI platform** — 18 active routines, 19 custom skills encoding pipeline scoring rules, SFO architecture, governance. Routine design with email recipients, MCP servers, callable sub-routines
 - **LLM integration** — Claude/Grok/ChatGPT for research synthesis, prompt engineering, Llama-optimized inference tuning, persona configuration
@@ -537,5 +619,5 @@ This system is maintained by an institutional SFO investment professional (CFA, 
 ### Research Governance & Spec Lifecycle
 - **Evidence standards** — Checklist v2 (FM, bootstrap, FDR, LOSO, calibration), true PIT backtests, forward shadow monitoring
 - **Spec lifecycle** — DRAFT > IN PROGRESS > HELD > RESOLVED > CLOSED, with phased acceptance criteria, blocking dependencies, closure memos. Currently managing specs 071-105.
-- **Promotion governance** — promotion battery, ruleset health monitor, architecture freeze protocol, rollback capability
+- **Promotion governance** — promotion battery, ruleset health monitor, architecture freeze protocol, rollback capability. Governed by governance/AGENT_ROUTING_POLICY.md Tier 3/4 requirements.
 - **Knowledge management** — Hermes Knowledge Layer (Spec 089), Town-Hermes Bridge (Spec 090), held-spec ledger, first-fire ledger, contradiction ledger, operator briefs
