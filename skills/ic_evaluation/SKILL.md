@@ -30,20 +30,24 @@ Measures Spearman IC of a signal vs forward returns, segmented by cohort and sta
 - catalyst\_quality segmentation \(auto-detects column presence\)
 - Top-30 walk-forward: mean/median excess 5d return per snap date + cumulative
 
-### CRITICAL: IC Tooling Scope Gap \(Spec 095, 2026-05-13\)
+### IC Tooling Scope Gap — RESOLVED via Spec 100 \(2026-05-17\)
 
-**The IC backtest tool \(`run_rank_ic_backtest.py`\) measures composite\_score IC, NOT production ranker final\_score IC.** This is a confirmed conflation:
+**Prior finding (Spec 095, 2026-05-13):** The IC backtest tool measured composite\_score IC, NOT production ranker final\_score IC. This created a confirmed conflation:
 
 - composite\_rank correlates only 0.25 with actionable\_rank \(production\)
 - Top-30 overlap: 7/30 \(23%\) between composite vs production rankings
 - composite\_score weakly correlates \(0.13\) with final\_score
-- IC backtest selects a completely different portfolio than production
+- IC backtest selected a completely different portfolio than production
 
-**Consequence**: Ranker IC is UNMEASURED. Any IC claims based on composite\_score are misattributed. Do NOT use prior IC evidence for ranker promotion until Spec 100 \(tooling correction\) is complete or outputs are explicitly relabeled.
+**Spec 100 Implementation (2026-05-17):** Tool corrected to measure `final_score` (production ranker) by default.
+- Default signal changed from `score_rank_pct` → `final_score`
+- Metadata includes explicit `spec_100_status: "CORRECTED"`
+- `composite_score` IC marked as ⚠️ INVALIDATED for promotion purposes
+- `final_score` IC marked as ✓ Spec 100 corrected (production ranker IC)
+- All future IC output states score field, tool version, and measurement status
+- Prior composite_score IC claims remain invalidated; new final_score IC is baseline evidence
 
-**Spec 100 fix** \(spec written, no implementation yet\): Update `run_rank_ic_backtest.py` to support score-field and universe parameters, add explicit metadata output. All future IC output must state score field, universe, and row count.
-
-> **Numbering note \(2026-05-14\):** "Spec 100" remains the ranker IC tooling correction. The expectation layer coverage verification spec was renumbered to Spec 105 \(commit cb242311\) to resolve the collision. No ambiguity remains.
+**Tooling specification:** `run_rank_ic_backtest.py --signal final_score` (now default)
 
 ### Interpretation Rules
 
@@ -51,7 +55,7 @@ Measures Spearman IC of a signal vs forward returns, segmented by cohort and sta
 - 14 snap dates yields \~37 effective observations
 - IC t-stats are indicative only, not promotion-grade
 - Promotion requires Checklist v2 \(full battery below\)
-- **Ranker IC is currently unmeasurable** — existing tools conflate composite\_score with final\_score \(Spec 095\). Blocks all ranker IC claims until Spec 100 is implemented.
+- **Ranker IC is now measurable (Spec 100, 2026-05-17)** — tool corrected to measure `final_score` instead of prior composite\_score conflation. Historical composite\_score IC claims are invalidated; future ranker IC claims require final\_score evidence.
 
 ---
 
@@ -162,7 +166,7 @@ The ONLY true out-of-sample evidence. Accumulates daily from production.
 - Pre-Checklist-v2 signal card t-stats
 - "Bear IR 3.35" regime story from contaminated data
 - Any promotion memo citing pre-Spec-050 selector performance
-- **Any ranker IC claim based on composite\_score** \(Spec 095, 2026-05-13\) - these measured the wrong score field and are misattributed
+- **Any ranker IC claim based on composite\_score** \(Spec 095 finding, 2026-05-13; Spec 100 fix, 2026-05-17\) - these measured the wrong score field and are misattributed. Corrected ranker IC uses `final_score` measurement.
 
 ---
 
@@ -236,14 +240,15 @@ Any IC research on expectation-gap features against historical snapshots must ve
 
 ## Ranker IC Tooling Status \(Spec 095 / Spec 100\)
 
-*Added: 2026-05-13*
+*Spec 095 finding: 2026-05-13 | Spec 100 fix implemented: 2026-05-17*
 
-The existing IC backtest tool measures the WRONG score. Until Spec 100 is implemented:
+**Status: CORRECTED** — IC backtest tool now measures `final_score` (production ranker) by default.
 
-- All prior ranker IC claims are misattributed \(composite\_score, not final\_score\)
-- Ranker promotion is blocked
-- No new ranker IC evidence can be generated
-- Spec 100 implementation is the highest-priority code change post-architecture-freeze
+- ✓ Spec 100 default signal changed to `final_score` (was `score_rank_pct`)
+- ✓ Metadata explicitly labels final\_score IC as Spec 100 corrected
+- ✓ composite\_score IC marked INVALIDATED for promotion purposes
+- Prior composite\_score IC claims remain invalidated
+- Ranker IC measurement now available for forward validation
 
 ## Forward Shadow Status
 

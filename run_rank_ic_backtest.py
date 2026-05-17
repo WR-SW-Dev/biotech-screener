@@ -2575,11 +2575,12 @@ def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_ra
             "metadata": {
                 "tool": "run_rank_ic_backtest.py",
                 "signal_field": signal_field,
+                "spec_100_status": "CORRECTED (Spec 100 final_score IC replaces prior composite_score claims)",
                 "deprecation_warning": (
-                    "⚠️ COMPOSITE_SCORE_IC (not production ranker IC)"
+                    "⚠️ INVALIDATED: Prior composite_score IC claims (Spec 095 finding). Use Spec 100 final_score IC instead."
                     if signal_field == "composite_score"
                     else (
-                        "⚠️ Spec 100 preliminary (final_score IC measurement)"
+                        "✓ Spec 100 corrected: production ranker IC (final_score)"
                         if signal_field == "final_score"
                         else None
                     )
@@ -2596,10 +2597,15 @@ def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_ra
         "metadata": {
             "tool": "run_rank_ic_backtest.py",
             "signal_field": signal_field,
+            "spec_100_status": "CORRECTED (Spec 100 final_score IC replaces prior composite_score claims)",
             "deprecation_warning": (
-                "⚠️ COMPOSITE_SCORE_IC (not production ranker IC)"
+                "⚠️ INVALIDATED: Prior composite_score IC claims (Spec 095 finding). Use Spec 100 final_score IC instead."
                 if signal_field == "composite_score"
-                else ("⚠️ Spec 100 preliminary (final_score IC measurement)" if signal_field == "final_score" else None)
+                else (
+                    "✓ Spec 100 corrected: production ranker IC (final_score)"
+                    if signal_field == "final_score"
+                    else None
+                )
             ),
         },
         "per_snapshot": [],
@@ -3894,7 +3900,7 @@ def main() -> None:
     parser.add_argument(
         "--signal",
         type=str,
-        default="score_rank_pct",
+        default="final_score",
         choices=[
             "score_rank_pct",
             "score_z",
@@ -3912,7 +3918,7 @@ def main() -> None:
             "tier_dev",
             "size_band",
         ],
-        help="Signal field for IC computation (default: score_rank_pct)",
+        help="Signal field for IC computation. Spec 100: default changed from score_rank_pct to final_score (production ranker)",
     )
     parser.add_argument(
         "--compare-signals",
@@ -4026,8 +4032,10 @@ def main() -> None:
         print(f"  Archives: {archives_list[0][0]} to {archives_list[-1][0]}")
 
     signal_field = args.signal
-    signal_defaulted = signal_field == "score_rank_pct" and "--signal" not in sys.argv
-    print(f"  Signal field: {signal_field}" + (" (default)" if signal_defaulted else ""))
+    signal_defaulted = signal_field == "final_score" and "--signal" not in sys.argv
+    print(
+        f"  Signal field: {signal_field}" + (" (Spec 100 default: final_score/ranker IC)" if signal_defaulted else "")
+    )
     if args.subset != "all":
         print(f"  Subset filter: {args.subset}")
     if args.flip_signal:
