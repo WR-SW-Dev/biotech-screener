@@ -179,8 +179,20 @@ class TestColumnLayout:
             "score_rank_pct_attn",
             "score_z_attn",
         ]
-        # After composite: de_sort_* diagnostics, then selector/ranker/regime columns
-        _ALLOWED_PREFIXES = ("de_sort_", "selector_", "ranker_", "final_score", "regime_")
+        # After composite: de_sort_* diagnostics, then selector/ranker/regime/event_ev/clinical columns
+        _ALLOWED_PREFIXES = (
+            "de_sort_",
+            "selector_",
+            "ranker_",
+            "final_score",
+            "regime_",
+            "event_ev_",
+            "clinical_quality_",
+            "endpoint_",
+            "design_",
+            "prior_",
+            "mechanism_",
+        )
         trailing = SNAPSHOT_COLUMNS[comp_start + 7 :]
         unexpected = [c for c in trailing if not any(c.startswith(p) for p in _ALLOWED_PREFIXES)]
         assert not unexpected, f"unexpected columns after composite block: {unexpected}"
