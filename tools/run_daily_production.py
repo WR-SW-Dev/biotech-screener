@@ -429,6 +429,9 @@ def _run_subprocess(
             result.returncode,
             (result.stderr or "")[-1000:],
         )
+    elif label == "run_screen" and result.stderr:
+        # For run_screen on success, log stderr (contains debug output from logger)
+        _logger.info("%s subprocess output: %s", label, (result.stderr or "")[-2000:])
 
     return result
 

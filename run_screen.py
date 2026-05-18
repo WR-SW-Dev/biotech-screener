@@ -9304,7 +9304,14 @@ def run_screening_pipeline(
 
     # Load input data
     logger.info("[1/7] Loading input data...")
-    raw_universe = load_json_data(data_dir / "universe.json", "Universe")
+    universe_path = data_dir / "universe.json"
+    logger.info(f"  Loading universe from: {universe_path}")
+    logger.info(f"  Universe file exists: {universe_path.exists()}")
+    if universe_path.exists():
+        logger.info(f"  Universe file size: {universe_path.stat().st_size} bytes")
+    raw_universe = load_json_data(universe_path, "Universe")
+    logger.info(f"  Loaded {len(raw_universe)} records from universe.json")
+    print(f"DEBUG_TRACE: Loaded {len(raw_universe)} records from {universe_path}", flush=True)
 
     # Normalize legacy field aliases (e.g. 'financials' → 'financial_data')
     # before any downstream code inspects these keys.
@@ -9317,6 +9324,15 @@ def run_screening_pipeline(
     # Compute universe hash for state file namespacing (prevents churn on population changes)
     universe_hash = hashlib.sha256(json.dumps(sorted(full_universe_tickers)).encode()).hexdigest()[:8]
     logger.info(f"  Full universe: {len(full_universe_tickers)} tickers (hash: {universe_hash})")
+    if len(raw_universe) == 0:
+        logger.error(f"  ERROR: raw_universe is empty! File content may be corrupt.")
+        logger.error(f"  universe_path: {universe_path}")
+        if universe_path.exists():
+            try:
+                first_100_bytes = universe_path.read_text()[:100]
+                logger.error(f"  First 100 bytes: {first_100_bytes}")
+            except Exception as e:
+                logger.error(f"  Could not read file: {e}")
 
     # --- PIT survivorship filter: exclude tickers that hadn't IPO'd or had delisted ---
     # Only applies when pit_mode is active (not "off")
@@ -9356,6 +9372,7 @@ def run_screening_pipeline(
 
             raw_universe = [r for r in raw_universe if _survivorship_ok(r)]
             _post_count = len(raw_universe)
+            print(f"DEBUG_TRACE: PIT filter: {_pre_count} → {_post_count}", flush=True)
 
             if _excluded_ipo:
                 logger.info(
