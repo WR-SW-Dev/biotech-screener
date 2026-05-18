@@ -24,8 +24,8 @@ def add_etf_tickers_to_universe():
     etf_file = Path("etf_holdings_complete.json")
     if not etf_file.exists():
         print(f"\n❌ ETF holdings file not found: {etf_file}")
-        print(f"\nRun this first:")
-        print(f"  python import_etf_csvs.py")
+        print("\nRun this first:")
+        print("  python import_etf_csvs.py")
         return 1
 
     with open(etf_file) as f:
@@ -43,7 +43,7 @@ def add_etf_tickers_to_universe():
     universe_file = Path("production_data/universe.json")
     if not universe_file.exists():
         print(f"\n❌ Universe file not found: {universe_file}")
-        print(f"\nCreate production_data/ directory and add universe.json")
+        print("\nCreate production_data/ directory and add universe.json")
         return 1
 
     with open(universe_file) as f:
@@ -62,11 +62,11 @@ def add_etf_tickers_to_universe():
     missing_tickers = all_etf_tickers - current_tickers
 
     if not missing_tickers:
-        print(f"\n✅ No new tickers to add - universe is already complete!")
+        print("\n✅ No new tickers to add - universe is already complete!")
         return 0
 
     print(f"📊 Missing from universe: {len(missing_tickers)} tickers")
-    print(f"\n📝 Tickers to add (first 20):")
+    print("\n📝 Tickers to add (first 20):")
     for i, ticker in enumerate(sorted(missing_tickers)[:20], 1):
         # Determine which ETFs contain this ticker
         sources = []
@@ -83,11 +83,11 @@ def add_etf_tickers_to_universe():
         print(f"   ... and {len(missing_tickers) - 20} more")
 
     # Ask for confirmation
-    print(f"\n" + "=" * 80)
+    print("\n" + "=" * 80)
     response = input(f"Add {len(missing_tickers)} tickers to universe? (yes/no): ")
 
     if response.lower() not in ["yes", "y"]:
-        print(f"❌ Cancelled - no changes made")
+        print("❌ Cancelled - no changes made")
         return 0
 
     # Add missing tickers
@@ -135,30 +135,30 @@ def add_etf_tickers_to_universe():
     print(f"✅ Updated universe saved to: {universe_file}")
 
     # Summary
-    print(f"\n" + "=" * 80)
+    print("\n" + "=" * 80)
     print("SUMMARY")
     print("=" * 80)
     print(f"Original universe: {len(current_tickers)} tickers")
     print(f"Added: {added_count} tickers")
     print(f"New universe: {len(universe)} tickers")
-    print(f"ETF coverage: 100% ✅")
+    print("ETF coverage: 100% ✅")
     print("=" * 80)
 
     # Next steps
-    print(f"\n" + "=" * 80)
+    print("\n" + "=" * 80)
     print("NEXT STEPS")
     print("=" * 80)
-    print(f"1. Populate data for new tickers:")
-    print(f"   python collect_financial_data.py")
-    print(f"   python collect_ctgov_data.py --output production_data/trial_records.json")
+    print("1. Populate data for new tickers:")
+    print("   python collect_financial_data.py")
+    print("   python collect_ctgov_data.py --output production_data/trial_records.json")
     print(f"\n2. Re-run screening:")
     print(f"   python run_screen.py --as-of-date {today} --data-dir production_data --output screening_complete.json")
-    print(f"\n3. Expect Module 1 to filter many new tickers:")
-    print(f"   - Recent IPOs (no financial data yet)")
-    print(f"   - Platform companies (no clinical trials)")
-    print(f"   - Pre-clinical (no Phase 1+ trials)")
-    print(f"   - Illiquid names")
-    print(f"\n4. Final active universe will be ~150-200 tickers (correct!)")
+    print("\n3. Expect Module 1 to filter many new tickers:")
+    print("   - Recent IPOs (no financial data yet)")
+    print("   - Platform companies (no clinical trials)")
+    print("   - Pre-clinical (no Phase 1+ trials)")
+    print("   - Illiquid names")
+    print("\n4. Final active universe will be ~150-200 tickers (correct!)")
     print("=" * 80 + "\n")
 
     return 0

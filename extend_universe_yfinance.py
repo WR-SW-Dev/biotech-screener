@@ -62,7 +62,7 @@ NEW_TICKERS = [
 ]
 
 
-def collect_market_data(ticker: str, end_date: datetime) -> Optional[Dict]:
+def collect_market_data(ticker: str, end_date: datetime, as_of_date: str = None) -> Optional[Dict]:
     """
     Collect defensive features for one ticker using Yahoo Finance.
 
@@ -143,7 +143,7 @@ def collect_market_data(ticker: str, end_date: datetime) -> Optional[Dict]:
             "corr_xbi": f"{correlation:.4f}",
             "rsi_14d": f"{rsi_current:.1f}",
             "vol_regime": vol_regime,
-            "timestamp": args.as_of_date + "T00:00:00Z" if hasattr(args, "as_of_date") else "unknown",
+            "timestamp": as_of_date + "T00:00:00Z" if as_of_date else "unknown",
         }
 
         print(f"✓ (vol: {vol_60d:.2%}, corr: {correlation:.2f})")
@@ -254,7 +254,7 @@ def main():
         print(f"[{i}/{len(NEW_TICKERS)}] ", end="")
 
         # Get defensive features
-        defensive_features = collect_market_data(ticker, end_date)
+        defensive_features = collect_market_data(ticker, end_date, args.as_of_date)
 
         if defensive_features is None:
             failed_tickers.append(ticker)

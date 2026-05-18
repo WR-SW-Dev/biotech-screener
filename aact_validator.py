@@ -13,7 +13,6 @@ The folder should contain the .txt files from an AACT daily snapshot.
 """
 
 import csv
-import os
 import sys
 from collections import Counter
 from datetime import datetime
@@ -183,7 +182,6 @@ def filter_biotech_trials(studies: list[dict], conditions: list[dict]) -> set[st
     biotech_ncts = set()
     for row in studies:
         phase = row.get("phase", "")
-        status = row.get("overall_status", "")
         study_type = row.get("study_type", "")
 
         # Interventional trials in clinical phases

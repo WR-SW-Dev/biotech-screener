@@ -154,7 +154,7 @@ def print_report(output: Dict[str, Any]):
 
     sizing = analyze_position_sizing(ranked)
     if sizing:
-        print(f"\nWeight Distribution:")
+        print("\nWeight Distribution:")
         print(f"  Sum:          {sizing['sum']:.4f} (target: 0.9000)")
         print(f"  Mean:         {sizing['mean']:.4f}")
         print(f"  Median:       {sizing['median']:.4f}")
@@ -162,7 +162,7 @@ def print_report(output: Dict[str, Any]):
         print(f"  Min:          {sizing['min']:.4f} ({sizing['min']*100:.2f}%)")
         print(f"  Max:          {sizing['max']:.4f} ({sizing['max']*100:.2f}%)")
         print(f"  Range:        {sizing['range']:.4f} ({sizing['range']/sizing['min']:.1f}:1 ratio)")
-        print(f"\nConcentration:")
+        print("\nConcentration:")
         print(f"  Top 5:        {sizing['concentration_top5']:.4f} ({sizing['concentration_top5']*100:.1f}%)")
         print(f"  Top 10:       {sizing['concentration_top10']:.4f} ({sizing['concentration_top10']*100:.1f}%)")
 
@@ -172,14 +172,14 @@ def print_report(output: Dict[str, Any]):
     print("-" * 80)
 
     adjustments = analyze_defensive_adjustments(ranked)
-    print(f"\nAdjustment Frequency:")
+    print("\nAdjustment Frequency:")
     print(
         f"  Securities adjusted: {adjustments['with_adjustments']}/{adjustments['total_securities']} "
         + f"({adjustments['pct_adjusted']:.1%})"
     )
 
     if adjustments["adjustment_types"]:
-        print(f"\nAdjustment Types:")
+        print("\nAdjustment Types:")
         for adj_type, count in sorted(adjustments["adjustment_types"].items(), key=lambda x: -x[1]):
             print(f"  {adj_type:40} {count:3} securities")
 
@@ -209,7 +209,7 @@ def print_report(output: Dict[str, Any]):
         print(f"Mean change: {score_impact['mean_change']:.2f} ({score_impact['mean_pct_change']:.2f}%)")
         print(f"Range: {score_impact['max_decrease']:.2f} to {score_impact['max_increase']:.2f}")
 
-        print(f"\nTop 10 Score Changes:")
+        print("\nTop 10 Score Changes:")
         print(f"{'Ticker':<8}{'Before':<10}{'After':<10}{'Change':<10}{'%':<8}{'Notes'}")
         print("-" * 80)
         for detail in score_impact["details"]:

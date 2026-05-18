@@ -21,7 +21,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sanity_checks.types import (
     DEFAULT_THRESHOLDS,
