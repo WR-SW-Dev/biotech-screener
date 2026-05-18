@@ -367,6 +367,7 @@ class TestRulesetDriftGuardrails:
         "spec_050_promotion",
         "run_signal_evidence.py",
         "acceptance_replay_ruleset.py",
+        "governance_2026-05-04",
     }
 
     # Accepts both YYYY-MM-DD and YYYY-MM-DDTHH:MM:SSZ (ISO 8601 UTC)

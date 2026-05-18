@@ -58,7 +58,7 @@
       "role": "hedge governance monitor, consumer of artifacts",
       "category": "portfolio_risk",
       "cadence": "weekly",
-      "status": "suppressed",
+      "status": "deprecated",
       "artifact_paths": [
         "artifacts/bioshort_watch/"
       ],
@@ -133,7 +133,7 @@
       "role": "guaranteed company press release coverage via polling",
       "category": "data_ingestion",
       "cadence": "daily_premarket",
-      "status": "retired",
+      "status": "deprecated",
       "artifact_paths": [
         "data/press_releases/"
       ],
