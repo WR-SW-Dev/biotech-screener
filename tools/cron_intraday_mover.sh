@@ -19,11 +19,11 @@
 #
 # Add with `crontab -e`:
 #
-#   # intraday mover open window (09:35, 09:50 ET)
-#   35,50 9 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_intraday_mover.sh poll >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/intraday_mover.log 2>&1
+#   # intraday mover first poll (10:30 ET, after production run completes)
+#   30 10 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_intraday_mover.sh poll >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/intraday_mover.log 2>&1
 #
-#   # intraday mover core hours (every 30 min, 10:00–15:30 ET)
-#   0,30 10-15 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_intraday_mover.sh poll >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/intraday_mover.log 2>&1
+#   # intraday mover core hours (every 30 min, 11:00–15:30 ET)
+#   0,30 11-15 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_intraday_mover.sh poll >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/intraday_mover.log 2>&1
 #
 #   # end-of-day digest (16:15 ET)
 #   15 16 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_intraday_mover.sh digest >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/intraday_mover.log 2>&1
