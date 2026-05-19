@@ -15,6 +15,40 @@ Primary references:
 - docs/hermes_skills/ (including new coordination skills below)
 - ~/.hermes/skills/devops/ when relevant
 
+## Hermeslink State Capture (May 2026)
+
+**Purpose:** Deterministic, real-time state snapshot of Hermes-managed infrastructure (cron jobs, agents, held specs, contradictions, first-fire schedules).
+
+**Tool:** `tools/build_hermes_knowledge_layer.py` (4-layer pipeline: capture → normalize → validate → emit)
+
+**Schedule:** Daily (manually triggered or via cron after significant changes)
+
+**Outputs:**
+- `artifacts/ops/knowledge_layer/latest_state.json` — Complete system state (git head, cron jobs, agents, artifacts)
+- `artifacts/ops/first_fire_ledger/latest.json` — Scheduled validation items (biotech_hedge_report first-fire, status, deadlines)
+- `artifacts/ops/contradiction_ledger/latest.md` — 5 contradiction checks (C1-C5: bioshort_watch suppression, watchlist freshness, producer cron, uncommitted changes, first-fire timing)
+- `artifacts/ops/held_spec_ledger/latest.json` — Spec holds and blocker status (6 items tracked)
+
+**Query:**
+```bash
+python3 tools/build_hermes_knowledge_layer.py
+# Outputs state to artifacts/ops/knowledge_layer/
+```
+
+**What it tracks:**
+- ✓ Git HEAD and uncommitted changes
+- ✓ Cron job count (active vs suppressed)
+- ✓ Agent status breakdown (active, deprecated, shadow)
+- ✓ Key artifact freshness (snapshots, models, validation reports)
+- ✓ Held specs and blockers (6 items: Spec 087 B1b/B2/C, Spec 088 Phase B, bioshort_watch LLM, score_rank_pct)
+- ✓ First-fire schedules and status (biotech_hedge_report deadline May 9)
+- ✓ Infrastructure contradictions (0 hard, 1 possible drift for each run)
+
+**Integration:**
+- Fed by: git log, crontab, AGENT_REGISTRY, snapshots, artifacts
+- Feeds: governance-spec-enforcement skill, hermes-operator inspection
+- Used by: operator to verify infrastructure health before major decisions
+
 ## New Skills (May 2026)
 - **docs/hermes_skills/13f-validation-coordinator.md** — Post-validation decision tree routing (CLEAR/EXTEND/MANUAL)
 - **docs/hermes_skills/phase-2-step-4-readiness.md** — KG pilot pre-launch verification (post-13F clearance)
@@ -66,6 +100,28 @@ When asked to audit Hermes:
 - Treat WSL2 sleep and OAuth drift as known first-class failure modes.
 
 ## Skill Invocation Guide (May 2026)
+
+### Invoke hermeslink state capture when:
+- User asks: "update hermeslink", "check infrastructure", "audit Hermes"
+- Before major decisions (13F validation, governance freeze lift, Phase 2 unlock)
+- After significant changes (new specs, cron modifications, agent updates)
+- Daily operational checks (optional cron at 08:00 ET post-snapshot)
+
+**What it provides:**
+- Current git state and code version
+- Cron job status (active/suppressed count)
+- Agent registry status
+- Artifact freshness and validation status
+- Contradiction detection (5 infrastructure checks)
+- First-fire schedule health
+- Held spec status and blockers
+
+**Output review checklist:**
+- ✓ No hard contradictions (0 hard OK, ≤1 possible drift acceptable)
+- ✓ All critical cron jobs active (C3: biotech_hedge_report)
+- ✓ Suppressed markers match registry (C1: bioshort_watch)
+- ✓ Working tree clean (C4: no uncommitted changes)
+- ✓ First-fire deadlines tracked (C5: pre-first-fire artifacts flagged)
 
 ### Invoke 13f-validation-coordinator when:
 - May 20 snapshot refresh completes (→ triggers validation run)
