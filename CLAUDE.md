@@ -208,7 +208,14 @@ Empty rotation log (policy effective date 2026-05-16). Required fields defined. 
 
 ## External AI Landscape (May 2026)
 
-### OpenClaw Security Posture
+### OpenClaw Status: Maintenance-Only (confirmed May 18, 2026)
+- OpenClaw has transitioned to maintenance-only status as of mid-May 2026. Multiple independent sources confirm the project is no longer under active feature development.
+- Hermes Agent v0.14.0 (May 16) includes native `hermes claw migrate` tool for seamless migration of configs, API keys, skills, and memory from OpenClaw to Hermes.
+- The DEM's 27-agent fleet runs on OpenClaw. Maintenance-only status does not affect current operations — the runtime is stable and functional. But it creates a planning horizon: OpenClaw will not receive new features, and the security patch cadence may slow.
+- **Immediate action: none.** The fleet runs on deterministic scripts (Lane A) and `run_agent_direct.py` (Lane B), not on OpenClaw gateway features. A runtime migration is a Tier 4 governance decision, not an urgent operational change.
+- **Planning horizon:** Evaluate Hermes as a potential successor runtime in Q4 2026 if OpenClaw patch cadence degrades. Any migration must preserve the AGENT_ROUTING_POLICY.md tier structure and CCFT controls. Self-evolving Hermes skills remain governance-incompatible unless fully versioned and reviewed.
+
+### OpenClaw Security Posture (unchanged)
 - Texas A&M SUCCESS Lab (arXiv:2603.27517, April 2026): 470 advisories organized by 7 architectural layers and 5 attack types
 - Three Moderate/High-severity advisories compose into complete unauthenticated RCE from LLM tool call to host process
 - Exec allowlist bypass via line continuation, busybox multiplexing, GNU long-option abbreviation
@@ -218,9 +225,11 @@ Empty rotation log (policy effective date 2026-05-16). Required fields defined. 
 ### Hermes Agent (Competitive Frame)
 - Nous Research, launched February 2026, MIT license, $70M funded ($1B valuation)
 - 153K GitHub stars (May 16, 2026 — single dated data point from GitHub)
+- v0.14.0 shipped May 16, 2026: xAI Grok integration (1M context via SuperGrok OAuth), OpenAI-compatible local proxy for OAuth providers, Claude operator worker launcher (`hermes claude-operator` for spawning Claude Code tmux workers), 12 P0 + 50 P1 bug closures
 - Core differentiator: self-learning Skill Documents (Markdown files created after 5+ tool calls, 40% efficiency gains)
 - Self-evolving skill loop is governance-incompatible with CCFT unless every skill mutation is versioned, reviewed, and approved
-- Recommendation: Monitor, do not adopt. hermes_claw_migrate command indicates Nous targeting OpenClaw installed base.
+- Native `hermes claw migrate` tool confirms Nous is actively targeting OpenClaw's installed base
+- Recommendation: Monitor as potential successor runtime (Q4 2026 evaluation if OpenClaw patch cadence degrades). Do not adopt now. Any migration must preserve AGENT_ROUTING_POLICY.md tier structure and CCFT controls.
 
 ### ODIN Engine (External Benchmark for Clinical Scoring)
 - L2-regularized logistic regression, 51 engineered features, 8 signal categories
