@@ -18,6 +18,8 @@ import argparse
 import json
 import logging
 import math
+import time
+import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -28,16 +30,44 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger("refresh_market_snapshot")
 
 
-def _fetch_history(ticker: str, period: str = "35d"):
-    """Fetch price history via yfinance. Returns list of (date_str, close)."""
+def _fetch_history(ticker: str, period: str = "35d", max_retries: int = 3):
+    """Fetch price history via yfinance with retry logic on rate-limit.
+
+    Returns list of (date_str, close) tuples. Implements exponential backoff
+    for 429 (Too Many Requests) responses to handle rate limiting gracefully.
+    """
     try:
         import yfinance as yf
 
-        t = yf.Ticker(ticker)
-        h = t.history(period=period)
-        if h.empty:
-            return []
-        return [(d.strftime("%Y-%m-%d"), float(row["Close"])) for d, row in h.iterrows()]
+        for attempt in range(max_retries):
+            try:
+                t = yf.Ticker(ticker)
+                h = t.history(period=period)
+                if h.empty:
+                    return []
+                return [(d.strftime("%Y-%m-%d"), float(row["Close"])) for d, row in h.iterrows()]
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429:  # Too Many Requests
+                    if attempt < max_retries - 1:
+                        wait_time = 2**attempt  # exponential backoff: 1s, 2s, 4s
+                        log.info(
+                            "Rate limited on %s, retrying in %ds (attempt %d/%d)",
+                            ticker,
+                            wait_time,
+                            attempt + 1,
+                            max_retries,
+                        )
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        log.warning("Rate limited on %s after %d retries: %s", ticker, max_retries, exc)
+                        return []
+                else:
+                    log.warning("Failed to fetch %s (HTTP %d): %s", ticker, exc.code, exc)
+                    return []
+            except Exception as exc:
+                log.warning("Failed to fetch %s: %s", ticker, exc)
+                return []
     except Exception as exc:
         log.warning("Failed to fetch %s: %s", ticker, exc)
         return []
