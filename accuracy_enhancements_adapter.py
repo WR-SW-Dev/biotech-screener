@@ -32,12 +32,7 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional, Union
 
-from common.accuracy_improvements import (
-    MarketRegimeType,
-    apply_all_accuracy_improvements,
-    classify_therapeutic_area,
-    compute_regulatory_pathway_score,
-)
+from common.accuracy_improvements import MarketRegimeType, apply_all_accuracy_improvements
 
 __version__ = "1.0.0"
 
@@ -245,7 +240,6 @@ class AccuracyEnhancementsAdapter:
         # 8. Apply endpoint weight to clinical score
         if "endpoint_analysis" in raw_results:
             ep = raw_results["endpoint_analysis"]
-            ep_weight = Decimal(ep.get("endpoint_weight", "0.70"))
             if ep.get("is_strong"):
                 # Strong endpoint = modest boost
                 clinical_mult = clinical_mult * Decimal("1.05")
