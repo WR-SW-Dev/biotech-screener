@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from statistics import StatisticsError, correlation, mean, stdev
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 sys.path.insert(0, "/home/claude/biotech_screener")
 

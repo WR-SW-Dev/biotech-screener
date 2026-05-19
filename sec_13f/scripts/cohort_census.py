@@ -19,7 +19,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 sys.path.insert(0, "/home/claude/biotech_screener")
 

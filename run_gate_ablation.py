@@ -32,7 +32,7 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from statistics import mean, median
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent

@@ -14,7 +14,7 @@ import json
 import re
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Tuple, TypedDict, Union
 
 
 # TypedDicts for 13F holdings snapshot structures

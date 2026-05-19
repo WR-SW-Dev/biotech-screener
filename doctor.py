@@ -20,7 +20,7 @@ import json
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Version requirements
 REQUIRED_PYTHON_VERSION = (3, 10)
