@@ -394,7 +394,7 @@ def print_defensive_summary(records: List[Dict]) -> None:
     """Print summary of defensive overlay results."""
     total = len([r for r in records if r.get("ticker") != "_XBI_BENCHMARK_"])
 
-    included = sum(1 for r in records if r.get("include_long") == True)
+    included = sum(1 for r in records if r.get("include_long") is True)
     excluded = total - included
 
     flag_counts = {}
