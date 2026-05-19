@@ -23,7 +23,7 @@ import re
 from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 

@@ -12,7 +12,6 @@ Usage:
 import argparse
 import json
 import statistics
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
 

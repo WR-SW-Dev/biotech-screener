@@ -10,12 +10,11 @@ Scenarios:
 - Exception handling patterns
 """
 
-import ast
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import List, Optional
 
 from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 

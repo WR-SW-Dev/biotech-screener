@@ -25,7 +25,6 @@ Can be called programmatically:
 import argparse
 import hashlib
 import json
-import os
 import platform
 import re
 import subprocess

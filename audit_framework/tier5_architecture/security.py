@@ -10,12 +10,11 @@ Checks:
 - Compliance with data privacy
 """
 
-import ast
 import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import List
 
 from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 

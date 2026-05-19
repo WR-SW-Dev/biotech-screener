@@ -36,7 +36,6 @@ import argparse
 import hashlib
 import json
 import logging
-import os
 import subprocess
 import sys
 from datetime import date, timedelta
@@ -45,7 +44,6 @@ from typing import Any, Dict, List, Optional
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # CONFIGURATION
@@ -58,7 +56,6 @@ MANIFEST_FILE = "manifest.json"
 
 # CT.gov fetch script (if exists)
 FETCH_SCRIPT = "wake_robin_data_pipeline/ctgov_collector.py"
-
 
 # ============================================================================
 # SNAPSHOT ARCHIVER
