@@ -176,7 +176,7 @@ class ElitePositionAggregator:
                 filings = self.fetcher.get_recent_filings(cik, count=quarters_back + 1)
 
                 if not filings:
-                    print(f"    No filings found")
+                    print("    No filings found")
                     continue
 
                 # Filter by as_of_date if specified

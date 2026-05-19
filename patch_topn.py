@@ -47,7 +47,7 @@ def apply_topn_patch():
     with open(file_path, "w") as f:
         f.write(new_content)
 
-    print(f"✅ Patched! Added top_n=60 parameter")
+    print("✅ Patched! Added top_n=60 parameter")
     return True
 
 

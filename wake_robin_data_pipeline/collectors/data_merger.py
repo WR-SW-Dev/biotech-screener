@@ -367,7 +367,7 @@ if __name__ == "__main__":
         print(f"Success: {merged['success']}")
         print(f"SEC available: {merged['provenance']['sec_available']}")
         print(f"Yahoo available: {merged['provenance']['yahoo_available']}")
-        print(f"Financials:")
+        print("Financials:")
         for k, v in merged["financials"].items():
             source = merged["data_sources"].get(k, "?")
             date = merged["data_dates"].get(k, "?")

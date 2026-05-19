@@ -76,7 +76,7 @@ def run_pipeline(as_of_date: str, data_dir: str, output_file: str, use_defensive
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print(f"✓ Pipeline completed successfully")
+        print("✓ Pipeline completed successfully")
 
         # Load results
         with open(output_file, "r") as f:
@@ -331,9 +331,9 @@ def main():
     print("BACKTEST COMPLETE")
     print("=" * 80)
     print(f"Results saved to: {output_dir}")
-    print(f"  - backtest_report.txt (summary)")
-    print(f"  - backtest_results.json (detailed data)")
-    print(f"  - with_defensive_YYYY-MM-DD.json (individual runs)")
+    print("  - backtest_report.txt (summary)")
+    print("  - backtest_results.json (detailed data)")
+    print("  - with_defensive_YYYY-MM-DD.json (individual runs)")
 
 
 if __name__ == "__main__":

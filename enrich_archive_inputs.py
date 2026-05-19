@@ -637,8 +637,8 @@ def _collect_sec_events_for_date(
     sec_mode: str,
     adcom_mode: str,
     data_dir: Path,
-    multi_form_mode: str = "off",
-    fda_regulatory_mode: str = "off",
+    multi_form_mode: str = "of",
+    fda_regulatory_mode: str = "of",
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Collect SEC 8-K, multi-form, ADCOM, and FDA regulatory events for a single as_of_date.
 
@@ -732,29 +732,29 @@ def main():
     parser.add_argument(
         "--sec-8k-mode",
         type=str,
-        default="off",
-        choices=["off", "live"],
+        default="of",
+        choices=["of", "live"],
         help="SEC 8-K catalyst mode: off (default) or live (fetch from EDGAR)",
     )
     parser.add_argument(
         "--adcom-mode",
         type=str,
-        default="off",
-        choices=["off", "live"],
+        default="of",
+        choices=["of", "live"],
         help="FDA ADCOM mode: off (default) or live (fetch from Federal Register + EDGAR)",
     )
     parser.add_argument(
         "--sec-multi-form-mode",
         type=str,
-        default="off",
-        choices=["off", "live"],
+        default="of",
+        choices=["of", "live"],
         help="SEC multi-form (10-Q, 10-K, 6-K) mode: off (default) or live",
     )
     parser.add_argument(
         "--fda-regulatory-mode",
         type=str,
-        default="off",
-        choices=["off", "live"],
+        default="of",
+        choices=["of", "live"],
         help="FDA regulatory notices (Federal Register) mode: off (default) or live",
     )
     parser.add_argument(
@@ -799,10 +799,10 @@ def main():
         archives = [a for a in archives if a.name.replace(".tar.gz", "") <= args.end]
 
     trial_window = args.trial_window if args.trial_window is not None else TRIAL_PCD_WINDOW_DAYS
-    use_sec = args.sec_8k_mode != "off"
-    use_adcom = args.adcom_mode != "off"
-    use_multi_form = args.sec_multi_form_mode != "off"
-    use_fda_regulatory = args.fda_regulatory_mode != "off"
+    use_sec = args.sec_8k_mode != "of"
+    use_adcom = args.adcom_mode != "of"
+    use_multi_form = args.sec_multi_form_mode != "of"
+    use_fda_regulatory = args.fda_regulatory_mode != "of"
 
     if out_dir:
         print(f"Output directory: {out_dir}")
@@ -820,7 +820,7 @@ def main():
                 universe_entries = json.load(f)
             print(f"  Universe: {len(universe_entries)} tickers (for SEC/ADCOM lookup)")
         else:
-            print(f"  WARNING: universe.json not found, SEC/ADCOM will have no CIK mapping")
+            print("  WARNING: universe.json not found, SEC/ADCOM will have no CIK mapping")
 
     print()
 

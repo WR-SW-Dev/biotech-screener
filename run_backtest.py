@@ -317,7 +317,7 @@ def create_production_scorer():
         dates = [s.get("date", "N/A") for s in sample_snaps]
         print(f"    Sample ({sample_ticker}): {len(sample_snaps)} snapshots, dates: {dates[0]} to {dates[-1]}")
     else:
-        print(f"    ⚠️  WARNING: No historical financials - PIT will use static current data!")
+        print("    ⚠️  WARNING: No historical financials - PIT will use static current data!")
 
     def production_scorer(ticker: str, data: Dict, as_of_date: datetime) -> Dict:
         """
@@ -450,7 +450,7 @@ def create_production_scorer():
             trial_records = [
                 {
                     "ticker": ticker,
-                    "nct_id": f"NCT00000000",
+                    "nct_id": "NCT00000000",
                     "phase": clinical.get("phase", "phase 1"),
                     "primary_completion_date": "2025-12-31",
                     "status": "active",
@@ -1009,7 +1009,7 @@ def run_direct_backtest(
         print(f"  Score range: {min(scores_only):.2f} - {max(scores_only):.2f} (delta={score_range:.2f})")
         print(f"  Unique scores: {unique_scores}/{len(scores_only)}")
         if score_range < 0.01:
-            print(f"  ⚠️  WARNING: Scores are STATIC - inputs not time-varying!")
+            print("  ⚠️  WARNING: Scores are STATIC - inputs not time-varying!")
         print()
 
     # Summary of ALL scores_hash values (critical for diagnosing static scoring)
@@ -1019,12 +1019,12 @@ def run_direct_backtest(
         unique_hashes = set(h for _, h in all_scores_hashes)
         print(f"  Unique hashes: {len(unique_hashes)}/{len(all_scores_hashes)} periods")
         if len(unique_hashes) == 1:
-            print(f"  ⚠️  CRITICAL: Score vector is COMPLETELY STATIC across all periods!")
+            print("  ⚠️  CRITICAL: Score vector is COMPLETELY STATIC across all periods!")
             print(f"     Hash: {all_scores_hashes[0][1]}")
         elif len(unique_hashes) < len(all_scores_hashes) * 0.5:
-            print(f"  ⚠️  WARNING: Score vector has limited variation (< 50% unique)")
+            print("  ⚠️  WARNING: Score vector has limited variation (< 50% unique)")
         else:
-            print(f"  ✓ Score vector varies across periods")
+            print("  ✓ Score vector varies across periods")
         # Show first 5 and last 5 hashes
         print(f"  First 5: {[h for _, h in all_scores_hashes[:5]]}")
         print(f"  Last 5:  {[h for _, h in all_scores_hashes[-5:]]}")

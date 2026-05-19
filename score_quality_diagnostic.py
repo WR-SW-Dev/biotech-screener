@@ -182,7 +182,7 @@ def print_report(quality: Dict, universe: Dict, data: Dict = None):
     print(f"   Suspicious tickers: {universe['suspicious_count']} ({universe['suspicious_pct']:.1f}%)")
 
     if universe["suspicious_tickers"]:
-        print(f"\n   Top suspicious tickers:")
+        print("\n   Top suspicious tickers:")
         for i, sus in enumerate(universe["suspicious_tickers"][:10], 1):
             print(f"      {i}. {sus['ticker']} (Rank {sus['rank']}) - {', '.join(sus['reasons'])}")
 
@@ -213,11 +213,11 @@ def print_report(quality: Dict, universe: Dict, data: Dict = None):
 
         if duplicates:
             print(f"   ??  WARNING: {len(duplicates)} ranks have duplicates!")
-            print(f"   Duplicate ranks:")
+            print("   Duplicate ranks:")
             for rank, count in sorted(duplicates, key=lambda x: -x[1])[:5]:
                 print(f"      Rank {rank}: {count} tickers")
         else:
-            print(f"   ? PERFECT: All ranks are unique (tiebreaker working!)")
+            print("   ? PERFECT: All ranks are unique (tiebreaker working!)")
     else:
         print("   ??  No ranked securities found")
 
@@ -245,17 +245,17 @@ def print_report(quality: Dict, universe: Dict, data: Dict = None):
     print("3. BUCKETING EVIDENCE (Repeated values indicate bucketing)")
     print("-" * 80)
 
-    print(f"\n   Financial - Top 5 repeated values:")
+    print("\n   Financial - Top 5 repeated values:")
     for val, count in fin["most_common"]:
         pct = count / quality["num_tickers"] * 100
         print(f"      {val:.2f} appears {count} times ({pct:.1f}% of universe)")
 
-    print(f"\n   Clinical - Top 5 repeated values:")
+    print("\n   Clinical - Top 5 repeated values:")
     for val, count in clin["most_common"]:
         pct = count / quality["num_tickers"] * 100
         print(f"      {val:.2f} appears {count} times ({pct:.1f}% of universe)")
         if pct > 40:
-            print(f"         ⚠️  WARNING: >40% of universe at same score!")
+            print("         ⚠️  WARNING: >40% of universe at same score!")
 
     # Tie Mass
     print()
@@ -324,7 +324,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Diagnose score quality issues")
-    parser.add_argument("--file", "-f", type=str, help="Results JSON file (default: auto-detect)")
+    parser.add_argument("--file", "-", type=str, help="Results JSON file (default: auto-detect)")
 
     args = parser.parse_args()
 

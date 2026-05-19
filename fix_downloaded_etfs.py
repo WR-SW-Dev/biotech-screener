@@ -30,7 +30,7 @@ def convert_xbi_excel_to_csv():
         # Try with pandas
         import pandas as pd
 
-        print(f"  → Reading Excel file...")
+        print("  → Reading Excel file...")
         df = pd.read_excel(xlsx_file)
 
         # Save to CSV
@@ -41,14 +41,14 @@ def convert_xbi_excel_to_csv():
         return True
 
     except ImportError:
-        print(f"  ❌ pandas not installed")
-        print(f"  → Installing pandas and openpyxl...")
+        print("  ❌ pandas not installed")
+        print("  → Installing pandas and openpyxl...")
 
         import subprocess
 
         try:
             subprocess.run(["pip", "install", "pandas", "openpyxl"], check=True)
-            print(f"  ✅ Installed pandas and openpyxl")
+            print("  ✅ Installed pandas and openpyxl")
 
             # Try again
             import pandas as pd
@@ -59,8 +59,8 @@ def convert_xbi_excel_to_csv():
             return True
         except Exception as e:
             print(f"  ❌ Auto-install failed: {e}")
-            print(f"\n  Manual fix:")
-            print(f"  1. pip install pandas openpyxl")
+            print("\n  Manual fix:")
+            print("  1. pip install pandas openpyxl")
             print(f"  2. Or open {xlsx_file} in Excel")
             print(f"  3. Save As → CSV: {csv_file}")
             return False
@@ -97,8 +97,8 @@ def fix_ibb_csv():
                 break
 
         if header_row_idx is None:
-            print(f"  ❌ Could not find header row with 'Ticker' or 'Symbol'")
-            print(f"  → First 10 lines:")
+            print("  ❌ Could not find header row with 'Ticker' or 'Symbol'")
+            print("  → First 10 lines:")
             for i, line in enumerate(lines[:10]):
                 print(f"     {i+1}: {line.strip()[:80]}")
             return False
@@ -144,7 +144,7 @@ def check_csv_format(csv_file: Path, etf_name: str) -> bool:
                     break
 
             if not ticker_col:
-                print(f"  ❌ No ticker column found")
+                print("  ❌ No ticker column found")
                 print(f"     Columns: {columns}")
                 return False
 
@@ -152,7 +152,7 @@ def check_csv_format(csv_file: Path, etf_name: str) -> bool:
             rows = list(reader)
             tickers = [row.get(ticker_col, "").strip() for row in rows if row.get(ticker_col, "").strip()]
 
-            print(f"  ✅ Format OK")
+            print("  ✅ Format OK")
             print(f"     Ticker column: '{ticker_col}'")
             print(f"     Tickers found: {len(tickers)}")
             print(f"     Sample: {', '.join(tickers[:5])}")
@@ -217,11 +217,11 @@ def main():
         return 0
     elif ready_count >= 2:
         print(f"\n⚠️  {ready_count}/3 files ready")
-        print(f"   Complete NBI download and you're good to go!")
+        print("   Complete NBI download and you're good to go!")
         return 1
     else:
         print(f"\n❌ Only {ready_count}/3 files ready")
-        print(f"   Review errors above")
+        print("   Review errors above")
         return 1
 
 

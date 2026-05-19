@@ -262,7 +262,7 @@ def collect_financial_data_batch(tickers: List[str], as_of_date: str, output_dir
                     cash_str = f"${record.get('cash', 0)/1e9:.2f}B" if record.get("cash") else "N/A"
                     print(f"OK Cash: {cash_str}")
                 else:
-                    print(f"No financial data")
+                    print("No financial data")
 
                 financial_data.append(record)
 
@@ -394,7 +394,7 @@ def collect_clinical_data_batch(tickers: List[str], as_of_date: str, output_dir:
 
                     print(f"OK {len(trials):3d} trials")
                 else:
-                    print(f"No trials found")
+                    print("No trials found")
 
             except Exception as e:
                 print(f"ERROR: {e}")
@@ -407,7 +407,7 @@ def collect_clinical_data_batch(tickers: List[str], as_of_date: str, output_dir:
         with open(clinical_data_file, "w") as f:
             json.dump(all_trials, f, indent=2)
 
-        print(f"\nClinical data collected:")
+        print("\nClinical data collected:")
         print(f"  Tickers with trials: {successful}/{total}")
         print(f"  Total trials: {total_trials}")
         print(f"Saved to: {clinical_data_file}")
@@ -439,10 +439,10 @@ def build_universe_snapshot(output_dir: Path, as_of_date: str) -> str:
 
     output_file = output_dir / f"universe_snapshot_{as_of_date}.json"
 
-    print(f"Combining data sources:")
-    print(f"  • Market data (defensive_features)")
-    print(f"  • Financial data (cash, burn, runway)")
-    print(f"  • Clinical data (lead programs)")
+    print("Combining data sources:")
+    print("  • Market data (defensive_features)")
+    print("  • Financial data (cash, burn, runway)")
+    print("  • Clinical data (lead programs)")
 
     print(f"\nOutput: {output_file}")
     print("TO IMPLEMENT: Merge all data sources into final universe structure")
@@ -494,7 +494,7 @@ def main():
     print("COLLECTION SUMMARY")
     print("=" * 80)
     print(f"Tickers processed: {len(tickers)}")
-    print(f"Data collected:")
+    print("Data collected:")
     for data_type, result in results.items():
         print(f"  • {data_type}: {result['status']}")
 

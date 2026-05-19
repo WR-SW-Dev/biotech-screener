@@ -31,12 +31,12 @@ def example_single_ticker():
     as_of = date(2024, 12, 31)
 
     print(f"\nFetching data for {ticker} as of {as_of}")
-    print(f"Lookback: 365 days\n")
+    print("Lookback: 365 days\n")
 
     # Get complete data package
     data = provider.get_ticker_data(ticker, as_of, lookback_days=365)
 
-    print(f"Results:")
+    print("Results:")
     print(f"  - Prices fetched: {data['num_days']}")
 
     if data["prices"]:
@@ -105,7 +105,7 @@ def example_pilot_universe():
 
     print(f"\nFetching data for {len(pilot_tickers)} tickers")
     print(f"As of: {as_of}")
-    print(f"Includes XBI benchmark\n")
+    print("Includes XBI benchmark\n")
 
     # Use batch provider for efficiency
     batch_provider = BatchPriceProvider()
@@ -117,7 +117,7 @@ def example_pilot_universe():
         include_xbi=True,
     )
 
-    print(f"\n=== Results ===")
+    print("\n=== Results ===")
     print(f"Total tickers fetched: {len(market_data)}")
 
     # Summary statistics
@@ -131,7 +131,7 @@ def example_pilot_universe():
 
     coverage.sort(key=lambda x: x[1], reverse=True)
 
-    print(f"\nData coverage (days of history):")
+    print("\nData coverage (days of history):")
     print(f"{'Ticker':<8} {'Days':<6} {'Coverage':<10}")
     print("-" * 30)
 
@@ -237,9 +237,9 @@ def example_time_series_prep():
         else:
             print(f"✗ {ticker}: No market data available")
 
-    print(f"\n=== Ready for Time-Series Overlay ===")
+    print("\n=== Ready for Time-Series Overlay ===")
     print(f"Securities with complete data: {len(enriched_securities)}")
-    print(f"\nNext step: Pass to TimeSeriesManager.enrich_securities_with_time_series()")
+    print("\nNext step: Pass to TimeSeriesManager.enrich_securities_with_time_series()")
 
     return enriched_securities
 
@@ -269,7 +269,7 @@ def example_pit_discipline():
 
     prices = provider.get_prices(ticker, historical_date, lookback_days=180)
 
-    print(f"Results:")
+    print("Results:")
     print(f"  - Prices fetched: {len(prices)}")
     print(f"  - This represents ~{len(prices)} trading days before {historical_date}")
 
@@ -280,10 +280,10 @@ def example_pit_discipline():
     print(f"\nCompare to fetching as of {current_date}:")
     print(f"  - Prices fetched: {len(current_prices)}")
 
-    print(f"\n✓ PIT discipline enforced:")
+    print("\n✓ PIT discipline enforced:")
     print(f"  Historical fetch stopped at {historical_date}")
     print(f"  Current fetch includes data up to {current_date}")
-    print(f"  This prevents lookahead bias in backtesting!")
+    print("  This prevents lookahead bias in backtesting!")
 
 
 # =============================================================================
@@ -316,7 +316,7 @@ def example_export_for_validation():
     for ticker, data in market_data.items():
         export_data[ticker] = {
             "ticker": ticker,
-            "as_of": str(data["as_of"]),
+            "as_o": str(data["as_o"]),
             "num_days": data["num_days"],
             "prices": [float(p) for p in data["prices"]],
             "returns": data["returns"],
@@ -329,7 +329,7 @@ def example_export_for_validation():
         json.dump(export_data, f, indent=2)
 
     print(f"\n✓ Exported {len(export_data)} tickers to {output_file}")
-    print(f"  Use this file to validate time-series calculations")
+    print("  Use this file to validate time-series calculations")
     print(f"  File size: {len(json.dumps(export_data)) / 1024:.1f} KB")
 
     return output_file

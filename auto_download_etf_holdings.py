@@ -29,7 +29,7 @@ def download_ibb_holdings(output_dir: Path) -> bool:
     params = {"fileType": "csv", "fileName": "IBB_holdings", "dataType": "fund"}
 
     try:
-        print(f"  Fetching from iShares API...")
+        print("  Fetching from iShares API...")
         response = requests.get(url, params=params, timeout=30)
 
         if response.status_code == 200 and len(response.content) > 1000:
@@ -85,7 +85,7 @@ def download_xbi_holdings(output_dir: Path) -> bool:
                 print(f"  ✅ Downloaded XBI: {len(response.content):,} bytes")
 
                 if ext == ".xlsx":
-                    print(f"  ⚠️  Downloaded as Excel - converting to CSV...")
+                    print("  ⚠️  Downloaded as Excel - converting to CSV...")
                     try:
                         import pandas as pd
 
@@ -94,7 +94,7 @@ def download_xbi_holdings(output_dir: Path) -> bool:
                         df.to_csv(csv_file, index=False)
                         print(f"  ✅ Converted to CSV: {csv_file}")
                     except ImportError:
-                        print(f"  ⚠️  Install pandas to auto-convert: pip install pandas openpyxl")
+                        print("  ⚠️  Install pandas to auto-convert: pip install pandas openpyxl")
                         print(f"  ⚠️  Or manually open {output_file} in Excel and Save As CSV")
 
                 return True
@@ -102,7 +102,7 @@ def download_xbi_holdings(output_dir: Path) -> bool:
         except Exception as e:
             continue
 
-    print(f"  ❌ All download attempts failed")
+    print("  ❌ All download attempts failed")
     return False
 
 
@@ -143,7 +143,7 @@ def download_nbi_holdings(output_dir: Path) -> bool:
                     data = response.json()
                     # Extract constituents (format varies by API)
                     # This is a placeholder - actual parsing depends on API response structure
-                    print(f"  ⚠️  Got JSON response - may need manual parsing")
+                    print("  ⚠️  Got JSON response - may need manual parsing")
                     with open(output_dir / "NBI_holdings.json", "w") as f:
                         json.dump(data, f, indent=2)
                     print(f"  ℹ️  Saved as JSON: {output_dir / 'NBI_holdings.json'}")
@@ -160,7 +160,7 @@ def download_nbi_holdings(output_dir: Path) -> bool:
         except Exception as e:
             continue
 
-    print(f"  ❌ All download attempts failed")
+    print("  ❌ All download attempts failed")
     return False
 
 

@@ -250,7 +250,7 @@ def main(aact_folder: str):
         if missing:
             print(f"  ⚠ MISSING COLUMNS: {missing}")
         else:
-            print(f"  ✓ All required columns present")
+            print("  ✓ All required columns present")
 
         if extra:
             print(f"  ℹ Extra columns (first 10): {extra}")

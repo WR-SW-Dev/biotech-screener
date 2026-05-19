@@ -571,7 +571,7 @@ def generate_ablation_report(
             lines.append(f"  D winsorized residual ({d_mean:+.2f}%) >= C ({c_mean:+.2f}%).")
             lines.append("  The gates may be over-penalizing viable names.")
         else:
-            lines.append(f"  FINDING: D-tier names underperform C-tier on average.")
+            lines.append("  FINDING: D-tier names underperform C-tier on average.")
             lines.append(f"  D winsorized residual ({d_mean:+.2f}%) < C ({c_mean:+.2f}%).")
             lines.append("  Gates appear to be removing genuinely weaker names.")
 
@@ -646,7 +646,7 @@ def generate_ablation_report(
         with_returns.sort(key=lambda x: x["resid_return_pct"], reverse=True)
         sample = with_returns[:10]
         if sample:
-            lines.append(f"    Top promoted (by residual):")
+            lines.append("    Top promoted (by residual):")
             for p in sample:
                 lines.append(
                     f"      {p['ticker']:<6} {p['date']}  "
@@ -692,18 +692,18 @@ def generate_ablation_report(
         lines.append(
             f"    Removing promotes {dd_promoted} name-snapshots with " f"positive avg residual ({dd_prom_mean:+.2f}%)."
         )
-        lines.append(f"    Consider: soften drawdown_gate from -40% to -50%,")
-        lines.append(f"    or convert to a sizing penalty (M->S) instead of exclusion.")
+        lines.append("    Consider: soften drawdown_gate from -40% to -50%,")
+        lines.append("    or convert to a sizing penalty (M->S) instead of exclusion.")
     elif dd_promoted > 0:
         lines.append("  DRAWDOWN GATE:")
         lines.append(
             f"    Removing promotes {dd_promoted} name-snapshots but avg "
             f"residual is negative ({dd_prom_mean:+.2f}%). Gate is effective."
         )
-        lines.append(f"    Recommendation: keep as-is.")
+        lines.append("    Recommendation: keep as-is.")
     else:
         lines.append("  DRAWDOWN GATE:")
-        lines.append(f"    No promotions from removing — gate has minimal practical impact.")
+        lines.append("    No promotions from removing — gate has minimal practical impact.")
 
     lines.append("")
 
@@ -713,24 +713,24 @@ def generate_ablation_report(
             f"    Removing promotes {sev3_promoted} name-snapshots with "
             f"positive avg residual ({sev3_prom_mean:+.2f}%)."
         )
-        lines.append(f"    Consider: convert to risk_flag + sizing penalty instead")
-        lines.append(f"    of hard exclusion.")
+        lines.append("    Consider: convert to risk_flag + sizing penalty instead")
+        lines.append("    of hard exclusion.")
     elif sev3_promoted > 0:
         lines.append("  SEV3 GATE:")
         lines.append(
             f"    Removing promotes {sev3_promoted} name-snapshots but avg "
             f"residual is negative ({sev3_prom_mean:+.2f}%). Gate is effective."
         )
-        lines.append(f"    Recommendation: keep as-is.")
+        lines.append("    Recommendation: keep as-is.")
     else:
         lines.append("  SEV3 GATE:")
-        lines.append(f"    No promotions from removing — gate has minimal practical impact.")
+        lines.append("    No promotions from removing — gate has minimal practical impact.")
 
     lines.append("")
     lines.append("  INERT GATES:")
     lines.append(f"    {', '.join(gate_freq['inert_gates'])} never fire in the archive history.")
-    lines.append(f"    These can be safely removed from the engine code or documented")
-    lines.append(f"    as placeholders for future data sources.")
+    lines.append("    These can be safely removed from the engine code or documented")
+    lines.append("    as placeholders for future data sources.")
     lines.append("")
 
     # Overall recommendation
@@ -748,7 +748,7 @@ def generate_ablation_report(
         lines.append("  Current gates are optimal for A-vs-C separation.")
     else:
         lines.append(f"  Consider adopting '{best_scenario[0]}' scenario if promoted names")
-        lines.append(f"  have acceptable risk profiles.")
+        lines.append("  have acceptable risk profiles.")
 
     lines.append("")
     lines.append("6. CAVEATS")

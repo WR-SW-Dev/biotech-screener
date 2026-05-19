@@ -626,12 +626,12 @@ def run_sharadar_backtest(
     print("OUTPUT ARTIFACTS")
     print("=" * 70)
     print(f"  {run_dir}/")
-    print(f"  ├── config.json")
-    print(f"  ├── data_readiness.json")
-    print(f"  ├── run_summary.json")
-    print(f"  ├── sanity_metrics.json")
-    print(f"  ├── stability_attribution.json")
-    print(f"  └── backtest_results.json")
+    print("  ├── config.json")
+    print("  ├── data_readiness.json")
+    print("  ├── run_summary.json")
+    print("  ├── sanity_metrics.json")
+    print("  ├── stability_attribution.json")
+    print("  └── backtest_results.json")
     print(f"\nManifest: {OUTPUT_DIR}/manifests/run_manifest.jsonl")
 
     return {

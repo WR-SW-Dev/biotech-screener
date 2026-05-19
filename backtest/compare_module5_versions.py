@@ -815,7 +815,7 @@ def run_comparison_backtest(
         print(f"  v2: Mean={ic_v2_mean:+.4f}, Std={ic_v2_std:.4f}, Positive={ic_v2_pos:.1f}%, N={len(ic_v2_90d)}")
         print(f"      t-stat={ic_v2_tstat:.2f}, 95% CI=[{ic_v2_ci[0]:+.4f}, {ic_v2_ci[1]:+.4f}]")
     else:
-        print(f"  v2: Insufficient data")
+        print("  v2: Insufficient data")
 
     if ic_v3_90d:
         ic_v3_mean = mean(ic_v3_90d)
@@ -827,7 +827,7 @@ def run_comparison_backtest(
         print(f"  v3: Mean={ic_v3_mean:+.4f}, Std={ic_v3_std:.4f}, Positive={ic_v3_pos:.1f}%, N={len(ic_v3_90d)}")
         print(f"      t-stat={ic_v3_tstat:.2f}, 95% CI=[{ic_v3_ci[0]:+.4f}, {ic_v3_ci[1]:+.4f}]")
     else:
-        print(f"  v3: Insufficient data")
+        print("  v3: Insufficient data")
 
     if ic_v2_mean is not None and ic_v3_mean is not None:
         ic_diff = ic_v3_mean - ic_v2_mean
@@ -840,9 +840,9 @@ def run_comparison_backtest(
         if abs(ic_diff) < 0.02 or ci_overlap:
             print(f"  Assessment: SIMILAR performance (CIs overlap: {ci_overlap})")
         elif ic_diff > 0.02:
-            print(f"  Assessment: v3 OUTPERFORMS v2")
+            print("  Assessment: v3 OUTPERFORMS v2")
         else:
-            print(f"  Assessment: v2 OUTPERFORMS v3")
+            print("  Assessment: v2 OUTPERFORMS v3")
 
     print()
 
@@ -870,9 +870,9 @@ def run_comparison_backtest(
 
     if v2_total and v3_total:
         if v2_consistent / v2_total >= 0.9 and v3_consistent / v3_total >= 0.9:
-            print(f"  Status: PASS - IC and spread signs are consistent")
+            print("  Status: PASS - IC and spread signs are consistent")
         else:
-            print(f"  Status: WARNING - Some periods have inconsistent IC/spread signs")
+            print("  Status: WARNING - Some periods have inconsistent IC/spread signs")
     print()
 
     # ==========================================================================
@@ -889,14 +889,14 @@ def run_comparison_backtest(
         spread_v2_pos = sum(1 for x in spread_v2 if x > 0) / len(spread_v2) * 100
         print(f"  v2: Mean={spread_v2_mean:+.2%}, Positive={spread_v2_pos:.1f}%, N={len(spread_v2)}")
     else:
-        print(f"  v2: Insufficient data")
+        print("  v2: Insufficient data")
 
     if spread_v3:
         spread_v3_mean = mean(spread_v3)
         spread_v3_pos = sum(1 for x in spread_v3 if x > 0) / len(spread_v3) * 100
         print(f"  v3: Mean={spread_v3_mean:+.2%}, Positive={spread_v3_pos:.1f}%, N={len(spread_v3)}")
     else:
-        print(f"  v3: Insufficient data")
+        print("  v3: Insufficient data")
 
     print()
 
@@ -909,12 +909,12 @@ def run_comparison_backtest(
     if turnover_v2:
         print(f"  v2 Turnover: Mean={mean(turnover_v2):.1%}, N={len(turnover_v2)}")
     else:
-        print(f"  v2 Turnover: N/A")
+        print("  v2 Turnover: N/A")
 
     if turnover_v3:
         print(f"  v3 Turnover: Mean={mean(turnover_v3):.1%}, N={len(turnover_v3)}")
     else:
-        print(f"  v3 Turnover: N/A")
+        print("  v3 Turnover: N/A")
 
     dd_v2 = compute_drawdown(cumret_v2)
     dd_v3 = compute_drawdown(cumret_v3)
@@ -988,11 +988,11 @@ def run_comparison_backtest(
         print(f"  Range: [{rank_corr_min:.3f}, {rank_corr_max:.3f}]")
 
         if rank_corr_mean > 0.9:
-            print(f"  Assessment: VERY SIMILAR rankings")
+            print("  Assessment: VERY SIMILAR rankings")
         elif rank_corr_mean > 0.7:
-            print(f"  Assessment: MODERATELY similar rankings")
+            print("  Assessment: MODERATELY similar rankings")
         else:
-            print(f"  Assessment: SIGNIFICANTLY different rankings")
+            print("  Assessment: SIGNIFICANTLY different rankings")
 
     print()
     print("=" * 70)

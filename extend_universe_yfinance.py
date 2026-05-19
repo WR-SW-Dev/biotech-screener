@@ -97,7 +97,7 @@ def collect_market_data(ticker: str, end_date: datetime, as_of_date: str = None)
         xbi_hist = xbi.history(start=start_date, end=end_date)
 
         if len(xbi_hist) < 30:
-            print(f"✗ XBI data unavailable")
+            print("✗ XBI data unavailable")
             return None
 
         xbi_returns = xbi_hist["Close"].pct_change().dropna()
@@ -106,7 +106,7 @@ def collect_market_data(ticker: str, end_date: datetime, as_of_date: str = None)
         common_dates = returns.index.intersection(xbi_returns.index)
 
         if len(common_dates) < 20:
-            print(f"✗ Insufficient overlap with XBI")
+            print("✗ Insufficient overlap with XBI")
             return None
 
         correlation = float(returns.loc[common_dates].corr(xbi_returns.loc[common_dates]))

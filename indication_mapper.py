@@ -510,9 +510,9 @@ def demonstration():
     result_before = mapper.map_ticker("MRNA", ["vaccine"], before_effective)
     result_after = mapper.map_ticker("MRNA", ["vaccine"], after_effective)
 
-    print(f"MRNA as of 2019-06-01 (before v3 effective_from):")
+    print("MRNA as of 2019-06-01 (before v3 effective_from):")
     print(f"  source: {result_before['source']}")
-    print(f"MRNA as of 2021-01-01 (after v3 effective_from):")
+    print("MRNA as of 2021-01-01 (after v3 effective_from):")
     print(f"  source: {result_after['source']}")
     print()
 

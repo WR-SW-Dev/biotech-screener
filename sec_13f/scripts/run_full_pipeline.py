@@ -261,7 +261,7 @@ def main():
     sample = snapshots[2]
     print(f"   Cohorts: {list(sample['cohort_stats'].keys())}")
     print(f"   Weights: {sample['weights_used']}")
-    print(f"\n   Top 5 by Composite Score:")
+    print("\n   Top 5 by Composite Score:")
     print(f"   {'Ticker':<8} {'Score':>8} {'Rank':>6} {'Stage':<8} {'MCap':<8} {'Severity':<8}")
     print("   " + "-" * 50)
     for s in sample["ranked_securities"][:5]:
@@ -334,7 +334,7 @@ Pipeline Flow:
   Backtest → IC, quintile spreads, monotonicity
 """)
 
-    print(f"\nProvenance:")
+    print("\nProvenance:")
     print(f"  Metrics Version: {result['provenance']['metrics_version']}")
     print(f"  Ruleset Versions: {result['provenance']['module_ruleset_versions']}")
 

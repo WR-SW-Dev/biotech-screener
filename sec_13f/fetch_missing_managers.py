@@ -151,7 +151,7 @@ def main():
             filing, current_holdings, prior_holdings = fetch_manager_filings(m["cik"], fetcher)
 
             if filing is None:
-                print(f"  ❌ No filings found")
+                print("  ❌ No filings found")
                 error_count += 1
                 continue
 

@@ -343,7 +343,7 @@ def generate_report(universe_path: Path) -> None:
         print(f"\n❌ Error: {result['error']}")
         return
 
-    print(f"\n📊 COVERAGE SUMMARY")
+    print("\n📊 COVERAGE SUMMARY")
     print("-" * 80)
     print(f"Universe size: {result['universe_size']} tickers")
     print(f"Unique ETF constituents: {result['total_unique_etf_constituents']} tickers")
@@ -361,10 +361,10 @@ def generate_report(universe_path: Path) -> None:
         for i, ticker in enumerate(result["missing_from_universe"], 1):
             print(f"  {i:3d}. {ticker}")
 
-    if result["in_universe_but_not_etf"]:
+    if result["in_universe_but_not_et"]:
         print(f"\n📝 IN UNIVERSE BUT NOT IN ETFs ({len(result['in_universe_but_not_etf'])} tickers):")
         print("-" * 80)
-        for i, ticker in enumerate(result["in_universe_but_not_etf"], 1):
+        for i, ticker in enumerate(result["in_universe_but_not_et"], 1):
             print(f"  {i:3d}. {ticker}")
 
     print(f"\n{'='*80}")
@@ -373,13 +373,13 @@ def generate_report(universe_path: Path) -> None:
     if result["coverage_pct"] < 90:
         print(f"\n⚠️  WARNING: Coverage is {result['coverage_pct']:.1f}%")
         print(f"   You're missing {result['missing_count']} constituents from XBI/IBB/NBI")
-        print(f"   Consider expanding your universe to include all ETF constituents.")
+        print("   Consider expanding your universe to include all ETF constituents.")
     elif result["coverage_pct"] < 100:
         print(f"\n✅ Good coverage: {result['coverage_pct']:.1f}%")
         print(f"   Missing {result['missing_count']} constituents (likely recent additions or small caps)")
     else:
-        print(f"\n✅ COMPLETE COVERAGE: 100%")
-        print(f"   All XBI/IBB/NBI constituents are in your universe")
+        print("\n✅ COMPLETE COVERAGE: 100%")
+        print("   All XBI/IBB/NBI constituents are in your universe")
 
 
 def download_current_constituents() -> dict:

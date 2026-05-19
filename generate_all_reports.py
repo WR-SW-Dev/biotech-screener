@@ -211,7 +211,7 @@ def generate_all_reports(results_file):
 
             f.write("PORTFOLIO CONSTRUCTION\n")
             f.write(f"  Total Universe: {len(ranked)} securities\n")
-            f.write(f"  Top 60 Weight: 90.0% (1.50% each)\n")
+            f.write("  Top 60 Weight: 90.0% (1.50% each)\n")
             f.write(
                 f'  Score Range: {ranked[-1].get("composite_score","N/A")} - {ranked[0].get("composite_score","N/A")}\n\n'
             )

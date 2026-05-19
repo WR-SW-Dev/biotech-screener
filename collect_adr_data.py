@@ -408,9 +408,9 @@ def get_sec_fpi_data(cik: str) -> Optional[Dict[str, Any]]:
             "incorporation_code": state_code,
             "is_foreign_incorporation": is_foreign_incorporation,
             "is_fpi_by_filings": is_fpi,
-            "has_20f": has_20f,
+            "has_20": has_20f,
             "has_6k": has_6k,
-            "has_40f": has_40f,
+            "has_40": has_40f,
             "has_10k": has_10k,
             "has_10q": has_10q,
         }
@@ -504,7 +504,7 @@ def collect_adr_data(
     elif isinstance(universe, dict):
         securities = universe.get("active_securities", universe.get("securities", []))
     else:
-        print(f"\n[ERROR] Invalid universe format")
+        print("\n[ERROR] Invalid universe format")
         return 1
 
     ticker_cik_map = {}
@@ -569,9 +569,9 @@ def collect_adr_data(
         if sec_data:
             record["incorporation_country"] = sec_data.get("incorporation_country")
             record["incorporation_code"] = sec_data.get("incorporation_code")
-            record["has_20f"] = sec_data.get("has_20f", False)
+            record["has_20"] = sec_data.get("has_20", False)
             record["has_6k"] = sec_data.get("has_6k", False)
-            record["has_40f"] = sec_data.get("has_40f", False)
+            record["has_40"] = sec_data.get("has_40", False)
 
         # Determine ADR status
         is_foreign = country and country != "United States"
@@ -636,7 +636,7 @@ def collect_adr_data(
         c = r.get("country_of_origin") or "Unknown"
         countries[c] = countries.get(c, 0) + 1
 
-    print(f"\nCountry breakdown:")
+    print("\nCountry breakdown:")
     for country, count in sorted(countries.items(), key=lambda x: -x[1])[:15]:
         pct = 100 * count / len(tickers)
         print(f"  {country:<25} {count:>4} ({pct:>5.1f}%)")
@@ -649,7 +649,7 @@ def collect_adr_data(
             currencies[curr] = currencies.get(curr, 0) + 1
 
     if currencies:
-        print(f"\nNon-USD reporting currencies:")
+        print("\nNon-USD reporting currencies:")
         for curr, count in sorted(currencies.items(), key=lambda x: -x[1]):
             print(f"  {curr:<6} {count:>4}")
 

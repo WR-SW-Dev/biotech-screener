@@ -769,25 +769,25 @@ def demonstration() -> None:
 
     snapshot = collector.collect_snapshot(test_date)
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Yield Curve Slope: {snapshot.yield_curve_slope_bps or 'N/A'} bps")
     print(f"  HY Credit Spread:  {snapshot.hy_credit_spread_bps or 'N/A'} bps")
     print(f"  Fund Flows (XBI):  {snapshot.biotech_fund_flows_mm or 'N/A'} MM")
 
     print(f"\nData Quality: {snapshot.data_quality.get('completeness', 'N/A')}")
     if snapshot.data_quality.get("errors"):
-        print(f"  Errors:")
+        print("  Errors:")
         for err in snapshot.data_quality["errors"]:
             print(f"    - {err}")
 
     # Show provenance details
-    print(f"\nData Sources:")
+    print("\nData Sources:")
     for source_name, meta in snapshot.provenance.get("sources", {}).items():
         status = "OK" if not meta.get("error") else f"Error: {meta.get('error', '')[:50]}"
         obs_date = meta.get("observation_date", meta.get("as_of_date", "N/A"))
         print(f"  {source_name}: {status} (date: {obs_date})")
 
-    print(f"\nRegime Engine Parameters:")
+    print("\nRegime Engine Parameters:")
     params = collector.to_regime_engine_params(snapshot)
     for key, value in params.items():
         print(f"  {key}: {value}")

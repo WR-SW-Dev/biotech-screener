@@ -683,4 +683,4 @@ if __name__ == "__main__":
     # Save
     with open("momentum_results.json", "w") as f:
         json.dump(result, f, indent=2, default=str)
-    print(f"\nSaved to momentum_results.json")
+    print("\nSaved to momentum_results.json")

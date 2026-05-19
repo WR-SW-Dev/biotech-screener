@@ -164,7 +164,7 @@ class Snapshot:
             "snapshot_id": self.snapshot_id,
             "as_of_date": self.as_of_date.isoformat(),
             "generated_at": self.generated_at,
-            "pit_cutoff": self.pit_cutoff.isoformat(),
+            "pit_cuto": self.pit_cutoff.isoformat(),
             "pit_lag_days": self.pit_lag_days,
             "provenance": self.provenance,
             "input_hashes": self.input_hashes,
@@ -279,7 +279,7 @@ def generate_snapshot(config: SnapshotConfig) -> Snapshot:
 
     # Build provenance
     provenance = {
-        "pit_cutoff": config.pit_cutoff.isoformat(),
+        "pit_cuto": config.pit_cutoff.isoformat(),
         "providers": {
             "clinical": {
                 "name": clinical_result.provider_name,
@@ -374,7 +374,7 @@ def main() -> None:
 
     # Required arguments
     parser.add_argument(
-        "--as-of",
+        "--as-o",
         type=lambda s: date.fromisoformat(s),
         required=True,
         help="Snapshot date (YYYY-MM-DD)",
@@ -460,7 +460,7 @@ def main() -> None:
     output_file = save_snapshot(snapshot, config.output_dir)
 
     # Summary
-    print(f"\nSnapshot generated successfully!")
+    print("\nSnapshot generated successfully!")
     print(f"  Snapshot ID: {snapshot.snapshot_id}")
     print(f"  As-of date: {snapshot.as_of_date}")
     print(f"  PIT cutoff: {snapshot.pit_cutoff}")

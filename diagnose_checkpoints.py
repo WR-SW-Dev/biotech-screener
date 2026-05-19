@@ -35,7 +35,7 @@ try:
     with open(first_file) as f:
         data = json.load(f)
 
-    print(f"Top-level keys in JSON:")
+    print("Top-level keys in JSON:")
     for key in data.keys():
         value = data[key]
         if isinstance(value, list):
@@ -64,7 +64,7 @@ try:
                 print(f"  Sample keys: {list(securities[0].keys())}")
                 if "ticker" in securities[0]:
                     tickers_found.extend([s.get("ticker") for s in securities if s.get("ticker")])
-                    print(f"  ✓ Found 'ticker' field")
+                    print("  ✓ Found 'ticker' field")
                     print(f"  Sample tickers: {tickers_found[:5]}")
 
     # Method 2: results
@@ -76,7 +76,7 @@ try:
                 print(f"  Sample keys: {list(results[0].keys())}")
                 if "ticker" in results[0]:
                     tickers_found.extend([s.get("ticker") for s in results if s.get("ticker")])
-                    print(f"  ✓ Found 'ticker' field")
+                    print("  ✓ Found 'ticker' field")
 
     # Method 3: Direct list at top level
     for key, value in data.items():

@@ -228,7 +228,7 @@ def main(aact_folder):
     print(f"  → Interventional:                  {interventional_count:>10,}")
     print(f"  → Clinical Phase (1-3):            {clinical_phase_count:>10,}")
     print(f"  → With Drug/Bio intervention:      {len(biotech_ncts):>10,}")
-    print(f"  ─────────────────────────────────────────────")
+    print("  ─────────────────────────────────────────────")
     print(f"  BIOTECH FILTER PASS:               {full_filter_count:>10,}")
 
     if passing_studies:

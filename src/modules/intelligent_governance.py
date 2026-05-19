@@ -1788,7 +1788,7 @@ def demonstration() -> None:
         print(f"  Governance Flags: {result.governance_flags}")
 
         if result.interaction_result.effects:
-            print(f"  Interaction Effects:")
+            print("  Interaction Effects:")
             for effect in result.interaction_result.effects:
                 print(f"    - {effect.name}: {effect.adjustment:+} ({effect.business_logic})")
 

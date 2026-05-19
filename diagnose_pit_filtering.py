@@ -141,7 +141,7 @@ def diagnose_pit_coverage(trial_records_path="production_data/trial_records.json
             print()
 
         if unparsed:
-            print(f"⚠️  Unparseable date formats found:")
+            print("⚠️  Unparseable date formats found:")
             for val in unparsed[:5]:
                 print(f"  '{val}'")
             print()

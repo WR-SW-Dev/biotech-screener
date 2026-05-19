@@ -31,15 +31,15 @@ def fix_run_screen():
     new_line = 'data_dir / "financial_records.json"'
 
     if old_line not in content:
-        print(f"  ⚠️  Line not found or already fixed")
+        print("  ⚠️  Line not found or already fixed")
         print(f"     Looking for: {old_line}")
 
         # Check if already fixed
         if new_line in content:
-            print(f"  ✅ Already using financial_records.json")
+            print("  ✅ Already using financial_records.json")
             return True
         else:
-            print(f"  ❌ Neither old nor new line found - manual fix needed")
+            print("  ❌ Neither old nor new line found - manual fix needed")
             return False
 
     # Apply fix
@@ -49,7 +49,7 @@ def fix_run_screen():
     with open(file_path, "w") as f:
         f.write(content)
 
-    print(f"  ✅ Fixed! Changed: financial.json → financial_records.json")
+    print("  ✅ Fixed! Changed: financial.json → financial_records.json")
     return True
 
 
@@ -88,14 +88,14 @@ def fix_module_5_composite():
             break
 
     if not found_call:
-        print(f"  ❌ Could not find enrich_with_defensive_overlays call")
+        print("  ❌ Could not find enrich_with_defensive_overlays call")
         return False
 
     if already_has_topn:
         return True
 
     if insert_line is None:
-        print(f"  ❌ Could not find apply_position_sizing=True line")
+        print("  ❌ Could not find apply_position_sizing=True line")
         return False
 
     # Insert top_n parameter

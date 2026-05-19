@@ -45,7 +45,7 @@ def extract_sponsor_mapping(trial_records_path: str = "trial_records.json") -> d
     total_sponsors = sum(len(sponsors) for sponsors in mapping_dict.values())
     avg_sponsors = total_sponsors / total_tickers if total_tickers > 0 else 0
 
-    print(f"\nExtracted mapping:")
+    print("\nExtracted mapping:")
     print(f"  Tickers: {total_tickers}")
     print(f"  Total sponsor names: {total_sponsors}")
     print(f"  Avg sponsors per ticker: {avg_sponsors:.1f}")

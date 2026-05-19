@@ -139,7 +139,7 @@ def apply_universe_gate(tickers: List[str], data_dir: str = "production_data", v
         print(f"Rejected: {len(rejected)} ({len(rejected)/len(tickers)*100:.1f}%)")
 
         if rejected:
-            print(f"\nRejected tickers (not in XBI/IBB/NBI):")
+            print("\nRejected tickers (not in XBI/IBB/NBI):")
             for i, ticker in enumerate(sorted(rejected)[:20], 1):
                 print(f"  {i}. {ticker}")
             if len(rejected) > 20:

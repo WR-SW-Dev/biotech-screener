@@ -452,7 +452,7 @@ def _run_self_checks() -> List[str]:
     # CHECK 3: Staleness should apply penalty for 7-month-old Phase 3
     # (Phase 3 has 180-day max staleness)
     if "staleness_penalty" not in str(adjustment.adjustments_applied):
-        errors.append(f"CHECK3 FAIL: Staleness penalty not applied for stale Phase 3")
+        errors.append("CHECK3 FAIL: Staleness penalty not applied for stale Phase 3")
 
     # CHECK 4: Clamp bounds
     if adjustment.clinical_adjustment < Decimal("0.70"):

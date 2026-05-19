@@ -121,7 +121,7 @@ class CrossValidationChecker:
                         category=CheckCategory.CROSS_VALIDATION,
                         ticker=sec.ticker,
                         check_name="revenue_timeline_mismatch",
-                        message=f"Pre-revenue company ranked #1 without Phase 3 catalyst within 12 months",
+                        message="Pre-revenue company ranked #1 without Phase 3 catalyst within 12 months",
                         details={
                             "rank": sec.rank,
                             "lead_phase": sec.lead_phase,

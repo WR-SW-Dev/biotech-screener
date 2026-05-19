@@ -45,7 +45,7 @@ def process_xbi_csv():
                     break
 
         if header_idx is None:
-            print(f"  ❌ Could not find data header")
+            print("  ❌ Could not find data header")
             return []
 
         # Try to parse from header onwards
@@ -114,7 +114,7 @@ def process_ibb_csv():
                     break
 
             if not ticker_col:
-                print(f"  ❌ No ticker column found")
+                print("  ❌ No ticker column found")
                 return []
 
             tickers = []
@@ -147,7 +147,7 @@ def process_nbi_excel():
             nbi_file = Path("etf_csvs/NBI_holdings.csv")
 
     if not nbi_file.exists():
-        print(f"  ❌ NBI file not found")
+        print("  ❌ NBI file not found")
         return []
 
     try:
@@ -167,7 +167,7 @@ def process_nbi_excel():
                 break
 
         if not ticker_col:
-            print(f"  ❌ No ticker column found")
+            print("  ❌ No ticker column found")
             print(f"     Columns: {list(df.columns)}")
             return []
 
@@ -219,7 +219,7 @@ def main():
     with open("etf_holdings_complete.json", "w") as f:
         json.dump(holdings, f, indent=2, sort_keys=True)
 
-    print(f"\n✅ Saved to: etf_holdings_complete.json")
+    print("\n✅ Saved to: etf_holdings_complete.json")
 
     # Overlap analysis
     xbi_set = set(xbi_tickers)
@@ -237,7 +237,7 @@ def main():
     print(f"NBI only: {len(nbi_set - xbi_set - ibb_set)} tickers")
 
     # Sample
-    print(f"\n📋 Sample of all tickers (first 20):")
+    print("\n📋 Sample of all tickers (first 20):")
     for i, ticker in enumerate(sorted(all_tickers)[:20], 1):
         in_xbi = "✓" if ticker in xbi_set else "✗"
         in_ibb = "✓" if ticker in ibb_set else "✗"

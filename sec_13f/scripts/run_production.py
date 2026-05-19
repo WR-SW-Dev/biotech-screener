@@ -168,7 +168,7 @@ def run_production_pipeline(
 
     # Show top 10
     print(f"\n   {'='*50}")
-    print(f"   TOP 10 SECURITIES")
+    print("   TOP 10 SECURITIES")
     print(f"   {'='*50}")
     print(f"   {'Rank':<6} {'Ticker':<8} {'Score':>8} {'Stage':<8} {'Phase':<12}")
     print(f"   {'-'*50}")

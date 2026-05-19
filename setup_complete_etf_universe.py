@@ -55,7 +55,7 @@ def main():
 
     if len(csv_files) < 3:
         print(f"\n⚠️  Only {len(csv_files)}/3 ETFs downloaded automatically")
-        print(f"   Some may require manual download (see instructions above)")
+        print("   Some may require manual download (see instructions above)")
 
         response = input("\nContinue with available CSVs? (yes/no): ")
         if response.lower() not in ["yes", "y"]:

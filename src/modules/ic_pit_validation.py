@@ -170,7 +170,7 @@ def validate_adaptive_weight_pit(
 
     # Compute embargo cutoff
     embargo_cutoff = as_of_date - timedelta(days=embargo_days)
-    details["embargo_cutoff"] = embargo_cutoff.isoformat()
+    details["embargo_cuto"] = embargo_cutoff.isoformat()
 
     # Check 1: All scores must have as_of_date field and be before embargo
     scores_after_embargo = []
@@ -302,7 +302,7 @@ def validate_peer_valuation_pit(
     }
 
     pit_cutoff = as_of_date - timedelta(days=1)
-    details["pit_cutoff"] = pit_cutoff.isoformat()
+    details["pit_cuto"] = pit_cutoff.isoformat()
 
     peers_without_snapshot = []
     peers_after_pit = []
@@ -341,7 +341,7 @@ def validate_peer_valuation_pit(
     if peers_without_snapshot and len(peers_without_snapshot) > len(peer_valuations) * 0.5:
         status = ValidationStatus.WARNING
         violations.append(
-            f"More than 50% of peers lack snapshot_date metadata - " f"valuation signal reliability reduced"
+            "More than 50% of peers lack snapshot_date metadata - " "valuation signal reliability reduced"
         )
 
     return PITValidationResult(
@@ -466,7 +466,7 @@ def validate_weight_stability(
     if l1_change > max_l1_change:
         violations.append(
             f"Weight L1 change ({l1_change}) exceeds maximum ({max_l1_change}). "
-            f"This may indicate overfitting or regime instability."
+            "This may indicate overfitting or regime instability."
         )
 
     status = ValidationStatus.PASSED if not violations else ValidationStatus.FAILED

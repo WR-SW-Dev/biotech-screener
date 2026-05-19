@@ -239,7 +239,7 @@ class DomainExpertChecker:
                             category=CheckCategory.DOMAIN_EXPERT,
                             ticker=trial.ticker,
                             check_name="regulatory_path_risk",
-                            message=f"Phase 2 rare disease with survival primary endpoint",
+                            message="Phase 2 rare disease with survival primary endpoint",
                             details={
                                 "nct_id": trial.nct_id,
                                 "indication": trial.indication,
@@ -258,7 +258,7 @@ class DomainExpertChecker:
                         category=CheckCategory.DOMAIN_EXPERT,
                         ticker=trial.ticker,
                         check_name="accelerated_approval_review",
-                        message=f"Accelerated approval path flagged - verify confirmatory trial plan",
+                        message="Accelerated approval path flagged - verify confirmatory trial plan",
                         details={
                             "nct_id": trial.nct_id,
                             "indication": trial.indication,

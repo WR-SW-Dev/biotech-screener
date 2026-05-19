@@ -75,7 +75,7 @@ def expand_universe(
             "sector": "Biotechnology",
             "market_cap": None,  # Populate later
             "status": "active",
-            "added_from_etf": True,
+            "added_from_et": True,
             "added_date": date.today().isoformat(),
             "sources": [],
         }
@@ -181,19 +181,19 @@ Note:
     )
 
     # Report
-    print(f"\n📊 EXPANSION SUMMARY")
+    print("\n📊 EXPANSION SUMMARY")
     print("-" * 80)
     print(f"Original universe: {result['original_size']} tickers")
     print(f"Expanded universe: {result['expanded_size']} tickers")
     print(f"Added: {result['added_count']} tickers")
 
-    print(f"\n✅ ETFs INCLUDED:")
+    print("\n✅ ETFs INCLUDED:")
     if include_xbi:
-        print(f"   • XBI (SPDR S&P Biotech)")
+        print("   • XBI (SPDR S&P Biotech)")
     if include_ibb:
-        print(f"   • IBB (iShares Biotechnology)")
+        print("   • IBB (iShares Biotechnology)")
     if include_nbi:
-        print(f"   • NBI (Nasdaq Biotechnology)")
+        print("   • NBI (Nasdaq Biotechnology)")
 
     if result["added_count"] > 0:
         print(f"\n📝 ADDED TICKERS ({result['added_count']}):")
@@ -202,16 +202,16 @@ Note:
             print(f"  {i:3d}. {ticker}")
 
     if args.dry_run:
-        print(f"\n⚠️  DRY RUN: No files modified")
+        print("\n⚠️  DRY RUN: No files modified")
         print(f"   Preview saved to: {output_path}")
     else:
         print(f"\n✅ Expanded universe saved to: {output_path}")
-        print(f"\n⚠️  IMPORTANT: New securities have placeholder data!")
-        print(f"   Run these commands to populate full data:")
-        print(f"   1. Fetch market cap / company info")
-        print(f"   2. Fetch financial data")
-        print(f"   3. Fetch clinical trials")
-        print(f"\n   Or run your data collection pipeline with the new universe.")
+        print("\n⚠️  IMPORTANT: New securities have placeholder data!")
+        print("   Run these commands to populate full data:")
+        print("   1. Fetch market cap / company info")
+        print("   2. Fetch financial data")
+        print("   3. Fetch clinical trials")
+        print("\n   Or run your data collection pipeline with the new universe.")
 
     print(f"\n{'='*80}\n")
 

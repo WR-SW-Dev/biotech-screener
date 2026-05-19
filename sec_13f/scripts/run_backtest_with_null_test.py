@@ -214,7 +214,7 @@ def main():
     else:
         z_score = 0
 
-    print(f"\n3. Statistical Test:")
+    print("\n3. Statistical Test:")
     print(f"   Z-score: {z_score:.2f}")
 
     if abs(z_score) < 1.96:
@@ -224,7 +224,7 @@ def main():
         print(f"   Result: IC significantly {'higher' if z_score > 0 else 'lower'} than null (p < 0.05)")
 
     # Expected null IC for N=25
-    print(f"\n4. Theoretical Null Analysis:")
+    print("\n4. Theoretical Null Analysis:")
     expected_null_std = 1 / (25**0.5)  # ~0.2 for N=25
     print(f"   Expected null std (1/√N): ±{expected_null_std:.3f}")
     print(f"   Observed null std:        ±{null_std:.3f}")

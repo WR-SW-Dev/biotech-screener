@@ -417,7 +417,7 @@ def validate_cohort_coverage(snapshots: List[Dict]) -> Dict[str, Any]:
         status = "✓" if fallback == "normal" else "→"
         print(f"  {cohort:<25} {min_count:>6} {max_count:>6} {status} {fallback:<12}")
 
-    print(f"\n  Fallback Summary:")
+    print("\n  Fallback Summary:")
     print(f"    Normal cohorts:     {fallback_counts['normal']}")
     print(f"    Stage-only fallback: {fallback_counts['stage_only']}")
     print(f"    No normalization:   {fallback_counts['none']}")
@@ -463,7 +463,7 @@ def validate_asof_alignment(snapshots: List[Dict], provider: CSVReturnsProvider)
         if start_dt <= as_of_dt:
             violations.append(
                 {
-                    "as_of": as_of,
+                    "as_o": as_of,
                     "return_start": start_date,
                     "issue": "return_start <= as_of (T+0 leakage)",
                 }
@@ -607,7 +607,7 @@ def main():
         print(f"    {symbol} {name}")
 
     print(f"\n  Manifest Entry: {entry.run_id}")
-    print(f"  Reproducibility: Run with same config hash to verify")
+    print("  Reproducibility: Run with same config hash to verify")
 
 
 if __name__ == "__main__":

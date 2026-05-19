@@ -361,20 +361,20 @@ class AuditReport:
     def generate_markdown(self) -> str:
         """Generate markdown report suitable for documentation."""
         lines = [
-            f"# Institutional Audit Report",
-            f"",
+            "# Institutional Audit Report",
+            "",
             f"**Report ID:** {self.report_id}",
             f"**Generated:** {self.generated_at}",
             f"**Codebase Version:** {self.codebase_version}",
             f"**Overall Grade:** {self.overall_grade.value}",
             f"**Status:** {'PASSED' if self.overall_passed else 'FAILED'}",
-            f"",
-            f"## Executive Summary",
-            f"",
+            "",
+            "## Executive Summary",
+            "",
             self.executive_summary,
-            f"",
-            f"## Tier Results",
-            f"",
+            "",
+            "## Tier Results",
+            "",
         ]
 
         for tr in self.tier_results:
@@ -382,20 +382,20 @@ class AuditReport:
             lines.extend(
                 [
                     f"### {tr.tier.value.replace('_', ' ').title()} - Grade: {tr.grade.value} {status}",
-                    f"",
+                    "",
                     tr.summary,
-                    f"",
+                    "",
                     f"- Critical Findings: {tr.critical_count}",
                     f"- High Findings: {tr.high_count}",
-                    f"",
+                    "",
                 ]
             )
 
         if self.recommendations:
             lines.extend(
                 [
-                    f"## Recommendations",
-                    f"",
+                    "## Recommendations",
+                    "",
                 ]
             )
             for i, rec in enumerate(self.recommendations, 1):
@@ -405,28 +405,28 @@ class AuditReport:
         if self.critical_findings:
             lines.extend(
                 [
-                    f"## Critical Findings Requiring Immediate Attention",
-                    f"",
+                    "## Critical Findings Requiring Immediate Attention",
+                    "",
                 ]
             )
             for f in self.critical_findings:
                 lines.extend(
                     [
                         f"### {f.finding_id}: {f.title}",
-                        f"",
+                        "",
                         f"**Location:** {f.location}",
-                        f"",
+                        "",
                         f"{f.description}",
-                        f"",
-                        f"**Evidence:**",
-                        f"```",
+                        "",
+                        "**Evidence:**",
+                        "```",
                         f.evidence,
-                        f"```",
-                        f"",
+                        "```",
+                        "",
                         f"**Remediation:** {f.remediation}",
-                        f"",
+                        "",
                         f"**Compliance Impact:** {f.compliance_impact}",
-                        f"",
+                        "",
                     ]
                 )
 

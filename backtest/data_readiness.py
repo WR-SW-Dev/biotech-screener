@@ -433,7 +433,7 @@ def print_preflight_report(preflight: Dict[str, Any]) -> None:
 
     # Schema validation
     schema = preflight.get("schema_validation", {})
-    print(f"\nSchema Validation:")
+    print("\nSchema Validation:")
     print(f"  Rows read:     {schema.get('rows_read', 'N/A')}")
     print(f"  Rows valid:    {schema.get('rows_valid', 'N/A')}")
     print(f"  Tickers loaded:{schema.get('tickers_loaded', 'N/A')}")
@@ -443,14 +443,14 @@ def print_preflight_report(preflight: Dict[str, Any]) -> None:
 
     # Date coverage
     date_cov = preflight.get("date_coverage", {})
-    print(f"\nDate Coverage:")
+    print("\nDate Coverage:")
     print(f"  Min date:      {date_cov.get('min_date', 'N/A')}")
     print(f"  Max date:      {date_cov.get('max_date', 'N/A')}")
     print(f"  Trading days:  {date_cov.get('n_trading_days', 'N/A')}")
 
     # Ticker coverage
     ticker_cov = preflight.get("ticker_coverage", {})
-    print(f"\nTicker Coverage:")
+    print("\nTicker Coverage:")
     print(f"  Tickers:       {ticker_cov.get('n_tickers', 'N/A')}")
     print(f"  Avg coverage:  {ticker_cov.get('avg_coverage_pct', 'N/A')}%")
     print(f"  Min coverage:  {ticker_cov.get('min_coverage_pct', 'N/A')}%")
@@ -461,7 +461,7 @@ def print_preflight_report(preflight: Dict[str, Any]) -> None:
 
     # Missingness
     miss = preflight.get("missingness_breakdown", {})
-    print(f"\nMissingness Breakdown:")
+    print("\nMissingness Breakdown:")
     print(f"  Tickers absent:    {miss.get('ticker_absent_entirely', 0)}")
     print(f"  Invalid prices:    {miss.get('rows_with_invalid_price', 0)}")
     print(f"  Invalid dates:     {miss.get('rows_with_invalid_date', 0)}")
@@ -469,7 +469,7 @@ def print_preflight_report(preflight: Dict[str, Any]) -> None:
 
     # Trading calendar
     cal = preflight.get("trading_calendar", {})
-    print(f"\nTrading Calendar:")
+    print("\nTrading Calendar:")
     print(f"  Type: {cal.get('type', 'unknown')} (dates present in file)")
     print(f"  Days: {cal.get('n_days', 0)}")
 

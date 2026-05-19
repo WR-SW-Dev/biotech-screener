@@ -108,7 +108,7 @@ def get_holdings_fmp(symbol: str, api_key: str) -> List[str]:
     data = response.json()
 
     if not data:
-        print(f"    ❌ No data returned")
+        print("    ❌ No data returned")
         return []
 
     # FMP returns list of holdings
@@ -198,7 +198,7 @@ def download_all_etf_holdings(method: str = "csv", api_key: str = None, csv_dir:
             print(f"  ✅ NBI: {len(holdings['nbi'])} holdings")
         else:
             print(f"  ⚠️  NBI CSV not found: {nbi_csv}")
-            print(f"     Download from: https://indexes.nasdaqomx.com/Index/Weighting/NBI")
+            print("     Download from: https://indexes.nasdaqomx.com/Index/Weighting/NBI")
 
     elif method == "alphavantage":
         if not api_key:

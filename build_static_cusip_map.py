@@ -288,7 +288,7 @@ def validate_static_map(static_map_path: Path) -> None:
                 seen_tickers[ticker] = cusip
 
     # Report
-    print(f"\nValidation Results:")
+    print("\nValidation Results:")
     print(f"  Entries: {len(static_map)}")
     print(f"  Errors: {len(errors)}")
     print(f"  Warnings: {len(warnings)}")
@@ -333,8 +333,8 @@ def show_statistics(static_map_path: Path, universe_path: Path) -> None:
     covered = mapped_tickers & universe_tickers
     missing = universe_tickers - mapped_tickers
 
-    print(f"\nStatic Map Coverage Statistics")
-    print(f"=" * 50)
+    print("\nStatic Map Coverage Statistics")
+    print("=" * 50)
     print(f"Universe tickers:     {len(universe_tickers)}")
     print(f"Static map entries:   {len(static_map)}")
     print(
@@ -343,7 +343,7 @@ def show_statistics(static_map_path: Path, universe_path: Path) -> None:
     print(f"Missing:              {len(missing)}")
 
     if missing and len(missing) <= 20:
-        print(f"\nMissing tickers:")
+        print("\nMissing tickers:")
         for ticker in sorted(missing):
             print(f"  - {ticker}")
 

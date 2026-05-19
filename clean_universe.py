@@ -34,7 +34,7 @@ print(f"Removed: {len(universe) - len(clean_universe)}")
 
 # Show what was removed
 removed_tickers = [s.get("ticker", "") for s in universe if not is_valid_ticker(s.get("ticker", ""))]
-print(f"\nRemoved tickers:")
+print("\nRemoved tickers:")
 for t in removed_tickers:
     display = t[:80] + "..." if len(t) > 80 else t
     print(f"  - {repr(display)}")
@@ -48,5 +48,5 @@ print(f"\n✅ Backup saved: {backup_name}")
 with open("production_data/universe.json", "w") as f:
     json.dump(clean_universe, f, indent=2)
 
-print(f"✅ Cleaned universe saved to: production_data/universe.json")
-print(f"\nYou can now re-run: python test_morningstar_universe.py")
+print("✅ Cleaned universe saved to: production_data/universe.json")
+print("\nYou can now re-run: python test_morningstar_universe.py")

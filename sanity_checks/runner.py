@@ -281,7 +281,7 @@ class SanityCheckRunner:
                             level=ReviewLevel(req_dict["level"]),
                             reasons=req_dict["reasons"],
                             requires_memo=req_dict["requires_memo"],
-                            requires_sign_off=req_dict["requires_sign_off"],
+                            requires_sign_off=req_dict["requires_sign_o"],
                             blocking=req_dict["blocking"],
                         )
                     )
@@ -461,20 +461,20 @@ def print_validation_summary(report: ValidationReport) -> None:
     print("-" * 70)
 
     # Flag summary
-    print(f"\nFlag Summary:")
+    print("\nFlag Summary:")
     print(f"  Total: {report.total_flags}")
     print(f"  Critical: {len(report.critical_flags)}")
     print(f"  High: {len(report.high_flags)}")
 
     # Check results
-    print(f"\nCheck Results:")
+    print("\nCheck Results:")
     for result in report.check_results:
         status = "PASS" if result.passed else "FAIL"
         print(f"  [{status}] {result.check_name}: {len(result.flags)} flags")
 
     # Critical flags detail
     if report.critical_flags:
-        print(f"\nCRITICAL FLAGS (must fix before IC):")
+        print("\nCRITICAL FLAGS (must fix before IC):")
         for flag in report.critical_flags:
             ticker = flag.ticker or "GLOBAL"
             print(f"  [{ticker}] {flag.check_name}")
@@ -484,7 +484,7 @@ def print_validation_summary(report: ValidationReport) -> None:
 
     # Review requirements
     if report.review_requirements:
-        print(f"\nReview Requirements:")
+        print("\nReview Requirements:")
         blocking = [r for r in report.review_requirements if r.blocking]
         if blocking:
             print(f"  BLOCKING ({len(blocking)}):")

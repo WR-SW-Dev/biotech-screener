@@ -90,7 +90,7 @@ def diagnose_checkpoints(checkpoint_dir="checkpoints"):
                     all_tickers.add(ticker)
             if all_tickers:
                 extraction_method = "data.ranked_securities"
-                print(f"  Found 'ticker' field")
+                print("  Found 'ticker' field")
 
     # Method 2: ranked_securities (top level)
     if not all_tickers and "ranked_securities" in data:
@@ -105,7 +105,7 @@ def diagnose_checkpoints(checkpoint_dir="checkpoints"):
                     all_tickers.add(ticker)
             if all_tickers:
                 extraction_method = "ranked_securities"
-                print(f"  Found 'ticker' field")
+                print("  Found 'ticker' field")
 
     # Method 3: results
     if not all_tickers and "results" in data:
@@ -120,7 +120,7 @@ def diagnose_checkpoints(checkpoint_dir="checkpoints"):
                     all_tickers.add(ticker)
             if all_tickers:
                 extraction_method = "results"
-                print(f"  Found 'ticker' field")
+                print("  Found 'ticker' field")
 
     # Method 4: securities
     if not all_tickers and "securities" in data:
@@ -135,7 +135,7 @@ def diagnose_checkpoints(checkpoint_dir="checkpoints"):
                     all_tickers.add(ticker)
             if all_tickers:
                 extraction_method = "securities"
-                print(f"  Found 'ticker' field")
+                print("  Found 'ticker' field")
 
     print()
 

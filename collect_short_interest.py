@@ -177,7 +177,7 @@ def collect_short_interest(
         securities = universe.get("active_securities", universe.get("securities", []))
         tickers = [s.get("ticker") for s in securities if s.get("ticker")]
     else:
-        print(f"\n❌ ERROR: Invalid universe format")
+        print("\n❌ ERROR: Invalid universe format")
         return 1
 
     print(f"\nUniverse: {len(tickers)} tickers")
@@ -240,7 +240,7 @@ def collect_short_interest(
         avg_si = sum(si_values) / len(si_values)
         max_si = max(si_values)
         high_si_count = sum(1 for v in si_values if v > 20)
-        print(f"\nShort Interest Stats:")
+        print("\nShort Interest Stats:")
         print(f"  Average SI%:    {avg_si:.1f}%")
         print(f"  Max SI%:        {max_si:.1f}%")
         print(f"  High SI (>20%): {high_si_count} tickers")

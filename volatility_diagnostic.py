@@ -86,8 +86,8 @@ def diagnose_volatility_bug():
     print("VOLATILITY DIAGNOSTIC REPORT")
     print("=" * 70)
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Period: 1 year lookback")
-    print(f"Method: Log returns, annualized with sqrt(252)")
+    print("Period: 1 year lookback")
+    print("Method: Log returns, annualized with sqrt(252)")
     print()
 
     results = []

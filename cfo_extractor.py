@@ -170,7 +170,7 @@ def parse_xbrl_filing(filing_path: Path, ticker: str) -> List[CFORecord]:
             tag_end = match.end()
             context_window = content[max(0, tag_start - 500) : min(len(content), tag_end + 500)]
 
-            decimals_pattern = rf'decimals="(-?\d+)"'
+            decimals_pattern = r'decimals="(-?\d+)"'
             decimals_match = re.search(decimals_pattern, context_window, re.IGNORECASE)
 
             if decimals_match:

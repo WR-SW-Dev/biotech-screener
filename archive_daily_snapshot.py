@@ -117,7 +117,7 @@ class SnapshotArchiver:
             logger.warning("Using existing trial_records.json (may be stale)")
             return False
 
-        logger.info(f"Fetching fresh CT.gov data...")
+        logger.info("Fetching fresh CT.gov data...")
         try:
             result = subprocess.run(
                 [sys.executable, str(fetch_script), "--as-of-date", as_of_date.isoformat()],
@@ -422,7 +422,7 @@ Cron setup (recommended: 2 AM daily):
         start_date = end_date - timedelta(days=args.days)
         coverage = archiver.get_snapshot_coverage(start_date, end_date)
 
-        print(f"\nSnapshot Coverage Report:")
+        print("\nSnapshot Coverage Report:")
         print("-" * 60)
         print(f"  Date range: {coverage['start_date']} to {coverage['end_date']}")
         print(f"  Total days: {coverage['total_days']}")

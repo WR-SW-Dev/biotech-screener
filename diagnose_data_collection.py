@@ -45,7 +45,7 @@ def analyze_data_coverage(universe_path: str = "production_data/universe.json"):
         else:
             fin_missing.append(ticker)
 
-    print(f"\n📊 FINANCIAL DATA (Module 2):")
+    print("\n📊 FINANCIAL DATA (Module 2):")
     print(f"  Complete: {len(fin_complete)}/{total} ({len(fin_complete)/total*100:.1f}%)")
     print(f"  Missing:  {len(fin_missing)}/{total} ({len(fin_missing)/total*100:.1f}%)")
     if len(fin_complete) > 0 and len(fin_complete) <= 10:
@@ -63,7 +63,7 @@ def analyze_data_coverage(universe_path: str = "production_data/universe.json"):
         else:
             cat_missing.append(ticker)
 
-    print(f"\n📅 CATALYST DATA (Module 3):")
+    print("\n📅 CATALYST DATA (Module 3):")
     print(f"  Complete: {len(cat_complete)}/{total} ({len(cat_complete)/total*100:.1f}%)")
     print(f"  Missing:  {len(cat_missing)}/{total} ({len(cat_missing)/total*100:.1f}%)")
     if len(cat_complete) > 0 and len(cat_complete) <= 10:
@@ -79,7 +79,7 @@ def analyze_data_coverage(universe_path: str = "production_data/universe.json"):
         else:
             clin_missing.append(ticker)
 
-    print(f"\n🔬 CLINICAL DATA (Module 4):")
+    print("\n🔬 CLINICAL DATA (Module 4):")
     print(f"  Complete: {len(clin_complete)}/{total} ({len(clin_complete)/total*100:.1f}%)")
     print(f"  Missing:  {len(clin_missing)}/{total} ({len(clin_missing)/total*100:.1f}%)")
     if len(clin_complete) > 0 and len(clin_complete) <= 10:
@@ -95,7 +95,7 @@ def analyze_data_coverage(universe_path: str = "production_data/universe.json"):
         else:
             def_missing.append(ticker)
 
-    print(f"\n🛡️  DEFENSIVE FEATURES:")
+    print("\n🛡️  DEFENSIVE FEATURES:")
     print(f"  Complete: {len(def_complete)}/{total} ({len(def_complete)/total*100:.1f}%)")
     print(f"  Missing:  {len(def_missing)}/{total} ({len(def_missing)/total*100:.1f}%)")
     if len(def_missing) > 0 and len(def_missing) <= 10:

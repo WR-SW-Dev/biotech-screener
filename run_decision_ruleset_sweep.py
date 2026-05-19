@@ -490,7 +490,7 @@ def run_holdout_validation(
     if not early_dates or not late_dates:
         return {
             "error": f"Cannot split: {len(early_dates)} early, {len(late_dates)} late",
-            "cutoff": cutoff,
+            "cuto": cutoff,
             "candidates": [],
         }
 
@@ -563,7 +563,7 @@ def run_holdout_validation(
     passing.sort(key=lambda x: x["late_delta_ac_resid_60d"], reverse=True)
 
     return {
-        "cutoff": cutoff,
+        "cuto": cutoff,
         "n_early_dates": len(early_dates),
         "n_late_dates": len(late_dates),
         "early_dates": early_dates,
@@ -629,13 +629,13 @@ def generate_calibration_memo(
     # 1. What we searched
     lines.append("1. GRID SEARCHED")
     lines.append("-" * 40)
-    lines.append(f"  Parameters swept:")
+    lines.append("  Parameters swept:")
     for k, vals in GRID_AXES.items():
         lines.append(f"    {k}: {vals}")
     lines.append(f"  Valid combinations: {len(all_results)}")
-    lines.append(f"  Note: sponsor_confirm_threshold has ZERO effect on tier")
+    lines.append("  Note: sponsor_confirm_threshold has ZERO effect on tier")
     lines.append(
-        f"    assignments (only affects sizing). Effective grid = " f"{len(all_results) // 2} unique tier behaviors."
+        "    assignments (only affects sizing). Effective grid = " f"{len(all_results) // 2} unique tier behaviors."
     )
     lines.append(f"  Usable archives: {all_results[0]['n_usable_snapshots']}")
     lines.append("")
@@ -680,9 +680,9 @@ def generate_calibration_memo(
             f"Δ(A-C)={default_result['delta_ac_resid_60d']:.2f}, "
             f"composite={default_result['composite_score']:.2f}"
         )
-        lines.append(f"  Default has NEGATIVE Δ(A-C): C-tier outperforms A-tier at a_floor=0.60.")
-        lines.append(f"  Lowering a_floor to 0.55 captures names in 0.55-0.59 range that")
-        lines.append(f"  perform well, flipping the separation positive.")
+        lines.append("  Default has NEGATIVE Δ(A-C): C-tier outperforms A-tier at a_floor=0.60.")
+        lines.append("  Lowering a_floor to 0.55 captures names in 0.55-0.59 range that")
+        lines.append("  perform well, flipping the separation positive.")
     lines.append("")
 
     # 4. Holdout validation
@@ -693,7 +693,7 @@ def generate_calibration_memo(
         f"late > {holdout['cutoff']} ({holdout['n_late_dates']} dates)"
     )
     lines.append(f"  Top {holdout['top_k_evaluated']} by early composite evaluated on late period.")
-    lines.append(f"  Gates: positive Δ(A-C) residual OOS, min 5 A obs, turnover <= 2x early.")
+    lines.append("  Gates: positive Δ(A-C) residual OOS, min 5 A obs, turnover <= 2x early.")
     lines.append(f"  Passing: {holdout['n_passing']}/{holdout['top_k_evaluated']}")
     lines.append("")
 
@@ -752,8 +752,8 @@ def generate_calibration_memo(
         late_d = recommended.get("late_delta_ac_resid_60d", 0)
         lines.append(f"  OOS result: Δ(A-C) = {early_d:.2f} (early), {late_d:.2f} (late)")
         if early_d < 0 < late_d:
-            lines.append(f"  Note: negative early Δ — A underperformed C during training")
-            lines.append(f"  period. Positive late Δ drives the full-period result.")
+            lines.append("  Note: negative early Δ — A underperformed C during training")
+            lines.append("  period. Positive late Δ drives the full-period result.")
         # Find conservative alternative (positive in both periods, more A obs)
         for v in passing:
             if v["ruleset_id"] != recommended["ruleset_id"]:
@@ -766,16 +766,16 @@ def generate_calibration_memo(
                         f"(early Δ={ve:.2f}, late Δ={vl:.2f}, "
                         f"late A obs={va})"
                     )
-                    lines.append(f"    Positive Δ in BOTH periods — more consistent.")
+                    lines.append("    Positive Δ in BOTH periods — more consistent.")
                     break
-        lines.append(f"  Holdout: passes all gates")
+        lines.append("  Holdout: passes all gates")
     else:
         lines.append("  No candidate passed all holdout gates.")
         if passing:
             lines.append(f"  Closest: {passing[0]['ruleset_id']}")
         else:
             lines.append("  Consider: relaxing gates or using best full-period ruleset")
-            lines.append(f"  with awareness that OOS validation is inconclusive.")
+            lines.append("  with awareness that OOS validation is inconclusive.")
             if top3:
                 lines.append(f"  Best full-period: {top3[0]['ruleset_id']} " f"(Δ={top3[0]['delta_ac_resid_60d']:.2f})")
     lines.append("")

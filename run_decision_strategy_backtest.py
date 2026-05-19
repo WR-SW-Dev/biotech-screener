@@ -1371,11 +1371,9 @@ def generate_report(
     pos_to = agg.get("mean_position_turnover")
     wt_to = agg.get("mean_weight_turnover_pct")
     lines.append(
-        f"  Mean position turnover: " f"{pos_to:.1%}" if pos_to is not None else "  Mean position turnover: n/a"
+        "  Mean position turnover: " f"{pos_to:.1%}" if pos_to is not None else "  Mean position turnover: n/a"
     )
-    lines.append(
-        f"  Mean weight turnover:   " f"{wt_to:.1f}%" if wt_to is not None else "  Mean weight turnover:   n/a"
-    )
+    lines.append("  Mean weight turnover:   " f"{wt_to:.1f}%" if wt_to is not None else "  Mean weight turnover:   n/a")
     lines.append("")
 
     # Section 5: Top positions
@@ -1499,7 +1497,7 @@ def main():
         print(f"Loaded ruleset from {args.ruleset}")
     else:
         ruleset = DEFAULT_RULESET
-        print(f"Using default ruleset")
+        print("Using default ruleset")
 
     tier_filter = [t.strip().upper() for t in args.tier_filter.split(",")]
     output_dir = Path(args.output_dir)
@@ -1516,7 +1514,7 @@ def main():
         "generated": datetime.now().isoformat(timespec="seconds"),
     }
 
-    print(f"\nStrategy Backtest Configuration:")
+    print("\nStrategy Backtest Configuration:")
     print(f"  Ruleset ID:  {ruleset.ruleset_id}")
     print(f"  Tier filter: {tier_filter}")
     print(f"  Top-K:       {args.top_k}")

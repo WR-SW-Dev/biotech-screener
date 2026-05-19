@@ -39,7 +39,7 @@ if enrollments:
     print(f"   Range: {min(enrollments)} - {max(enrollments)}")
     print(f"   Average: {sum(enrollments)/len(enrollments):.0f}")
 else:
-    print(f"   NO ENROLLMENT DATA (all None or 0)")
+    print("   NO ENROLLMENT DATA (all None or 0)")
 
 # Check status field
 print("\n4. Status field analysis:")
@@ -50,7 +50,7 @@ if statuses:
     for status, count in status_counts.most_common(10):
         print(f"     {status:30s}: {count:5d} ({count/len(trials)*100:.1f}%)")
 else:
-    print(f"   NO STATUS DATA")
+    print("   NO STATUS DATA")
 
 # Check phase field
 print("\n5. Phase field analysis:")
@@ -61,7 +61,7 @@ if phases:
     for phase, count in phase_counts.most_common():
         print(f"     {phase:30s}: {count:5d} ({count/len(trials)*100:.1f}%)")
 else:
-    print(f"   NO PHASE DATA")
+    print("   NO PHASE DATA")
 
 # Load clinical results to see actual scores
 print("\n6. Checking actual clinical scores from results:")
@@ -74,7 +74,7 @@ try:
     score_counts = Counter(clinical_scores)
 
     print(f"   Total unique scores: {len(score_counts)}/322")
-    print(f"   Top 5 most common scores:")
+    print("   Top 5 most common scores:")
     for score, count in score_counts.most_common(5):
         print(f"     {score:.2f}: {count} tickers ({count/322*100:.1f}%)")
 

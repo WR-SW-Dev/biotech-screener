@@ -12,9 +12,9 @@ stock = yf.Ticker(ticker)
 hist = stock.history(period="1y", auto_adjust=True, actions=False)
 
 print(f"\nTotal rows: {len(hist)}")
-print(f"\nFirst 5 rows:")
+print("\nFirst 5 rows:")
 print(hist.head())
-print(f"\nLast 5 rows:")
+print("\nLast 5 rows:")
 print(hist.tail())
 
 # Check filtering

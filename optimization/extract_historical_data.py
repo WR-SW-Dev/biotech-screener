@@ -397,7 +397,7 @@ class HistoricalDataExtractor:
                 training_data.append(observation)
 
         # Print statistics
-        print(f"\nExtraction Statistics:")
+        print("\nExtraction Statistics:")
         print(f"  Checkpoints processed: {stats['checkpoints_processed']}")
         print(f"  Tickers with scores: {stats['tickers_with_scores']}")
         print(f"  Forward returns calculated: {stats['forward_returns_calculated']}")
@@ -443,7 +443,7 @@ class HistoricalDataExtractor:
         if np and has_returns and include_returns:
             returns = [d["fwd_return"] for d in training_data if d.get("fwd_return") is not None]
             if returns:
-                print(f"\nForward return statistics:")
+                print("\nForward return statistics:")
                 print(f"  Mean: {np.mean(returns):.4f} ({np.mean(returns)*100:.2f}%)")
                 print(f"  Std: {np.std(returns):.4f} ({np.std(returns)*100:.2f}%)")
                 print(f"  Min: {np.min(returns):.4f} ({np.min(returns)*100:.2f}%)")
@@ -451,13 +451,13 @@ class HistoricalDataExtractor:
 
         # Print date range
         dates = [d["date"] for d in training_data]
-        print(f"\nDate range:")
+        print("\nDate range:")
         print(f"  First: {min(dates)}")
         print(f"  Last: {max(dates)}")
 
         # Print ticker coverage
         unique_tickers = len(set(d["ticker"] for d in training_data))
-        print(f"\nTicker coverage:")
+        print("\nTicker coverage:")
         print(f"  Unique tickers: {unique_tickers}")
         print(f"  Avg observations per ticker: {len(training_data) / unique_tickers:.1f}")
 

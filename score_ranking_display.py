@@ -337,7 +337,7 @@ def print_rankings(
         cap_count = sum(1 for s in display_list if "CAP" in s.gov_flags)
 
         if penalized_count > 0:
-            print(f"\n  Governance Breakdown:")
+            print("\n  Governance Breakdown:")
             if sev1_count > 0:
                 print(f"    SEV1 (10% penalty):   {sev1_count}")
             if sev2_count > 0:
@@ -585,7 +585,7 @@ def print_movers(
     gainers, losers = find_biggest_movers(ranked, top_n)
 
     print(f"\n{'='*60}")
-    print(f"LEAST PENALIZED (Smallest Gov Impact)")
+    print("LEAST PENALIZED (Smallest Gov Impact)")
     print(f"{'='*60}")
     print(f"{'Ticker':<10}{'Final':<12}{'Pre-Gov':<12}{'Impact':<12}{'Flags':<10}")
     print("-" * 60)
@@ -595,7 +595,7 @@ def print_movers(
         )
 
     print(f"\n{'='*60}")
-    print(f"MOST PENALIZED (Largest Gov Impact)")
+    print("MOST PENALIZED (Largest Gov Impact)")
     print(f"{'='*60}")
     print(f"{'Ticker':<10}{'Final':<12}{'Pre-Gov':<12}{'Impact':<12}{'Flags':<10}")
     print("-" * 60)
@@ -669,7 +669,7 @@ def main():
     parser = argparse.ArgumentParser(description="Display score rankings with enhanced vs base comparison")
     parser.add_argument(
         "--file",
-        "-f",
+        "-",
         type=str,
         help="Path to Module 5 results JSON file",
     )

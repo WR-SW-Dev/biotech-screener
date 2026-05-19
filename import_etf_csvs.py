@@ -87,29 +87,29 @@ def main():
 
     if not csv_dir.exists():
         print(f"\n❌ Directory not found: {csv_dir}")
-        print(f"\n📋 Setup Instructions:")
-        print(f"   1. Create directory: mkdir etf_csvs")
-        print(f"   2. Download CSV files:")
-        print(f"      • XBI: https://www.ssga.com/us/en/individual/etfs/funds/xbi")
-        print(f"      • IBB: https://www.ishares.com/us/products/239699/")
-        print(f"      • NBI: https://indexes.nasdaqomx.com/Index/Weighting/NBI")
-        print(f"   3. Save files as:")
-        print(f"      • etf_csvs/XBI_holdings.csv")
-        print(f"      • etf_csvs/IBB_holdings.csv")
-        print(f"      • etf_csvs/NBI_holdings.csv")
-        print(f"   4. Re-run this script")
+        print("\n📋 Setup Instructions:")
+        print("   1. Create directory: mkdir etf_csvs")
+        print("   2. Download CSV files:")
+        print("      • XBI: https://www.ssga.com/us/en/individual/etfs/funds/xbi")
+        print("      • IBB: https://www.ishares.com/us/products/239699/")
+        print("      • NBI: https://indexes.nasdaqomx.com/Index/Weighting/NBI")
+        print("   3. Save files as:")
+        print("      • etf_csvs/XBI_holdings.csv")
+        print("      • etf_csvs/IBB_holdings.csv")
+        print("      • etf_csvs/NBI_holdings.csv")
+        print("   4. Re-run this script")
         return 1
 
     holdings = {}
 
     # Import XBI
-    print(f"\n📥 Loading XBI...")
+    print("\n📥 Loading XBI...")
     xbi_csv = csv_dir / "XBI_holdings.csv"
     holdings["xbi"] = load_csv_tickers(xbi_csv)
 
     if holdings["xbi"] is None:
         print(f"  ❌ File not found: {xbi_csv}")
-        print(f"     Download from: https://www.ssga.com/us/en/individual/etfs/funds/xbi")
+        print("     Download from: https://www.ssga.com/us/en/individual/etfs/funds/xbi")
         holdings["xbi"] = []
     elif holdings["xbi"]:
         print(f"  ✅ Loaded {len(holdings['xbi'])} tickers")
@@ -117,13 +117,13 @@ def main():
         print(f"  ⚠️  No tickers found in {xbi_csv.name}")
 
     # Import IBB
-    print(f"\n📥 Loading IBB...")
+    print("\n📥 Loading IBB...")
     ibb_csv = csv_dir / "IBB_holdings.csv"
     holdings["ibb"] = load_csv_tickers(ibb_csv)
 
     if holdings["ibb"] is None:
         print(f"  ❌ File not found: {ibb_csv}")
-        print(f"     Download from: https://www.ishares.com/us/products/239699/")
+        print("     Download from: https://www.ishares.com/us/products/239699/")
         holdings["ibb"] = []
     elif holdings["ibb"]:
         print(f"  ✅ Loaded {len(holdings['ibb'])} tickers")
@@ -131,13 +131,13 @@ def main():
         print(f"  ⚠️  No tickers found in {ibb_csv.name}")
 
     # Import NBI
-    print(f"\n📥 Loading NBI...")
+    print("\n📥 Loading NBI...")
     nbi_csv = csv_dir / "NBI_holdings.csv"
     holdings["nbi"] = load_csv_tickers(nbi_csv)
 
     if holdings["nbi"] is None:
         print(f"  ❌ File not found: {nbi_csv}")
-        print(f"     Download from: https://indexes.nasdaqomx.com/Index/Weighting/NBI")
+        print("     Download from: https://indexes.nasdaqomx.com/Index/Weighting/NBI")
         holdings["nbi"] = []
     elif holdings["nbi"]:
         print(f"  ✅ Loaded {len(holdings['nbi'])} tickers")
@@ -148,7 +148,7 @@ def main():
     total_loaded = len(holdings["xbi"]) + len(holdings["ibb"]) + len(holdings["nbi"])
 
     if total_loaded == 0:
-        print(f"\n❌ No tickers loaded from any ETF")
+        print("\n❌ No tickers loaded from any ETF")
         return 1
 
     # Calculate unique tickers
@@ -180,7 +180,7 @@ def main():
     print(f"\n✅ Saved to: {output_file}")
 
     # Show sample
-    print(f"\n📋 Sample tickers (first 20):")
+    print("\n📋 Sample tickers (first 20):")
     for i, ticker in enumerate(sorted(all_tickers)[:20], 1):
         in_xbi = "✓" if ticker in xbi_set else "✗"
         in_ibb = "✓" if ticker in ibb_set else "✗"
@@ -191,13 +191,13 @@ def main():
         print(f"   ... and {len(all_tickers) - 20} more")
 
     # Next steps
-    print(f"\n" + "=" * 80)
+    print("\n" + "=" * 80)
     print("NEXT STEPS")
     print("=" * 80)
-    print(f"1. Verify the ticker counts look correct")
-    print(f"2. Add these tickers to your universe:")
-    print(f"   python add_etf_tickers_to_universe.py")
-    print(f"3. Or manually inspect the JSON file:")
+    print("1. Verify the ticker counts look correct")
+    print("2. Add these tickers to your universe:")
+    print("   python add_etf_tickers_to_universe.py")
+    print("3. Or manually inspect the JSON file:")
     print(f"   cat {output_file}")
     print("=" * 80 + "\n")
 

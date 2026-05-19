@@ -205,7 +205,7 @@ if __name__ == "__main__":
     data = collect_time_series_data(test_ticker, as_of=date(2024, 12, 31))
 
     if data.get("success"):
-        print(f"\n✓ Success!")
+        print("\n✓ Success!")
         print(f"  - Days of data: {data['time_series']['num_days']}")
         print(f"  - First price: ${data['time_series']['prices'][0]:.2f}")
         print(f"  - Last price: ${data['time_series']['prices'][-1]:.2f}")

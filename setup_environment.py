@@ -62,7 +62,7 @@ def setup_env_file():
         return
 
     # Create .env file
-    env_content = f"""# Wake Robin Biotech Screening - Environment Variables
+    env_content = """# Wake Robin Biotech Screening - Environment Variables
 # SECURITY: Never commit this file to git!
 
 # OpenFIGI API Key
@@ -80,9 +80,9 @@ DATA_DIR=production_data
     # Set restrictive permissions (Linux/Mac)
     if os.name != "nt":  # Not Windows
         os.chmod(env_path, 0o600)
-        print(f"\n✅ .env file created with mode 600 (owner read/write only)")
+        print("\n✅ .env file created with mode 600 (owner read/write only)")
     else:
-        print(f"\n✅ .env file created")
+        print("\n✅ .env file created")
 
     print(f"📁 Location: {env_path.absolute()}")
 

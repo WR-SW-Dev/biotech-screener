@@ -93,7 +93,7 @@ def get_api_key() -> str:
                 return api_key
 
     raise ValueError(
-        f"Nasdaq Data Link API key not found.\n"
+        "Nasdaq Data Link API key not found.\n"
         f"Set environment variable: {API_KEY_ENV_VAR}\n"
         f"Or create file: {API_KEY_FILE}"
     )
@@ -178,10 +178,10 @@ def fetch_sep_data(
                 data = json.loads(response.read().decode("utf-8"))
         except HTTPError as e:
             if e.code == 429:
-                print(f"\n⚠ Rate limited. Wait and retry.")
+                print("\n⚠ Rate limited. Wait and retry.")
                 raise
             elif e.code == 401:
-                print(f"\n✗ Invalid API key")
+                print("\n✗ Invalid API key")
                 raise ValueError("Invalid Nasdaq Data Link API key")
             else:
                 print(f"\n✗ HTTP error: {e.code}")
@@ -351,7 +351,7 @@ def sync_incremental(
         # First sync: get last 2 years
         start_date = (date.today() - timedelta(days=730)).isoformat()
 
-    print(f"\n[Incremental Sync]")
+    print("\n[Incremental Sync]")
     print(f"  Start date: {start_date}")
     print(f"  Ingest date: {ingest_date}")
 
@@ -397,7 +397,7 @@ def sync_incremental(
     print("\n[Validation]")
     try:
         _, diagnostics = validate_and_load_csv(str(CURATED_CSV))
-        print(f"  OK Schema valid")
+        print("  OK Schema valid")
         print(f"  Rows valid: {diagnostics['rows_valid']}")
         if diagnostics.get("warnings"):
             print(f"  Warnings: {len(diagnostics['warnings'])}")
@@ -421,10 +421,10 @@ def sync_full(
     """
     ingest_date = date.today().isoformat()
 
-    print(f"\n[Full Sync]")
+    print("\n[Full Sync]")
     print(f"  Start date: {start_date}")
     print(f"  Ingest date: {ingest_date}")
-    print(f"  WARNING: This may take several minutes...")
+    print("  WARNING: This may take several minutes...")
 
     # Fetch all data
     rows = fetch_sep_data(api_key, date_gte=start_date, tickers=tickers)
@@ -439,7 +439,7 @@ def sync_full(
     if RAW_DIR.exists():
         for f in RAW_DIR.glob("ingest_*.csv"):
             f.unlink()
-        print(f"  Cleared existing raw slices")
+        print("  Cleared existing raw slices")
 
     # Write single raw slice
     raw_file = write_raw_slice(rows, ingest_date)
@@ -587,7 +587,7 @@ def main():
         print("OK SYNC COMPLETE")
         print(f"  Rows fetched: {result['rows_fetched']}")
         print(f"  Curated file: {CURATED_CSV}")
-        print(f"  Ready for backtest:")
+        print("  Ready for backtest:")
         print(f"    python scripts/run_sharadar_backtest.py --prices {CURATED_CSV}")
     else:
         print("WARNING SYNC COMPLETE (no new data)")

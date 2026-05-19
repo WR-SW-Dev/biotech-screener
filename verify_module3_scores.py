@@ -33,7 +33,7 @@ print(f"✅ Found Module 3 scores for {len(scores)} tickers")
 # Extract catalyst scores
 catalyst_scores = [s["catalyst_normalized"] for s in scores]
 
-print(f"\nCatalyst Score Statistics:")
+print("\nCatalyst Score Statistics:")
 print(f"  Min score: {min(catalyst_scores):.2f}")
 print(f"  Max score: {max(catalyst_scores):.2f}")
 print(f"  Mean score: {sum(catalyst_scores) / len(catalyst_scores):.2f}")
@@ -51,12 +51,12 @@ if all_fifty:
     print("   1. Wait for next week's data collection (new trial updates)")
     print("   2. OR run with different --as-of-date (historical comparison)")
 else:
-    print(f"\n✅ SUCCESS: Module 3 scoring is working!")
+    print("\n✅ SUCCESS: Module 3 scoring is working!")
     print(f"   Scores vary from {min(catalyst_scores):.1f} to {max(catalyst_scores):.1f}")
 
 # Show event detection stats
 diag = m3_data.get("diagnostic_counts", {})
-print(f"\nEvent Detection Statistics:")
+print("\nEvent Detection Statistics:")
 print(f"  Events detected: {diag.get('events_detected', 0)}")
 print(f"  Tickers with events: {diag.get('tickers_with_events', 0)}")
 print(f"  Severe negatives: {diag.get('severe_negatives', 0)}")
@@ -65,13 +65,13 @@ print(f"  Severe negatives: {diag.get('severe_negatives', 0)}")
 sentiments = [s.get("catalyst_sentiment", "UNKNOWN") for s in scores]
 sentiment_counts = Counter(sentiments)
 
-print(f"\nSentiment Distribution:")
+print("\nSentiment Distribution:")
 for sentiment, count in sentiment_counts.most_common():
     pct = (count / len(scores)) * 100
     print(f"  {sentiment:20s}: {count:3d} ({pct:5.1f}%)")
 
 # Show examples
-print(f"\nExample Scores:")
+print("\nExample Scores:")
 for score_data in scores[:10]:
     ticker = score_data["ticker"]
     score = score_data["catalyst_normalized"]
@@ -86,26 +86,26 @@ print("=" * 80 + "\n")
 
 m2_scores = [s["financial_normalized"] for s in data["module_2_financial"]["scores"]]
 
-print(f"Module 2 (Financial):")
+print("Module 2 (Financial):")
 print(f"  Range: {min(m2_scores):.1f} - {max(m2_scores):.1f}")
 print(f"  Unique: {len(set(m2_scores))}")
 
-print(f"\nModule 3 (Catalyst):")
+print("\nModule 3 (Catalyst):")
 print(f"  Range: {min(catalyst_scores):.1f} - {max(catalyst_scores):.1f}")
 print(f"  Unique: {len(set(catalyst_scores))}")
 
 # Composite score check
 composite_scores = [r["composite_score"] for r in data["module_5_composite"]["ranked_securities"]]
-print(f"\nComposite (Final):")
+print("\nComposite (Final):")
 print(f"  Range: {min(composite_scores):.2f} - {max(composite_scores):.2f}")
-print(f"  Expected: Wider than Module 2 only (15-70)")
+print("  Expected: Wider than Module 2 only (15-70)")
 
 print("\n" + "=" * 80)
 print("✅ VERIFICATION COMPLETE")
 print("=" * 80)
 
 # Summary
-print(f"\n📊 SUMMARY:")
+print("\n📊 SUMMARY:")
 if all_fifty and diag.get("events_detected", 0) == 0:
     print("  ✅ Module 3 scoring integrated correctly")
     print("  ✅ No events detected (expected for same-day re-run)")

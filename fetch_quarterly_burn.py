@@ -208,7 +208,7 @@ def main():
         print(f"Loaded {len(tickers)} tickers from {args.universe}")
 
     # Fetch data
-    print(f"\nFetching quarterly cash flow data...")
+    print("\nFetching quarterly cash flow data...")
     print(f"Output: {args.output}")
     print()
 
@@ -289,7 +289,7 @@ def main():
         else:
             insufficient += 1
 
-    print(f"\nTrajectory preview:")
+    print("\nTrajectory preview:")
     print(f"  Decelerating: {decelerating}")
     print(f"  Stable: {stable}")
     print(f"  Accelerating: {accelerating}")

@@ -31,17 +31,17 @@ def test_yahoo_finance_access():
         price = info.get("currentPrice", info.get("regularMarketPrice", 0))
 
         if price > 0:
-            print(f"✓")
+            print("✓")
             print(f"      Current price: ${price:.2f}")
-            print(f"      Status: Yahoo Finance accessible")
+            print("      Status: Yahoo Finance accessible")
             return True, "Yahoo Finance operational"
         else:
-            print(f"✗")
-            print(f"      Status: No price data returned")
+            print("✗")
+            print("      Status: No price data returned")
             return False, "Yahoo Finance returned no data"
 
     except Exception as e:
-        print(f"✗")
+        print("✗")
         print(f"      Error: {e}")
         return False, f"Yahoo Finance failed: {e}"
 
@@ -64,17 +64,17 @@ def test_sec_edgar_access():
 
         if response.status_code == 200:
             data = response.json()
-            print(f"✓")
-            print(f"      Status: SEC EDGAR API accessible")
+            print("✓")
+            print("      Status: SEC EDGAR API accessible")
             print(f"      Entity: {data.get('entityName', 'Unknown')}")
             return True, "SEC EDGAR operational"
         else:
-            print(f"✗")
+            print("✗")
             print(f"      HTTP {response.status_code}")
             return False, f"SEC EDGAR returned HTTP {response.status_code}"
 
     except Exception as e:
-        print(f"✗")
+        print("✗")
         print(f"      Error: {e}")
         return False, f"SEC EDGAR failed: {e}"
 
@@ -91,23 +91,23 @@ def test_clinicaltrials_gov_access():
         url = "https://clinicaltrials.gov/api/v2/studies"
         params = {"query.spons": "Pfizer", "pageSize": 1, "format": "json"}
 
-        print(f"   └─ Testing API v2 endpoint...", end=" ")
+        print("   └─ Testing API v2 endpoint...", end=" ")
         response = requests.get(url, params=params, timeout=15)
 
         if response.status_code == 200:
             data = response.json()
             total = data.get("totalCount", 0)
-            print(f"✓")
-            print(f"      Status: ClinicalTrials.gov API accessible")
+            print("✓")
+            print("      Status: ClinicalTrials.gov API accessible")
             print(f"      Test query returned {total} results")
             return True, "ClinicalTrials.gov operational"
         else:
-            print(f"✗")
+            print("✗")
             print(f"      HTTP {response.status_code}")
             return False, f"ClinicalTrials.gov returned HTTP {response.status_code}"
 
     except Exception as e:
-        print(f"✗")
+        print("✗")
         print(f"      Error: {e}")
         return False, f"ClinicalTrials.gov failed: {e}"
 
@@ -123,15 +123,15 @@ def test_network_general():
         response = requests.get("https://www.google.com", timeout=10)
 
         if response.status_code == 200:
-            print(f"✓")
-            print(f"      Status: Internet connection active")
+            print("✓")
+            print("      Status: Internet connection active")
             return True, "Network operational"
         else:
-            print(f"✗")
+            print("✗")
             return False, "Network connectivity issues"
 
     except Exception as e:
-        print(f"✗")
+        print("✗")
         print(f"      Error: {e}")
         return False, f"Network test failed: {e}"
 

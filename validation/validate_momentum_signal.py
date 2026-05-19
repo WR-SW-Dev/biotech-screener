@@ -464,7 +464,7 @@ class MomentumValidator:
             print("❌ FAIL: Should reject zero volatility")
             self.test_results["math_properties"] = "FAIL"
         except ValueError as e:
-            print(f"✅ PASS: Correctly rejects zero volatility")
+            print("✅ PASS: Correctly rejects zero volatility")
             print(f"   Error: {e}")
 
         np.random.seed(VALIDATION_SEED)

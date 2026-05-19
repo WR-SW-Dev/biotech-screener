@@ -458,9 +458,9 @@ def main():
 
     # Next steps
     print("\n💡 Next Steps:")
-    print(f"   1. Extract CFO data:")
+    print("   1. Extract CFO data:")
     print(f"      python cfo_extractor.py --filings-dir {output_dir} --as-of-date 2024-12-31")
-    print(f"   2. Integrate with Module 2")
+    print("   2. Integrate with Module 2")
     print()
 
 

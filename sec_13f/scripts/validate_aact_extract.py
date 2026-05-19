@@ -392,7 +392,7 @@ def validate_joins(studies_path: Path, sponsors_path: Path, mapping_path: Option
         pct = len(studies_without_sponsor) / len(studies_nct_ids) * 100
         result.add_info(f"Studies without lead sponsor: {len(studies_without_sponsor)} ({pct:.1f}%)")
         if pct > 10:
-            result.warn(f"High percentage of studies missing lead sponsor")
+            result.warn("High percentage of studies missing lead sponsor")
 
     # Mapping ↔ Studies join
     if mapping_nct_ids:

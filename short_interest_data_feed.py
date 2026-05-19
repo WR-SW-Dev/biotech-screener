@@ -268,7 +268,7 @@ def main():
     si_values = [float(r["short_interest_pct"]) for r in si_data]
     dtc_values = [float(r["days_to_cover"]) for r in si_data]
 
-    print(f"\nSI Distribution Summary:")
+    print("\nSI Distribution Summary:")
     print(f"  Mean SI%: {sum(si_values)/len(si_values):.1f}%")
     print(f"  Max SI%: {max(si_values):.1f}%")
     print(f"  >10% SI: {sum(1 for v in si_values if v > 10)} tickers")

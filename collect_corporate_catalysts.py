@@ -301,7 +301,7 @@ def collect_corporate_catalysts(
         securities = universe.get("active_securities", universe.get("securities", []))
         tickers = [s.get("ticker") for s in securities if s.get("ticker")]
     else:
-        print(f"\n[ERROR] Invalid universe format")
+        print("\n[ERROR] Invalid universe format")
         return 1
 
     # Filter out benchmark ticker
@@ -454,7 +454,7 @@ def collect_corporate_catalysts(
     print(f"  Earnings dates:    {earnings_count}")
     print(f"  PDUFA dates:       {pdufa_count}")
     print(f"  Data readouts:     {readout_count}")
-    print(f"\nUpcoming conferences in window:")
+    print("\nUpcoming conferences in window:")
     for conf in conferences:
         print(f"  - {conf['conference_abbrev']:<6} {conf['start_date']} - {conf['end_date']}")
 

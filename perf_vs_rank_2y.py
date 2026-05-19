@@ -137,7 +137,7 @@ def main():
     parser = argparse.ArgumentParser(description="Validate composite rank vs 2-year realized returns")
     parser.add_argument("--rank-csv", type=Path, required=True, help="Screen CSV with composite_rank, composite_score")
     parser.add_argument("--prices", type=Path, required=True, help="Daily price history CSV (long format)")
-    parser.add_argument("--as-of", type=str, required=True, help="End date for return calc (YYYY-MM-DD)")
+    parser.add_argument("--as-o", type=str, required=True, help="End date for return calc (YYYY-MM-DD)")
     parser.add_argument("--lookback-years", type=int, default=2, help="Years of return lookback (default: 2)")
     parser.add_argument("--out-csv", type=Path, default=None, help="Output CSV with per-ticker results")
     parser.add_argument("--out-json", type=Path, default=None, help="Output JSON summary")
@@ -225,7 +225,7 @@ def main():
     results_by_rank = sorted(results, key=lambda r: r["composite_rank"])
 
     print(f"\n{'='*60}")
-    print(f"DECILE LIFT TABLE (by composite rank)")
+    print("DECILE LIFT TABLE (by composite rank)")
     print(f"{'='*60}")
     print(f"{'Decile':<8} {'Ranks':<14} {'N':<5} {'Avg Return':<12} {'Median Ret':<12} {'Win Rate':<10}")
     print(f"{'-'*8} {'-'*14} {'-'*5} {'-'*12} {'-'*12} {'-'*10}")
@@ -267,7 +267,7 @@ def main():
 
     # Quintile summary
     print(f"\n{'='*60}")
-    print(f"QUINTILE SUMMARY")
+    print("QUINTILE SUMMARY")
     print(f"{'='*60}")
     for q in range(5):
         d_lo = q * 2

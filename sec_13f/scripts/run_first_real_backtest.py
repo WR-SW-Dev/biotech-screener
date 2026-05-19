@@ -389,9 +389,9 @@ def run_first_real_backtest(
     print(f"Run ID:          {run_id}")
     print(f"Universe:        {len(BIOTECH_UNIVERSE)} tickers")
     print(f"Date range:      {start_year} - {end_year}")
-    print(f"Frequency:       Monthly")
+    print("Frequency:       Monthly")
     print(f"Horizons:        {horizons}")
-    print(f"Delisting:       Conservative (drop obs)")
+    print("Delisting:       Conservative (drop obs)")
     print(f"Prices:          {prices_file}")
 
     # Load returns provider

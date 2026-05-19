@@ -378,7 +378,7 @@ def compute_survivability_score(
     if ocf_ttm is not None and ocf_ttm != 0:
         if ocf_ttm < 0:
             burn_ttm = abs(ocf_ttm)
-            burn_method = "ocf"
+            burn_method = "oc"
     elif financial_data.get("total_operating_expense_ttm") is not None:
         # Fallback: approximate burn from opex - revenue
         opex = to_decimal(financial_data.get("total_operating_expense_ttm"))
@@ -469,7 +469,7 @@ def compute_survivability_score(
     notes.append(f"runway_calc:{runway_method}")
 
     # Runway data confidence
-    if cash_total > 0 and burn_method == "ocf":
+    if cash_total > 0 and burn_method == "oc":
         runway_confidence = "HIGH"
     elif cash_total > 0 and burn_method == "approximated":
         runway_confidence = "MED"
@@ -625,7 +625,7 @@ def main():
             "LongTermDebt": 50e6,
         }
     )
-    print(f"\nHealthy Company:")
+    print("\nHealthy Company:")
     print(f"  Score: {healthy['score']:.1f}")
     print(f"  Subscores: {healthy['subscores']}")
     print(f"  Runway: {healthy['metrics'].get('effective_runway_months', 'N/A')} months")
@@ -642,7 +642,7 @@ def main():
             "current_debt": 20e6,
         }
     )
-    print(f"\nDistressed Company:")
+    print("\nDistressed Company:")
     print(f"  Score: {distressed['score']:.1f}")
     print(f"  Subscores: {distressed['subscores']}")
     print(f"  Runway: {distressed['metrics'].get('effective_runway_months', 'N/A')} months")
@@ -657,7 +657,7 @@ def main():
             "total_operating_expense_ttm": 200e6,
         }
     )
-    print(f"\nProfitable Company:")
+    print("\nProfitable Company:")
     print(f"  Score: {profitable['score']:.1f}")
     print(f"  Subscores: {profitable['subscores']}")
     print(f"  Coverage: {profitable['coverage']}")
@@ -668,7 +668,7 @@ def main():
             "Cash": 100e6,
         }
     )
-    print(f"\nMissing Data Company:")
+    print("\nMissing Data Company:")
     print(f"  Score: {missing['score']:.1f}")
     print(f"  Subscores: {missing['subscores']}")
     print(f"  Coverage: {missing['coverage']}")

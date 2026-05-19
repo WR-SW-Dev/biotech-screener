@@ -111,7 +111,7 @@ def add_etf_tickers_to_universe():
             "exchange": "NASDAQ",  # Most biotech are NASDAQ (update later if needed)
             "sector": "Biotechnology",
             "status": "active",
-            "added_from_etf": True,
+            "added_from_et": True,
             "added_date": today,
             "etf_sources": sources,
             "market_cap": None,  # Populate later
@@ -151,7 +151,7 @@ def add_etf_tickers_to_universe():
     print("1. Populate data for new tickers:")
     print("   python collect_financial_data.py")
     print("   python collect_ctgov_data.py --output production_data/trial_records.json")
-    print(f"\n2. Re-run screening:")
+    print("\n2. Re-run screening:")
     print(f"   python run_screen.py --as-of-date {today} --data-dir production_data --output screening_complete.json")
     print("\n3. Expect Module 1 to filter many new tickers:")
     print("   - Recent IPOs (no financial data yet)")

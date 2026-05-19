@@ -144,7 +144,7 @@ fetch_start = min_date - timedelta(days=30)
 fetch_end = max_date + timedelta(days=30)
 
 print(f"Price data will be fetched from {fetch_start.date()} to {fetch_end.date()}")
-print(f"  (Extended ±30 days to ensure forward return coverage)")
+print("  (Extended ±30 days to ensure forward return coverage)")
 print()
 
 # Confirm before proceeding

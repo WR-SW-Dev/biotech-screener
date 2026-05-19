@@ -147,7 +147,7 @@ def find_13f_filing_via_submissions_api(cik: str, quarter_end: date) -> Optional
         recent = data.get("filings", {}).get("recent", {})
 
         if not recent:
-            print(f"    No recent filings found")
+            print("    No recent filings found")
             return None
 
         accession_list = recent.get("accessionNumber", [])
@@ -218,13 +218,13 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
     Returns:
         (xml_content, document_url) or None
     """
-    print(f"    Fetching information table XML...")
+    print("    Fetching information table XML...")
 
     # Try 1: Primary document (often the information table)
     content = fetch_url_with_rate_limit(primary_doc_url)
 
     if content and "<informationTable>" in content:
-        print(f"      Found information table in primary document")
+        print("      Found information table in primary document")
         return content, primary_doc_url
 
     # Try 2: Look for informationTable.xml in filing directory
@@ -256,7 +256,7 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
         # This is a fallback - production systems should use submissions API properly
         pass
 
-    print(f"      Could not locate information table XML")
+    print("      Could not locate information table XML")
     return None
 
 
@@ -590,7 +590,7 @@ def extract_all_elite_holdings(
         json.dump(ticker_snapshots, f, indent=2)
 
     print(f"\n{'='*80}")
-    print(f"EXTRACTION COMPLETE")
+    print("EXTRACTION COMPLETE")
     print(f"{'='*80}")
     print(f"Tickers with institutional coverage: {len(ticker_snapshots)}")
     print(f"Output saved to: {output_path}")
