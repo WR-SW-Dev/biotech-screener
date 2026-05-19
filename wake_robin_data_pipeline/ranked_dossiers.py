@@ -98,18 +98,18 @@ for i, (c, scores) in enumerate(ranked[:5], 1):
         warnings.append(f"[CRITICAL] Only {c['data_quality']['financial_coverage']:.0f}% financial data coverage")
 
     if scores["runway_months"] and scores["runway_months"] < 12:
-        warnings.append(f"[HIGH RISK] Dilution risk - Runway < 12 months")
+        warnings.append("[HIGH RISK] Dilution risk - Runway < 12 months")
     elif scores["runway_months"] and scores["runway_months"] < 18:
-        warnings.append(f"[WATCH] Runway < 18 months - monitor for financing")
+        warnings.append("[WATCH] Runway < 18 months - monitor for financing")
 
     if c["market_data"]["market_cap"] < 1e9:
-        warnings.append(f"[LIQUIDITY] Market cap < $1B - position sizing limited")
+        warnings.append("[LIQUIDITY] Market cap < $1B - position sizing limited")
 
     if c["clinical"]["lead_stage"] in ["phase_1", "phase_2"]:
         warnings.append(f"[CLINICAL RISK] Lead asset in {c['clinical']['lead_stage']}")
 
     if not cash:
-        warnings.append(f"[DATA GAP] No cash data available - verify SEC filings")
+        warnings.append("[DATA GAP] No cash data available - verify SEC filings")
 
     if warnings:
         content += "\n".join(f"- {w}" for w in warnings)

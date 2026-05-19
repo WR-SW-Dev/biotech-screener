@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -200,17 +200,17 @@ class PipelineValidator:
                 success, message = test_func()
 
                 if success:
-                    print(f"✓ PASS")
+                    print("✓ PASS")
                     print(f"  └─ {message}")
                     passed += 1
                     self.results["tests"][test_name] = {"status": "PASS", "message": message}
                 else:
-                    print(f"✗ FAIL")
+                    print("✗ FAIL")
                     print(f"  └─ {message}")
                     failed += 1
                     self.results["tests"][test_name] = {"status": "FAIL", "message": message}
             except Exception as e:
-                print(f"✗ ERROR")
+                print("✗ ERROR")
                 print(f"  └─ Unexpected error: {e}")
                 failed += 1
                 self.results["tests"][test_name] = {"status": "ERROR", "message": str(e)}

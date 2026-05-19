@@ -1,5 +1,4 @@
 ﻿import json
-from datetime import datetime
 
 # Load latest snapshot
 with open("outputs/universe_snapshot_latest.json") as f:

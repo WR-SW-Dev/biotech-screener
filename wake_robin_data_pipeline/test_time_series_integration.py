@@ -28,7 +28,7 @@ def test_single_ticker():
     data = time_series_collector.collect_time_series_data(ticker, as_of=as_of)
 
     if data.get("success"):
-        print(f"\n✓ SUCCESS!")
+        print("\n✓ SUCCESS!")
         print(f"  Ticker: {data['ticker']}")
         print(f"  Days of data: {data['time_series']['num_days']}")
         print(f"  First price: ${data['time_series']['prices'][0]:.2f}")

@@ -21,7 +21,7 @@ def test_collectors():
     print("=" * 60)
 
     # Test Yahoo Finance
-    print(f"\n1. Testing Yahoo Finance collector...")
+    print("\n1. Testing Yahoo Finance collector...")
     yahoo_data = yahoo_collector.collect_yahoo_data(ticker, force_refresh=True)
 
     if yahoo_data.get("success"):
@@ -34,7 +34,7 @@ def test_collectors():
         return False
 
     # Test SEC EDGAR
-    print(f"\n2. Testing SEC EDGAR collector...")
+    print("\n2. Testing SEC EDGAR collector...")
     sec_data = sec_collector.collect_sec_data(ticker, force_refresh=True)
 
     if sec_data.get("success"):
@@ -47,7 +47,7 @@ def test_collectors():
         return False
 
     # Test ClinicalTrials.gov
-    print(f"\n3. Testing ClinicalTrials.gov collector...")
+    print("\n3. Testing ClinicalTrials.gov collector...")
     trials_data = trials_collector.collect_trials_data(ticker, company, force_refresh=True)
 
     if trials_data.get("success"):
