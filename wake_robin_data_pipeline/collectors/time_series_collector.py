@@ -3,8 +3,6 @@ time_series_collector.py - Collect historical price/return series for time-serie
 Uses market_data_provider.py for PIT-safe data with caching
 """
 
-import json
-
 # Import the market data provider (in parent directory)
 import sys
 import time

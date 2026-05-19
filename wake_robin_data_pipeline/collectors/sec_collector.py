@@ -7,12 +7,11 @@ Environment Variables:
     SEC_CACHE_DIR: Override default cache directory
 """
 
-import hashlib
 import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 

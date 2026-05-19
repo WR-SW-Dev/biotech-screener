@@ -1,6 +1,5 @@
 ﻿import json
 import math
-from pathlib import Path
 
 companies = json.load(open("outputs/universe_snapshot_latest.json"))
 

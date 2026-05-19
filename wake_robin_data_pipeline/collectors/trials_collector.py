@@ -3,7 +3,6 @@ trials_collector.py - Collect clinical trial data from ClinicalTrials.gov
 Free, no API key required. Rate limit: reasonable (1 req/sec safe)
 """
 
-import hashlib
 import json
 import time
 from datetime import datetime, timedelta

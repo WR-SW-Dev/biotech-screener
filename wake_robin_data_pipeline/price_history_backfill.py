@@ -4,7 +4,6 @@
 import argparse
 import csv
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from wake_robin_data_pipeline.price_gap_report import load_price_coverage, load_universe_tickers
