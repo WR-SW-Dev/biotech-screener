@@ -328,7 +328,7 @@ To Detect Real Signal:
 Pipeline Flow:
   Module 1 (Universe) → 25 active tickers
   Module 2 (Financial) → Cash runway, debt, size scores
-  Module 3 (Catalyst) → Trial proximity scores  
+  Module 3 (Catalyst) → Trial proximity scores
   Module 4 (Clinical) → Phase, design, execution scores
   Module 5 (Composite) → Weighted combination with cohort normalization
   Backtest → IC, quintile spreads, monotonicity

@@ -116,10 +116,10 @@ def main():
 Examples:
   # Expand to all three ETFs
   python expand_universe_to_etfs.py --universe production_data/universe.json --output production_data/universe_expanded.json
-  
+
   # Expand to XBI only
   python expand_universe_to_etfs.py --universe production_data/universe.json --output production_data/universe_expanded.json --xbi-only
-  
+
   # Preview what would be added (dry run)
   python expand_universe_to_etfs.py --universe production_data/universe.json --dry-run
 
@@ -128,7 +128,7 @@ Note:
   - Market cap
   - Company name (currently uses ticker)
   - Exchange (currently defaults to NASDAQ)
-  
+
   Run collect_universe_data.py afterward to fetch full data.
         """,
     )

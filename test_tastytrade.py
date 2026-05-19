@@ -55,7 +55,7 @@ except Exception as e:
 print("\n4. Testing API call (get customer info):")
 try:
     customer = session.get_customer()
-    print(f"   ✓ API call successful")
+    print("   ✓ API call successful")
     print(f"   ✓ Customer ID: {customer.id if hasattr(customer, 'id') else 'N/A'}")
     print(f"   ✓ Session token valid: {bool(session.session_token)}")
     print(f"   ✓ Session expires: {session.session_expiration}")

@@ -252,10 +252,10 @@ Examples:
   # 1. Download CSVs from ETF websites
   # 2. Save to etf_csvs/ directory
   python download_etf_holdings.py --method csv --csv-dir etf_csvs/ --output etf_holdings.json
-  
+
   # Method 2: Alpha Vantage API (Free)
   python download_etf_holdings.py --method alphavantage --api-key YOUR_KEY --output etf_holdings.json
-  
+
   # Method 3: Financial Modeling Prep API
   python download_etf_holdings.py --method fmp --api-key YOUR_KEY --output etf_holdings.json
 

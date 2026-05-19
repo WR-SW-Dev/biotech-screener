@@ -7,11 +7,11 @@ reproducible backtest runs using Sharadar CSV data.
 INPUTS (Required):
   - data/sharadar_sep.csv: Sharadar SEP (Security End-of-day Prices)
     Columns: ticker, date, closeadj (adjusted close)
-    
+
   - Universe: Defined in BIOTECH_UNIVERSE constant (or loaded from file)
-  
+
   - Date range: START_YEAR, END_YEAR
-  
+
   - Horizons: ["63d", "126d", "252d"]
 
 OUTPUTS (Deterministic):
@@ -29,10 +29,10 @@ ARTIFACT HASHES:
 REPRODUCIBILITY:
   - Run with same config hash to verify exact reproduction
   - Manifest tracks: config_hash, data_hashes, results_hash
-  
+
 USAGE:
   python scripts/run_sharadar_backtest.py --prices data/sharadar_sep.csv
-  
+
   Or with explicit config:
   python scripts/run_sharadar_backtest.py \\
     --prices data/sharadar_sep.csv \\

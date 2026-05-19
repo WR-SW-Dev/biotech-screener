@@ -174,7 +174,7 @@ def diagnose_pit_coverage(trial_records_path="production_data/trial_records.json
         'nct_id': ...,
         'phase': ...,
         'status': ...,
-        
+
         # ADD THESE:
         'last_update_posted': status_module.get('lastUpdatePostDate'),
         'study_first_posted': status_module.get('studyFirstPostDate'),
@@ -223,25 +223,25 @@ def collect_clinical_data(ticker, company_name=None):
     try:
         import requests
         # ... existing search code ...
-        
+
         for study in studies:
             protocol = study.get('protocolSection', {})
             id_module = protocol.get('identificationModule', {})
             status_module = protocol.get('statusModule', {})     # ← ADD THIS
             design_module = protocol.get('designModule', {})
-            
+
             trial = {
                 'nct_id': id_module.get('nctId'),
                 'title': id_module.get('briefTitle'),
                 'status': status_module.get('overallStatus'),
                 'phase': (design_module.get('phases', ['N/A']) or ['N/A'])[0],
-                
+
                 # ADD THESE DATE FIELDS:
                 'last_update_posted': status_module.get('lastUpdatePostDate'),
                 'study_first_posted': status_module.get('studyFirstPostDate'),
                 'results_first_posted': status_module.get('resultsFirstPostDate'),
             }
-            
+
             # ... rest of code ...
 """
 

@@ -171,29 +171,29 @@ def calculate_volatility(ticker, period='1y'):
     try:
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period)
-        
+
         # Need sufficient data
         if len(hist) < 50:
             return 0.50  # Default to 50% for biotech (not 200%!)
-        
+
         # CORRECT METHOD: Log returns
         returns = np.log(hist['Close'] / hist['Close'].shift(1))
         returns = returns.dropna()
-        
+
         daily_vol = returns.std()
-        
+
         # CRITICAL: Use sqrt(252), NOT 252!
         annual_vol = daily_vol * np.sqrt(252)
-        
+
         # Sanity check for biotech
         if annual_vol < 0.20:  # 20% too low
             return 0.30  # Floor at 30% for biotech
         if annual_vol > 1.50:  # 150% suspiciously high
             print(f"WARNING: {ticker} vol {annual_vol:.1%} seems high")
             return min(annual_vol, 1.00)  # Cap at 100%
-        
+
         return annual_vol
-        
+
     except Exception as e:
         print(f"ERROR calculating vol for {ticker}: {e}")
         return 0.50  # Safe default
@@ -201,7 +201,7 @@ def calculate_volatility(ticker, period='1y'):
 
 KEY CHANGES:
 1. ✅ Use np.sqrt(252) not 252
-2. ✅ Default to 50% not 200% 
+2. ✅ Default to 50% not 200%
 3. ✅ Add sanity checks (20-150% range)
 4. ✅ Use log returns (more stable)
 """)

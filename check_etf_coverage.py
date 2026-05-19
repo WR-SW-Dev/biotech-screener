@@ -415,10 +415,10 @@ def main():
 Examples:
   # Check coverage
   python check_etf_coverage.py --universe production_data/universe.json
-  
+
   # Download current constituents (placeholder)
   python check_etf_coverage.py --download
-  
+
 Note:
   This script uses representative ETF constituent lists.
   For production, fetch current holdings from ETF providers.
