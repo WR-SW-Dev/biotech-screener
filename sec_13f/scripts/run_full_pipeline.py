@@ -165,7 +165,7 @@ def generate_sample_data(as_of_date: str) -> Dict[str, List[Dict]]:
                     "ticker": ticker,
                     "nct_id": f"NCT{random.randint(10000000, 99999999)}",
                     "phase": clinical.get("phase", "phase 1"),
-                    "primary_completion_date": f"2024-{random.randint(1,12):02d}-{random.randint(1,28):02d}",
+                    "primary_completion_date": f"2024-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
                     "status": random.choice(["recruiting", "active", "completed"]),
                     "randomized": random.random() > 0.3,
                     "blinded": random.choice(["open", "single", "double"]),

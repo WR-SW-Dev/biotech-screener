@@ -855,7 +855,7 @@ def run_direct_backtest(
                 scores_sorted = sorted((t, round(s, 4)) for t, s in period_scores.items())
                 blob = "|".join(f"{t}:{s}" for t, s in scores_sorted)
                 all_hash = hashlib.sha256(blob.encode()).hexdigest()[:8]
-                top_hash = hashlib.sha256(",".join(sorted(top_set)).encode()).hexdigest()[:8]
+                top_hash = hashlib.sha256(", ".join(sorted(top_set)).encode()).hexdigest()[:8]
                 all_scores_hashes.append((test_date.strftime("%Y-%m-%d"), all_hash))
                 prev_top_decile = top_set
 
@@ -892,7 +892,7 @@ def run_direct_backtest(
                     mcap_counts[mb] = mcap_counts.get(mb, 0) + 1
                     adv_counts[ab] = adv_counts.get(ab, 0) + 1
                 # Compact format: show hash + ADV counts on one line
-                adv_str = f"ILLIQ={adv_counts.get('ILLIQ',0)} MID={adv_counts.get('MID',0)} LIQ={adv_counts.get('LIQ',0)} UNK={adv_counts.get('UNKNOWN',0)}"
+                adv_str = f"ILLIQ={adv_counts.get('ILLIQ', 0)} MID={adv_counts.get('MID', 0)} LIQ={adv_counts.get('LIQ', 0)} UNK={adv_counts.get('UNKNOWN', 0)}"
                 print(f"    scores_hash={all_hash} | ADV$: {adv_str}")
 
                 # Intersection ICs: MID-cap ∩ ADV buckets

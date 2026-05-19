@@ -183,8 +183,10 @@ def generate_all_reports(results_file):
 
             f.write("TOP 10 HOLDINGS\n")
             for i, s in enumerate(ranked[:10]):
-                f.write(f'  {i+1:2d}. {s["ticker"]:6s} - Score: {s.get("composite_score","N/A"):7s} ')
-                f.write(f'(Fin: {s.get("financial_normalized","N/A"):6s}, Clin: {s.get("clinical_score","N/A"):6s})\n')
+                f.write(f'  {i+1:2d}. {s["ticker"]:6s} - Score: {s.get("composite_score", "N/A"):7s} ')
+                f.write(
+                    f'(Fin: {s.get("financial_normalized", "N/A"):6s}, Clin: {s.get("clinical_score", "N/A"):6s})\n'
+                )
 
             f.write("\n" + "=" * 80 + "\n")
 
@@ -213,18 +215,18 @@ def generate_all_reports(results_file):
             f.write(f"  Total Universe: {len(ranked)} securities\n")
             f.write("  Top 60 Weight: 90.0% (1.50% each)\n")
             f.write(
-                f'  Score Range: {ranked[-1].get("composite_score","N/A")} - {ranked[0].get("composite_score","N/A")}\n\n'
+                f'  Score Range: {ranked[-1].get("composite_score", "N/A")} - {ranked[0].get("composite_score", "N/A")}\n\n'
             )
 
             f.write("TOP 10 CONVICTION LONGS\n")
             for i, s in enumerate(top10):
-                f.write(f'  {i+1:2d}. {s["ticker"]:6s} ({s.get("composite_score","N/A"):7s}) - ')
-                f.write(f'{s.get("stage_bucket","N/A"):5s} stage\n')
+                f.write(f'  {i+1:2d}. {s["ticker"]:6s} ({s.get("composite_score", "N/A"):7s}) - ')
+                f.write(f'{s.get("stage_bucket", "N/A"):5s} stage\n')
             f.write("\n")
 
             f.write("KEY INSIGHTS\n")
             f.write("  * Financial: Continuous scoring (84.8% unique)\n")
-            f.write("  * Clinical: 6,675 trials evaluated\n")
+            f.write("  * Clinical: 6, 675 trials evaluated\n")
             f.write("  * Catalyst: Monitoring 322 securities for events\n")
             f.write("  * Tiebreaker: Market cap -> Coinvest -> Ticker\n\n")
 
