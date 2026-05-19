@@ -21,12 +21,12 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal, getcontext
 from pathlib import Path
 from statistics import mean, median, stdev
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from pos_model_v2 import (
     BASE_RATE_MATRIX,
@@ -679,7 +679,9 @@ class AblationReport:
         print(f"{'Variant':<20} {'Mean PoS':>10} {'Median':>10} {'Δ Baseline':>12} {'%Ceiling':>10} {'%Floor':>10}")
         print("-" * 70)
 
-        baseline_mean = self.all_stats.get("baseline", self.all_stats[list(self.all_stats.keys())[0]]).mean_adjusted_pos
+        _baseline_mean = self.all_stats.get(
+            "baseline", self.all_stats[list(self.all_stats.keys())[0]]
+        ).mean_adjusted_pos
 
         for name in [
             "baseline",

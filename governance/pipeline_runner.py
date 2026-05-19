@@ -9,7 +9,6 @@ Orchestrates pipeline execution with:
 - Fail-closed error handling
 """
 
-import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 

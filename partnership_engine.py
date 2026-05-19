@@ -12,7 +12,6 @@ Key signals:
 - Recency and activity level
 """
 
-import re
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal

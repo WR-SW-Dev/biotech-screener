@@ -30,7 +30,6 @@ Version: 1.0.0
 import argparse
 import hashlib
 import json
-import random
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path

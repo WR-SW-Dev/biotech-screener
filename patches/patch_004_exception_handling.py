@@ -22,7 +22,7 @@ Usage:
 
 import logging
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union

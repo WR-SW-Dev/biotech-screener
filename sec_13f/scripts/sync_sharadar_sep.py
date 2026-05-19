@@ -35,7 +35,6 @@ import json
 import os
 import sys
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.error import HTTPError, URLError

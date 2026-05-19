@@ -6,7 +6,6 @@ Automatically fixes all diagnostic_counts issues in run_screen.py
 Creates a backup before making changes.
 """
 
-import os
 import re
 import shutil
 

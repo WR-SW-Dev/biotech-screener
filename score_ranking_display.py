@@ -27,7 +27,6 @@ import argparse
 import csv
 import json
 import sys
-from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -516,9 +515,9 @@ def analyze_enhancement_impact(ranked: List[RankedSecurity]) -> Dict[str, Any]:
     min_delta = min(deltas)
 
     # Count by delta direction
-    positive_count = sum(1 for d in deltas if d > 0)
-    negative_count = sum(1 for d in deltas if d < 0)
-    zero_count = sum(1 for d in deltas if d == 0)
+    _positive_count = sum(1 for d in deltas if d > 0)
+    _negative_count = sum(1 for d in deltas if d < 0)
+    _zero_count = sum(1 for d in deltas if d == 0)
 
     # Score ranges
     avg_enhanced = sum(enhanced_scores) / len(enhanced_scores)

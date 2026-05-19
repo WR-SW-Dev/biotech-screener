@@ -6,7 +6,6 @@ Analyzes what data exists and identifies gaps in the collection pipeline.
 
 import json
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 

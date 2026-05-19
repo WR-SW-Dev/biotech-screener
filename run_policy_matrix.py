@@ -33,13 +33,13 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from statistics import mean, median
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import DEFAULT_RULESET, DecisionRuleset
-from run_decision_ruleset_sweep import ArchiveData, compute_snapshot_returns, init_providers, load_archive_data
+from decision_engine import DecisionRuleset
+from run_decision_ruleset_sweep import ArchiveData, init_providers, load_archive_data
 from run_decision_strategy_backtest import (
     HORIZONS,
     MultiHorizonReturns,

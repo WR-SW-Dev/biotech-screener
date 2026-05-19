@@ -11,7 +11,7 @@ Usage:
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Set
 
 # ============================================================================
 # ETF CONSTITUENT DATA (as of late 2024/early 2025)

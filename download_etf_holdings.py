@@ -12,7 +12,7 @@ import argparse
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List
 
 import requests
 

@@ -30,7 +30,6 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-import hashlib
 import json
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal

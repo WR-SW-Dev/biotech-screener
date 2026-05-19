@@ -15,8 +15,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import date, datetime, timedelta
-from decimal import Decimal
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -855,7 +854,7 @@ def run_direct_backtest(
                 scores_sorted = sorted((t, round(s, 4)) for t, s in period_scores.items())
                 blob = "|".join(f"{t}:{s}" for t, s in scores_sorted)
                 all_hash = hashlib.sha256(blob.encode()).hexdigest()[:8]
-                top_hash = hashlib.sha256(", ".join(sorted(top_set)).encode()).hexdigest()[:8]
+                _top_hash = hashlib.sha256(", ".join(sorted(top_set)).encode()).hexdigest()[:8]
                 all_scores_hashes.append((test_date.strftime("%Y-%m-%d"), all_hash))
                 prev_top_decile = top_set
 

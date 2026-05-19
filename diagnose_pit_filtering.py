@@ -7,7 +7,6 @@ Checks if trial records have proper date fields for temporal discipline.
 """
 
 import json
-import sys
 from collections import Counter
 from datetime import datetime
 

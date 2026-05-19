@@ -4,7 +4,7 @@ Implements fail-loud validation to prevent data contamination.
 """
 
 import re
-from typing import Dict, List, Tuple, TypedDict, Union
+from typing import Dict, List, Tuple, TypedDict
 
 # Known delisted/merged securities (as of Jan 2026)
 # Extracted as module constant so validate_blacklist() can cross-reference market data.

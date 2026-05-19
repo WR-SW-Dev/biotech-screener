@@ -8,7 +8,7 @@ Manages trial state snapshots in JSONL format with sorted keys.
 import hashlib
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, timedelta
 from functools import cached_property
 from pathlib import Path

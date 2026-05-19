@@ -3,7 +3,7 @@
 import json
 import logging
 import math
-from datetime import date, timedelta
+from datetime import date
 
 from mcp_server.app import mcp
 

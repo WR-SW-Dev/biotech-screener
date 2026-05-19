@@ -10,7 +10,6 @@ import json
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
-from decimal import Decimal
 from pathlib import Path
 
 try:

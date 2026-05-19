@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # Validation thresholds
 EXPECTED_WEIGHT_SUM = 1.00  # Fully invested, no cash reserve

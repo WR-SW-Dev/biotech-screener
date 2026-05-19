@@ -5,7 +5,6 @@ Returns empty trial data for baseline comparison.
 Used when --clinical-provider=stub or as fallback.
 """
 
-from dataclasses import dataclass
 from datetime import date
 
 from .protocols import ClinicalTrialsProvider, ProviderResult, TrialRow

@@ -13,7 +13,7 @@ Checks:
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List
 
 from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
@@ -208,7 +208,7 @@ class BacktestValidator:
         hist_data = self.check_historical_data()
 
         # Check metrics
-        metrics = self.check_metrics_implementation()
+        _metrics = self.check_metrics_implementation()
 
         # Determine specific capabilities
         has_walk_forward = any(c.present for c in capabilities if c.capability == "walk_forward")

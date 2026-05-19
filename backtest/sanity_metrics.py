@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from statistics import StatisticsError, correlation, mean, stdev
@@ -143,7 +142,7 @@ def compute_ic_by_stage(
 
     if pooled_ic is not None and stage_ics:
         # Check if pooled sign matches 2/3 stages
-        pooled_sign = 1 if pooled_ic > 0 else -1
+        _pooled_sign = 1 if pooled_ic > 0 else -1
         matching_signs = sum(1 for ic in stage_ics.values() if (ic > 0) == (pooled_ic > 0))
 
         if matching_signs >= len(stage_ics) * 2 / 3:

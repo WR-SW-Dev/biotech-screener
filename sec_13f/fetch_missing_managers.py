@@ -9,7 +9,6 @@ Usage:
 import json
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 # Add parent directory to path for imports

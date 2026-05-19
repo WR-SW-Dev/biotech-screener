@@ -10,7 +10,7 @@ All functions are deterministic (no datetime.now(), no network calls).
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

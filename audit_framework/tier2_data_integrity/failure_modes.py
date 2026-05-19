@@ -224,7 +224,7 @@ class FailureModeValidator:
         results = []
 
         financial_data = self._load_json_data("financial_records.json")
-        market_data = self._load_json_data("market_data.json")
+        _market_data = self._load_json_data("market_data.json")
 
         if financial_data and isinstance(financial_data, list):
             # Check for anomalies
@@ -281,10 +281,10 @@ class FailureModeValidator:
         results = []
 
         market_data = self._load_json_data("market_data.json")
-        universe_data = self._load_json_data("universe.json")
+        _universe_data = self._load_json_data("universe.json")
 
         small_cap_tickers = []
-        large_pipeline_tickers = []
+        _large_pipeline_tickers = []
 
         # Check market data for small caps
         if isinstance(market_data, list):

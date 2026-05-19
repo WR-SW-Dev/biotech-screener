@@ -28,9 +28,8 @@ Updated: 2026-01-18 - Added intelligent governance integration
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal
-from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
 # =============================================================================
@@ -763,7 +762,7 @@ def check_sanity_override(
                 driving_factor = comp.get("name")
 
     # Check enhancement signals
-    enhancements = score_breakdown.get("enhancements", {})
+    _enhancements = score_breakdown.get("enhancements", {})
 
     # Check interaction terms
     interaction_adj = Decimal(str(score_breakdown.get("interaction_terms", {}).get("total_adjustment", "0")))

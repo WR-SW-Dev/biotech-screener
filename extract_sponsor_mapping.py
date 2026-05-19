@@ -8,7 +8,6 @@ This mapping is needed for AACT refresh queries.
 
 import json
 from collections import defaultdict
-from pathlib import Path
 
 
 def extract_sponsor_mapping(trial_records_path: str = "trial_records.json") -> dict:

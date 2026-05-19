@@ -6,7 +6,6 @@ Creates realistic-looking price series with some variance.
 import csv
 import random
 from datetime import date, timedelta
-from decimal import Decimal
 
 # Seed for reproducibility
 random.seed(42)

@@ -22,8 +22,8 @@ Version: 1.0.0
 
 import logging
 import math
-from dataclasses import dataclass, field
-from datetime import date, timedelta
+from dataclasses import dataclass
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -207,7 +207,7 @@ class RegimeAdaptiveDecayEngine:
             return (Decimal("1.0"), "No VIX adjustment")
 
         # VIX ratio to baseline
-        vix_ratio = vix_level / self.VIX_BASELINE
+        _vix_ratio = vix_level / self.VIX_BASELINE
 
         # Convert to decay multiplier
         # VIX 20 -> 1.0x (no change)

@@ -20,7 +20,6 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-import csv
 import hashlib
 import io
 import json
@@ -220,7 +219,7 @@ def parse_finra_short_volume_file(file_path: Path, trade_date: date) -> List[Dic
                 return header.index(n)
         return -1
 
-    idx_date = find_col(["DATE", "TRADEDATE"])
+    _idx_date = find_col(["DATE", "TRADEDATE"])
     idx_symbol = find_col(["SYMBOL", "TICKER"])
     idx_short = find_col(["SHORTVOLUME", "SHORT_VOLUME", "SHORTVOL"])
     idx_exempt = find_col(["SHORTEXEMPTVOLUME", "SHORT_EXEMPT_VOLUME", "EXEMPTVOLUME"])

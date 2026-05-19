@@ -7,7 +7,6 @@ Wraps output writing to ensure:
 3. Output hashes are computed and returned
 """
 
-import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 

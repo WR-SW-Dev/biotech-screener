@@ -20,7 +20,7 @@ import csv
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 
@@ -310,7 +310,7 @@ def main():
             # Assume we're in project root
             output_path = os.path.join("optimization", output_path)
 
-    n_obs = generate_training_data(
+    _n_obs = generate_training_data(
         output_path=output_path,
         start_date=args.start_date,
         end_date=args.end_date,

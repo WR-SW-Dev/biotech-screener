@@ -18,7 +18,6 @@ Decision gate:
 - If return_coverage < 80% or fallback > 20% → fix before interpreting IC
 """
 
-import json
 import random
 import sys
 from datetime import date, datetime, timedelta, timezone

@@ -15,9 +15,9 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Set
 
-from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory, ValidationFinding
+from audit_framework.types import AuditResult, AuditSeverity, ValidationCategory
 
 
 @dataclass

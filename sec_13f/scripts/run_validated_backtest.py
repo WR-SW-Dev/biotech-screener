@@ -12,7 +12,6 @@ Usage:
     python scripts/run_validated_backtest.py
 """
 
-import json
 import random
 import sys
 from datetime import datetime, timezone
@@ -403,7 +402,7 @@ def validate_cohort_coverage(snapshots: List[Dict]) -> Dict[str, Any]:
     print(f"  {'Cohort':<25} {'Min':>6} {'Max':>6} {'Fallback':<15}")
     print("  " + "-" * 55)
 
-    all_ok = True
+    _all_ok = True
     for cohort, counts in sorted(all_cohorts.items()):
         min_count = min(counts)
         max_count = max(counts)

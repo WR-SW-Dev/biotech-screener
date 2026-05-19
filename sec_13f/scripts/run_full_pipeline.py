@@ -5,7 +5,6 @@ Runs Modules 1-5 with sample data, then executes backtest.
 Demonstrates end-to-end flow from raw data to IC metrics.
 """
 
-import json
 import random
 import sys
 from decimal import Decimal
@@ -158,7 +157,7 @@ def generate_sample_data(as_of_date: str) -> Dict[str, List[Dict]]:
 
         for i in range(num_trials):
             # Generate trial with some variation
-            days_offset = random.randint(30, 365)
+            _days_offset = random.randint(30, 365)
 
             trial_records.append(
                 {

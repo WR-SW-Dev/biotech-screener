@@ -31,7 +31,7 @@ class PipelineValidator:
             import requests
             import yfinance
 
-            from collectors import sec_collector, trials_collector, yahoo_collector
+            from collectors import yahoo_collector
 
             return True, "All required modules imported successfully"
         except ImportError as e:

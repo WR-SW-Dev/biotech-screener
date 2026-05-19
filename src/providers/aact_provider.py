@@ -16,7 +16,7 @@ import logging
 from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Dict, List, Optional, Tuple, TypedDict
 
 
 class StudyRow(TypedDict, total=False):
@@ -31,7 +31,7 @@ class StudyRow(TypedDict, total=False):
     study_type: str
 
 
-from .protocols import ClinicalTrialsProvider, PCDType, Phase, ProviderResult, TrialDiff, TrialRow, TrialStatus
+from .protocols import PCDType, Phase, ProviderResult, TrialRow, TrialStatus
 
 logger = logging.getLogger(__name__)
 

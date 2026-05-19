@@ -31,7 +31,7 @@ import urllib.error
 import urllib.request
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # Check for yfinance
 try:

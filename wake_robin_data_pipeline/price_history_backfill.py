@@ -150,7 +150,7 @@ def main():
         fetched, new = backfill_ticker(ticker, args.price_file, args.as_of, args.min_rows, args.dry_run)
         total_fetched += fetched
         total_new += new
-        status = f"fetched={fetched}, new={new}"
+        _status = f"fetched={fetched}, new={new}"
         if args.dry_run:
             print(f"  {ticker}: current={current}, would_fetch={fetched}, would_add={new}")
         else:

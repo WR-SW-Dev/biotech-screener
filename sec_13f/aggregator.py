@@ -20,7 +20,6 @@ Usage:
         print(f"{ticker}: {signal['overlap_count']} managers, score={signal['conviction_score']:.2f}")
 """
 
-import hashlib
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field

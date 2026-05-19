@@ -32,10 +32,10 @@ Version: 1.0.0
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # Import enhancement modules
 from pos_engine import ProbabilityOfSuccessEngine

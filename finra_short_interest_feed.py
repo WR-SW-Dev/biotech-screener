@@ -21,7 +21,6 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-import csv
 import hashlib
 import io
 import json
@@ -144,7 +143,7 @@ def get_latest_available_settlement_date(as_of_date: date) -> date:
     """
     # Work backwards from as_of_date to find latest available settlement
     # Subtract dissemination lag to get approximate settlement window
-    earliest_settlement = as_of_date - timedelta(days=DISSEMINATION_LAG_BUSINESS_DAYS + 7)
+    _earliest_settlement = as_of_date - timedelta(days=DISSEMINATION_LAG_BUSINESS_DAYS + 7)
 
     # Find mid-month and end-month settlement dates for relevant months
     candidates = []

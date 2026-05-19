@@ -15,7 +15,7 @@ Rules:
 
 import json
 import math
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import IO, Any, Optional
 
 

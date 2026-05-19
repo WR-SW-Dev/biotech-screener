@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"

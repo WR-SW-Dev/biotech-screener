@@ -17,7 +17,6 @@ Version: 1.0.0
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -480,7 +479,7 @@ class AdaptiveValidator:
 
         # Check and activate fallbacks if component metrics provided
         if component_metrics:
-            updated_metrics = self.check_and_activate_fallbacks(component_metrics)
+            _updated_metrics = self.check_and_activate_fallbacks(component_metrics)
 
         # Validate backtest metrics
         metric_results = self.validate_backtest_metrics(backtest_results)

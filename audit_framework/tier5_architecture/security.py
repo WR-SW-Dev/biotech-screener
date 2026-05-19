@@ -254,7 +254,7 @@ class SecurityValidator:
 
                     for pattern in env_patterns:
                         if re.search(pattern, content):
-                            has_env_usage = True
+                            _has_env_usage = True
                             break
 
                 except Exception:

@@ -9,7 +9,7 @@ Fail-closed: missing required fields trigger SCHEMA_MISMATCH.
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from governance.canonical_json import canonical_dumps
 from governance.hashing import hash_canonical_json_short

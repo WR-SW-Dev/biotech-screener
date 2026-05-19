@@ -7,7 +7,6 @@ Downloads price data from Yahoo Finance to enable forward return calculations.
 import csv
 import json
 import sys
-from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 

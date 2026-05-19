@@ -16,7 +16,7 @@ Usage:
 
 import json
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
 
 def load_etf_constituents(data_dir: str = "production_data") -> Set[str]:

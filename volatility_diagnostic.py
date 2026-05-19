@@ -13,7 +13,7 @@ Author: Claude
 Date: 2026-01-15
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
 import pandas as pd

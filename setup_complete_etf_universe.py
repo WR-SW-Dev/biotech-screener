@@ -9,7 +9,6 @@ Usage:
 """
 
 import subprocess
-import sys
 from pathlib import Path
 
 
@@ -20,7 +19,7 @@ def run_command(cmd: str, description: str) -> bool:
     print(f"{'='*80}")
 
     try:
-        result = subprocess.run(cmd, shell=True, check=True, capture_output=False, text=True)
+        _result = subprocess.run(cmd, shell=True, check=True, capture_output=False, text=True)
         print(f"✅ Success: {description}")
         return True
     except subprocess.CalledProcessError as e:

@@ -5,11 +5,11 @@ This module defines the interface that all clinical trials providers must implem
 ensuring consistent PIT-safe data delivery to Modules 3 and 4.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Optional, Protocol, TypedDict, Union
+from typing import Optional, Protocol, TypedDict
 
 
 class TrialRowDict(TypedDict):

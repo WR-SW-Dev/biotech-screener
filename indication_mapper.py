@@ -26,7 +26,6 @@ Version: 2.0.0
 import json
 import re
 from datetime import date
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 

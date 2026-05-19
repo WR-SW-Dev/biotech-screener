@@ -23,7 +23,7 @@ Version: 1.0.0
 
 import logging
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from statistics import mean, stdev

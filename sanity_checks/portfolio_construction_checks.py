@@ -18,8 +18,7 @@ Version: 1.0.0
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from datetime import date
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -565,7 +564,7 @@ def generate_investable_capital_report(
     Returns:
         Detailed investability report
     """
-    checker = PortfolioConstructionChecker(mandate=mandate)
+    _checker = PortfolioConstructionChecker(mandate=mandate)
 
     top20 = [s for s in securities if s.rank is not None and s.rank <= 20]
 

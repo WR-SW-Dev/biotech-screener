@@ -17,9 +17,7 @@ from typing import Any, Dict, List, Optional
 from elite_managers import get_all_managers, get_elite_ciks, get_elite_managers
 
 # Import risk gates for fail-closed filtering
-from risk_gates import apply_all_gates
-from risk_gates import compute_parameters_hash as compute_risk_gates_hash
-from risk_gates import load_financial_data, load_market_data
+from risk_gates import apply_all_gates, load_financial_data, load_market_data
 
 # =============================================================================
 # VERSION TRACKING
@@ -507,7 +505,7 @@ def main():
         financial_data = load_financial_data(args.financial_data)
 
     # Generate report
-    signals = generate_report(
+    _signals = generate_report(
         data, market_data=market_data, financial_data=financial_data, output_file=args.output, as_of_date=args.as_of
     )
 

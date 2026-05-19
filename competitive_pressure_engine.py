@@ -16,7 +16,7 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional, Union
 
-from common.accuracy_improvements import CompetitiveLandscapeResult, compute_competition_penalty
+from common.accuracy_improvements import compute_competition_penalty
 
 __version__ = "1.0.0"
 

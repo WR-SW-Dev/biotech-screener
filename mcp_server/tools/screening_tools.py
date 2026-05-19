@@ -2,7 +2,6 @@
 
 import json
 import logging
-from pathlib import Path
 
 from mcp_server.app import mcp
 from mcp_server.config import DATA_DIR, SCREEN_OUTPUT_FILE

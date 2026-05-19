@@ -23,7 +23,6 @@ from __future__ import annotations
 import csv
 import json
 import math
-import os
 import shutil
 import sys
 import tarfile
@@ -258,7 +257,7 @@ def _sec_event_days(event: Dict[str, Any], as_of: date) -> Optional[int]:
 
     Returns positive days if event is in the future, else None.
     """
-    precision = event.get("date_precision", "DAY")
+    _precision = event.get("date_precision", "DAY")
     confidence = event.get("confidence", "")
 
     # Skip LOW confidence (vague "mid-year" / "year-end" language)

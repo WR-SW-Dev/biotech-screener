@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -400,7 +399,7 @@ def generate_battle_tested_report(
         None,
     )
 
-    review_result = next(
+    _review_result = next(
         (r for r in report.check_results if r.check_name == "review_triggers"),
         None,
     )

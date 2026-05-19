@@ -26,7 +26,6 @@ Usage:
 
 import hashlib
 import json
-import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -218,7 +217,7 @@ class SEC13FFetcher:
                 primary_doc = primary_docs[i] if i < len(primary_docs) else ""
 
                 # Construct URLs
-                accession_formatted = accessions[i]
+                _accession_formatted = accessions[i]
                 base_url = f"{self.EDGAR_BASE}/Archives/edgar/data/{cik_int}/{accession}"
                 primary_url = f"{base_url}/{primary_doc}"
 

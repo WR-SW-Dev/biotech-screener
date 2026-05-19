@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -289,7 +289,7 @@ class PipelineDiversityEngine:
             seen_nct_ids.add(nct_id)
 
             # Filter by as_of_date if we have date info
-            start_date = trial.get("start_date") or trial.get("primary_completion_date")
+            _start_date = trial.get("start_date") or trial.get("primary_completion_date")
             # Skip future trials
             # (simplified - in production would parse dates properly)
 

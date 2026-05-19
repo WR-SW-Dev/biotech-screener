@@ -14,7 +14,6 @@ import csv
 import json
 import sys
 import time
-from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 

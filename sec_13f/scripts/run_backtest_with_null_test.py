@@ -3,7 +3,6 @@ Run sample backtest with proper null hypothesis testing.
 Uses multiple shuffle seeds to estimate null distribution.
 """
 
-import json
 import random
 import sys
 from decimal import Decimal

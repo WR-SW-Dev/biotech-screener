@@ -8,7 +8,6 @@ This script flattens and transforms the data.
 """
 
 import json
-from pathlib import Path
 from typing import Any, Dict, List
 
 

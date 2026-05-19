@@ -384,7 +384,7 @@ class DependencyValidator:
                 all_network_calls.extend(calls)
 
         # Check pyproject
-        declared_deps = self.check_pyproject_dependencies()
+        _declared_deps = self.check_pyproject_dependencies()
 
         # Filter to only truly external (not dev dependencies)
         core_external = external_deps - {"pytest", "coverage", "mypy", "black", "flake8"}

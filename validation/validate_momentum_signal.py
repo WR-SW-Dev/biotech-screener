@@ -18,7 +18,6 @@ Version: 1.0.0
 """
 
 import json
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal

@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import logging
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal
 from statistics import mean, stdev
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from sanity_checks.types import (
     DEFAULT_THRESHOLDS,

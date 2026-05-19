@@ -9,7 +9,6 @@ All functions are deterministic (no datetime.now(), no network calls).
 
 import json
 import logging
-from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 from risk_gates import (

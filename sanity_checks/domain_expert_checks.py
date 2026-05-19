@@ -18,7 +18,6 @@ Version: 1.0.0
 from __future__ import annotations
 
 import logging
-import re
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set, Tuple

@@ -22,8 +22,8 @@ Version: 1.0.0
 """
 
 import logging
-from dataclasses import dataclass, field
-from datetime import date, timedelta
+from dataclasses import dataclass
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from statistics import mean, median
 from typing import Any, Callable, Dict, List, Optional, Tuple

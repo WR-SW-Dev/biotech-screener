@@ -10,7 +10,6 @@ Issue: Module 2 expects 'cash', 'debt' but data has 'cash_usd', 'debt_usd'
 """
 
 import json
-from pathlib import Path
 
 
 def transform_universe_to_financial_records(

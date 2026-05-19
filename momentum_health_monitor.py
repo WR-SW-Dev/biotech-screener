@@ -33,7 +33,7 @@ Version: 1.0.0
 """
 
 import math
-from datetime import date, timedelta
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, List, Optional, Tuple
 

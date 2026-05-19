@@ -148,8 +148,10 @@ class GateConfig:
     audit_warn_is_gate_warn: bool = True
     """If data_integrity_audit exits 2, treat as gate WARN."""
 
-    market_data_max_age_days: int = 3
-    """Max calendar-day age of market_data.json (collected_at vs as_of_date)."""
+    market_data_max_age_days: int = 5
+    """TEMP 2026-05-19: raised from 3→5 for Yahoo Finance 429 outage."""
+    # REVERT to 3 once Yahoo API recovers
+    # """Max calendar-day age of market_data.json (collected_at vs as_of_date)."""
 
     market_data_min_coverage: float = 0.90
     """Min fraction of universe tickers that must have market_data records."""

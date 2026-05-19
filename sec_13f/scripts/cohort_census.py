@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
@@ -49,7 +48,7 @@ def analyze_cohort_distribution(snapshots: List[Dict]) -> Dict[str, Any]:
     for snap in snapshots:
         as_of = snap["as_of_date"]
         cohort_stats = snap.get("cohort_stats", {})
-        ranked = snap.get("ranked_securities", [])
+        _ranked = snap.get("ranked_securities", [])
 
         # Count by cohort
         cohort_counts = {}
@@ -83,7 +82,7 @@ def analyze_cohort_distribution(snapshots: List[Dict]) -> Dict[str, Any]:
 
         # Calculate totals
         total_securities = sum(stage_counts.values())
-        unknown_stage_count = stage_counts.get("unknown", 0) + stage_counts.get(
+        _unknown_stage_count = stage_counts.get("unknown", 0) + stage_counts.get(
             "early", 0
         )  # early often contains unknowns
 

@@ -12,7 +12,7 @@ All operations are deterministic.
 
 import json
 import re
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, TypedDict, Union
 

@@ -47,7 +47,6 @@ import argparse
 import json
 import sys
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
 

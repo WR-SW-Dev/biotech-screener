@@ -244,7 +244,7 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
 
     # Try 3: Fetch filing index to find information table
     cik_no_zeros = cik.lstrip("0")
-    accession_no_dashes = accession.replace("-", "")
+    _accession_no_dashes = accession.replace("-", "")
     index_url = (
         f"{SEC_EDGAR_BASE_URL}/cgi-bin/viewer?action=view&cik={cik_no_zeros}&accession_number={accession}&xbrl_type=v"
     )

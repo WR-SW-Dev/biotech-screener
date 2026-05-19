@@ -8,7 +8,6 @@ Uses sample financial data (replace with real API when available).
 import json
 import random
 import sys
-from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
@@ -261,7 +260,7 @@ def main():
     ]
 
     # Run backtest
-    result = run_production_backtest(dates, use_cached_trials=True)
+    _result = run_production_backtest(dates, use_cached_trials=True)
 
     print("\n" + "=" * 70)
     print("COMPLETE")

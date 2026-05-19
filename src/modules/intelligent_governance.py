@@ -43,7 +43,7 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, TypeVar, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, TypeVar, Union
 
 # Type variable for coalesce function
 T = TypeVar("T")

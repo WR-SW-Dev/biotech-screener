@@ -4,7 +4,6 @@ Run sample backtest with generated price data.
 Creates mock Module 5 snapshots and runs metrics suite.
 """
 
-import json
 import random
 
 # Add parent to path for imports

@@ -18,8 +18,7 @@ Version: 1.0.0
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from datetime import date, timedelta
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
@@ -251,7 +250,7 @@ class MarketMicrostructureChecker:
 
             # Count C-suite transactions
             csuite_sells = [t for t in txns["sell"] if t.is_c_suite]
-            csuite_buys = [t for t in txns["buy"] if t.is_c_suite]
+            _csuite_buys = [t for t in txns["buy"] if t.is_c_suite]
 
             # Check aggressive C-suite selling
             if len(csuite_sells) >= 2:

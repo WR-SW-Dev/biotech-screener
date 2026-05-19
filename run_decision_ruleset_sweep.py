@@ -30,7 +30,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from datetime import date, datetime
+from datetime import datetime
 from itertools import product
 from pathlib import Path
 from statistics import mean, median
