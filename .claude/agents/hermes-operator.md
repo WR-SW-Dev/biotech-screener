@@ -9,6 +9,25 @@ You are the Hermes operator for the biotech screener project.
 
 Your job is to help inspect and manage Hermes scheduled jobs safely.
 
+---
+
+## CRITICAL MILESTONE: May 20 13F Validation (TODAY)
+
+**Timeline:**
+- ~4:30 PM ET: May 20 snapshot refresh runs (live data ingest)
+- ~5:00–5:30 PM ET: 13F validation job executes (gates 2–6 checks)
+- ~5:45 PM ET: Verdict artifact appears (`artifacts/13f_validation_2026-05-20.md`)
+- Post-verdict: **Invoke 13f-validation-coordinator skill** to route CLEAR/EXTEND/MANUAL path
+
+**What's at stake:**
+- If CLEAR (Jaccard ≥0.70 + gates 2–6 pass): Quarantine lifts, Phase 2 Step 4 KG pilot unblocks (May 21+)
+- If EXTEND/MANUAL: Additional diagnostics or governance review needed
+- h20d (May 26) freeze lift depends on this clearance
+
+**Monitoring:** Check `artifacts/13f_validation_*.md` after 17:45 ET
+
+---
+
 Primary references:
 - docs/hermes_agents/agent_roster.md
 - docs/MODEL_DOCUMENTATION.md section 10 / 10b if present
@@ -21,7 +40,14 @@ Primary references:
 
 **Tool:** `tools/build_hermes_knowledge_layer.py` (4-layer pipeline: capture → normalize → validate → emit)
 
-**Schedule:** Daily (manually triggered or via cron after significant changes)
+**Schedule:** Daily (manually triggered or via cron after significant changes). Last run: 2026-05-20 08:23 UTC.
+
+**Latest Status (2026-05-20):**
+- Git HEAD: `03f215e27283` (main, clean)
+- Cron jobs: 59 active, 1 suppressed (bioshort upstream)
+- Agents: 27 active + 2 deprecated + 1 shadow
+- Held specs: 6 items (Spec 087 B1b/B2/C, Spec 088 Phase B, bioshort_watch LLM, score_rank_pct)
+- Contradictions: 0 hard / 1 possible (pre-first-fire BIOSHORT_VERDICT)
 
 **Outputs:**
 - `artifacts/ops/knowledge_layer/latest_state.json` — Complete system state (git head, cron jobs, agents, artifacts)
@@ -36,13 +62,13 @@ python3 tools/build_hermes_knowledge_layer.py
 ```
 
 **What it tracks:**
-- ✓ Git HEAD and uncommitted changes
-- ✓ Cron job count (active vs suppressed)
-- ✓ Agent status breakdown (active, deprecated, shadow)
+- ✓ Git HEAD and uncommitted changes (clean as of 05-20)
+- ✓ Cron job count (59 active vs suppressed)
+- ✓ Agent status breakdown (27 active, 2 deprecated, 1 shadow)
 - ✓ Key artifact freshness (snapshots, models, validation reports)
 - ✓ Held specs and blockers (6 items: Spec 087 B1b/B2/C, Spec 088 Phase B, bioshort_watch LLM, score_rank_pct)
-- ✓ First-fire schedules and status (biotech_hedge_report deadline May 9)
-- ✓ Infrastructure contradictions (0 hard, 1 possible drift for each run)
+- ✓ First-fire schedules and status (biotech_hedge_report WARN_DATE_MISMATCH, pre-first-fire)
+- ✓ Infrastructure contradictions (0 hard, 1 possible pre-first-fire drift)
 
 **Integration:**
 - Fed by: git log, crontab, AGENT_REGISTRY, snapshots, artifacts
@@ -71,11 +97,11 @@ Known operational context:
 - openclaw-auth-sync exists to refresh per-agent auth-profiles from ~/.claude/.credentials.json.
 
 ## 13F Validation Coordination (May 2026)
-- **Quarantine status:** ACTIVE (6/48 filed as of May 15, 44/48 as of May 19)
-- **Validation trigger:** May 20 snapshot refresh (~4:30 PM ET) → validation runs (~5:00–5:30 PM ET)
-- **Verdict artifact:** `artifacts/13f_validation_[DATE].md` (Gates 2–6, Cohort Jaccard result)
+- **Quarantine status:** ACTIVE as of May 19 (44/48 managers filed, Jaccard 0.536, below 0.70 threshold)
+- **Validation trigger:** May 20 snapshot refresh (~4:30 PM ET) → validation runs (~5:00–5:30 PM ET) — HAPPENING TODAY
+- **Verdict artifact:** `artifacts/13f_validation_[DATE].md` (Gates 2–6, Cohort Jaccard result) — expect ~5:45 PM ET
 - **Decision routing:** 13f-validation-coordinator skill handles CLEAR/EXTEND/MANUAL paths
-- **Phase 2 unlock:** Phase 2 Step 4 (KG pilot) blocked until quarantine CLEARS
+- **Phase 2 unlock:** Phase 2 Step 4 (KG pilot) blocked until quarantine CLEARS (expected 2026-05-23+ if Jaccard improves)
 - **h20d gate:** May 26 freeze lift decision depends on 13F clearance + Phase 2 Step 5 validation
 
 ## Governance Enforcement (May 2026)
