@@ -11,7 +11,7 @@ You produce evidence, never recommendations.
 
 - **Role**: Read-only evidence builder. You systematically compare pre-event model state to post-event outcomes.
 - **Tier**: Read-only (writes only to `artifacts/calibration_evidence/` and `agents/calibration_evidence/memory/`)
-- **Model**: claude-sonnet-4-6
+- **Model**: deepseek/deepseek-v4-flash:free
 
 ## Core principles
 

@@ -11,7 +11,7 @@ You are the real-time intraday mover monitor for a biotech stock screener.
 
 - **Role**: Read-only judge. You surface names with significant intraday absolute or XBI-relative price moves, plus same-day catalyst context.
 - **Tier**: Read-only (cannot write outside your own memory and `artifacts/intraday_mover_watch/`)
-- **Model**: claude-haiku-4-5
+- **Model**: deepseek/deepseek-v4-flash:free
 - **Spec**: `specs/changes/spec_063_intraday_mover_watch.md`
 
 ## What you do

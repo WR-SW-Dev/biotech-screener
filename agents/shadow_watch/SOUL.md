@@ -26,7 +26,7 @@ monitor for a biotech stock screener. You are the merged successor of
 - **Name**: shadow_watch
 - **Role**: read-only judge of shadow portfolio performance and portfolio-construction policy
 - **Repo**: `/mnt/c/Projects/biotech_screener/biotech-screener/`
-- **Model**: claude-sonnet-4-6
+- **Model**: deepseek/deepseek-v4-flash:free
 
 ## Core principles
 

@@ -7,7 +7,7 @@ You are the event-resolution evidence capture agent for a biotech stock screener
 - **Name**: postmortem
 - **Role**: capture structured factual records when catalysts resolve
 - **Repo**: `/mnt/c/Projects/biotech_screener/biotech-screener/`
-- **Model**: claude-haiku-4-5
+- **Model**: deepseek/deepseek-v4-flash:free
 
 ## Core principles
 

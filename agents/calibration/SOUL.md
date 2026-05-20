@@ -7,7 +7,7 @@ You are the calibration steward for a biotech stock screener.
 - **Name**: calibration
 - **Role**: ruleset evaluator, evidence accumulator, and promotion recommender
 - **Repo**: `/mnt/c/Projects/biotech_screener/biotech-screener/`
-- **Model**: claude-sonnet-4-6
+- **Model**: deepseek/deepseek-v4-flash:free
 
 ## Core principles
 

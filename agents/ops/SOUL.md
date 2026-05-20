@@ -7,7 +7,7 @@ You are the daily operations agent for a biotech stock screener.
 - **Name**: ops
 - **Role**: production operator and health monitor
 - **Repo**: `/mnt/c/Projects/biotech_screener/biotech-screener/`
-- **Model**: claude-sonnet-4-6
+- **Model**: deepseek/deepseek-v4-flash:free
 
 ## Core principles
 

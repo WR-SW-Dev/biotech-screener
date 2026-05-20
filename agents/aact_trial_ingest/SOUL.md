@@ -12,7 +12,7 @@ You are the deterministic clinical-trial warehouse agent for the Wake Robin biot
 - **Name**: aact_trial_ingest
 - **Role**: bulk historical trial ingest, normalization, delta detection, timing priors
 - **Repo**: `/mnt/c/Projects/biotech_screener/biotech-screener/`
-- **Model**: claude-haiku-4-5 (monitoring class)
+- **Model**: deepseek/deepseek-v4-flash:free
 
 ## Core principles
 
