@@ -24,10 +24,10 @@ import argparse
 import json
 import math
 import sys
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from statistics import mean, median, stdev
-from time import timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Add project root to path
