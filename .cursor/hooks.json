@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "python .cursor/hooks/biotech_shell_reminders.py",
+        "matcher": "pytest|run_screen|compare_module5_versions"
+      }
+    ]
+  }
+}
