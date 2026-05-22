@@ -4,14 +4,14 @@ Phase 2 Step 4a: Knowledge Graph Loader Tests
 17 test cases for KnowledgeGraphNode, KnowledgeGraphEdge, and KnowledgeGraph.
 """
 
-import unittest
 import json
-import tempfile
-from pathlib import Path
 import sys
+import tempfile
+import unittest
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
-from kg_loader import KnowledgeGraphNode, KnowledgeGraphEdge, KnowledgeGraph
+from kg_loader import KnowledgeGraph, KnowledgeGraphEdge, KnowledgeGraphNode
 
 
 class TestKnowledgeGraphNode(unittest.TestCase):
@@ -237,9 +237,7 @@ class TestKnowledgeGraph(unittest.TestCase):
 
     def test_load_seed_basic(self):
         """Loading a valid seed file populates the graph."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             f.write(
                 '{"type": "node", "id": "spec_100", "node_type": "Spec", "title": "Test", "status": "PENDING", "source_path": "path", "evidence": "ev", "updated_at": "2026-05-14T00:00:00Z", "extra_fields": {}}\n'
             )

@@ -9,14 +9,9 @@ Phase 2 Step 4b: Knowledge Graph Query Tests
 """
 
 import unittest
-from tools.kg_loader import KnowledgeGraph, KnowledgeGraphNode, KnowledgeGraphEdge
-from tools.kg_queries import (
-    WhatBlocksRanker,
-    WhatContradicts,
-    WhatEvidence,
-    WhatPromotes,
-    run_all_queries
-)
+
+from tools.kg_loader import KnowledgeGraph, KnowledgeGraphEdge, KnowledgeGraphNode
+from tools.kg_queries import WhatBlocksRanker, WhatContradicts, WhatEvidence, WhatPromotes, run_all_queries
 
 
 class TestWhatBlocksRanker(unittest.TestCase):
@@ -27,37 +22,43 @@ class TestWhatBlocksRanker(unittest.TestCase):
         self.graph = KnowledgeGraph()
 
         # Create nodes
-        self.graph.add_node(KnowledgeGraphNode(
-            id="module_ranker",
-            node_type="ModelComponent",
-            title="Ranker v2 (2-feature)",
-            status="ACTIVE",
-            source_path="ranker.py",
-            evidence="",
-            updated_at="2026-05-20T00:00:00Z",
-            extra_fields={}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="module_ranker",
+                node_type="ModelComponent",
+                title="Ranker v2 (2-feature)",
+                status="ACTIVE",
+                source_path="ranker.py",
+                evidence="",
+                updated_at="2026-05-20T00:00:00Z",
+                extra_fields={},
+            )
+        )
 
-        self.graph.add_node(KnowledgeGraphNode(
-            id="policy_alpha_freeze",
-            node_type="Policy",
-            title="Alpha Stack Frozen",
-            status="ACTIVE",
-            source_path="policies/alpha_freeze.md",
-            evidence="policy_alpha_freeze_2026_04_04.md",
-            updated_at="2026-04-04T00:00:00Z",
-            extra_fields={}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="policy_alpha_freeze",
+                node_type="Policy",
+                title="Alpha Stack Frozen",
+                status="ACTIVE",
+                source_path="policies/alpha_freeze.md",
+                evidence="policy_alpha_freeze_2026_04_04.md",
+                updated_at="2026-04-04T00:00:00Z",
+                extra_fields={},
+            )
+        )
 
         # Create BLOCKS edge
-        self.graph.add_edge(KnowledgeGraphEdge(
-            src="policy_alpha_freeze",
-            edge_type="BLOCKS",
-            dst="module_ranker",
-            evidence="Promotion requires Checklist v2",
-            confidence="HIGH",
-            created_at="2026-04-04T00:00:00Z"
-        ))
+        self.graph.add_edge(
+            KnowledgeGraphEdge(
+                src="policy_alpha_freeze",
+                edge_type="BLOCKS",
+                dst="module_ranker",
+                evidence="Promotion requires Checklist v2",
+                confidence="HIGH",
+                created_at="2026-04-04T00:00:00Z",
+            )
+        )
 
     def test_blockers_found(self):
         """What_Blocks_Ranker finds blocking policies."""
@@ -81,37 +82,43 @@ class TestWhatContradicts(unittest.TestCase):
         self.graph = KnowledgeGraph()
 
         # Create specs
-        self.graph.add_node(KnowledgeGraphNode(
-            id="spec_057",
-            node_type="Spec",
-            title="Clinical Quality Score",
-            status="ACTIVE",
-            source_path="specs/changes/spec_057.md",
-            evidence="",
-            updated_at="2026-04-13T00:00:00Z",
-            extra_fields={"spec_number": 57}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="spec_057",
+                node_type="Spec",
+                title="Clinical Quality Score",
+                status="ACTIVE",
+                source_path="specs/changes/spec_057.md",
+                evidence="",
+                updated_at="2026-04-13T00:00:00Z",
+                extra_fields={"spec_number": 57},
+            )
+        )
 
-        self.graph.add_node(KnowledgeGraphNode(
-            id="spec_069",
-            node_type="Spec",
-            title="Module 2 v2 Schema Restore",
-            status="PENDING",
-            source_path="specs/changes/spec_069.md",
-            evidence="",
-            updated_at="2026-04-28T00:00:00Z",
-            extra_fields={"spec_number": 69}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="spec_069",
+                node_type="Spec",
+                title="Module 2 v2 Schema Restore",
+                status="PENDING",
+                source_path="specs/changes/spec_069.md",
+                evidence="",
+                updated_at="2026-04-28T00:00:00Z",
+                extra_fields={"spec_number": 69},
+            )
+        )
 
         # Create CONTRADICTS edge
-        self.graph.add_edge(KnowledgeGraphEdge(
-            src="spec_057",
-            edge_type="CONTRADICTS",
-            dst="spec_069",
-            evidence="Clinical scoring conflicts with module 2 schema",
-            confidence="MEDIUM",
-            created_at="2026-04-28T00:00:00Z"
-        ))
+        self.graph.add_edge(
+            KnowledgeGraphEdge(
+                src="spec_057",
+                edge_type="CONTRADICTS",
+                dst="spec_069",
+                evidence="Clinical scoring conflicts with module 2 schema",
+                confidence="MEDIUM",
+                created_at="2026-04-28T00:00:00Z",
+            )
+        )
 
     def test_contradictions_found(self):
         """What_Contradicts finds conflicting specs."""
@@ -133,38 +140,44 @@ class TestWhatEvidence(unittest.TestCase):
         self.graph = KnowledgeGraph()
 
         # Create decision node
-        self.graph.add_node(KnowledgeGraphNode(
-            id="decision_promote_spec_057",
-            node_type="Action",
-            title="Promote Spec 057 Clinical Score",
-            status="PENDING",
-            source_path="decisions/promote_spec_057.md",
-            evidence="",
-            updated_at="2026-05-01T00:00:00Z",
-            extra_fields={}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="decision_promote_spec_057",
+                node_type="Action",
+                title="Promote Spec 057 Clinical Score",
+                status="PENDING",
+                source_path="decisions/promote_spec_057.md",
+                evidence="",
+                updated_at="2026-05-01T00:00:00Z",
+                extra_fields={},
+            )
+        )
 
         # Create supporting spec
-        self.graph.add_node(KnowledgeGraphNode(
-            id="spec_057",
-            node_type="Spec",
-            title="Clinical Quality Score",
-            status="CLOSED",
-            source_path="specs/changes/spec_057.md",
-            evidence="clinical_quality_score_2026_04_13.md",
-            updated_at="2026-04-13T00:00:00Z",
-            extra_fields={"spec_number": 57}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="spec_057",
+                node_type="Spec",
+                title="Clinical Quality Score",
+                status="CLOSED",
+                source_path="specs/changes/spec_057.md",
+                evidence="clinical_quality_score_2026_04_13.md",
+                updated_at="2026-04-13T00:00:00Z",
+                extra_fields={"spec_number": 57},
+            )
+        )
 
         # Create evidence link
-        self.graph.add_edge(KnowledgeGraphEdge(
-            src="spec_057",
-            edge_type="DOCUMENTS",
-            dst="decision_promote_spec_057",
-            evidence="Spec 057 provides evidence for promotion",
-            confidence="HIGH",
-            created_at="2026-05-01T00:00:00Z"
-        ))
+        self.graph.add_edge(
+            KnowledgeGraphEdge(
+                src="spec_057",
+                edge_type="DOCUMENTS",
+                dst="decision_promote_spec_057",
+                evidence="Spec 057 provides evidence for promotion",
+                confidence="HIGH",
+                created_at="2026-05-01T00:00:00Z",
+            )
+        )
 
     def test_evidence_chain(self):
         """What_Evidence traces evidence back to sources."""
@@ -187,58 +200,68 @@ class TestWhatPromotes(unittest.TestCase):
         self.graph = KnowledgeGraph()
 
         # Create spec
-        self.graph.add_node(KnowledgeGraphNode(
-            id="spec_100",
-            node_type="Spec",
-            title="IC Tooling Correction",
-            status="PENDING",
-            source_path="specs/changes/spec_100.md",
-            evidence="",
-            updated_at="2026-05-13T00:00:00Z",
-            extra_fields={"spec_number": 100}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="spec_100",
+                node_type="Spec",
+                title="IC Tooling Correction",
+                status="PENDING",
+                source_path="specs/changes/spec_100.md",
+                evidence="",
+                updated_at="2026-05-13T00:00:00Z",
+                extra_fields={"spec_number": 100},
+            )
+        )
 
         # Create promotion gates
-        self.graph.add_node(KnowledgeGraphNode(
-            id="gate_ic_coverage",
-            node_type="Gate",
-            title="IC Coverage 100%",
-            status="PENDING",
-            source_path="gates/ic_coverage.py",
-            evidence="",
-            updated_at="2026-05-13T00:00:00Z",
-            extra_fields={}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="gate_ic_coverage",
+                node_type="Gate",
+                title="IC Coverage 100%",
+                status="PENDING",
+                source_path="gates/ic_coverage.py",
+                evidence="",
+                updated_at="2026-05-13T00:00:00Z",
+                extra_fields={},
+            )
+        )
 
-        self.graph.add_node(KnowledgeGraphNode(
-            id="review_ic_governance",
-            node_type="Review",
-            title="IC Governance Review",
-            status="PENDING",
-            source_path="reviews/ic_governance.md",
-            evidence="",
-            updated_at="2026-05-13T00:00:00Z",
-            extra_fields={}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="review_ic_governance",
+                node_type="Review",
+                title="IC Governance Review",
+                status="PENDING",
+                source_path="reviews/ic_governance.md",
+                evidence="",
+                updated_at="2026-05-13T00:00:00Z",
+                extra_fields={},
+            )
+        )
 
         # Create promotion edges
-        self.graph.add_edge(KnowledgeGraphEdge(
-            src="gate_ic_coverage",
-            edge_type="GATES",
-            dst="spec_100",
-            evidence="IC coverage required before promotion",
-            confidence="HIGH",
-            created_at="2026-05-13T00:00:00Z"
-        ))
+        self.graph.add_edge(
+            KnowledgeGraphEdge(
+                src="gate_ic_coverage",
+                edge_type="GATES",
+                dst="spec_100",
+                evidence="IC coverage required before promotion",
+                confidence="HIGH",
+                created_at="2026-05-13T00:00:00Z",
+            )
+        )
 
-        self.graph.add_edge(KnowledgeGraphEdge(
-            src="review_ic_governance",
-            edge_type="REQUIRES",
-            dst="spec_100",
-            evidence="Governance review required",
-            confidence="HIGH",
-            created_at="2026-05-13T00:00:00Z"
-        ))
+        self.graph.add_edge(
+            KnowledgeGraphEdge(
+                src="review_ic_governance",
+                edge_type="REQUIRES",
+                dst="spec_100",
+                evidence="Governance review required",
+                confidence="HIGH",
+                created_at="2026-05-13T00:00:00Z",
+            )
+        )
 
     def test_promotion_gates_identified(self):
         """What_Promotes identifies blocking gates."""
@@ -261,16 +284,18 @@ class TestRunAllQueries(unittest.TestCase):
     def setUp(self):
         """Create minimal test graph."""
         self.graph = KnowledgeGraph()
-        self.graph.add_node(KnowledgeGraphNode(
-            id="module_ranker",
-            node_type="ModelComponent",
-            title="Ranker",
-            status="ACTIVE",
-            source_path="ranker.py",
-            evidence="",
-            updated_at="2026-05-20T00:00:00Z",
-            extra_fields={}
-        ))
+        self.graph.add_node(
+            KnowledgeGraphNode(
+                id="module_ranker",
+                node_type="ModelComponent",
+                title="Ranker",
+                status="ACTIVE",
+                source_path="ranker.py",
+                evidence="",
+                updated_at="2026-05-20T00:00:00Z",
+                extra_fields={},
+            )
+        )
 
     def test_run_all_queries_returns_dict(self):
         """run_all_queries returns structured result."""

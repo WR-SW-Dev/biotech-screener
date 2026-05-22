@@ -9,8 +9,9 @@ Usage:
 import json
 import sys
 from pathlib import Path
-from tools.provenance_graph import GraphBuilder
+
 from tools.graph_queries import run_all_queries
+from tools.provenance_graph import GraphBuilder
 
 
 def main(snapshot_date: str):
@@ -29,7 +30,7 @@ def main(snapshot_date: str):
     print(f"  Edges: {len(graph.edges)}")
 
     # Run all query patterns
-    print(f"\nExecuting 5 query patterns...")
+    print("\nExecuting 5 query patterns...")
     results = run_all_queries(graph)
 
     # Save results
@@ -38,16 +39,12 @@ def main(snapshot_date: str):
 
     output_file = artifacts_dir / f"lineage_{snapshot_date}.json"
     with open(output_file, "w") as f:
-        json.dump({
-            "snapshot_date": snapshot_date,
-            "graph": graph.to_dict(),
-            "queries": results
-        }, f, indent=2)
+        json.dump({"snapshot_date": snapshot_date, "graph": graph.to_dict(), "queries": results}, f, indent=2)
 
     print(f"\nResults saved to {output_file}")
 
     # Print summaries
-    print(f"\nQuery Results Summary:")
+    print("\nQuery Results Summary:")
     print(f"  Lineage: {results['lineage'].get('node_count', 'N/A')} nodes")
     print(f"  Snapshot Inputs: {results['snapshot_inputs'].get('total_sources', 'N/A')} sources")
     print(f"  Stale Features: {len(results['stale_features'].get('stale_features', []))} stale")

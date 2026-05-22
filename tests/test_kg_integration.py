@@ -16,12 +16,7 @@ from pathlib import Path
 
 from tools.kg_contradictions import ContradictionSeverity, run_contradiction_detection
 from tools.kg_loader import KnowledgeGraph, KnowledgeGraphEdge, KnowledgeGraphNode
-from tools.kg_queries import (
-    WhatBlocksRanker,
-    WhatContradicts,
-    WhatEvidence,
-    WhatPromotes,
-)
+from tools.kg_queries import WhatBlocksRanker, WhatContradicts, WhatEvidence, WhatPromotes
 
 
 class TestLoaderQueryContract(unittest.TestCase):

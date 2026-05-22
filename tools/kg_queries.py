@@ -8,8 +8,9 @@ Four deterministic query patterns for governance questions:
 4. What_Promotes - promotion path for a spec
 """
 
-from typing import Dict, List, Set, Optional
-from tools.kg_loader import KnowledgeGraph, KnowledgeGraphNode, KnowledgeGraphEdge
+from typing import List, Optional, Set
+
+from tools.kg_loader import KnowledgeGraph
 
 
 class QueryContext:
@@ -44,13 +45,15 @@ class WhatBlocksRanker:
                 if edge.edge_type == "BLOCKS":
                     blocker = graph.get_node(edge.src)
                     if blocker:
-                        blockers.append({
-                            "blocker_id": edge.src,
-                            "blocker_type": blocker.node_type,
-                            "blocker_status": blocker.status,
-                            "evidence": edge.evidence,
-                            "confidence": edge.confidence
-                        })
+                        blockers.append(
+                            {
+                                "blocker_id": edge.src,
+                                "blocker_type": blocker.node_type,
+                                "blocker_status": blocker.status,
+                                "evidence": edge.evidence,
+                                "confidence": edge.confidence,
+                            }
+                        )
                     traverse_blockers(edge.src)
 
         traverse_blockers(ranker_node_id)
@@ -60,7 +63,7 @@ class WhatBlocksRanker:
             "target": ranker_node_id,
             "blockers": blockers,
             "blocker_count": len(blockers),
-            "can_change_ranker": len(blockers) == 0
+            "can_change_ranker": len(blockers) == 0,
         }
 
 
@@ -88,13 +91,15 @@ class WhatContradicts:
                 if edge.edge_type == "CONTRADICTS":
                     target = graph.get_node(edge.dst)
                     if target:
-                        contradictions.append({
-                            "source": edge.src,
-                            "target": edge.dst,
-                            "target_type": target.node_type,
-                            "evidence": edge.evidence,
-                            "confidence": edge.confidence
-                        })
+                        contradictions.append(
+                            {
+                                "source": edge.src,
+                                "target": edge.dst,
+                                "target_type": target.node_type,
+                                "evidence": edge.evidence,
+                                "confidence": edge.confidence,
+                            }
+                        )
 
             # Incoming CONTRADICTS edges
             incoming = graph.incoming_edges(node_id)
@@ -102,13 +107,15 @@ class WhatContradicts:
                 if edge.edge_type == "CONTRADICTS":
                     source = graph.get_node(edge.src)
                     if source:
-                        contradictions.append({
-                            "source": edge.src,
-                            "target": edge.dst,
-                            "source_type": source.node_type,
-                            "evidence": edge.evidence,
-                            "confidence": edge.confidence
-                        })
+                        contradictions.append(
+                            {
+                                "source": edge.src,
+                                "target": edge.dst,
+                                "source_type": source.node_type,
+                                "evidence": edge.evidence,
+                                "confidence": edge.confidence,
+                            }
+                        )
 
         traverse_contradictions(spec_node_id)
 
@@ -117,7 +124,7 @@ class WhatContradicts:
             "target": spec_node_id,
             "contradictions": contradictions,
             "contradiction_count": len(contradictions),
-            "has_conflicts": len(contradictions) > 0
+            "has_conflicts": len(contradictions) > 0,
         }
 
 
@@ -143,14 +150,16 @@ class WhatEvidence:
             if not node:
                 return
 
-            evidence_chain.append({
-                "node_id": node_id,
-                "node_type": node.node_type,
-                "title": node.title,
-                "status": node.status,
-                "source": node.source_path,
-                "depth": depth
-            })
+            evidence_chain.append(
+                {
+                    "node_id": node_id,
+                    "node_type": node.node_type,
+                    "title": node.title,
+                    "status": node.status,
+                    "source": node.source_path,
+                    "depth": depth,
+                }
+            )
 
             # Follow incoming DOCUMENTS/IMPLEMENTS edges
             incoming = graph.incoming_edges(node_id)
@@ -165,7 +174,7 @@ class WhatEvidence:
             "target": decision_node_id,
             "evidence_chain": evidence_chain,
             "chain_length": len(evidence_chain),
-            "sources": list(set(e["source"] for e in evidence_chain if e["source"]))
+            "sources": list(set(e["source"] for e in evidence_chain if e["source"])),
         }
 
 
@@ -193,14 +202,16 @@ class WhatPromotes:
                 if edge.edge_type in ["REQUIRES", "GATES", "DEPENDS_ON"]:
                     gate = graph.get_node(edge.src)
                     if gate and gate.node_type in ["Gate", "Review", "Action"]:
-                        promotion_path.append({
-                            "gate_id": edge.src,
-                            "gate_type": gate.node_type,
-                            "title": gate.title,
-                            "status": gate.status,
-                            "evidence": edge.evidence,
-                            "depth": depth
-                        })
+                        promotion_path.append(
+                            {
+                                "gate_id": edge.src,
+                                "gate_type": gate.node_type,
+                                "title": gate.title,
+                                "status": gate.status,
+                                "evidence": edge.evidence,
+                                "depth": depth,
+                            }
+                        )
                     traverse_gates(edge.src, depth + 1)
 
         traverse_gates(spec_node_id)
@@ -210,7 +221,7 @@ class WhatPromotes:
             "target": spec_node_id,
             "promotion_gates": promotion_path,
             "gates_remaining": len([g for g in promotion_path if g["status"] != "CLOSED"]),
-            "ready_for_promotion": all(g["status"] == "CLOSED" for g in promotion_path)
+            "ready_for_promotion": all(g["status"] == "CLOSED" for g in promotion_path),
         }
 
 
@@ -225,17 +236,9 @@ def run_all_queries(graph: KnowledgeGraph, target_nodes: Optional[List[str]] = N
         dict with all query results
     """
     if target_nodes is None:
-        target_nodes = [
-            "module_ranker",
-            "policy_alpha_freeze",
-            "spec_089",
-            "action_promote_spec_057"
-        ]
+        target_nodes = ["module_ranker", "policy_alpha_freeze", "spec_089", "action_promote_spec_057"]
 
-    results = {
-        "query_set": "Phase_2_Step_4b",
-        "queries": {}
-    }
+    results = {"query_set": "Phase_2_Step_4b", "queries": {}}
 
     for node_id in target_nodes:
         if not graph.get_node(node_id):
@@ -245,7 +248,7 @@ def run_all_queries(graph: KnowledgeGraph, target_nodes: Optional[List[str]] = N
             "what_blocks_ranker": WhatBlocksRanker.query(graph, "module_ranker"),
             "what_contradicts": WhatContradicts.query(graph, node_id),
             "what_evidence": WhatEvidence.query(graph, node_id),
-            "what_promotes": WhatPromotes.query(graph, node_id)
+            "what_promotes": WhatPromotes.query(graph, node_id),
         }
 
     return results

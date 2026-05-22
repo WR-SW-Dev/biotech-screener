@@ -68,9 +68,8 @@ def _list_snapshot_dates(snap_dir: Path) -> list[str]:
     """Return sorted YYYY-MM-DD subdirs of snap_dir; skips non-date entries like 'resolutions'."""
     if not snap_dir.exists():
         return []
-    return sorted(
-        d.name for d in snap_dir.iterdir() if d.is_dir() and SNAPSHOT_DATE_RE.match(d.name)
-    )
+    return sorted(d.name for d in snap_dir.iterdir() if d.is_dir() and SNAPSHOT_DATE_RE.match(d.name))
+
 
 # ---------------------------------------------------------------------------
 # Environment loading

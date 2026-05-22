@@ -8,15 +8,19 @@ Tests validate:
 - Error handling
 """
 
-import pytest
 from pathlib import Path
-from tools.provenance_graph import (
-    ProvenanceGraph, Node, Edge, NodeType, EdgeType, GraphBuilder
-)
+
+import pytest
+
 from tools.graph_queries import (
-    LineageQuery, SnapshotInputsQuery, BreakageImpactQuery,
-    StaleQuery, ValidateSnapshotQuery, run_all_queries
+    BreakageImpactQuery,
+    LineageQuery,
+    SnapshotInputsQuery,
+    StaleQuery,
+    ValidateSnapshotQuery,
+    run_all_queries,
 )
+from tools.provenance_graph import Edge, EdgeType, GraphBuilder, Node, NodeType, ProvenanceGraph
 
 
 @pytest.fixture
@@ -130,10 +134,7 @@ class TestValidateSnapshotQueries:
         """T11: All CONSUMES edges have target artifacts"""
         result = ValidateSnapshotQuery.query(graph)
         assert "assertions" in result
-        completeness = next(
-            (a for a in result["assertions"] if "CONSUMES" in a["assertion"]),
-            None
-        )
+        completeness = next((a for a in result["assertions"] if "CONSUMES" in a["assertion"]), None)
         assert completeness is not None
         assert completeness["result"] in ["PASS", "FAIL"]
 
@@ -141,20 +142,14 @@ class TestValidateSnapshotQueries:
         """T12: All gates gating ranked lists are PASS"""
         result = ValidateSnapshotQuery.query(graph)
         assert "assertions" in result
-        gate_assertion = next(
-            (a for a in result["assertions"] if "gates" in a["assertion"].lower()),
-            None
-        )
+        gate_assertion = next((a for a in result["assertions"] if "gates" in a["assertion"].lower()), None)
         assert gate_assertion is not None
 
     def test_t13_quarantine_status_accuracy(self, graph):
         """T13: No contradictions (C0–C5 clear)"""
         result = ValidateSnapshotQuery.query(graph)
         assert "assertions" in result
-        quarantine = next(
-            (a for a in result["assertions"] if "QUARANTINE" in a["assertion"]),
-            None
-        )
+        quarantine = next((a for a in result["assertions"] if "QUARANTINE" in a["assertion"]), None)
         assert quarantine is not None
         assert quarantine["result"] in ["PASS", "WARN"]
 
@@ -198,7 +193,7 @@ class TestSchemaValidation:
             NodeType.GATE,
             NodeType.CONTRADICTION,
             NodeType.RANKED_LIST,
-            NodeType.VALIDATION_EVIDENCE
+            NodeType.VALIDATION_EVIDENCE,
         }
         # At minimum, check that common types exist
         assert NodeType.RAW_SOURCE in node_types
@@ -238,10 +233,7 @@ class TestGraphStructure:
     def test_no_orphaned_nodes(self, graph):
         """No nodes are completely disconnected"""
         for node_id in graph.nodes.keys():
-            has_edge = any(
-                e.source_id == node_id or e.target_id == node_id
-                for e in graph.edges
-            )
+            has_edge = any(e.source_id == node_id or e.target_id == node_id for e in graph.edges)
             # Allow some orphans (singleton nodes), but most should be connected
             # This is a soft assertion
             pass

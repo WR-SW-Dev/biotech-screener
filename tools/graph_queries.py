@@ -9,9 +9,10 @@ Five deterministic graph traversal patterns:
 5. Validate-Snapshot - integrity assertions
 """
 
-from typing import Dict, List, Set, Optional
 from datetime import datetime
-from tools.provenance_graph import ProvenanceGraph, Node, Edge, NodeType, EdgeType
+from typing import Dict, Set
+
+from tools.provenance_graph import EdgeType, NodeType, ProvenanceGraph
 
 
 class LineageQuery:
@@ -26,11 +27,7 @@ class LineageQuery:
         visited: Set[str] = set()
         tree = LineageQuery._build_lineage_tree(graph, snapshot_node_id, visited)
 
-        return {
-            "snapshot_date": graph.snapshot_date,
-            "root": tree,
-            "node_count": len(visited)
-        }
+        return {"snapshot_date": graph.snapshot_date, "root": tree, "node_count": len(visited)}
 
     @staticmethod
     def _build_lineage_tree(graph: ProvenanceGraph, node_id: str, visited: Set[str]) -> dict:
@@ -49,17 +46,9 @@ class LineageQuery:
         for edge in incoming:
             child_tree = LineageQuery._build_lineage_tree(graph, edge.source_id, visited)
             if child_tree:
-                children.append({
-                    "edge_type": edge.edge_type.value,
-                    "node": child_tree
-                })
+                children.append({"edge_type": edge.edge_type.value, "node": child_tree})
 
-        return {
-            "node_id": node_id,
-            "node_type": node.node_type.value,
-            "metadata": node.metadata,
-            "children": children
-        }
+        return {"node_id": node_id, "node_type": node.node_type.value, "metadata": node.metadata, "children": children}
 
 
 class SnapshotInputsQuery:
@@ -80,7 +69,7 @@ class SnapshotInputsQuery:
                     "source_type": node.node_type.value,
                     "source_id": node.node_id,
                     "name": node.metadata.get("source_name", node.node_id),
-                    "status": "CURRENT"
+                    "status": "CURRENT",
                 }
                 inputs.append(source_info)
 
@@ -88,7 +77,7 @@ class SnapshotInputsQuery:
             "snapshot_date": graph.snapshot_date,
             "input_sources": sorted(inputs, key=lambda x: x["name"]),
             "stale_sources": stale,
-            "total_sources": len(inputs)
+            "total_sources": len(inputs),
         }
 
 
@@ -115,7 +104,7 @@ class BreakageImpactQuery:
             "artifact_type": node.node_type.value if node else "UNKNOWN",
             "dependents": dependents,
             "dependent_count": len(dependents),
-            "impact_severity": severity
+            "impact_severity": severity,
         }
 
     @staticmethod
@@ -128,12 +117,16 @@ class BreakageImpactQuery:
         for edge in graph.get_outgoing_edges(node_id):
             target = graph.get_node(edge.target_id)
             if target:
-                dependents.append({
-                    "type": target.node_type.value,
-                    "name": target.metadata.get("module_name") or target.metadata.get("feature_name") or edge.target_id,
-                    "edge_type": edge.edge_type.value,
-                    "required": edge.edge_type in [EdgeType.PRODUCES, EdgeType.CONSUMES]
-                })
+                dependents.append(
+                    {
+                        "type": target.node_type.value,
+                        "name": target.metadata.get("module_name")
+                        or target.metadata.get("feature_name")
+                        or edge.target_id,
+                        "edge_type": edge.edge_type.value,
+                        "required": edge.edge_type in [EdgeType.PRODUCES, EdgeType.CONSUMES],
+                    }
+                )
                 BreakageImpactQuery._traverse_dependents(graph, edge.target_id, dependents, visited)
 
 
@@ -156,26 +149,30 @@ class StaleQuery:
                 is_stale = "clinical" in feature_name.lower()
 
                 if is_stale:
-                    stale_features.append({
-                        "feature": feature_name,
-                        "last_computed": "2026-05-19T18:30:00Z",
-                        "age_hours": 14.78,
-                        "status": "STALE"
-                    })
+                    stale_features.append(
+                        {
+                            "feature": feature_name,
+                            "last_computed": "2026-05-19T18:30:00Z",
+                            "age_hours": 14.78,
+                            "status": "STALE",
+                        }
+                    )
                 else:
-                    current_features.append({
-                        "feature": feature_name,
-                        "last_computed": "2026-05-20T08:52:00Z",
-                        "age_hours": 0.42,
-                        "status": "CURRENT"
-                    })
+                    current_features.append(
+                        {
+                            "feature": feature_name,
+                            "last_computed": "2026-05-20T08:52:00Z",
+                            "age_hours": 0.42,
+                            "status": "CURRENT",
+                        }
+                    )
 
         return {
             "snapshot_date": graph.snapshot_date,
             "stale_threshold_hours": threshold_hours,
             "stale_features": stale_features,
             "current_features": current_features,
-            "total_features": len(stale_features) + len(current_features)
+            "total_features": len(stale_features) + len(current_features),
         }
 
 
@@ -201,19 +198,23 @@ class ValidateSnapshotQuery:
                 if not graph.get_node(edge.target_id):
                     consumes_valid = False
 
-        assertions.append({
-            "assertion": "All CONSUMES edges have target artifacts",
-            "result": "PASS" if consumes_valid else "FAIL",
-            "details": f"{consumes_count} CONSUMES edges, all targets exist"
-        })
+        assertions.append(
+            {
+                "assertion": "All CONSUMES edges have target artifacts",
+                "result": "PASS" if consumes_valid else "FAIL",
+                "details": f"{consumes_count} CONSUMES edges, all targets exist",
+            }
+        )
 
         # Assertion 2: No active quarantines
         quarantines = [e for e in graph.edges if e.edge_type == EdgeType.QUARANTINES]
-        assertions.append({
-            "assertion": "No QUARANTINE flags active",
-            "result": "PASS" if len(quarantines) == 0 else "WARN",
-            "details": f"0 contradictions, C0–C5 clear (found {len(quarantines)} quarantine edges)"
-        })
+        assertions.append(
+            {
+                "assertion": "No QUARANTINE flags active",
+                "result": "PASS" if len(quarantines) == 0 else "WARN",
+                "details": f"0 contradictions, C0–C5 clear (found {len(quarantines)} quarantine edges)",
+            }
+        )
 
         # Assertion 3: Gate assertions
         gated_edges = [e for e in graph.edges if e.edge_type == EdgeType.GATED_BY]
@@ -222,11 +223,13 @@ class ValidateSnapshotQuery:
             for e in gated_edges
             if graph.get_node(e.source_id)
         )
-        assertions.append({
-            "assertion": "All gates GATED_BY RankedList are PASS",
-            "result": "PASS" if gates_pass else "FAIL",
-            "details": f"6/6 gates pass (Jaccard 0.99, KS 0.34, etc.)"
-        })
+        assertions.append(
+            {
+                "assertion": "All gates GATED_BY RankedList are PASS",
+                "result": "PASS" if gates_pass else "FAIL",
+                "details": "6/6 gates pass (Jaccard 0.99, KS 0.34, etc.)",
+            }
+        )
 
         # Overall
         overall = "PASS" if all(a["result"] == "PASS" for a in assertions) else "FAIL"
@@ -235,7 +238,7 @@ class ValidateSnapshotQuery:
             "snapshot_date": graph.snapshot_date,
             "validation_ts": datetime.utcnow().isoformat() + "Z",
             "assertions": assertions,
-            "overall_status": overall
+            "overall_status": overall,
         }
 
 
@@ -248,5 +251,5 @@ def run_all_queries(graph: ProvenanceGraph) -> Dict[str, dict]:
         "snapshot_inputs": SnapshotInputsQuery.query(graph),
         "breakage_impact_inst_delta_z": BreakageImpactQuery.query(graph, "feature_inst_delta_z"),
         "stale_features": StaleQuery.query(graph, threshold_hours=12),
-        "validate_snapshot": ValidateSnapshotQuery.query(graph)
+        "validate_snapshot": ValidateSnapshotQuery.query(graph),
     }

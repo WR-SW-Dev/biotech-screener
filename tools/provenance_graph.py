@@ -7,16 +7,16 @@ Maps data flow through biotech screener pipeline.
 No ML, no scoring integration, no LLM-derived facts.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Set, Optional, Literal
-from datetime import datetime
-from enum import Enum
 import json
+from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
+from typing import Dict, List, Optional
 
 
 class NodeType(str, Enum):
     """13 node types per Spec 110 schema."""
+
     RAW_SOURCE = "RawSource"
     VENDOR_SNAPSHOT = "VendorSnapshot"
     CACHE_FILE = "CacheFile"
@@ -32,6 +32,7 @@ class NodeType(str, Enum):
 
 class EdgeType(str, Enum):
     """8 edge types per Spec 110 schema."""
+
     PRODUCES = "PRODUCES"
     CONSUMES = "CONSUMES"
     DERIVES = "DERIVES"
@@ -45,21 +46,19 @@ class EdgeType(str, Enum):
 @dataclass
 class Node:
     """Graph node with type and metadata."""
+
     node_id: str
     node_type: NodeType
     metadata: Dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
-        return {
-            "node_id": self.node_id,
-            "node_type": self.node_type.value,
-            "metadata": self.metadata
-        }
+        return {"node_id": self.node_id, "node_type": self.node_type.value, "metadata": self.metadata}
 
 
 @dataclass
 class Edge:
     """Graph edge with type and validation."""
+
     source_id: str
     target_id: str
     edge_type: EdgeType
@@ -70,7 +69,7 @@ class Edge:
             "source_id": self.source_id,
             "target_id": self.target_id,
             "edge_type": self.edge_type.value,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -117,13 +116,14 @@ class ProvenanceGraph:
         return {
             "snapshot_date": self.snapshot_date,
             "nodes": {nid: n.to_dict() for nid, n in self.nodes.items()},
-            "edges": [e.to_dict() for e in self.edges]
+            "edges": [e.to_dict() for e in self.edges],
         }
 
 
 @dataclass
 class SnapshotMetadata:
     """Metadata extracted from snapshot artifacts."""
+
     snapshot_date: str
     universe_size: int
     ranked_count: int
@@ -187,7 +187,7 @@ class GraphBuilder:
             ruleset_version=manifest.get("ruleset", {}).get("version", "unknown"),
             gates_status=gates_status,
             manifest_path=str(manifest_path),
-            rankings_path=str(rankings_path)
+            rankings_path=str(rankings_path),
         )
 
     def _create_source_nodes(self, graph: ProvenanceGraph, metadata: SnapshotMetadata) -> None:
@@ -203,7 +203,7 @@ class GraphBuilder:
             node = Node(
                 node_id=f"source_{source_name}",
                 node_type=NodeType.RAW_SOURCE,
-                metadata={"source_name": source_name, **source_meta}
+                metadata={"source_name": source_name, **source_meta},
             )
             graph.add_node(node)
 
@@ -218,7 +218,7 @@ class GraphBuilder:
             node = Node(
                 node_id=f"cache_{cache_name}",
                 node_type=NodeType.CACHE_FILE,
-                metadata={"cache_name": cache_name, **cache_meta}
+                metadata={"cache_name": cache_name, **cache_meta},
             )
             graph.add_node(node)
 
@@ -235,7 +235,7 @@ class GraphBuilder:
             node = Node(
                 node_id=f"feature_{feature_name}",
                 node_type=NodeType.FEATURE_ARTIFACT,
-                metadata={"feature_name": feature_name, **feature_meta}
+                metadata={"feature_name": feature_name, **feature_meta},
             )
             graph.add_node(node)
 
@@ -253,7 +253,7 @@ class GraphBuilder:
             node = Node(
                 node_id=f"module_{module_name}",
                 node_type=NodeType.MODULE,
-                metadata={"module_name": module_name, "version": version, "responsibility": responsibility}
+                metadata={"module_name": module_name, "version": version, "responsibility": responsibility},
             )
             graph.add_node(node)
 
@@ -263,7 +263,7 @@ class GraphBuilder:
         ruleset = Node(
             node_id=f"ruleset_{metadata.ruleset_id}",
             node_type=NodeType.RULESET_ARTIFACT,
-            metadata={"ruleset_id": metadata.ruleset_id, "version": metadata.ruleset_version}
+            metadata={"ruleset_id": metadata.ruleset_id, "version": metadata.ruleset_version},
         )
         graph.add_node(ruleset)
 
@@ -272,7 +272,7 @@ class GraphBuilder:
             ranked = Node(
                 node_id=f"rankings_{ranking_type}",
                 node_type=NodeType.RANKED_LIST,
-                metadata={"output_type": ranking_type, "count": metadata.ranked_count}
+                metadata={"output_type": ranking_type, "count": metadata.ranked_count},
             )
             graph.add_node(ranked)
 
@@ -280,7 +280,7 @@ class GraphBuilder:
         snapshot = Node(
             node_id=f"snapshot_{metadata.snapshot_date}",
             node_type=NodeType.DATA_SNAPSHOT,
-            metadata={"snapshot_date": metadata.snapshot_date, "universe_size": metadata.universe_size}
+            metadata={"snapshot_date": metadata.snapshot_date, "universe_size": metadata.universe_size},
         )
         graph.add_node(snapshot)
 
@@ -289,7 +289,7 @@ class GraphBuilder:
             evidence = Node(
                 node_id=f"gate_{gate_name}",
                 node_type=NodeType.VALIDATION_EVIDENCE,
-                metadata={"gate_name": gate_name, "verdict": verdict}
+                metadata={"gate_name": gate_name, "verdict": verdict},
             )
             graph.add_node(evidence)
 
@@ -301,32 +301,26 @@ class GraphBuilder:
             ("source_ctgov", "feature_clinical_score_v2", EdgeType.DERIVES),
             ("source_catalyst_news", "feature_catalyst_score", EdgeType.DERIVES),
             ("source_market_snapshot", "feature_financial_score", EdgeType.DERIVES),
-
             # CacheFile -> FeatureArtifact (CONSUMES via Module)
             ("cache_trial_records", "feature_clinical_score_v2", EdgeType.CONSUMES),
             ("cache_market_snapshot", "feature_financial_score", EdgeType.CONSUMES),
-
             # FeatureArtifact -> Module (CONSUMES)
             ("feature_inst_delta_z", "module_selector", EdgeType.CONSUMES),
             ("feature_clinical_score_v2", "module_ranker", EdgeType.CONSUMES),
             ("feature_catalyst_score", "module_ranker", EdgeType.CONSUMES),
             ("feature_financial_score", "module_ranker", EdgeType.CONSUMES),
-
             # Module -> RankedList (PRODUCES)
             ("module_selector", "rankings_production", EdgeType.PRODUCES),
             ("module_ranker", "rankings_production", EdgeType.PRODUCES),
             ("module_ranker", "rankings_shadow", EdgeType.PRODUCES),
-
             # RulesetArtifact -> Modules (IMPLEMENTS)
             (f"ruleset_{metadata.ruleset_id}", "module_selector", EdgeType.IMPLEMENTS),
             (f"ruleset_{metadata.ruleset_id}", "module_ranker", EdgeType.IMPLEMENTS),
-
             # Gates -> RankedList (VALIDATES/GATED_BY)
             ("gate_jaccard", "rankings_production", EdgeType.VALIDATES),
             ("gate_top30_ks", "rankings_production", EdgeType.VALIDATES),
             ("rankings_production", "gate_jaccard", EdgeType.GATED_BY),
             ("rankings_production", "gate_top30_ks", EdgeType.GATED_BY),
-
             # RankedList -> DataSnapshot (PRODUCES)
             ("rankings_production", f"snapshot_{metadata.snapshot_date}", EdgeType.PRODUCES),
         ]

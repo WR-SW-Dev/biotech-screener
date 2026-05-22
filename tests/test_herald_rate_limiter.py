@@ -1,4 +1,5 @@
 """Unit tests for Herald's per-domain rate limiter (no network, no real sleeps)."""
+
 from __future__ import annotations
 
 import sys

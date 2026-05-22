@@ -5,10 +5,10 @@ In-memory knowledge graph for governance queries.
 Three classes: KnowledgeGraphNode, KnowledgeGraphEdge, KnowledgeGraph.
 """
 
-from dataclasses import dataclass
-from typing import Any, Optional
 import json
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Optional
 
 
 @dataclass
@@ -52,9 +52,7 @@ class KnowledgeGraphNode:
             "Snapshot",
         }
         if self.node_type not in valid_types:
-            raise ValueError(
-                f"Invalid node_type: {self.node_type}. Must be one of {valid_types}"
-            )
+            raise ValueError(f"Invalid node_type: {self.node_type}. Must be one of {valid_types}")
 
         valid_statuses = {
             "ACTIVE",
@@ -65,9 +63,7 @@ class KnowledgeGraphNode:
             "FROZEN",
         }
         if self.status not in valid_statuses:
-            raise ValueError(
-                f"Invalid status: {self.status}. Must be one of {valid_statuses}"
-            )
+            raise ValueError(f"Invalid status: {self.status}. Must be one of {valid_statuses}")
 
 
 @dataclass
@@ -112,15 +108,11 @@ class KnowledgeGraphEdge:
             "AWAITS",
         }
         if self.edge_type not in valid_types:
-            raise ValueError(
-                f"Invalid edge_type: {self.edge_type}. Must be one of {valid_types}"
-            )
+            raise ValueError(f"Invalid edge_type: {self.edge_type}. Must be one of {valid_types}")
 
         valid_confidences = {"HIGH", "MEDIUM", "LOW"}
         if self.confidence not in valid_confidences:
-            raise ValueError(
-                f"Invalid confidence: {self.confidence}. Must be one of {valid_confidences}"
-            )
+            raise ValueError(f"Invalid confidence: {self.confidence}. Must be one of {valid_confidences}")
 
 
 class KnowledgeGraph:
