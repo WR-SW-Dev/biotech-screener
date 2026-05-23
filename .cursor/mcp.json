@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hermes": {
+      "command": "${workspaceFolder}/../hermes-agent/hermes-mcp-serve",
+      "args": [],
+      "env": {
+        "HERMES_REPO": "${workspaceFolder}/../hermes-agent",
+        "HERMES_HOME": "~/.hermes",
+        "HERMES_AGENTS_DIR": "${workspaceFolder}/agents"
+      }
+    }
+  }
+}
