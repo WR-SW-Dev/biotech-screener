@@ -4,6 +4,14 @@ on:
   pull_request:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".cursor/**"
+      - "skills/**"
+      - ".claude/**"
+      - "**/*.mdc"
+      - "artifacts/**"
 
 permissions:
   contents: read

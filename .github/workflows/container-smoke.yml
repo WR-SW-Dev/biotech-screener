@@ -2,6 +2,14 @@ name: container-smoke
 
 on:
   push:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".cursor/**"
+      - "skills/**"
+      - ".claude/**"
+      - "**/*.mdc"
+      - "artifacts/**"
   pull_request:
 
 jobs:
