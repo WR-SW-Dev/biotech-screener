@@ -1,5 +1,15 @@
 {
   "mcpServers": {
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp",
+        "--path",
+        "${workspaceFolder}"
+      ]
+    },
     "hermes": {
       "command": "python3",
       "args": [
