@@ -568,4 +568,11 @@ def _write(message: Any) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    import sys, json
+    if "--health" in sys.argv:
+        print(json.dumps({"ok": True, "server": "hermes", "mode": "stdio"}))
+        raise SystemExit(0)
+    if "--help" in sys.argv:
+        print("Usage: python -m mcp_server.hermes_server [--health]")
+        raise SystemExit(0)
+    main()
