@@ -515,7 +515,11 @@ def run(pre_date: str, post_date: str, output: Optional[Path] = None, no_alert: 
                 f"Entered: {entered}\nLeft: {left}\n"
                 f"Action: attribution-only until quarantine window closes."
             )
-            send_operator_alert(f"13F {verdict}", alert_text, level="WARN")
+            send_operator_alert(
+                severity="WARN",
+                system=f"13f_{verdict.lower()}",
+                message=alert_text,
+            )
             log.info("Telegram alert sent")
         except Exception as exc:
             log.warning("Telegram alert failed (non-blocking): %s", exc)
