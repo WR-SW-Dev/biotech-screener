@@ -1,0 +1,79 @@
+# .cursorignore — biotech-screener
+# Exclude heavy/generated directories from Cursor's indexing.
+# Smaller index = faster AI retrieval = better suggestions.
+
+# Large data directories
+data/
+production_data/morningstar_*.json
+production_data/price_history*.csv
+production_data/holdings_history/
+production_data/archives_enriched/
+production_data/filings/
+production_data/ctgov_state/
+production_data/alpha_cohort_tables/daily/
+
+# Generated artifacts (timestamped run outputs)
+artifacts/
+checkpoints/
+checkpoints_ab_*/
+
+# Cache directories
+cache/
+data/caches/
+data/13f_cache/
+sec_13f/data/13f_cache/
+wake_robin_data_pipeline/cache/
+wake_robin_data_pipeline/outputs/
+
+# Virtual environments
+.venv/
+.venv-wsl/
+venv/
+
+# Build/dist
+build/
+dist/
+*.egg-info/
+
+# Runtime logs and test output
+logs/
+audit_logs/
+backtest_results/
+backfill_logs/
+backfill_results/
+
+# Git internals
+.git/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+
+# Frontend build cache
+frontend/dashboard/.vite/
+
+# OpenClaw / agent state (nested)
+.openclaw/
+agents/*/.openclaw/
+agents/*/memory/
+
+# Claude state
+.claude/
+
+# Vendor
+vendor/
+
+# One-off data/research outputs
+data/snapshots*/
+data/research/
+data/grid_search/
+data/diag/
+data/regime_backfill_cache/
+data/staging/
+etf_csvs/

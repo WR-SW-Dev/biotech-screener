@@ -1,0 +1,87 @@
+# .cursorrules — biotech-screener
+
+## Project Context
+Production biotech equity screening pipeline (v1.14.0). Python 3.12, pydantic v2.
+Architecture freeze may be active — check with operator before structural changes.
+
+## Core Rules
+
+### Decimal Arithmetic (MANDATORY)
+- All scoring arithmetic uses `Decimal`, never `float`. Initialize from strings: `Decimal("0.5")`
+- Rounding: `ROUND_HALF_UP`. Scores to 2 dp, rates to 4 dp.
+- Exception: `exp()` in sigmoid formulas may use float, convert result back to Decimal immediately.
+- Statistical analysis (IC, Spearman, bootstrap) may use float/numpy/scipy.
+
+### Point-in-Time (PIT) Safety (MANDATORY)
+- All dates ISO 8601 (`YYYY-MM-DD`).
+- Never call `datetime.now()`. Derive all timestamps from `as_of_date`.
+- Standard PIT: `source_date <= as_of_date - 1 day`.
+- Strict PIT: `source_date < as_of_date - 2 days` (intraday data).
+- Lookahead (`age_days < 0`): reject unconditionally.
+
+### Deterministic Output
+- Same inputs MUST produce byte-identical outputs.
+- JSON serialization: sorted keys always.
+- List operations: deterministic sort keys.
+- Content hashes (SHA256) in every output.
+- No external API calls during scoring (stdlib only).
+- Random seed: 42 when randomization is needed.
+- Never overwrite existing run directories; new `run_id` for reruns.
+
+## Naming
+- Use `coinvest_score_z` (not legacy `sponsorship_score_z`)
+- Use `inst_delta_z` (not legacy `momentum_delta_z`)
+- Python files: `snake_case.py`
+- Config: `snake_case.yaml`
+- Production data: `production_data/{descriptor}.json`
+- Artifacts: `artifacts/{category}/{YYYY-MM-DD}/`
+
+## Governance Metadata
+Every pipeline output MUST include:
+```json
+{
+  "_governance": {
+    "run_id": "<deterministic-hash>",
+    "score_version": "<version>",
+    "schema_version": "<version>",
+    "parameters_hash": "sha256:<hash>",
+    "pit_cutoff": "<ISO-date>",
+    "as_of_date": "<ISO-date>"
+  }
+}
+```
+
+## Commands
+```bash
+# Test
+pytest -p no:warnings
+
+# Lint
+ruff check src tests scripts tools
+ruff format --check src tests scripts tools
+```
+
+## Key Constraints
+- Always warm 8-K cache BEFORE running screen.
+- No new enforcement logic or scoring changes during architecture freeze.
+- CI fixes and test-only changes are allowed during freeze.
+- One task per session. No broad refactors.
+- No model/ranker/scorer changes without explicit spec.
+
+## Anti-Patterns (DO NOT)
+1. `float` in scoring paths
+2. `datetime.now()` anywhere
+3. Overwriting existing run directories
+4. Raw EDGAR XML as source of truth (use canonical summary)
+5. Pushing red main
+6. Implementation before design-lock
+7. Behavior changes without documentation update
+8. Hard-coded allocation ratios (read from config)
+
+## File Structure Awareness
+- `src/` — core pipeline modules
+- `tests/` — pytest suite
+- `scripts/` — CLI entry points
+- `tools/` — utility scripts
+- `production_data/` — canonical data files
+- `artifacts/` — timestamped run outputs

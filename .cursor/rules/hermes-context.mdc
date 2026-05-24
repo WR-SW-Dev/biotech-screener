@@ -1,0 +1,53 @@
+---
+description: Load Hermes fleet context before modifying agent code, pipeline tools, or monitoring infrastructure
+globs:
+  - "agents/**"
+  - "tools/run_agent_direct.py"
+  - "tools/agent_heartbeat_checks.py"
+  - "tools/run_post_snapshot_supervisor.py"
+  - "tools/agent_supervisor_sentinel.py"
+  - "tools/build_hermes_knowledge_layer.py"
+  - "common/operator_delivery.py"
+---
+
+# Hermes Fleet Context (biotech-screener)
+
+Before modifying agent-related code in this repo, load fleet context via Hermes MCP.
+
+## Session Start (when touching scoped paths)
+
+1. `fleet_context_snapshot()` -- one-call bounded bootstrap
+2. If unavailable: `agents_list(include_heartbeat=true)` then `knowledge_read(artifact="held_spec_ledger")`
+
+## Before Modifying a Specific Agent
+
+1. `skills_read(name="<agent_name>")` -- read the SOUL.md (behavioral truth)
+2. `agents_get(name="<agent_name>")` -- registry entry, heartbeat, file listing
+3. `knowledge_read(artifact="contradiction_ledger")` -- check for known discrepancies
+
+## Source of Truth (precedence, highest first)
+
+1. Runtime wrappers / cron / production scripts (execution truth)
+2. `agents/<name>/SOUL.md` / `IDENTITY.md` / `HEARTBEAT.md` (behavioral truth)
+3. `agents/AGENT_REGISTRY.json` (index/discovery only)
+4. Knowledge layer artifacts (operational state)
+5. `.learnings/` (memory/reference)
+6. `CLAUDE.md` / `.cursor/rules/` (IDE workflow constraints)
+
+Registry metadata must never override runtime identity documents.
+
+## Key Constraints
+
+- All MCP tools are **read-only** -- no mutation from IDE sessions
+- Lane A agents (deterministic) must not depend on LLM gateway tokens
+- Only `crt_resolution_watcher` has `mutate_data` authority
+- No agent has `mutate_config` -- operator-only
+- Check `held_spec_ledger` before modifying constrained areas
+- Architecture freeze active until post-h20d (~2026-05-26)
+
+## Agent Fleet Quick Reference
+
+- 30 total: 27 active, 1 suppressed (bioshort_watch), 1 retired (company_news_ingest), 1 shadow
+- Model: DeepSeek v4 flash (switched 2026-05-20)
+- Cron: 5:30 PM ET weekdays (daily production), 10:00 AM ET (universe maintenance)
+- Monitoring: heartbeat -> supervisor -> post-snapshot -> sentinel (4-layer stack)
