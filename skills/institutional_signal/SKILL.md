@@ -213,7 +213,7 @@ Also monitor BioPharm IQ Twitter \([https://twitter.com/BioPharmIQ](https://twit
 
 ## 13F Filing Cycle Status
 
-*Last reviewed: 2026-05-16*
+*Last reviewed: 2026-05-24*
 
 - **Completed cycle**: Q1 2026 \(period ending March 31, 2026\) -- ALL THREE FILED May 15, 2026
 - **Accession numbers**: Fairmount 0001104659-26-062419, Deep Track 0001856083-26-000003, Logos Global 0001172661-26-002196

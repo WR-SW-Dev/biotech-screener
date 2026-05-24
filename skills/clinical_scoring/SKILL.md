@@ -305,7 +305,7 @@ Based on count of unique condition tokens across all trials.
 
 ---
 
-## Step 12: Execution Track Record (0-25 pts)
+## Step 12: Execution Track Record (0-22 pts)
 
 - **Base**: 12 pts
 - **Completion Rate Contribution**: `completion_rate * 10` pts
@@ -342,11 +342,11 @@ raw_total = phase_score + phase_progress + trial_count_bonus
           + diversity_bonus + recency_bonus + design_score
           + execution_score + endpoint_score
 
-clinical_score = (raw_total / 120) * 100    # Normalize to 0-100
+clinical_score = (raw_total / 117) * 100    # Normalize to 0-100
 clinical_score = clamp(clinical_score, 0, 100)
 ```
 
-Maximum raw total = 30 + 5 + 5 + 5 + 5 + 25 + 25 + 20 = 120.
+Maximum raw total = 30 + 5 + 5 + 5 + 5 + 25 + 22 + 20 = 117. (execution_score max is 22, not 25 — base 12 + completion 10; PR #288 corrected the denominator from 120.)
 
 ---
 

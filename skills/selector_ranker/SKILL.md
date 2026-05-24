@@ -244,13 +244,13 @@ size_multiplier = max(0.40, 1.0 - 0.60 * ev_severity_score)
 - Spec 100 ranker IC evaluation ready but interpretation deferred
 
 **13F Q1 2026 Cohort Quarantine** — Active
-- 6/48 managers filed (2026-05-15)
-- Validation trigger: ~2026-05-23 (≥34 managers filed)
+- 42/48 managers filed (as of 2026-05-19; up from 6/48 on 2026-05-15)
+- Validation trigger: ~2026-05-23 (≥34 threshold MET as of 2026-05-19)
 - Clearance decision: ~2026-05-26 (requires Jaccard ≥0.70 + all gates pass)
 - No selector/ranker changes until cohort clears
 
 **Next Milestones**
-- **May 19**: Phase 2 Step 3 verification (evening cron watchdog)
-- **~May 23**: 13F refresh validation rerun
-- **~May 26**: Architecture freeze lift + cohort clearance decision
+- **May 19**: Phase 2 Step 3 verification ✓ complete
+- **~May 23**: 13F refresh validation rerun — trigger MET
+- **~May 26**: Architecture freeze lift + cohort clearance decision; h20d Decision Memo Draft ready (2026-05-21)
 - **Post-May 26**: Spec 100 ranker IC evaluation + Checklist v2 battery (if cohort clears)

@@ -112,12 +112,12 @@ Hermes job completes
 
 **File**: `agents/AGENT_REGISTRY.json`
 
-### Model Configuration \(updated 2026-05-13\)
+### Model Configuration \(updated 2026-05-20\)
 
-- **Primary model**: Llama 3.3 70B Instruct Turbo \(Together AI\) - all agents default to this
+- **Primary model**: `deepseek/deepseek-v4-flash:free` \(OpenRouter\) - fleet-wide migration 2026-05-20; all 27 agents migrated from Llama 3.3 70B / Claude Haiku 4.5
 - **Fallback**: Anthropic Claude SDK \(for Claude-specific models\)
-- **Auto-routing**: "llama" models -> Together API \(OpenAI-compatible\), "claude" -> Anthropic SDK
-- **Previous**: OpenRouter \(out of credits as of 2026-05-13\)
+- **Auto-routing**: "deepseek" models -> OpenRouter \(OpenAI-compatible\), "claude" -> Anthropic SDK
+- **Previous**: Llama 3.3 70B Instruct Turbo \(Together AI, 2026-05-13 to 2026-05-20\)
 
 ### Inference Tuning \(Llama-optimized, 2026-05-13\)
 
@@ -421,6 +421,15 @@ Key findings \(pseudo-PIT\):
 
 - Phase A complete \(dry-run mode, `OPERATOR_DELIVERY_DRY_RUN=1`\)
 - Phase B \(live delivery\): not yet started
+
+## Knowledge Graph Implementation Status
+
+*Last reviewed: 2026-05-24*
+
+- **Phase 2 Step 4 \(KG implementation\)**: COMPLETE \(2026-05-21\) — 68/68 tests PASS; 4a loader + 4b queries + 4c contradictions + 4e integration; h20d evidence package ready
+- **Spec 110 Phase 1 PoC**: COMPLETE \(2026-05-21\) — 56 nodes, 16 edges, 5 query patterns, 22 tests PASS; pipeline provenance graph; no production wiring
+- **Phase 2 Step 4d \(CLI\)**: deferred post-h20d
+- **Phase 2 Step 5 \(KG gating\)**: blocked on 13F quarantine clearance + h20d decision \(~2026-05-26\)
 
 ## Infrastructure
 

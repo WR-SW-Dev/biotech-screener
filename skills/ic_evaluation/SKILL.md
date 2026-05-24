@@ -266,15 +266,16 @@ Should be at or past the 30-day evaluation threshold. Architecture freeze in eff
 - Spec 100 ranker IC evaluation deferred post-freeze
 
 **13F Q1 2026 Cohort Quarantine** — Active
-- 6/48 managers filed (as of 2026-05-15)
-- Validation trigger: ~2026-05-23 (when ≥34 managers filed)
+- 42/48 managers filed (as of 2026-05-19; up from 6/48 on 2026-05-15)
+- Validation trigger: ~2026-05-23 (≥34 managers filed — threshold MET as of 2026-05-19)
 - Clearance decision: ~2026-05-26 (requires Jaccard ≥0.70 + all 6 gates pass)
 - No selector/ranker/sizing changes authorized until cohort clears
+- IC health monitor ALERT as of 2026-05-19: lagging historical IC baseline, NOT a system failure — expected post-13F refresh transient
 
 **Decision Gates Ahead**
-- **May 19**: Phase 2 Step 3 verification (evening cron watchdog)
-- **~May 23**: 13F refresh validation rerun (filings ≥34)
-- **~May 26**: Architecture freeze lift + cohort clearance decision
+- **May 19**: Phase 2 Step 3 verification ✓ (IC health monitor ALERT = lagging IC, not failure)
+- **~May 23**: 13F refresh validation rerun — trigger MET (42 managers filed)
+- **~May 26**: Architecture freeze lift + cohort clearance decision; h20d Decision Memo Draft ready (2026-05-21)
 - **Post-May 26**: Spec 100 corrected final_score IC evaluation + Checklist v2 battery
 
 **Interpretation**: All IC evaluation and ranker promotion decisions are deferred until post-freeze when full validation battery can be applied. Current Spec 100 baseline is ready but explicitly labeled for deferred interpretation.
