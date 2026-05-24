@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "Hermes": {
+    "hermes": {
       "command": "python3",
       "args": [
         "-m",
