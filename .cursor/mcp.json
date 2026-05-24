@@ -1,12 +1,15 @@
 {
   "mcpServers": {
     "hermes": {
-      "command": "${workspaceFolder}/../hermes-agent/hermes-mcp-serve",
-      "args": [],
+      "command": "python3",
+      "args": [
+        "-m",
+        "mcp_server.hermes_server"
+      ],
       "env": {
-        "HERMES_REPO": "${workspaceFolder}/../hermes-agent",
-        "HERMES_HOME": "~/.hermes",
-        "HERMES_AGENTS_DIR": "${workspaceFolder}/agents"
+        "HERMES_REPO": "${workspaceFolder}",
+        "HERMES_AGENTS_DIR": "${workspaceFolder}/agents",
+        "PYTHONPATH": "${workspaceFolder}"
       }
     }
   }
