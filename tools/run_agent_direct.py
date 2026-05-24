@@ -107,7 +107,7 @@ def run_preflight(agent_name: str) -> dict | None:
             ["python3", str(preflight_script), "--agent", agent_name, "--json"],
             capture_output=True,
             text=True,
-            timeout=10,
+            timeout=20,
             cwd=PROJECT_ROOT,
         )
         if result.returncode == 0:
