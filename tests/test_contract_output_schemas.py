@@ -369,3 +369,34 @@ class TestDecisionRulesetContract:
         assert DE_VERSION.startswith("v")
         parts = DE_VERSION[1:].split(".")
         assert len(parts) == 3
+
+
+# ---------------------------------------------------------------------------
+# Contract 6: bundle path SNAPSHOT_COLUMNS is a strict subset of live
+# ---------------------------------------------------------------------------
+
+
+class TestBundleSnapshotColumnsSubset:
+    """Contract: run_screen_from_bundle.SNAPSHOT_COLUMNS is a strict subset of
+    the authoritative run_screen_columns.SNAPSHOT_COLUMNS.
+
+    The bundle path intentionally emits a narrower rankings.csv (no
+    ranker/selector/extension columns), so full equality is not required.
+    This test catches forward drift: column additions to the bundle list that
+    use wrong names, or live-side renames not propagated to the bundle list.
+    """
+
+    def test_bundle_snapshot_columns_are_strict_subset_of_live(self):
+        from run_screen_columns import SNAPSHOT_COLUMNS as live_cols
+        from scripts.run_screen_from_bundle import SNAPSHOT_COLUMNS as bundle_cols
+
+        live = set(live_cols)
+        bundle = set(bundle_cols)
+        only_in_bundle = bundle - live
+        assert not only_in_bundle, (
+            f"run_screen_from_bundle.SNAPSHOT_COLUMNS contains {len(only_in_bundle)} "
+            f"column(s) not present in the authoritative run_screen_columns.SNAPSHOT_COLUMNS. "
+            f"Either rename them to match the canonical name, or add them to "
+            f"run_screen_columns.py first.\n"
+            f"Columns only in bundle: {sorted(only_in_bundle)}"
+        )
