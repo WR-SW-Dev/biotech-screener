@@ -5,6 +5,9 @@ Proves that:
 2. run_manifest.json has all required top-level keys and gate structure.
 3. GATE_ALLOWLIST is complete and no unknown gates can sneak in.
 4. SORT_CONTRIB_KEYS are reflected in SNAPSHOT_COLUMNS.
+5. Bundle-path SNAPSHOT_COLUMNS is a strict subset of live (no naming drift).
+6. Both paths share the required parity surface (decision/tier/scoring columns).
+7. Live path retains required scoring and expectation-layer columns.
 
 These contracts catch silent field renames, type changes, or column
 additions/removals at CI time.
@@ -372,19 +375,61 @@ class TestDecisionRulesetContract:
 
 
 # ---------------------------------------------------------------------------
-# Contract 6: bundle path SNAPSHOT_COLUMNS is a strict subset of live
+# Contract 6: rankings.csv cross-path schema parity
+#
+# Two separate SNAPSHOT_COLUMNS definitions exist:
+#   - run_screen_columns.py          (authoritative, live path)
+#   - scripts/run_screen_from_bundle.py  (bundle/backfill path)
+#
+# The bundle path intentionally emits a narrower set (no ranker/selector/
+# extension columns — it does not run those engines). Full equality is not
+# required or correct. Three invariants are enforced instead:
+#
+#   6a. Bundle is a strict subset of live (naming drift guard).
+#   6b. Both paths share the required scoring/decision parity surface.
+#   6c. Live path retains required scoring and expectation-layer columns.
 # ---------------------------------------------------------------------------
+
+# Tier 1 — columns that must exist in BOTH paths.
+# These define the shared output surface that downstream consumers depend on.
+# Both paths compute and write all of these today (verified 2026-05-24).
+REQUIRED_PARITY_COLUMNS = {
+    # Identity
+    "ticker",
+    # Core scoring
+    "clinical_score",
+    # Decision / eligibility surface
+    "eligible",
+    "actionable_rank",
+    "tier_dev",
+    "tier_commercial",
+    # Decision-engine overlays
+    "cost_mult",
+    "size_band",
+    "missing_components",
+}
+
+# Tier 1+2 — columns that must exist in the LIVE path.
+# final_score, selector_score, ranker_adjustment: live-only (ranker/selector
+# not run in bundle path — intentional).
+# Expectation-layer pass-through: live-only (market data not in bundle).
+# These guard against silent removal from run_screen_columns.py.
+REQUIRED_LIVE_SCORING_COLUMNS = {
+    # Ranker/selector output
+    "final_score",
+    "selector_score",
+    "ranker_adjustment",
+    # Expectation-layer market pass-through
+    "short_interest_pct",
+    "close_price",
+    "market_cap_mm",
+    "priced_move_pct",
+}
 
 
 class TestBundleSnapshotColumnsSubset:
-    """Contract: run_screen_from_bundle.SNAPSHOT_COLUMNS is a strict subset of
-    the authoritative run_screen_columns.SNAPSHOT_COLUMNS.
-
-    The bundle path intentionally emits a narrower rankings.csv (no
-    ranker/selector/extension columns), so full equality is not required.
-    This test catches forward drift: column additions to the bundle list that
-    use wrong names, or live-side renames not propagated to the bundle list.
-    """
+    """Contract 6a: run_screen_from_bundle.SNAPSHOT_COLUMNS is a strict subset
+    of the authoritative run_screen_columns.SNAPSHOT_COLUMNS."""
 
     def test_bundle_snapshot_columns_are_strict_subset_of_live(self):
         from run_screen_columns import SNAPSHOT_COLUMNS as live_cols
@@ -396,7 +441,32 @@ class TestBundleSnapshotColumnsSubset:
         assert not only_in_bundle, (
             f"run_screen_from_bundle.SNAPSHOT_COLUMNS contains {len(only_in_bundle)} "
             f"column(s) not present in the authoritative run_screen_columns.SNAPSHOT_COLUMNS. "
-            f"Either rename them to match the canonical name, or add them to "
-            f"run_screen_columns.py first.\n"
+            f"Either rename to match the canonical name, or add to run_screen_columns.py first.\n"
             f"Columns only in bundle: {sorted(only_in_bundle)}"
+        )
+
+    def test_both_paths_share_required_parity_columns(self):
+        """Contract 6b: both paths emit the required shared scoring/decision surface."""
+        from run_screen_columns import SNAPSHOT_COLUMNS as live_cols
+        from scripts.run_screen_from_bundle import SNAPSHOT_COLUMNS as bundle_cols
+
+        live = set(live_cols)
+        bundle = set(bundle_cols)
+        missing_live = REQUIRED_PARITY_COLUMNS - live
+        missing_bundle = REQUIRED_PARITY_COLUMNS - bundle
+        assert not missing_live, f"Live path missing parity columns: {sorted(missing_live)}"
+        assert not missing_bundle, (
+            f"Bundle path missing parity columns: {sorted(missing_bundle)}\n"
+            f"If intentionally removed from the bundle path, update REQUIRED_PARITY_COLUMNS."
+        )
+
+    def test_live_path_retains_scoring_and_expectation_columns(self):
+        """Contract 6c: live path retains final_score, ranker/selector outputs,
+        and expectation-layer market pass-through columns."""
+        from run_screen_columns import SNAPSHOT_COLUMNS as live_cols
+
+        live = set(live_cols)
+        missing = REQUIRED_LIVE_SCORING_COLUMNS - live
+        assert not missing, (
+            f"Live SNAPSHOT_COLUMNS is missing required scoring/expectation columns: " f"{sorted(missing)}"
         )
