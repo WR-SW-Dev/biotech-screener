@@ -1,0 +1,61 @@
+---
+description: Codegraph repo-intelligence workflow — MCP/CLI usage, limits, and Hermes deferral
+alwaysApply: true
+---
+
+# Codegraph (biotech-screener)
+
+Codegraph is a **repo map**, not an oracle. Index lives in `.codegraph/` (gitignored). Registered globally in Cursor MCP; Hermes is **not** registered.
+
+## Stance
+
+- **Cursor + Claude Code:** use codegraph interactively via MCP.
+- **Terminal CLI:** status, index, query, callers, callees, files.
+- **Hermes:** deferred until policy exists for dynamic-dispatch breaks and ambiguous symbols.
+
+## Workflow
+
+1. `codegraph_search` broad
+2. `codegraph_node` for exact symbol/signature
+3. `codegraph_callers` / `codegraph_callees` for dependency direction
+4. `codegraph_trace` only between Python symbols (MCP-only; no CLI)
+5. If trace breaks → inspect reported break point manually; do not infer missing edges
+6. Confirm file-path literals with grep/read
+
+## Tool limits
+
+| Tool | Caveat |
+|------|--------|
+| `codegraph_callees` | Shows calls, not parameter inputs |
+| `codegraph_trace` | No file paths; breaks on dynamic dispatch |
+| `codegraph_context` | Can overmatch generic terms |
+| `codegraph_search` | Best first step; disambiguate by file path |
+
+## Do not rely on codegraph alone for
+
+- cron → shell → Python boundaries
+- file path literals (e.g. `rankings.csv`)
+- dynamic dispatch
+- common names (`main`, `_write_snapshot`)
+- final production-path proof before code changes
+
+## Biotech-specific uses
+
+Module 4/5 score inputs, production vs test-only callers, snapshot pipeline deps, blast radius before refactors, orienting in `run_screen.py` / `run_screen_from_bundle.py`.
+
+## CLI (Windows or WSL)
+
+```bash
+codegraph status          # health check
+codegraph index           # re-index after meaningful changes
+codegraph query "symbol"
+codegraph callers "fn"
+codegraph callees "fn"
+```
+
+## Canonical agent rules
+
+- Start with `codegraph_search`; use `codegraph_node` for exact context.
+- Disambiguate symbol collisions by file path.
+- Do not infer missing graph edges.
+- Do not edit files unless explicitly approved.
