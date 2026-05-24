@@ -1,9 +1,14 @@
 # Codegraph Operator Runbook
 
-**Status:** Claude/Cursor approved · Hermes registration deferred  
-**Last updated:** 2026-05-24  
-**Index location:** `.codegraph/` (repo-contained, gitignored db)  
+**Status:** Claude/Cursor approved · Cursor Cloud repo config active · Hermes registration deferred
+
+**Last updated:** 2026-05-24
+
+**Index location:** `.codegraph/` (repo-contained, gitignored db)
+
 **Tool version:** codegraph v0.9.4 · Node 22 · npm global install
+
+**Skill:** `skills/codegraph/SKILL.md`
 
 ---
 
@@ -206,7 +211,16 @@ codegraph index           # full reindex (use after merges / branch switches)
 codegraph status          # verify node/edge counts unchanged or updated
 ```
 
-Current index: **1,667 files · 50,259 nodes · 114,016 edges · 108 MB**
+Current index: **1,668 files · 50,291 nodes · 114,066 edges · 108 MB**
+
+### Cursor Cloud Persistence
+
+Repo-level Cursor Cloud setup lives in:
+
+- `.cursor/environment.json` — installs `@colbymchenry/codegraph@latest`, then syncs or initializes the local index from the project root.
+- `.cursor/mcp.json` — registers the Cursor MCP server as `codegraph serve --mcp --path ${workspaceFolder}`.
+
+The install command must remain idempotent. Keep `.codegraph/` database files gitignored.
 
 ---
 
@@ -232,7 +246,7 @@ codegraph install --target hermes --location global
 | Target | Registered | Command |
 |---|---|---|
 | Claude Code (global) | ✅ | `codegraph install --target claude --location global` |
-| Cursor | ❌ deferred | `codegraph install --target cursor --location global` |
+| Cursor | ✅ repo config | `.cursor/mcp.json` + `.cursor/environment.json` |
 | Hermes Agent | ❌ deferred | See acceptance gate above |
 
 ---

@@ -5,13 +5,14 @@ alwaysApply: true
 
 # Codegraph (biotech-screener)
 
-Codegraph is a **repo map**, not an oracle. Index lives in `.codegraph/` (gitignored). Registered globally in Cursor MCP; Hermes is **not** registered.
+Codegraph is a **repo map**, not an oracle. Index lives in `.codegraph/` (gitignored). Cursor MCP is registered in repo config; Hermes is **not** registered.
 
 ## Stance
 
 - **Cursor + Claude Code:** use codegraph interactively via MCP.
 - **Terminal CLI:** status, index, query, callers, callees, files.
 - **Hermes:** deferred until policy exists for dynamic-dispatch breaks and ambiguous symbols.
+- **Skill:** load `skills/codegraph/SKILL.md` for repo-specific workflow templates and setup checks.
 
 ## Workflow
 
@@ -47,6 +48,7 @@ Module 4/5 score inputs, production vs test-only callers, snapshot pipeline deps
 
 ```bash
 codegraph status          # health check
+codegraph sync            # incremental update after normal edits
 codegraph index           # re-index after meaningful changes
 codegraph query "symbol"
 codegraph callers "fn"
