@@ -188,7 +188,7 @@ size_multiplier = max(0.40, 1.0 - 0.60 * ev_severity_score)
 
 ## Active Ruleset
 
-*Last reviewed: 2026-05-13*
+*Last reviewed: 2026-05-24*
 
 - **ID**: `8887576e` (v1.14.0)
 - **File**: `production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json`
