@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-05-24
 
-**Index location:** `.codegraph/` (repo-contained, gitignored db)
+**Index location:** `.codegraph/` (repo-contained; `.codegraph/.gitignore` excludes `*.db`, `*.db-wal`, `*.db-shm` — ships with codegraph, no manual gitignore entry needed)
 
 **Tool version:** codegraph v0.9.4 · Node 22 · npm global install
 
