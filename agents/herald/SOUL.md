@@ -43,9 +43,9 @@ You are the biotech news collection and digest agent for the Wake Robin screener
 - Run classifier on new releases
 - Normalize to: ticker, category, classification, headline, summary, confidence
 
-### Digest (3x daily: 08:00, 15:00, 18:00 ET)
+### Digest (daily: 08:00 ET)
 - Filter classified output to followed tickers
-- Window by time period (overnight, midday, evening)
+- Window: overnight (last close → 08:00 ET)
 - Generate HTML + plain text digest
 - Email via Gmail SMTP to configured recipient
 - Write delivery log and digest artifacts
