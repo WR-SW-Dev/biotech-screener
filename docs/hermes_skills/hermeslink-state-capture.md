@@ -1,30 +1,43 @@
 ---
 name: hermeslink-state-capture
 triggers:
-  - "update hermeslink"
-  - "check infrastructure"
-  - "audit Hermes"
+  - "phase 2 step 5 deployment"
+  - "weekly knowledge layer update"
+  - "check infrastructure state"
+  - "audit Hermes governance"
   - "hermeslink status"
 description: >
-  Real-time deterministic state snapshot of Hermes infrastructure: cron jobs, 
-  agents, held specs, contradictions, first-fire schedules, git state. 
-  Read-only monitoring tool; outputs to artifacts/ops/.
+  Real-time deterministic state snapshot of Hermes infrastructure (Spec 089 Phase 1 KG builder).
+  Deployed 2026-05-21; live since 2026-05-26. Captures cron jobs, agents, held specs,
+  contradictions, first-fire schedules, git state. Weekly execution (weekdays 5:45 PM ET).
+  Read-only monitoring tool; outputs to artifacts/ops/ and artifacts/audit/.
 ---
 
-# Hermeslink State Capture — Infrastructure Health Monitoring
+# Hermeslink State Capture — Knowledge Layer (Phase 2 Step 4 Complete)
+
+## Status Update (2026-05-26)
+
+✅ **DEPLOYED & LIVE** — Spec 089 Phase 1 Knowledge Layer fully operational
+
+- **KG Builder:** `tools/build_hermes_knowledge_layer.py` (live, cron active)
+- **CLI Queries:** `tools/query_knowledge_graph.py` (5 query patterns working)
+- **Execution:** Weekdays 5:45 PM ET (automated cron)
+- **Outputs:** artifacts/ops/knowledge_layer/, artifacts/audit/
+- **Tests:** 30/30 PASS (Phase 2 Step 4 completion verified)
 
 ## Purpose
 
-Provide real-time, deterministic snapshot of Hermes-managed infrastructure state. Answers:
+Provide real-time, deterministic snapshot of Hermes-managed infrastructure state via Knowledge Graph. Answers:
 
 - "What's the current git state and code version?"
 - "Which cron jobs are active vs suppressed?"
-- "What specs are held and why?"
+- "What specs are held and why? What's released?"
 - "Which first-fire schedules are at risk?"
 - "Are there infrastructure contradictions?"
 - "Is the system ready for major decisions?"
+- "What governance gates are blocking work?" (NEW: KG-driven)
 
-**Scope:** Read-only capture + validation. No modifications, no enforcement.
+**Scope:** Read-only capture + validation + governance queries. No modifications, no enforcement.
 
 ---
 
