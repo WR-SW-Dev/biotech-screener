@@ -103,12 +103,23 @@ def get_blocked_specs():
     """Read blocked/frozen specs from operational memos."""
     blocked = []
 
+    # Check h20d override authorization (Spec 089 activation)
+    override_memos = list(Path("artifacts/audit").glob("h20d_override_authorization_*.md"))
+    spec_089_active = False
+    for memo in sorted(override_memos, reverse=True)[:1]:
+        try:
+            content = memo.read_text()
+            if "ACTIVATED" in content and "Spec 089" in content:
+                spec_089_active = True
+        except Exception:
+            pass
+
     # Check operational closure memo
     closure_memos = list(Path("artifacts/audit").glob("operational_closure_*.md"))
     for memo in sorted(closure_memos, reverse=True)[:1]:
         try:
             content = memo.read_text()
-            if "Spec 089" in content and "DEFERRED" in content:
+            if "Spec 089" in content and "DEFERRED" in content and not spec_089_active:
                 blocked.append("Spec 089 KG (deferred, pending cohort clearance)")
             if "Spec 100" in content and "BLOCKED" in content:
                 blocked.append("Spec 100 (blocked by Spec 096 doctrine)")
@@ -171,21 +182,50 @@ def get_allowed_action():
     if "ranker/selector/sizing" in str(blocked):
         return "Monitor 13F filing ingest; audit forward shadow freshness; write governance docs"
 
-    if "Spec 089" in str(blocked):
+    # Check if Spec 089 is active
+    override_memos = list(Path("artifacts/audit").glob("h20d_override_authorization_*.md"))
+    spec_089_active = False
+    for memo in sorted(override_memos, reverse=True)[:1]:
+        try:
+            content = memo.read_text()
+            if "ACTIVATED" in content and "Spec 089" in content:
+                spec_089_active = True
+        except Exception:
+            pass
+
+    if "Spec 089" in str(blocked) and not spec_089_active:
         return "Cannot start Spec 089 (deferred); can prepare: evening cron audit, preflight tool, registry metadata"
+
+    if spec_089_active:
+        return "Spec 089 KG enforcement ACTIVE: Deploy Phase 2 Step 5, monitor weekly validation gates, prepare governance dashboards"
 
     return "Follow Phase 2 roadmap: finish preflight tool, audit evening cron, wait for 13F clearance (~May 23)"
 
 
 def get_not_allowed():
     """List explicitly forbidden work."""
-    return [
-        "Ranker/selector/sizing changes (frozen during cohort quarantine)",
-        "Spec 089 KG implementation (deferred pending cohort clearance)",
+    forbidden = [
+        "Ranker/selector/sizing changes without governance approval",
         "Spec 100 implementation (blocked by Spec 096 doctrine)",
         "Broad crontab edits without approval",
-        "Production model promotion",
+        "Production model promotion without Checklist v2",
     ]
+
+    # Check if Spec 089 is active; if not, add it to forbidden list
+    override_memos = list(Path("artifacts/audit").glob("h20d_override_authorization_*.md"))
+    spec_089_active = False
+    for memo in sorted(override_memos, reverse=True)[:1]:
+        try:
+            content = memo.read_text()
+            if "ACTIVATED" in content and "Spec 089" in content:
+                spec_089_active = True
+        except Exception:
+            pass
+
+    if not spec_089_active:
+        forbidden.append("Spec 089 KG implementation (deferred pending cohort clearance)")
+
+    return forbidden
 
 
 def build_preflight_report(
