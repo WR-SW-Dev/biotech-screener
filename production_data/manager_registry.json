@@ -261,6 +261,55 @@
       "aum_b": 2.71,
       "style": "healthcare_long_short",
       "notes": "Added 2026-04-25. Guy Levy / Harold Schaaff. 95 holdings / $2.71B reportable in Q4 2025 13F. Files 13F-HR since 2019-Q4 (filed 2020-02-14, 26 quarters)."
+    },
+    {
+      "cik": "0001892134",
+      "name": "Frazier Life Sciences Management",
+      "aum_b": 3.89,
+      "style": "biotech_crossover",
+      "notes": "Added 2026-05-22. 38 holdings / $3.89B reportable in Q1 2026 13F (filed 2026-05-15). Frazier Healthcare crossover fund; top Q1 2026 holdings: MIRM, NAMS, ERAS, BBIO."
+    },
+    {
+      "cik": "0002005245",
+      "name": "Siren LLC",
+      "aum_b": 3.61,
+      "style": "concentrated_clinical_stage",
+      "notes": "Added 2026-05-22. 100 holdings / $3.61B reportable in Q1 2026 13F (filed 2026-05-14). Clinical-stage biotech focus; top holdings include SRRK, KYMR, BNT."
+    },
+    {
+      "cik": "0001839948",
+      "name": "TCG Crossover Management",
+      "aum_b": 3.5,
+      "style": "biotech_crossover",
+      "notes": "Added 2026-05-22. 49 holdings / $3.5B reportable in Q1 2026 13F (filed 2026-05-15). Chen Yu; science-driven crossover; public + private life sciences."
+    },
+    {
+      "cik": "0001920938",
+      "name": "Braidwell LP",
+      "aum_b": 3.0,
+      "style": "biotech_long_short",
+      "notes": "Added 2026-05-22. 88 holdings / $3.0B reportable in Q1 2026 13F (filed 2026-05-15). Alex Karnal; long/short across biotech, pharma, medtech, diagnostics."
+    },
+    {
+      "cik": "0001773206",
+      "name": "Integral Health Asset Management",
+      "aum_b": 1.89,
+      "style": "healthcare_long_short",
+      "notes": "Added 2026-05-22. 86 holdings / $1.89B reportable in Q1 2026 13F (filed 2026-05-15). Jay Rao MD/JD; absolute-return healthcare L/S across pharma, biotech, medtech, healthcare services."
+    },
+    {
+      "cik": "0001773195",
+      "name": "Affinity Asset Advisors",
+      "aum_b": 1.7,
+      "style": "biotech_long_short",
+      "notes": "Added 2026-05-22. 95 holdings / $1.7B reportable in Q1 2026 13F (filed 2026-05-14). Biotech L/S; top Q1 2026 holdings: XBI, APGE, INSM, ABVX, IBB."
+    },
+    {
+      "cik": "0001855655",
+      "name": "Paradigm Biocapital Advisors",
+      "aum_b": 4.89,
+      "style": "biotech_crossover",
+      "notes": "Added 2026-05-22. 35 holdings / $4.89B reportable in Q1 2026 13F (filed 2026-05-15). Top Q1 2026 holdings: NUVL, RVMD, ACLX, GMAB, TARS."
     }
   ],
   "conditional": [
@@ -302,9 +351,9 @@
     }
   ],
   "metadata": {
-    "version": "2.5",
-    "last_updated": "2026-04-25",
-    "total_elite_aum_b": 131.35,
+    "version": "3.2",
+    "last_updated": "2026-05-22",
+    "total_elite_aum_b": 153.83,
     "notes": [
       "Elite Core = primary signal source",
       "Conditional = secondary breadth signal",
