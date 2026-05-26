@@ -29,6 +29,7 @@ from backtest_signal_robustness import (
     compute_double_sort_spread,
     compute_spread,
     extend_price_csv,
+    extend_price_csv_safe,
     parse_train_mode,
     residualize_ranks,
     score_alpha_oos,
@@ -1849,6 +1850,163 @@ class TestExtendPriceCsv:
         fresh = summary["fwd_return_diagnostics"]["data_freshness"]
         assert fresh["fwd_returns_stale"] is False
         assert fresh["price_gap_days"] == 1  # positive = healthy
+
+
+# ---------------------------------------------------------------------------
+# extend_price_csv_safe: Rate-limit retry + backoff
+# ---------------------------------------------------------------------------
+
+
+class TestExtendPriceCsvSafe:
+    def test_safe_wrapper_uses_backoff_handler(self, tmp_path, monkeypatch):
+        """Safe wrapper integrates safe_download_per_ticker with backoff parameters."""
+        import pandas as pd
+
+        csv_path = tmp_path / "prices.csv"
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "TEST",
+                    "close": "100.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
+
+        mock_data = pd.DataFrame(
+            {
+                "Close": [101.0],
+                "Open": [100.5],
+                "High": [101.5],
+                "Low": [100.0],
+                "Volume": [1000],
+            },
+            index=pd.to_datetime(["2026-02-11"]),
+        )
+        mock_data["ticker"] = "TEST"
+
+        # Mock safe_download_per_ticker to verify correct integration
+        from scripts import yfinance_safe
+
+        call_log = []
+
+        def mock_safe_download(tickers, start, end, delay_sec=1.5, max_retries=3):
+            call_log.append(
+                {
+                    "tickers": tickers,
+                    "start": start,
+                    "end": end,
+                    "delay_sec": delay_sec,
+                    "max_retries": max_retries,
+                }
+            )
+            return {
+                "data": mock_data,
+                "failed_tickers": [],
+                "successful_tickers": 1,
+                "rate_limit_hits": 0,
+            }
+
+        monkeypatch.setattr(yfinance_safe, "safe_download_per_ticker", mock_safe_download)
+
+        result = extend_price_csv_safe(
+            csv_path,
+            through_date="2026-02-11",
+            include_xbi=False,
+            delay_sec=0.5,
+            max_retries=2,
+        )
+
+        # Verify safe_download_per_ticker was called with backoff params
+        assert len(call_log) == 1
+        call = call_log[0]
+        assert call["delay_sec"] == 0.5
+        assert call["max_retries"] == 2
+
+        # Should extend successfully
+        assert result["n_extended"] == 1
+        assert result["n_rows_appended"] == 1
+        assert result["n_failed"] == 0
+
+        # Verify CSV extended
+        import csv as _csv
+
+        with open(csv_path) as f:
+            rows = list(_csv.DictReader(f))
+        assert len(rows) == 2  # original + new row
+        assert any(r["date"] == "2026-02-11" for r in rows)
+
+    def test_safe_wrapper_reports_failures(self, tmp_path, monkeypatch):
+        """Safe wrapper correctly reports failed tickers from safe handler."""
+        import pandas as pd
+
+        csv_path = tmp_path / "prices.csv"
+        _write_test_csv(
+            csv_path,
+            [
+                {
+                    "date": "2026-02-10",
+                    "ticker": "GOOD",
+                    "close": "100.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+                {
+                    "date": "2026-02-10",
+                    "ticker": "FAILED",
+                    "close": "200.0",
+                    "open": "",
+                    "high": "",
+                    "low": "",
+                    "volume": "",
+                },
+            ],
+        )
+
+        mock_data = pd.DataFrame(
+            {
+                "Close": [101.0],
+                "Open": [100.5],
+                "High": [101.5],
+                "Low": [100.0],
+                "Volume": [1000],
+            },
+            index=pd.to_datetime(["2026-02-11"]),
+        )
+        mock_data["ticker"] = "GOOD"
+
+        from scripts import yfinance_safe
+
+        def mock_safe_download(tickers, start, end, delay_sec=1.5, max_retries=3):
+            return {
+                "data": mock_data,
+                "failed_tickers": ["FAILED"],
+                "successful_tickers": 1,
+                "rate_limit_hits": 0,
+            }
+
+        monkeypatch.setattr(yfinance_safe, "safe_download_per_ticker", mock_safe_download)
+
+        result = extend_price_csv_safe(
+            csv_path,
+            through_date="2026-02-11",
+            include_xbi=False,
+            delay_sec=0.5,
+            max_retries=2,
+        )
+
+        # GOOD extended, FAILED reported in failures
+        assert result["n_extended"] == 1
+        assert result["n_failed"] == 1
+        assert "FAILED" in result["failed_tickers"]
+        assert result["n_rows_appended"] == 1
 
 
 # ---------------------------------------------------------------------------

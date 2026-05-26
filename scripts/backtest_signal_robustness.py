@@ -1463,17 +1463,142 @@ def extend_price_csv_safe(
 
     Returns: Same as extend_price_csv — stats dict with extended price data.
     """
-    # Use original extend_price_csv for now; will integrate deeper in future
-    # For now, this serves as a documented entry point for safe downloads
-    logger = logging.getLogger(__name__)
-    logger.info("Using rate-limit safe yfinance wrapper for price refresh")
+    import tempfile
+    from scripts.yfinance_safe import safe_download_per_ticker
 
-    # Fall back to original for now; production already recovered
-    # TODO: Integrate per-ticker safe download into extend_price_csv logic
-    return extend_price_csv(
-        csv_path=csv_path,
-        through_date=through_date,
-        tickers=tickers,
-        start_date=start_date,
-        include_xbi=include_xbi,
+    import yfinance as yf  # lazy — not needed unless --extend-prices
+
+    logger = logging.getLogger(__name__)
+    logger.info("Using rate-limit safe yfinance wrapper for price refresh (delay_sec=%s, max_retries=%d)", delay_sec, max_retries)
+
+    # Load existing data (if any)
+    existing_rows: List[Dict[str, str]] = []
+    max_dates: Dict[str, str] = {}
+    if csv_path.exists():
+        with open(csv_path, "r", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                existing_rows.append(row)
+                t = (row.get("ticker") or "").strip().upper()
+                d = (row.get("date") or "").strip()[:10]
+                if t and d:
+                    if t not in max_dates or d > max_dates[t]:
+                        max_dates[t] = d
+
+    # Merge ticker sets
+    if tickers:
+        universe_set = set(t.upper() for t in tickers if not t.startswith("_"))
+        all_tickers = universe_set
+    else:
+        all_tickers = set(max_dates.keys())
+    all_tickers = {t for t in all_tickers if not t.startswith("_")}
+    if include_xbi:
+        all_tickers.add("XBI")
+
+    if not all_tickers:
+        logger.warning("extend_price_csv_safe: no tickers (CSV empty/missing and none provided)")
+        return {
+            "n_extended": 0,
+            "n_rows_appended": 0,
+            "n_failed": 0,
+            "failed_tickers": [],
+            "n_already_current": 0,
+            "n_tickers_total": 0,
+        }
+
+    # Determine fetch needs per ticker
+    needs_fetch: Dict[str, str] = {}
+    for t in sorted(all_tickers):
+        if t in max_dates:
+            if max_dates[t] < through_date:
+                needs_fetch[t] = (_date_cls.fromisoformat(max_dates[t]) + timedelta(days=1)).isoformat()
+        else:
+            needs_fetch[t] = start_date
+
+    n_total = len(all_tickers)
+    if not needs_fetch:
+        return {
+            "n_extended": 0,
+            "n_rows_appended": 0,
+            "n_failed": 0,
+            "failed_tickers": [],
+            "n_already_current": n_total,
+            "n_tickers_total": n_total,
+        }
+
+    # yfinance end is exclusive — add 1 day to include through_date
+    end_yf = (_date_cls.fromisoformat(through_date) + timedelta(days=1)).isoformat()
+
+    # Use safe_download_per_ticker with exponential backoff + jitter
+    ticker_list = sorted(needs_fetch.keys())
+    safe_result = safe_download_per_ticker(
+        ticker_list,
+        start=needs_fetch[ticker_list[0]],  # Use earliest start date for batch
+        end=end_yf,
+        delay_sec=delay_sec,
+        max_retries=max_retries,
     )
+
+    new_rows: List[Dict[str, str]] = []
+    if safe_result.get("data") is not None and not safe_result["data"].empty:
+        df = safe_result["data"]
+        for idx, row in df.iterrows():
+            dt = idx.strftime("%Y-%m-%d")
+            close = row.get("Close")
+            if close is None or close != close:  # NaN guard
+                continue
+            new_rows.append(
+                {
+                    "date": dt,
+                    "ticker": str(row.get("ticker", idx.name if hasattr(idx, "name") else "")).strip().upper(),
+                    "close": str(close),
+                    "open": str(row["Open"]) if row.get("Open") == row.get("Open") else "",
+                    "high": str(row["High"]) if row.get("High") == row.get("High") else "",
+                    "low": str(row["Low"]) if row.get("Low") == row.get("Low") else "",
+                    "volume": str(int(row["Volume"])) if row.get("Volume") == row.get("Volume") else "",
+                }
+            )
+
+    failed = safe_result.get("failed_tickers", [])
+    logger.info(
+        "extend_price_csv_safe: %d tickers, %d succeeded, %d failed, %d rate-limit hits",
+        len(ticker_list),
+        safe_result.get("successful_tickers", 0),
+        len(failed),
+        safe_result.get("rate_limit_hits", 0),
+    )
+
+    # Deduplicate: keep last occurrence per (ticker, date)
+    all_rows = existing_rows + new_rows
+    seen: Dict[Tuple[str, str], int] = {}
+    for i, row in enumerate(all_rows):
+        key = ((row.get("ticker") or "").upper(), (row.get("date") or "")[:10])
+        seen[key] = i
+    deduped = [all_rows[i] for i in sorted(seen.values())]
+    n_removed = len(all_rows) - len(deduped)
+    if n_removed > 0:
+        logger.info("extend_price_csv_safe: removed %d duplicate (ticker,date) rows", n_removed)
+
+    # Atomic write: deduped → temp → os.replace()
+    if new_rows or n_removed > 0 or not csv_path.exists():
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_path = tempfile.mkstemp(suffix=".csv", dir=csv_path.parent)
+        try:
+            with open(fd, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=_PRICE_FIELDNAMES)
+                writer.writeheader()
+                for row in deduped:
+                    writer.writerow({k: row.get(k, "") for k in _PRICE_FIELDNAMES})
+            Path(tmp_path).replace(csv_path)
+        except BaseException:
+            Path(tmp_path).unlink(missing_ok=True)
+            raise
+
+    n_ext = len(needs_fetch) - len(failed)
+    return {
+        "n_extended": n_ext,
+        "n_rows_appended": len(new_rows),
+        "n_failed": len(failed),
+        "failed_tickers": failed,
+        "n_already_current": n_total - len(needs_fetch),
+        "n_tickers_total": n_total,
+    }

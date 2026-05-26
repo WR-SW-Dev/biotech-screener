@@ -336,7 +336,7 @@ def refresh_prices(
     """
     # Import lazily to avoid yfinance dependency at module level
     sys.path.insert(0, str(REPO_ROOT / "scripts"))
-    from backtest_signal_robustness import extend_price_csv
+    from backtest_signal_robustness import extend_price_csv_safe as extend_price_csv
 
     # Collect tickers from universe.json if available
     tickers: Optional[List[str]] = None
