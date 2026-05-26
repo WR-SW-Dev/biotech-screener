@@ -31,70 +31,83 @@ Verify that governance gates, architecture freeze, blocked specs, and promotion 
 
 ## 1. Architecture Freeze Status
 
-### Expected State: ACTIVE
+### Expected State: LIFTED (as of 2026-05-26, h20d override authorization)
 
-Architecture freeze was implemented May 15 (post-Phase 2 Step 3.5 completion). No changes to selector, ranker, sizing, or core scoring allowed without explicit governance approval.
+Architecture freeze was **LIFTED on 2026-05-26** via h20d override authorization (OPTION_B_OVERRIDE_2026_05_26). Selector, ranker, sizing, and core scoring changes now authorized (subject to governance gates).
 
-**Verify freeze is active:**
+**Verify freeze lift decision:**
 
 ```bash
-# Check memory for freeze status
-grep -l "architecture.*freeze\|FROZEN\|Specs frozen" \
-  ~/.claude/projects/*/memory/*.md 2>/dev/null | head -3
+# Check for h20d override authorization
+ls -lh artifacts/audit/h20d_override_authorization_*.md 2>/dev/null | tail -1
 
-# Expected freeze location:
-grep -l "policy_freeze_architecture\|freeze.*2026_04_19" \
-  ~/.claude/projects/*/memory/*.md 2>/dev/null
+# Verify freeze lift documented
+grep -l "LIFTED\|freeze.*lift" artifacts/audit/h20d_override_authorization_*.md 2>/dev/null
 ```
 
 **Checklist:**
-- ☐ Freeze initiated date: 2026-04-19 (from memory)
-- ☐ Freeze reason: "Audit live A4 + 2-feat ranker; attribution only"
-- ☐ Current status: ACTIVE (no changes authorized)
-- ☐ Lift condition: Post-h20d (2026-05-26) + Spec 100 IC corrected
+- ☑ Original freeze initiated: 2026-04-19 (audit/attribution phase)
+- ☑ Freeze reason: "Audit live A4 + 2-feat ranker; attribution only"
+- ☑ **Current status: LIFTED (2026-05-26, h20d override)**
+- ☑ Lift authorization: OPTION_B_OVERRIDE_2026_05_26 (55-manager registry override)
+- ☑ Phase 2 Step 5: UNBLOCKED
+- ☑ Spec 089: ACTIVATED (KG enforcement live)
 
-**Stop condition:** If freeze is marked LIFTED without explicit h20d decision + governance memo, escalate immediately.
+**Stop condition:** If freeze status reverts to ACTIVE, escalation required (only operator can re-activate).
 
 ---
 
-## 2. Blocked Specs (4 specs, zero implementation)
+## 2. Spec Status (updated 2026-05-26, h20d override)
 
-### Specs BLOCKED until 13F quarantine clears + Phase 2 verification complete:
+### Spec 089: ACTIVATED (was BLOCKED, now live)
 
-| Spec | Status | Reason | Check |
-|------|--------|--------|-------|
-| **089** | BLOCKED | 13F quarantine + Phase 2 Step 5 gate | No branch/PR |
+| Spec | Status | Reason | Verification |
+|------|--------|--------|---|
+| **089** | ✅ **ACTIVATED** | h20d override (2026-05-26) — Phase 2 Step 5 LIVE | KG enforcement in preflight |
 | **100** | BLOCKED | Deferred interpretation post-freeze | Smoke artifact only, read-only |
 | **094** | BLOCKED | h20d decision + 13F refresh | No impl code |
 | **072** | BLOCKED | h20d decision + 13F refresh | Diagnostic only |
 
-**Verification commands:**
+**Spec 089 Verification (ACTIVATED):**
 
 ```bash
-# Check for Spec 089 implementation (should not exist)
-git log --oneline --grep="spec.089\|089.*implement" 2>/dev/null | head -5
-git branch -a | grep -i "spec.089\|089.*impl"
-git diff origin/main -- ranker_v2_pairwise.py selector_engine.py run_screen.py \
-  | grep -i "kg\|knowledge.graph\|node\|edge" | head -5
+# Verify KG deployment live
+ls -lh tools/build_hermes_knowledge_layer.py tools/query_knowledge_graph.py 2>/dev/null
 
-# Check for Spec 100 implementation (should be read-only artifact only)
-ls -lh artifacts/*spec.100* artifacts/*ic.*tooling* 2>/dev/null
-grep -l "spec.100.*INVALIDATED\|composite_score.*INVALID" \
-  artifacts/*.md 2>/dev/null | head -2
+# Check preflight activation
+grep -n "spec_089_active\|Spec 089.*ACTIVE" tools/agent_preflight.py 2>/dev/null | head -3
 
-# Check for Spec 094/072 code (should not exist)
-git log --oneline --grep="spec.094\|spec.072" 2>/dev/null | head -5
-git diff origin/main -- . | grep -i "selector.*rerun\|vnext.*implement" | head -5
+# Verify h20d override authorization
+ls -lh artifacts/audit/h20d_override_authorization_*.md 2>/dev/null
+
+# Confirm Phase 2 Step 5 deployment
+grep -l "Phase 2 Step 5.*LIVE\|KG.*deployment.*complete" \
+  artifacts/audit/*.md 2>/dev/null | head -1
 ```
 
-**Expected outcomes:**
-- ✅ No Spec 089 implementation branch exists
-- ✅ Spec 100 artifact exists (read-only, no tooling changes)
-- ✅ No Spec 094 selector-only code
-- ✅ No Spec 072 vNext scoring code
-- ❌ Any implementation = FAILURE
+**Expected outcomes (Spec 089):**
+- ✅ KG builder tools exist and are committed
+- ✅ Preflight recognizes h20d override (spec_089_active flag set)
+- ✅ h20d override authorization artifact present
+- ✅ Phase 2 Step 5 deployment documented
+- ✅ Weekly validation monitoring scheduled (starts 2026-05-31)
 
-**Escalation trigger:** If any blocked spec has implementation, halt deployment and escalate to governance.
+**Spec 100/094/072 Verification (still BLOCKED):**
+
+```bash
+# Verify no implementation of blocked specs
+git log --oneline --grep="spec.100.*implement\|spec.094\|spec.072" 2>/dev/null | head -5
+git diff origin/main -- ranker_v2_pairwise.py selector_engine.py \
+  | grep -i "100\|094\|072" | head -5
+```
+
+**Expected outcomes (blocked specs):**
+- ✅ No Spec 100 implementation (artifact only, read-only)
+- ✅ No Spec 094 code
+- ✅ No Spec 072 code
+- ❌ Any implementation = FAILURE → escalate
+
+**Escalation trigger:** If blocked specs (100/094/072) have implementation, halt deployment and escalate to governance.
 
 ---
 

@@ -1,27 +1,33 @@
 ---
 name: 13f-validation-coordinator
 triggers:
-  - 13F validation ready
-  - quarantine decision pending
-  - May 20+ post-snapshot refresh
-  - validation verdict available
+  - weekly 13F validation gate (Fridays 6:22 PM ET, starting 2026-05-31)
+  - 55-manager cohort monitoring (post-h20d override)
+  - Jaccard stability tracking (target ≥0.70 by 2026-06-15)
+  - re-evaluation gate (2026-07-01)
 description: >
-  Coordinate execution of 13F Q1 2026 validation decision tree.
-  Triggered after May 20 snapshot refresh. Reads validation gates (2–6),
-  Cohort Jaccard result, and routes to CLEAR / EXTEND / MANUAL decision paths.
-  All actions gated by explicit user approval. Artifact-driven, read-only by default.
+  Monitor 55-manager cohort stability post-h20d override (OPTION_B_OVERRIDE_2026_05_26).
+  Weekly validation starting 2026-05-31. Reads Jaccard similarity, inst_delta distortion,
+  filing progress, and Top-30 churn. Reports stabilization trends. Tracks escalation
+  triggers (Jaccard < 0.40 or inst_delta > 1.50). Re-evaluation gate at 2026-07-01.
 ---
 
-# 13F Validation Coordinator — Decision Tree Execution
+# 13F Validation Coordinator — Weekly Cohort Monitoring (Updated 2026-05-26)
 
 ## Purpose
 
-Execute the 13F Q1 2026 validation decision tree once the May 20 snapshot refresh lands and validation runs complete. Routes to quarantine lift, extension, or manual review based on gates 2–6 and Cohort Jaccard result.
+Monitor 55-manager institutional registry cohort stability post-h20d override authorization (2026-05-26). Execute weekly validation starting 2026-05-31 to track Jaccard similarity and inst_delta distortion trends. Report stabilization progress toward re-evaluation gate (2026-07-01).
 
-**Trigger conditions:**
-- May 20 snapshot refresh (expected ~4:30 PM ET)
-- 13F validation runs (expected ~5:00–5:30 PM ET)
-- Verdict artifact available: `artifacts/13f_validation_[DATE].md`
+**Status Update (2026-05-26):**
+- ✅ 13F quarantine: CLEARED (48-manager cohort, Jaccard 0.875)
+- ✅ Registry expansion: AUTHORIZED (55-manager cohort, Jaccard 0.463 baseline)
+- ⚠️ 55-manager validation: FAILED (below threshold, but override approved)
+- 🔄 Weekly monitoring: ACTIVE (starting 2026-05-31)
+
+**Trigger conditions (weekly):**
+- Every Friday 6:22 PM ET starting 2026-05-31
+- Run: `python3 tools/check_13f_cohort_quarantine.py --pre-date 2026-05-15 --post-date [FRIDAY_DATE]`
+- Artifact: `artifacts/13f_validation_verdict_55manager_weekly_[DATE].md`
 
 ---
 
