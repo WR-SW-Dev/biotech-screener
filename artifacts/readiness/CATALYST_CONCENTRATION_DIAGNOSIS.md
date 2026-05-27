@@ -169,6 +169,15 @@ READINESS HOLD ← Cannot trade until resolved
 
 ---
 
+## Canonical HOLD Framing
+
+- **Selector:** Working as designed; no demonstrated near-term tiering bias.
+- **Signal:** Real, observable, and materially concentrated in near-term catalysts.
+- **Policy:** Misaligned with the current signal regime; requires governance decision.
+- **Path D:** Exception trade only, not a neutral bridge. Requires explicit operator accountability.
+
+---
+
 ## Final Statement
 
 > Readiness HOLD is blocked by a real policy/ranking alignment issue. The selector is not biased; institutional consensus on near-term catalysts is concentrated and real. **Governance must decide:** Is this mismatch a temporary opportunity to relax policy for, or a concentration risk that requires portfolio construction gates? If uncertain, maintain HOLD; Path D is an exception trade, not a neutral bridge.
