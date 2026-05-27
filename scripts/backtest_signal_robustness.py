@@ -1540,23 +1540,33 @@ def extend_price_csv_safe(
         max_retries=max_retries,
     )
 
+    def _scalar_value(val):
+        """Extract scalar from Series or return scalar value."""
+        if isinstance(val, pd.Series):
+            return val.iloc[0] if len(val) > 0 else None
+        return val
+
     new_rows: List[Dict[str, str]] = []
     if safe_result.get("data") is not None and not safe_result["data"].empty:
         df = safe_result["data"]
         for idx, row in df.iterrows():
             dt = idx.strftime("%Y-%m-%d")
-            close = row.get("Close")
+            close = _scalar_value(row.get("Close"))
             if close is None or pd.isna(close):
                 continue
+            open_val = _scalar_value(row.get("Open"))
+            high_val = _scalar_value(row.get("High"))
+            low_val = _scalar_value(row.get("Low"))
+            volume_val = _scalar_value(row.get("Volume"))
             new_rows.append(
                 {
                     "date": dt,
                     "ticker": str(row.get("ticker", idx.name if hasattr(idx, "name") else "")).strip().upper(),
                     "close": str(close),
-                    "open": str(row["Open"]) if row.get("Open") == row.get("Open") else "",
-                    "high": str(row["High"]) if row.get("High") == row.get("High") else "",
-                    "low": str(row["Low"]) if row.get("Low") == row.get("Low") else "",
-                    "volume": str(int(row["Volume"])) if row.get("Volume") == row.get("Volume") else "",
+                    "open": str(open_val) if open_val is not None and open_val == open_val else "",
+                    "high": str(high_val) if high_val is not None and high_val == high_val else "",
+                    "low": str(low_val) if low_val is not None and low_val == low_val else "",
+                    "volume": str(int(volume_val)) if volume_val is not None and volume_val == volume_val else "",
                 }
             )
 
