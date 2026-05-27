@@ -26,7 +26,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO))
+
 SUP_DIR = REPO / "artifacts" / "ops_supervisor"
+
+from common.operator_delivery import send_operator_event
 
 VALID_SEVERITY = {"GREEN", "YELLOW", "ORANGE", "RED"}
 VALID_ACTION = {"no_action", "watch", "investigate", "fix_now"}
@@ -159,6 +163,30 @@ def main() -> int:
     if failures:
         for f_ in failures:
             print(f"  - {f_}")
+
+    # Route snapshot_missing FAIL event to Town if sentinel is RED (Spec 090 Phase B)
+    if sentinel_state == "RED":
+        try:
+            send_operator_event(
+                channel="town",
+                severity="FAIL",
+                event_type="snapshot_missing",
+                title=f"Production snapshot missing: supervisor sentinel RED ({as_of})",
+                summary=(
+                    f"ops_supervisor artifact missing or invalid as of {as_of}. "
+                    f"Production snapshot did not complete. See sentinel artifact for details."
+                ),
+                artifact=str(out_json.relative_to(REPO)),
+                next_operator_action="investigate",
+                extra={
+                    "as_of_date": as_of,
+                    "sentinel_state": sentinel_state,
+                    "supervisor_final_severity": sup.get("final_severity") if sup else None,
+                    "failure_count": len(failures),
+                }
+            )
+        except Exception as e:
+            print(f"[sentinel] WARNING: Failed to route snapshot_missing event to Town: {e}")
 
     return {"GREEN": 0, "YELLOW": 1, "RED": 2}[sentinel_state]
 

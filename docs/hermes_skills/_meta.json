@@ -96,10 +96,13 @@
       ]
     },
     "agent_supervisor_sentinel": {
-      "status": "TODO",
+      "status": "COMPLETE",
       "event_type": "snapshot_missing",
       "severity": "FAIL",
-      "note": "Route FAIL event when snapshot not detected"
+      "implementation_date": "2026-05-27",
+      "files": [
+        "tools/agent_supervisor_sentinel.py"
+      ]
     },
     "hermes-ruleset-integrity": {
       "status": "COMPLETE",
