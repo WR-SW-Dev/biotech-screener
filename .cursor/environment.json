@@ -1,3 +1,12 @@
 {
-  "install": "npm install -g @colbymchenry/codegraph@latest && (codegraph status >/dev/null 2>&1 && codegraph sync || (codegraph init --index && (git checkout -- .cursor/rules/codegraph.mdc 2>/dev/null || true))) && codegraph status"
+  "install": "npm install -g @colbymchenry/codegraph@latest && (codegraph status >/dev/null 2>&1 && codegraph sync || (codegraph init --index && (git checkout -- .cursor/rules/codegraph.mdc 2>/dev/null || true))) && codegraph status",
+  "town_integration": {
+    "description": "Town-Hermes bridge (Spec 090) routes Hermes job outputs to Town operator inbox",
+    "env_vars": {
+      "TOWN_EMAIL": "Operator email for Town delivery (default: djschulz@gmail.com)",
+      "OPERATOR_DELIVERY_DRY_RUN": "Set to 0 for live email delivery; 1 (default) logs only"
+    },
+    "docs": "See docs/hermes_skills/town-operator-bridge.md for full integration guide",
+    "phase": "A (email delivery, tested and ready) / B (hard failure routing, in progress)"
+  }
 }

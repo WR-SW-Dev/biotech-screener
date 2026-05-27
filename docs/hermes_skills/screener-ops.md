@@ -102,7 +102,8 @@ Repo-native "ops brain" that continuously answers:
 
 ## Town-Hermes Bridge (Spec 090)
 
-**Module**: `common/operator_delivery.py`
+**Module**: `common/operator_delivery.py`  
+**Full Integration Guide**: See **`town-operator-bridge.md`** skill (includes Phase B call sites, API reference, integration patterns, verification)
 
 Routes Hermes Knowledge Layer events to Town via email trigger. Town does NOT control Hermes.
 
@@ -116,6 +117,12 @@ Hermes job completes
     -> Town routine triggers on [Hermes] subject prefix
     -> Town creates task / DMs operator
 ```
+
+### Event Types
+
+INFO: `held_spec_ledger`, `first_fire_pass`  
+FAIL: `first_fire_fail`, `snapshot_missing`, `ruleset_mismatch`, `cron_missed`  
+WARN: `stale_artifact`, `contradiction_detected`
 
 ### What Town is NOT
 

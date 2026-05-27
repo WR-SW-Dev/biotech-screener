@@ -1,0 +1,110 @@
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+
+---
+2026-05-26 10:45 EDT: Check 6 (manual verification)
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+✗ Still rate-limited (73 hours into incident)
+
+---
+2026-05-26 11:10 EDT: Check 7 (post-PR workflow)
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+⚠ Zero rows (stale/holiday market data)
+✗ Still rate-limited (81 hours into incident)
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+
+2026-05-26 15:59 EDT: ⚠ Zero rows (post-holiday)
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
+
+2026-05-27 09:07 EDT: ⚠ Zero rows (stale data)
+Failed to get ticker 'AAPL' reason: Expecting value: line 1 column 1 (char 0)
+
+1 Failed download:
+['AAPL']: Exception('%ticker%: No timezone found, symbol may be delisted')
+✗ Still rate-limited
