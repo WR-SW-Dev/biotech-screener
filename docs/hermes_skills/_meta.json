@@ -1,0 +1,107 @@
+{
+  "registry_version": "1.0",
+  "last_updated": "2026-05-27",
+  "skills": {
+    "town-operator-bridge": {
+      "name": "Town-Hermes Bridge (Spec 090)",
+      "file": "town-operator-bridge.md",
+      "status": "Phase B (hard failure routing, in progress)",
+      "phase": "B",
+      "event_types": [
+        "held_spec_ledger",
+        "first_fire_pass",
+        "first_fire_fail",
+        "snapshot_missing",
+        "ruleset_mismatch",
+        "stale_artifact",
+        "cron_missed",
+        "contradiction_detected"
+      ],
+      "implementation": "common/operator_delivery.py (send_operator_event)",
+      "delivery_mode": "email",
+      "agents_using": [
+        "hermes-held-spec-ledger",
+        "hermes-first-fire-validator",
+        "agent_supervisor (watchdog)",
+        "hermes-ruleset-integrity (future)"
+      ]
+    },
+    "screener-ops": {
+      "name": "Screener Ops & Governance",
+      "file": "screener-ops.md",
+      "status": "Active",
+      "topics": [
+        "daily production pipeline",
+        "hermes knowledge layer",
+        "agent fleet monitoring",
+        "spec lifecycle",
+        "operational state"
+      ]
+    },
+    "13f-validation-coordinator": {
+      "name": "13F Cohort Validation",
+      "file": "13f-validation-coordinator.md",
+      "status": "Active"
+    },
+    "governance-spec-enforcement": {
+      "name": "Spec Enforcement & Governance",
+      "file": "governance-spec-enforcement.md",
+      "status": "Active"
+    },
+    "catalyst-resolution": {
+      "name": "Catalyst Resolution & Tracking",
+      "file": "catalyst-resolution.md",
+      "status": "Active"
+    },
+    "clinical-scoring": {
+      "name": "Clinical Trial Scoring",
+      "file": "clinical-scoring.md",
+      "status": "Active"
+    },
+    "institutional-signal": {
+      "name": "Institutional Holdings Signal",
+      "file": "institutional-signal.md",
+      "status": "Active"
+    },
+    "selector-ranker": {
+      "name": "Selector & Ranker Architecture",
+      "file": "selector-ranker.md",
+      "status": "Active"
+    },
+    "financial-health": {
+      "name": "Financial Health Assessment",
+      "file": "financial-health.md",
+      "status": "Active"
+    }
+  },
+  "phase_b_implementation_status": {
+    "hermes-held-spec-ledger": {
+      "status": "COMPLETE",
+      "event_type": "held_spec_ledger",
+      "severity": "INFO",
+      "implementation_date": "2026-05-27",
+      "files": [
+        "agents/hermes-held-spec-ledger/run_job.py",
+        "agents/hermes-held-spec-ledger/SOUL.md"
+      ]
+    },
+    "hermes-first-fire-validator": {
+      "status": "TODO",
+      "event_types": ["first_fire_pass", "first_fire_fail"],
+      "severity": ["INFO", "FAIL"],
+      "note": "Job script to be created"
+    },
+    "agent_supervisor_sentinel": {
+      "status": "TODO",
+      "event_type": "snapshot_missing",
+      "severity": "FAIL",
+      "note": "Route FAIL event when snapshot not detected"
+    },
+    "hermes-ruleset-integrity": {
+      "status": "TODO",
+      "event_type": "ruleset_mismatch",
+      "severity": "FAIL",
+      "note": "Job script to validate CLAUDE.md vs runtime"
+    }
+  }
+}

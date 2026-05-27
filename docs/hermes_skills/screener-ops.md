@@ -131,6 +131,25 @@ WARN: `stale_artifact`, `contradiction_detected`
 - NOT allowed to reactivate bioshort_watch LLM
 - NOT the authoritative source for any production state
 
+### Phase B Implementation Status (2026-05-27)
+
+**Live call sites:**
+- `hermes-held-spec-ledger` — routes held_spec_ledger events (INFO severity, 60m dedupe window)
+- `snapshot_complete` — custom event type, routes snapshot promotion results (WARN severity)
+- `contradiction_detected` — routes hard/possible contradictions from knowledge layer (WARN severity)
+
+**TODO (Phase B planned extensions):**
+- `hermes-first-fire-validator` — route first_fire_pass/fail events (INFO/FAIL severity)
+- `agent_supervisor_sentinel` — route snapshot_missing event on watchdog timeout (FAIL severity)
+- `hermes-ruleset-integrity` — validate CLAUDE.md vs code, route ruleset_mismatch (FAIL severity)
+
+**Dedupe windows:**
+- FAIL: 15 minutes
+- WARN: 30 minutes  
+- INFO: 60 minutes
+
+**Dry-run status:** `OPERATOR_DELIVERY_DRY_RUN=1` (default, logs only); set to `0` for live email delivery (requires operator approval).
+
 ---
 
 ## OpenClaw Agent Fleet

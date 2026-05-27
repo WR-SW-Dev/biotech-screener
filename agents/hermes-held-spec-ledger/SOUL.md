@@ -97,9 +97,29 @@ Records:
 - **Implementation:** `common/operator_delivery.py`
 - **Tests:** `tests/test_operator_delivery.py`
 
+## Town-Hermes Bridge Integration (Spec 090 Phase B)
+
+**Event routed:** `held_spec_ledger` (INFO severity, 60-minute dedupe window)
+
+**Routing logic:**
+```python
+send_operator_event(
+    channel="town",
+    severity="INFO",
+    event_type="held_spec_ledger",
+    title=f"Held specs ledger: {len(held_specs)} specs ({len(waiting)} awaiting clearance)",
+    summary=f"{len(approved)} approved, {len(blocked)} blocked, {len(waiting)} awaiting clearance",
+    artifact="artifacts/ops/held_spec_ledger/latest.json",
+    next_operator_action="review"
+)
+```
+
+**Status:** Phase B live (2026-05-27), dry-run mode (OPERATOR_DELIVERY_DRY_RUN=1)
+
 ## Status
 
 **Phase:** B (In Progress)  
 **Last updated:** 2026-05-27  
-**Deployed:** Yes (run_job.py created)  
-**Live:** No (awaiting OPERATOR_DELIVERY_DRY_RUN=0 approval)
+**Deployed:** Yes (run_job.py + Town routing active)  
+**Live mode:** Awaiting OPERATOR_DELIVERY_DRY_RUN=0 approval  
+**First event routed:** 2026-05-27 20:37:59 (0 held specs, all clear)
