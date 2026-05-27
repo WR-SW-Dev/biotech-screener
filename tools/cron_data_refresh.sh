@@ -28,7 +28,9 @@ PYTHON="/usr/bin/python3"
 LOG_DIR="${REPO_ROOT}/logs"
 
 cd "$REPO_ROOT"
+set -a
 source .env 2>/dev/null || true
+set +a
 
 TODAY=$(date +%Y-%m-%d)
 
