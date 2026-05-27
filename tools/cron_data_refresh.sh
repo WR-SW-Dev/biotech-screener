@@ -11,6 +11,7 @@
 #   fda_regulatory   Warm FDA regulatory notices cache (cache/fda/)
 #   pdufa_extracted  Build extracted PDUFA sidecar (Phase 1, review-only)
 #   herald           Fetch + classify company press releases
+#   firecrawl        Research-only: search biotech news via Firecrawl (research-only, no alpha)
 #   iv               Rebuild historical IV features from surface data
 #   universe         Run universe maintenance health check
 #   status           Write logs/data_refresh_status_{date}.json summary
@@ -18,6 +19,7 @@
 #
 # Cron schedule:
 #   0 14 * * 1-5  (2:00 PM ET weekdays — 2.5 hours before production)
+#   0 8  * * 1-5  (8:00 AM ET weekdays — second run for firecrawl research discovery)
 
 set -euo pipefail
 
@@ -119,6 +121,30 @@ stage_herald() {
         fi
     else
         log "No new releases file for $TODAY"
+    fi
+}
+
+stage_firecrawl() {
+    log "Firecrawl research discovery (timeout 180s)..."
+
+    # Check if API key is available
+    if [ -z "${FIRECRAWL_API_KEY:-}" ]; then
+        log "Firecrawl research skipped: FIRECRAWL_API_KEY not set in environment"
+        return 0
+    fi
+
+    local rc=0
+    timeout 180 $PYTHON tools/firecrawl_research_ingest.py \
+        --query "biotech clinical trial results FDA approval obesity GLP-1 2026" \
+        --limit 15 \
+        --timeout 30 \
+        --out "artifacts/research/firecrawl/$TODAY" 2>&1 | tail -5 || rc=$?
+    if [ $rc -eq 124 ]; then
+        log "Firecrawl research TIMED OUT after 180s"
+    elif [ $rc -ne 0 ]; then
+        log "Firecrawl research failed (exit $rc) — continuing"
+    else
+        log "Firecrawl research done → artifacts/research/firecrawl/$TODAY/"
     fi
 }
 
@@ -264,6 +290,9 @@ case "$MODE" in
     herald)
         stage_herald
         ;;
+    firecrawl)
+        stage_firecrawl
+        ;;
     iv)
         stage_iv
         ;;
@@ -280,12 +309,13 @@ case "$MODE" in
         stage_fda_regulatory
         stage_pdufa_extracted
         stage_herald
+        stage_firecrawl
         stage_iv
         stage_universe
         stage_status
         ;;
     *)
-        echo "Usage: $0 {ctgov|sec_8k|fda_adcom|fda_regulatory|pdufa_extracted|herald|iv|universe|status|all}"
+        echo "Usage: $0 {ctgov|sec_8k|fda_adcom|fda_regulatory|pdufa_extracted|herald|firecrawl|iv|universe|status|all}"
         exit 1
         ;;
 esac
