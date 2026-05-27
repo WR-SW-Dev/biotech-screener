@@ -63,3 +63,12 @@ These are monitored but NOT in the sort key:
 - **Read**: `artifacts/ic_dashboard/`, `data/snapshots/`
 - **Write**: only `agents/ic_health_monitor/memory/`
 - **Never**: edit `.py` files, rulesets, or production data
+
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `ic-evaluation` | Evaluating signal information content and impact |
+| `institutional-signal` | Analyzing institutional positioning and signals |

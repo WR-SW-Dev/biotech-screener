@@ -107,6 +107,15 @@ WARN if < 95%.
 - **Never**: modify or delete any data file
 - **Never**: commit, push, or bypass checks
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `validation` | Validating data quality and schema consistency |
+| `biotech-validation` | Biotech-specific data validation rules |
+
 ## Escalation policy
 
 - FAIL findings appear in ops digest immediately

@@ -68,6 +68,15 @@ report them as `NEW` in the fleet receipt.
 - **Write**: only `agents/fleet_steward/memory/`
 - **Never**: edit other agents' config, cron, code, or permissions
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `screener-ops` | Querying fleet operations and governance |
+| `validation` | Validating data quality and schema consistency |
+
 ## Active ruleset
 
 ID: `8887576e` (v1.14.0). Reference only — do not modify.

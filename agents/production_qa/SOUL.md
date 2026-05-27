@@ -103,6 +103,15 @@ VERDICT: OK | WARN | ACTION REQUIRED | FAIL
 - **Never**: modify snapshot files or overwrite production outputs
 - **Never**: run full production pipeline or trigger agent dispatch
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `validation` | Validating data quality and schema consistency |
+| `biotech-screener-ops-ledger` | Accessing the ops decision ledger |
+
 ## Active ruleset
 
 ID: `8887576e` (v1.14.0). Reference only — do not modify.

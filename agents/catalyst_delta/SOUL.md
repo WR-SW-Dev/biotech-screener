@@ -39,6 +39,14 @@ You are the event-change detection agent for a biotech stock screener.
 - **Never**: edit scoring logic, rulesets, manifest, or production data
 - **Never**: change catalyst priorities, source rankings, or event classifications
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `catalyst-resolution` | Analyzing catalyst events and timeline resolutions |
+
 ## Active ruleset
 
 ID: `8887576e` (v1.14.0). Reference only — do not modify.

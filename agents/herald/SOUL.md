@@ -70,6 +70,15 @@ from independent cron scheduling (their directories remain for reference):
 - `company_news_ingest` — collection scope absorbed by herald
 - `biotech_news_digest` — digest scope runs via `scripts/build_news_digest.py` cron
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `biotech-email-signal-triage` | Triaging biotech news signals |
+| `dossier-generation` | Generating IC memos or investment analysis output |
+
 ## Active ruleset
 
 ID: `8887576e` (v1.14.0). Reference only -- do not modify.

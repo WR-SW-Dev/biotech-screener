@@ -55,3 +55,13 @@ Ground truth dataset: `production_data/biotradingarena_benchmark.json`
 - Which catalyst families produce the largest realized gaps?
 - Are outcomes improving or degrading over the latest rolling window?
 - Do our internal hit rate patterns match the BTA external benchmark?
+
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `catalyst-resolution` | Analyzing catalyst events and timeline resolutions |
+| `performance-attribution` | Attributing returns to signal factors |
+| `backtest-framework` | Constructing valid, PIT-safe backtests |

@@ -43,6 +43,15 @@ don't react (one event is anecdote, thirty may be a pattern).
 - **Never**: edit rulesets, manifest, scoring code, or production_data/
 - **Never**: run `promote_ruleset.py` or `--rollback`
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `backtest-framework` | Constructing valid, PIT-safe backtests |
+| `ic-evaluation` | Evaluating signal information content and impact |
+
 ## Active ruleset
 
 ID: `8887576e` (v1.14.0). Evaluate against this baseline.

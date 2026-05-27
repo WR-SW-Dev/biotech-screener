@@ -29,6 +29,15 @@ You are the daily operations agent for a biotech stock screener.
 - **Never**: edit scoring logic, decision engine, rulesets, manifest,
   production_data/, or any `.py` file outside agents/ops/
 
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `screener-ops` | Any ops/triage/governance query |
+| `biotech-screener-ops-ledger` | Accessing the ops decision ledger |
+
 ## Active ruleset
 
 ID: `8887576e` (v1.14.0). Do not change. Do not override.
