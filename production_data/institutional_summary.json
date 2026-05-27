@@ -1,15 +1,15 @@
 {
   "schema_version": "institutional_summary.v1",
   "version": "1.0.0",
-  "created_at": "2026-05-19T00:00:00Z",
-  "as_of_date": "2026-05-19",
-  "cache_as_of_date": "2026-05-19",
+  "created_at": "2026-05-27T00:00:00Z",
+  "as_of_date": "2026-05-27",
+  "cache_as_of_date": "2026-05-27",
   "cache_schema_version": "sec_13f_pit_index.v1",
-  "elite_managers_total": 42,
-  "elite_managers_with_filing": 42,
-  "tickers_with_signal": 253,
-  "tickers_in_universe": 298,
-  "signal_coverage_pct": 84.9,
+  "elite_managers_total": 49,
+  "elite_managers_with_filing": 49,
+  "tickers_with_signal": 252,
+  "tickers_in_universe": 297,
+  "signal_coverage_pct": 84.85,
   "tickers": {
     "AARD": {
       "elite_holders_count": 0,
@@ -18,7 +18,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "ABCL": {
       "elite_holders_count": 1,
@@ -31,7 +31,7 @@
       "elite_total_shares": 30275938,
       "elite_total_value_usd_thousands": 105663024,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ABEO": {
       "elite_holders_count": 3,
@@ -48,7 +48,7 @@
       "elite_total_shares": 3184865,
       "elite_total_value_usd_thousands": 14268195,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "ABOS": {
       "elite_holders_count": 1,
@@ -61,26 +61,28 @@
       "elite_total_shares": 20992669,
       "elite_total_value_usd_thousands": 49542699,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ABSI": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Baker Bros",
         "Casdin Capital",
         "Redmile Group",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Baker Bros": 2134803,
         "Casdin Capital": 973260,
         "Redmile Group": 8253316,
+        "Siren LLC": 1800000,
         "Vestal Point": 232219
       },
-      "elite_total_shares": 11593598,
-      "elite_total_value_usd_thousands": 34780794,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 13393598,
+      "elite_total_value_usd_thousands": 40180794,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "ABUS": {
       "elite_holders_count": 1,
@@ -93,23 +95,24 @@
       "elite_total_shares": 125000,
       "elite_total_value_usd_thousands": 525000,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ABVX": {
-      "elite_holders_count": 12,
+      "elite_holders_count": 15,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
-        "Boxer Capital",
         "Caligan Partners",
         "Cormorant Asset",
         "Logos Global",
         "Orbimed Advisors",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
-        "Samsara BioCapital",
-        "Vestal Point",
-        "Vivo Capital"
+        "TCG Crossover",
+        "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 405000,
         "Ally Bridge": 33712,
         "Baker Bros": 875796,
         "Boxer Capital": 200000,
@@ -117,22 +120,26 @@
         "Cormorant Asset": 760000,
         "Logos Global": 675000,
         "Orbimed Advisors": 465700,
+        "Paradigm Biocapital": 772473,
         "Perceptive Advisors": 328884,
         "Samsara BioCapital": 56581,
         "Sectoral Asset": 2340,
+        "TCG Crossover": 6481085,
         "Vestal Point": 1500000,
         "Vivo Capital": 239539
       },
-      "elite_total_shares": 6599476,
-      "elite_total_value_usd_thousands": 734888954,
-      "inst_score_raw": 12,
-      "inst_score_z": 2.0607
+      "elite_total_shares": 14258034,
+      "elite_total_value_usd_thousands": 1587669388,
+      "inst_score_raw": 15,
+      "inst_score_z": 2.0874
     },
     "ACAD": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "Avidity Partners",
         "Baker Bros",
+        "Braidwell LP",
+        "Frazier Life Sciences",
         "Logos Global",
         "Palo Alto Investors",
         "RTW Investments",
@@ -141,15 +148,17 @@
       "elite_holder_shares": {
         "Avidity Partners": 12967,
         "Baker Bros": 42896690,
+        "Braidwell LP": 2471199,
+        "Frazier Life Sciences": 1438198,
         "Logos Global": 750000,
         "Palo Alto Investors": 2872695,
         "RTW Investments": 7144524,
         "Sofinnova Investments": 78551
       },
-      "elite_total_shares": 53755427,
-      "elite_total_value_usd_thousands": 1196598268,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 57664824,
+      "elite_total_value_usd_thousands": 1283621445,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "ACIU": {
       "elite_holders_count": 0,
@@ -158,7 +167,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "ACRV": {
       "elite_holders_count": 1,
@@ -171,24 +180,26 @@
       "elite_total_shares": 8340508,
       "elite_total_value_usd_thousands": 11593306,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ADCT": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "DAFNA Capital",
         "Orbimed Advisors",
-        "Redmile Group"
+        "Redmile Group",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "DAFNA Capital": 72081,
         "Orbimed Advisors": 1318026,
-        "Redmile Group": 15470502
+        "Redmile Group": 15470502,
+        "TCG Crossover": 11390175
       },
-      "elite_total_shares": 16860609,
-      "elite_total_value_usd_thousands": 63227285,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 28250784,
+      "elite_total_value_usd_thousands": 105940441,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "ADMA": {
       "elite_holders_count": 2,
@@ -203,7 +214,7 @@
       "elite_total_shares": 5523744,
       "elite_total_value_usd_thousands": 49768933,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "ADPT": {
       "elite_holders_count": 1,
@@ -216,13 +227,14 @@
       "elite_total_shares": 152500,
       "elite_total_value_usd_thousands": 2116700,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "AGIO": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Caligan Partners",
         "Foresite Capital VI",
+        "Frazier Life Sciences",
         "Palo Alto Investors",
         "Rock Springs",
         "Tang Capital",
@@ -231,15 +243,16 @@
       "elite_holder_shares": {
         "Caligan Partners": 90000,
         "Foresite Capital VI": 525000,
+        "Frazier Life Sciences": 1256080,
         "Palo Alto Investors": 213601,
         "Rock Springs": 799163,
         "Tang Capital": 100000,
         "Vestal Point": 450000
       },
-      "elite_total_shares": 2177764,
-      "elite_total_value_usd_thousands": 73673756,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 3433844,
+      "elite_total_value_usd_thousands": 116166942,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "ALDX": {
       "elite_holders_count": 1,
@@ -252,29 +265,31 @@
       "elite_total_shares": 155709,
       "elite_total_value_usd_thousands": 263148,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ALKS": {
-      "elite_holders_count": 13,
+      "elite_holders_count": 15,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
         "BVF Inc/IL",
         "Bain Capital Life",
         "Baker Bros",
         "Deep Track",
+        "Frazier Life Sciences",
         "Logos Global",
-        "Palo Alto Investors",
         "RTW Investments",
-        "Rock Springs",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1350000,
         "Avoro Capital": 1200000,
         "BVF Inc/IL": 2000000,
         "Bain Capital Life": 610000,
         "Baker Bros": 10012267,
         "DAFNA Capital": 139482,
         "Deep Track": 3590323,
+        "Frazier Life Sciences": 700647,
         "Great Point": 50000,
         "Krensavage Asset": 107822,
         "Logos Global": 350000,
@@ -283,28 +298,30 @@
         "Rock Springs": 183986,
         "Soleus Capital": 1970864
       },
-      "elite_total_shares": 22129660,
-      "elite_total_value_usd_thousands": 778696005,
-      "inst_score_raw": 13,
-      "inst_score_z": 2.3295
+      "elite_total_shares": 24180307,
+      "elite_total_value_usd_thousands": 851206883,
+      "inst_score_raw": 15,
+      "inst_score_z": 2.0874
     },
     "ALLO": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Boxer Capital",
-        "DAFNA Capital"
+        "DAFNA Capital",
+        "Frazier Life Sciences"
       ],
       "elite_holder_shares": {
         "Boxer Capital": 2725000,
-        "DAFNA Capital": 1370118
+        "DAFNA Capital": 1370118,
+        "Frazier Life Sciences": 3796668
       },
-      "elite_total_shares": 4095118,
-      "elite_total_value_usd_thousands": 9992088,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 7891786,
+      "elite_total_value_usd_thousands": 19255958,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "ALMS": {
-      "elite_holders_count": 11,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "Baker Bros",
         "Cormorant Asset",
@@ -312,8 +329,8 @@
         "Foresite Capital V",
         "Foresite Capital VI",
         "Great Point",
+        "Integral Health",
         "Opaleye Management",
-        "Orbimed Advisors",
         "Samsara BioCapital",
         "Venbio Partners"
       ],
@@ -325,15 +342,16 @@
         "Foresite Capital V": 5896995,
         "Foresite Capital VI": 4247670,
         "Great Point": 856061,
+        "Integral Health": 800000,
         "Opaleye Management": 550000,
         "Orbimed Advisors": 548163,
         "Samsara BioCapital": 6345219,
         "Venbio Partners": 4528408
       },
-      "elite_total_shares": 35873811,
-      "elite_total_value_usd_thousands": 790300057,
-      "inst_score_raw": 11,
-      "inst_score_z": 1.7918
+      "elite_total_shares": 36673811,
+      "elite_total_value_usd_thousands": 807924057,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "ALNY": {
       "elite_holders_count": 6,
@@ -356,7 +374,7 @@
       "elite_total_shares": 469895,
       "elite_total_value_usd_thousands": 155574081,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "ALT": {
       "elite_holders_count": 1,
@@ -369,7 +387,7 @@
       "elite_total_shares": 666022,
       "elite_total_value_usd_thousands": 2051348,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ALVO": {
       "elite_holders_count": 0,
@@ -378,7 +396,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "AMGN": {
       "elite_holders_count": 2,
@@ -393,10 +411,10 @@
       "elite_total_shares": 49110,
       "elite_total_value_usd_thousands": 17553797,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "AMLX": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Acuta Capital",
         "Boxer Capital",
@@ -404,7 +422,9 @@
         "Great Point",
         "Logos Global",
         "Perceptive Advisors",
-        "Rock Springs"
+        "Rock Springs",
+        "Siren LLC",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 151067,
@@ -413,12 +433,14 @@
         "Great Point": 1750000,
         "Logos Global": 700000,
         "Perceptive Advisors": 8284882,
-        "Rock Springs": 499764
+        "Rock Springs": 499764,
+        "Siren LLC": 1230000,
+        "TCG Crossover": 6243812
       },
-      "elite_total_shares": 12535713,
-      "elite_total_value_usd_thousands": 174246411,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 20009525,
+      "elite_total_value_usd_thousands": 278132398,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "AMPH": {
       "elite_holders_count": 0,
@@ -427,7 +449,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "AMRX": {
       "elite_holders_count": 1,
@@ -440,11 +462,12 @@
       "elite_total_shares": 12488,
       "elite_total_value_usd_thousands": 3922980,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ANAB": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
+        "Affinity Asset",
         "EcoR1 Capital",
         "Palo Alto Investors",
         "Sofinnova Investments",
@@ -452,16 +475,17 @@
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 940000,
         "EcoR1 Capital": 7880094,
         "Palo Alto Investors": 638161,
         "Sofinnova Investments": 248253,
         "Soleus Capital": 6000,
         "Tang Capital": 1330879
       },
-      "elite_total_shares": 10103387,
-      "elite_total_value_usd_thousands": 560333842,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 11043387,
+      "elite_total_value_usd_thousands": 612466242,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "ANIP": {
       "elite_holders_count": 3,
@@ -478,10 +502,10 @@
       "elite_total_shares": 2127743,
       "elite_total_value_usd_thousands": 163623437,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "ANNX": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Bain Capital Life",
@@ -490,7 +514,8 @@
         "Great Point",
         "Opaleye Management",
         "Palo Alto Investors",
-        "Redmile Group"
+        "Redmile Group",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 8698173,
@@ -500,58 +525,68 @@
         "Great Point": 2500000,
         "Opaleye Management": 2331761,
         "Palo Alto Investors": 2948090,
-        "Redmile Group": 14549768
+        "Redmile Group": 14549768,
+        "Siren LLC": 3958646
       },
-      "elite_total_shares": 36942191,
-      "elite_total_value_usd_thousands": 204659738,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 40900837,
+      "elite_total_value_usd_thousands": 226590637,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "ANRO": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 6,
       "elite_holder_names": [
+        "Affinity Asset",
+        "Integral Health",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "Vestal Point",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 500000,
+        "Integral Health": 500000,
         "Orbimed Advisors": 167500,
         "Perceptive Advisors": 2009893,
         "Vestal Point": 2064075,
         "Vivo Capital": 1035551
       },
-      "elite_total_shares": 5277019,
-      "elite_total_value_usd_thousands": 118627387,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 6277019,
+      "elite_total_value_usd_thousands": 141107387,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "APGE": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 11,
       "elite_holder_names": [
-        "Boxer Capital",
+        "Affinity Asset",
+        "Braidwell LP",
         "Deep Track",
         "Fairmount Funds",
         "Great Point",
         "Opaleye Management",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
         "RTW Investments",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1284926,
         "Boxer Capital": 70000,
+        "Braidwell LP": 478667,
         "Deep Track": 285000,
         "Fairmount Funds": 298647,
         "Great Point": 374000,
         "Opaleye Management": 390000,
+        "Paradigm Biocapital": 1348243,
         "Perceptive Advisors": 1540384,
         "RTW Investments": 2782097,
         "Vestal Point": 1100000
       },
-      "elite_total_shares": 6840128,
-      "elite_total_value_usd_thousands": 575733573,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 9951964,
+      "elite_total_value_usd_thousands": 837656808,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "APLS": {
       "elite_holders_count": 7,
@@ -576,7 +611,7 @@
       "elite_total_shares": 25026818,
       "elite_total_value_usd_thousands": 1006828888,
       "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "inst_score_z": 0.3677
     },
     "AQST": {
       "elite_holders_count": 3,
@@ -593,7 +628,7 @@
       "elite_total_shares": 10294886,
       "elite_total_value_usd_thousands": 42723777,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "ARDX": {
       "elite_holders_count": 4,
@@ -612,14 +647,15 @@
       "elite_total_shares": 3655217,
       "elite_total_value_usd_thousands": 18950665,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "ARGX": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Acuta Capital",
         "Avoro Capital",
         "Baker Bros",
+        "Braidwell LP",
         "Orbimed Advisors",
         "RTW Investments",
         "Rock Springs",
@@ -630,31 +666,34 @@
         "Acuta Capital": 4690,
         "Avoro Capital": 1000000,
         "Baker Bros": 25174,
+        "Braidwell LP": 84939,
         "Orbimed Advisors": 136900,
         "RTW Investments": 709446,
         "Rock Springs": 98500,
         "Sectoral Asset": 3564,
         "Soleus Capital": 3500
       },
-      "elite_total_shares": 1981774,
-      "elite_total_value_usd_thousands": 1447324831,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 2066713,
+      "elite_total_value_usd_thousands": 1509351536,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "ARQT": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Cormorant Asset",
+        "Frazier Life Sciences",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
         "Cormorant Asset": 450000,
+        "Frazier Life Sciences": 9874511,
         "Suvretta Capital": 12327000
       },
-      "elite_total_shares": 12777000,
-      "elite_total_value_usd_thousands": 301026120,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 22651511,
+      "elite_total_value_usd_thousands": 533669599,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "ARTV": {
       "elite_holders_count": 2,
@@ -669,78 +708,92 @@
       "elite_total_shares": 10384639,
       "elite_total_value_usd_thousands": 66877075,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "ARVN": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "TCG Crossover",
         "Tang Capital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "TCG Crossover": 2387461,
         "Tang Capital": 538658,
         "Vestal Point": 905465
       },
-      "elite_total_shares": 1444123,
-      "elite_total_value_usd_thousands": 15307704,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 3831584,
+      "elite_total_value_usd_thousands": 40614791,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "ARWR": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 10,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
         "Baker Bros",
         "Cormorant Asset",
         "Deerfield Management",
+        "Integral Health",
         "RTW Investments",
+        "Siren LLC",
         "Soleus Capital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 200000,
         "Avoro Capital": 10699999,
         "Baker Bros": 1992783,
         "Cormorant Asset": 100000,
         "Deerfield Management": 1573297,
+        "Integral Health": 300000,
         "RTW Investments": 585682,
+        "Siren LLC": 1615476,
         "Soleus Capital": 28479,
         "Vestal Point": 2275000
       },
-      "elite_total_shares": 17255240,
-      "elite_total_value_usd_thousands": 1081903547,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 19370716,
+      "elite_total_value_usd_thousands": 1214543892,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "ASMB": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Paradigm Biocapital",
         "RA Capital"
       ],
       "elite_holder_shares": {
+        "Paradigm Biocapital": 665251,
         "RA Capital": 1020410
       },
-      "elite_total_shares": 1020410,
-      "elite_total_value_usd_thousands": 28316378,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 1685661,
+      "elite_total_value_usd_thousands": 46777093,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "ASND": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
         "Cormorant Asset",
-        "DAFNA Capital",
+        "Frazier Life Sciences",
+        "Integral Health",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "RA Capital",
         "Rock Springs",
-        "Sectoral Asset",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 95000,
         "Avoro Capital": 5062500,
         "Cormorant Asset": 95000,
         "DAFNA Capital": 23177,
+        "Frazier Life Sciences": 133333,
+        "Integral Health": 115000,
         "Orbimed Advisors": 181977,
         "Perceptive Advisors": 1531421,
         "RA Capital": 10281496,
@@ -748,10 +801,10 @@
         "Sectoral Asset": 2800,
         "Vestal Point": 375000
       },
-      "elite_total_shares": 17747371,
-      "elite_total_value_usd_thousands": 4059444000,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 18090704,
+      "elite_total_value_usd_thousands": 4137974557,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "AUPH": {
       "elite_holders_count": 2,
@@ -766,26 +819,29 @@
       "elite_total_shares": 13454346,
       "elite_total_value_usd_thousands": 200777484,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "AURA": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Caligan Partners",
+        "Frazier Life Sciences",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
         "Caligan Partners": 229864,
+        "Frazier Life Sciences": 5100000,
         "Suvretta Capital": 4372884
       },
-      "elite_total_shares": 4602748,
-      "elite_total_value_usd_thousands": 30792384,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 9702748,
+      "elite_total_value_usd_thousands": 64911384,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "AVBP": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
+        "Affinity Asset",
         "Logos Global",
         "Orbimed Advisors",
         "Sectoral Asset",
@@ -794,6 +850,7 @@
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 175000,
         "Logos Global": 350000,
         "Orbimed Advisors": 3027328,
         "Sectoral Asset": 30013,
@@ -801,10 +858,10 @@
         "Suvretta Capital": 4401083,
         "Vivo Capital": 885916
       },
-      "elite_total_shares": 10391092,
-      "elite_total_value_usd_thousands": 239750523,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 10566092,
+      "elite_total_value_usd_thousands": 243787773,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "AVIR": {
       "elite_holders_count": 3,
@@ -821,7 +878,7 @@
       "elite_total_shares": 7497938,
       "elite_total_value_usd_thousands": 40338906,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "AVTR": {
       "elite_holders_count": 0,
@@ -830,7 +887,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "AVXL": {
       "elite_holders_count": 1,
@@ -843,13 +900,14 @@
       "elite_total_shares": 521300,
       "elite_total_value_usd_thousands": 1600391,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "AXSM": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Cormorant Asset",
         "Deep Track",
+        "Integral Health",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "Sectoral Asset",
@@ -858,15 +916,16 @@
       "elite_holder_shares": {
         "Cormorant Asset": 50000,
         "Deep Track": 1100000,
+        "Integral Health": 35000,
         "Orbimed Advisors": 213921,
         "Perceptive Advisors": 149950,
         "Sectoral Asset": 1500,
         "Sofinnova Investments": 412747
       },
-      "elite_total_shares": 1928118,
-      "elite_total_value_usd_thousands": 325926843,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 1963118,
+      "elite_total_value_usd_thousands": 331842543,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "AZN": {
       "elite_holders_count": 0,
@@ -875,40 +934,47 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "BBIO": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 9,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avidity Partners",
         "Cormorant Asset",
         "Deep Track",
+        "Frazier Life Sciences",
+        "Integral Health",
         "Rock Springs",
         "Sectoral Asset",
         "Sofinnova Investments"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 150000,
         "Avidity Partners": 10000,
         "Cormorant Asset": 850000,
         "Deep Track": 841445,
+        "Frazier Life Sciences": 3448139,
+        "Integral Health": 275000,
         "Rock Springs": 128250,
         "Sectoral Asset": 8100,
         "Sofinnova Investments": 409183
       },
-      "elite_total_shares": 2246978,
-      "elite_total_value_usd_thousands": 166914857,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 6120117,
+      "elite_total_value_usd_thousands": 454534159,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "BBOT": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Avidity Partners",
         "Casdin Capital",
         "Cormorant Asset",
         "Deerfield Management",
         "EcoR1 Capital",
-        "Opaleye Management"
+        "Opaleye Management",
+        "Paradigm Biocapital"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 43853,
@@ -916,15 +982,16 @@
         "Cormorant Asset": 17878594,
         "Deerfield Management": 4885446,
         "EcoR1 Capital": 2823126,
-        "Opaleye Management": 53282
+        "Opaleye Management": 53282,
+        "Paradigm Biocapital": 868213
       },
-      "elite_total_shares": 25966613,
-      "elite_total_value_usd_thousands": 232377506,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 26834826,
+      "elite_total_value_usd_thousands": 240148012,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "BCAX": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "DAFNA Capital",
         "Deep Track",
@@ -932,6 +999,7 @@
         "Palo Alto Investors",
         "RA Capital",
         "Rock Springs",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
@@ -941,56 +1009,63 @@
         "Palo Alto Investors": 550408,
         "RA Capital": 7255993,
         "Rock Springs": 489095,
+        "Siren LLC": 5802970,
         "Vestal Point": 5425000
       },
-      "elite_total_shares": 18872029,
-      "elite_total_value_usd_thousands": 375364657,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 24674999,
+      "elite_total_value_usd_thousands": 490785730,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "BCRX": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 10,
       "elite_holder_names": [
         "DAFNA Capital",
         "Deerfield Management",
+        "Frazier Life Sciences",
         "Kynam Capital",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "RA Capital",
         "Rock Springs",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "DAFNA Capital": 430248,
         "Deerfield Management": 15038000,
+        "Frazier Life Sciences": 4009240,
         "Kynam Capital": 5680795,
         "Orbimed Advisors": 1425200,
         "Perceptive Advisors": 7434033,
         "RA Capital": 15827186,
         "Rock Springs": 12600,
+        "TCG Crossover": 11020968,
         "Vestal Point": 7025000
       },
-      "elite_total_shares": 52873062,
-      "elite_total_value_usd_thousands": 503351550,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 67903270,
+      "elite_total_value_usd_thousands": 646439130,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "BCYC": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Baker Bros",
         "DAFNA Capital",
-        "Palo Alto Investors"
+        "Palo Alto Investors",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "Baker Bros": 10885357,
         "DAFNA Capital": 64492,
-        "Palo Alto Investors": 201890
+        "Palo Alto Investors": 201890,
+        "Siren LLC": 1560882
       },
-      "elite_total_shares": 11151739,
-      "elite_total_value_usd_thousands": 51744069,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 12712621,
+      "elite_total_value_usd_thousands": 58986561,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "BDTX": {
       "elite_holders_count": 0,
@@ -999,13 +1074,14 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "BEAM": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "Casdin Capital",
         "Deep Track",
+        "Integral Health",
         "Kynam Capital",
         "RTW Investments",
         "Redmile Group"
@@ -1013,18 +1089,20 @@
       "elite_holder_shares": {
         "Casdin Capital": 1350000,
         "Deep Track": 820765,
+        "Integral Health": 300000,
         "Kynam Capital": 3682185,
         "RTW Investments": 570394,
         "Redmile Group": 1237659
       },
-      "elite_total_shares": 7661003,
-      "elite_total_value_usd_thousands": 182561702,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 7961003,
+      "elite_total_value_usd_thousands": 189710702,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "BIIB": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 8,
       "elite_holder_names": [
+        "Integral Health",
         "Krensavage Asset",
         "Logos Global",
         "Orbimed Advisors",
@@ -1034,6 +1112,7 @@
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Integral Health": 60000,
         "Krensavage Asset": 20000,
         "Logos Global": 200000,
         "Orbimed Advisors": 61600,
@@ -1042,46 +1121,52 @@
         "Sofinnova Investments": 229521,
         "Tang Capital": 35000
       },
-      "elite_total_shares": 688690,
-      "elite_total_value_usd_thousands": 122641354,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 748690,
+      "elite_total_value_usd_thousands": 133641154,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "BIOA": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
+        "Braidwell LP",
         "Cormorant Asset",
         "Orbimed Advisors",
         "RA Capital",
         "Sofinnova Investments"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 1200587,
         "Cormorant Asset": 2890605,
         "Orbimed Advisors": 711811,
         "RA Capital": 1650648,
         "Sofinnova Investments": 2293788
       },
-      "elite_total_shares": 7546852,
-      "elite_total_value_usd_thousands": 131994441,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 8747439,
+      "elite_total_value_usd_thousands": 152992708,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "BLTE": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 5,
       "elite_holder_names": [
+        "Affinity Asset",
         "Deerfield Management",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
         "RTW Investments"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 65000,
         "Deerfield Management": 304013,
+        "Paradigm Biocapital": 1114784,
         "Perceptive Advisors": 151979,
         "RTW Investments": 715332
       },
-      "elite_total_shares": 1171324,
-      "elite_total_value_usd_thousands": 186755899,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 2351108,
+      "elite_total_value_usd_thousands": 374860660,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "BMEA": {
       "elite_holders_count": 0,
@@ -1090,11 +1175,12 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "BMRN": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 10,
       "elite_holder_names": [
+        "Braidwell LP",
         "Deep Track",
         "Deerfield Management",
         "Krensavage Asset",
@@ -1106,6 +1192,7 @@
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 497020,
         "Deep Track": 1150000,
         "Deerfield Management": 851556,
         "Krensavage Asset": 524786,
@@ -1116,10 +1203,10 @@
         "Soleus Capital": 650572,
         "Vestal Point": 3575000
       },
-      "elite_total_shares": 8402387,
-      "elite_total_value_usd_thousands": 445108762,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 8899407,
+      "elite_total_value_usd_thousands": 473185422,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "BNTX": {
       "elite_holders_count": 6,
@@ -1142,7 +1229,7 @@
       "elite_total_shares": 698044,
       "elite_total_value_usd_thousands": 56832407,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "BRKR": {
       "elite_holders_count": 0,
@@ -1151,7 +1238,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "CABA": {
       "elite_holders_count": 3,
@@ -1168,7 +1255,7 @@
       "elite_total_shares": 16557125,
       "elite_total_value_usd_thousands": 44538666,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "CADL": {
       "elite_holders_count": 0,
@@ -1177,39 +1264,45 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "CAI": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "Braidwell LP",
         "Orbimed Advisors",
         "Rock Springs"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 8009447,
         "Orbimed Advisors": 2806811,
         "Rock Springs": 563000
       },
-      "elite_total_shares": 3369811,
-      "elite_total_value_usd_thousands": 60252221,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 11379258,
+      "elite_total_value_usd_thousands": 203461133,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "CATX": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 5,
       "elite_holder_names": [
+        "Affinity Asset",
         "Ally Bridge",
         "Avidity Partners",
-        "Opaleye Management"
+        "Opaleye Management",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 3164582,
         "Ally Bridge": 926557,
         "Avidity Partners": 6049999,
-        "Opaleye Management": 4675000
+        "Opaleye Management": 4675000,
+        "TCG Crossover": 7915567
       },
-      "elite_total_shares": 11651556,
-      "elite_total_value_usd_thousands": 46953489,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 22731705,
+      "elite_total_value_usd_thousands": 93157710,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "CCCC": {
       "elite_holders_count": 4,
@@ -1228,30 +1321,33 @@
       "elite_total_shares": 19832205,
       "elite_total_value_usd_thousands": 52158698,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "CDNA": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "Braidwell LP",
         "Deerfield Management",
         "Palo Alto Investors"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 2173146,
         "Deerfield Management": 2191000,
         "Palo Alto Investors": 531870
       },
-      "elite_total_shares": 2722870,
-      "elite_total_value_usd_thousands": 47269023,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 4896016,
+      "elite_total_value_usd_thousands": 84994838,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "CELC": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "Avoro Capital",
         "Baker Bros",
         "Boxer Capital",
         "Deerfield Management",
+        "Integral Health",
         "Perceptive Advisors",
         "RTW Investments",
         "Sofinnova Investments",
@@ -1259,20 +1355,23 @@
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 30000,
         "Avoro Capital": 3575000,
         "Baker Bros": 7915792,
         "Boxer Capital": 225000,
+        "Braidwell LP": 29198,
         "Deerfield Management": 1714000,
+        "Integral Health": 80000,
         "Perceptive Advisors": 3127200,
         "RTW Investments": 3039621,
         "Sofinnova Investments": 666175,
         "Soleus Capital": 1284378,
         "Tang Capital": 1050000
       },
-      "elite_total_shares": 22597166,
-      "elite_total_value_usd_thousands": 2559462528,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 22736364,
+      "elite_total_value_usd_thousands": 2575350588,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "CERS": {
       "elite_holders_count": 3,
@@ -1289,36 +1388,43 @@
       "elite_total_shares": 21773659,
       "elite_total_value_usd_thousands": 39870847,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "CGEM": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 10,
       "elite_holder_names": [
+        "Affinity Asset",
         "BVF Inc/IL",
         "Deerfield Management",
         "Great Point",
         "Kynam Capital",
         "Orbimed Advisors",
         "RTW Investments",
-        "Soleus Capital"
+        "Siren LLC",
+        "Soleus Capital",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 781260,
         "BVF Inc/IL": 5750683,
         "Deerfield Management": 386169,
         "Great Point": 300000,
         "Kynam Capital": 3114132,
         "Orbimed Advisors": 243006,
         "RTW Investments": 1705960,
-        "Soleus Capital": 410200
+        "Siren LLC": 1193410,
+        "Soleus Capital": 410200,
+        "TCG Crossover": 406786
       },
-      "elite_total_shares": 11910150,
-      "elite_total_value_usd_thousands": 169243231,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 14291606,
+      "elite_total_value_usd_thousands": 203083721,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "CGON": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Braidwell LP",
         "Caligan Partners",
         "EcoR1 Capital",
         "Foresite Capital V",
@@ -1327,9 +1433,11 @@
         "Opaleye Management",
         "Orbimed Advisors",
         "RTW Investments",
-        "Soleus Capital"
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 60000,
+        "Braidwell LP": 984783,
         "Caligan Partners": 900000,
         "EcoR1 Capital": 1102000,
         "Foresite Capital V": 1004050,
@@ -1338,12 +1446,13 @@
         "Opaleye Management": 94800,
         "Orbimed Advisors": 948267,
         "RTW Investments": 6984808,
-        "Soleus Capital": 20000
+        "Soleus Capital": 20000,
+        "TCG Crossover": 3670206
       },
-      "elite_total_shares": 13850399,
-      "elite_total_value_usd_thousands": 937395004,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 18565388,
+      "elite_total_value_usd_thousands": 1256505459,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "CHRS": {
       "elite_holders_count": 2,
@@ -1358,24 +1467,26 @@
       "elite_total_shares": 5315319,
       "elite_total_value_usd_thousands": 8982889,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "CLDX": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
-        "DAFNA Capital",
+        "Braidwell LP",
         "Deep Track",
         "Foresite Capital VI",
         "Kynam Capital",
         "Logos Global",
         "Palo Alto Investors",
-        "Redmile Group",
         "Rock Springs",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 500000,
         "Baker Bros": 665370,
+        "Braidwell LP": 1356082,
         "DAFNA Capital": 68518,
         "Deep Track": 1283979,
         "Foresite Capital VI": 315913,
@@ -1386,10 +1497,10 @@
         "Rock Springs": 650270,
         "Vestal Point": 1224165
       },
-      "elite_total_shares": 11056698,
-      "elite_total_value_usd_thousands": 350718460,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 12912780,
+      "elite_total_value_usd_thousands": 409593381,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "CLLS": {
       "elite_holders_count": 0,
@@ -1398,30 +1509,35 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "CLYM": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 6,
       "elite_holder_names": [
+        "Affinity Asset",
+        "Braidwell LP",
         "Broadfin Capital (Kotler)",
         "Great Point",
         "Kynam Capital",
         "RA Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 700000,
+        "Braidwell LP": 1529675,
         "Broadfin Capital (Kotler)": 400000,
         "Great Point": 1334130,
         "Kynam Capital": 1003341,
         "RA Capital": 11300939
       },
-      "elite_total_shares": 14038410,
-      "elite_total_value_usd_thousands": 95023109,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 16268085,
+      "elite_total_value_usd_thousands": 110296383,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "CMPS": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 10,
       "elite_holder_names": [
+        "Affinity Asset",
         "Ally Bridge",
         "Baker Bros",
         "DAFNA Capital",
@@ -1433,6 +1549,7 @@
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1108483,
         "Ally Bridge": 1045000,
         "Baker Bros": 2344720,
         "DAFNA Capital": 2418882,
@@ -1443,13 +1560,13 @@
         "Tang Capital": 4002200,
         "Vivo Capital": 200000
       },
-      "elite_total_shares": 34070950,
-      "elite_total_value_usd_thousands": 188412353,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 35179433,
+      "elite_total_value_usd_thousands": 194542264,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "CMPX": {
-      "elite_holders_count": 14,
+      "elite_holders_count": 15,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Deerfield Management",
@@ -1466,6 +1583,7 @@
         "Acuta Capital": 849076,
         "Ally Bridge": 1000000,
         "BVF Inc/IL": 7764842,
+        "Braidwell LP": 1965106,
         "Deerfield Management": 3606000,
         "Great Point": 1350000,
         "Logos Global": 3150000,
@@ -1478,52 +1596,56 @@
         "Tang Capital": 16790809,
         "Vivo Capital": 9545466
       },
-      "elite_total_shares": 85146138,
-      "elite_total_value_usd_thousands": 450423070,
-      "inst_score_raw": 14,
-      "inst_score_z": 2.5984
+      "elite_total_shares": 87111244,
+      "elite_total_value_usd_thousands": 460818481,
+      "inst_score_raw": 15,
+      "inst_score_z": 2.0874
     },
     "CNTX": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "Avidity Partners",
         "Cormorant Asset",
         "Deep Track",
         "Great Point",
-        "Soleus Capital"
+        "Soleus Capital",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 4998267,
         "Cormorant Asset": 529550,
         "Deep Track": 7419355,
         "Great Point": 2238496,
-        "Soleus Capital": 6963141
+        "Soleus Capital": 6963141,
+        "TCG Crossover": 2682696
       },
-      "elite_total_shares": 22148809,
-      "elite_total_value_usd_thousands": 56730330,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 24831505,
+      "elite_total_value_usd_thousands": 63758994,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "COGT": {
-      "elite_holders_count": 16,
+      "elite_holders_count": 20,
       "elite_holder_names": [
+        "Affinity Asset",
         "Deep Track",
         "Deerfield Management",
         "Fairmount Funds",
         "Kynam Capital",
         "RTW Investments",
-        "Redmile Group",
-        "Rock Springs",
+        "Siren LLC",
         "Sofinnova Investments",
-        "Vestal Point",
-        "Vivo Capital"
+        "TCG Crossover",
+        "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 750000,
         "Boxer Capital": 225000,
         "Cormorant Asset": 200000,
         "Deep Track": 1000000,
         "Deerfield Management": 9043903,
         "Fairmount Funds": 5503418,
+        "Integral Health": 350000,
         "Kynam Capital": 4037331,
         "Orbimed Advisors": 322100,
         "Perceptive Advisors": 121082,
@@ -1531,15 +1653,17 @@
         "Redmile Group": 688036,
         "Rock Springs": 624155,
         "Sectoral Asset": 22140,
+        "Siren LLC": 1709279,
         "Sofinnova Investments": 2113551,
         "Soleus Capital": 10000,
+        "TCG Crossover": 4946894,
         "Vestal Point": 1230888,
         "Vivo Capital": 422300
       },
-      "elite_total_shares": 31022579,
-      "elite_total_value_usd_thousands": 1194109295,
-      "inst_score_raw": 16,
-      "inst_score_z": 3.1361
+      "elite_total_shares": 38778752,
+      "elite_total_value_usd_thousands": 1492644394,
+      "inst_score_raw": 20,
+      "inst_score_z": 3.1623
     },
     "COLL": {
       "elite_holders_count": 0,
@@ -1548,7 +1672,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "CRBU": {
       "elite_holders_count": 1,
@@ -1561,7 +1685,7 @@
       "elite_total_shares": 2503302,
       "elite_total_value_usd_thousands": 4756274,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "CRL": {
       "elite_holders_count": 1,
@@ -1574,7 +1698,7 @@
       "elite_total_shares": 10000,
       "elite_total_value_usd_thousands": 1669700,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "CRMD": {
       "elite_holders_count": 1,
@@ -1587,47 +1711,53 @@
       "elite_total_shares": 6274076,
       "elite_total_value_usd_thousands": 42600976,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "CRNX": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 9,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
         "Cormorant Asset",
         "EcoR1 Capital",
         "Foresite Capital VI",
         "Orbimed Advisors",
         "RTW Investments",
+        "Siren LLC",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 75000,
         "Baker Bros": 2351465,
         "Cormorant Asset": 250000,
         "EcoR1 Capital": 4288120,
         "Foresite Capital VI": 212010,
         "Orbimed Advisors": 999000,
         "RTW Investments": 1451326,
+        "Siren LLC": 1903636,
         "Suvretta Capital": 1043879
       },
-      "elite_total_shares": 10595800,
-      "elite_total_value_usd_thousands": 384839455,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 12574436,
+      "elite_total_value_usd_thousands": 456703515,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "CRSP": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "Affinity Asset",
         "EcoR1 Capital",
         "Palo Alto Investors"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 150000,
         "EcoR1 Capital": 1389276,
         "Palo Alto Investors": 39605
       },
-      "elite_total_shares": 1428881,
-      "elite_total_value_usd_thousands": 67971869,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 1578881,
+      "elite_total_value_usd_thousands": 75107369,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "CSTL": {
       "elite_holders_count": 1,
@@ -1640,7 +1770,7 @@
       "elite_total_shares": 2758335,
       "elite_total_value_usd_thousands": 67717124,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "CTKB": {
       "elite_holders_count": 0,
@@ -1649,16 +1779,17 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "CTMX": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Ally Bridge",
         "Baker Bros",
         "DAFNA Capital",
         "Kynam Capital",
         "Perceptive Advisors",
+        "Siren LLC",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
@@ -1667,12 +1798,13 @@
         "DAFNA Capital": 230000,
         "Kynam Capital": 15013093,
         "Perceptive Advisors": 10098824,
+        "Siren LLC": 3457711,
         "Soleus Capital": 300000
       },
-      "elite_total_shares": 31517743,
-      "elite_total_value_usd_thousands": 148133392,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 34975454,
+      "elite_total_value_usd_thousands": 164384634,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "CTNM": {
       "elite_holders_count": 8,
@@ -1699,7 +1831,7 @@
       "elite_total_shares": 8983894,
       "elite_total_value_usd_thousands": 117329656,
       "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "inst_score_z": 0.5827
     },
     "DNA": {
       "elite_holders_count": 1,
@@ -1712,68 +1844,77 @@
       "elite_total_shares": 36493,
       "elite_total_value_usd_thousands": 223702,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "DNLI": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "Baker Bros",
+        "Braidwell LP",
         "Casdin Capital",
         "DAFNA Capital",
         "Foresite Capital VI",
         "Palo Alto Investors",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Baker Bros": 3731695,
+        "Braidwell LP": 296324,
         "Casdin Capital": 1840000,
         "DAFNA Capital": 318500,
         "Foresite Capital VI": 1209971,
         "Palo Alto Investors": 234582,
+        "Siren LLC": 1396513,
         "Vestal Point": 1773326
       },
-      "elite_total_shares": 9108074,
-      "elite_total_value_usd_thousands": 174875020,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 10800911,
+      "elite_total_value_usd_thousands": 207377491,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "DNTH": {
-      "elite_holders_count": 12,
+      "elite_holders_count": 16,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avidity Partners",
-        "Bain Capital Life",
         "Baker Bros",
+        "Braidwell LP",
         "Cormorant Asset",
         "Deerfield Management",
         "Fairmount Funds",
         "Logos Global",
         "RA Capital",
-        "Tang Capital",
-        "Vivo Capital"
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 400000,
         "Avidity Partners": 2104184,
         "Bain Capital Life": 362470,
         "Baker Bros": 852164,
+        "Braidwell LP": 899364,
         "Cormorant Asset": 950000,
         "Deerfield Management": 1019813,
         "Fairmount Funds": 2537191,
+        "Integral Health": 150000,
         "Logos Global": 400000,
         "RA Capital": 2611733,
         "RTW Investments": 248063,
         "Rock Springs": 26757,
+        "TCG Crossover": 1676624,
         "Tang Capital": 264692,
         "Vivo Capital": 353998
       },
-      "elite_total_shares": 11731065,
-      "elite_total_value_usd_thousands": 992635208,
-      "inst_score_raw": 12,
-      "inst_score_z": 2.0607
+      "elite_total_shares": 14857053,
+      "elite_total_value_usd_thousands": 1254968121,
+      "inst_score_raw": 16,
+      "inst_score_z": 2.3024
     },
     "DRUG": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 10,
       "elite_holder_names": [
         "Acuta Capital",
+        "Braidwell LP",
         "Cormorant Asset",
         "Deerfield Management",
         "Great Point",
@@ -1785,6 +1926,7 @@
       ],
       "elite_holder_shares": {
         "Acuta Capital": 111996,
+        "Braidwell LP": 539708,
         "Cormorant Asset": 1059331,
         "Deerfield Management": 283000,
         "Great Point": 220000,
@@ -1794,10 +1936,10 @@
         "Vestal Point": 492319,
         "Vivo Capital": 557172
       },
-      "elite_total_shares": 3406362,
-      "elite_total_value_usd_thousands": 248562235,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 3946070,
+      "elite_total_value_usd_thousands": 287944728,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "DSGN": {
       "elite_holders_count": 6,
@@ -1820,38 +1962,42 @@
       "elite_total_shares": 10052360,
       "elite_total_value_usd_thousands": 106957111,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "DYN": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 14,
       "elite_holder_names": [
-        "Baker Bros",
+        "Braidwell LP",
         "Deep Track",
-        "Logos Global",
+        "Frazier Life Sciences",
         "Orbimed Advisors",
         "Palo Alto Investors",
         "Perceptive Advisors",
-        "Rock Springs",
+        "Siren LLC",
         "Sofinnova Investments",
-        "Vestal Point",
-        "Vivo Capital"
+        "TCG Crossover",
+        "Vestal Point"
       ],
       "elite_holder_shares": {
         "Baker Bros": 813449,
+        "Braidwell LP": 1681998,
         "Deep Track": 2000000,
+        "Frazier Life Sciences": 3153082,
         "Logos Global": 1400000,
         "Orbimed Advisors": 2917884,
         "Palo Alto Investors": 1652972,
         "Perceptive Advisors": 4668839,
         "Rock Springs": 972198,
+        "Siren LLC": 2229125,
         "Sofinnova Investments": 1633897,
+        "TCG Crossover": 4615144,
         "Vestal Point": 4000000,
         "Vivo Capital": 1557466
       },
-      "elite_total_shares": 21616705,
-      "elite_total_value_usd_thousands": 391910862,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 33296054,
+      "elite_total_value_usd_thousands": 603657460,
+      "inst_score_raw": 14,
+      "inst_score_z": 1.8725
     },
     "EBS": {
       "elite_holders_count": 0,
@@ -1860,7 +2006,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "EDIT": {
       "elite_holders_count": 1,
@@ -1873,7 +2019,7 @@
       "elite_total_shares": 1926997,
       "elite_total_value_usd_thousands": 4759683,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ELDN": {
       "elite_holders_count": 1,
@@ -1886,34 +2032,38 @@
       "elite_total_shares": 6293282,
       "elite_total_value_usd_thousands": 19383309,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ELVN": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 10,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avidity Partners",
         "Baker Bros",
         "Fairmount Funds",
         "Logos Global",
         "Orbimed Advisors",
         "Rock Springs",
+        "Siren LLC",
         "Soleus Capital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 586904,
         "Avidity Partners": 400000,
         "Baker Bros": 905191,
         "Fairmount Funds": 1855644,
         "Logos Global": 1040000,
         "Orbimed Advisors": 7959538,
         "Rock Springs": 826500,
+        "Siren LLC": 746226,
         "Soleus Capital": 230869,
         "Vestal Point": 3250000
       },
-      "elite_total_shares": 16467742,
-      "elite_total_value_usd_thousands": 646347487,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 17800872,
+      "elite_total_value_usd_thousands": 698606183,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "ENTA": {
       "elite_holders_count": 3,
@@ -1930,74 +2080,86 @@
       "elite_total_shares": 4948005,
       "elite_total_value_usd_thousands": 26330179,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "EOLS": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 6,
       "elite_holder_names": [
+        "Braidwell LP",
+        "Frazier Life Sciences",
         "Krensavage Asset",
         "Perceptive Advisors",
         "Soleus Capital",
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 3105209,
+        "Frazier Life Sciences": 2630665,
         "Krensavage Asset": 157985,
         "Perceptive Advisors": 1286862,
         "Soleus Capital": 2245360,
         "Tang Capital": 483021
       },
-      "elite_total_shares": 4173228,
-      "elite_total_value_usd_thousands": 16503298,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 9909102,
+      "elite_total_value_usd_thousands": 40077740,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "EPRX": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
+        "Affinity Asset",
         "Ally Bridge",
         "Great Point",
         "Redmile Group",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1589005,
         "Ally Bridge": 660375,
         "Great Point": 1200000,
         "Redmile Group": 700000,
         "Vivo Capital": 1350000
       },
-      "elite_total_shares": 3910375,
-      "elite_total_value_usd_thousands": 28311115,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 5499380,
+      "elite_total_value_usd_thousands": 39815511,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "ERAS": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 14,
       "elite_holder_names": [
-        "Acuta Capital",
+        "Affinity Asset",
         "Cormorant Asset",
-        "EcoR1 Capital",
+        "Frazier Life Sciences",
         "Logos Global",
+        "Paradigm Biocapital",
         "RTW Investments",
         "Rock Springs",
+        "Siren LLC",
         "Suvretta Capital",
-        "Tang Capital",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 354575,
+        "Affinity Asset": 5350000,
         "Cormorant Asset": 5800000,
         "EcoR1 Capital": 900000,
+        "Frazier Life Sciences": 24675188,
+        "Integral Health": 700000,
         "Logos Global": 11150000,
+        "Paradigm Biocapital": 10392702,
         "RTW Investments": 16157175,
         "Rock Springs": 1103469,
+        "Siren LLC": 11244246,
         "Suvretta Capital": 3434967,
         "Tang Capital": 200000,
         "Vivo Capital": 12151480
       },
-      "elite_total_shares": 51251666,
-      "elite_total_value_usd_thousands": 829251956,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 103613802,
+      "elite_total_value_usd_thousands": 1676471316,
+      "inst_score_raw": 14,
+      "inst_score_z": 1.8725
     },
     "ESPR": {
       "elite_holders_count": 1,
@@ -2010,7 +2172,7 @@
       "elite_total_shares": 10570300,
       "elite_total_value_usd_thousands": 28962622,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ETON": {
       "elite_holders_count": 3,
@@ -2027,38 +2189,42 @@
       "elite_total_shares": 5198319,
       "elite_total_value_usd_thousands": 128294513,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "EWTX": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 14,
       "elite_holder_names": [
-        "Ally Bridge",
         "Baker Bros",
+        "Braidwell LP",
         "Cormorant Asset",
-        "DAFNA Capital",
-        "Opaleye Management",
+        "Integral Health",
         "Orbimed Advisors",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
         "RA Capital",
-        "Sofinnova Investments",
+        "Siren LLC",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
         "Ally Bridge": 161000,
         "Baker Bros": 6575940,
+        "Braidwell LP": 2347583,
         "Cormorant Asset": 3260000,
         "DAFNA Capital": 112236,
+        "Integral Health": 1600000,
         "Opaleye Management": 500000,
         "Orbimed Advisors": 15518492,
+        "Paradigm Biocapital": 7365038,
         "Perceptive Advisors": 4423974,
         "RA Capital": 10428437,
+        "Siren LLC": 4430263,
         "Sofinnova Investments": 386498,
         "Soleus Capital": 1449915
       },
-      "elite_total_shares": 42816492,
-      "elite_total_value_usd_thousands": 1348719499,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 58559376,
+      "elite_total_value_usd_thousands": 1844620346,
+      "inst_score_raw": 14,
+      "inst_score_z": 1.8725
     },
     "EXEL": {
       "elite_holders_count": 3,
@@ -2075,26 +2241,28 @@
       "elite_total_shares": 2220455,
       "elite_total_value_usd_thousands": 77424071,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "EYPT": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Cormorant Asset",
         "Orbimed Advisors",
+        "Paradigm Biocapital",
         "Rock Springs",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
         "Cormorant Asset": 8265000,
         "Orbimed Advisors": 1069147,
+        "Paradigm Biocapital": 3142437,
         "Rock Springs": 258739,
         "Suvretta Capital": 8296375
       },
-      "elite_total_shares": 17889261,
-      "elite_total_value_usd_thousands": 230592575,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 21031698,
+      "elite_total_value_usd_thousands": 271098588,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "FATE": {
       "elite_holders_count": 3,
@@ -2111,7 +2279,7 @@
       "elite_total_shares": 14590719,
       "elite_total_value_usd_thousands": 17508863,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "FDMT": {
       "elite_holders_count": 4,
@@ -2130,24 +2298,26 @@
       "elite_total_shares": 8517096,
       "elite_total_value_usd_thousands": 79294163,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "FHTX": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "BVF Inc/IL",
         "DAFNA Capital",
-        "Deerfield Management"
+        "Deerfield Management",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 5842000,
         "DAFNA Capital": 111859,
-        "Deerfield Management": 4394367
+        "Deerfield Management": 4394367,
+        "Siren LLC": 720720
       },
-      "elite_total_shares": 10348226,
-      "elite_total_value_usd_thousands": 49464520,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 11068946,
+      "elite_total_value_usd_thousands": 52909562,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "FLGT": {
       "elite_holders_count": 1,
@@ -2160,26 +2330,32 @@
       "elite_total_shares": 1289000,
       "elite_total_value_usd_thousands": 20495100,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "FULC": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 7,
       "elite_holder_names": [
+        "Braidwell LP",
         "DAFNA Capital",
         "RA Capital",
+        "Siren LLC",
         "Suvretta Capital",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 3134922,
         "DAFNA Capital": 205000,
         "RA Capital": 6053960,
+        "Siren LLC": 2350000,
         "Suvretta Capital": 6561111,
+        "TCG Crossover": 5250000,
         "Vestal Point": 1100000
       },
-      "elite_total_shares": 13920071,
-      "elite_total_value_usd_thousands": 106766944,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 24654993,
+      "elite_total_value_usd_thousands": 189103796,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "GERN": {
       "elite_holders_count": 6,
@@ -2202,11 +2378,12 @@
       "elite_total_shares": 155048418,
       "elite_total_value_usd_thousands": 231022143,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "GH": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
+        "Braidwell LP",
         "Casdin Capital",
         "Deep Track",
         "Orbimed Advisors",
@@ -2215,6 +2392,7 @@
         "Sectoral Asset"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 499712,
         "Casdin Capital": 315000,
         "Deep Track": 3338241,
         "Orbimed Advisors": 435200,
@@ -2222,10 +2400,10 @@
         "RTW Investments": 1481033,
         "Sectoral Asset": 1980
       },
-      "elite_total_shares": 5871454,
-      "elite_total_value_usd_thousands": 542368836,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 6371166,
+      "elite_total_value_usd_thousands": 588527233,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "GHRS": {
       "elite_holders_count": 5,
@@ -2246,24 +2424,26 @@
       "elite_total_shares": 24376162,
       "elite_total_value_usd_thousands": 342728838,
       "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "inst_score_z": -0.0622
     },
     "GILD": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Avidity Partners",
+        "Integral Health",
         "Orbimed Advisors",
         "Sectoral Asset"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 20000,
+        "Integral Health": 100000,
         "Orbimed Advisors": 59600,
         "Sectoral Asset": 27490
       },
-      "elite_total_shares": 107090,
-      "elite_total_value_usd_thousands": 15054876,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 207090,
+      "elite_total_value_usd_thousands": 28991876,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "GLPG": {
       "elite_holders_count": 4,
@@ -2282,78 +2462,88 @@
       "elite_total_shares": 5673285,
       "elite_total_value_usd_thousands": 170441550,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "GLUE": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
+        "Braidwell LP",
         "Casdin Capital",
         "Cormorant Asset",
+        "Frazier Life Sciences",
         "Suvretta Capital",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 4460886,
         "Baker Bros": 4345736,
+        "Braidwell LP": 3206574,
         "Casdin Capital": 186014,
         "Cormorant Asset": 400000,
+        "Frazier Life Sciences": 1000000,
         "Suvretta Capital": 4226809,
+        "TCG Crossover": 4622151,
         "Vestal Point": 3603465
       },
-      "elite_total_shares": 17222910,
-      "elite_total_value_usd_thousands": 283316869,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 26051635,
+      "elite_total_value_usd_thousands": 428549395,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "GMAB": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Avidity Partners",
         "Deep Track",
         "Deerfield Management",
+        "Paradigm Biocapital",
         "Sofinnova Investments"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 50000,
         "Deep Track": 3663250,
         "Deerfield Management": 2462000,
+        "Paradigm Biocapital": 7967836,
         "Sofinnova Investments": 752261
       },
-      "elite_total_shares": 6927511,
-      "elite_total_value_usd_thousands": 185849621,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 14895347,
+      "elite_total_value_usd_thousands": 399626661,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "GOSS": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Rock Springs",
-        "Samsara BioCapital"
+        "Samsara BioCapital",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "Rock Springs": 1609492,
-        "Samsara BioCapital": 7222559
+        "Samsara BioCapital": 7222559,
+        "Siren LLC": 5208968
       },
-      "elite_total_shares": 8832051,
-      "elite_total_value_usd_thousands": 2901329,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 14041019,
+      "elite_total_value_usd_thousands": 4612475,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "GPCR": {
-      "elite_holders_count": 15,
+      "elite_holders_count": 18,
       "elite_holder_names": [
         "Avoro Capital",
         "BVF Inc/IL",
         "Baker Bros",
         "Casdin Capital",
-        "Cormorant Asset",
         "Deep Track",
         "Deerfield Management",
-        "Logos Global",
         "Orbimed Advisors",
-        "Rock Springs"
+        "Paradigm Biocapital",
+        "Rock Springs",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 48000,
@@ -2368,33 +2558,38 @@
         "Deerfield Management": 767993,
         "Logos Global": 500000,
         "Orbimed Advisors": 1475403,
+        "Paradigm Biocapital": 545287,
         "Rock Springs": 640217,
         "Sectoral Asset": 14102,
-        "Soleus Capital": 80000
+        "Siren LLC": 1328698,
+        "Soleus Capital": 80000,
+        "TCG Crossover": 140411
       },
-      "elite_total_shares": 20724505,
-      "elite_total_value_usd_thousands": 998628231,
-      "inst_score_raw": 15,
-      "inst_score_z": 2.8673
+      "elite_total_shares": 22738901,
+      "elite_total_value_usd_thousands": 1095722118,
+      "inst_score_raw": 18,
+      "inst_score_z": 2.7323
     },
     "GRAL": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Baker Bros",
+        "Braidwell LP",
         "Casdin Capital",
         "Deep Track",
         "RA Capital"
       ],
       "elite_holder_shares": {
         "Baker Bros": 4028614,
+        "Braidwell LP": 142755,
         "Casdin Capital": 230000,
         "Deep Track": 1722797,
         "RA Capital": 428266
       },
-      "elite_total_shares": 6409677,
-      "elite_total_value_usd_thousands": 331252108,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 6552432,
+      "elite_total_value_usd_thousands": 338629686,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "GRFS": {
       "elite_holders_count": 0,
@@ -2403,7 +2598,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "HALO": {
       "elite_holders_count": 0,
@@ -2412,7 +2607,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "HRMY": {
       "elite_holders_count": 2,
@@ -2427,20 +2622,22 @@
       "elite_total_shares": 641889,
       "elite_total_value_usd_thousands": 17979311,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "HROW": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Braidwell LP",
         "Opaleye Management"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 156419,
         "Opaleye Management": 2832230
       },
-      "elite_total_shares": 2832230,
-      "elite_total_value_usd_thousands": 99864430,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 2988649,
+      "elite_total_value_usd_thousands": 105379764,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "HRTX": {
       "elite_holders_count": 2,
@@ -2455,7 +2652,7 @@
       "elite_total_shares": 16066940,
       "elite_total_value_usd_thousands": 12855159,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "IBRX": {
       "elite_holders_count": 0,
@@ -2464,7 +2661,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "IDYA": {
       "elite_holders_count": 8,
@@ -2491,49 +2688,56 @@
       "elite_total_shares": 11554750,
       "elite_total_value_usd_thousands": 386158809,
       "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "inst_score_z": 0.5827
     },
     "IKT": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "Ally Bridge",
         "Fairmount Funds",
+        "Integral Health",
         "Perceptive Advisors",
+        "Siren LLC",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
         "Ally Bridge": 1325000,
         "Fairmount Funds": 8625000,
+        "Integral Health": 1350000,
         "Perceptive Advisors": 2315000,
+        "Siren LLC": 5850000,
         "Soleus Capital": 10875000
       },
-      "elite_total_shares": 23140000,
-      "elite_total_value_usd_thousands": 38875200,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 30340000,
+      "elite_total_value_usd_thousands": 50971200,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "ILMN": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "Braidwell LP",
         "Casdin Capital",
         "Sectoral Asset"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 229215,
         "Casdin Capital": 530000,
         "Sectoral Asset": 2132
       },
-      "elite_total_shares": 532132,
-      "elite_total_value_usd_thousands": 65623871,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 761347,
+      "elite_total_value_usd_thousands": 93876912,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "IMCR": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
         "Deep Track",
         "Deerfield Management",
+        "Frazier Life Sciences",
         "Kynam Capital",
         "Logos Global",
         "RTW Investments",
@@ -2545,16 +2749,18 @@
         "Baker Bros": 734397,
         "Deep Track": 1931884,
         "Deerfield Management": 30000000,
+        "Frazier Life Sciences": 484782,
+        "Integral Health": 100000,
         "Kynam Capital": 884937,
         "Logos Global": 1500000,
         "RTW Investments": 4869798,
         "Tang Capital": 2649368,
         "Vestal Point": 2766868
       },
-      "elite_total_shares": 46631715,
-      "elite_total_value_usd_thousands": 528471408,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 47216497,
+      "elite_total_value_usd_thousands": 546102585,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "IMMP": {
       "elite_holders_count": 0,
@@ -2563,7 +2769,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "IMRX": {
       "elite_holders_count": 0,
@@ -2572,7 +2778,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "IMTX": {
       "elite_holders_count": 8,
@@ -2599,7 +2805,7 @@
       "elite_total_shares": 55457762,
       "elite_total_value_usd_thousands": 545739457,
       "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "inst_score_z": 0.5827
     },
     "INBX": {
       "elite_holders_count": 3,
@@ -2616,7 +2822,7 @@
       "elite_total_shares": 1979736,
       "elite_total_value_usd_thousands": 133097652,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "INCY": {
       "elite_holders_count": 2,
@@ -2631,7 +2837,7 @@
       "elite_total_shares": 30746762,
       "elite_total_value_usd_thousands": 2893918181,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "INDV": {
       "elite_holders_count": 0,
@@ -2640,25 +2846,29 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "INSM": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
         "Cormorant Asset",
+        "Integral Health",
         "Palo Alto Investors",
+        "Paradigm Biocapital",
         "RTW Investments",
         "Rock Springs",
-        "Sectoral Asset",
         "Sofinnova Investments",
-        "Soleus Capital",
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 480000,
         "Baker Bros": 7421111,
         "Cormorant Asset": 190000,
+        "Integral Health": 1500000,
         "Palo Alto Investors": 415269,
+        "Paradigm Biocapital": 1254488,
         "RTW Investments": 4842880,
         "Rock Springs": 314300,
         "Sectoral Asset": 19668,
@@ -2666,10 +2876,10 @@
         "Soleus Capital": 10250,
         "Tang Capital": 260000
       },
-      "elite_total_shares": 13819553,
-      "elite_total_value_usd_thousands": 2259937972,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 17054041,
+      "elite_total_value_usd_thousands": 2788841450,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "INVA": {
       "elite_holders_count": 1,
@@ -2682,30 +2892,34 @@
       "elite_total_shares": 2130950,
       "elite_total_value_usd_thousands": 49651135,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "IONS": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "Baker Bros",
+        "Braidwell LP",
         "Deep Track",
         "Deerfield Management",
+        "Integral Health",
         "Perceptive Advisors",
         "Sectoral Asset",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
         "Baker Bros": 2047727,
+        "Braidwell LP": 130862,
         "Deep Track": 1950000,
         "Deerfield Management": 1979669,
+        "Integral Health": 125000,
         "Perceptive Advisors": 504000,
         "Sectoral Asset": 7200,
         "Suvretta Capital": 10800
       },
-      "elite_total_shares": 6499396,
-      "elite_total_value_usd_thousands": 488116237,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 6755258,
+      "elite_total_value_usd_thousands": 507328915,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "IOVA": {
       "elite_holders_count": 2,
@@ -2720,20 +2934,20 @@
       "elite_total_shares": 7349563,
       "elite_total_value_usd_thousands": 25796966,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "IRON": {
-      "elite_holders_count": 14,
+      "elite_holders_count": 18,
       "elite_holder_names": [
         "BVF Inc/IL",
-        "Baker Bros",
         "Deerfield Management",
-        "Foresite Capital V",
+        "Frazier Life Sciences",
         "Logos Global",
         "Opaleye Management",
         "Orbimed Advisors",
-        "Palo Alto Investors",
         "RA Capital",
+        "Siren LLC",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
@@ -2743,44 +2957,51 @@
         "Casdin Capital": 65000,
         "Deerfield Management": 657000,
         "Foresite Capital V": 374069,
+        "Frazier Life Sciences": 1354852,
+        "Integral Health": 170000,
         "Logos Global": 560000,
         "Opaleye Management": 421000,
         "Orbimed Advisors": 1067550,
         "Palo Alto Investors": 401719,
         "RA Capital": 2450221,
         "RTW Investments": 30000,
+        "Siren LLC": 988401,
         "Sofinnova Investments": 78320,
+        "TCG Crossover": 1341862,
         "Vestal Point": 700000
       },
-      "elite_total_shares": 8568082,
-      "elite_total_value_usd_thousands": 547843164,
-      "inst_score_raw": 14,
-      "inst_score_z": 2.5984
+      "elite_total_shares": 12423197,
+      "elite_total_value_usd_thousands": 794339217,
+      "inst_score_raw": 18,
+      "inst_score_z": 2.7323
     },
     "IRWD": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
+        "Integral Health",
         "Sarissa Capital",
         "Sectoral Asset",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
+        "Integral Health": 35000,
         "Sarissa Capital": 9188635,
         "Sectoral Asset": 8307,
         "Suvretta Capital": 7175
       },
-      "elite_total_shares": 9204117,
-      "elite_total_value_usd_thousands": 34892410,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 9239117,
+      "elite_total_value_usd_thousands": 40861310,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "IVVD": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Boxer Capital",
         "Perceptive Advisors",
         "Redmile Group",
+        "Siren LLC",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
@@ -2788,21 +3009,23 @@
         "Boxer Capital": 1500000,
         "Perceptive Advisors": 20859303,
         "Redmile Group": 2648659,
+        "Siren LLC": 4000000,
         "Soleus Capital": 7708727
       },
-      "elite_total_shares": 52241689,
-      "elite_total_value_usd_thousands": 67914196,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 56241689,
+      "elite_total_value_usd_thousands": 73114196,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "JANX": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Deep Track",
         "Logos Global",
         "Orbimed Advisors",
         "RA Capital",
         "Rock Springs",
+        "TCG Crossover",
         "Tang Capital"
       ],
       "elite_holder_shares": {
@@ -2811,12 +3034,13 @@
         "Orbimed Advisors": 983600,
         "RA Capital": 11189693,
         "Rock Springs": 367009,
+        "TCG Crossover": 1789617,
         "Tang Capital": 500000
       },
-      "elite_total_shares": 15227592,
-      "elite_total_value_usd_thousands": 211663529,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 17017209,
+      "elite_total_value_usd_thousands": 236539205,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "JAZZ": {
       "elite_holders_count": 6,
@@ -2839,16 +3063,16 @@
       "elite_total_shares": 2650112,
       "elite_total_value_usd_thousands": 469350241,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "JBIO": {
-      "elite_holders_count": 13,
+      "elite_holders_count": 14,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avidity Partners",
         "Baker Bros",
         "Fairmount Funds",
         "Great Point",
-        "Logos Global",
         "Opaleye Management",
         "RA Capital",
         "RTW Investments",
@@ -2856,6 +3080,7 @@
         "Soleus Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 639956,
         "Avidity Partners": 1400708,
         "Baker Bros": 1641137,
         "Fairmount Funds": 4553494,
@@ -2870,16 +3095,17 @@
         "Sofinnova Investments": 107391,
         "Soleus Capital": 796744
       },
-      "elite_total_shares": 16009641,
-      "elite_total_value_usd_thousands": 239432784,
-      "inst_score_raw": 13,
-      "inst_score_z": 2.3295
+      "elite_total_shares": 16649597,
+      "elite_total_value_usd_thousands": 248424166,
+      "inst_score_raw": 14,
+      "inst_score_z": 1.8725
     },
     "KALV": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Boxer Capital",
         "DAFNA Capital",
+        "Frazier Life Sciences",
         "Great Point",
         "Kynam Capital",
         "Orbimed Advisors",
@@ -2890,6 +3116,7 @@
       "elite_holder_shares": {
         "Boxer Capital": 20400,
         "DAFNA Capital": 267402,
+        "Frazier Life Sciences": 4961108,
         "Great Point": 675000,
         "Kynam Capital": 1820954,
         "Orbimed Advisors": 94400,
@@ -2897,10 +3124,10 @@
         "Tang Capital": 4573530,
         "Vestal Point": 1850000
       },
-      "elite_total_shares": 14070398,
-      "elite_total_value_usd_thousands": 283237112,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 19031506,
+      "elite_total_value_usd_thousands": 383104216,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "KMDA": {
       "elite_holders_count": 0,
@@ -2909,43 +3136,49 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "KNSA": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Baker Bros",
+        "Braidwell LP",
         "Orbimed Advisors",
         "Soleus Capital",
         "Tang Capital"
       ],
       "elite_holder_shares": {
         "Baker Bros": 2826246,
+        "Braidwell LP": 272522,
         "Orbimed Advisors": 180599,
         "Soleus Capital": 521353,
         "Tang Capital": 2259889
       },
-      "elite_total_shares": 5788087,
-      "elite_total_value_usd_thousands": 278696389,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 6060609,
+      "elite_total_value_usd_thousands": 291818323,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "KOD": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Baker Bros",
         "Boxer Capital",
-        "RTW Investments"
+        "Braidwell LP",
+        "RTW Investments",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Baker Bros": 19919186,
         "Boxer Capital": 1361000,
-        "RTW Investments": 1487934
+        "Braidwell LP": 1818665,
+        "RTW Investments": 1487934,
+        "TCG Crossover": 1445538
       },
-      "elite_total_shares": 22768120,
-      "elite_total_value_usd_thousands": 867920734,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 26032323,
+      "elite_total_value_usd_thousands": 992352152,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "KROS": {
       "elite_holders_count": 1,
@@ -2958,26 +3191,30 @@
       "elite_total_shares": 759155,
       "elite_total_value_usd_thousands": 8381071,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "KRYS": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "Avoro Capital",
+        "Braidwell LP",
+        "Frazier Life Sciences",
         "Orbimed Advisors",
         "Redmile Group",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
         "Avoro Capital": 2888888,
+        "Braidwell LP": 182425,
+        "Frazier Life Sciences": 481307,
         "Orbimed Advisors": 69100,
         "Redmile Group": 673505,
         "Soleus Capital": 1153087
       },
-      "elite_total_shares": 4784580,
-      "elite_total_value_usd_thousands": 1235952706,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 5448312,
+      "elite_total_value_usd_thousands": 1407407956,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "KURA": {
       "elite_holders_count": 5,
@@ -2998,7 +3235,7 @@
       "elite_total_shares": 19972081,
       "elite_total_value_usd_thousands": 162397896,
       "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "inst_score_z": -0.0622
     },
     "KYTX": {
       "elite_holders_count": 2,
@@ -3013,7 +3250,7 @@
       "elite_total_shares": 5110000,
       "elite_total_value_usd_thousands": 44099300,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "LAB": {
       "elite_holders_count": 0,
@@ -3022,20 +3259,20 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "LBRX": {
-      "elite_holders_count": 11,
+      "elite_holders_count": 13,
       "elite_holder_names": [
-        "Acuta Capital",
         "Baker Bros",
         "Boxer Capital",
         "Caligan Partners",
         "Deep Track",
         "Great Point",
+        "Integral Health",
         "Logos Global",
-        "Opaleye Management",
         "RA Capital",
+        "TCG Crossover",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
@@ -3045,16 +3282,18 @@
         "Caligan Partners": 1438070,
         "Deep Track": 3352804,
         "Great Point": 300000,
+        "Integral Health": 150000,
         "Logos Global": 915000,
         "Opaleye Management": 14506,
         "RA Capital": 2208604,
         "Soleus Capital": 10000,
+        "TCG Crossover": 1839489,
         "Vivo Capital": 800000
       },
-      "elite_total_shares": 9337903,
-      "elite_total_value_usd_thousands": 229438609,
-      "inst_score_raw": 11,
-      "inst_score_z": 1.7918
+      "elite_total_shares": 11327392,
+      "elite_total_value_usd_thousands": 278417220,
+      "inst_score_raw": 13,
+      "inst_score_z": 1.6575
     },
     "LCTX": {
       "elite_holders_count": 0,
@@ -3063,7 +3302,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "LEGN": {
       "elite_holders_count": 5,
@@ -3084,7 +3323,7 @@
       "elite_total_shares": 16900462,
       "elite_total_value_usd_thousands": 305810808,
       "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "inst_score_z": -0.0622
     },
     "LFCR": {
       "elite_holders_count": 0,
@@ -3093,24 +3332,26 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "LQDA": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Caligan Partners",
         "Opaleye Management",
-        "Sofinnova Investments"
+        "Sofinnova Investments",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Caligan Partners": 8118892,
         "Opaleye Management": 2545000,
-        "Sofinnova Investments": 500000
+        "Sofinnova Investments": 500000,
+        "TCG Crossover": 403048
       },
-      "elite_total_shares": 11163892,
-      "elite_total_value_usd_thousands": 414097484,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 11566940,
+      "elite_total_value_usd_thousands": 429308516,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "LRMR": {
       "elite_holders_count": 5,
@@ -3131,30 +3372,36 @@
       "elite_total_shares": 41703098,
       "elite_total_value_usd_thousands": 187663941,
       "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "inst_score_z": -0.0622
     },
     "LXEO": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 9,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
         "DAFNA Capital",
+        "Frazier Life Sciences",
         "Orbimed Advisors",
+        "Paradigm Biocapital",
         "RA Capital",
         "Suvretta Capital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 5050211,
         "Avoro Capital": 1875000,
         "DAFNA Capital": 377059,
+        "Frazier Life Sciences": 4424725,
         "Orbimed Advisors": 3602450,
+        "Paradigm Biocapital": 6184134,
         "RA Capital": 5000000,
         "Suvretta Capital": 1250000,
         "Vestal Point": 4475000
       },
-      "elite_total_shares": 16579509,
-      "elite_total_value_usd_thousands": 95166382,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 32238579,
+      "elite_total_value_usd_thousands": 185049444,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "LYEL": {
       "elite_holders_count": 4,
@@ -3173,21 +3420,21 @@
       "elite_total_shares": 1694271,
       "elite_total_value_usd_thousands": 33987077,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "MAZE": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 13,
       "elite_holder_names": [
-        "Acuta Capital",
         "Ally Bridge",
         "Caligan Partners",
         "Casdin Capital",
         "Cormorant Asset",
-        "DAFNA Capital",
         "Deep Track",
         "Foresite Capital IV",
-        "Foresite Capital V",
-        "Logos Global"
+        "Frazier Life Sciences",
+        "Integral Health",
+        "Logos Global",
+        "Paradigm Biocapital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 19335,
@@ -3199,43 +3446,50 @@
         "Deep Track": 3477562,
         "Foresite Capital IV": 156901,
         "Foresite Capital V": 25905,
-        "Logos Global": 1235000
+        "Frazier Life Sciences": 4567274,
+        "Integral Health": 100000,
+        "Logos Global": 1235000,
+        "Paradigm Biocapital": 2744399
       },
-      "elite_total_shares": 7173522,
-      "elite_total_value_usd_thousands": 214129632,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 14585195,
+      "elite_total_value_usd_thousands": 435368071,
+      "inst_score_raw": 13,
+      "inst_score_z": 1.6575
     },
     "MBX": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 14,
       "elite_holder_names": [
+        "Braidwell LP",
         "Caligan Partners",
         "Cormorant Asset",
-        "DAFNA Capital",
         "Deep Track",
         "EcoR1 Capital",
+        "Frazier Life Sciences",
         "Kynam Capital",
-        "Opaleye Management",
         "Orbimed Advisors",
         "Rock Springs",
-        "Soleus Capital"
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 150000,
+        "Braidwell LP": 1492467,
         "Caligan Partners": 848590,
         "Cormorant Asset": 1120000,
         "DAFNA Capital": 175465,
         "Deep Track": 2757569,
         "EcoR1 Capital": 777000,
+        "Frazier Life Sciences": 6652013,
         "Kynam Capital": 934799,
         "Opaleye Management": 260000,
         "Orbimed Advisors": 3637887,
         "Rock Springs": 287967,
-        "Soleus Capital": 178897
+        "Soleus Capital": 178897,
+        "TCG Crossover": 650000
       },
-      "elite_total_shares": 10978174,
-      "elite_total_value_usd_thousands": 327698494,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 19922654,
+      "elite_total_value_usd_thousands": 594691222,
+      "inst_score_raw": 14,
+      "inst_score_z": 1.8725
     },
     "MCRB": {
       "elite_holders_count": 0,
@@ -3244,13 +3498,15 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "MDGL": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 9,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
         "Baker Bros",
+        "Integral Health",
         "Logos Global",
         "Palo Alto Investors",
         "RTW Investments",
@@ -3258,18 +3514,20 @@
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 55000,
         "Avoro Capital": 1818181,
         "Baker Bros": 2141701,
+        "Integral Health": 25000,
         "Logos Global": 85000,
         "Palo Alto Investors": 1787,
         "RTW Investments": 1993687,
         "Rock Springs": 170999,
         "Vestal Point": 31468
       },
-      "elite_total_shares": 6242823,
-      "elite_total_value_usd_thousands": 3267930556,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 6322823,
+      "elite_total_value_usd_thousands": 3309808156,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "MEDP": {
       "elite_holders_count": 1,
@@ -3282,7 +3540,7 @@
       "elite_total_shares": 430,
       "elite_total_value_usd_thousands": 228090,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "MESO": {
       "elite_holders_count": 0,
@@ -3291,48 +3549,52 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "MIRM": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
-        "Logos Global",
+        "Frazier Life Sciences",
         "Palo Alto Investors",
+        "Paradigm Biocapital",
         "RA Capital",
         "Rock Springs",
-        "Sofinnova Investments",
         "Soleus Capital",
+        "TCG Crossover",
         "Tang Capital"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 1584727,
         "Baker Bros": 445975,
+        "Frazier Life Sciences": 7679684,
         "Logos Global": 200000,
         "Palo Alto Investors": 325175,
+        "Paradigm Biocapital": 625000,
         "RA Capital": 318554,
         "Rock Springs": 811294,
         "Sofinnova Investments": 27591,
         "Soleus Capital": 400306,
+        "TCG Crossover": 1062049,
         "Tang Capital": 1236027
       },
-      "elite_total_shares": 5349649,
-      "elite_total_value_usd_thousands": 494200576,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 14716382,
+      "elite_total_value_usd_thousands": 1359499371,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "MLTX": {
-      "elite_holders_count": 15,
+      "elite_holders_count": 16,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
-        "Boxer Capital",
         "Casdin Capital",
         "Cormorant Asset",
         "Deep Track",
         "Great Point",
         "Logos Global",
+        "Siren LLC",
         "Vestal Point",
         "Vivo Capital"
       ],
@@ -3350,19 +3612,22 @@
         "Logos Global": 1500000,
         "RA Capital": 248294,
         "Rock Springs": 61700,
+        "Siren LLC": 450000,
         "Vestal Point": 420000,
         "Vivo Capital": 1000000
       },
-      "elite_total_shares": 32123045,
-      "elite_total_value_usd_thousands": 600695327,
-      "inst_score_raw": 15,
-      "inst_score_z": 2.8673
+      "elite_total_shares": 32573045,
+      "elite_total_value_usd_thousands": 609843827,
+      "inst_score_raw": 16,
+      "inst_score_z": 2.3024
     },
     "MLYS": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 10,
       "elite_holder_names": [
+        "Affinity Asset",
         "Caligan Partners",
         "DAFNA Capital",
+        "Integral Health",
         "Orbimed Advisors",
         "RA Capital",
         "Rock Springs",
@@ -3371,8 +3636,10 @@
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 750000,
         "Caligan Partners": 2772654,
         "DAFNA Capital": 38490,
+        "Integral Health": 1250000,
         "Orbimed Advisors": 2052900,
         "RA Capital": 7692750,
         "Rock Springs": 439751,
@@ -3380,101 +3647,95 @@
         "Sectoral Asset": 31618,
         "Suvretta Capital": 1538662
       },
-      "elite_total_shares": 20437843,
-      "elite_total_value_usd_thousands": 553699772,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 22437843,
+      "elite_total_value_usd_thousands": 607879772,
+      "inst_score_raw": 10,
+      "inst_score_z": 1.0126
     },
     "MNKD": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
-        "Avoro Capital"
+        "Avoro Capital",
+        "Frazier Life Sciences"
       ],
       "elite_holder_shares": {
-        "Avoro Capital": 2200000
+        "Avoro Capital": 2200000,
+        "Frazier Life Sciences": 5900000
       },
-      "elite_total_shares": 2200000,
-      "elite_total_value_usd_thousands": 5390000,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 8100000,
+      "elite_total_value_usd_thousands": 19845000,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "MRNA": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
+        "Affinity Asset",
         "Casdin Capital",
         "Perceptive Advisors",
         "Sectoral Asset",
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 800000,
         "Casdin Capital": 75000,
         "Perceptive Advisors": 1000000,
         "Sectoral Asset": 4350,
         "Tang Capital": 100000
       },
-      "elite_total_shares": 1179350,
-      "elite_total_value_usd_thousands": 59937904,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
-    },
-    "MYGN": {
-      "elite_holders_count": 3,
-      "elite_holder_names": [
-        "Deerfield Management",
-        "Orbimed Advisors",
-        "Vestal Point"
-      ],
-      "elite_holder_shares": {
-        "Deerfield Management": 505,
-        "Orbimed Advisors": 125000000,
-        "Vestal Point": 1648000
-      },
-      "elite_total_shares": 126648505,
-      "elite_total_value_usd_thousands": 130293273,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 1979350,
+      "elite_total_value_usd_thousands": 100577904,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "NAMS": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 9,
       "elite_holder_names": [
+        "Affinity Asset",
         "Bain Capital Life",
         "Cormorant Asset",
         "DAFNA Capital",
         "Deerfield Management",
+        "Frazier Life Sciences",
         "Logos Global",
         "RA Capital",
         "Rock Springs"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 275000,
         "Bain Capital Life": 7306566,
         "Cormorant Asset": 950000,
         "DAFNA Capital": 20000,
         "Deerfield Management": 4264789,
+        "Frazier Life Sciences": 16943774,
         "Logos Global": 600000,
         "RA Capital": 9550191,
         "Rock Springs": 588794
       },
-      "elite_total_shares": 23280340,
-      "elite_total_value_usd_thousands": 745203684,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 40499114,
+      "elite_total_value_usd_thousands": 1296376640,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "NBIX": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 11,
       "elite_holder_names": [
+        "Braidwell LP",
         "DAFNA Capital",
         "Deerfield Management",
+        "Integral Health",
         "Palo Alto Investors",
         "Perceptive Advisors",
         "RTW Investments",
         "Rock Springs",
         "Sarissa Capital",
-        "Sectoral Asset",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 652121,
         "DAFNA Capital": 70615,
         "Deerfield Management": 610000,
+        "Integral Health": 150000,
         "Palo Alto Investors": 18117,
         "Perceptive Advisors": 65050,
         "RTW Investments": 1062072,
@@ -3483,10 +3744,10 @@
         "Sectoral Asset": 2300,
         "Vestal Point": 1250000
       },
-      "elite_total_shares": 3345137,
-      "elite_total_value_usd_thousands": 440729187,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 4147258,
+      "elite_total_value_usd_thousands": 546400608,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "NGNE": {
       "elite_holders_count": 9,
@@ -3515,7 +3776,7 @@
       "elite_total_shares": 8883550,
       "elite_total_value_usd_thousands": 179092369,
       "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "inst_score_z": 0.7976
     },
     "NKTX": {
       "elite_holders_count": 3,
@@ -3532,32 +3793,35 @@
       "elite_total_shares": 15793618,
       "elite_total_value_usd_thousands": 33324534,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "NMRA": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "DAFNA Capital",
         "Perceptive Advisors",
+        "Siren LLC",
         "Tang Capital"
       ],
       "elite_holder_shares": {
         "DAFNA Capital": 70000,
         "Perceptive Advisors": 5104097,
+        "Siren LLC": 8497822,
         "Tang Capital": 439878
       },
-      "elite_total_shares": 5613975,
-      "elite_total_value_usd_thousands": 10947251,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 14111797,
+      "elite_total_value_usd_thousands": 27518004,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "NRIX": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
-        "Boxer Capital",
+        "Braidwell LP",
         "Deep Track",
-        "Foresite Capital V",
+        "Integral Health",
         "Kynam Capital",
         "Perceptive Advisors",
         "Redmile Group",
@@ -3565,20 +3829,23 @@
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 967620,
         "Baker Bros": 4658556,
         "Boxer Capital": 100000,
+        "Braidwell LP": 1750766,
         "Deep Track": 6345244,
         "Foresite Capital V": 265000,
+        "Integral Health": 700000,
         "Kynam Capital": 1194757,
         "Perceptive Advisors": 3710877,
         "Redmile Group": 7732808,
         "Soleus Capital": 938163,
         "Vestal Point": 6500000
       },
-      "elite_total_shares": 31445405,
-      "elite_total_value_usd_thousands": 487403779,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 34863791,
+      "elite_total_value_usd_thousands": 540388762,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "NTLA": {
       "elite_holders_count": 3,
@@ -3595,12 +3862,13 @@
       "elite_total_shares": 675000,
       "elite_total_value_usd_thousands": 8703000,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "NTRA": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Avidity Partners",
+        "Braidwell LP",
         "Orbimed Advisors",
         "RTW Investments",
         "Sofinnova Investments",
@@ -3609,16 +3877,17 @@
       ],
       "elite_holder_shares": {
         "Avidity Partners": 9000,
+        "Braidwell LP": 129000,
         "Orbimed Advisors": 262000,
         "RTW Investments": 1250000,
         "Sofinnova Investments": 1550280,
         "Soleus Capital": 119000,
         "Suvretta Capital": 10100
       },
-      "elite_total_shares": 3200380,
-      "elite_total_value_usd_thousands": 640099526,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 3329380,
+      "elite_total_value_usd_thousands": 665898236,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "NUVB": {
       "elite_holders_count": 3,
@@ -3635,28 +3904,34 @@
       "elite_total_shares": 6811659,
       "elite_total_value_usd_thousands": 29222017,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "NUVL": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 8,
       "elite_holder_names": [
+        "Affinity Asset",
+        "Braidwell LP",
         "Deep Track",
         "Deerfield Management",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
         "RA Capital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 300000,
+        "Braidwell LP": 700429,
         "Deep Track": 1376324,
         "Deerfield Management": 17248450,
+        "Paradigm Biocapital": 5324433,
         "Perceptive Advisors": 1580505,
         "RA Capital": 2534145,
         "Vestal Point": 481715
       },
-      "elite_total_shares": 23221139,
-      "elite_total_value_usd_thousands": 2379005691,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 29546001,
+      "elite_total_value_usd_thousands": 3026987803,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "NVAX": {
       "elite_holders_count": 0,
@@ -3665,7 +3940,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "NVCR": {
       "elite_holders_count": 3,
@@ -3682,7 +3957,7 @@
       "elite_total_shares": 12022830,
       "elite_total_value_usd_thousands": 131048847,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "OABI": {
       "elite_holders_count": 0,
@@ -3691,7 +3966,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "OCGN": {
       "elite_holders_count": 1,
@@ -3704,10 +3979,10 @@
       "elite_total_shares": 6666666,
       "elite_total_value_usd_thousands": 12066665,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "OCUL": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Acuta Capital",
         "Avoro Capital",
@@ -3716,7 +3991,8 @@
         "Logos Global",
         "Opaleye Management",
         "Perceptive Advisors",
-        "Rock Springs"
+        "Rock Springs",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 592108,
@@ -3726,22 +4002,25 @@
         "Logos Global": 3850000,
         "Opaleye Management": 600000,
         "Perceptive Advisors": 500000,
-        "Rock Springs": 383716
+        "Rock Springs": 383716,
+        "TCG Crossover": 1647752
       },
-      "elite_total_shares": 38277106,
-      "elite_total_value_usd_thousands": 324207089,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 39924858,
+      "elite_total_value_usd_thousands": 338163548,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "OLMA": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Bain Capital Life",
         "Cormorant Asset",
         "Logos Global",
+        "Paradigm Biocapital",
         "RA Capital",
         "Rock Springs",
+        "Siren LLC",
         "Vestal Point",
         "Vivo Capital"
       ],
@@ -3749,16 +4028,19 @@
         "BVF Inc/IL": 5295893,
         "Bain Capital Life": 7473238,
         "Cormorant Asset": 4400000,
+        "Integral Health": 150000,
         "Logos Global": 3208875,
+        "Paradigm Biocapital": 8020576,
         "RA Capital": 2600000,
         "Rock Springs": 170378,
+        "Siren LLC": 4756949,
         "Vestal Point": 428551,
         "Vivo Capital": 671843
       },
-      "elite_total_shares": 24248778,
-      "elite_total_value_usd_thousands": 361549280,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 37176303,
+      "elite_total_value_usd_thousands": 554298678,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "OMER": {
       "elite_holders_count": 1,
@@ -3771,22 +4053,24 @@
       "elite_total_shares": 1124335,
       "elite_total_value_usd_thousands": 19348726,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "ONC": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Baker Bros",
-        "Sectoral Asset"
+        "Sectoral Asset",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "Baker Bros": 8799053,
-        "Sectoral Asset": 1870
+        "Sectoral Asset": 1870,
+        "Siren LLC": 465000
       },
-      "elite_total_shares": 8800923,
-      "elite_total_value_usd_thousands": 2613685830,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 9265923,
+      "elite_total_value_usd_thousands": 2751776880,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "OPCH": {
       "elite_holders_count": 0,
@@ -3795,7 +4079,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "OPK": {
       "elite_holders_count": 0,
@@ -3804,67 +4088,74 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "ORIC": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 13,
       "elite_holder_names": [
-        "Boxer Capital",
-        "DAFNA Capital",
+        "Braidwell LP",
         "EcoR1 Capital",
+        "Integral Health",
         "Logos Global",
         "Orbimed Advisors",
+        "Paradigm Biocapital",
         "Redmile Group",
-        "Sectoral Asset",
+        "Siren LLC",
         "Sofinnova Investments",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Boxer Capital": 176500,
+        "Braidwell LP": 1128040,
         "DAFNA Capital": 98724,
         "EcoR1 Capital": 6728116,
+        "Integral Health": 1400000,
         "Logos Global": 950000,
         "Orbimed Advisors": 2693929,
+        "Paradigm Biocapital": 1701217,
         "Redmile Group": 415710,
         "Sectoral Asset": 23500,
+        "Siren LLC": 2998192,
         "Sofinnova Investments": 679578,
         "Vivo Capital": 1848786
       },
-      "elite_total_shares": 13614843,
-      "elite_total_value_usd_thousands": 172229594,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 20842292,
+      "elite_total_value_usd_thousands": 263801372,
+      "inst_score_raw": 13,
+      "inst_score_z": 1.6575
     },
     "ORKA": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avidity Partners",
         "Cormorant Asset",
         "Deep Track",
         "Fairmount Funds",
         "Great Point",
         "Palo Alto Investors",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
-        "RTW Investments",
-        "Rock Springs",
-        "Soleus Capital"
+        "RTW Investments"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 499673,
         "Avidity Partners": 760424,
         "Cormorant Asset": 533340,
         "Deep Track": 2034203,
         "Fairmount Funds": 3705262,
         "Great Point": 183330,
         "Palo Alto Investors": 59985,
+        "Paradigm Biocapital": 2320316,
         "Perceptive Advisors": 1395501,
         "RTW Investments": 2058148,
         "Rock Springs": 4123,
         "Soleus Capital": 5000
       },
-      "elite_total_shares": 10739316,
-      "elite_total_value_usd_thousands": 541485258,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 13559305,
+      "elite_total_value_usd_thousands": 679805719,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "PACB": {
       "elite_holders_count": 1,
@@ -3877,7 +4168,7 @@
       "elite_total_shares": 723767,
       "elite_total_value_usd_thousands": 955372,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "PAHC": {
       "elite_holders_count": 0,
@@ -3886,7 +4177,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "PBYI": {
       "elite_holders_count": 0,
@@ -3895,7 +4186,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "PCRX": {
       "elite_holders_count": 0,
@@ -3904,10 +4195,10 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "PCVX": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "Boxer Capital",
         "Caligan Partners",
@@ -3915,9 +4206,9 @@
         "Deep Track",
         "Kynam Capital",
         "Logos Global",
+        "Paradigm Biocapital",
         "RA Capital",
         "Rock Springs",
-        "Sofinnova Investments",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
@@ -3927,15 +4218,16 @@
         "Deep Track": 4300000,
         "Kynam Capital": 2922335,
         "Logos Global": 300000,
+        "Paradigm Biocapital": 4793020,
         "RA Capital": 11474599,
         "Rock Springs": 60250,
         "Sofinnova Investments": 50600,
         "Soleus Capital": 385472
       },
-      "elite_total_shares": 21978975,
-      "elite_total_value_usd_thousands": 1277198238,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 26771995,
+      "elite_total_value_usd_thousands": 1555720630,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "PEPG": {
       "elite_holders_count": 3,
@@ -3952,7 +4244,7 @@
       "elite_total_shares": 22662437,
       "elite_total_value_usd_thousands": 40112514,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "PGEN": {
       "elite_holders_count": 2,
@@ -3967,24 +4259,26 @@
       "elite_total_shares": 9917500,
       "elite_total_value_usd_thousands": 38380725,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "PHAT": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Avidity Partners",
         "EcoR1 Capital",
+        "Frazier Life Sciences",
         "Perceptive Advisors"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 249390,
         "EcoR1 Capital": 625000,
+        "Frazier Life Sciences": 12466489,
         "Perceptive Advisors": 925000
       },
-      "elite_total_shares": 1799390,
-      "elite_total_value_usd_thousands": 20013668,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 14265879,
+      "elite_total_value_usd_thousands": 158516361,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "PHVS": {
       "elite_holders_count": 14,
@@ -4019,12 +4313,12 @@
       "elite_total_shares": 19948069,
       "elite_total_value_usd_thousands": 563532949,
       "inst_score_raw": 14,
-      "inst_score_z": 2.5984
+      "inst_score_z": 1.8725
     },
     "PRAX": {
-      "elite_holders_count": 13,
+      "elite_holders_count": 16,
       "elite_holder_names": [
-        "Acuta Capital",
+        "Affinity Asset",
         "Baker Bros",
         "Cormorant Asset",
         "Deerfield Management",
@@ -4037,11 +4331,14 @@
       ],
       "elite_holder_shares": {
         "Acuta Capital": 84901,
+        "Affinity Asset": 170000,
         "Ally Bridge": 32810,
         "Baker Bros": 1753198,
         "Boxer Capital": 46457,
+        "Braidwell LP": 9976,
         "Cormorant Asset": 885500,
         "Deerfield Management": 963351,
+        "Integral Health": 40000,
         "Logos Global": 285000,
         "Orbimed Advisors": 172500,
         "Perceptive Advisors": 2035986,
@@ -4050,10 +4347,10 @@
         "Soleus Capital": 330517,
         "Vivo Capital": 338895
       },
-      "elite_total_shares": 7366582,
-      "elite_total_value_usd_thousands": 2373439055,
-      "inst_score_raw": 13,
-      "inst_score_z": 2.3295
+      "elite_total_shares": 7586558,
+      "elite_total_value_usd_thousands": 2444313122,
+      "inst_score_raw": 16,
+      "inst_score_z": 2.3024
     },
     "PRLD": {
       "elite_holders_count": 4,
@@ -4072,24 +4369,26 @@
       "elite_total_shares": 23572680,
       "elite_total_value_usd_thousands": 80618566,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "PRQR": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
+        "Affinity Asset",
         "DAFNA Capital",
         "Kynam Capital",
         "Palo Alto Investors"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 2454278,
         "DAFNA Capital": 1567561,
         "Kynam Capital": 1566317,
         "Palo Alto Investors": 188807
       },
-      "elite_total_shares": 3322685,
-      "elite_total_value_usd_thousands": 5382750,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 5776963,
+      "elite_total_value_usd_thousands": 9358680,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "PRTA": {
       "elite_holders_count": 2,
@@ -4104,7 +4403,7 @@
       "elite_total_shares": 3275568,
       "elite_total_value_usd_thousands": 46844941,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "PRVA": {
       "elite_holders_count": 1,
@@ -4117,7 +4416,7 @@
       "elite_total_shares": 27136,
       "elite_total_value_usd_thousands": 558188,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "PSNL": {
       "elite_holders_count": 2,
@@ -4132,7 +4431,7 @@
       "elite_total_shares": 4600000,
       "elite_total_value_usd_thousands": 29302000,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "PTCT": {
       "elite_holders_count": 8,
@@ -4159,12 +4458,14 @@
       "elite_total_shares": 10590570,
       "elite_total_value_usd_thousands": 721636683,
       "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "inst_score_z": 0.5827
     },
     "PTGX": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 8,
       "elite_holder_names": [
+        "Affinity Asset",
         "Boxer Capital",
+        "Integral Health",
         "Opaleye Management",
         "Orbimed Advisors",
         "Perceptive Advisors",
@@ -4172,38 +4473,44 @@
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 172125,
         "Boxer Capital": 170000,
+        "Integral Health": 50000,
         "Opaleye Management": 100000,
         "Orbimed Advisors": 42100,
         "Perceptive Advisors": 1230879,
         "RTW Investments": 5059053,
         "Vestal Point": 326159
       },
-      "elite_total_shares": 6928191,
-      "elite_total_value_usd_thousands": 730231332,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 7150316,
+      "elite_total_value_usd_thousands": 753643307,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "PVLA": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Avidity Partners",
         "BVF Inc/IL",
+        "Frazier Life Sciences",
         "Orbimed Advisors",
         "Samsara BioCapital",
+        "Siren LLC",
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 70000,
         "BVF Inc/IL": 960989,
+        "Frazier Life Sciences": 882400,
         "Orbimed Advisors": 184600,
         "Samsara BioCapital": 38432,
+        "Siren LLC": 257485,
         "Suvretta Capital": 1153496
       },
-      "elite_total_shares": 2407517,
-      "elite_total_value_usd_thousands": 300353894,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 3547402,
+      "elite_total_value_usd_thousands": 442440559,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "PYXS": {
       "elite_holders_count": 1,
@@ -4216,7 +4523,7 @@
       "elite_total_shares": 1010510,
       "elite_total_value_usd_thousands": 1475345,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "QSI": {
       "elite_holders_count": 0,
@@ -4225,31 +4532,34 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "RANI": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "RA Capital",
-        "Samsara BioCapital"
+        "Samsara BioCapital",
+        "Siren LLC"
       ],
       "elite_holder_shares": {
         "RA Capital": 8500000,
-        "Samsara BioCapital": 8500000
+        "Samsara BioCapital": 8500000,
+        "Siren LLC": 2000000
       },
-      "elite_total_shares": 17000000,
-      "elite_total_value_usd_thousands": 12491600,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 19000000,
+      "elite_total_value_usd_thousands": 13961200,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "RAPP": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Baker Bros",
         "Cormorant Asset",
         "DAFNA Capital",
         "Perceptive Advisors",
         "Sectoral Asset",
+        "Siren LLC",
         "Sofinnova Investments",
         "Soleus Capital",
         "Vestal Point"
@@ -4260,14 +4570,15 @@
         "DAFNA Capital": 75000,
         "Perceptive Advisors": 673923,
         "Sectoral Asset": 25421,
+        "Siren LLC": 641469,
         "Sofinnova Investments": 1904408,
         "Soleus Capital": 10000,
         "Vestal Point": 1436229
       },
-      "elite_total_shares": 8629592,
-      "elite_total_value_usd_thousands": 270059515,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 9271061,
+      "elite_total_value_usd_thousands": 290131080,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "RARE": {
       "elite_holders_count": 6,
@@ -4290,7 +4601,7 @@
       "elite_total_shares": 9411930,
       "elite_total_value_usd_thousands": 188999207,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "RCKT": {
       "elite_holders_count": 3,
@@ -4307,16 +4618,17 @@
       "elite_total_shares": 18742772,
       "elite_total_value_usd_thousands": 67099124,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "RCUS": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Baker Bros",
         "DAFNA Capital",
         "Logos Global",
         "Rock Springs",
         "Sectoral Asset",
+        "Siren LLC",
         "Sofinnova Investments",
         "Soleus Capital",
         "Suvretta Capital"
@@ -4327,18 +4639,20 @@
         "Logos Global": 1200000,
         "Rock Springs": 180000,
         "Sectoral Asset": 45070,
+        "Siren LLC": 3007077,
         "Sofinnova Investments": 923086,
         "Soleus Capital": 451983,
         "Suvretta Capital": 5030993
       },
-      "elite_total_shares": 8690582,
-      "elite_total_value_usd_thousands": 187778564,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 11697659,
+      "elite_total_value_usd_thousands": 252731427,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "REGN": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
+        "Integral Health",
         "Krensavage Asset",
         "Orbimed Advisors",
         "Rock Springs",
@@ -4347,6 +4661,7 @@
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Integral Health": 85000,
         "Krensavage Asset": 4000,
         "Orbimed Advisors": 14700,
         "Rock Springs": 10100,
@@ -4354,46 +4669,50 @@
         "Sectoral Asset": 2919,
         "Vestal Point": 40000
       },
-      "elite_total_shares": 75909,
-      "elite_total_value_usd_thousands": 55789245,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 160909,
+      "elite_total_value_usd_thousands": 121463645,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "RGEN": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Avidity Partners",
+        "Braidwell LP",
         "Perceptive Advisors",
         "RTW Investments",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 77800,
+        "Braidwell LP": 47500,
         "Perceptive Advisors": 280541,
         "RTW Investments": 1206000,
         "Vestal Point": 925000
       },
-      "elite_total_shares": 2489341,
-      "elite_total_value_usd_thousands": 293332279,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 2536841,
+      "elite_total_value_usd_thousands": 298928729,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "RGNX": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Boxer Capital",
+        "Integral Health",
         "Redmile Group",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Boxer Capital": 15000,
+        "Integral Health": 1500000,
         "Redmile Group": 4368804,
         "Vestal Point": 108525
       },
-      "elite_total_shares": 4492329,
-      "elite_total_value_usd_thousands": 37645718,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 5992329,
+      "elite_total_value_usd_thousands": 50215718,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "RIGL": {
       "elite_holders_count": 2,
@@ -4408,7 +4727,7 @@
       "elite_total_shares": 80000,
       "elite_total_value_usd_thousands": 2163200,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "RNA": {
       "elite_holders_count": 0,
@@ -4417,99 +4736,116 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "ROIV": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 8,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
         "Cormorant Asset",
+        "Integral Health",
         "Perceptive Advisors",
         "Rock Springs",
         "Sectoral Asset",
         "Sofinnova Investments"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 2800000,
         "Baker Bros": 4867723,
         "Cormorant Asset": 750000,
+        "Integral Health": 2000000,
         "Perceptive Advisors": 8285461,
         "Rock Springs": 97000,
         "Sectoral Asset": 32500,
         "Sofinnova Investments": 477995
       },
-      "elite_total_shares": 14510679,
-      "elite_total_value_usd_thousands": 402061927,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 19310679,
+      "elite_total_value_usd_thousands": 535021927,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "RVMD": {
-      "elite_holders_count": 17,
+      "elite_holders_count": 24,
       "elite_holder_names": [
         "Avoro Capital",
         "BVF Inc/IL",
         "Baker Bros",
         "Caligan Partners",
         "Casdin Capital",
-        "DAFNA Capital",
         "Deerfield Management",
+        "Integral Health",
         "Logos Global",
-        "Rock Springs",
+        "Paradigm Biocapital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 26069,
+        "Affinity Asset": 200000,
         "Avoro Capital": 2344444,
         "BVF Inc/IL": 2856782,
         "Baker Bros": 9555357,
         "Boxer Capital": 500000,
+        "Braidwell LP": 84900,
         "Caligan Partners": 1881708,
         "Casdin Capital": 2577333,
         "DAFNA Capital": 580678,
         "Deerfield Management": 2297000,
+        "Frazier Life Sciences": 675686,
+        "Integral Health": 2750000,
         "Kynam Capital": 207500,
         "Logos Global": 2000000,
         "Opaleye Management": 100000,
         "Orbimed Advisors": 52000,
+        "Paradigm Biocapital": 6655703,
         "Perceptive Advisors": 258600,
         "Rock Springs": 1209465,
         "Sectoral Asset": 1830,
+        "Siren LLC": 1110980,
+        "TCG Crossover": 576473,
         "Vestal Point": 2375000
       },
-      "elite_total_shares": 28823766,
-      "elite_total_value_usd_thousands": 2803135556,
-      "inst_score_raw": 17,
-      "inst_score_z": 3.405
+      "elite_total_shares": 40877508,
+      "elite_total_value_usd_thousands": 3975361966,
+      "inst_score_raw": 24,
+      "inst_score_z": 4.0221
     },
     "RYTM": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "Baker Bros",
+        "Braidwell LP",
+        "Integral Health",
         "Logos Global",
-        "Opaleye Management",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "RA Capital",
         "Rock Springs",
+        "Siren LLC",
         "Sofinnova Investments"
       ],
       "elite_holder_shares": {
         "Baker Bros": 5604483,
+        "Braidwell LP": 310628,
+        "Integral Health": 600000,
         "Logos Global": 450000,
         "Opaleye Management": 123000,
         "Orbimed Advisors": 314100,
         "Perceptive Advisors": 2373795,
         "RA Capital": 6666837,
         "Rock Springs": 689748,
+        "Siren LLC": 725511,
         "Sofinnova Investments": 450096
       },
-      "elite_total_shares": 16672059,
-      "elite_total_value_usd_thousands": 1474594862,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 18308198,
+      "elite_total_value_usd_thousands": 1616889871,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "SABS": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
+        "Affinity Asset",
         "Caligan Partners",
         "Perceptive Advisors",
         "RA Capital",
@@ -4517,32 +4853,35 @@
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 575000,
         "Caligan Partners": 7967207,
         "Perceptive Advisors": 6431743,
         "RA Capital": 4401500,
         "Soleus Capital": 1050000,
         "Vivo Capital": 11420000
       },
-      "elite_total_shares": 31270450,
-      "elite_total_value_usd_thousands": 119765824,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 31845450,
+      "elite_total_value_usd_thousands": 121968074,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "SANA": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
-        "Baker Bros"
+        "Baker Bros",
+        "Integral Health"
       ],
       "elite_holder_shares": {
-        "Baker Bros": 310483
+        "Baker Bros": 310483,
+        "Integral Health": 3200000
       },
-      "elite_total_shares": 310483,
-      "elite_total_value_usd_thousands": 894191,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 3510483,
+      "elite_total_value_usd_thousands": 10110191,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "SEPN": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Avoro Capital",
         "BVF Inc/IL",
@@ -4550,6 +4889,7 @@
         "Logos Global",
         "RA Capital",
         "Samsara BioCapital",
+        "Siren LLC",
         "Sofinnova Investments",
         "Soleus Capital"
       ],
@@ -4560,13 +4900,14 @@
         "Logos Global": 23548,
         "RA Capital": 6995858,
         "Samsara BioCapital": 3149128,
+        "Siren LLC": 2000000,
         "Sofinnova Investments": 47506,
         "Soleus Capital": 275000
       },
-      "elite_total_shares": 13735057,
-      "elite_total_value_usd_thousands": 330053419,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 15735057,
+      "elite_total_value_usd_thousands": 378113419,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "SERA": {
       "elite_holders_count": 2,
@@ -4581,7 +4922,7 @@
       "elite_total_shares": 7148610,
       "elite_total_value_usd_thousands": 14511678,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "SGMO": {
       "elite_holders_count": 0,
@@ -4590,20 +4931,22 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "SGMT": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 868020,
         "Baker Bros": 952996
       },
-      "elite_total_shares": 952996,
-      "elite_total_value_usd_thousands": 4979404,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 1821016,
+      "elite_total_value_usd_thousands": 9514809,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "SIGA": {
       "elite_holders_count": 0,
@@ -4612,35 +4955,39 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "SION": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Baker Bros",
         "Deerfield Management",
+        "Integral Health",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "RA Capital",
         "Rock Springs",
+        "Siren LLC",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
         "Baker Bros": 400000,
         "Deerfield Management": 970590,
+        "Integral Health": 50000,
         "Orbimed Advisors": 3530702,
         "Perceptive Advisors": 658439,
         "RA Capital": 9905045,
         "Rock Springs": 99429,
+        "Siren LLC": 300000,
         "Soleus Capital": 293500
       },
-      "elite_total_shares": 15857705,
-      "elite_total_value_usd_thousands": 635735394,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 16207705,
+      "elite_total_value_usd_thousands": 649766894,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "SLDB": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Ally Bridge",
         "Bain Capital Life",
@@ -4649,6 +4996,7 @@
         "Perceptive Advisors",
         "RA Capital",
         "Redmile Group",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
@@ -4659,27 +5007,32 @@
         "Perceptive Advisors": 11906646,
         "RA Capital": 9339978,
         "Redmile Group": 2011895,
+        "Siren LLC": 7690405,
         "Vestal Point": 5000000
       },
-      "elite_total_shares": 42699374,
-      "elite_total_value_usd_thousands": 307435493,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 50389779,
+      "elite_total_value_usd_thousands": 362806409,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "SLN": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Great Point",
-        "Redmile Group"
+        "Redmile Group",
+        "Siren LLC",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Great Point": 1020489,
-        "Redmile Group": 2164777
+        "Redmile Group": 2164777,
+        "Siren LLC": 2911438,
+        "TCG Crossover": 3033560
       },
-      "elite_total_shares": 3185266,
-      "elite_total_value_usd_thousands": 16786352,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 9130264,
+      "elite_total_value_usd_thousands": 48116491,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "SMMT": {
       "elite_holders_count": 3,
@@ -4696,13 +5049,14 @@
       "elite_total_shares": 37170678,
       "elite_total_value_usd_thousands": 704835781,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "SNDX": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "DAFNA Capital",
         "Deerfield Management",
+        "Integral Health",
         "Kynam Capital",
         "Orbimed Advisors",
         "Palo Alto Investors",
@@ -4712,16 +5066,17 @@
       "elite_holder_shares": {
         "DAFNA Capital": 217355,
         "Deerfield Management": 3779900,
+        "Integral Health": 350000,
         "Kynam Capital": 8050959,
         "Orbimed Advisors": 962300,
         "Palo Alto Investors": 864986,
         "Sectoral Asset": 31680,
         "Soleus Capital": 1726908
       },
-      "elite_total_shares": 15634088,
-      "elite_total_value_usd_thousands": 365259717,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 15984088,
+      "elite_total_value_usd_thousands": 373435717,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "SNY": {
       "elite_holders_count": 2,
@@ -4736,7 +5091,7 @@
       "elite_total_shares": 1723946,
       "elite_total_value_usd_thousands": 67467608,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "SPRY": {
       "elite_holders_count": 5,
@@ -4757,7 +5112,7 @@
       "elite_total_shares": 26871734,
       "elite_total_value_usd_thousands": 215821121,
       "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "inst_score_z": -0.0622
     },
     "SRPT": {
       "elite_holders_count": 3,
@@ -4774,31 +5129,37 @@
       "elite_total_shares": 4070484,
       "elite_total_value_usd_thousands": 88573732,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "SRRK": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "Casdin Capital",
+        "Integral Health",
+        "Paradigm Biocapital",
         "Redmile Group",
         "Rock Springs",
         "Samsara BioCapital",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Casdin Capital": 350000,
+        "Integral Health": 500000,
+        "Paradigm Biocapital": 1226080,
         "Redmile Group": 9066621,
         "Rock Springs": 739816,
         "Samsara BioCapital": 6897652,
+        "Siren LLC": 10825013,
         "Vestal Point": 1324422
       },
-      "elite_total_shares": 18378511,
-      "elite_total_value_usd_thousands": 903487601,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 30929604,
+      "elite_total_value_usd_thousands": 1520499333,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "STOK": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
@@ -4806,9 +5167,9 @@
         "Deerfield Management",
         "EcoR1 Capital",
         "Opaleye Management",
-        "Palo Alto Investors",
         "RTW Investments",
         "Redmile Group",
+        "Siren LLC",
         "Tang Capital"
       ],
       "elite_holder_shares": {
@@ -4821,12 +5182,13 @@
         "Palo Alto Investors": 84631,
         "RTW Investments": 5623525,
         "Redmile Group": 4164120,
+        "Siren LLC": 1995347,
         "Tang Capital": 500000
       },
-      "elite_total_shares": 19010905,
-      "elite_total_value_usd_thousands": 618995066,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 21006252,
+      "elite_total_value_usd_thousands": 683963564,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "STRO": {
       "elite_holders_count": 0,
@@ -4835,7 +5197,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "STVN": {
       "elite_holders_count": 0,
@@ -4844,7 +5206,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "SUPN": {
       "elite_holders_count": 2,
@@ -4859,97 +5221,120 @@
       "elite_total_shares": 1234990,
       "elite_total_value_usd_thousands": 49342740,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "SVRA": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 11,
       "elite_holder_names": [
-        "Avidity Partners",
+        "Affinity Asset",
         "Bain Capital Life",
         "Deerfield Management",
+        "Frazier Life Sciences",
+        "Integral Health",
         "Orbimed Advisors",
         "RTW Investments",
         "Sofinnova Investments",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 2512153,
         "Avidity Partners": 50000,
         "Bain Capital Life": 17600621,
         "Deerfield Management": 13569000,
+        "Frazier Life Sciences": 9720852,
+        "Integral Health": 600000,
         "Orbimed Advisors": 635000,
         "RTW Investments": 5952380,
         "Sofinnova Investments": 364763,
+        "TCG Crossover": 12362205,
         "Vestal Point": 2600052
       },
-      "elite_total_shares": 40771816,
-      "elite_total_value_usd_thousands": 222603116,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 65967026,
+      "elite_total_value_usd_thousands": 360168962,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "SYRE": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
-        "Caligan Partners",
+        "Braidwell LP",
         "Fairmount Funds",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
         "RA Capital",
         "RTW Investments",
+        "TCG Crossover",
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1279134,
         "Baker Bros": 1000000,
+        "Braidwell LP": 932823,
         "Caligan Partners": 878127,
         "Fairmount Funds": 4018101,
+        "Paradigm Biocapital": 1957266,
         "Perceptive Advisors": 3783225,
         "RA Capital": 1621620,
         "RTW Investments": 4171996,
+        "Siren LLC": 818598,
+        "TCG Crossover": 1900582,
         "Tang Capital": 1892200
       },
-      "elite_total_shares": 17365269,
-      "elite_total_value_usd_thousands": 875904168,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 24253672,
+      "elite_total_value_usd_thousands": 1223355215,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "TARA": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
-        "Baker Bros"
+        "Baker Bros",
+        "Integral Health"
       ],
       "elite_holder_shares": {
-        "Baker Bros": 971614
+        "Baker Bros": 971614,
+        "Integral Health": 1750000
       },
-      "elite_total_shares": 971614,
-      "elite_total_value_usd_thousands": 5062109,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 2721614,
+      "elite_total_value_usd_thousands": 14179609,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "TARS": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 12,
       "elite_holder_names": [
-        "Ally Bridge",
+        "Braidwell LP",
         "Cormorant Asset",
         "Deep Track",
+        "Frazier Life Sciences",
+        "Integral Health",
+        "Paradigm Biocapital",
         "RTW Investments",
         "Rock Springs",
-        "Sectoral Asset",
         "Tang Capital",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Ally Bridge": 80859,
+        "Braidwell LP": 265715,
         "Cormorant Asset": 225000,
         "Deep Track": 3600000,
+        "Frazier Life Sciences": 728644,
+        "Integral Health": 200000,
+        "Paradigm Biocapital": 2562154,
         "RTW Investments": 3346025,
         "Rock Springs": 225179,
         "Sectoral Asset": 11272,
         "Tang Capital": 1188624,
         "Vestal Point": 200000
       },
-      "elite_total_shares": 8876959,
-      "elite_total_value_usd_thousands": 622780407,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 12633472,
+      "elite_total_value_usd_thousands": 886299794,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "TBPH": {
       "elite_holders_count": 0,
@@ -4958,7 +5343,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "TCRX": {
       "elite_holders_count": 2,
@@ -4973,7 +5358,7 @@
       "elite_total_shares": 8349082,
       "elite_total_value_usd_thousands": 8432573,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "TECH": {
       "elite_holders_count": 0,
@@ -4982,32 +5367,36 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "TECX": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Baker Bros",
+        "Braidwell LP",
         "Broadfin Capital (Kotler)",
         "Opaleye Management",
         "Orbimed Advisors",
         "Sectoral Asset",
         "Soleus Capital",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Baker Bros": 607788,
+        "Braidwell LP": 847151,
         "Broadfin Capital (Kotler)": 80000,
         "Opaleye Management": 123000,
         "Orbimed Advisors": 226600,
         "Sectoral Asset": 19059,
         "Soleus Capital": 121684,
+        "TCG Crossover": 1204891,
         "Vestal Point": 328000
       },
-      "elite_total_shares": 1506131,
-      "elite_total_value_usd_thousands": 45789610,
-      "inst_score_raw": 7,
-      "inst_score_z": 0.7164
+      "elite_total_shares": 3558173,
+      "elite_total_value_usd_thousands": 109218228,
+      "inst_score_raw": 9,
+      "inst_score_z": 0.7976
     },
     "TEM": {
       "elite_holders_count": 2,
@@ -5022,66 +5411,73 @@
       "elite_total_shares": 359127,
       "elite_total_value_usd_thousands": 16906623,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "TENX": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "Avidity Partners",
         "BVF Inc/IL",
         "Great Point",
+        "Integral Health",
         "Logos Global",
         "Perceptive Advisors",
         "RTW Investments",
+        "Siren LLC",
         "Sofinnova Investments",
-        "Vestal Point",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Avidity Partners": 265934,
         "BVF Inc/IL": 339549,
         "Great Point": 327307,
+        "Integral Health": 167000,
         "Logos Global": 625000,
         "Perceptive Advisors": 1447782,
         "RTW Investments": 370246,
+        "Siren LLC": 427141,
         "Sofinnova Investments": 104400,
         "Vestal Point": 53439,
         "Vivo Capital": 208333
       },
-      "elite_total_shares": 3741990,
-      "elite_total_value_usd_thousands": 59068532,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 4336131,
+      "elite_total_value_usd_thousands": 68568847,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "TEVA": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avidity Partners",
         "Rock Springs"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1400000,
         "Avidity Partners": 200000,
         "Rock Springs": 45500
       },
-      "elite_total_shares": 245500,
-      "elite_total_value_usd_thousands": 8384460,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 1645500,
+      "elite_total_value_usd_thousands": 50552460,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "TGTX": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
+        "Braidwell LP",
         "Opaleye Management",
         "Soleus Capital"
       ],
       "elite_holder_shares": {
+        "Braidwell LP": 358800,
         "Opaleye Management": 535000,
         "Soleus Capital": 4029319
       },
-      "elite_total_shares": 4564319,
-      "elite_total_value_usd_thousands": 151626677,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 4923119,
+      "elite_total_value_usd_thousands": 163546013,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "TKNO": {
       "elite_holders_count": 0,
@@ -5090,20 +5486,20 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "TNGX": {
-      "elite_holders_count": 13,
+      "elite_holders_count": 17,
       "elite_holder_names": [
         "Boxer Capital",
         "Caligan Partners",
-        "Cormorant Asset",
         "Deep Track",
         "Deerfield Management",
         "Logos Global",
-        "Perceptive Advisors",
+        "Paradigm Biocapital",
         "RTW Investments",
-        "Soleus Capital",
+        "Siren LLC",
+        "TCG Crossover",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
@@ -5113,18 +5509,22 @@
         "Cormorant Asset": 1425000,
         "Deep Track": 2750000,
         "Deerfield Management": 4146813,
+        "Integral Health": 450000,
         "Logos Global": 3000000,
+        "Paradigm Biocapital": 4009679,
         "Perceptive Advisors": 808153,
         "RTW Investments": 13300620,
         "Rock Springs": 386915,
+        "Siren LLC": 5657105,
         "Sofinnova Investments": 395081,
         "Soleus Capital": 450000,
+        "TCG Crossover": 10531071,
         "Vivo Capital": 2154780
       },
-      "elite_total_shares": 42544210,
-      "elite_total_value_usd_thousands": 890024874,
-      "inst_score_raw": 13,
-      "inst_score_z": 2.3295
+      "elite_total_shares": 63192065,
+      "elite_total_value_usd_thousands": 1321978001,
+      "inst_score_raw": 17,
+      "inst_score_z": 2.5174
     },
     "TNYA": {
       "elite_holders_count": 1,
@@ -5137,54 +5537,61 @@
       "elite_total_shares": 361969,
       "elite_total_value_usd_thousands": 250627,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "TRDA": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Acuta Capital",
-        "Baker Bros"
+        "Baker Bros",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 89358,
-        "Baker Bros": 5072730
+        "Baker Bros": 5072730,
+        "TCG Crossover": 2287500
       },
-      "elite_total_shares": 5162088,
-      "elite_total_value_usd_thousands": 65145551,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "elite_total_shares": 7449588,
+      "elite_total_value_usd_thousands": 94013801,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.4922
     },
     "TRVI": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 11,
       "elite_holder_names": [
-        "Avidity Partners",
+        "Affinity Asset",
+        "Frazier Life Sciences",
         "Logos Global",
         "Opaleye Management",
         "Orbimed Advisors",
         "Sectoral Asset",
+        "Siren LLC",
         "Soleus Capital",
         "Vestal Point",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 2000172,
         "Avidity Partners": 6660,
+        "Frazier Life Sciences": 9939547,
         "Logos Global": 2400000,
         "Opaleye Management": 345100,
         "Orbimed Advisors": 2454400,
         "Sectoral Asset": 74446,
+        "Siren LLC": 1786867,
         "Soleus Capital": 1620000,
         "Vestal Point": 2166504,
         "Vivo Capital": 5094668
       },
-      "elite_total_shares": 14161778,
-      "elite_total_value_usd_thousands": 169013558,
-      "inst_score_raw": 8,
-      "inst_score_z": 0.9852
+      "elite_total_shares": 27888364,
+      "elite_total_value_usd_thousands": 332771729,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "TSHA": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 11,
       "elite_holder_names": [
-        "Acuta Capital",
+        "Affinity Asset",
         "Avoro Capital",
         "Baker Bros",
         "Casdin Capital",
@@ -5192,10 +5599,12 @@
         "Palo Alto Investors",
         "RA Capital",
         "RTW Investments",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 439464,
+        "Affinity Asset": 1000000,
         "Avoro Capital": 21700000,
         "Baker Bros": 4004756,
         "Casdin Capital": 3250000,
@@ -5203,16 +5612,18 @@
         "Palo Alto Investors": 1391382,
         "RA Capital": 23555648,
         "RTW Investments": 13680248,
+        "Siren LLC": 8829913,
         "Vestal Point": 18000000
       },
-      "elite_total_shares": 88743663,
-      "elite_total_value_usd_thousands": 396684175,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 98573576,
+      "elite_total_value_usd_thousands": 440623886,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "TVTX": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
+        "Affinity Asset",
         "Kynam Capital",
         "Palo Alto Investors",
         "Perceptive Advisors",
@@ -5221,6 +5632,7 @@
         "Soleus Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 300000,
         "Kynam Capital": 2423918,
         "Palo Alto Investors": 230453,
         "Perceptive Advisors": 4142551,
@@ -5228,10 +5640,10 @@
         "Rock Springs": 1477954,
         "Soleus Capital": 546000
       },
-      "elite_total_shares": 9567717,
-      "elite_total_value_usd_thousands": 284256872,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 9867717,
+      "elite_total_value_usd_thousands": 293169872,
+      "inst_score_raw": 7,
+      "inst_score_z": 0.3677
     },
     "TWST": {
       "elite_holders_count": 2,
@@ -5246,7 +5658,7 @@
       "elite_total_shares": 1376629,
       "elite_total_value_usd_thousands": 65417410,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "TXG": {
       "elite_holders_count": 1,
@@ -5259,69 +5671,75 @@
       "elite_total_shares": 2275000,
       "elite_total_value_usd_thousands": 48298250,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "TYRA": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 12,
       "elite_holder_names": [
+        "Affinity Asset",
         "BVF Inc/IL",
-        "Baker Bros",
         "Caligan Partners",
         "Deerfield Management",
         "Logos Global",
+        "Paradigm Biocapital",
         "RA Capital",
         "Sofinnova Investments",
-        "Soleus Capital",
+        "TCG Crossover",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 257512,
         "BVF Inc/IL": 1976196,
         "Baker Bros": 10607,
         "Caligan Partners": 1276968,
         "Deerfield Management": 549000,
         "Logos Global": 850000,
+        "Paradigm Biocapital": 2054991,
         "RA Capital": 12198625,
         "Sofinnova Investments": 204015,
         "Soleus Capital": 10000,
+        "TCG Crossover": 3248980,
         "Vestal Point": 54000
       },
-      "elite_total_shares": 17129411,
-      "elite_total_value_usd_thousands": 656056442,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 22690894,
+      "elite_total_value_usd_thousands": 869061241,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "UPB": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Bain Capital Life",
         "Boxer Capital",
         "Orbimed Advisors",
-        "Samsara BioCapital"
+        "Samsara BioCapital",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "Bain Capital Life": 867211,
         "Boxer Capital": 150000,
         "Orbimed Advisors": 5693589,
-        "Samsara BioCapital": 736047
+        "Samsara BioCapital": 736047,
+        "TCG Crossover": 181063
       },
-      "elite_total_shares": 7446847,
-      "elite_total_value_usd_thousands": 67021623,
-      "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "elite_total_shares": 7627910,
+      "elite_total_value_usd_thousands": 68651190,
+      "inst_score_raw": 5,
+      "inst_score_z": -0.0622
     },
     "URGN": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "Ally Bridge",
         "Boxer Capital",
         "Kynam Capital",
         "Opaleye Management",
         "Orbimed Advisors",
-        "Palo Alto Investors",
+        "Paradigm Biocapital",
         "RTW Investments",
         "Soleus Capital",
-        "Tang Capital",
-        "Vestal Point"
+        "TCG Crossover",
+        "Tang Capital"
       ],
       "elite_holder_shares": {
         "Ally Bridge": 202124,
@@ -5330,15 +5748,17 @@
         "Opaleye Management": 1430000,
         "Orbimed Advisors": 875487,
         "Palo Alto Investors": 24500,
+        "Paradigm Biocapital": 1703949,
         "RTW Investments": 4543895,
         "Soleus Capital": 727000,
+        "TCG Crossover": 405365,
         "Tang Capital": 350000,
         "Vestal Point": 139079
       },
-      "elite_total_shares": 11039478,
-      "elite_total_value_usd_thousands": 198489814,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 13148792,
+      "elite_total_value_usd_thousands": 236415280,
+      "inst_score_raw": 12,
+      "inst_score_z": 1.4425
     },
     "UTHR": {
       "elite_holders_count": 10,
@@ -5369,7 +5789,7 @@
       "elite_total_shares": 4200582,
       "elite_total_value_usd_thousands": 2226028794,
       "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "inst_score_z": 1.0126
     },
     "VCEL": {
       "elite_holders_count": 1,
@@ -5382,7 +5802,7 @@
       "elite_total_shares": 2549079,
       "elite_total_value_usd_thousands": 82003871,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "VCYT": {
       "elite_holders_count": 4,
@@ -5401,27 +5821,30 @@
       "elite_total_shares": 1452907,
       "elite_total_value_usd_thousands": 46798135,
       "inst_score_raw": 4,
-      "inst_score_z": -0.0902
+      "inst_score_z": -0.2772
     },
     "VERA": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 13,
       "elite_holder_names": [
         "Avoro Capital",
+        "Braidwell LP",
         "Deep Track",
         "Deerfield Management",
-        "Great Point",
+        "Integral Health",
         "Kynam Capital",
         "Orbimed Advisors",
         "Rock Springs",
-        "Sectoral Asset",
         "Sofinnova Investments",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 250000,
         "Avoro Capital": 5888888,
+        "Braidwell LP": 523824,
         "Deep Track": 4106067,
         "Deerfield Management": 3722100,
         "Great Point": 199348,
+        "Integral Health": 1600000,
         "Kynam Capital": 3398224,
         "Orbimed Advisors": 369596,
         "Rock Springs": 503585,
@@ -5429,10 +5852,10 @@
         "Sofinnova Investments": 2793987,
         "Vestal Point": 1368159
       },
-      "elite_total_shares": 22375527,
-      "elite_total_value_usd_thousands": 900223291,
-      "inst_score_raw": 10,
-      "inst_score_z": 1.523
+      "elite_total_shares": 24749351,
+      "elite_total_value_usd_thousands": 995722231,
+      "inst_score_raw": 13,
+      "inst_score_z": 1.6575
     },
     "VIR": {
       "elite_holders_count": 3,
@@ -5449,13 +5872,14 @@
       "elite_total_shares": 4487300,
       "elite_total_value_usd_thousands": 40983430,
       "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "inst_score_z": -0.4922
     },
     "VKTX": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "DAFNA Capital",
         "Deerfield Management",
+        "Integral Health",
         "Rock Springs",
         "Tang Capital",
         "Vestal Point"
@@ -5463,14 +5887,15 @@
       "elite_holder_shares": {
         "DAFNA Capital": 59516,
         "Deerfield Management": 20206170,
+        "Integral Health": 250000,
         "Rock Springs": 96000,
         "Tang Capital": 500000,
         "Vestal Point": 914147
       },
-      "elite_total_shares": 21775833,
-      "elite_total_value_usd_thousands": 324062191,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 22025833,
+      "elite_total_value_usd_thousands": 332197191,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "VNDA": {
       "elite_holders_count": 2,
@@ -5485,7 +5910,7 @@
       "elite_total_shares": 1280388,
       "elite_total_value_usd_thousands": 890156,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "VOR": {
       "elite_holders_count": 0,
@@ -5494,49 +5919,54 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "VRDN": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 11,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
         "Baker Bros",
         "Deep Track",
         "Fairmount Funds",
         "Kynam Capital",
+        "Paradigm Biocapital",
         "Perceptive Advisors",
-        "Suvretta Capital",
         "Tang Capital",
         "Vivo Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 250000,
         "Avoro Capital": 1500000,
         "Baker Bros": 1971678,
         "Deep Track": 1393944,
         "Fairmount Funds": 3914458,
         "Kynam Capital": 2341652,
+        "Paradigm Biocapital": 3148893,
         "Perceptive Advisors": 1170829,
         "Suvretta Capital": 16700,
         "Tang Capital": 1792626,
         "Vivo Capital": 166288
       },
-      "elite_total_shares": 14268175,
-      "elite_total_value_usd_thousands": 279085503,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.2541
+      "elite_total_shares": 17667068,
+      "elite_total_value_usd_thousands": 345567850,
+      "inst_score_raw": 11,
+      "inst_score_z": 1.2276
     },
     "VRTX": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Integral Health",
         "Sectoral Asset"
       ],
       "elite_holder_shares": {
+        "Integral Health": 40000,
         "Sectoral Asset": 7007
       },
-      "elite_total_shares": 7007,
-      "elite_total_value_usd_thousands": 3457113,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "elite_total_shares": 47007,
+      "elite_total_value_usd_thousands": 21318713,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.7071
     },
     "VTRS": {
       "elite_holders_count": 0,
@@ -5545,7 +5975,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "VYGR": {
       "elite_holders_count": 2,
@@ -5560,65 +5990,73 @@
       "elite_total_shares": 4152936,
       "elite_total_value_usd_thousands": 16030333,
       "inst_score_raw": 2,
-      "inst_score_z": -0.6279
+      "inst_score_z": -0.7071
     },
     "WVE": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 8,
       "elite_holder_names": [
+        "Affinity Asset",
         "Baker Bros",
         "Kynam Capital",
         "RA Capital",
         "RTW Investments",
+        "Siren LLC",
         "Sofinnova Investments",
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1401727,
         "Baker Bros": 822638,
         "Kynam Capital": 965193,
         "RA Capital": 26975505,
         "RTW Investments": 1350000,
+        "Siren LLC": 2450000,
         "Sofinnova Investments": 189253,
         "Tang Capital": 600000
       },
-      "elite_total_shares": 30902589,
-      "elite_total_value_usd_thousands": 224043770,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "elite_total_shares": 34754316,
+      "elite_total_value_usd_thousands": 251968791,
+      "inst_score_raw": 8,
+      "inst_score_z": 0.5827
     },
     "XENE": {
-      "elite_holders_count": 14,
+      "elite_holders_count": 18,
       "elite_holder_names": [
+        "Affinity Asset",
         "Avoro Capital",
-        "Baker Bros",
+        "Braidwell LP",
         "Caligan Partners",
         "Deerfield Management",
         "Logos Global",
         "Orbimed Advisors",
         "Rock Springs",
-        "Sofinnova Investments",
-        "Soleus Capital",
+        "Siren LLC",
         "Vestal Point"
       ],
       "elite_holder_shares": {
+        "Affinity Asset": 1675000,
         "Avoro Capital": 5777777,
         "Baker Bros": 370208,
+        "Braidwell LP": 1338452,
         "Caligan Partners": 1393027,
         "DAFNA Capital": 250772,
         "Deerfield Management": 1615696,
         "Foresite Capital IV": 160000,
+        "Integral Health": 200000,
         "Logos Global": 450000,
         "Orbimed Advisors": 1059971,
         "Palo Alto Investors": 51345,
         "Redmile Group": 262674,
         "Rock Springs": 763020,
+        "Siren LLC": 1318564,
         "Sofinnova Investments": 305216,
         "Soleus Capital": 292000,
         "Vestal Point": 639900
       },
-      "elite_total_shares": 13391606,
-      "elite_total_value_usd_thousands": 778721889,
-      "inst_score_raw": 14,
-      "inst_score_z": 2.5984
+      "elite_total_shares": 17923622,
+      "elite_total_value_usd_thousands": 1042258620,
+      "inst_score_raw": 18,
+      "inst_score_z": 2.7323
     },
     "XERS": {
       "elite_holders_count": 1,
@@ -5631,28 +6069,30 @@
       "elite_total_shares": 104410,
       "elite_total_value_usd_thousands": 605578,
       "inst_score_raw": 1,
-      "inst_score_z": -0.8968
+      "inst_score_z": -0.9221
     },
     "XNCR": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
         "EcoR1 Capital",
         "RA Capital",
-        "RTW Investments"
+        "RTW Investments",
+        "TCG Crossover"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 7133720,
         "Baker Bros": 1102106,
         "EcoR1 Capital": 2183000,
         "RA Capital": 4897237,
-        "RTW Investments": 6777461
+        "RTW Investments": 6777461,
+        "TCG Crossover": 2452138
       },
-      "elite_total_shares": 22093524,
-      "elite_total_value_usd_thousands": 266447899,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.1786
+      "elite_total_shares": 24545662,
+      "elite_total_value_usd_thousands": 296020683,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.1527
     },
     "ZBIO": {
       "elite_holders_count": 6,
@@ -5675,24 +6115,26 @@
       "elite_total_shares": 4417168,
       "elite_total_value_usd_thousands": 86355634,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     },
     "ZLAB": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
+        "Frazier Life Sciences",
         "RA Capital",
         "RTW Investments",
         "Rock Springs"
       ],
       "elite_holder_shares": {
+        "Frazier Life Sciences": 1902320,
         "RA Capital": 5707262,
         "RTW Investments": 6574032,
         "Rock Springs": 814707
       },
-      "elite_total_shares": 13096001,
-      "elite_total_value_usd_thousands": 246335779,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.3591
+      "elite_total_shares": 14998321,
+      "elite_total_value_usd_thousands": 282118418,
+      "inst_score_raw": 4,
+      "inst_score_z": -0.2772
     },
     "ZVRA": {
       "elite_holders_count": 0,
@@ -5701,7 +6143,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1657
+      "inst_score_z": -1.1371
     },
     "ZYME": {
       "elite_holders_count": 6,
@@ -5724,7 +6166,7 @@
       "elite_total_shares": 30717872,
       "elite_total_value_usd_thousands": 769175515,
       "inst_score_raw": 6,
-      "inst_score_z": 0.4475
+      "inst_score_z": 0.1527
     }
   }
 }

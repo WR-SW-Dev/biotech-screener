@@ -202,3 +202,17 @@ READINESS HOLD ← Cannot trade until resolved
 | **Portfolio binary 91-180d** | 26.7% | 55% | ✗ FAIL |
 | **Total portfolio positions** | 30 | 30 | ✓ OK |
 | **A-tier concentration** | 8/12 0-7d | balanced | ⚠ SKEWED |
+
+---
+
+## GOVERNANCE DECISION — 2026-05-28
+
+**Path C APPROVED: Temporary Policy Override**
+
+Operator approved Path C effective 2026-05-28:
+- Allow 0–30d exposure up to 40–45% (temporary)
+- Monitor through 2026-06-03 forward eval IC window
+- Revoke if mean_ic < 0.0200 at window close or drawdown breaches limits
+- Path A (durable portfolio timing gates) mandated as post-freeze follow-on
+
+**See:** `GOVERNANCE_DECISION_PATH_C_2026_05_28.md` for full decision memo, constraints, and Path A design target.
