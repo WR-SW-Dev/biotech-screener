@@ -6,13 +6,15 @@
 
 ## Executive Summary
 
-**Readiness HOLD is blocked by a policy/ranking alignment issue, NOT selector bias.**
+**Readiness remains in HOLD.** The blocker is not selector bias, but policy/ranking alignment.
 
 The selector correctly assigns A-tier status more favorably to 8–90d catalysts (38.2%) than 0–7d (25.5%), but the final portfolio is still 40.8% near-term because institutional consensus (coinvest signal) is concentrated in a small set of very high-conviction near-term plays (COGT, RVMD, SYRE, PRAX) that dominate the rank order.
 
-**The fix is governance, not algorithm tuning:**
-- Either relax the 0–30d bucket policy target (10% → 40%) to align with institutional consensus, OR
-- Implement post-freeze selector timing gates to enforce historical policy distribution
+**Current constraint:** Portfolio violates catalyst-timing policy and Phase-2 health constraints.
+
+**Core question:** Is the current signal/policy mismatch a temporary opportunity worth relaxing for, or a risk the portfolio construction layer must constrain?
+
+**Governance decision required:** Choose one of three paths (relax policy, enforce gates post-freeze, or approve exception trade with monitoring).
 
 ---
 
@@ -96,52 +98,69 @@ READINESS HOLD ← Cannot trade until resolved
 
 ---
 
-## Remediation Paths
+## Governance Decision Paths
 
-### Path A: Post-Freeze Selector Timing Gate (BEST STRUCTURAL FIX)
-- **Timeline:** After h20d freeze lift (2026-05-26), implement in Spec (new governance item)
-- **Action:** Add portfolio construction constraint: enforce max 30% weight in 0-7d, min 40% in 90+d
-- **Scope:** Selector architecture change; requires spec approval + testing
-- **Benefit:** Decouples institutional signal (coinvest) from portfolio distribution policy
-- **Current status:** BLOCKED by architecture freeze
-
-### Path B: Coinvest/Ranker Timing Adjustment (SURGICAL)
-- **Timeline:** Spec governance review (can initiate now, activate post-freeze)
-- **Action:** Adjust ranker penalty for near-term catalysts, OR reweight coinvest calculation to dampen near-term concentration
-- **Scope:** Signal engineering within existing Spec 095/100 framework
-- **Benefit:** Surgical; respects institutional signal while aligning timing distribution
-- **Risk:** Unintended IC impact; requires Spec 95/100 review before deployment
-
-### Path C: Policy Relaxation (FASTEST CLEAN GOVERNANCE PATH)
-- **Timeline:** Governance decision now
-- **Action:** Relax 0–30d bucket target from 10% → 40%, 91–180d from 55% → 30% to align with institutional consensus regime
-- **Scope:** Policy override; explicitly acknowledges near-term institutional conviction
-- **Benefit:** Immediate unblock; no algorithm changes; transparent governance decision
-- **Risk:** Increases near-term event risk; may conflict with long-duration strategy intent
-- **Precedent:** Spec 072 ("coinvest as context layer") supports institutional consensus driving positioning
-
-### Path D: Exception Trade with Daily Monitoring (HIGH RISK)
-- **Timeline:** Immediate
-- **Action:** Approve single trade waiving HOLD verdict; monitor daily portfolio hedge ratio / drawdown
-- **Scope:** One-off exception; explicit risk acknowledgment
-- **Benefit:** Fastest path
-- **Risk:** Executes against Phase 2 health gates by design; drawdown spike if near-term catalysts disappoint
+**The signal is real; the policy is misaligned with the current regime.** Governance must decide whether that mismatch represents a temporary opportunity worth relaxing for, or a risk the portfolio construction layer must constrain.
 
 ---
 
-## Recommendation
+### Path C: Temporary Policy Override (FASTEST UNBLOCK)
+- **Timeline:** Governance decision now
+- **Action:** Explicitly override Phase-2 health / bucket-drift constraints for 2026-05-27 snapshot
+- **Terms:** Relax 0–30d bucket target from 10% → 40% (current 43.3%) and 91–180d from 55% → 26.7% (current state)
+- **Duration:** Temporary; reassess 2026-06-03 after IC monitoring window closes
+- **Rationale:** Spec 072 ("coinvest as context layer") supports institutional consensus driving positioning; current 13F concentration on near-term catalysts is real and justified
+- **Governance stance:** Accepts near-term event-risk concentration as intentional opportunity
+- **Status:** NOT a clean readiness pass; this is a controlled policy exception
+- **Risk:** Heightened drawdown exposure if near-term catalysts disappoint; must monitor daily
 
-**Governance Decision:** 
+---
 
-The realistic framing is that **the existing policy bucket targets are misaligned with the current institutional signal regime.** The selector is functioning correctly; the policy is the constraint.
+### Path A: Post-Freeze Portfolio Construction Gate (BEST DURABLE FIX)
+- **Timeline:** After h20d freeze lift (2026-05-26), design and implement as spec item (2026-06-01+)
+- **Action:** Add hard timing constraints to portfolio construction: enforce max 30% weight in 0–7d, min 40% in 90+d
+- **Scope:** Selector/ranker architecture change; separates signal strength from portfolio distribution policy
+- **Benefit:** Durable; preserves coinvest signal while enforcing policy diversification; no ongoing governance risk
+- **Current status:** BLOCKED by architecture freeze (cannot implement until 2026-05-26 lift)
+- **Interim:** Can proceed with **Path C (Policy Override)** while designing this fix
 
-**Recommended sequence (in order of confidence):**
+---
 
-1. **Primary path:** Governance decision on **Path C (Policy Relaxation)**. If institutional consensus on near-term catalysts is intentional and high-conviction, relax 0–30d exposure cap to 40% and document as governance override.
+### Path B: Ranker / Coinvest Timing Adjustment (AVOID UNTIL SPEC REVIEW)
+- **Timeline:** Spec 95/100 governance review required before implementation
+- **Action:** Dampen coinvest concentration on near-term catalysts via ranker penalty, or reweight coinvest calculation
+- **Risk:** Penalizing near-term coinvest could suppress institutional signal IC or distort the evidence base
+- **Status:** Surgical in principle, but requires careful IC impact review
+- **Recommendation:** Defer until Spec 95/100 review signals clear that IC dampening is acceptable
 
-2. **Secondary path:** If policy must remain strict, approve **Path A (Post-Freeze Timing Gate)** as a spec item for post-h20d implementation, with interim **Path D (Exception Trade)** if necessary.
+---
 
-3. **Avoid:** Path B (Coinvest adjustment) without clear Spec 95/100 governance, as it risks unintended IC suppression.
+### Path D: Exception Trade (LAST RESORT ONLY)
+- **Timeline:** Immediate
+- **Action:** Approve single trade waiving Phase-2 health / bucket-drift HOLD verdict; establish daily monitoring gate
+- **Scope:** Explicit readiness hold waiver; NOT a remediation, just a risk acknowledgment
+- **Monitoring:** Daily portfolio hedge ratio, drawdown vs. XBI, near-term catalyst weight changes
+- **Exit trigger:** If portfolio drawdown > 2pp relative to XBI by end-of-week, pause further positioning
+- **Risk:** Highest; executes against readiness gates by design
+- **Use case:** Only if governance needs trading while deliberating Paths C/A
+
+---
+
+## Governance Recommendation
+
+**Decision order (in sequence):**
+
+1. **Immediate:** Decide between **Path C (Policy Override)** and **Path D (Exception Trade)** to unblock 2026-05-27 production run
+   - **Path C preferred:** Explicit governance, transparent policy adjustment, daily monitoring
+   - **Path D fallback:** If need to trade while governance deliberates longer-term path
+
+2. **Post-freeze (2026-05-26):** Design and implement **Path A (Portfolio Timing Gate)** as permanent fix
+   - Best durable architecture; decouples signal from distribution policy
+
+3. **Avoid:** **Path B (Coinvest Adjustment)** until Spec 95/100 signals that IC impact is acceptable
+
+**Final statement:**
+> Readiness HOLD is blocked by a real policy/ranking alignment issue. The selector is not biased; institutional consensus on near-term catalysts is concentrated and real. Governance must choose whether this mismatch is a temporary opportunity to exploit with explicit override, or a risk to constrain through post-freeze architecture gates.
 
 ---
 
