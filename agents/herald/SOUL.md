@@ -76,6 +76,7 @@ Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
 
 | Skill | Use when |
 |-------|----------|
+| `firecrawl-research-discovery` | Searching biotech news + competitor intelligence (research-only) |
 | `biotech-email-signal-triage` | Triaging biotech news signals |
 | `dossier-generation` | Generating IC memos or investment analysis output |
 

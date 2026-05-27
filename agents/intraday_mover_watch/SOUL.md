@@ -47,3 +47,11 @@ A big sector-wide XBI move that sweeps along individual names is noted in the di
 - **no_credentials** — nothing set: `status=NO_DATA`, one warn per day
 
 Phase 1 status: scaffolding complete. Phase 1.5 pending Alpaca credentials + fixture capture.
+
+## Skills
+
+Invoke via `/skill <name>` (in-session) or `hermes -s <name>` (session preload).
+
+| Skill | Use when |
+|-------|----------|
+| `firecrawl-research-discovery` | Searching for biotech news context on intraday movers (research-only enrichment) |
