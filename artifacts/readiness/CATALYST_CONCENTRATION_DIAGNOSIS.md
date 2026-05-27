@@ -148,19 +148,30 @@ READINESS HOLD ← Cannot trade until resolved
 
 ## Governance Recommendation
 
+**The signal is real. The policy is misaligned. Governance decides.**
+
+- **If governance views the mismatch as an opportunity:** Choose **Path C** and temporarily relax policy. Explicit override; transparent accountability.
+
+- **If governance views it as unmanaged concentration risk:** Choose **Path A** and enforce portfolio timing gates post-freeze. Best durable fix.
+
+- **If governance is uncertain:** Maintain **HOLD**. Use **Path D** only as an explicit, accountable HOLD waiver with daily monitoring — not as a neutral bridge, but as an exception trade against Phase-2 health gates.
+
 **Decision order (in sequence):**
 
-1. **Immediate:** Decide between **Path C (Policy Override)** and **Path D (Exception Trade)** to unblock 2026-05-27 production run
-   - **Path C preferred:** Explicit governance, transparent policy adjustment, daily monitoring
-   - **Path D fallback:** If need to trade while governance deliberates longer-term path
+1. **Immediate (2026-05-27):** Governance chooses stance on policy/signal mismatch
+   - **Opportunity** → Path C (policy override with monitoring)
+   - **Risk** → Maintain HOLD pending Path A design
+   - **Accountable exception needed** → Path D (explicit HOLD waiver only)
 
-2. **Post-freeze (2026-05-26):** Design and implement **Path A (Portfolio Timing Gate)** as permanent fix
-   - Best durable architecture; decouples signal from distribution policy
+2. **Post-freeze (2026-05-26+):** If HOLD maintained, design and implement **Path A (Portfolio Timing Gate)** as permanent fix
 
-3. **Avoid:** **Path B (Coinvest Adjustment)** until Spec 95/100 signals that IC impact is acceptable
+3. **Ongoing:** **Avoid Path B (Coinvest Adjustment)** until Spec 95/100 signals that IC impact is acceptable
 
-**Final statement:**
-> Readiness HOLD is blocked by a real policy/ranking alignment issue. The selector is not biased; institutional consensus on near-term catalysts is concentrated and real. Governance must choose whether this mismatch is a temporary opportunity to exploit with explicit override, or a risk to constrain through post-freeze architecture gates.
+---
+
+## Final Statement
+
+> Readiness HOLD is blocked by a real policy/ranking alignment issue. The selector is not biased; institutional consensus on near-term catalysts is concentrated and real. **Governance must decide:** Is this mismatch a temporary opportunity to relax policy for, or a concentration risk that requires portfolio construction gates? If uncertain, maintain HOLD; Path D is an exception trade, not a neutral bridge.
 
 ---
 
