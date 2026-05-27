@@ -26,6 +26,8 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import pandas as pd
+
 # ---------------------------------------------------------------------------
 # Project imports
 # ---------------------------------------------------------------------------
@@ -1544,7 +1546,7 @@ def extend_price_csv_safe(
         for idx, row in df.iterrows():
             dt = idx.strftime("%Y-%m-%d")
             close = row.get("Close")
-            if close is None or close != close:  # NaN guard
+            if close is None or pd.isna(close):
                 continue
             new_rows.append(
                 {
