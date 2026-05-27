@@ -34,13 +34,25 @@ import logging
 import os
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 # Setup paths
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
+
+# Load .env if not already in environment (for cron execution)
+if not os.getenv("FIRECRAWL_API_KEY"):
+    env_file = REPO_ROOT / ".env"
+    if env_file.exists():
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    value = value.strip('"\'')
+                    os.environ[key] = value
 
 from tools.firecrawl_research_ingest import FirecrawlResearchAdapter
 
@@ -67,29 +79,57 @@ def load_digest(digest_file: str | Path) -> dict:
 
 
 def extract_high_moves(digest: dict) -> list[HighMove]:
-    """Extract HIGH-severity moves from digest."""
-    high_moves = []
+    """Extract HIGH-severity moves from digest.
 
-    # Digest structure: { "alerts": { "YYYY-MM-DD": [ { "ticker": "...", "codes": [...], ... } ] } }
-    alerts = digest.get("alerts", {})
-    for date_key, ticker_alerts in alerts.items():
-        if not isinstance(ticker_alerts, list):
+    Supports both formats:
+    1. New format: top_absolute_movers / top_relative_movers_vs_xbi with severity field
+    2. Legacy format: alerts keyed by date with codes array
+    """
+    high_moves = []
+    seen_tickers = set()
+
+    # Try new format first (Spec 063)
+    for move_list_key in ["top_absolute_movers", "top_relative_movers_vs_xbi"]:
+        moves = digest.get(move_list_key, [])
+        if not isinstance(moves, list):
             continue
 
-        for alert in ticker_alerts:
-            ticker = alert.get("ticker", "").upper()
-            if not ticker:
+        for move in moves:
+            ticker = move.get("ticker", "").upper()
+            severity = move.get("severity", "").upper()
+
+            if not ticker or severity != "HIGH" or ticker in seen_tickers:
                 continue
 
-            # Check for HIGH-severity codes
-            codes = alert.get("codes", [])
-            for code in codes:
-                if "HIGH" in code and ("ABS_MOVE" in code or "REL_MOVE" in code):
-                    move_type = code
-                    magnitude = alert.get("magnitude", 0.0)
-                    high_moves.append(
-                        HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude)
-                    )
+            seen_tickers.add(ticker)
+            move_type = f"INTRADAY_{move_list_key.upper()}_HIGH"
+            magnitude = move.get("move_pct", 0.0)
+            high_moves.append(
+                HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude)
+            )
+
+    # Fall back to legacy format if available
+    if not high_moves:
+        alerts = digest.get("alerts", {})
+        for date_key, ticker_alerts in alerts.items():
+            if not isinstance(ticker_alerts, list):
+                continue
+
+            for alert in ticker_alerts:
+                ticker = alert.get("ticker", "").upper()
+                if not ticker or ticker in seen_tickers:
+                    continue
+
+                codes = alert.get("codes", [])
+                for code in codes:
+                    if "HIGH" in code and ("ABS_MOVE" in code or "REL_MOVE" in code):
+                        seen_tickers.add(ticker)
+                        move_type = code
+                        magnitude = alert.get("magnitude", 0.0)
+                        high_moves.append(
+                            HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude)
+                        )
+                        break
 
     return high_moves
 
@@ -147,7 +187,7 @@ def enrich_digest(
                 "ticker": ticker,
                 "move_type": move.move_type,
                 "magnitude_pct": move.magnitude,
-                "enriched_at": datetime.utcnow().isoformat(),
+                "enriched_at": datetime.now(timezone.utc).isoformat(),
                 "governance": "research_only",
                 "news_sources": news_results,
             }
@@ -158,7 +198,7 @@ def enrich_digest(
     # Add enrichment to digest under _firecrawl_context
     if firecrawl_context:
         enriched_digest["_firecrawl_context"] = {
-            "enrichment_timestamp": datetime.utcnow().isoformat(),
+            "enrichment_timestamp": datetime.now(timezone.utc).isoformat(),
             "governance": "research_only_no_alpha",
             "high_moves_enriched": firecrawl_context,
         }
