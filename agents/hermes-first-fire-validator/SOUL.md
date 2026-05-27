@@ -100,8 +100,8 @@ Records:
 
 ## Status
 
-**Phase:** B (Planning)  
+**Phase:** B (Complete)  
 **Last updated:** 2026-05-27  
-**Deployed:** Skeleton only (IDENTITY.md + memory/)  
-**Implementation needed:** `run_job.py` (read ledger, route events to Town)  
-**Live:** Awaiting implementation + OPERATOR_DELIVERY_DRY_RUN=0 approval
+**Deployed:** Yes (run_job.py + SOUL.md + Town routing active)  
+**Live mode:** OPERATOR_DELIVERY_DRY_RUN=0 active (approved 2026-05-27)  
+**First test:** 2026-05-27 21:08:10 — no-op case (biotech_hedge_report WARN_DATE_MISMATCH, not yet evaluated)

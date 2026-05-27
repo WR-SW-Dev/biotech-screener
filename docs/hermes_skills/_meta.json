@@ -86,10 +86,14 @@
       ]
     },
     "hermes-first-fire-validator": {
-      "status": "TODO",
+      "status": "COMPLETE",
       "event_types": ["first_fire_pass", "first_fire_fail"],
       "severity": ["INFO", "FAIL"],
-      "note": "Job script to be created"
+      "implementation_date": "2026-05-27",
+      "files": [
+        "agents/hermes-first-fire-validator/run_job.py",
+        "agents/hermes-first-fire-validator/SOUL.md"
+      ]
     },
     "agent_supervisor_sentinel": {
       "status": "TODO",
@@ -98,10 +102,15 @@
       "note": "Route FAIL event when snapshot not detected"
     },
     "hermes-ruleset-integrity": {
-      "status": "TODO",
-      "event_type": "ruleset_mismatch",
-      "severity": "FAIL",
-      "note": "Job script to validate CLAUDE.md vs runtime"
+      "status": "COMPLETE",
+      "event_types": ["ruleset_mismatch_pass", "ruleset_mismatch_fail"],
+      "severity": ["INFO", "FAIL"],
+      "implementation_date": "2026-05-27",
+      "files": [
+        "agents/hermes-ruleset-integrity/run_job.py",
+        "agents/hermes-ruleset-integrity/SOUL.md",
+        "agents/hermes-ruleset-integrity/IDENTITY.md"
+      ]
     }
   }
 }
