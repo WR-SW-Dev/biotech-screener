@@ -4854,6 +4854,39 @@ def run_daily(
                     _logger.info(f"[{g.status}] {g.name}: {g.detail}")
         _logger.info(f"{'='*70}")
 
+        # --- Step 5a: Update forward_eval IC ledger (Path C monitoring) ---
+        # Extracts mean_ic from forward_eval gate results and appends to
+        # forward_eval_ic_ledger.jsonl for trend monitoring through 2026-06-03.
+        # Non-blocking; failures logged but do not halt pipeline.
+        try:
+            from tools.forward_eval_ic_ledger import append_to_ledger, extract_forward_eval_ic
+
+            _ic_ledger = REPO_ROOT / "artifacts" / "forward_eval_ic_ledger.jsonl"
+            _existing_dates = set()
+            if _ic_ledger.exists():
+                with open(_ic_ledger) as f:
+                    for line in f:
+                        if line.strip():
+                            try:
+                                _entry = json.loads(line)
+                                _existing_dates.add(_entry["as_of_date"])
+                            except json.JSONDecodeError:
+                                pass
+
+            if as_of_date not in _existing_dates:
+                _ic_data = extract_forward_eval_ic(
+                    snapshot_dir=final_path,
+                    as_of_date=as_of_date,
+                    price_cache_base=_price_cache_base,
+                    horizon=config.forward_eval_horizon,
+                    lookback_n=config.forward_eval_lookback_n,
+                )
+                if _ic_data:
+                    append_to_ledger(_ic_ledger, _ic_data)
+                    _logger.info(f"Forward eval IC ledger: {as_of_date} → mean_ic={_ic_data['mean_ic']:.4f}")
+        except Exception as _ic_err:
+            _logger.warning(f"Forward eval IC ledger update failed (non-fatal): {_ic_err}")
+
         # --- Step 5a.1: Archive PIT-sensitive inputs alongside snapshot ---
         # Copies key input files so future PIT v2 regeneration and backtests
         # can use historical inputs instead of current production_data/.
