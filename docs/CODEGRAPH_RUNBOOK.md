@@ -2,11 +2,11 @@
 
 **Status:** Claude/Cursor approved · Cursor Cloud repo config active · Hermes registration deferred
 
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-28
 
 **Index location:** `.codegraph/` (repo-contained; `.codegraph/.gitignore` excludes `*.db`, `*.db-wal`, `*.db-shm` — ships with codegraph, no manual gitignore entry needed)
 
-**Tool version:** codegraph v0.9.4 · Node 22 · npm global install
+**Tool version:** codegraph v0.9.6 · Node 22 · npm global install
 
 **Skill:** `skills/codegraph/SKILL.md`
 
@@ -157,7 +157,12 @@ Return:
 6. minimal guardrail test proposal
 ```
 
-**Known risk in this repo:** `SNAPSHOT_COLUMNS` has an authoritative definition in `run_screen_columns.py` and a separate copy in `run_screen_from_bundle.py`. Schema divergence between these two could make live and bundle `rankings.csv` outputs differ silently. This is the next recommended codegraph application.
+**Known risk in this repo:** `SNAPSHOT_COLUMNS` has an authoritative definition in `run_screen_columns.py` and a separate copy in `run_screen_from_bundle.py`. Schema divergence between these two could make live and bundle `rankings.csv` outputs differ silently.
+
+**Status: covered.** Contract 6 in `tests/test_contract_output_schemas.py` enforces three invariants (added 2026-05-24, verified passing):
+- 6a: Bundle is a strict subset of live (naming drift guard)
+- 6b: Both paths share the required scoring/decision parity surface
+- 6c: Live path retains required scoring and expectation-layer columns
 
 ---
 
@@ -204,53 +209,75 @@ Run `codegraph index` (full reindex) or `codegraph sync` (incremental) after:
 - Before serious dependency tracing
 
 ```bash
-cd /mnt/c/Projects/biotech_screener/biotech-screener
 codegraph status          # confirm index state
 codegraph sync            # incremental (fast, use after small changes)
 codegraph index           # full reindex (use after merges / branch switches)
 codegraph status          # verify node/edge counts unchanged or updated
 ```
 
-Current index: **1,668 files · 50,291 nodes · 114,066 edges · 108 MB**
+Current index: **1,677 files · 50,419 nodes · 113,867 edges · 108.5 MB**
 
 ### Cursor Cloud Persistence
 
 Repo-level Cursor Cloud setup lives in:
 
-- `.cursor/environment.json` — installs `@colbymchenry/codegraph@latest`, then syncs or initializes the local index from the project root.
+- `.cursor/environment.json` — installs `@colbymchenry/codegraph@0.9.6`, installs Python deps from `requirements.txt`, then syncs or initializes the local index from the project root.
 - `.cursor/mcp.json` — registers the Cursor MCP server as `codegraph serve --mcp --path ${workspaceFolder}`.
 
-The install command must remain idempotent. In Cursor Cloud it should also install
-the Python runtime/test dependencies needed for repo work (`requirements.txt`,
-plus `pytest-xdist` while main branch pytest addopts use `-n auto`). Keep
-`.codegraph/` database files gitignored.
+The install command must remain idempotent. Keep `.codegraph/` database files gitignored.
 
 ---
 
-## Hermes Registration — Deferred
+## Hermes Registration
 
-Hermes agents run autonomously on cron. Do not register codegraph as a Hermes MCP dependency until a wrapper/policy exists for:
+Hermes agents run autonomously on cron. All five acceptance gates are now implemented in `common/codegraph_guard.py`. Hermes agents must import and use `CodegraphGuard` rather than calling the codegraph CLI directly.
 
-1. **Dynamic-dispatch break** → warn + fallback to `codegraph_node` + grep/read (agent must not halt silently)
-2. **Ambiguous symbol** → require file-qualified disambiguation before proceeding
-3. **File-path literal** → automatic grep/read fallback
-4. **Cron/shell boundary** → explicit non-graph verification step
-5. **Partial graph proof** → emit explicit warning; no hallucinated path completion
+### Acceptance gates (all implemented)
 
-Registration command (when approved):
-```bash
-codegraph install --target hermes --location global
+| Gate | Implementation |
+|---|---|
+| Dynamic-dispatch break | `_gate_dynamic_dispatch()` — warns + instructs fallback; never halts silently |
+| Ambiguous symbol | `_gate_ambiguous()` — warns + requires `file_hint` before proceeding |
+| File-path literal | `_gate_file_path()` — returns UNVERIFIED + rg fallback instruction |
+| Cron/shell boundary | `_gate_cron_shell()` — warns to inspect subprocess/crontab manually |
+| Partial graph proof | Emits `[PARTIAL PROOF]` on empty results or dynamic-dispatch gaps |
+
+### Hermes agent usage
+
+```python
+from common.codegraph_guard import CodegraphGuard
+
+cg = CodegraphGuard()
+
+# Before any write/mutation:
+result = cg.callers("my_function")
+if not result.is_trustworthy:
+    # heed result.warnings before proceeding
+    logger.warning(result.format())
+
+# Tier 3 boundary check:
+hit, surfaces = cg.tier3_gate("my_function")
+if hit:
+    raise RuntimeError(f"Tier 3 surface reached: {surfaces}. Operator approval required.")
 ```
+
+### Registration state
+
+| Target | Registered | Notes |
+|---|---|---|
+| Cursor IDE | ✅ `.cursor/mcp.json` | MCP tools available |
+| Cloud Agent env | ✅ `.cursor/environment.json` | v0.9.6 pinned |
+| Hermes agents | ✅ `common/codegraph_guard.py` | Use guard, not raw CLI |
 
 ---
 
 ## Registration State
 
-| Target | Registered | Command |
+| Target | Registered | Notes |
 |---|---|---|
 | Claude Code (global) | ✅ | `codegraph install --target claude --location global` |
-| Cursor | ✅ repo config | `.cursor/mcp.json` + `.cursor/environment.json` |
-| Hermes Agent | ❌ deferred | See acceptance gate above |
+| Cursor IDE | ✅ repo config | `.cursor/mcp.json` + `.cursor/environment.json` |
+| Hermes agents | ✅ | `common/codegraph_guard.py` — use guard, not raw CLI |
 
 ---
 
@@ -258,7 +285,7 @@ codegraph install --target hermes --location global
 
 ```bash
 # Remove index from repo
-codegraph uninit /mnt/c/Projects/biotech_screener/biotech-screener
+codegraph uninit .
 
 # Remove Claude Code MCP registration
 codegraph uninstall --target claude --location global
