@@ -100,6 +100,16 @@ Repo-native "ops brain" that continuously answers:
 
 ---
 
+## Path C Governance Monitoring (2026-05-28 to 2026-06-03)
+
+**Status**: ACTIVE governance window  
+**Full Operational Guide**: See **`path-c-operational-runbook.md`** skill (daily monitoring, window close decision automation, emergency conditions)  
+**Monitoring Framework**: See **`path-c-governance-monitoring.md`** skill (IC floor guardrail, forward eval monitoring, decision logic)  
+
+Temporary catalyst timing policy override with hard exit conditions (floor threshold, drawdown trigger, cohort stability check). Daily cron at 10:15 AM ET. Window close decision on 2026-06-03.
+
+---
+
 ## Town-Hermes Bridge (Spec 090)
 
 **Module**: `common/operator_delivery.py`  
@@ -300,12 +310,17 @@ Key rules:
 
 ## Governance Freeze Status
 
-*Last reviewed: 2026-05-24*
+*Last reviewed: 2026-05-28*
 
 - **Architecture Freeze**: ACTIVE — no selector/ranker/sizing/KG changes
-- **13F Q1 2026 Quarantine**: ACTIVE — Jaccard 0.364 (gate ≥ 0.70); attribution-only
-- **Phase 2 Step 5 (KG gating)**: blocked on quarantine clearance + h20d decision
-- Gate results: `artifacts/audit/13f_q1_2026_refresh_gates_2026_05_24.md`
+- **13F Q1 2026 Quarantine**: ✓ CLEARED (Jaccard 0.875, 2026-05-24)
+- **h20d Override**: ✓ ACTIVE (2026-05-26); Phase 2 Step 5 UNBLOCKED; weekly monitoring + re-eval 2026-07-01
+- **Path C Governance**: ✓ APPROVED (2026-05-28); temporary catalyst timing policy override active 2026-05-28 to 2026-06-03
+  - Rationale: institutional data remediated (49-manager cohort); near-term concentration confirmed real consensus
+  - Monitoring: forward eval IC floor (0.0200); portfolio drawdown vs XBI (2pp trigger); cohort Jaccard (0.70)
+  - Exit conditions: observable IC evaluate floor; unobservable IC operator decide extend/revert
+  - Related: `artifacts/readiness/GOVERNANCE_DECISION_PATH_C_2026_05_28.md`
+- **Phase 2 Step 5 (KG gating)**: UNBLOCKED on 13F clearance; h20d now active
 
 ## Infrastructure
 

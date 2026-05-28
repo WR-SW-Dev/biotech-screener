@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-05-27",
+  "last_updated": "2026-05-28",
   "skills": {
     "town-operator-bridge": {
       "name": "Town-Hermes Bridge (Spec 090)",
@@ -72,6 +72,82 @@
       "name": "Financial Health Assessment",
       "file": "financial-health.md",
       "status": "Active"
+    },
+    "path-c-governance-monitoring": {
+      "name": "Path C Governance Monitoring",
+      "file": "path-c-governance-monitoring.md",
+      "status": "Active",
+      "phase": "Governance Window (2026-05-28 to 2026-06-03)",
+      "purpose": "Monitor temporary catalyst timing policy override with IC floor guardrail",
+      "key_metrics": [
+        "forward_eval IC (floor: 0.0200)",
+        "portfolio drawdown vs XBI (threshold: 2pp)",
+        "13F cohort Jaccard (threshold: 0.70)",
+        "emergency exit conditions"
+      ],
+      "related_artifacts": [
+        "artifacts/forward_eval_ic_ledger.jsonl",
+        "artifacts/readiness/GOVERNANCE_DECISION_PATH_C_2026_05_28.md",
+        "tools/forward_eval_ic_ledger.py"
+      ]
+    },
+    "path-c-operational-runbook": {
+      "name": "Path C Operational Runbook",
+      "file": "path-c-operational-runbook.md",
+      "status": "Active",
+      "phase": "Implementation (2026-05-28 through window close)",
+      "tools": [
+        "tools/daily_path_c_monitoring.sh (daily 10:15 AM ET)",
+        "tools/path_c_window_close_decision.py (2026-06-03 decision automation)",
+        "tools/monitor_forward_eval_ic.py (IC status query)"
+      ],
+      "cron_schedule": "15 10 * * * (daily post-snapshot)",
+      "window_close": "2026-06-03 10:00 AM ET",
+      "decision_options": [
+        "Extend window (if IC unobservable)",
+        "Revert to HOLD (conservative)",
+        "Continue (if IC >= 0.0200)"
+      ]
+    }
+  },
+  "path_c_governance_window_status": {
+    "status": "ACTIVE",
+    "effective_period": "2026-05-28 to 2026-06-03",
+    "monitoring_setup": {
+      "daily_checklist": {
+        "tool": "tools/daily_path_c_monitoring.sh",
+        "schedule": "10:15 AM ET (daily)",
+        "cron": "15 10 * * *",
+        "checks": [
+          "Forward Eval IC Status",
+          "Portfolio Drawdown vs XBI",
+          "13F Cohort Stability",
+          "Emergency Exit Conditions"
+        ],
+        "status": "DEPLOYED"
+      },
+      "ic_monitoring": {
+        "tool": "tools/monitor_forward_eval_ic.py",
+        "integration": "run_daily_production.py Step 5a",
+        "ledger": "artifacts/forward_eval_ic_ledger.jsonl",
+        "floor_threshold": 0.02,
+        "expected_status": "NO_DATA (cold start until ~2026-06-17)",
+        "status": "ACTIVE"
+      },
+      "window_close_automation": {
+        "tool": "tools/path_c_window_close_decision.py",
+        "execution_date": "2026-06-03 10:00 AM ET",
+        "scenarios": [
+          "IC observable: evaluate floor (0.0200)",
+          "IC unobservable: operator chooses extend or revert"
+        ],
+        "status": "READY"
+      }
+    },
+    "documentation": {
+      "governance_decision": "artifacts/readiness/GOVERNANCE_DECISION_PATH_C_2026_05_28.md",
+      "monitoring_framework": "docs/hermes_skills/path-c-governance-monitoring.md",
+      "operational_runbook": "docs/hermes_skills/path-c-operational-runbook.md"
     }
   },
   "phase_b_implementation_status": {
