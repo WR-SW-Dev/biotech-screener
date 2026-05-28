@@ -1,0 +1,57 @@
+# CodeGraph Exclusion List
+# Strategy: Exclude pure data/output directories with no symbols.
+# Keep tests/ (needed for codegraph_callers → test coverage discovery).
+# Keep frontend/ source and production_data/ scripts.
+
+# === Generated Data / No Symbols ===
+data/
+output/
+outputs/
+artifacts/
+backfill_logs/
+backfill_results/
+audit_logs/
+logs/
+etf_csvs/
+
+# === Virtual Environments / Build Artifacts ===
+venv/
+.venv/
+.venv-wsl/
+build/
+dist/
+*.egg-info/
+
+# === Large Pipeline Caches (Runtime-Generated) ===
+wake_robin_data_pipeline/cache/
+wake_robin_data_pipeline/outputs/
+wake_robin_data_pipeline/dossiers/
+production_data/archives_enriched/
+
+# === Frontend Build Artifacts (Keep TSX source) ===
+frontend/dashboard/.vite/
+frontend/dashboard/node_modules/
+
+# === CodeGraph Itself ===
+.codegraph/
+
+# === Node / Package Management ===
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# === Python Package Metadata ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
