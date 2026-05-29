@@ -1,13 +1,14 @@
 # Phase 2 Forward Paper Test: Execution Log
 
-**Status:** PENDING_START (infrastructure ready, awaiting operator assignment and start-date finalization)
+**Status:** PENDING_SNAPSHOT (operator assigned, awaiting post-approval trading snapshot for official Day 1)
 
 ## Operational Parameters
 
 | Parameter | Value |
 |-----------|-------|
-| **Start Date** | PENDING (first trading day after 2026-05-29 approval; likely 2026-06-01) |
-| **Approval** | Option A: Approved (2026-05-29), but start date/operator not yet locked |
+| **Operator** | user/operator (locked 2026-05-29) |
+| **Start Date** | NOT LOCKED — Candidate: 2026-06-01 (pending snapshot availability) |
+| **Approval** | Option A: Approved (2026-05-29); Operator locked; Start date pending 2026-06-01 snapshot |
 | **Execution Model** | Manual/on-demand (daily) |
 | **Test Period** | 60–90 trading days |
 | **Terminal Date** | ~2026-08-27 (90 trading days out) |
@@ -26,16 +27,16 @@
 
 ## Governance Checkpoints
 
-**Status:** PENDING (checkpoints to be calculated by trading days, not calendar days)
+**Status:** PENDING_SNAPSHOT (checkpoints will be calculated by trading days once Day 1 is confirmed)
 
-| Trading Day | Target Date (TBD) | Checkpoint | Action Required |
-|-------------|-------------------|-----------|-----------------|
-| **Day 1** | TBD (after 2026-05-29) | **OFFICIAL START** | Lock operator, start date, first snapshot |
-| **~Day 30** | TBD (~30 trading days) | 30-day review | Governance gate: continue or defer? |
-| **~Day 60** | TBD (~60 trading days) | 60-day review | Attribution review: mechanism clarity? |
-| **~Day 90** | TBD (~90 trading days) | 90-day final | Phase 3 decision: promote or close? |
+| Trading Day | Target Date | Checkpoint | Action Required |
+|-------------|-------------|-----------|-----------------|
+| **Day 1** | 2026-06-01 (candidate, pending snapshot) | **OFFICIAL START** | Confirm 2026-06-01 snapshot available; approve Day 1 run |
+| **~Day 30** | TBD (~30 trading days from Day 1) | 30-day review | Governance gate: continue or defer? |
+| **~Day 60** | TBD (~60 trading days from Day 1) | 60-day review | Attribution review: mechanism clarity? |
+| **~Day 90** | TBD (~90 trading days from Day 1) | 90-day final | Phase 3 decision: promote or close? |
 
-**Note:** Checkpoints are calculated by trading days from official start date (Day 1), not calendar days. No cron reminders scheduled.
+**Note:** Operator: user/operator (locked). Official Day 1: pending 2026-06-01 snapshot availability. Checkpoints are trading-day based from confirmed Day 1. No cron reminders scheduled. No automation.
 
 ## 2026-05-29: DRY-RUN BASELINE CAPTURE (Not Official Phase 2 Day 1)
 
@@ -78,18 +79,18 @@ Start (05-29)     |  30-day (06-28)    |  60-day (07-28)    |  90-day (08-27)
 
 ---
 
-## Next Steps (PENDING)
+## Next Steps (PENDING_SNAPSHOT)
 
-1. ⏳ **Operator assignment:** Who will run Phase 2 daily tracking?
-2. ⏳ **Official start date:** Confirm first post-approval trading day (likely 2026-06-01)
-3. ⏳ **Lock governance:** Finalize operator + start date before daily runs begin
-4. ⏳ **Begin official Phase 2:** First trading day after approval with official start snapshot
-5. ⏳ **Daily manual runs:** Each trading day, no automation
-6. ⏳ **30-day checkpoint:** Manual governance review (~30 trading days from start)
-7. ⏳ **60-day checkpoint:** Manual governance review (~60 trading days from start)
-8. ⏳ **90-day checkpoint:** Final governance review (~90 trading days from start)
+1. ✓ **Operator assignment:** user/operator (locked 2026-05-29)
+2. ⏳ **Check 2026-06-01 snapshot:** Verify data/snapshots/2026-06-01/rankings.csv exists and is valid
+3. ⏳ **Lock official Day 1:** Once 2026-06-01 snapshot confirmed, approve Day 1 run authorization
+4. ⏳ **Begin official Phase 2:** First run on confirmed 2026-06-01 snapshot (if available)
+5. ⏳ **Daily manual runs:** Each trading day after Day 1 (no automation, manual only)
+6. ⏳ **30-day checkpoint:** Manual governance review (~30 trading days from Day 1)
+7. ⏳ **60-day checkpoint:** Manual governance review (~60 trading days from Day 1)
+8. ⏳ **90-day checkpoint:** Final governance review (~90 trading days from Day 1)
 
-**Do not continue daily runs until operator and start date are explicitly locked in governance.**
+**Do not run daily tracking until 2026-06-01 snapshot is confirmed and Day 1 run is explicitly authorized.**
 
 ---
 
