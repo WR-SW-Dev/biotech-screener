@@ -1,5 +1,75 @@
-# Hermes Agent Roster
-Last updated: 2026-05-05
+# Hermes & OpenClaw Agent Roster
+
+Last updated: 2026-05-30
+
+This document has **two layers** — do not conflate them:
+
+| Layer | Source of truth | Count (2026-05-30) |
+| --- | --- | --- |
+| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | 34 directories, 31 active + 2 deprecated + 1 shadow |
+| **Hermes scheduler jobs** | Hermes gateway (`hermes cron list`) | ~19 jobs (below; IDs may drift) |
+
+**Lint:** `pytest tests/test_agent_registry.py -q -p no:warnings` (bidirectional registry ↔ disk).
+
+**Town-Hermes bridge (Spec 090):** `docs/hermes_skills/town-operator-bridge.md` — Phase B wired in repo; live email requires `OPERATOR_DELIVERY_DRY_RUN=0` on operator host.
+
+---
+
+## Repo agent fleet (`agents/`)
+
+Canonical registry: **`agents/AGENT_REGISTRY.json`** (`as_of` field on file).
+
+### Summary
+
+| Status | Count | Names |
+| --- | ---: | --- |
+| active | 31 | See registry |
+| deprecated | 2 | `bioshort_watch`, `company_news_ingest` |
+| shadow | 1 | `shadow_watch` |
+
+### Hermes governance agents (Lane A, `llm_policy: none`)
+
+| Agent | Entry | Town event types |
+| --- | --- | --- |
+| `hermes-held-spec-ledger` | `run_job.py` | `held_spec_ledger` |
+| `hermes-first-fire-validator` | `run_job.py` | `first_fire_pass`, `first_fire_fail` |
+| `hermes-ruleset-integrity` | `run_job.py` | `ruleset_mismatch` |
+| `hermes-contradiction-detector` | `run_job.py` | `contradiction_detected` |
+
+Also wired (not separate registry agents): `tools/agent_supervisor_sentinel.py` → `snapshot_missing`; `ops_supervisor` + `cron_watchdog.sh` → `cron_missed`.
+
+### Monitoring stack (production path)
+
+```
+agent heartbeats → tools/agent_heartbeat_checks.py
+    → agents/ops_supervisor/supervisor.py
+    → tools/run_post_snapshot_supervisor.py
+    → tools/agent_supervisor_sentinel.py
+```
+
+### Authority (registry)
+
+- **`mutate_data`:** `crt_resolution_watcher` only
+- **`mutate_config`:** none (operator-only)
+- **Unsupervised:** `bioshort_watch`, `company_news_ingest`, `ops_supervisor`, `shadow_watch` (intentional)
+
+### Operator commands (repo fleet)
+
+```bash
+pytest tests/test_agent_registry.py tests/test_town_bridge_events.py -q -p no:warnings
+python3 tools/build_hermes_knowledge_layer.py
+python3 agents/hermes-contradiction-detector/run_job.py
+python3 agents/ops_supervisor/supervisor.py --as-of $(date +%F)
+```
+
+Live Hermes job history and OpenClaw runtime: **operator WSL only** (`hermes cron list`, fleet triage skill).
+
+---
+
+## Hermes scheduler jobs (gateway)
+
+*Snapshot below from 2026-05-05; verify IDs on host with `hermes cron list`.*
+
 Total jobs: 19 (17 recurring, 2 one-shot)
 
 All jobs deliver locally (Hermes job history). None push to external channels.

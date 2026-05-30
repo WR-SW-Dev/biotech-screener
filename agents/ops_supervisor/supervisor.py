@@ -690,6 +690,18 @@ def main() -> int:
     with open(out_json, "w") as fh:
         json.dump(out, fh, indent=2, default=str)
 
+    # Phase B: cron_missed → Town when runtime health shows missed critical windows
+    try:
+        from common.town_bridge_events import notify_cron_missed_from_runtime_health
+
+        notify_cron_missed_from_runtime_health(
+            as_of,
+            runtime_health,
+            artifact=str(out_json.relative_to(REPO)),
+        )
+    except Exception:
+        pass
+
     # -- Emit Markdown --
     lines = [
         f"# Ops Supervisor — {as_of}",

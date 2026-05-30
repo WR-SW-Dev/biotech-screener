@@ -60,6 +60,12 @@ fi
 if [ "$PROD_RAN" = false ]; then
     log "MISSED: No production run for $TODAY — triggering manual recovery"
 
+    $PYTHON "$REPO/tools/notify_cron_missed.py" \
+        --date "$TODAY" \
+        --reason "production_snapshot_missing" \
+        --recovery-triggered >> "$LOG" 2>&1 \
+        || log "notify_cron_missed failed (exit $?)"
+
     # Try to restart cron (may fail without sudo)
     service cron restart >> "$LOG" 2>&1 || log "cron restart failed (no sudo) — running jobs directly"
 

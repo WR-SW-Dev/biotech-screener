@@ -123,12 +123,13 @@ metadata:
 
 *Last sync: 2026-05-30 · `python3 tools/sync_hermes_skills.py --register-meta`*
 
+- **Agent registry:** 34 agents in `agents/AGENT_REGISTRY.json` (31 active + 2 deprecated + 1 shadow); 4 Hermes governance jobs including `hermes-contradiction-detector`
 - **Registry:** 31 skills in `docs/hermes_skills/_meta.json` (16 Cursor `SKILL.md` mirrors + 3 `REFERENCE.md` + 12 Hermes-native)
 - **Sync map:** `tools/sync_hermes_skills.py` · audit: `tools/audit_hermes_skills.py`
 - **Authoritative (no overwrite from `skills/`):** `memory-steward` — canonical copy at `~/.hermes/skills/devops/memory-steward/`; repo backup `.hermes/skills/devops/memory-steward.SKILL.md`
 - **Recent additions:** `firecrawl-research-discovery` (SDK v2, PR #319), `codegraph` (guard + MCP, PR #307)
 - **Hermes-only sections preserved on sync:** Path C block in `screener-ops.md`
-- **Town-Hermes bridge:** Phase B event wiring complete (2026-05-27); live email delivery awaits `OPERATOR_DELIVERY_DRY_RUN=0`
+- **Town-Hermes bridge:** Phase B event wiring complete (2026-05-30, all event types); live email delivery awaits `OPERATOR_DELIVERY_DRY_RUN=0`
 - Governance label: Tooling/knowledge-layer expansion only. No model, ranker, selector, sizing, or alpha-promotion change.
 ## What to Update After Every Session
 
