@@ -98,6 +98,23 @@ Repo-native "ops brain" that continuously answers:
 | Contradiction ledger | `artifacts/ops/contradiction_ledger/latest.md` |
 | Operator briefs | `artifacts/ops/operator_brief/daily/YYYY-MM-DD.md` |
 
+### Host authority (operator WSL vs Cloud)
+
+*Last reviewed: 2026-05-30 · `main` @ `b19c36e3` (#311–#313)*
+
+- **Operator WSL** is authoritative for `crontab -l`, `biotech_hedge_report.py`, `output/hedge_report/`, `BIOSHORT_VERDICT.json`, producer logs, and Spec 087 B1b/B2/B3 state.
+- **Cursor Cloud** may build ledgers and validate repo plumbing only. Missing `crontab` → C1/C3 `UNKNOWN_CLOUD_ENV` (not `HARD_CONTRADICTION`). First-fire FAIL remains when hedge artifacts are missing.
+- **Standing rule:** No more cloud cleanup for registry/MCP/CodeGraph unless a new failure appears. Missing cron/artifacts on WSL → narrow bioshort hedge **producer** ops repair, not model/ranker redesign.
+
+Operator check:
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+git pull && python3 tools/build_hermes_knowledge_layer.py
+cat artifacts/ops/contradiction_ledger/latest.md
+cat artifacts/ops/first_fire_ledger/latest.md
+```
+
 ---
 
 ## Path C Governance Monitoring (2026-05-28 to 2026-06-03)
@@ -170,7 +187,8 @@ WARN: `stale_artifact`, `contradiction_detected`
 
 ### Model Configuration
 
-- **Primary**: `deepseek/deepseek-v4-flash:free` (OpenRouter) — fleet-wide migration 2026-05-20; 27 agents migrated
+- **Primary**: `deepseek/deepseek-v4-flash:free` (OpenRouter) — fleet-wide migration 2026-05-20
+- **Registry**: 33 agents (30 active, 2 deprecated, 1 shadow) — `agents/AGENT_REGISTRY.json`
 - **Fallback**: Anthropic Claude SDK (for Claude-specific models)
 - **Auto-routing**: "deepseek" models → OpenRouter (OpenAI-compatible), "claude" → Anthropic SDK
 
@@ -324,17 +342,25 @@ Key rules:
 
 ## Infrastructure
 
-*Last reviewed: 2026-05-25*
+*Last reviewed: 2026-05-30*
 
-- **Platform**: WSL2 on Windows host
+- **Platform**: WSL2 on Windows host (operator authority for cron + artifacts)
 - **Agent model**: `deepseek/deepseek-v4-flash:free` (OpenRouter) since 2026-05-20
 - Daily cron: 5:30 PM ET weekdays
-- Sleep-cliff risk: Windows host suspend kills crons silently
-- Stopgap: `powercfg /change standby-timeout-ac 0`
+- Sleep-cliff risk: Windows host suspend kills crons silently — `powercfg /change standby-timeout-ac 0`
+
+### Repo plumbing baseline
+
+| PR | Scope |
+|----|--------|
+| #311 | Registry ↔ agent dirs; 33-agent fleet |
+| #312 | CodeGraph 0.9.7; `$HOME/.local` install |
+| #313 | `UNKNOWN_CLOUD_ENV` for cloud crontab checks |
 
 ### Cursor Cloud / CI / Hermes Notes
 
-- Cursor Cloud agents need Python deps from `requirements.txt` plus `pytest-xdist` before running `run_screen.py` or pytest on main.
-- GitHub Actions failures that say `The job was not started because an Actions budget is preventing further use.` are provider budget/quota blocks, not PR code failures.
-- PR #304 is Track B draft/spec-test-only. Expected red fail-closed tests must not be made green without explicit governance clearance.
-- Repo-native Hermes MCP can work in Cursor Cloud while production Hermes/Hermes Link runtime is absent; stale cloud knowledge artifacts require local/production refresh before triage.
+- `.cursor/environment.json`: CodeGraph `@0.9.7` to `$HOME/.local`, `pip install -r requirements.txt`, `codegraph sync|index`. **No pytest-xdist required.**
+- Repo-native Hermes MCP (`mcp_server/hermes_server.py`) read-only in Cloud; production Hermes gateway is operator-host only.
+- Knowledge-layer triage: run builder on **operator WSL**; see **Host authority** above.
+- GitHub Actions budget blocks are infrastructure, not PR code failures.
+- PR #304 is Track B draft/spec-test-only — do not green without governance clearance.

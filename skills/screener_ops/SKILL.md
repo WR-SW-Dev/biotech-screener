@@ -78,6 +78,38 @@ Repo-native "ops brain" that continuously answers:
 | Contradiction ledger | `artifacts/ops/contradiction_ledger/latest.md` |
 | Operator briefs | `artifacts/ops/operator_brief/daily/YYYY-MM-DD.md` |
 
+### Host authority \(operator WSL vs Cloud\)
+
+*Last reviewed: 2026-05-30 · plumbing baseline `main` @ `b19c36e3` (#311–#313 merged)*
+
+| Host | Can validate | Cannot validate |
+| --- | --- | --- |
+| **Operator WSL** | `crontab -l`, `biotech_hedge_report.py` schedule, `output/hedge_report/`, `BIOSHORT_VERDICT.json`, producer logs, B1b/B2/B3 governance | Hermes gateway / OpenClaw job history \(separate checks\) |
+| **Cursor Cloud** | Repo plumbing, registry/MCP, CodeGraph, ledger **build** \(read-only\) | Authoritative cron or hedge artifacts |
+
+**Contradiction severities**
+
+- `HARD_CONTRADICTION` — only when `crontab` is available and B1b producer line is missing.
+- `UNKNOWN_CLOUD_ENV` — C1/C3 when `crontab` binary is absent \(Cloud Agent VMs\). Not a governance pass/fail.
+- First-fire `FAIL_ARTIFACT_MISSING_PAST_DEADLINE` — still emitted on any host when hedge artifacts are missing past deadline. Do not suppress from cloud.
+
+**Operator WSL authority check** \(after `git pull` on `main`):
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+python3 tools/build_hermes_knowledge_layer.py
+cat artifacts/ops/contradiction_ledger/latest.md
+cat artifacts/ops/first_fire_ledger/latest.md
+```
+
+| WSL finding | Meaning |
+| --- | --- |
+| Cron + hedge artifacts present | B1b may be closable on operator evidence |
+| Cron missing or hedge artifacts missing | Narrow **Spec 087 B1b ops repair** \(bioshort hedge producer\) — not model/ranker/governance redesign |
+| Cron present, artifacts missing | Inspect `logs/biotech_hedge_report.log` before governance change |
+
+**Standing rule:** No further cloud cleanup for registry/MCP/CodeGraph/knowledge-layer plumbing unless a new failure appears.
+
 ---
 
 ## Town-Hermes Bridge \(Spec 090\)
@@ -114,7 +146,8 @@ Hermes job completes
 
 ### Model Configuration \(updated 2026-05-20\)
 
-- **Primary model**: `deepseek/deepseek-v4-flash:free` \(OpenRouter\) - fleet-wide migration 2026-05-20; all 27 agents migrated from Llama 3.3 70B / Claude Haiku 4.5
+- **Primary model**: `deepseek/deepseek-v4-flash:free` \(OpenRouter\) - fleet-wide migration 2026-05-20
+- **Registry**: 33 agents \(30 active, 2 deprecated, 1 shadow\) + 3 Hermes governance jobs in `agents/` \(held-spec, first-fire, ruleset-integrity\) — see `agents/AGENT_REGISTRY.json`
 - **Fallback**: Anthropic Claude SDK \(for Claude-specific models\)
 - **Auto-routing**: "deepseek" models -> OpenRouter \(OpenAI-compatible\), "claude" -> Anthropic SDK
 - **Previous**: Llama 3.3 70B Instruct Turbo \(Together AI, 2026-05-13 to 2026-05-20\)
@@ -433,23 +466,33 @@ Key findings \(pseudo-PIT\):
 
 ## Infrastructure
 
-*Last reviewed: 2026-05-25*
+*Last reviewed: 2026-05-30*
 
-- **Current**: WSL2 on Windows host
-- **Agent model**: Llama 3.3 70B via Together AI \(switched 2026-05-13, was OpenRouter\)
-- Daily cron runs 4:30-7:30 PM ET on weekdays
-- universe\_maintenance cron: 10:00 AM ET \(fixed race condition - was running before rankings.csv existed\)
-- Sleep-cliff risk: Windows host suspend kills crons silently
-- Stopgap: `powercfg /change standby-timeout-ac 0`
+- **Production host**: WSL2 on Windows \(operator authority for cron + artifacts\)
+- **Agent model**: `deepseek/deepseek-v4-flash:free` via OpenRouter \(2026-05-20\)
+- Daily production cron: 5:30 PM ET weekdays
+- `universe_maintenance`: 10:00 AM ET
+- Sleep-cliff risk: Windows host suspend kills crons silently — `powercfg /change standby-timeout-ac 0`
 - Missed cron signature: 24-48h gap in `data/snapshots/`
-- **Planned**: $15/mo Linux VPS \(DigitalOcean / Hetzner\). No timeline set. WSL2 remains dev environment.
+- **Planned**: Linux VPS migration; WSL2 remains dev environment
+
+### Repo plumbing baseline \(Cloud + Cursor\)
+
+*Merged 2026-05-30 · `main` @ `b19c36e3`*
+
+| PR | Scope | Status |
+| --- | --- | --- |
+| #311 | Agent registry ↔ `agents/` dirs; 33-agent fleet; Hermes governance agents registered | Done |
+| #312 | CodeGraph `@0.9.7` via `$HOME/.local`; `.cursor/environment.json` | Done |
+| #313 | Knowledge layer: `UNKNOWN_CLOUD_ENV` when `crontab` unavailable; operator-host C3 authority | Done |
 
 ### Cursor Cloud Agent Environment
 
-- Repo setup is in `.cursor/environment.json`.
-- Cloud agents need Python runtime/test dependencies from `requirements.txt` before running `run_screen.py` or pytest.
-- Include `pytest-xdist` while main branch pytest addopts still include `-n auto --dist worksteal`.
-- Symptom of drift: `run_screen.py --help` fails on missing `dotenv`, or pytest errors on unrecognized `-n/--dist`.
+- Install hook: `.cursor/environment.json` — `npm install -g @colbymchenry/codegraph@0.9.7 --prefix "$HOME/.local"`, then `pip install -r requirements.txt`, then `codegraph sync` or `codegraph index`.
+- MCP: `.cursor/mcp.json` — `codegraph` + repo-native `hermes` (`mcp_server/hermes_server.py`, read-only).
+- Python deps from `requirements.txt` only; **`pytest-xdist` not required** (`pyproject.toml` uses `-q -m 'not network'`).
+- Cloud can run registry tests and build knowledge-layer ledgers; **cannot** authoritatively validate operator cron or `output/hedge_report/`.
+- Expected cloud build summary: `0 hard / N cloud-env / M possible`; first-fire FAIL may still appear if hedge artifacts are absent in the checkout.
 
 ### CI Budget Failures
 
@@ -465,6 +508,6 @@ Key findings \(pseudo-PIT\):
 
 ### Hermes Runtime vs Repo MCP
 
-- Repo-native Hermes MCP can work in Cursor Cloud via `.cursor/mcp.json` and `mcp_server/hermes_server.py`.
-- Production Hermes/Hermes Link runtime is not expected to be visible in Cursor Cloud.
-- Knowledge-layer artifact warnings generated in cloud are stale unless regenerated on the intended branch/runtime; confirm locally before treating C2/C3/C5/first-fire warnings as production failures.
+- Repo-native Hermes MCP works in Cursor Cloud \(registry, SOUL, knowledge artifacts when built locally\).
+- Production Hermes gateway, scheduled jobs, and OpenClaw runtime are **operator-host only** — not visible in Cloud.
+- Triage knowledge-layer alerts on **operator WSL** after `git pull` and `build_hermes_knowledge_layer.py`; see **Host authority** above.

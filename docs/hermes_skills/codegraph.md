@@ -60,13 +60,19 @@ codegraph sync
 codegraph index
 ```
 
-Cursor Cloud agents install and maintain codegraph through `.cursor/environment.json`. Cursor MCP launches through `.cursor/mcp.json`:
+Cursor Cloud agents install and maintain codegraph through `.cursor/environment.json`:
+
+- Pin: `@colbymchenry/codegraph@0.9.7`
+- Install to `$HOME/.local` (global npm may fail with EACCES on Cloud VMs)
+- Then `pip install -r requirements.txt` and `codegraph sync` or `codegraph index`
+
+Cursor MCP launches through `.cursor/mcp.json`:
 
 ```bash
 codegraph serve --mcp --path ${workspaceFolder}
 ```
 
-Hermes registration remains deferred; do not add codegraph to Hermes until the ambiguity/dynamic-dispatch fallback policy is implemented.
+Plumbing baseline: `main` @ `b19c36e3` (#312). Hermes agents use `common/codegraph_guard.py` when registered.
 
 ---
 
