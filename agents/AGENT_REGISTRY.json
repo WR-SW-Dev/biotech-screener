@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-04-28",
+  "as_of": "2026-05-30",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE \u2014 active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
   "enums": {
     "category": [
@@ -263,6 +263,52 @@
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
       "notes": "Crontab: 14:35. Absorbs company_news_ingest.",
+      "llm_policy": "none",
+      "requires_preflight": true
+    },
+    "hermes-first-fire-validator": {
+      "role": "validate first-fire readiness before production promotion",
+      "category": "control_plane",
+      "cadence": "on_demand",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/ops/first_fire_ledger/",
+        "artifacts/audit/first_fire_validations/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Spec 089 Phase 2. Hermes job: one-shot after new cron first run. Entry: agents/hermes-first-fire-validator/run_job.py. Reads artifacts/ops/first_fire_ledger/latest.json.",
+      "llm_policy": "none",
+      "requires_preflight": true
+    },
+    "hermes-held-spec-ledger": {
+      "role": "held-spec ledger analyst, route operator alerts",
+      "category": "control_plane",
+      "cadence": "on_demand",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/ops/held_spec_ledger/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Spec 089/090 Phase 2. Mon 08:45 ET + daily while specs open. Entry: agents/hermes-held-spec-ledger/run_job.py.",
+      "llm_policy": "none",
+      "requires_preflight": true
+    },
+    "hermes-ruleset-integrity": {
+      "role": "ruleset integrity monitor, CLAUDE.md vs runtime",
+      "category": "control_plane",
+      "cadence": "on_demand",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/audit/ruleset_integrity/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Spec 089 governance lane. Entry: agents/hermes-ruleset-integrity/run_job.py.",
       "llm_policy": "none",
       "requires_preflight": true
     },
