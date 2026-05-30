@@ -72,30 +72,32 @@ Cursor MCP launches through `.cursor/mcp.json`:
 codegraph serve --mcp --path ${workspaceFolder}
 ```
 
-Plumbing baseline: `main` @ `b19c36e3` (#312). Hermes agents use `common/codegraph_guard.py` when registered.
+Plumbing baseline: `main` @ `b19c36e3` (#312). No further CodeGraph/cloud install work unless a new failure appears.
+
+Hermes agents use `common/codegraph_guard.py` when registered; Hermes MCP remains read-only fleet context only.
 
 ---
 
 ## Standard Workflow
 
+> **Tool names differ by context.**
+> From an IDE/agent session use the **MCP tools** (`codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_context`).
+> From a bash shell use the **CLI equivalents** (`codegraph query`, `codegraph callers`, `codegraph callees`, `codegraph impact`, `codegraph context`).
+> The table below uses MCP names. CLI equivalents are shown inline.
+
 1. Search broadly for the target symbol or concept:
-   ```bash
-   codegraph query "save_validation_snapshot"
-   ```
+   - MCP: `codegraph_search("save_validation_snapshot")`
+   - CLI: `codegraph query "save_validation_snapshot"`
 2. Disambiguate common names by file/path context before drawing conclusions.
 3. Inspect dependency direction:
-   ```bash
-   codegraph callers "save_validation_snapshot"
-   codegraph callees "save_validation_snapshot"
-   ```
+   - MCP: `codegraph_callers("save_validation_snapshot")` / `codegraph_callees("save_validation_snapshot")`
+   - CLI: `codegraph callers "save_validation_snapshot"` / `codegraph callees "save_validation_snapshot"`
 4. Before edits, check blast radius:
-   ```bash
-   codegraph impact "SNAPSHOT_COLUMNS"
-   ```
+   - MCP: `codegraph_impact("SNAPSHOT_COLUMNS")`
+   - CLI: `codegraph impact "SNAPSHOT_COLUMNS"`
 5. For unknown subsystems, generate focused context:
-   ```bash
-   codegraph context "trace snapshot columns drift risk"
-   ```
+   - MCP: `codegraph_context("trace snapshot columns drift risk")`
+   - CLI: `codegraph context "trace snapshot columns drift risk"`
 6. Confirm anything outside static Python/JS call edges with targeted read/search.
 
 ---

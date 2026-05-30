@@ -56,7 +56,7 @@ spend_t = weight * (rate * NAV_t) + (1 - weight) * spend_{t-1}
 
 ### Owl / Guyton-Klinger Guardrail Rule
 
-**File**: `src/aa_model/spending/owl_adapter.py`
+**File**: `src/aa_model/spending/owl_adapter.py` (16KB, full implementation)
 
 Advanced guardrail-based withdrawal strategy with prosperity and capital preservation triggers.
 
@@ -66,13 +66,13 @@ Advanced guardrail-based withdrawal strategy with prosperity and capital preserv
 - Capital preservation rule: decrease spend when portfolio falls below threshold
 - Guardrails define maximum and minimum spend adjustments per period
 
-**Phase 11 fix (L16)**: Owl now uses absolute-dollar guardrail thresholds (scale-invariant in initial NAV). Prior version reacted to forecasted NAV, not realized NAV (L15, resolved Phase 4a).
+**Phase 11 fix (L16)**: Owl now uses absolute-dollar guardrail thresholds, making it scale-invariant in initial NAV. Prior version reacted to forecasted NAV, not realized NAV (L15, resolved Phase 4a).
 
 ---
 
 ## Spending Base (Phase 12/12.5)
 
-**File**: `src/aa_model/spending/spending_base.py`
+**File**: `src/aa_model/spending/spending_base.py` (12.6KB)
 
 ### The Core Problem (L19)
 
@@ -85,29 +85,27 @@ Using total NAV as the spending rate denominator would suggest the family can sp
 
 ### Configurable Denominator
 
+The spending base is configurable to use different NAV measures:
+
 | Base Type | What It Includes | Use Case |
 |-----------|-----------------|----------|
 | total_nav | Everything | Legacy/simple models |
 | liquid_nav | Only liquid buckets | Conservative |
-| distributable_income | Income-producing assets only | Most realistic for this SFO |
-
-**Rule**: Spending rate denominator must be explicitly configured, not defaulted to total NAV.
+| distributable_income | Income-producing assets only | Most realistic for SFO |
 
 ### Distribution Inflow (Phase 13)
 
-`distribution_inflow` is a ledger flow type representing income distributions from illiquid assets that become spendable. Bridges the gap between illiquid NAV and actual spending capacity.
+`distribution_inflow` is a new ledger flow type representing income distributions from illiquid assets that become spendable. This bridges the gap between illiquid NAV and actual spending capacity.
 
 ---
 
 ## Liquidity Coverage
 
-**File**: `src/aa_model/liquidity/coverage.py`
+**File**: `src/aa_model/liquidity/coverage.py` (21KB)
 
 ### Reserve Floor
 
 Default: 18 months of spending in cash + short-term bonds (configurable via `liquidity.floor_months` in base.yaml).
-
-Reserve floor is enforced before rebalancing.
 
 ### Coverage Ratios
 
@@ -123,8 +121,6 @@ Per-period obligations vs period-available liquidity by tier.
 | 4 | At maturity | Fixed-term vehicles |
 | 5 | Locked | PE, development RE, OpCo |
 
-Liquidity tiering must honor the four-line principle.
-
 ### Breach Alerts
 
 Triggered when projected outflows exceed tier 1-2 capacity within the planning horizon.
@@ -133,7 +129,7 @@ Triggered when projected outflows exceed tier 1-2 capacity within the planning h
 
 ## Manager Terms Diagnostics
 
-**File**: `src/aa_model/liquidity/manager_terms_diagnostics.py`
+**File**: `src/aa_model/liquidity/manager_terms_diagnostics.py` (19.5KB)
 
 Per-manager liquidity analysis:
 - Redemption notice periods
@@ -148,7 +144,7 @@ Per-manager liquidity analysis:
 
 ### Cashflow Modeling v7.xlsx (Read-Only)
 
-Canonical entity-level cash-flow forecast. The model reads, normalizes, and reconciles to it. The model does NOT mutate the workbook.
+The canonical entity-level cash-flow forecast. The model reads, normalizes, and reconciles to it. The model does NOT mutate the workbook.
 
 ### Investment Summary Workbook (Read-Only)
 

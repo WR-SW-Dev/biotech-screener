@@ -163,8 +163,14 @@
     },
     "hermes-first-fire-validator": {
       "status": "COMPLETE",
-      "event_types": ["first_fire_pass", "first_fire_fail"],
-      "severity": ["INFO", "FAIL"],
+      "event_types": [
+        "first_fire_pass",
+        "first_fire_fail"
+      ],
+      "severity": [
+        "INFO",
+        "FAIL"
+      ],
       "implementation_date": "2026-05-27",
       "files": [
         "agents/hermes-first-fire-validator/run_job.py",
@@ -182,8 +188,14 @@
     },
     "hermes-ruleset-integrity": {
       "status": "COMPLETE",
-      "event_types": ["ruleset_mismatch_pass", "ruleset_mismatch_fail"],
-      "severity": ["INFO", "FAIL"],
+      "event_types": [
+        "ruleset_mismatch_pass",
+        "ruleset_mismatch_fail"
+      ],
+      "severity": [
+        "INFO",
+        "FAIL"
+      ],
       "implementation_date": "2026-05-27",
       "files": [
         "agents/hermes-ruleset-integrity/run_job.py",

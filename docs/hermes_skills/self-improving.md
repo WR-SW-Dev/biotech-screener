@@ -131,6 +131,11 @@ get_memories()  # global
 get_memories(routine_slug="town-morning-briefing")  # routine-specific
 ```
 
+### Archiving a stale memory
+```
+delete_memory(memory_id="...")  # after confirming it's no longer relevant
+```
+
 ## Scope
 
 **ONLY**: Learns from corrections and self-reflection; stores preferences via Town memories or Hermes files; reads memory state.

@@ -21,12 +21,26 @@ description: >
 
 ## Purpose
 
-Reference for the 13F institutional signal pipeline - from SEC EDGAR filing ingestion through coinvest_score_z production signal and cohort quarantine governance. This is the dominant selector signal (100% weight in v1.14.0).
+Reference for the 13F institutional signal pipeline - from SEC EDGAR filing ingestion through coinvest\_score\_z production signal and cohort quarantine governance. This is the dominant selector signal (100% weight in v1.14.0).
 
 This skill is organized into two sections:
 
 1. **Framework Reference** - Stable architecture, rules, and processes (changes only with code updates)
 2. **Operational State** - Volatile status snapshots that require periodic refresh
+
+---
+
+## Codegraph Preflight (mandatory before any code edit)
+
+The institutional signal (13F / coinvest_score_z) is the sole selector signal at v1.14.0 — Tier 3. Before editing any symbol, run the standard preflight per `skills/codegraph/SKILL.md`:
+
+1. `codegraph_search("<symbol>")` — locate the target
+2. `codegraph_node("<symbol>", source=True)` — inspect signature and body
+3. `codegraph_callers("<symbol>")` — identify all production callers
+4. `codegraph_callees("<symbol>")` — map downstream dependencies
+5. `codegraph_impact("<symbol>", depth=2)` — confirm blast radius
+
+**Gate:** If impact reaches `selector_engine`, `ranker_engine`, `decision_engine`, `final_score`, `coinvest_score_z`, or `rankings.csv` — change is **BLOCKED** until operator approval.
 
 ---
 
@@ -52,8 +66,8 @@ SEC EDGAR 13F-HR filings
 ### Tiers
 
 | Tier | Description | Signal Weight |
-|------|-------------|--------------|
-| elite_core | Highest-conviction biotech-focused managers | Full weight |
+| --- | --- | --- |
+| elite\_core | Highest-conviction biotech-focused managers | Full weight |
 | conditional | Broader institutional managers with biotech exposure | Reduced weight |
 
 ### Onboarding Flow
@@ -74,15 +88,15 @@ Partial reruns: `--skip-registry`, `--skip-backfill`, `--skip-current`, `--skip-
 
 ---
 
-## coinvest_score_z
+## coinvest\_score\_z
 
 The production selector signal. Measures institutional co-investment conviction across elite biotech managers.
 
 ### Key Properties
 
-- Drives 100% of selector weight (v1.14.0, coinvest-only after inst_delta_z demotion)
-- Correlation with final_score: rho = +0.882 (double-count concern, documented in T1 ranker anatomy)
-- Checklist v2: 3/5 standalone; prior bundle with inst_delta is historical evidence only
+- Drives 100% of selector weight (v1.14.0, coinvest-only after inst\_delta\_z demotion)
+- Correlation with final\_score: rho = +0.882 (double-count concern, documented in T1 ranker anatomy)
+- Checklist v2: 3/5 standalone; prior bundle with inst\_delta is historical evidence only
 - Collapse guard: SD floor = 0.10 (below this, snapshot integrity check FAILs)
 
 ### Data Flow
@@ -94,7 +108,7 @@ The production selector signal. Measures institutional co-investment conviction 
 
 ---
 
-## inst_delta_z
+## inst\_delta\_z
 
 Quarter-over-quarter change in institutional holdings. Measures whether smart money is accumulating or distributing.
 
@@ -103,11 +117,11 @@ Quarter-over-quarter change in institutional holdings. Measures whether smart mo
 - Reinstatement requires IC recovery evidence documented in governance log
 - Current production status: selector weight 0%, absent from the production 2-feature ranker
 - Historical audit showed positive within-cohort discrimination (NW-t = +3.32), but this is not active production behavior
-- When zeroed, selector runs on coinvest_score_z alone and ranker uses only `coinvest_score_z` + `financial_score`
+- When zeroed, selector runs on coinvest\_score\_z alone and ranker uses only `coinvest_score_z` + `financial_score`
 
 ---
 
-## insider_net_buy_value_90d (Spec 104, Diagnostic Only)
+## insider\_net\_buy\_value\_90d (Spec 104, Diagnostic Only)
 
 Form 4-derived insider buying signal. Tracks net insider purchase value over a trailing 90-day window.
 
@@ -121,7 +135,7 @@ Form 4-derived insider buying signal. Tracks net insider purchase value over a t
 ### Blank vs. Zero Semantics (CRITICAL)
 
 | Value | Meaning |
-|-------|---------|
+| --- | --- |
 | NaN / None / blank | Not fetched, no Form 4 coverage for this ticker |
 | 0.0 | Fetched successfully, no insider buy activity in 90-day window |
 
@@ -129,11 +143,15 @@ Never collapse blank and zero. Never impute zero for missing or blank for zero.
 
 ### Expectation Model Isolation Guard (Spec 104, R4a)
 
-The expectation model has an `insider_net_buy_z` weight that activates silently if `insider_net_buy_value_90d` flows into `market_features`. Spec 104 requires an explicit guard: either runtime assertion that the field is NOT in `market_features`, or weight zeroing, or a pre-inference drop guard.
+The expectation model has an `insider_net_buy_z` weight that activates silently if `insider_net_buy_value_90d` flows into `market_features`. This is the fragile path that "diagnostic-only" depends on. Spec 104 requires an explicit guard: either runtime assertion that the field is NOT in `market_features`, or weight zeroing, or a pre-inference drop guard.
 
 ### Promotion Criteria (future, not current build)
 
-Requires ALL of: 20+ stable snapshots with >= 60% non-null coverage, blank/zero integrity verified, IC > 0 at p < 0.05, Checklist v2 battery pass, explicit written approval.
+Requires ALL of: 20+ stable snapshots with >= 60% non-null coverage, blank/zero integrity verified, IC > 0 at p < 0.05, Checklist v2 battery pass, explicit written approval. Until all five are met, insider stays diagnostic.
+
+### Relationship to Crowd-Belief Estimation
+
+If insider data eventually proves useful for crowd-belief estimation (market expectation modeling), it would enter through the expectation pipeline, NOT through the institutional signal pipeline. The 13F-based signals (coinvest\_score\_z, inst\_delta\_z) measure institutional conviction from quarterly portfolio disclosures. Insider buying measures company-insider conviction from Form 4 filings. They are different data sources with different provenance rules.
 
 ---
 
@@ -146,12 +164,12 @@ SEC 13F filings have a 45-day lag from quarter-end. Filings typically cluster in
 5 guards, all must PASS:
 
 | Guard | Check |
-|-------|-------|
-| 1 | Most recent snapshot has valid institutional_summary_delta.json |
-| 2 | coinvest_score_z has healthy variance (SD > 0.10) |
+| --- | --- |
+| 1 | Most recent snapshot has valid institutional\_summary\_delta.json |
+| 2 | coinvest\_score\_z has healthy variance (SD > 0.10) |
 | 3 | PIT cache has entries within 3 days of today |
 | 4 | SEC EDGAR endpoint is reachable |
-| 5 | Dry-run: build_institutional_summary() produces valid output (>=80% coverage) |
+| 5 | Dry-run: build\_institutional\_summary() produces valid output (>=80% coverage) |
 
 Writes baseline artifact: `artifacts/13f_pre_refresh_baseline_{date}.json`
 
@@ -162,19 +180,19 @@ Run after new filings land. Compares pre-refresh vs post-refresh snapshots.
 **Sections:**
 
 - A: Manager-level diff (filing counts, coverage)
-- B: Coverage diff (tickers_with_signal, signal_coverage_pct)
-- C: Per-ticker score diff (coinvest_score_z, inst_delta_z distributions)
+- B: Coverage diff (tickers\_with\_signal, signal\_coverage\_pct)
+- C: Per-ticker score diff (coinvest\_score\_z, inst\_delta\_z distributions)
 - D: Top-30 churn (Jaccard similarity, entries/exits, rank movement)
 
 **Verdicts:**
 
 | Verdict | Meaning | Action |
-|---------|---------|--------|
+| --- | --- | --- |
 | CLEAN | Normal refresh, minimal churn | Proceed |
 | QUARANTINE | Significant score/rank disruption | Hold for review |
-| PRODUCER_AUDIT_REQUIRED | Anomalous coverage or manager changes | Deep investigation |
+| PRODUCER\_AUDIT\_REQUIRED | Anomalous coverage or manager changes | Deep investigation |
 
-Telegram alerting on QUARANTINE/PRODUCER_AUDIT_REQUIRED (suppressible with `--no-alert`).
+Telegram alerting on QUARANTINE/PRODUCER\_AUDIT\_REQUIRED (suppressible with `--no-alert`).
 
 ### Contamination Window
 
@@ -191,10 +209,17 @@ After adding new managers, a contamination window opens (typically 20 trading da
 
 ---
 
+## Key Biotech 13F Filers to Track
+
+Per user preference: Fairmount Funds, Deep Track Capital, Logos Capital.
+Also monitor BioPharm IQ Twitter ([https://twitter.com/BioPharmIQ](https://twitter.com/BioPharmIQ)).
+
+---
+
 ## Source Files
 
 | Component | File |
-|----------|------|
+| --- | --- |
 | Manager Onboarding | `tools/onboard_manager.py` |
 | 13F Cache Warmer | `tools/warm_13f_cache.py` |
 | Institutional Summary Builder | `build_institutional_summary.py` |
@@ -212,7 +237,7 @@ After adding new managers, a contamination window opens (typically 20 trading da
 
 ---
 
-## inst_delta_z Current Status
+## inst\_delta\_z Current Status
 
 *Last reviewed: 2026-05-04*
 
@@ -227,19 +252,38 @@ After adding new managers, a contamination window opens (typically 20 trading da
 
 - **Completed cycle**: Q1 2026 (period ending March 31, 2026) -- ALL THREE FILED May 15, 2026
 - **Accession numbers**: Fairmount 0001104659-26-062419, Deep Track 0001856083-26-000003, Logos Global 0001172661-26-002196
-- **Filing pattern**: All three filed on deadline day (May 15), consistent with Q1 2025 pattern
+- **Filing pattern**: All three filed on deadline day (May 15), consistent with Q1 2025 pattern (all three also filed May 15, 2025)
 - **CIKs**: Fairmount 0001802528, Deep Track 0001856083, Logos Global 0001792126
-- **Post-filing action sequence**: (1) Warm 13F cache, (2) Run cohort quarantine, (3) Check collapse guards (coinvest_score_z SD), (4) Refresh IC decomposition, (5) 5-day observation window before treating as production-grade
-- **Next cycle**: Q2 2026 (period ending June 30, 2026). Filing deadline ~August 14, 2026. Monitor EDGAR starting ~August 11.
+- **Post-filing action sequence**: (1) Warm 13F cache, (2) Run cohort quarantine, (3) Check collapse guards (coinvest\_score\_z SD), (4) Refresh IC decomposition, (5) 5-day observation window before treating as production-grade
+- **Next cycle**: Q2 2026 (period ending June 30, 2026). Filing deadline \~August 14, 2026. Monitor EDGAR starting \~August 11.
+- **SEC compliance**: SEC\_USER\_AGENT preflight check added (2026-05-13) for EDGAR fair-use policy
 
-## Q1 2026 13F Cohort Quarantine Status
+## Q1 2026 13F-HR Filing Summary (COMPLETE)
 
-*Last reviewed: 2026-05-24*
+*Filed: 2026-05-15*
 
-- **Verdict**: QUARANTINE ACTIVE — Jaccard 0.364 (gate requires ≥ 0.70)
-- **49/55 managers filed** (84.9%); structural cohort shift, not filing lag
-- **Top-30 entering**: ALMS, APGE, ARWR, CMPS, DRUG, MLTX, MLYS, NRIX, RYTM, SNDX, SYRE, TRVI, TYRA, URGN
-- **Top-30 leaving**: ANNX, ARGX, AXSM, BCRX, BLTE, CMPX, ERAS, INSM, KYMR, ORIC, SLDB, SLN, SRRK, TSHA
-- **Re-decision gate**: condition-based (Jaccard ≥ 0.70 + inst_delta_z mean abs delta < 0.50 + ≥10 post-refresh snapshots + no active incidents)
-- **Earliest plausible re-decision**: 2026-06-15; more likely 2026-07-01+
-- **Gate results documented**: `artifacts/audit/13f_q1_2026_refresh_gates_2026_05_24.md`
+**Fairmount Funds** (accession 0001104659-26-062419):
+
+- AUM \~$1.38B. Key new: DAMORA THERAPEUTICS ($225.7M, 16.3% of portfolio -- largest new position, NOT signaled by 13D/13G pre-filing). Massive APGE trim (-85.4%), COGT trim (-38.9%). Exits: KINIKSA, NUVALENT. VRDN held (3.9M shares at 3/31). Post-Q1: VRDN stake raised to 14.04% via $20M purchase May 11 (13D/A filed May 13). ORKA 19.99% held.
+
+**Deep Track Capital** (accession 0001856083-26-000003):
+
+- AUM $6,124M (was $5,609M, +9.2%). 63 positions (was 55). SPDR ETF hedge $1,277M. Top equity: GH $308M, IMVT $286M, TARS $252M, VCYT $250M, GPCR $206M. 16 new positions including ALMS ($149M), NUVL ($141M), GMAB ($98M), DFNT ($57M). Biggest adds: JANX +1225%, OCUL +144%, COGT +121%. Exits: DVAX ($242M largest), MNMD, XENE, BHVN, RAPT.
+
+**Logos Global** (accession 0001172661-26-002196):
+
+- AUM $2,003M (was $1,655M, +21.0%). 66 positions. Top: RVMD $194.5M, ERSA $180.4M, IDYA $115M, TERN $105.4M. Massive CNTA add (+963%, now $84.4M top-6 holding). New: UTHR ($47M), MDGL ($44.5M), XENE ($26M). 15 exits including CDTX ($68.5M).
+
+**Coinvest signals**: VRDN (FM 3.9M shares + DT 1.4M shares at 3/31; DT accumulated to 5.4M post-Q1). ORKA (FM 3.7M + DT 2.0M). Triple overlap on CRESCENT BIOPHARMA only. DT+Logos 22 overlaps; top by combined value: IMVT $313M, VCYT $267M, GPCR $230M, CNTA $210M (new -- Logos +963%).
+
+## Q1 2026 Early Signals (13G/13D, pre-13F-HR) -- VALIDATED
+
+*Captured: 2026-05-11. Validated against 13F-HR filings 2026-05-15.*
+
+**Fairmount**: 13D/13G signals mostly validated. COGT trim confirmed ($243M sale 3/31). ORKA 19.99% confirmed. VRDN accumulation confirmed (3.9M shares at 3/31). SURPRISE: DAMORA THERAPEUTICS ($225.7M, 16.3% of portfolio) was NOT signaled by any pre-filing 13D/13G -- largest new position was invisible until 13F-HR dropped.
+
+**Deep Track**: VRDN accumulation was primarily post-Q1 (only 1.4M shares at 3/31 vs 5.4M by May per 13G). ALMS confirmed ($149M new). New positions not signaled by 13G: NUVL ($141M), GMAB ($98M), DFNT ($57M).
+
+**Logos**: TENX and AVLO confirmed. CNTA massive add (+963%) was NOT signaled pre-filing.
+
+**Lesson**: 13D/13G pre-signals capture ~60-70% of major moves but systematically miss sub-5% positions and non-reporting-threshold changes. The largest surprises (DAMORA for Fairmount, CNTA for Logos) were invisible until 13F-HR.

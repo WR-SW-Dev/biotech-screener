@@ -30,6 +30,20 @@ This skill is organized into two sections:
 
 ---
 
+## Codegraph Preflight (mandatory before any code edit)
+
+Catalyst resolution feeds the CRT evidence surface — Tier 3. Before editing any symbol, run the standard preflight per `skills/codegraph/SKILL.md`:
+
+1. `codegraph_search("<symbol>")` — locate the target
+2. `codegraph_node("<symbol>", source=True)` — inspect signature and body
+3. `codegraph_callers("<symbol>")` — identify all production callers
+4. `codegraph_callees("<symbol>")` — map downstream dependencies
+5. `codegraph_impact("<symbol>", depth=2)` — confirm blast radius
+
+**Gate:** If impact reaches `decision_engine`, `selector_engine`, `ranker_engine`, `final_score`, any CRT write path, or `rankings.csv` — change is **BLOCKED** until operator approval.
+
+---
+
 # SECTION 1: FRAMEWORK REFERENCE
 
 ---
@@ -52,7 +66,7 @@ This skill is organized into two sections:
 ### Sources (7+)
 
 | Source | Data |
-|--------|------|
+| --- | --- |
 | ClinicalTrials.gov (AACT) | Trial status changes, phase transitions |
 | SEC 8-K | Material events (earnings, FDA actions) |
 | FDA ADCOM | Advisory committee meetings |
@@ -70,20 +84,20 @@ This skill is organized into two sections:
 
 ---
 
-## catalyst_decay_w (Timing Signal)
+## catalyst\_decay\_w (Timing Signal)
 
 Measures proximity to the next known catalyst event. Near-term catalyst = higher weight.
 
 ### Key Properties
 
 - Production signal in rankings.csv
-- Signal primarily discriminates in lower quartile (~15-18 tickers); top-60 tends toward ceiling effect (median = 1.000)
+- Signal primarily discriminates in lower quartile (\~15-18 tickers); top-60 tends toward ceiling effect (median = 1.000)
 - IC tests blocked on Spec 071 Lane 2 + Gate 4
 - Requires >= 30 post-PIT HIT/MISS outcomes for formal evaluation
 
 ### Monitoring (updated 2026-05-13)
 
-Shadow-track catalyst_decay_w + binary_quality_score distributions in top-60 monthly (Spec 097). No formal IC claims until gates clear.
+Shadow-track catalyst\_decay\_w + binary\_quality\_score distributions in top-60 monthly (Spec 097). No formal IC claims until gates clear.
 
 **Spec 097 monitoring framework** (canonicalized 2026-05-13):
 
@@ -99,22 +113,22 @@ Shadow-track catalyst_decay_w + binary_quality_score distributions in top-60 mon
 
 ---
 
-## catalyst_quality / binary_quality_score (Quality Signal)
+## catalyst\_quality / binary\_quality\_score (Quality Signal)
 
 Classification of catalyst event quality (Spec 078).
 
 ### Key Properties
 
-- binary_quality_score has meaningful variability (IQR ~0.2)
-- Joint opportunity (timing + quality): typically ~38% of top-60 tickers
+- binary\_quality\_score has meaningful variability (IQR \~0.2)
+- Joint opportunity (timing + quality): typically \~38% of top-60 tickers
 
-### CTGOV_CALENDAR Dependency
+### CTGOV\_CALENDAR Dependency
 
 A material share of top-60 catalysts are sourced from ClinicalTrials.gov calendar. Lane 2 dependency confirmed material - some false catalysts expected in any given top-60.
 
 ---
 
-## event_ev_p_hit (EV Binder, Spec 077)
+## event\_ev\_p\_hit (EV Binder, Spec 077)
 
 Bayesian expected value estimate for catalyst events, binding EV artifacts to resolution outcomes.
 
@@ -127,8 +141,8 @@ Bayesian expected value estimate for catalyst events, binding EV artifacts to re
 ### Gate Requirements
 
 | Gate | Requirement |
-|------|-------------|
-| Gate 3 | >= 15 non-null event_ev_p_hit records |
+| --- | --- |
+| Gate 3 | >= 15 non-null event\_ev\_p\_hit records |
 | Gate 4 | >= 30 post-PIT HIT/MISS with non-null |
 | Spec 079 | Calibration review at n >= 30 |
 
@@ -147,18 +161,18 @@ Per-ticker resolution files tracking catalyst event outcomes.
 ### Resolution States
 
 | State | Meaning |
-|-------|---------|
+| --- | --- |
 | HIT | Catalyst event occurred and was positive |
 | MISS | Catalyst event occurred and was negative |
 | PENDING | Event not yet resolved |
 | EXPIRED | Event window passed without resolution |
 
-### watchlist_current.json
+### watchlist\_current.json
 
 - Today-only aggregator regenerated on every cron run
 - NOT tracked in git (gitignored after contaminating commits)
 - History captured by per-ticker resolution files
-- Freshness check: as_of_date within 3 days (WARN if stale)
+- Freshness check: as\_of\_date within 3 days (WARN if stale)
 
 ---
 
@@ -187,7 +201,7 @@ Always warm 8-K cache BEFORE running screen.
 Catalyst signals enter Module 5 composite via Module 3:
 
 | Weight Set | Catalyst Weight |
-|-----------|----------------|
+| --- | --- |
 | V3 Enhanced | Part of remaining allocation |
 | V3 Default | 25% (legacy) |
 
@@ -196,7 +210,7 @@ Catalyst signals enter Module 5 composite via Module 3:
 ## Source Files
 
 | Component | File |
-|----------|------|
+| --- | --- |
 | Event Ledger Builder | `event_ledger.py` |
 | Catalyst Resolution Tracker | `catalyst_resolution_tracker.py` |
 | Module 3 Scoring | `module_3_scoring_v2.py` |
@@ -213,7 +227,7 @@ Catalyst signals enter Module 5 composite via Module 3:
 
 ---
 
-## event_ev_p_hit Gate Progress
+## event\_ev\_p\_hit Gate Progress
 
 *Last reviewed: 2026-05-13*
 
@@ -228,16 +242,20 @@ Catalyst signals enter Module 5 composite via Module 3:
 
 *Added: 2026-05-13. Spec 092 Phases A-D all complete.*
 
+Historical backfill of hedge report features across 146 snapshots with forward return analysis (pseudo-PIT):
+
 | Metric | Value |
-|--------|-------|
+| --- | --- |
 | DEFER verdict accuracy (T+5) | 60.5% (129 samples) |
 | Median T+5 return | +0.63% |
 | Median T+20 return | +2.49% |
 | Median 20d max drawdown | -2.86% |
 
-**Caveat**: Pseudo-PIT. No promotion claims supported. Descriptive analysis only.
+Research-mode isolation verified: 100% success rate, 0 writes to live output/hedge\_report/ path. All Phase D outputs in `artifacts/research/bioshort_backfill/forward_analysis/`.
 
-## binary_quality_score Coverage
+**Caveat**: Pseudo-PIT (features computed with current logic on historical snapshots). No promotion claims supported per Spec 092 section A6 - descriptive analysis only. Candidate for independent overlay signal or pre-trade timing filter, but requires true forward evidence before any production use.
+
+## binary\_quality\_score Coverage
 
 *Last reviewed: 2026-05-08*
 
@@ -245,9 +263,17 @@ Catalyst signals enter Module 5 composite via Module 3:
 - Rising trend in May: n(>0.7) grew from 24 to 34 tickers in top-60
 - Joint opportunity (timing + quality): median 23/60 tickers (38%)
 
-## CTGOV_CALENDAR Dependency
+## CTGOV\_CALENDAR Dependency
 
 *Last reviewed: 2026-05-08*
 
-- ~48% of top-60 catalysts sourced from ClinicalTrials.gov calendar
-- ~6 estimated false catalysts in current top-60 (Lane 2 dependency)
+- \~48% of top-60 catalysts sourced from ClinicalTrials.gov calendar
+- \~6 estimated false catalysts in current top-60 (Lane 2 dependency)
+- BCRX excluded from monitoring
+
+## catalyst\_decay\_w Coverage
+
+*Last reviewed: 2026-05-08*
+
+- 299/299 coverage in recent snapshots
+- Median = 1.000 in top-60 (ceiling effect confirmed)
