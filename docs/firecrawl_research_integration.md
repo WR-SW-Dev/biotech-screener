@@ -1,5 +1,7 @@
 # Firecrawl Research Integration
 
+**SDK:** `firecrawl-py==4.28.2` (v2 client: `from firecrawl import Firecrawl`)
+
 ## Overview
 
 Firecrawl research-only adapter for biotech news discovery and competitor intelligence gathering. This tool enables agents to search and scrape web content for research purposes **only** — no features are extracted for the ranker, selector, or alpha stack.
@@ -57,6 +59,7 @@ python tools/firecrawl_research_ingest.py \
 ```python
 from tools.firecrawl_research_ingest import FirecrawlResearchAdapter
 
+# Requires: pip install firecrawl-py (pinned in requirements.txt)
 adapter = FirecrawlResearchAdapter(api_key="fc-...")
 
 # Search

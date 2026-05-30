@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Research-only Firecrawl adapter for biotech news discovery and competitor intelligence.
 
+Uses Firecrawl Python SDK v2 (`firecrawl-py` >= 4.28, `Firecrawl` client).
+
 GOVERNANCE CONSTRAINTS (enforced):
   - RESEARCH_ONLY: True (no ranker/selector/scoring inputs)
   - NO_MODEL_FEATURES: True
@@ -33,9 +35,9 @@ import sys
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Iterable, Optional
 
-from firecrawl import FirecrawlApp
+from firecrawl import Firecrawl
 
 # Configure logging
 logging.basicConfig(
@@ -52,13 +54,13 @@ NO_SELECTOR_INPUTS = True
 SOURCE_URL_REQUIRED = True
 FETCH_TIMESTAMP_REQUIRED = True
 
-# Biotech news sources known to Firecrawl
+# Biotech news sources (optional domain hints for operators)
 BIOTECH_NEWS_DOMAINS = [
     "fiercebiotech.com",
     "statnews.com",
     "biopharmadive.com",
     "biospace.com",
-    "endpoints.json",  # Endpoints News
+    "endpoints.news",
     "xconomy.com",
     "news.crunchbase.com",
     "prnewswire.com",
@@ -78,6 +80,7 @@ class SourceRecord:
     error_message: Optional[str] = None
     content_length: int = 0
     search_query: str = ""
+    markdown: str = ""
 
 
 @dataclass
@@ -90,11 +93,91 @@ class SearchResult:
     score: Optional[float] = None
 
 
+def _iter_search_hits(search_data: Any) -> Iterable[Any]:
+    """Yield hits from v2 SearchData (.web, .news, .images)."""
+    if search_data is None:
+        return
+    for attr in ("web", "news", "images"):
+        items = getattr(search_data, attr, None) or []
+        yield from items
+
+
+def _search_hit_to_result(item: Any) -> Optional[SearchResult]:
+    """Normalize SearchResultWeb/Document/dict into SearchResult."""
+    if item is None:
+        return None
+
+    url = getattr(item, "url", None)
+    title = getattr(item, "title", None)
+    description = getattr(item, "description", None)
+    score = getattr(item, "score", None)
+
+    metadata = getattr(item, "metadata", None)
+    if metadata is not None:
+        url = url or getattr(metadata, "url", None) or getattr(metadata, "source_url", None)
+        title = title or getattr(metadata, "title", None)
+        description = description or getattr(metadata, "description", None)
+
+    if isinstance(item, dict):
+        url = url or item.get("url")
+        title = title or item.get("title")
+        description = description or item.get("description")
+        score = score if score is not None else item.get("score")
+        meta = item.get("metadata") or {}
+        if isinstance(meta, dict):
+            url = url or meta.get("url") or meta.get("source_url")
+            title = title or meta.get("title")
+            description = description or meta.get("description")
+
+    if not url:
+        logger.warning("Search hit missing URL: %s", type(item))
+        return None
+
+    return SearchResult(
+        url=str(url),
+        title=title,
+        description=description,
+        score=score,
+    )
+
+
+def _document_from_scrape(doc: Any) -> tuple[Optional[str], Optional[str], str, Optional[str]]:
+    """Extract title, description, markdown, error from v2 Document."""
+    markdown = getattr(doc, "markdown", None) or ""
+    if isinstance(doc, dict):
+        markdown = doc.get("markdown", "") or ""
+
+    metadata = getattr(doc, "metadata", None)
+    if metadata is None and isinstance(doc, dict):
+        metadata = doc.get("metadata")
+
+    title = None
+    description = None
+    error = None
+    if metadata is not None:
+        title = getattr(metadata, "title", None)
+        description = getattr(metadata, "description", None)
+        error = getattr(metadata, "error", None)
+        if isinstance(metadata, dict):
+            title = title or metadata.get("title")
+            description = description or metadata.get("description")
+            error = error or metadata.get("error")
+
+    warning = getattr(doc, "warning", None)
+    if warning and not error and isinstance(warning, str):
+        error = warning
+
+    if not error and not markdown.strip():
+        error = "Empty markdown response"
+
+    return title, description, markdown, error
+
+
 class FirecrawlResearchAdapter:
     """Research-only Firecrawl adapter for biotech intelligence gathering."""
 
     def __init__(self, api_key: Optional[str] = None):
-        """Initialize Firecrawl client.
+        """Initialize Firecrawl v2 client.
 
         Args:
             api_key: Firecrawl API key (defaults to FIRECRAWL_API_KEY env var)
@@ -106,12 +189,12 @@ class FirecrawlResearchAdapter:
                 "Export env var or pass --api-key to CLI."
             )
 
-        self.app = FirecrawlApp(api_key=self.api_key)
+        self.client = Firecrawl(api_key=self.api_key)
         self.sources: list[SourceRecord] = []
         self.search_results: list[dict] = []
 
     def search(self, query: str, limit: int = 20) -> list[SearchResult]:
-        """Search biotech news via Firecrawl.
+        """Search biotech news via Firecrawl v2.
 
         Args:
             query: Search query (e.g., "obesity drug phase 3 trial results")
@@ -120,68 +203,38 @@ class FirecrawlResearchAdapter:
         Returns:
             List of SearchResult objects with URL, title, description
         """
-        logger.info(f"Searching: {query!r} (limit={limit})")
+        logger.info("Searching: %r (limit=%s)", query, limit)
 
         try:
-            response = self.app.search(query, limit=limit)
-            results = []
+            response = self.client.search(query, limit=limit)
+            results: list[SearchResult] = []
+            seen_urls: set[str] = set()
 
-            # Handle both dict and object responses
-            search_results = []
-
-            # Try various attributes that might contain results
-            if hasattr(response, "web") and response.web:
-                # Firecrawl SearchData has .web, .news, .images attributes
-                search_results = response.web if isinstance(response.web, list) else []
-            elif hasattr(response, "news") and response.news:
-                search_results = response.news if isinstance(response.news, list) else []
-            elif hasattr(response, "data") and response.data:
-                search_results = response.data if isinstance(response.data, list) else []
-            elif hasattr(response, "results"):
-                search_results = response.results if isinstance(response.results, list) else []
-            elif isinstance(response, dict):
-                search_results = response.get("results", []) or response.get("web", []) or response.get("news", [])
-
-            # Process results
-            for item in search_results:
-                # item might be dict or object
-                if hasattr(item, "url"):
-                    result = SearchResult(
-                        url=item.url or "",
-                        title=getattr(item, "title", None),
-                        description=getattr(item, "description", None),
-                        score=getattr(item, "score", None),
-                    )
-                elif isinstance(item, dict):
-                    result = SearchResult(
-                        url=item.get("url", ""),
-                        title=item.get("title"),
-                        description=item.get("description"),
-                        score=item.get("score"),
-                    )
-                else:
-                    logger.warning(f"Unexpected item format: {type(item)}")
+            for item in _iter_search_hits(response):
+                result = _search_hit_to_result(item)
+                if result is None or result.url in seen_urls:
                     continue
+                seen_urls.add(result.url)
                 results.append(result)
 
             if not results:
                 logger.warning(
-                    f"No results found in search response. "
-                    f"Response type: {type(response)}"
+                    "No results in search response (type=%s)",
+                    type(response).__name__,
                 )
 
             self.search_results = [asdict(r) for r in results]
-            logger.info(f"Found {len(results)} results")
+            logger.info("Found %s results", len(results))
             return results
 
         except Exception as e:
-            logger.error(f"Search failed: {e}", exc_info=True)
+            logger.error("Search failed: %s", e, exc_info=True)
             raise
 
     def scrape_urls(
         self, urls: list[str], timeout_sec: int = 30
     ) -> list[SourceRecord]:
-        """Scrape and clean content from URLs.
+        """Scrape and clean content from URLs via Firecrawl v2.
 
         Args:
             urls: List of URLs to scrape
@@ -192,68 +245,42 @@ class FirecrawlResearchAdapter:
         """
         # Firecrawl API enforces minimum timeout of 1000ms
         timeout_ms = max(1000, timeout_sec * 1000)
-        logger.info(f"Scraping {len(urls)} URLs (timeout={timeout_ms}ms)")
+        logger.info("Scraping %s URLs (timeout=%sms)", len(urls), timeout_ms)
 
         for url in urls:
             source = SourceRecord(url=url)
-            logger.debug(f"Scraping: {url}")
+            logger.debug("Scraping: %s", url)
 
             try:
-                response = self.app.scrape_url(url, timeout=timeout_ms)
+                doc = self.client.scrape(
+                    url,
+                    formats=["markdown"],
+                    timeout=timeout_ms,
+                )
+                title, description, markdown, error = _document_from_scrape(doc)
 
-                # Handle both dict and Document object responses
-                success = False
-                markdown = ""
-                title = None
-                description = None
-
-                if hasattr(response, "success"):
-                    success = response.success
-                elif isinstance(response, dict):
-                    success = response.get("success", False)
-
-                if hasattr(response, "markdown"):
-                    markdown = response.markdown or ""
-                elif isinstance(response, dict):
-                    markdown = response.get("markdown", "")
-
-                if hasattr(response, "metadata"):
-                    metadata = response.metadata
-                    if isinstance(metadata, dict):
-                        title = metadata.get("title")
-                        description = metadata.get("description")
-                    elif hasattr(metadata, "title"):
-                        title = metadata.title
-                        description = getattr(metadata, "description", None)
-                elif isinstance(response, dict):
-                    metadata = response.get("metadata", {})
-                    title = metadata.get("title")
-                    description = metadata.get("description")
-
-                if success:
+                if error:
+                    source.fetch_status = "failed"
+                    source.error_message = error
+                    logger.warning("Scrape failed for %s: %s", url, error)
+                else:
                     source.fetch_status = "success"
                     source.title = title
                     source.summary = description
+                    source.markdown = markdown
                     source.content_length = len(markdown)
                     logger.info(
-                        f"Scraped {url}: "
-                        f"{source.content_length} bytes, "
-                        f"title={source.title}"
+                        "Scraped %s: %s bytes, title=%s",
+                        url,
+                        source.content_length,
+                        source.title,
                     )
-                else:
-                    source.fetch_status = "failed"
-                    if isinstance(response, dict):
-                        source.error_message = response.get("error", "Unknown error")
-                    else:
-                        source.error_message = "Scrape returned success=false"
-                    logger.warning(f"Scrape failed for {url}: {source.error_message}")
 
             except Exception as e:
                 source.fetch_status = "failed"
                 source.error_message = str(e)
-                logger.error(f"Exception scraping {url}: {e}")
+                logger.error("Exception scraping %s: %s", url, e)
 
-            # GOVERNANCE CHECK: ensure timestamp is set
             if not source.fetch_timestamp:
                 source.fetch_timestamp = datetime.now(UTC).isoformat()
 
@@ -276,37 +303,32 @@ class FirecrawlResearchAdapter:
 
         artifacts = {}
 
-        # Write search results
         search_file = output_path / "search_results.json"
-        with open(search_file, "w") as f:
+        with open(search_file, "w", encoding="utf-8") as f:
             json.dump(self.search_results, f, indent=2)
         artifacts["search_results"] = str(search_file)
-        logger.info(f"Wrote search results: {search_file}")
+        logger.info("Wrote search results: %s", search_file)
 
-        # Write source manifest with fetch status
         manifest_file = output_path / "source_manifest.json"
         manifest = [asdict(s) for s in self.sources]
-        with open(manifest_file, "w") as f:
+        with open(manifest_file, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
         artifacts["source_manifest"] = str(manifest_file)
-        logger.info(f"Wrote source manifest: {manifest_file}")
+        logger.info("Wrote source manifest: %s", manifest_file)
 
-        # Write analyst summary (high-level digest)
         summary_file = output_path / "analyst_summary.md"
         summary = self._generate_summary()
-        with open(summary_file, "w") as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             f.write(summary)
         artifacts["analyst_summary"] = str(summary_file)
-        logger.info(f"Wrote analyst summary: {summary_file}")
+        logger.info("Wrote analyst summary: %s", summary_file)
 
-        # Write scraped pages markdown
         pages_file = output_path / "scraped_pages.md"
-        with open(pages_file, "w") as f:
+        with open(pages_file, "w", encoding="utf-8") as f:
             f.write(self._generate_scraped_pages_markdown())
         artifacts["scraped_pages"] = str(pages_file)
-        logger.info(f"Wrote scraped pages: {pages_file}")
+        logger.info("Wrote scraped pages: %s", pages_file)
 
-        # GOVERNANCE: write metadata file confirming research-only status
         meta_file = output_path / "_metadata.json"
         meta = {
             "research_only": RESEARCH_ONLY,
@@ -315,6 +337,7 @@ class FirecrawlResearchAdapter:
             "no_selector_inputs": NO_SELECTOR_INPUTS,
             "source_url_required": SOURCE_URL_REQUIRED,
             "fetch_timestamp_required": FETCH_TIMESTAMP_REQUIRED,
+            "firecrawl_sdk": "firecrawl-py>=4.28",
             "generated_at": datetime.now(UTC).isoformat(),
             "total_sources": len(self.sources),
             "successful_scrapes": sum(
@@ -324,10 +347,10 @@ class FirecrawlResearchAdapter:
                 1 for s in self.sources if s.fetch_status == "failed"
             ),
         }
-        with open(meta_file, "w") as f:
+        with open(meta_file, "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2)
         artifacts["_metadata"] = str(meta_file)
-        logger.info(f"Wrote governance metadata: {meta_file}")
+        logger.info("Wrote governance metadata: %s", meta_file)
 
         return artifacts
 
@@ -336,7 +359,7 @@ class FirecrawlResearchAdapter:
         summary_lines = [
             "# Research Ingest Summary\n",
             f"**Generated:** {datetime.now(UTC).isoformat()}\n",
-            f"**Governance:** Research-Only (No Alpha Inputs)\n",
+            "**Governance:** Research-Only (No Alpha Inputs)\n",
             "## Fetch Status\n",
         ]
 
@@ -381,6 +404,9 @@ class FirecrawlResearchAdapter:
             lines.append(f"## ✓ {source.title or 'Untitled'}\n")
             lines.append(f"**URL:** {source.url}\n")
             lines.append(f"**Fetched:** {source.fetch_timestamp}\n\n")
+            if source.markdown:
+                lines.append(source.markdown)
+                lines.append("\n\n")
             lines.append("---\n\n")
 
         return "".join(lines)
@@ -431,23 +457,20 @@ def main():
     try:
         adapter = FirecrawlResearchAdapter(api_key=args.api_key)
 
-        # Search
         results = adapter.search(args.query, limit=args.limit)
         urls = [r.url for r in results if r.url]
 
         if not args.skip_scrape and urls:
-            # Scrape top results
             adapter.scrape_urls(urls, timeout_sec=args.timeout)
 
-        # Write artifacts
         artifacts = adapter.write_artifacts(args.out)
-        logger.info(f"Artifacts written to {args.out}")
-        logger.info(f"Files: {json.dumps(artifacts, indent=2)}")
+        logger.info("Artifacts written to %s", args.out)
+        logger.info("Files: %s", json.dumps(artifacts, indent=2))
 
         return 0
 
     except Exception as e:
-        logger.error(f"Fatal error: {e}", exc_info=True)
+        logger.error("Fatal error: %s", e, exc_info=True)
         return 1
 
 
