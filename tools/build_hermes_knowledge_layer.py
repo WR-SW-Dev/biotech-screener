@@ -11,6 +11,7 @@ Does not modify code, cron, scoring, or agent registry.
 """
 
 import json
+import shutil
 import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -84,6 +85,20 @@ def capture_git():
 
 
 def capture_crontab():
+    """Capture operator crontab when available.
+
+    Cloud Agent VMs often lack the crontab binary. In that case return
+    availability=UNKNOWN_CLOUD_ENV so contradiction checks do not treat
+    a missing crontab as a hard governance failure.
+    """
+    if shutil.which("crontab") is None:
+        return {
+            "available": False,
+            "availability": "UNKNOWN_CLOUD_ENV",
+            "active_jobs": [],
+            "suppressed_jobs": [],
+        }
+
     raw = run("crontab -l 2>/dev/null")
     active = []
     suppressed = []
@@ -99,7 +114,12 @@ def capture_crontab():
             pass
         else:
             active.append(stripped)
-    return {"active_jobs": active, "suppressed_jobs": suppressed}
+    return {
+        "available": True,
+        "availability": "OPERATOR_HOST",
+        "active_jobs": active,
+        "suppressed_jobs": suppressed,
+    }
 
 
 def capture_agent_registry():
@@ -380,12 +400,22 @@ def detect_contradictions(git_info, crontab_info, agents, artifacts):
     Returns list of {severity, description, recommendation}.
     """
     issues = []
+    crontab_available = crontab_info.get("available", True)
 
     # C1: bioshort_watch registry says suppressed; crontab should have no active line
     active_bioshort_cron = any(
         "bioshort_watch" in line and not line.strip().startswith("#") for line in crontab_info["active_jobs"]
     )
-    if active_bioshort_cron:
+    if not crontab_available:
+        issues.append(
+            {
+                "id": "C1",
+                "severity": "UNKNOWN_CLOUD_ENV",
+                "description": "Cannot verify bioshort_watch cron suppression — crontab unavailable on this host.",
+                "recommendation": "Re-run on operator host (crontab -l).",
+            }
+        )
+    elif active_bioshort_cron:
         issues.append(
             {
                 "id": "C1",
@@ -446,7 +476,18 @@ def detect_contradictions(git_info, crontab_info, agents, artifacts):
 
     # C3: bioshort producer cron present and active
     producer_active = any("biotech_hedge_report.py" in line for line in crontab_info["active_jobs"])
-    if not producer_active:
+    if not crontab_available:
+        issues.append(
+            {
+                "id": "C3",
+                "severity": "UNKNOWN_CLOUD_ENV",
+                "description": (
+                    "Cannot verify Spec 087 B1b biotech_hedge_report.py cron — crontab unavailable on this host."
+                ),
+                "recommendation": "Re-run on operator host: crontab -l | grep biotech_hedge_report",
+            }
+        )
+    elif not producer_active:
         issues.append(
             {
                 "id": "C3",
@@ -522,6 +563,8 @@ def write_state_json(git_info, crontab_info, agents, artifacts, held_items, ff_i
         "generated_at": datetime.now().isoformat(),
         "git": git_info,
         "cron": {
+            "available": crontab_info.get("available", True),
+            "availability": crontab_info.get("availability", "OPERATOR_HOST"),
             "active_job_count": len(crontab_info["active_jobs"]),
             "suppressed_job_count": len(crontab_info["suppressed_jobs"]),
             "suppressed_markers": crontab_info["suppressed_jobs"],
@@ -722,7 +765,12 @@ def write_first_fire_md(ff_items):
 
 def write_contradiction_md(contradictions):
     hard = [c for c in contradictions if c["severity"] == "HARD_CONTRADICTION"]
-    possible = [c for c in contradictions if c["severity"] == "POSSIBLE_DRIFT"]
+    cloud_env = [c for c in contradictions if c["severity"] == "UNKNOWN_CLOUD_ENV"]
+    possible = [
+        c
+        for c in contradictions
+        if c["severity"] in ("POSSIBLE_DRIFT", "WARN", "NEEDS_OPERATOR_DECISION")
+    ]
     ok = [c for c in contradictions if c["severity"] == "OK"]
 
     lines = [
@@ -745,7 +793,20 @@ def write_contradiction_md(contradictions):
 
     lines += [
         "",
-        f"## 2. Possible Drift / Warnings ({len(possible)})",
+        f"## 2. Non-Authoritative Host (Cloud / No Crontab) ({len(cloud_env)})",
+        "",
+    ]
+    if cloud_env:
+        for c in cloud_env:
+            lines.append(f"- **{c['id']}**: {c['description']}")
+            if c.get("recommendation"):
+                lines.append(f"  - Action: {c['recommendation']}")
+    else:
+        lines.append("None.")
+
+    lines += [
+        "",
+        f"## 3. Possible Drift / Warnings ({len(possible)})",
         "",
     ]
     if possible:
@@ -758,7 +819,7 @@ def write_contradiction_md(contradictions):
 
     lines += [
         "",
-        f"## 3. OK / Consistent ({len(ok)})",
+        f"## 4. OK / Consistent ({len(ok)})",
         "",
     ]
     for c in ok:
@@ -823,18 +884,27 @@ def main():
     # Summary
     print()
     hard_count = sum(1 for c in contradictions if c["severity"] == "HARD_CONTRADICTION")
-    warn_count = sum(1 for c in contradictions if c["severity"] == "POSSIBLE_DRIFT")
+    cloud_count = sum(1 for c in contradictions if c["severity"] == "UNKNOWN_CLOUD_ENV")
+    warn_count = sum(
+        1
+        for c in contradictions
+        if c["severity"] in ("POSSIBLE_DRIFT", "WARN", "NEEDS_OPERATOR_DECISION")
+    )
     ff_status = ff_items[0].get("eval", ff_items[0]["status"]) if ff_items else "N/A"
+    cron_availability = cron_info.get("availability", "OPERATOR_HOST")
 
     print("=== Summary ===")
     print(f"  git head:           {git_info['head']}")
     print(f"  uncommitted files:  {len(git_info['uncommitted'])}")
+    print(f"  crontab surface:    {cron_availability}")
     print(f"  held items:         {len(HELD_ITEMS_SEED)}")
     print(f"  first-fire status:  {ff_status}")
-    print(f"  contradictions:     {hard_count} hard  /  {warn_count} possible")
+    print(f"  contradictions:     {hard_count} hard  /  {cloud_count} cloud-env  /  {warn_count} possible")
     print()
     if hard_count > 0:
         print("  HARD CONTRADICTIONS detected — review contradiction_ledger/latest.md")
+    elif cloud_count > 0:
+        print("  Cron checks skipped (non-authoritative host) — verify on operator machine.")
     elif warn_count > 0:
         print("  Possible drift items — review contradiction_ledger/latest.md")
     else:
