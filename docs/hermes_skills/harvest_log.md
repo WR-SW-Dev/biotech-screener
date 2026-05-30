@@ -19,6 +19,20 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-05-30 (gap closure)
+
+### Agent & bridge gaps addressed
+- **agent_roster.md:** Split repo fleet (34 agents, `AGENT_REGISTRY.json`) vs Hermes scheduler jobs
+- **Town-Hermes Phase B:** `common/town_bridge_events.py`; `cron_missed` from `ops_supervisor` + `cron_watchdog`; `contradiction_detected` from knowledge layer + `hermes-contradiction-detector`
+- **Registry:** Added `hermes-contradiction-detector` (31 active agents)
+- **Tests:** `tests/test_town_bridge_events.py`
+- **Docs:** `town-operator-bridge.md` operator live-email checklist; `hermes-context.mdc` fleet count
+
+### Governance
+- Plumbing/ops only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-05-06
 
 ### Git activity (past 24h)

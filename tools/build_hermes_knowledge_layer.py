@@ -881,6 +881,14 @@ def main():
     write_contradiction_md(contradictions)
     write_held_spec_json(HELD_ITEMS_SEED)
 
+    # Phase B: route hard contradictions to Town (dry-run unless OPERATOR_DELIVERY_DRY_RUN=0)
+    try:
+        from common.town_bridge_events import notify_hard_contradictions
+
+        notify_hard_contradictions(contradictions)
+    except Exception as exc:
+        print(f"  town bridge (contradiction_detected): {exc}")
+
     # Summary
     print()
     hard_count = sum(1 for c in contradictions if c["severity"] == "HARD_CONTRADICTION")
