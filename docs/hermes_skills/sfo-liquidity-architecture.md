@@ -26,7 +26,7 @@ description: >
 
 ## Purpose
 
-Reference for the Wake Robin Liquidity Architecture — a deterministic, multi-engine modeling stack for a Gen3-Gen5 single-family office. Every modeling decision is downstream of the four-line principle.
+Reference for the Wake Robin Liquidity Architecture - a deterministic, multi-engine modeling stack for a Gen3-Gen5 single-family office. This is NOT a generic asset-allocation framework. Every modeling decision is downstream of the four-line principle.
 
 ---
 
@@ -39,7 +39,7 @@ Development / land value is not distributable income.
 OpCo value is not automatically portfolio liquidity.
 ```
 
-This principle governs every phase of work.
+This principle governs every phase of work. It is not a preface to skim past.
 
 ---
 
@@ -47,6 +47,7 @@ This principle governs every phase of work.
 
 **Repo**: `Warrenpoobear/asset-allocation`
 **Current Phase**: 23 (PE real-data commitment input layer)
+**Tests**: 386 passing
 **Stack**: Python 3.12, pydantic v2, numpy, pandas, pyarrow
 
 ### Seven Layers (dependency order)
@@ -84,13 +85,13 @@ Every module produces or consumes rows on the quarterly ledger. It is the centra
 
 ### Canonical Intra-Quarter Flow Ordering
 
-1. `inflow` — external contributions
-2. `return` — mark-to-market on liquid buckets
-3. `pe_call` — capital deployed into PE
-4. `pe_distribution` — capital returned from PE
-5. `pe_nav_mark` — PE NAV growth + yield
-6. `spend` — withdrawals
-7. `rebalance` — intra-portfolio transfer (sums to zero)
+1. `inflow` - external contributions
+2. `return` - mark-to-market on liquid buckets
+3. `pe_call` - capital deployed into PE
+4. `pe_distribution` - capital returned from PE
+5. `pe_nav_mark` - PE NAV growth + yield
+6. `spend` - withdrawals
+7. `rebalance` - intra-portfolio transfer (sums to zero)
 
 ### Invariants
 
@@ -132,7 +133,7 @@ Liquid NAV residual rebalances; PE buckets do not. This is the first place the m
 
 ### Spending Base (Phase 12/12.5)
 
-Configurable denominator for spending rate calculation. Critical: total NAV materially overstates spendable resources for this household.
+Configurable denominator for spending rate calculation. Critical because total NAV materially overstates spendable resources for this household.
 
 ### Liquidity Coverage
 
@@ -146,19 +147,26 @@ Coverage ratios, reserve floor (18 months default), shortfall frequency.
 
 ### Takahashi-Alexander Model
 
-**File**: `src/aa_model/pe/ta_model.py` — deterministic PE cash-flow projection.
+**File**: `src/aa_model/pe/ta_model.py`
 
-Default parameters: lifetime_years=12, commitment_period_years=4, rate_of_contribution=[0.25, 0.30, 0.25, 0.20], bow=2.5, growth_pct=0.13.
+Deterministic PE cash-flow projection. Default parameters:
+- lifetime_years: 12
+- commitment_period_years: 4
+- rate_of_contribution: [0.25, 0.30, 0.25, 0.20]
+- bow: 2.5
+- growth_pct: 0.13
 
 ### STAIRS Adapter
 
-**File**: `src/aa_model/pe/stairs_adapter.py` (Phase 7) — market-state-coupled PE pacing.
+**File**: `src/aa_model/pe/stairs_adapter.py` (Phase 7)
+
+Market-state-coupled PE pacing.
 
 ### Call Obligation & Reconciliation (Phases 19-21)
 
-- `call_obligation.py` — PE capital call bridge (workbook-wins default)
-- `call_reconciliation.py` — Workbook vs model reconciliation
-- `reconciliation_gates.py` — Configurable gates (advisory / warning / requires_override / hard_fail)
+- `call_obligation.py` - PE capital call bridge
+- `call_reconciliation.py` - Workbook vs model reconciliation
+- `reconciliation_gates.py` - Configurable gates (advisory / warning / requires_override / hard_fail)
 
 ---
 
@@ -166,10 +174,10 @@ Default parameters: lifetime_years=12, commitment_period_years=4, rate_of_contri
 
 The model must stay aligned with `Cashflow Modeling v7.xlsx`. Four dimensions:
 
-1. **Timing** — quarters, fiscal periods, lookahead windows match
-2. **Flow** — spending, distributions, calls map to worksheet lines
-3. **Source** — every obligation carries provenance (explicit_config / cashflow_workbook / pe_pacing_model / investment_summary / synthetic_fixture)
-4. **Reconciliation** — reports show where model totals reconcile to worksheet
+1. **Timing** - quarters, fiscal periods, lookahead windows match
+2. **Flow** - spending, distributions, calls map to worksheet lines
+3. **Source** - every obligation carries provenance (explicit_config / cashflow_workbook / pe_pacing_model / investment_summary / synthetic_fixture)
+4. **Reconciliation** - reports show where model totals reconcile to worksheet
 
 **Boundary rules**: Read the worksheet. Normalize it. Reconcile to it. Do NOT mutate it.
 
@@ -177,7 +185,9 @@ The model must stay aligned with `Cashflow Modeling v7.xlsx`. Four dimensions:
 
 ## Capital Market Assumptions
 
-**File**: `configs/cma.yaml` — CMA baseline is immutable. Scenarios are perturbations.
+**File**: `configs/cma.yaml`
+
+CMA baseline is immutable. Scenarios are perturbations.
 
 | Bucket | Vol (annual) | Liquidity |
 |--------|-------------|-----------|
@@ -188,21 +198,9 @@ The model must stay aligned with `Cashflow Modeling v7.xlsx`. Four dimensions:
 
 ---
 
-## Configuration
-
-| Key | Default |
-|-----|---------|
-| governance.size_usd | 100,000,000 |
-| solver.preferred | clarabel (fallback: scs, osqp) |
-| liquidity.floor_months | 18 |
-| pe.sleeve_target_pct | 0.25 |
-| rebalance.frequency | quarterly |
-
----
-
 ## Governance Rules (Do Not Violate)
 
-1. Ledger is sole state spine — no sidecars, no hidden state
+1. Ledger is sole state spine - no sidecars, no hidden state
 2. CMA baseline immutable; scenarios are perturbations
 3. No implementation before design lock (docs commit first)
 4. MODEL_DOCUMENTATION.md updated for any behavior change
@@ -212,12 +210,25 @@ The model must stay aligned with `Cashflow Modeling v7.xlsx`. Four dimensions:
 
 ---
 
+## Configuration
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| governance.size_usd | 100,000,000 | Sizing only |
+| solver.preferred | clarabel | Fallback: scs, osqp |
+| liquidity.floor_months | 18 | Cash + ST bonds reserve |
+| pe.sleeve_target_pct | 0.25 | PE share of total |
+| rebalance.frequency | quarterly | Aligns with ledger |
+
+---
+
 ## Source Files
 
 | Component | File |
 |----------|------|
 | Quarterly Ledger | `src/aa_model/integration/ledger.py` |
 | Orchestrator | `src/aa_model/integration/orchestrator.py` |
+| Manifest | `src/aa_model/integration/manifest.py` |
 | Allocation (stub) | `src/aa_model/allocation/stub.py` |
 | Riskfolio Adapter | `src/aa_model/allocation/riskfolio_adapter.py` |
 | cvxportfolio Adapter | `src/aa_model/allocation/cvxportfolio_adapter.py` |
@@ -228,4 +239,9 @@ The model must stay aligned with `Cashflow Modeling v7.xlsx`. Four dimensions:
 | Liquidity Coverage | `src/aa_model/liquidity/coverage.py` |
 | Manager Terms | `src/aa_model/liquidity/manager_terms_diagnostics.py` |
 | TA Model | `src/aa_model/pe/ta_model.py` |
+| STAIRS Adapter | `src/aa_model/pe/stairs_adapter.py` |
+| PE Call Obligation | `src/aa_model/pe/call_obligation.py` |
+| Call Reconciliation | `src/aa_model/pe/call_reconciliation.py` |
+| Reconciliation Gates | `src/aa_model/pe/reconciliation_gates.py` |
+| Schemas | `src/aa_model/io/schemas.py` |
 | Run Script | `scripts/run_sfo_study.py` |

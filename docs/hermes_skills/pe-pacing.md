@@ -32,7 +32,7 @@ Reference for the private equity pacing model within the Wake Robin Liquidity Ar
 
 **File**: `src/aa_model/pe/ta_model.py`
 
-Deterministic PE cash-flow projection — the canonical PE engine.
+Deterministic PE cash-flow projection used as the canonical PE engine.
 
 ### Default Parameters (pinned in `configs/pe_pacing.yaml`)
 
@@ -47,14 +47,14 @@ Deterministic PE cash-flow projection — the canonical PE engine.
 
 ### Golden CSV Regression Test
 
-`tests/golden/ta_single_fund.csv` — single fund: $100M commitment, 2024Q1 vintage, default params, 48 quarters. Regression test asserts byte-equality.
+`tests/golden/ta_single_fund.csv` generated from a single fund: $100M commitment, 2024Q1 vintage, default params, 48 quarters. Regression test asserts byte-equality.
 
 ### Ledger Integration
 
 PE flows on the quarterly ledger follow canonical ordering:
-1. `pe_call` — capital deployed (negative amount)
-2. `pe_distribution` — capital returned (positive amount)
-3. `pe_nav_mark` — NAV growth + yield (positive amount)
+1. `pe_call` - capital deployed (negative amount)
+2. `pe_distribution` - capital returned (positive amount)
+3. `pe_nav_mark` - NAV growth + yield (positive amount)
 
 PE buckets are illiquid and DO NOT participate in rebalancing (Phase 8 liquidity overlay).
 
@@ -100,13 +100,21 @@ When workbook and model disagree on capital calls:
 
 Compares model-projected PE calls against workbook capital-call lines per quarter per fund.
 
-Output: per-quarter, per-source comparison showing model-projected call, workbook-classified call, delta (absolute and percentage), and reconciliation verdict.
+### Reconciliation Output
+
+Per-quarter, per-source comparison showing:
+- Model-projected call amount
+- Workbook-classified call amount
+- Delta (absolute and percentage)
+- Reconciliation verdict
 
 ---
 
 ## Configurable Reconciliation Gates (Phase 21)
 
 **File**: `src/aa_model/pe/reconciliation_gates.py`
+
+Four-tier gate classification for reconciliation discrepancies:
 
 | Gate Level | Behavior |
 |-----------|----------|
@@ -128,10 +136,10 @@ From `configs/base.yaml`:
 
 ### Illiquidity Overlay (Phase 8)
 
-`allocation/liquidity_overlay.py` enforces that PE buckets are structurally illiquid:
+The liquidity overlay in `allocation/liquidity_overlay.py` enforces that PE buckets are structurally illiquid:
 - PE NAV is marked but NOT available for rebalancing
 - Liquid NAV residual (public_equity, public_bond, cash) absorbs all rebalancing
-- Prevents the model from treating PE NAV as spendable liquidity
+- This prevents the model from treating PE NAV as spendable liquidity
 
 ---
 
@@ -139,17 +147,17 @@ From `configs/base.yaml`:
 
 Design locked at `f81ff43`. Implementation pending.
 
-Purpose: Replace synthetic PE commitment fixtures with real fund commitment data from the Investment Summary workbook, enabling realistic call pacing against actual fund terms.
+Purpose: Replace synthetic PE commitment fixtures with real fund commitment data ingested from the Investment Summary workbook, enabling realistic call pacing against actual fund terms.
 
 ---
 
 ## Key Constraints
 
-1. TA model is NOT behind an adapter in Phase 1 — it is the canonical implementation
+1. TA model is NOT behind an adapter in Phase 1 - it is the canonical implementation
 2. STAIRS is optional, wrapped behind adapter interface
 3. PE flows must follow canonical intra-quarter ordering on the ledger
 4. PE call obligations carry provenance from the canonical source taxonomy
-5. Reconciliation gates default to workbook-wins precedence
+5. Reconciliation gates are configurable but default to workbook-wins precedence
 6. All PE projections are deterministic (seeded RNG from base.yaml)
 
 ---

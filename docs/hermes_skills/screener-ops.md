@@ -31,8 +31,8 @@ Reference for daily production operations, the Hermes knowledge layer, agent fle
 
 This skill is organized into two sections:
 
-1. **Framework Reference** — Stable pipeline architecture, processes, and governance
-2. **Operational State** — Volatile infrastructure status snapshots
+1. **Framework Reference** - Stable pipeline architecture, processes, and governance (changes only with code updates)
+2. **Operational State** - Volatile infrastructure and status snapshots that require periodic refresh
 
 ---
 
@@ -44,7 +44,6 @@ This skill is organized into two sections:
 
 **Runner**: `tools/run_daily_production.py` (13-step orchestrator)
 **Cron**: 5:30 PM ET weekdays + `@reboot` catch-up for missed runs
-**Timeout**: 6000s (100 min) — covers worst-case AACT + tail steps
 
 ### Pipeline Steps (in order)
 
@@ -62,7 +61,13 @@ This skill is organized into two sections:
 12. Readiness scorecard
 13. Ops digest + PIT backfill (optional)
 
-**Key Rule**: Always warm 8-K cache BEFORE running screen.
+### Key Rule
+
+Always warm 8-K cache BEFORE running screen.
+
+### Pipeline Timeout
+
+6000s (100 min) to cover worst-case AACT + tail steps. Previous 4500s was killing mid-AACT on Mondays.
 
 ---
 
@@ -82,7 +87,7 @@ Repo-native "ops brain" that continuously answers:
 ### Four Layers
 
 | Layer | Purpose | Output |
-|-------|---------|--------|
+| --- | --- | --- |
 | Capture | Read-only from specs, artifacts, registry, git, cron | Raw state |
 | Normalize | Structured ledgers | `artifacts/ops/knowledge_layer/` |
 | Reason | Drift, contradiction, missed-run detection | Alerts |
@@ -91,7 +96,7 @@ Repo-native "ops brain" that continuously answers:
 ### Output Artifacts
 
 | Artifact | Location |
-|---------|----------|
+| --- | --- |
 | Latest state | `artifacts/ops/knowledge_layer/latest_state.{json,md}` |
 | Held spec ledger | `artifacts/ops/held_spec_ledger/latest.{json,md}` |
 | First fire ledger | `artifacts/ops/first_fire_ledger/latest.{json,md}` |
@@ -100,20 +105,35 @@ Repo-native "ops brain" that continuously answers:
 
 ### Host authority (operator WSL vs Cloud)
 
-*Last reviewed: 2026-05-30 · `main` @ `b19c36e3` (#311–#313)*
+*Last reviewed: 2026-05-30 · plumbing baseline `main` @ `b19c36e3` (#311–#313 merged)*
 
-- **Operator WSL** is authoritative for `crontab -l`, `biotech_hedge_report.py`, `output/hedge_report/`, `BIOSHORT_VERDICT.json`, producer logs, and Spec 087 B1b/B2/B3 state.
-- **Cursor Cloud** may build ledgers and validate repo plumbing only. Missing `crontab` → C1/C3 `UNKNOWN_CLOUD_ENV` (not `HARD_CONTRADICTION`). First-fire FAIL remains when hedge artifacts are missing.
-- **Standing rule:** No more cloud cleanup for registry/MCP/CodeGraph unless a new failure appears. Missing cron/artifacts on WSL → narrow bioshort hedge **producer** ops repair, not model/ranker redesign.
+| Host | Can validate | Cannot validate |
+| --- | --- | --- |
+| **Operator WSL** | `crontab -l`, `biotech_hedge_report.py` schedule, `output/hedge_report/`, `BIOSHORT_VERDICT.json`, producer logs, B1b/B2/B3 governance | Hermes gateway / OpenClaw job history (separate checks) |
+| **Cursor Cloud** | Repo plumbing, registry/MCP, CodeGraph, ledger **build** (read-only) | Authoritative cron or hedge artifacts |
 
-Operator check:
+**Contradiction severities**
+
+- `HARD_CONTRADICTION` — only when `crontab` is available and B1b producer line is missing.
+- `UNKNOWN_CLOUD_ENV` — C1/C3 when `crontab` binary is absent (Cloud Agent VMs). Not a governance pass/fail.
+- First-fire `FAIL_ARTIFACT_MISSING_PAST_DEADLINE` — still emitted on any host when hedge artifacts are missing past deadline. Do not suppress from cloud.
+
+**Operator WSL authority check** (after `git pull` on `main`):
 
 ```bash
 cd /mnt/c/Projects/biotech_screener/biotech-screener
-git pull && python3 tools/build_hermes_knowledge_layer.py
+python3 tools/build_hermes_knowledge_layer.py
 cat artifacts/ops/contradiction_ledger/latest.md
 cat artifacts/ops/first_fire_ledger/latest.md
 ```
+
+| WSL finding | Meaning |
+| --- | --- |
+| Cron + hedge artifacts present | B1b may be closable on operator evidence |
+| Cron missing or hedge artifacts missing | Narrow **Spec 087 B1b ops repair** (bioshort hedge producer) — not model/ranker/governance redesign |
+| Cron present, artifacts missing | Inspect `logs/biotech_hedge_report.log` before governance change |
+
+**Standing rule:** No further cloud cleanup for registry/MCP/CodeGraph/knowledge-layer plumbing unless a new failure appears.
 
 ---
 
@@ -125,12 +145,12 @@ cat artifacts/ops/first_fire_ledger/latest.md
 
 Temporary catalyst timing policy override with hard exit conditions (floor threshold, drawdown trigger, cohort stability check). Daily cron at 10:15 AM ET. Window close decision on 2026-06-03.
 
+
 ---
 
 ## Town-Hermes Bridge (Spec 090)
 
-**Module**: `common/operator_delivery.py`  
-**Full Integration Guide**: See **`town-operator-bridge.md`** skill (includes Phase B call sites, API reference, integration patterns, verification)
+**Module**: `common/operator_delivery.py`
 
 Routes Hermes Knowledge Layer events to Town via email trigger. Town does NOT control Hermes.
 
@@ -145,37 +165,12 @@ Hermes job completes
     -> Town creates task / DMs operator
 ```
 
-### Event Types
-
-INFO: `held_spec_ledger`, `first_fire_pass`  
-FAIL: `first_fire_fail`, `snapshot_missing`, `ruleset_mismatch`, `cron_missed`  
-WARN: `stale_artifact`, `contradiction_detected`
-
 ### What Town is NOT
 
 - NOT a scheduler or cron controller
 - NOT a repo mutator or spec approver
-- NOT allowed to reactivate bioshort_watch LLM
+- NOT allowed to reactivate bioshort\_watch LLM
 - NOT the authoritative source for any production state
-
-### Phase B Implementation Status (2026-05-27)
-
-**Live call sites:**
-- `hermes-held-spec-ledger` — routes held_spec_ledger events (INFO severity, 60m dedupe window)
-- `snapshot_complete` — custom event type, routes snapshot promotion results (WARN severity)
-- `contradiction_detected` — routes hard/possible contradictions from knowledge layer (WARN severity)
-
-**TODO (Phase B planned extensions):**
-- `hermes-first-fire-validator` — route first_fire_pass/fail events (INFO/FAIL severity)
-- `agent_supervisor_sentinel` — route snapshot_missing event on watchdog timeout (FAIL severity)
-- `hermes-ruleset-integrity` — validate CLAUDE.md vs code, route ruleset_mismatch (FAIL severity)
-
-**Dedupe windows:**
-- FAIL: 15 minutes
-- WARN: 30 minutes  
-- INFO: 60 minutes
-
-**Dry-run status:** `OPERATOR_DELIVERY_DRY_RUN=1` (default, logs only); set to `0` for live email delivery (requires operator approval).
 
 ---
 
@@ -185,36 +180,55 @@ WARN: `stale_artifact`, `contradiction_detected`
 
 **File**: `agents/AGENT_REGISTRY.json`
 
-### Model Configuration
+### Model Configuration (updated 2026-05-20)
 
-- **Primary**: `deepseek/deepseek-v4-flash:free` (OpenRouter) — fleet-wide migration 2026-05-20
-- **Registry**: 33 agents (30 active, 2 deprecated, 1 shadow) — `agents/AGENT_REGISTRY.json`
+- **Primary model**: `deepseek/deepseek-v4-flash:free` (OpenRouter) - fleet-wide migration 2026-05-20
+- **Registry**: 33 agents (30 active, 2 deprecated, 1 shadow) + 3 Hermes governance jobs in `agents/` (held-spec, first-fire, ruleset-integrity) — see `agents/AGENT_REGISTRY.json`
 - **Fallback**: Anthropic Claude SDK (for Claude-specific models)
-- **Auto-routing**: "deepseek" models → OpenRouter (OpenAI-compatible), "claude" → Anthropic SDK
+- **Auto-routing**: "deepseek" models -> OpenRouter (OpenAI-compatible), "claude" -> Anthropic SDK
+- **Previous**: Llama 3.3 70B Instruct Turbo (Together AI, 2026-05-13 to 2026-05-20)
 
-### Inference Tuning
+### Inference Tuning (Llama-optimized, 2026-05-13)
 
-| Parameter | Value |
-|-----------|-------|
-| Temperature | 0.2 |
-| Frequency penalty | 0.1 |
-| Top_p | 0.95 |
-| Repetition penalty | 1.2 |
-| API timeout | 2400s |
-| Retry strategy | Exponential backoff (500ms–8000ms) |
+| Parameter | Value | Rationale |
+| --- | --- | --- |
+| Temperature | 0.2 | Stronger governance determinism |
+| Frequency penalty | 0.1 | Reduce repetition loops |
+| Top\_p | 0.95 | Tighter nucleus sampling |
+| Repetition penalty | 1.2 | Anti-loop guard |
+| API timeout | 2400s | Llama inference variance (Together can spike 8-12s cold) |
+| Retry strategy | Exponential backoff | 500ms-8000ms delays |
+| Compression threshold | 0.5 | Less aggressive for 131K context |
 
-### Uncertainty Handling (all agents)
+### Uncertainty Handling (all agents, 2026-05-13)
 
-- ops_supervisor: missing artifacts → RED (not GUESS); confidence < 0.7 → escalate
-- sentinel: missing drift → FAIL; boundary cases → WARN
-- data_auditor: missing snapshot → FAIL; specific ticker counts (not "some")
-- ic_health_monitor: missing dashboard → UNKNOWN; threshold boundaries → ALERT (conservative)
-- fleet_steward: unreachable status → MEDIUM; missing last_run → anomalous
+All agents tuned with explicit uncertainty escalation rules:
+
+- ops\_supervisor: missing artifacts -> RED (not GUESS); confidence < 0.7 -> escalate
+- sentinel: missing drift -> FAIL; boundary cases -> WARN; ambiguous rollback -> both commands
+- data\_auditor: missing snapshot -> FAIL; specific ticker counts (not "some")
+- ic\_health\_monitor: missing dashboard -> UNKNOWN; threshold boundaries -> ALERT (conservative)
+- fleet\_steward: unreachable status -> MEDIUM; missing last\_run -> anomalous (not healthy)
+
+### Llama-Specific Prompting
+
+Agent AGENTS.md docs updated with Llama-specific procedures:
+
+- IF/THEN chains instead of open-ended reasoning
+- Step numbering for multi-step workflows
+- Schema-first output format
+- No inferred data; report missing explicitly
+
+### Gateway Monitoring
+
+- `~/.hermes/monitor_together_latency.py` tracks latency trends
+- Alerts on success rate <80% or avg latency >5s
+- Logs to `together_latency.log`
 
 ### Monitoring Layers
 
 | Layer | Tool | Purpose |
-|-------|------|---------|
+| --- | --- | --- |
 | Heartbeat | `tools/agent_heartbeat_checks.py` | Per-agent health |
 | Supervisor | `agents/ops_supervisor/supervisor.py` | Fleet-wide anomaly classification |
 | Post-snapshot | `tools/run_post_snapshot_supervisor.py` | Post-pipeline task orchestration |
@@ -223,28 +237,37 @@ WARN: `stale_artifact`, `contradiction_detected`
 ### Anomaly Classification
 
 | Classification | Severity | Meaning |
-|---------------|----------|---------|
+| --- | --- | --- |
 | new | ORANGE | First occurrence |
 | carried | YELLOW | Same anomaly seen yesterday (exact text match) |
 | resolved | GREEN | Previously seen, now gone |
 
-Terminal agents (e.g., ops_supervisor) are intentionally unsupervised — no HEARTBEAT.md.
+Terminal agents (e.g., ops\_supervisor) are intentionally unsupervised and do not carry HEARTBEAT.md.
 
 ### Herald Pipeline
 
-Done predicate requires BOTH:
+Done predicate requires BOTH deduped AND classified JSONL:
+
 - `data/press_releases/deduped/deduped_{date}.jsonl`
 - `data/press_releases/classified/classified_{date}.jsonl`
 
-If classification failed but dedupe exists, next supervisor run retries classification.
+If classification failed but dedupe exists, the next supervisor run retries classification.
 
 ---
 
 ## SOUL.md / Ruleset System
 
-**SOUL.md**: Per-agent operating manual defining boundaries, tools, and heartbeat checks. Located in `agents/{name}/SOUL.md`.
+### SOUL.md
 
-**Ruleset Health Monitor** (`tools/ruleset_health_monitor.py`): JSONL history grows with each evaluation date. Tracks consecutive WARN days by active ruleset ID. Recommends rollback after sustained degradation.
+Per-agent operating manual defining boundaries, tools, and heartbeat checks. Located in each agent workspace under `agents/{name}/SOUL.md`.
+
+### Ruleset Health Monitor
+
+**Tool**: `tools/ruleset_health_monitor.py`
+
+- JSONL history grows with each new evaluation date (idempotent on same-day reruns)
+- Tracks consecutive WARN days by active ruleset ID
+- Recommends rollback after sustained degradation
 
 ---
 
@@ -253,7 +276,7 @@ If classification failed but dedupe exists, next supervisor run retries classifi
 ### Spec States
 
 | State | Meaning |
-|-------|---------|
+| --- | --- |
 | DRAFT | Under development |
 | IN PROGRESS | Active work, phased |
 | HELD | Blocked on dependency |
@@ -261,22 +284,132 @@ If classification failed but dedupe exists, next supervisor run retries classifi
 | SUPERSEDED / MITIGATED | Failure modes neutralized via different route |
 | CLOSED | Formally closed |
 
-Each spec has: acceptance criteria with section references, phase gates (A/B/C/D), blocking dependencies, closure memos in `artifacts/audit/`.
+### Active Spec Numbering
+
+Specs numbered sequentially (currently 071-105 range active). Each spec has:
+
+- Acceptance criteria with explicit section references
+- Phase gates (A/B/C/D typical)
+- Blocking dependencies on other specs
+- Closure memos in `artifacts/audit/`
+
+**Spec numbering collision resolved (2026-05-14):** Original expectation coverage spec was drafted as Spec 100, which collided with the existing IC tooling correction spec. Renumbered to Spec 105 in commit cb242311.
+
+**Schema/coverage/export specs (commits cb242311 through b310671a, 2026-05-14):**
+
+| Spec | Title | Status | Commit |
+| --- | --- | --- | --- |
+| 105 | Expectation Layer Coverage Verification | CODE-CLOSED / pending live QA | 0ddbb509 |
+| 101 | Runway Severity v1.1 Export Contract | CLOSED | eaa4ea87 + cba4ee0f |
+| 104 | Insider Diagnostic Stabilization | MEASURED / pending 2026-05-15 | b310671a |
+| 102 | Historical Backfill for Expectation Research | DRAFT | -- |
+
+**Other specs shipped 2026-05-14:**
+
+| Spec | Title | Status | Commit |
+| --- | --- | --- | --- |
+| 087 B2 | Dashboard Freshness Envelope | CLOSED | 400a6cd9 |
+| 087 B0 | Stale-Propagation Guard | CLOSED (formal closure memo) | 0f0c7952 |
+| 087C A | Bioshort Alpha Research Design | DESIGN (memo only) | 7628b9c6 |
+| 088 B | Catalyst Delta v2 Filter Companion | SHIPPED | 5ca4b033 |
+
+All schema/coverage/export specs are correctness work. No new model, no new alpha.
 
 ### Held-Spec Ledger
 
-Tracks all specs that are held/blocked with: what is held and why, first-fire validation status, alert deadlines, next operator action.
+Tracks all specs that are held/blocked with:
+
+- What is held and why
+- First-fire validation status
+- Alert deadlines
+- Next operator action
+
+---
+
+## Expectation Layer Coverage Gate (Spec 105)
+
+**QA file**: `production_qa_check.py`
+**Status:** CODE-CLOSED (commit 0ddbb509). Pending live production snapshot QA via `python tools/production_qa_check.py --as-of-date YYYY-MM-DD`.
+
+Production pipeline hard-fails if market-expectation fields are missing or under-covered in `rankings.csv`. Thresholds sourced from `FEATURE_COVERAGE_REQUIREMENTS` (not hardcoded).
+
+### Required Expectation Fields
+
+| Field | Required Coverage | Source |
+| --- | --- | --- |
+| `short_interest_pct` | 0.90 | Market data provider |
+| `close_price` | 0.99 | Market data provider |
+| `market_cap_mm` | 0.95 | Market data provider |
+| `priced_move_pct` | 0.80 | Derived (catalyst pricing model) |
+| `insider_net_buy_value_90d` | 0.30 | Form 4 (tracked nonblocking / diagnostic only) |
+
+### Gate Behavior
+
+- Runs every pipeline execution at Step 5 (Gates)
+- Hard fail if any required field is missing from DataFrame
+- Hard fail if any field falls below its per-field threshold
+- Error message includes: field name, actual coverage, required threshold
+- Coverage stats logged every run regardless of pass/fail
+- Expectation model must consume these columns from `rankings.csv`, not from a parallel source
+
+### Key Rule
+
+`FEATURE_COVERAGE_REQUIREMENTS` is the single source of truth. If thresholds change, the gate inherits automatically. Do NOT hardcode coverage floors in pipeline scripts.
 
 ---
 
 ## Export Contract Registry (Spec 101)
 
-Status: CLOSED (commits eaa4ea87 + cba4ee0f). `ev_severity_score` now exported.
+**Status:** CLOSED (commits eaa4ea87 + cba4ee0f, 2026-05-14). `ev_severity_score` now exported. Build gap resolved.
 
-**Runway severity fields exported (post-Spec 101):**
-`runway_severity_score`, `ev_severity_score`, `runway_buffer_months`, `financing_truth_gate`, `dilution_haircut`, `size_multiplier`, `severity_bucket`, `severity_notes`
+Tracks which computed fields are exported to CSV and snapshots.
 
-`check_severity_formulas()` QA validation runs on every snapshot.
+### Runway Severity Export (v1.1, RESOLVED)
+
+**All exported (post-Spec 101):**
+
+- `runway_severity_score`, `ev_severity_score`, `runway_buffer_months`, `financing_truth_gate`
+- `dilution_haircut`, `size_multiplier`, `severity_bucket`, `severity_notes`
+- `check_severity_formulas()` QA validation runs on every snapshot
+- Validates finiteness before formula checks; fails explicitly on blank/NaN/Inf
+
+**Derived field contracts (must hold for all non-null rows):**
+
+```
+dilution_haircut == 0.35 * ev_severity_score       (tolerance 1e-6)
+size_multiplier == max(0.40, 1 - 0.60 * ev_severity_score)  (tolerance 1e-6)
+```
+
+Pre-v1.1 snapshot readers default `ev_severity_score` to NaN (not fail).
+
+---
+
+## Diagnostic Fields Registry (Spec 104)
+
+Fields tracked for observability but explicitly excluded from scoring, ranking, and selection.
+
+### Current Diagnostic Fields
+
+| Field | Status | Meaning of Null | Meaning of 0.0 |
+| --- | --- | --- | --- |
+| `insider_net_buy_value_90d` | DIAGNOSTIC ONLY | Not fetched / no Form 4 coverage | Fetched, no insider buy activity in 90d |
+
+### Insider Model Isolation Guard (CRITICAL)
+
+`insider_net_buy_value_90d` must NOT enter the expectation model's `market_features` input. The model has an `insider_net_buy_z` weight that activates silently if the field flows upstream. Guard with at least one of:
+
+1. **Input exclusion (preferred):** Runtime assert that `insider_net_buy_value_90d` is NOT in `market_features` DataFrame at inference
+2. **Weight zeroing:** `insider_net_buy_z` weight = 0.0 with test
+3. **Drop guard:** Pre-inference step that drops the field if present, with logged warning
+
+### Rules
+
+- Never collapse blank (NaN) and zero (0.0) -- they have different semantics
+- Never impute zero for missing or blank for zero
+- CI check: flag suspicious if column is ALL zero or ALL null
+- Field must remain in `DIAGNOSTIC_FIELDS`, NOT in `ALPHA_FEATURE_REGISTRY`
+- Does not affect ranks, actions, or position sizing
+- Promotion requires: 20+ stable snapshots, >= 60% coverage, IC > 0 at p < 0.05, Checklist v2 pass, explicit written approval
 
 ---
 
@@ -284,20 +417,24 @@ Status: CLOSED (commits eaa4ea87 + cba4ee0f). `ev_severity_score` now exported.
 
 Research-enablement tooling for backfilling expectation fields into historical snapshots.
 
-Target fields: `short_interest_pct`, `close_price`, `market_cap_mm`, `priced_move_pct` (required); `insider_net_buy_value_90d` (optional)
+### Target Fields
 
-Key rules:
+`short_interest_pct`, `close_price`, `market_cap_mm`, `priced_move_pct` (required); `insider_net_buy_value_90d` (optional)
+
+### Key Rules
+
 - Default: additive-only (`recompute=False`). Original ranks/actions preserved.
-- Every backfill emits a structured manifest
+- Every backfill emits a structured manifest (snapshot\_date, fields\_added, coverage before/after, recompute flag, timestamp, version)
 - `_backfill_version` metadata column added to all backfilled snapshots (null for originals)
 - Research scripts must filter on `_backfill_version` to avoid silent pre/post mixing
+- Default scope: 30 trading days, configurable
 
 ---
 
 ## Source Files
 
 | Component | File |
-|----------|------|
+| --- | --- |
 | Daily Production Runner | `tools/run_daily_production.py` |
 | Knowledge Layer Builder | `tools/build_hermes_knowledge_layer.py` |
 | Operator Delivery | `common/operator_delivery.py` |
@@ -308,59 +445,105 @@ Key rules:
 | Ops Digest Builder | `tools/build_ops_digest.py` |
 | Readiness Scorecard | `tools/weekly_readiness_scorecard.py` |
 | Cron Wrapper | `tools/cron_daily_production.sh` |
-| Agent Registry | `agents/AGENT_REGISTRY.json` |
 
 ---
 
 # SECTION 2: OPERATIONAL STATE
 
-> **SNAPSHOT DATA** — Verify against current pipeline or infrastructure before citing.
+> **SNAPSHOT DATA** - The values below are point-in-time and go stale. Verify against current pipeline or infrastructure before citing.
 
 ---
 
 ## Active Ruleset
 
-*Last reviewed: 2026-05-24*
+*Last reviewed: 2026-05-13*
 
 - **ID**: `8887576e` (v1.14.0)
 - **File**: `production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json`
-- **Architecture freeze**: ACTIVE — h20d DEFERRED (Path B, 2026-05-24)
+- **Prior ruleset**: `2a3e79eb` (v1.13.0) - RETIRED 2026-05-04
+- **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
+- **Manifest**: 36+ entries, no duplicate IDs
+- **Architecture freeze**: In effect until post-h20d checkpoint (\~2026-05-26)
 
-## Governance Freeze Status
+## BioShort Research (Spec 092)
 
-*Last reviewed: 2026-05-28*
+*Last reviewed: 2026-05-13*
 
-- **Architecture Freeze**: ACTIVE — no selector/ranker/sizing/KG changes
-- **13F Q1 2026 Quarantine**: ✓ CLEARED (Jaccard 0.875, 2026-05-24)
-- **h20d Override**: ✓ ACTIVE (2026-05-26); Phase 2 Step 5 UNBLOCKED; weekly monitoring + re-eval 2026-07-01
-- **Path C Governance**: ✓ APPROVED (2026-05-28); temporary catalyst timing policy override active 2026-05-28 to 2026-06-03
-  - Rationale: institutional data remediated (49-manager cohort); near-term concentration confirmed real consensus
-  - Monitoring: forward eval IC floor (0.0200); portfolio drawdown vs XBI (2pp trigger); cohort Jaccard (0.70)
-  - Exit conditions: observable IC evaluate floor; unobservable IC operator decide extend/revert
-  - Related: `artifacts/readiness/GOVERNANCE_DECISION_PATH_C_2026_05_28.md`
-- **Phase 2 Step 5 (KG gating)**: UNBLOCKED on 13F clearance; h20d now active
+| Phase | Status | Key Output |
+| --- | --- | --- |
+| A (inventory) | COMPLETE | 142/162 usable snapshots, 18 with decision\_portfolio.csv fallback |
+| B (research-mode isolation) | COMPLETE | --research-mode flag, archive redirect, mode tagging |
+| C (historical panel) | COMPLETE | 146 rows x 16 features, 100% success, 0 live path mutations |
+| D (forward returns) | COMPLETE | DEFER verdict 60.5% hit T+5, median T+5 +0.63%, T+20 +2.49% |
+
+Key findings (pseudo-PIT):
+
+- DEFER verdict: 129 samples, 60.5% accuracy at T+5 (forward\_5d >= 0)
+- Median T+5 return: +0.63%
+- Median T+20 return: +2.49%
+- Median drawdown: -2.86% over 20d post-recommendation
+- Pseudo-PIT caveat: features computed with current logic on historical snapshots. No promotion claims supported.
+
+## Town-Hermes Bridge Status
+
+*Last reviewed: 2026-05-13*
+
+- Phase A complete (dry-run mode, `OPERATOR_DELIVERY_DRY_RUN=1`)
+- Phase B (live delivery): not yet started
+
+## Knowledge Graph Implementation Status
+
+*Last reviewed: 2026-05-24*
+
+- **Phase 2 Step 4 (KG implementation)**: COMPLETE (2026-05-21) — 68/68 tests PASS; 4a loader + 4b queries + 4c contradictions + 4e integration; h20d evidence package ready
+- **Spec 110 Phase 1 PoC**: COMPLETE (2026-05-21) — 56 nodes, 16 edges, 5 query patterns, 22 tests PASS; pipeline provenance graph; no production wiring
+- **Phase 2 Step 4d (CLI)**: deferred post-h20d
+- **Phase 2 Step 5 (KG gating)**: blocked on 13F quarantine clearance + h20d decision (~2026-05-26)
 
 ## Infrastructure
 
 *Last reviewed: 2026-05-30*
 
-- **Platform**: WSL2 on Windows host (operator authority for cron + artifacts)
-- **Agent model**: `deepseek/deepseek-v4-flash:free` (OpenRouter) since 2026-05-20
-- Daily cron: 5:30 PM ET weekdays
+- **Production host**: WSL2 on Windows (operator authority for cron + artifacts)
+- **Agent model**: `deepseek/deepseek-v4-flash:free` via OpenRouter (2026-05-20)
+- Daily production cron: 5:30 PM ET weekdays
+- `universe_maintenance`: 10:00 AM ET
 - Sleep-cliff risk: Windows host suspend kills crons silently — `powercfg /change standby-timeout-ac 0`
+- Missed cron signature: 24-48h gap in `data/snapshots/`
+- **Planned**: Linux VPS migration; WSL2 remains dev environment
 
-### Repo plumbing baseline
+### Repo plumbing baseline (Cloud + Cursor)
 
-| PR | Scope |
-|----|--------|
-| #311 | Registry ↔ agent dirs; 33-agent fleet |
-| #312 | CodeGraph 0.9.7; `$HOME/.local` install |
-| #313 | `UNKNOWN_CLOUD_ENV` for cloud crontab checks |
+*Merged 2026-05-30 · `main` @ `b19c36e3`*
 
-### Cursor Cloud / CI / Hermes Notes
+| PR | Scope | Status |
+| --- | --- | --- |
+| #311 | Agent registry ↔ `agents/` dirs; 33-agent fleet; Hermes governance agents registered | Done |
+| #312 | CodeGraph `@0.9.7` via `$HOME/.local`; `.cursor/environment.json` | Done |
+| #313 | Knowledge layer: `UNKNOWN_CLOUD_ENV` when `crontab` unavailable; operator-host C3 authority | Done |
 
-- `.cursor/environment.json`: CodeGraph `@0.9.7` to `$HOME/.local`, `pip install -r requirements.txt`, `codegraph sync|index`. **No pytest-xdist required.**
-- Repo-native Hermes MCP (`mcp_server/hermes_server.py`) read-only in Cloud; production Hermes gateway is operator-host only.
-- Knowledge-layer triage: run builder on **operator WSL**; see **Host authority** above.
-- GitHub Actions budget blocks are infrastructure, not PR code failures.
-- PR #304 is Track B draft/spec-test-only — do not green without governance clearance.
+### Cursor Cloud Agent Environment
+
+- Install hook: `.cursor/environment.json` — `npm install -g @colbymchenry/codegraph@0.9.7 --prefix "$HOME/.local"`, then `pip install -r requirements.txt`, then `codegraph sync` or `codegraph index`.
+- MCP: `.cursor/mcp.json` — `codegraph` + repo-native `hermes` (`mcp_server/hermes_server.py`, read-only).
+- Python deps from `requirements.txt` only; **`pytest-xdist` not required** (`pyproject.toml` uses `-q -m 'not network'`).
+- Cloud can run registry tests and build knowledge-layer ledgers; **cannot** authoritatively validate operator cron or `output/hedge_report/`.
+- Expected cloud build summary: `0 hard / N cloud-env / M possible`; first-fire FAIL may still appear if hedge artifacts are absent in the checkout.
+
+### CI Budget Failures
+
+- GitHub Actions annotation `The job was not started because an Actions budget is preventing further use.` means provider budget/quota blocked job startup.
+- Treat this as CI infrastructure, unrelated to PR diffs unless logs show actual job steps ran.
+- Do not patch code for this signal; restore/wait for Actions budget and rerun.
+
+### Track B Governance Contracts
+
+- PR #304 is draft/spec-test-only for fail-closed production-governance contracts.
+- Expected red tests are evidence of current gaps, not CI failures to fix.
+- Do not implement ranker/final_score behavior, snapshot writer/promotion semantics, selector, sizing, or KG production changes from that PR without explicit governance clearance.
+
+### Hermes Runtime vs Repo MCP
+
+- Repo-native Hermes MCP works in Cursor Cloud (registry, SOUL, knowledge artifacts when built locally).
+- Production Hermes gateway, scheduled jobs, and OpenClaw runtime are **operator-host only** — not visible in Cloud.
+- Triage knowledge-layer alerts on **operator WSL** after `git pull` and `build_hermes_knowledge_layer.py`; see **Host authority** above.

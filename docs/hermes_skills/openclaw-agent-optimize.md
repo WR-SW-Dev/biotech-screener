@@ -111,7 +111,7 @@ After any approved optimization, verify:
 
 ### Town Environment
 
-1. Audit memories: `get_memories()` + per-routine memories for active routines
+1. Audit memories: `get_memories()` \+ per-routine memories for active routines
 2. Audit skills: `town_ls skills://` - identify unused or oversized skills
 3. Audit routines: `list_routines()` - check for redundancy, frequency, tool bloat
 4. Audit analytics: `get_analytics(period_days=7)` - identify high-cost routines
