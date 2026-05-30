@@ -47,7 +47,7 @@ Registry metadata must never override runtime identity documents.
 
 ## Agent Fleet Quick Reference
 
-- 30 total: 27 active, 1 suppressed (bioshort_watch), 1 retired (company_news_ingest), 1 shadow
+- 33 total: 30 active, 2 deprecated (bioshort_watch, company_news_ingest), 1 shadow; 3 Hermes governance jobs (held-spec, first-fire, ruleset-integrity)
 - Model: DeepSeek v4 flash via OpenRouter (switched 2026-05-20; gateway fixed to openrouter primary 2026-05-25)
 - Cron: 5:30 PM ET weekdays (daily production), 10:00 AM ET (universe maintenance)
 - Monitoring: heartbeat -> supervisor -> post-snapshot -> sentinel (4-layer stack)
