@@ -60,8 +60,8 @@ bash tools/cron_data_refresh.sh all
 # Required for live operation
 export FIRECRAWL_API_KEY="fc-..."
 
-# Optional schedule override (default: 2 PM ET)
-export FIRECRAWL_SEARCH_TIME="08:00"  # 8 AM ET for morning run
+# Schedule via operator crontab (not an env var):
+#   0 8 * * 1-5  .../tools/cron_data_refresh.sh firecrawl
 ```
 
 ### Output Consumption
@@ -90,8 +90,8 @@ End of day (4:00 PM ET)
   │   └─ artifacts/intraday_mover_watch/{date}_digest.json
   │       └─ HIGH-severity moves flagged
   │
-  └─ (optional enrichment)
-      python tools/enrich_intraday_digest_with_research.py --date {date}
+  └─ cron_intraday_mover.sh digest (automatic when FIRECRAWL_API_KEY set)
+      └─ enrich_intraday_digest_with_research.py
           └─ artifacts/intraday_mover_watch/{date}_digest_enriched.json
               (digest + Firecrawl news context on HIGH moves)
 ```
@@ -108,13 +108,7 @@ python tools/enrich_intraday_digest_with_research.py \
 # Output: artifacts/intraday_mover_watch/2026-05-27_digest_enriched.json
 ```
 
-**Cron integration (add to crontab):**
-
-```bash
-# After daily intraday digest is generated
-0 16 * * 1-5 cd /mnt/c/Projects/biotech_screener/biotech-screener && \
-  python tools/enrich_intraday_digest_with_research.py --date $(date +%F)
-```
+**Cron integration:** Wired in `tools/cron_intraday_mover.sh digest` (runs after digest build when `FIRECRAWL_API_KEY` is set; 120s timeout). Recommended crontab: **16:15 ET** weekdays — see `cron_intraday_mover.sh` header.
 
 **Environment:**
 
@@ -251,7 +245,7 @@ Or preload at session start:
 hermes -s firecrawl-research-discovery
 ```
 
-See `~/.hermes/skills/biotech-screener/firecrawl-research-discovery/` for full documentation.
+Repo skill: `skills/firecrawl_research/SKILL.md` (Hermes mirror: `docs/hermes_skills/firecrawl-research-discovery.md`).
 
 ---
 

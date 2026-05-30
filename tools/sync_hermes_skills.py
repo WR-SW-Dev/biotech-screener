@@ -29,6 +29,7 @@ META = HERMES / "_meta.json"
 SKILL_MAP: dict[str, str] = {
     "screener_ops": "screener-ops.md",
     "codegraph": "codegraph.md",
+    "firecrawl_research": "firecrawl-research-discovery.md",
     "catalyst_resolution": "catalyst-resolution.md",
     "clinical_scoring": "clinical-scoring.md",
     "financial_health": "financial-health.md",
@@ -80,6 +81,7 @@ HERMES_AUTHORITATIVE: set[str] = {
 DISPLAY_NAMES: dict[str, str] = {
     "screener_ops": "Screener Ops & Governance",
     "codegraph": "Codegraph Repo Intelligence",
+    "firecrawl_research": "Firecrawl Research Discovery",
     "catalyst_resolution": "Catalyst Resolution & Tracking",
     "clinical_scoring": "Clinical Trial Scoring",
     "financial_health": "Financial Health Assessment",

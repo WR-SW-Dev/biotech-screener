@@ -39,6 +39,10 @@ from typing import Any, Iterable, Optional
 
 from firecrawl import Firecrawl
 
+from common.repo_env import REPO_ROOT, load_repo_dotenv
+
+load_repo_dotenv(REPO_ROOT)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
