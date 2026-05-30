@@ -2,7 +2,7 @@
 # BIOTECH-SCREENER DEPENDENCIES (Pinned for Reproducibility)
 # ============================================================================
 # Python version: 3.10+
-# Last updated: 2026-03-05
+# Last updated: 2026-05-30
 #
 # After editing this file, regenerate the lock file:
 #   pip-compile --generate-hashes --output-file=requirements.lock requirements.txt
@@ -49,3 +49,8 @@ mypy==2.1.0
 yfinance==0.2.35
 beautifulsoup4==4.14.3
 lxml==6.1.0
+
+# ----------------------------------------------------------------------------
+# Research-only web discovery (no ranker/selector inputs)
+# ----------------------------------------------------------------------------
+firecrawl-py==4.28.2

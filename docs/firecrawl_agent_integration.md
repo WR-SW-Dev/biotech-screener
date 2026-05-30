@@ -1,5 +1,7 @@
 # Firecrawl Agent Integration Guide
 
+**SDK:** `firecrawl-py==4.28.2` · v2 `Firecrawl` client (`search`, `scrape`)
+
 ## Overview
 
 Firecrawl research-only integrations wired into biotech screener data collection and monitoring agents.
