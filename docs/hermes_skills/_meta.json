@@ -222,6 +222,12 @@
       "file": "phase-2-step-4-readiness.md",
       "status": "Active",
       "source": "hermes_native"
+    },
+    "firecrawl-research-discovery": {
+      "name": "Firecrawl Research Discovery",
+      "file": "firecrawl-research-discovery.md",
+      "status": "Active",
+      "source": "cursor_skill"
     }
   },
   "path_c_governance_window_status": {

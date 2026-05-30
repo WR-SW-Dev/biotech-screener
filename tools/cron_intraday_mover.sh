@@ -90,6 +90,15 @@ case "${MODE}" in
             --as-of-date "${AS_OF_DATE}" \
             --digest-only \
             ${SEND_FLAG}
+
+        if [ -n "${FIRECRAWL_API_KEY:-}" ]; then
+            echo "[$(date -Iseconds)] intraday_mover: firecrawl digest enrichment (timeout 120s)"
+            timeout 120 "${PYTHON}" "${REPO_ROOT}/tools/enrich_intraday_digest_with_research.py" \
+                --date "${AS_OF_DATE}" \
+                || echo "[$(date -Iseconds)] intraday_mover: firecrawl enrichment failed or timed out — digest unchanged on disk except prior step"
+        else
+            echo "[$(date -Iseconds)] intraday_mover: firecrawl enrichment skipped (FIRECRAWL_API_KEY unset)"
+        fi
         ;;
     *)
         echo "usage: $0 {poll|digest} [--no-email]" >&2

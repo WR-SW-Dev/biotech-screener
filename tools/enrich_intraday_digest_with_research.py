@@ -38,23 +38,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-# Setup paths
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-# Load .env if not already in environment (for cron execution)
-if not os.getenv("FIRECRAWL_API_KEY"):
-    env_file = REPO_ROOT / ".env"
-    if env_file.exists():
-        with open(env_file) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, value = line.split("=", 1)
-                    value = value.strip('"\'')
-                    os.environ[key] = value
+from common.repo_env import load_repo_dotenv  # noqa: E402
 
-from tools.firecrawl_research_ingest import FirecrawlResearchAdapter
+load_repo_dotenv(REPO_ROOT)
+
+from tools.firecrawl_research_ingest import FirecrawlResearchAdapter  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -103,7 +94,12 @@ def extract_high_moves(digest: dict) -> list[HighMove]:
 
             seen_tickers.add(ticker)
             move_type = f"INTRADAY_{move_list_key.upper()}_HIGH"
-            magnitude = move.get("move_pct", 0.0)
+            magnitude = float(
+                move.get("stock_abs_move_pct")
+                or move.get("rel_move_vs_xbi_pct")
+                or move.get("move_pct")
+                or 0.0
+            )
             high_moves.append(
                 HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude)
             )
