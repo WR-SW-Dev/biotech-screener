@@ -51,3 +51,4 @@ Registry metadata must never override runtime identity documents.
 - Model: DeepSeek v4 flash via OpenRouter (switched 2026-05-20; gateway fixed to openrouter primary 2026-05-25)
 - Cron: 5:30 PM ET weekdays (daily production), 10:00 AM ET (universe maintenance)
 - Monitoring: heartbeat -> supervisor -> post-snapshot -> sentinel (4-layer stack)
+- Knowledge-layer cron checks (C1/C3) are authoritative on the **operator host** only; Cloud Agent VMs without `crontab` emit `UNKNOWN_CLOUD_ENV`, not hard contradictions
