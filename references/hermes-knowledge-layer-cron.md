@@ -37,6 +37,12 @@ After the cron fires for the first time:
 - [ ] Failure exits nonzero or logs clearly — `tail -20 logs/knowledge_layer.log` on failure
 - [ ] Output path stays gitignored — `git check-ignore artifacts/ops/knowledge_layer/latest_state.json`
 
+## Host authority (2026-05-30)
+
+- **Authoritative runs:** operator WSL / production host where `crontab` and `output/hedge_report/` exist.
+- **Cursor Cloud:** may run the builder for plumbing checks; C1/C3 emit `UNKNOWN_CLOUD_ENV` when `crontab` is missing (#313). First-fire FAIL still applies if hedge artifacts are absent.
+- **Spec 087 B1b:** closable only on operator evidence (cron + artifacts + logs), not from cloud ledger output alone.
+
 ## Scope Boundary
 
 This cron job refreshes the deterministic ledgers only. It does NOT:
