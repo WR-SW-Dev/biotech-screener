@@ -1,6 +1,6 @@
 # Town-Hermes Bridge (Spec 090)
 
-**Status:** Phase B In Progress  
+**Status:** Phase B wired (live delivery pending operator sign-off)  
 **Architecture:** Email-based delivery (Phase A), webhook-ready structure  
 **Governance:** Read-only ops layer; Town has no production mutation authority
 
@@ -211,9 +211,11 @@ Example:
 
 ---
 
-## Phase B (In Progress): Hard Failures to Town
+## Phase B: Hard Failures to Town
 
 **Scope:** Wire `first_fire_fail`, `snapshot_missing`, `ruleset_mismatch`, `cron_missed`, `contradiction_detected` events
+
+**Code status (2026-05-27):** Call sites implemented for held-spec ledger, first-fire validator, ruleset integrity, and snapshot-missing sentinel. Remaining: morning watchdog (`cron_missed`), contradiction detector (`contradiction_detected`), operator flip to `OPERATOR_DELIVERY_DRY_RUN=0`.
 
 **Call sites:**
 - `hermes-held-spec-ledger` job (entry point)
@@ -248,10 +250,10 @@ Listed in order of implementation:
 
 | Job | event_type | Artifact | Status |
 |---|---|---|---|
-| `hermes-held-spec-ledger` | `held_spec_ledger` | `artifacts/ops/held_spec_ledger/` | TODO |
-| `first-fire-validator` | `first_fire_pass` / `first_fire_fail` | `artifacts/qa/first_fire_{date}.json` | TODO |
-| snapshot watchdog | `snapshot_missing` | (none, metadata only) | TODO |
-| `hermes-ruleset-integrity` | `ruleset_mismatch` | `artifacts/ruleset_audit/` | TODO |
+| `hermes-held-spec-ledger` | `held_spec_ledger` | `artifacts/ops/held_spec_ledger/` | DONE (2026-05-27) |
+| `hermes-first-fire-validator` | `first_fire_pass` / `first_fire_fail` | `artifacts/qa/first_fire_{date}.json` | DONE (2026-05-27) |
+| `agent_supervisor_sentinel` | `snapshot_missing` | (none, metadata only) | DONE (2026-05-27) |
+| `hermes-ruleset-integrity` | `ruleset_mismatch` | `artifacts/ruleset_audit/` | DONE (2026-05-27) |
 | morning watchdog | `cron_missed` | (cron log excerpt) | TODO |
 | `hermes-contradiction-detector` | `contradiction_detected` | `artifacts/ops/contradiction_ledger/` | TODO |
 

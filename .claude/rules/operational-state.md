@@ -121,18 +121,15 @@ metadata:
 
 ## Hermes Skills Hub — Sync State
 
-*Last sync: 2026-05-24*
+*Last sync: 2026-05-30 · `python3 tools/sync_hermes_skills.py --register-meta`*
 
-- **biotech-screener `f3ab726b`** — 15 reference docs in `docs/hermes_skills/`
-- **hermes-agent `654172c06`** — 7 new live skills installed:
-  - `biotech-screener/`: dossier-generation, validation
-  - `software-development/`: browser-automation
-  - `autonomous-ai-agents/`: self-improving
-  - `investment-frameworks/` (new category): pe-pacing, sfo-liquidity-architecture, spending-liquidity
-- **Canonical 7 biotech hub skills preserved** (sizes unchanged): catalyst-resolution, clinical-scoring, financial-health, ic-evaluation, institutional-signal, screener-ops, selector-ranker
-- Gateway reload and smoke checks passed (dossier-generation + validation)
-- `validation` skill includes Spec 104 insider isolation guard
-- Governance label: Tooling/knowledge-layer expansion. No model, ranker, selector, sizing, or alpha-promotion change.
+- **Registry:** 31 skills in `docs/hermes_skills/_meta.json` (16 Cursor `SKILL.md` mirrors + 3 `REFERENCE.md` + 12 Hermes-native)
+- **Sync map:** `tools/sync_hermes_skills.py` · audit: `tools/audit_hermes_skills.py`
+- **Authoritative (no overwrite from `skills/`):** `memory-steward` — canonical copy at `~/.hermes/skills/devops/memory-steward/`; repo backup `.hermes/skills/devops/memory-steward.SKILL.md`
+- **Recent additions:** `firecrawl-research-discovery` (SDK v2, PR #319), `codegraph` (guard + MCP, PR #307)
+- **Hermes-only sections preserved on sync:** Path C block in `screener-ops.md`
+- **Town-Hermes bridge:** Phase B event wiring complete (2026-05-27); live email delivery awaits `OPERATOR_DELIVERY_DRY_RUN=0`
+- Governance label: Tooling/knowledge-layer expansion only. No model, ranker, selector, sizing, or alpha-promotion change.
 ## What to Update After Every Session
 
 - [ ] Current benchmark winner (Top-20 vs Top-30, any new candidate)

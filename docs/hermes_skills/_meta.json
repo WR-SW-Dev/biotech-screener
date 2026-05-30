@@ -5,7 +5,7 @@
     "town-operator-bridge": {
       "name": "Town-Hermes Bridge (Spec 090)",
       "file": "town-operator-bridge.md",
-      "status": "Phase B (hard failure routing, in progress)",
+      "status": "Phase B wired; live delivery pending OPERATOR_DELIVERY_DRY_RUN=0",
       "phase": "B",
       "event_types": [
         "held_spec_ledger",
