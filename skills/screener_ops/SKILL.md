@@ -450,10 +450,12 @@ Key findings \(pseudo-PIT\):
 
 ## Town-Hermes Bridge Status
 
-*Last reviewed: 2026-05-13*
+*Last reviewed: 2026-05-30*
 
 - Phase A complete \(dry-run mode, `OPERATOR_DELIVERY_DRY_RUN=1`\)
-- Phase B \(live delivery\): not yet started
+- Phase B wiring complete \(2026-05-27\): `hermes-held-spec-ledger`, `hermes-first-fire-validator`, `hermes-ruleset-integrity`, `agent_supervisor_sentinel` call `send_operator_event()`
+- Phase B live delivery: pending operator sign-off to set `OPERATOR_DELIVERY_DRY_RUN=0` in `.env`
+- Skill doc: `docs/hermes_skills/town-operator-bridge.md` · Spec 090
 
 ## Knowledge Graph Implementation Status
 

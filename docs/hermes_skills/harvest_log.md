@@ -5,6 +5,20 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-05-30
+
+### Sync (Cursor Cloud agent)
+- Ran `python3 tools/audit_hermes_skills.py` — 31/31 Hermes docs registered in `_meta.json`
+- Ran `python3 tools/sync_hermes_skills.py --register-meta` — 19 cursor mirrors unchanged; `memory-steward` skipped (Hermes-authoritative)
+- **screener-ops**: Town-Hermes bridge status refreshed (Phase B wiring complete 2026-05-27; live delivery pending)
+- **town-operator-bridge**: Phase B call-site table updated (4 DONE, 2 TODO)
+- **operational-state.md**: Hermes Skills Hub sync state block updated
+
+### Governance
+- Tooling/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-05-06
 
 ### Git activity (past 24h)
