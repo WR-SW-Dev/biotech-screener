@@ -883,6 +883,10 @@ def main():
 
     # Phase B: route hard contradictions to Town (dry-run unless OPERATOR_DELIVERY_DRY_RUN=0)
     try:
+        import sys
+
+        if str(REPO) not in sys.path:
+            sys.path.insert(0, str(REPO))
         from common.town_bridge_events import notify_hard_contradictions
 
         notify_hard_contradictions(contradictions)

@@ -19,6 +19,16 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-05-31
+
+### Hermes update (Cloud agent)
+- Cherry-picked Phase B gap closure onto `main` (was only partially merged in PR #320)
+- Fixed `build_hermes_knowledge_layer.py` repo `sys.path` for `town_bridge_events` import
+- Fixed MCP `knowledge_read(contradiction_ledger)` to prefer `latest.md`
+- Ran knowledge layer build; artifacts under `artifacts/ops/` (gitignored)
+
+---
+
 ## 2026-05-30 (gap closure)
 
 ### Agent & bridge gaps addressed

@@ -74,6 +74,31 @@ def test_hermes_mcp_stdio_exposes_read_only_tools():
     assert snapshot["agent_registry"]["exists"] is True
 
 
+def test_knowledge_read_contradiction_ledger_prefers_latest_md(tmp_path, monkeypatch):
+    """MCP knowledge_read must find contradiction_ledger/latest.md (not only .json)."""
+    ledger_dir = PROJECT_ROOT / "artifacts" / "ops" / "contradiction_ledger"
+    ledger_dir.mkdir(parents=True, exist_ok=True)
+    md_path = ledger_dir / "latest.md"
+    md_path.write_text("# Contradiction Ledger\n\n## 1. Hard Contradictions (0)\n\nNone.\n")
+
+    request = _request(4, "tools/call", {"name": "knowledge_read", "arguments": {"artifact": "contradiction_ledger"}})
+    result = subprocess.run(
+        [sys.executable, "-m", "mcp_server.hermes_server"],
+        input=request + "\n",
+        capture_output=True,
+        text=True,
+        cwd=PROJECT_ROOT,
+        timeout=5,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout.strip().splitlines()[-1])
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["exists"] is True
+    assert payload["selected_path"].endswith("contradiction_ledger/latest.md")
+    assert "Hard Contradictions" in payload["content"]
+
+
 def test_hermes_mcp_stdio_accepts_content_length_framing():
     request = _request(
         1,

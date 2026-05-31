@@ -408,6 +408,9 @@ def _knowledge_read(arguments: dict[str, Any]) -> dict[str, Any]:
                 }
             payload = _read_text_file(candidate, max_chars=max_chars)
             payload["artifact"] = artifact
+            payload["selected_path"] = payload.get("path", _repo_relative(candidate))
+            payload["exists"] = True
+            payload["format"] = "markdown"
             return payload
 
     return {
@@ -462,7 +465,7 @@ def _knowledge_candidates(artifact: str) -> list[Path]:
     filenames = {
         "knowledge_layer": ["latest_state.json", "latest_state.md"],
         "held_spec_ledger": ["latest.json", "latest.md"],
-        "contradiction_ledger": ["latest.json", "latest.md"],
+        "contradiction_ledger": ["latest.md", "latest.json"],
         "first_fire_ledger": ["latest.json", "latest.md"],
     }
     if directory not in filenames:
