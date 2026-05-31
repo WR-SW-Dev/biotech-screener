@@ -312,6 +312,22 @@
       "llm_policy": "none",
       "requires_preflight": true
     },
+    "hermes-contradiction-detector": {
+      "role": "route hard knowledge-layer contradictions to Town inbox",
+      "category": "control_plane",
+      "cadence": "on_demand",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/ops/contradiction_ledger/",
+        "artifacts/ops/knowledge_layer/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Spec 090 Phase B. Entry: agents/hermes-contradiction-detector/run_job.py. Also invoked from build_hermes_knowledge_layer.py.",
+      "llm_policy": "none",
+      "requires_preflight": true
+    },
     "ic_health_monitor": {
       "role": "signal health watchdog, detect IC degradation",
       "category": "signal_monitor",

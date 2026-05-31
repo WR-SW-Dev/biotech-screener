@@ -453,8 +453,8 @@ Key findings \(pseudo-PIT\):
 *Last reviewed: 2026-05-30*
 
 - Phase A complete \(dry-run mode, `OPERATOR_DELIVERY_DRY_RUN=1`\)
-- Phase B wiring complete \(2026-05-27\): `hermes-held-spec-ledger`, `hermes-first-fire-validator`, `hermes-ruleset-integrity`, `agent_supervisor_sentinel` call `send_operator_event()`
-- Phase B live delivery: pending operator sign-off to set `OPERATOR_DELIVERY_DRY_RUN=0` in `.env`
+- Phase B wiring complete \(2026-05-30\): all event types in repo — held-spec, first-fire, ruleset-integrity, snapshot-missing, contradiction_detected, cron_missed
+- Phase B live delivery: pending operator sign-off to set `OPERATOR_DELIVERY_DRY_RUN=0` in `.env` \(see `docs/hermes_skills/town-operator-bridge.md`\)
 - Skill doc: `docs/hermes_skills/town-operator-bridge.md` · Spec 090
 
 ## Knowledge Graph Implementation Status

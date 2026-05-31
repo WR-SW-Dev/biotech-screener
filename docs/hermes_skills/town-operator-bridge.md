@@ -215,7 +215,10 @@ Example:
 
 **Scope:** Wire `first_fire_fail`, `snapshot_missing`, `ruleset_mismatch`, `cron_missed`, `contradiction_detected` events
 
-**Code status (2026-05-27):** Call sites implemented for held-spec ledger, first-fire validator, ruleset integrity, and snapshot-missing sentinel. Remaining: morning watchdog (`cron_missed`), contradiction detector (`contradiction_detected`), operator flip to `OPERATOR_DELIVERY_DRY_RUN=0`.
+**Code status (2026-05-30):** All Phase B event types wired in repo:
+- `build_hermes_knowledge_layer.py` + `hermes-contradiction-detector` → `contradiction_detected`
+- `ops_supervisor` runtime health + `cron_watchdog.sh` → `cron_missed`
+- Operator action remaining: set `OPERATOR_DELIVERY_DRY_RUN=0` in `.env` after smoke tests
 
 **Call sites:**
 - `hermes-held-spec-ledger` job (entry point)
@@ -254,8 +257,8 @@ Listed in order of implementation:
 | `hermes-first-fire-validator` | `first_fire_pass` / `first_fire_fail` | `artifacts/qa/first_fire_{date}.json` | DONE (2026-05-27) |
 | `agent_supervisor_sentinel` | `snapshot_missing` | (none, metadata only) | DONE (2026-05-27) |
 | `hermes-ruleset-integrity` | `ruleset_mismatch` | `artifacts/ruleset_audit/` | DONE (2026-05-27) |
-| morning watchdog | `cron_missed` | (cron log excerpt) | TODO |
-| `hermes-contradiction-detector` | `contradiction_detected` | `artifacts/ops/contradiction_ledger/` | TODO |
+| `cron_watchdog.sh` + `ops_supervisor` | `cron_missed` | `logs/watchdog.log` / supervisor JSON | DONE (2026-05-30) |
+| `hermes-contradiction-detector` | `contradiction_detected` | `artifacts/ops/contradiction_ledger/` | DONE (2026-05-30) |
 
 ---
 
@@ -265,6 +268,24 @@ Listed in order of implementation:
 - [ ] **Phase B unit test:** `pytest tests/test_operator_delivery.py` — all event types, dedupe logic
 - [ ] **Phase B integration test:** Set `OPERATOR_DELIVERY_DRY_RUN=1`, run each target job, verify logged events
 - [ ] **Phase B live test:** Set `OPERATOR_DELIVERY_DRY_RUN=0` (after operator approval), run one job, verify email received
+
+### Enable live Town email (operator host)
+
+```bash
+# 1. Smoke all event types in dry-run (default)
+export OPERATOR_DELIVERY_DRY_RUN=1
+python3 tools/build_hermes_knowledge_layer.py
+python3 agents/hermes-contradiction-detector/run_job.py
+python3 agents/hermes-held-spec-ledger/run_job.py
+python3 agents/ops_supervisor/supervisor.py --as-of $(date +%F)
+
+# 2. After operator approval — add to .env (never commit secrets):
+#    OPERATOR_DELIVERY_DRY_RUN=0
+#    TOWN_EMAIL=your@email.com
+#    SMTP_USER / SMTP_PASSWORD (see .env.example)
+
+# 3. Re-run one job; confirm [Hermes] email in TOWN_EMAIL inbox
+```
 - [ ] **Cursor discovery:** `hermes -s town-operator-bridge` in Cursor, verify skill loads
 - [ ] **Ledger audit:** `hermes knowledge_read artifact=held_spec_ledger` — verify delivery timestamps
 
