@@ -16,7 +16,7 @@ Canonical taxonomy for Hermes in this repo. **Hermes is not one thing** — it i
 | **Skills + operator CLI** | Skill bodies + WSL runtime | Drift if `~/.hermes` stale | `docs/hermes_skills/`, `hermes -s …` |
 | **Monitoring stack** | Ops signal producers | Writes heartbeat/supervisor artifacts | `tools/agent_heartbeat_checks.py`, etc. |
 
-Related docs: [`operator_host_skills.md`](operator_host_skills.md) (skills sync + `~/.hermes`), [`agent_roster.md`](agent_roster.md) (fleet vs scheduler).
+Related docs: [`operator_host_skills.md`](operator_host_skills.md) (skills sync + `~/.hermes`), [`agent_roster.md`](agent_roster.md) (fleet vs scheduler), [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md) (gateway model + WSL gate).
 
 ---
 
@@ -131,9 +131,56 @@ hermes -s codegraph "status"
 
 Full runbook: [`operator_host_skills.md`](operator_host_skills.md).
 
+Gateway model file and acceptance gate: [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md).
+
 ---
 
-## 5. Monitoring stack
+## 5. Hermes model routing (surface-specific)
+
+**Do not assume one model for all “Hermes” paths.** Each surface has its own truth source.
+
+| Layer | Truth source | Model / LLM? |
+|-------|----------------|--------------|
+| **Cursor MCP** | `mcp_server/hermes_server.py` | **No** — read-only; no inference |
+| **Lane A `hermes-*` jobs** | `AGENT_REGISTRY.json` + `run_job.py` | **No** — `llm_policy: none` |
+| **Hermes Gateway / CLI** | Operator WSL `~/.hermes/config.yaml` | **Yes** — **verify live on WSL** |
+| **Fleet SOUL intent** | `agents/*/SOUL.md`, `screener-ops.md`, `hermes-context.mdc` | **`deepseek/deepseek-v4-flash:free`** (OpenRouter, 2026-05-20+) |
+| **`run_agent_direct.py`** | `tools/run_agent_direct.py` | **Bypasses gateway** — defaults to **Together Llama** unless `--model` set |
+
+### Implications
+
+- **Cursor / Cloud Agent** cannot validate gateway model — no `~/.hermes/config.yaml` on typical cloud VMs.
+- **SOUL.md** states fleet intent; **`run_agent_direct.py`** behavior is defined in repo code (Llama default today). Mismatch is documented, not hidden — fix via separate code PR only after WSL acceptance gate.
+- Registry enum `direct_llama_on_anomaly` names the **direct-bypass** escalation path, not the Hermes Gateway default.
+
+### Operator acceptance gate (after `git pull`)
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener   # operator WSL
+git pull
+python3 tools/build_hermes_knowledge_layer.py
+python3 tools/audit_hermes_skills.py
+python3 -c "
+import yaml, pathlib
+p = pathlib.Path.home() / '.hermes' / 'config.yaml'
+if not p.exists():
+    print('MISSING', p)
+else:
+    d = yaml.safe_load(p.read_text())
+    m = d.get('model', {})
+    print('model.default:', m.get('default'))
+    print('model.provider:', m.get('provider'))
+    for fb in d.get('fallback_providers', [])[:3]:
+        print('fallback:', fb.get('provider'), fb.get('model'))
+"
+```
+
+**Healthy (2026-05-20+ intent):** OpenRouter primary; `deepseek/deepseek-v4-flash:free` default/active.  
+**Stale:** Claude Sonnet primary with Llama as the only working route — update host config; see [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md).
+
+---
+
+## 6. Monitoring stack
 
 Produces ops signals consumed by the knowledge layer and heartbeat. **Not** Hermes MCP tools.
 
@@ -148,7 +195,7 @@ Also feeds: `artifacts/heartbeat/`, `artifacts/ops_supervisor/`, fleet receipts 
 
 ---
 
-## 6. Standard operator sequences
+## 7. Standard operator sequences
 
 ### Skills hygiene
 
@@ -194,6 +241,9 @@ python3 tools/build_hermes_knowledge_layer.py
 | Hermes skills live under `agents/` | Skill mirrors live under **`docs/hermes_skills/`** |
 | `docs/hermes_skills/` equals `~/.hermes/skills/` | Runtime copies are **optional** and can be stale |
 | Hermes MCP mutates production | MCP is **read-only**; use repo tools/jobs for writes |
+| One model for all Hermes | **Surface-specific** — see §5; gateway ≠ MCP ≠ `run_agent_direct.py` |
+| SOUL DeepSeek = cron uses DeepSeek | Cron via `run_agent_direct.py` defaults to **Llama** until a separate code change |
+| `HERMES_GATEWAY_SETUP.md` is live config | **Illustrative**; `~/.hermes/config.yaml` on WSL is truth |
 | `build_knowledge_graph.py` is Hermeslink | That is the **governance KG** — use `build_hermes_knowledge_layer.py` |
 | Lane A jobs run on heartbeat | Heartbeat **SKIP**s them; run `run_job.py` explicitly |
 | Monitoring scripts are Hermes tools | They **feed** ops state; they are not MCP `hermes_*` tools |
@@ -211,3 +261,5 @@ python3 tools/build_hermes_knowledge_layer.py
 | Run governance after build | `agents/hermes-*/run_job.py` |
 | Check fleet agent behavior | `agents_get` + `skills_read` (SOUL) |
 | Avoid split-brain with Hermes CLI | [`operator_host_skills.md`](operator_host_skills.md) |
+| Hermes gateway model on WSL | §5 + [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md) acceptance gate |
+| Direct cron LLM (no gateway) | `run_agent_direct.py` — Together Llama default (documented drift vs SOUL) |

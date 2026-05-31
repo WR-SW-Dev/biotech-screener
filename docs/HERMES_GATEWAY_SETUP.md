@@ -1,167 +1,201 @@
-# Hermes Gateway & LLM Fallback Configuration
+# Hermes Gateway & LLM Model Routing
 
-**Last Updated**: 2026-05-13  
-**Status**: ✓ Operational
+**Last updated**: 2026-05-30  
+**Status**: Operator-host config is live source of truth (not this file alone)
 
-## Overview
+---
 
-Hermes gateway routes LLM requests through a cascading fallback chain. Current configuration:
+## Stale-doc notice (read first)
 
-1. **Primary**: OpenRouter (Claude Sonnet 4.6) — **Out of credits**
-2. **Fallback 1**: Together AI (Llama 3.3 70B Instruct Turbo) — **Active**
-3. **Fallback 2**: Nous Research (Trinity Large Thinking) — **Backup**
+This file **replaced** the 2026-05-13 version that described:
 
-## Configuration Files
+1. Primary: OpenRouter **Claude Sonnet 4.6** (out of credits)  
+2. Fallback: **Together Llama 3.3 70B**  
+3. Backup: **Nous Trinity**
 
-### Hermes Config
-Location: `~/.hermes/config.yaml`
+That predates the **2026-05-20+** fleet intent documented in `docs/hermes_skills/screener-ops.md`, `agents/*/SOUL.md`, and `.cursor/rules/hermes-context.mdc`:
+
+- **Fleet SOUL intent**: `deepseek/deepseek-v4-flash:free` via **OpenRouter**
+- **Gateway fix**: OpenRouter primary confirmed **2026-05-25** on operator WSL (session notes)
+
+**Live routing** is always **`~/.hermes/config.yaml` on operator WSL**. Re-verify after every `git pull` that touches Hermes docs (acceptance gate below).
+
+---
+
+## Hermes model routing is surface-specific
+
+Do not assume one model applies to all “Hermes” paths.
+
+| Layer | Truth source | Model / LLM? |
+|-------|----------------|--------------|
+| **Hermes MCP** (Cursor) | Repo: `mcp_server/hermes_server.py` | **No model** — read-only registry, SOUL, knowledge artifacts |
+| **Lane A Hermes jobs** | Registry + `agents/hermes-*/run_job.py` | **No model** — `llm_policy: none`, deterministic |
+| **Hermes Gateway / CLI** | Operator WSL `~/.hermes/config.yaml` | **Yes** — verify live on WSL |
+| **Fleet SOUL intent** | `agents/*/SOUL.md`, `screener-ops.md`, `hermes-context.mdc` | **`deepseek/deepseek-v4-flash:free`** (OpenRouter) |
+| **`run_agent_direct.py`** | Repo: `tools/run_agent_direct.py` | **Bypasses Hermes Gateway**; defaults to **Together Llama** unless `--model` overrides |
+
+Canonical taxonomy: [`docs/hermes_agents/hermes_tools_map.md`](hermes_agents/hermes_tools_map.md) (§ Hermes model routing).
+
+**Defer code changes** to `run_agent_direct.py` until WSL confirms desired live gateway routing. A separate PR may add OpenRouter/DeepSeek to the direct-bypass path so cron matches SOUL intent — that is a **behavior change**, not documentation.
+
+---
+
+## Operator acceptance gate (after doc merge)
+
+Run on **operator WSL** only:
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+git pull
+python3 tools/build_hermes_knowledge_layer.py
+python3 tools/audit_hermes_skills.py
+python3 -c "
+import yaml, pathlib
+p = pathlib.Path.home() / '.hermes' / 'config.yaml'
+if not p.exists():
+    print('MISSING', p)
+else:
+    d = yaml.safe_load(p.read_text())
+    m = d.get('model', {})
+    print('model.default:', m.get('default'))
+    print('model.provider:', m.get('provider'))
+    for fb in d.get('fallback_providers', [])[:3]:
+        print('fallback:', fb.get('provider'), fb.get('model'))
+"
+```
+
+**Expected healthy state** (2026-05-20+ intent):
+
+- `model.provider`: **openrouter** (or equivalent primary)
+- `model.default`: **`deepseek/deepseek-v4-flash:free`** active or default
+- No forced **Claude-only / Together-only** legacy primary without operator approval
+
+If output still shows Claude Sonnet primary with Llama as the only working route, update `~/.hermes/config.yaml` on WSL — do not infer from this repo doc alone.
+
+Optional smoke:
+
+```bash
+hermes gateway status
+hermes chat -q "Reply with only the model id you are using." -Q
+```
+
+---
+
+## Configuration file (operator WSL)
+
+**Location**: `~/.hermes/config.yaml` (not in git)
+
+**Illustrative** shape (keys vary by Hermes Agent version — verify on host):
 
 ```yaml
 model:
-  default: anthropic/claude-sonnet-4.6
+  default: deepseek/deepseek-v4-flash:free   # fleet intent 2026-05-20+
   provider: openrouter
   base_url: https://openrouter.ai/api/v1
 
 providers:
   together:
     base_url: https://api.together.xyz/v1
-    api_key: $TOGETHER_API_KEY  # Set in ~/.bashrc
+    api_key: <set on host>                   # systemd may need embedded key
     default_model: meta-llama/Llama-3.3-70B-Instruct-Turbo
 
 fallback_providers:
-- provider: together
-  model: meta-llama/Llama-3.3-70B-Instruct-Turbo
-  base_url: https://api.together.xyz/v1
-  api_key: $TOGETHER_API_KEY  # Set in ~/.bashrc
-- provider: nous
-  model: arcee-ai/trinity-large-thinking
-  base_url: https://inference-api.nousresearch.com/v1
+  - provider: together
+    model: meta-llama/Llama-3.3-70B-Instruct-Turbo
+    base_url: https://api.together.xyz/v1
+  # Optional backup providers (e.g. nous) — operator-defined
 ```
 
-### Bash Environment
-Location: `~/.bashrc`
+**Historical reference** (2026-05-13, superseded): primary `anthropic/claude-sonnet-4.6` on OpenRouter with Together Llama fallback when OpenRouter returned HTTP 402.
+
+### Bash environment
+
+`TOGETHER_API_KEY` and OpenRouter credentials belong in operator env (`~/.bashrc` and/or embedded in `config.yaml` for `hermes-gateway.service`). Systemd user units do not load bashrc unless configured.
+
+---
+
+## Gateway service
+
+| Property | Typical value |
+|----------|----------------|
+| Process | Hermes Agent (version on host: `hermes gateway status`) |
+| Service | `hermes-gateway.service` (systemd user) |
+| Port | 8642 |
+| OpenClaw | May delegate LLM inference through Hermes — separate from MCP |
+
+### Commands
 
 ```bash
-export TOGETHER_API_KEY="<api-key-from-together.ai>"  # Configure in ~/.bashrc
-```
-
-**Note**: API key must be set in `~/.bashrc` and also in `~/.hermes/config.yaml` (direct embedding needed for systemd service to access it).
-
-## Gateway Status
-
-**Gateway Process**: Hermes Agent v0.13.0 (2026.5.7)  
-**Service**: `hermes-gateway.service` (systemd user service)  
-**Port**: 8642  
-**Status**: Running ✓
-
-### Start/Stop Commands
-```bash
-# Check status
 hermes gateway status
-
-# Restart gateway (picks up config changes)
-hermes gateway restart
-
-# View logs
+hermes gateway restart    # after config.yaml edits
 journalctl --user-unit hermes-gateway -f
 ```
 
-## API Endpoints & Models
+### Interactive chat
 
-### Together AI (Llama 3.3 70B)
-```
-Endpoint: https://api.together.xyz/v1/chat/completions
-Model: meta-llama/Llama-3.3-70B-Instruct-Turbo
-Context Length: 131,072 tokens
-Pricing: $0.88 per 1M input + output tokens
-Status: ✓ Operational
-```
-
-### Nous Research (Trinity)
-```
-Endpoint: https://inference-api.nousresearch.com/v1
-Model: arcee-ai/trinity-large-thinking
-Context Length: 262,144 tokens
-Status: ✓ Backup
-```
-
-## Testing
-
-### Direct Together API Test
 ```bash
-source ~/.bashrc
-curl -X POST https://api.together.xyz/v1/chat/completions \
-  -H "Authorization: Bearer $TOGETHER_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    "messages": [{"role": "user", "content": "test"}],
-    "max_tokens": 50
-  }'
+hermes chat
+hermes chat -q "your query"
+hermes chat -q "query" -Q    # response only
 ```
 
-### Hermes Interactive Chat
-```bash
-hermes chat                        # Interactive
-hermes chat -q "your query"        # Single query
-hermes chat -q "query" -Q          # Quiet mode (response only)
-```
+Cascade behavior (when fallbacks are configured) may log provider switches — inspect gateway logs; do not assume 2026-05-13 “402 → Llama” is still the steady state.
 
-### View Fallback Chain in Action
-```bash
-hermes chat -q "What is the capital of France?"
-```
+---
 
-Output will show cascade:
-```
-❌ OpenRouter: HTTP 402 (out of credits)
-🔄 Switching to fallback: meta-llama/Llama-3.3-70B-Instruct-Turbo via together
-✓ Response generated
-```
+## Direct-bypass path (repo, not gateway)
 
-## Known Issues & Fixes
+Scheduled or cron invocations that call **`tools/run_agent_direct.py`** do **not** read `~/.hermes/config.yaml`.
 
-### Issue: Together API Returns HTTP 401
-**Cause**: API key as environment variable reference in config, but systemd service doesn't load bashrc.
+| Property | Value |
+|----------|--------|
+| Default model | `meta-llama/Llama-3.3-70B-Instruct-Turbo` |
+| Provider | Together AI (`TOGETHER_API_KEY`) |
+| Routing | `llama` in model name → Together; else → Anthropic SDK |
+| Registry name | `direct_llama_on_anomaly` (historical label) |
 
-**Fix Applied** (2026-05-13):
-- Embedded API key directly in `~/.hermes/config.yaml` (both `providers:` and `fallback_providers:` sections)
-- Registered credential via `hermes auth add together --type api-key --api-key <key>`
-- Restarted gateway: `hermes gateway restart`
+See [`docs/ops/hermes_openclaw_routing_policy.md`](ops/hermes_openclaw_routing_policy.md) and [`docs/ops/token_budget_policy.md`](ops/token_budget_policy.md) (Tier 1 still documents Llama for this path).
 
-**Result**: Fallback chain now functional. Hermes cascades from OpenRouter → Llama successfully.
+---
 
-### Issue: Compression Model Context Mismatch
-**Warning**: Qwen compression model has 65K context, but main model threshold is 500K.
+## Known operator issues (retained)
 
-**To Fix Permanently**:
-```yaml
-# In config.yaml, either:
-# Option 1: Use larger compression model
-auxiliary:
-  compression:
-    model: claude-sonnet-4.6
+### Together API HTTP 401 from gateway
 
-# Option 2: Lower compression threshold
-compression:
-  threshold: 0.06
-```
+**Cause**: API key only in bashrc; systemd service cannot resolve `$TOGETHER_API_KEY`.
 
-## Governance Notes
+**Fix**: Embed key in `~/.hermes/config.yaml` fallback sections and/or `hermes auth add together …`; `hermes gateway restart`.
 
-- **Hermes** manages model routing and fallback chain
-- **OpenClaw** agents use Hermes for LLM inference
-- Both currently route through **Llama 3.3 70B** (fallback 1)
-- No code changes to model logic — configuration only
+### Compression model context mismatch
+
+Gateway may warn when auxiliary compression model context is smaller than main model threshold. Adjust `auxiliary.compression` or `compression.threshold` in `config.yaml` per Hermes Agent docs.
+
+---
+
+## Governance
+
+- **Hermes MCP** (IDE): read-only — never schedules models  
+- **Lane A** `hermes-*` jobs: no LLM tokens  
+- **Gateway / CLI**: operator-controlled model policy on WSL  
+- **OpenClaw**: see [`docs/hermes_agents/hermes_tools_map.md`](hermes_agents/hermes_tools_map.md) OpenClaw section when present on `main`  
+- No ranker/selector/scoring changes via gateway config
+
+---
 
 ## Related
 
-- Biotech Screener memory: `memory/biotech_stabilization_checkpoint_2026_05_08.md`
-- OpenRouter out of credits status documented in session logs
-- Together AI fallback integration: commit `799630f0` (ranker decision) + this setup
+| Doc | Topic |
+|-----|--------|
+| [`docs/hermes_agents/hermes_tools_map.md`](hermes_agents/hermes_tools_map.md) | Full Hermes surface taxonomy + model table |
+| [`docs/hermes_skills/screener-ops.md`](hermes_skills/screener-ops.md) | Fleet model migration 2026-05-20 |
+| [`.cursor/rules/hermes-context.mdc`](../.cursor/rules/hermes-context.mdc) | Cursor bootstrap fleet model note |
+| [`docs/ops/hermes_openclaw_routing_policy.md`](ops/hermes_openclaw_routing_policy.md) | Lanes A/B/C |
+| [`tools/run_agent_direct.py`](../tools/run_agent_direct.py) | Direct API bypass (Llama default) |
 
-## Next Steps
+---
 
-1. **Monitor**: Track Llama performance on governance tasks
-2. **Optional**: Request OpenRouter credits restoration if cost-effective
-3. **Review**: Post-h20d checkpoint (2026-05-26) — may migrate back to primary when credits available
+## Sequencing (recommended)
+
+1. **Docs-only PR** (this file + tools map) — clarify surfaces; no code  
+2. **WSL verification** — acceptance gate above  
+3. **Optional code PR** — OpenRouter/DeepSeek in `run_agent_direct.py` only if cron/direct path must match SOUL intent
