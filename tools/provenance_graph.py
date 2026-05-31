@@ -196,7 +196,7 @@ class GraphBuilder:
             ("13F", {"vendor": "Morningstar", "cadence": "quarterly"}),
             ("ctgov", {"vendor": "ClinicalTrials.gov", "cadence": "daily"}),
             ("market_snapshot", {"vendor": "Yahoo Finance + Morningstar", "cadence": "daily"}),
-            ("catalyst_news", {"vendor": "biotech_news_digest + herald", "cadence": "daily"}),
+            ("catalyst_news", {"vendor": "herald", "cadence": "daily"}),
         ]
 
         for source_name, source_meta in sources:

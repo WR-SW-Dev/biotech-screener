@@ -37,13 +37,11 @@ AGENT_NAMES = [
 # referencing no python script, etc.)
 # Tested for SOUL.md structure only via TestPartialAgents.
 PARTIAL_AGENTS = [
-    "bioshort_watch",
     "earnings_calendar_sync",
     "fleet_steward",
     "herald",
     "postmortem",
     "review_queue_steward",
-    "shadow_watch",
 ]
 # Known incomplete workspaces — missing docs, major SOUL.md gaps, or
 # intentionally different model (haiku monitoring class).
@@ -54,19 +52,20 @@ INCOMPLETE_AGENTS = [
     "ctgov_poller",
     "data_auditor",
     "event_analyst",
+    "hermes-contradiction-detector",
+    "hermes-first-fire-validator",
+    "hermes-held-spec-ledger",
+    "hermes-ruleset-integrity",
     "ic_health_monitor",
     "intraday_mover_watch",
     "price_action_watch",
     "production_qa",
+    "shadow_monitor",
     "universe_maintenance",
 ]
 # Retired agent workspaces — merged into other agents, dirs kept for history.
 RETIRED_AGENTS = [
-    "biotech_news_digest",  # merged into herald
-    "calibration_evidence",  # merged into calibration
-    "company_news_ingest",  # merged into herald
-    "policy_shadow_watch",  # merged into shadow_watch
-    "shadow_monitor",  # merged into shadow_watch
+    "calibration_evidence",  # merged into calibration (dir retained)
 ]
 # Terminal supervisor workspace: intentionally active but unsupervised and
 # does not carry a HEARTBEAT.md because tools/agent_supervisor_sentinel.py is

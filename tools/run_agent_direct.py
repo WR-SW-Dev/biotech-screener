@@ -153,7 +153,6 @@ def run_preflight(agent_name: str) -> dict | None:
 # Model format: "llama-3.3-70b" (auto-routed to Together)
 AGENT_MODELS = {
     "aact_trial_ingest": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    "company_news_ingest": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "postmortem": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "ctgov_poller": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "price_action_watch": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
