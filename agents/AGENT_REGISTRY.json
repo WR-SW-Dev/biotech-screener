@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-05-30",
+  "as_of": "2026-05-31",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE \u2014 active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
   "enums": {
     "category": [
