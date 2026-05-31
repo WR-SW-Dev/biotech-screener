@@ -183,7 +183,7 @@ Hermes job completes
 ### Model Configuration (updated 2026-05-20)
 
 - **Primary model**: `deepseek/deepseek-v4-flash:free` (OpenRouter) - fleet-wide migration 2026-05-20
-- **Registry**: 34 agents (31 active, 2 deprecated, 1 shadow) — includes 4 Hermes governance jobs in `agents/` (held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector) — see `agents/AGENT_REGISTRY.json`
+- **Registry**: 34 agents (30 active, 3 deprecated, 1 shadow) — includes 4 Hermes governance jobs in `agents/` (held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector) — see `agents/AGENT_REGISTRY.json`
 - **Fallback**: Anthropic Claude SDK (for Claude-specific models)
 - **Auto-routing**: "deepseek" models -> OpenRouter (OpenAI-compatible), "claude" -> Anthropic SDK
 - **Previous**: Llama 3.3 70B Instruct Turbo (Together AI, 2026-05-13 to 2026-05-20)

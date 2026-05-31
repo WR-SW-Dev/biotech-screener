@@ -121,6 +121,7 @@ EXCEPTIONS: list[dict] = [
 SUPPRESSED_AGENTS = {
     "shadow_watch": "suppressed placeholder (Spec 085 disposition 2026-05-06; not active, not wired; activation requires separate spec)",
     "company_news_ingest": "agent retired (replaced by tier-2 heartbeat checks)",
+    "biotech_news_digest": "agent retired (digest consolidated into herald; scripts/build_news_digest.py)",
     "bioshort_watch": "suppressed_orphaned_upstream (bioshort P2 disposition 2026-05-06; output/hedge_report/ unscheduled and 41-day stale; producer tools/biotech_hedge_report.py preserved; reactivation requires separate spec)",
 }
 SUPPRESS_AGENT_PATTERNS = ["massive"]  # paused per license downgrade

@@ -6,7 +6,7 @@ This document has **two layers** — do not conflate them:
 
 | Layer | Source of truth | Count (2026-05-30) |
 | --- | --- | --- |
-| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | 34 directories, 31 active + 2 deprecated + 1 shadow |
+| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | 34 directories, 30 active + 3 deprecated + 1 shadow |
 | **Hermes scheduler jobs** | Hermes gateway (`hermes cron list`) | ~19 jobs (below; IDs may drift) |
 
 **Lint:** `pytest tests/test_agent_registry.py -q -p no:warnings` (bidirectional registry ↔ disk).
@@ -23,8 +23,8 @@ Canonical registry: **`agents/AGENT_REGISTRY.json`** (`as_of` field on file).
 
 | Status | Count | Names |
 | --- | ---: | --- |
-| active | 31 | See registry |
-| deprecated | 2 | `bioshort_watch`, `company_news_ingest` |
+| active | 30 | See registry |
+| deprecated | 3 | `bioshort_watch`, `company_news_ingest`, `biotech_news_digest` |
 | shadow | 1 | `shadow_watch` |
 
 ### Hermes governance agents (Lane A, `llm_policy: none`)
@@ -51,7 +51,7 @@ agent heartbeats → tools/agent_heartbeat_checks.py
 
 - **`mutate_data`:** `crt_resolution_watcher` only
 - **`mutate_config`:** none (operator-only)
-- **Unsupervised:** `bioshort_watch`, `company_news_ingest`, `ops_supervisor`, `shadow_watch` (intentional)
+- **Unsupervised:** `bioshort_watch`, `company_news_ingest`, `biotech_news_digest`, `ops_supervisor`, `shadow_watch` (intentional)
 
 ### Operator commands (repo fleet)
 

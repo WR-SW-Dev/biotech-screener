@@ -407,19 +407,21 @@ def check_aact_ingest(dt: date) -> CheckResult:
 # ── Biotech News Digest ──────────────────────────────────────
 
 
-def check_news_digest(dt: date) -> CheckResult:
-    """Verify news digests were produced.
+def check_herald_news_pipeline(dt: date) -> CheckResult:
+    """Verify Herald news digests and press-release freshness (herald canonical owner).
 
+    Artifact filenames retain biotech_news_digest_* prefix from build_news_digest.py.
     The evening digest arrives at ~18:00 ET, but heartbeat runs at 17:30.
     To avoid false positives, check yesterday's (completed) digest counts
     when running before 19:00, and today's only at/after 19:00.
     """
+    agent = "herald"
     ds = as_of_date(dt)
     anomalies = []
     digest_dir = ARTIFACTS_DIR / "news_digest"
 
     if not digest_dir.is_dir():
-        return CheckResult("biotech_news_digest", "STALE", "No news_digest artifact directory")
+        return CheckResult(agent, "STALE", "No news_digest artifact directory")
 
     hour = datetime.now().hour
     today_digests = list(digest_dir.glob(f"biotech_news_digest_{ds}_*.json"))
@@ -472,9 +474,9 @@ def check_news_digest(dt: date) -> CheckResult:
 
     if anomalies:
         return CheckResult(
-            "biotech_news_digest", "WARN" if len(anomalies) <= 1 else "FAIL", f"{len(anomalies)} issue(s)", anomalies
+            agent, "WARN" if len(anomalies) <= 1 else "FAIL", f"{len(anomalies)} issue(s)", anomalies
         )
-    return CheckResult("biotech_news_digest", "OK", f"{len(today_digests)} digest(s) for {ds}")
+    return CheckResult(agent, "OK", f"{len(today_digests)} digest(s) for {ds}")
 
 
 # ── Calibration Evidence ─────────────────────────────────────
@@ -682,7 +684,7 @@ SPECIALIZED_CHECKS = {
     "calibration": check_calibration,
     "shadow_monitor": check_shadow_monitor,
     "aact_trial_ingest": check_aact_ingest,
-    "biotech_news_digest": check_news_digest,
+    "herald": check_herald_news_pipeline,
     "calibration_evidence": check_calibration_evidence,
     "data_auditor": check_data_auditor,
     "production_qa": check_production_qa,
@@ -693,12 +695,8 @@ SPECIALIZED_CHECKS = {
 # shadow_watch alias intentionally absent: agent is a SUPPRESSED PLACEHOLDER
 # per Spec 085 disposition (2026-05-06) — directory still exists with planning
 # context, but there are no live heartbeat / cron / artifact obligations.
-# herald alias removed 2026-05-06 (P1 #5): the prior alias mapped --agent herald
-# to check_news_digest (which actually checks biotech_news_digest, a different
-# agent), and was retained as backward-compat while company_news_ingest was
-# being phased out. company_news_ingest is now retired (P1 #5); the alias is
-# no longer needed and was misleading because its CheckResult reported the
-# wrong agent name. Use --agent biotech_news_digest for the news_digest check.
+# biotech_news_digest retired 2026-05-30 (Fix #5): digest monitoring is under herald.
+# Artifact files still use biotech_news_digest_{date}_{window}.json from build_news_digest.py.
 AGENTS = dict(SPECIALIZED_CHECKS)
 
 

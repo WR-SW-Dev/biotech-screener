@@ -106,8 +106,9 @@ def test_news_digest_press_release_freshness_parses_releases_prefix(hb_mod, tmp_
     pr_dir.mkdir(parents=True)
     (pr_dir / "releases_2026-05-01.jsonl").write_text("{}\n")
 
-    result = hb_mod.check_news_digest(date.fromisoformat("2026-05-08"))
+    result = hb_mod.check_herald_news_pipeline(date.fromisoformat("2026-05-08"))
 
+    assert result.agent == "herald"
     assert result.status == "WARN"
     assert any("STALE_SOURCE" in a and "7d" in a for a in result.anomalies)
 

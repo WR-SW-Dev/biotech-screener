@@ -17,7 +17,7 @@ All agents use `--message "HEARTBEAT"` as the universal work trigger EXCEPT:
 |---|---|---|---|
 | aact_trial_ingest | Bulk-ingest AACT clinical trial snapshots, normalize, detect deltas | HEARTBEAT (weekly) | No clinical outcome judgments, no rankings/scoring edits, no overwriting historical snapshots |
 | bioshort_watch | Weekly hedge governance monitor; detects verdict/structure/carry/Greek changes | HEARTBEAT (Fri) | No edits to hedge report logic, decision engine, rulesets, execution scripts |
-| biotech_news_digest | Generate/email biotech news digests 3x daily from Herald classified output | HEARTBEAT (3x daily) | No rankings/scoring edits, no feeding news into event ledger, max 3 items/ticker/digest |
+| biotech_news_digest | DEPRECATED — digest absorbed by herald (`scripts/build_news_digest.py`) | None | N/A |
 | calibration | Run ruleset sweeps/holdout machinery, recommend PROMOTE/HOLD/REJECT | HEARTBEAT (weekly) | No editing rulesets/manifest/scoring code/production_data, no running promote_ruleset.py |
 | calibration_evidence | Read-only post-event evidence builder; signal contribution + calibration | HEARTBEAT (weekly) | No weight change recommendations, no writing to promotion battery, no causal claims |
 | catalyst_delta | Detect new/changed/reclassified catalyst events since last run | HEARTBEAT (18:20) | No scoring/ruleset/manifest edits, no changing catalyst priorities, no git push |
@@ -29,7 +29,7 @@ All agents use `--message "HEARTBEAT"` as the universal work trigger EXCEPT:
 | event_analyst | Aggregate postmortem facts, compute hit rates/returns by category | HEARTBEAT (18:55 weekdays) | No signal promotion/demotion, no causal claims, no trade recommendations |
 | fleet_steward | Control-plane fleet health; artifact freshness checks, daily receipt | HEARTBEAT (daily) | No editing other agents' SOUL.md/IDENTITY.md, no cron/gateway changes, no executing production steps |
 | grok_biotech_watch | Watchlist-scoped xAI Grok search monitor with email alerting | **SCAN** (not HEARTBEAT) | No modifying rankings/scoring/decision engine, no feeding results into scoring pipeline, max 5 emails/hr |
-| herald | Canonical biotech news agent: fetch press releases, dedupe, classify, digest | HEARTBEAT (14:35) | No rankings/scoring edits, no trade recommendations, no feeding into scoring pipeline |
+| herald | Canonical biotech news agent: fetch, dedupe, classify, 3x daily digest + email | Cron fetch 14:35; `build_news_digest` 3x daily | No rankings/scoring edits, no trade recommendations, no feeding into scoring pipeline |
 | ic_health_monitor | Read-only signal health watchdog; rolling IC trends, ALERT/WARN flags | HEARTBEAT (daily) | No editing scoring logic/rulesets/decision engine, no weight change recommendations |
 | intraday_mover_watch | 15-min-delayed intraday mover monitor; absolute + XBI-relative moves | Not wired yet | No trade recommendations, no scoring/ranker/ruleset edits, no self-registering cron |
 | ops | Daily production operator: runs pipeline, reports NEW/RESOLVED/UNCHANGED | HEARTBEAT (17:00) | No scoring/decision engine/ruleset edits, no git push, no deleting snapshots |
@@ -58,7 +58,7 @@ Flagged 2026-05-04 SOUL.md sweep:
 
 3. **shadow_monitor + policy_shadow_watch + shadow_watch** — Three agents sharing portfolio-construction-monitoring mandate. Fuzzy scope boundaries. Registry notes partial overlap.
 
-4. **biotech_news_digest + herald** — Both write to artifacts/news_digest/. Herald absorbed biotech_news_digest scope but biotech_news_digest still marked active. Dual-active state = ambiguous primary owner.
+4. **biotech_news_digest + herald** — **Resolved 2026-05-30 (Fix #5).** `biotech_news_digest` deprecated; herald owns pipeline; heartbeat monitors `herald`.
 
 5. **calibration + calibration_evidence** — Both write to artifacts/calibration_evidence/. Boundary between who writes what is underspecified.
 

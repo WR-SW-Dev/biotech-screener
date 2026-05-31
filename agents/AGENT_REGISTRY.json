@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-05-31",
+  "as_of": "2026-05-30",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE \u2014 active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
   "enums": {
     "category": [
@@ -73,16 +73,16 @@
       "role": "generate and email biotech news briefs 3x daily",
       "category": "signal_monitor",
       "cadence": "daily_after_production",
-      "status": "active",
+      "status": "deprecated",
       "artifact_paths": [
         "artifacts/news_digest/"
       ],
       "authority_level": "write_artifacts",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "Overlaps with herald on digest output path; scope boundary to clarify in Fix #5 follow-up.",
-      "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "notes": "RETIRED 2026-05-30 (Fix #5). Digest scope consolidated into herald; production path is scripts/build_news_digest.py (3x daily cron) writing biotech_news_digest_{date}_{window}.json under artifacts/news_digest/. LLM agent cron retired; heartbeat monitors herald. Directory retained for git history; SOUL.md carries RETIRED header. Manual run_agent_direct NOT supported; reactivation requires a new spec.",
+      "llm_policy": "none",
+      "requires_preflight": false
     },
     "calibration": {
       "role": "ruleset evaluator, evidence accumulator, promotion recommender",
@@ -262,7 +262,7 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 14:35. Absorbs company_news_ingest.",
+      "notes": "Canonical news pipeline: fetch/dedupe/classify (tools/fetch_company_press_releases.py, dedupe, classify) + 3x daily digest (scripts/build_news_digest.py). Absorbs company_news_ingest and biotech_news_digest (Fix #5 2026-05-30). Crontab: 14:35 premarket fetch; digest windows via build_news_digest cron.",
       "llm_policy": "none",
       "requires_preflight": true
     },

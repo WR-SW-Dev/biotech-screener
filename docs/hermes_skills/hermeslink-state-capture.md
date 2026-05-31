@@ -28,7 +28,7 @@ description: >
 | **MCP read** | `knowledge_read(artifact=...)` | `contradiction_ledger` → `latest.md` |
 | **Cron (operator)** | Weekdays ~5:45 PM ET | Run on WSL after `git pull` |
 
-**Agent fleet (registry):** 34 total — 31 active, 2 deprecated, 1 shadow; 4 Hermes governance jobs.
+**Agent fleet (registry):** 34 total — 30 active, 3 deprecated, 1 shadow; 4 Hermes governance jobs.
 
 ## Purpose
 
