@@ -13,6 +13,8 @@ This document has **two layers** — do not conflate them:
 
 **Town-Hermes bridge (Spec 090):** `docs/hermes_skills/town-operator-bridge.md` — Phase B wired in repo; live email requires `OPERATOR_DELIVERY_DRY_RUN=0` on operator host.
 
+**Hermes skills (repo vs WSL runtime):** `docs/hermes_agents/operator_host_skills.md` — edit `skills/`, sync to `docs/hermes_skills/`, then copy to `~/.hermes/skills/` only if the gateway reads runtime copies.
+
 ---
 
 ## Repo agent fleet (`agents/`)
@@ -295,7 +297,7 @@ To manage: ask Hermes "pause/resume/remove <job name>".
 
 ## Debug skills (loaded on demand, not wired to cron)
 
-Stored in docs/hermes_skills/ and ~/.hermes/skills/devops/:
+Stored in `docs/hermes_skills/` (repo mirror) and optionally `~/.hermes/skills/devops/` on the operator host — see `operator_host_skills.md` before copying:
 - openclaw-cron-scheduler-debug — 7-class cron/scheduler failure taxonomy
   (Class A: crontab REPLACE, B: WSL2 sleep, C: Hermes scheduler stall,
    D: watchdog loop, E: weekend false-positive, F: LLM/tool mismatch,

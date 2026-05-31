@@ -1,0 +1,100 @@
+# Operator Host Hermes Skills Layout
+
+Last updated: 2026-05-30
+
+This runbook separates **repo authority** from **operator runtime copies** so Hermes and Cursor do not drift silently.
+
+## Four layers (repo — do not blur)
+
+| Layer | Path | Edit here? |
+|-------|------|------------|
+| Editable source | `skills/<dir>/SKILL.md` | **Yes** (normal skills) |
+| Long references | `skills/<dir>/REFERENCE.md` | **Yes** (dossier, excel, word) |
+| Hermes mirror | `docs/hermes_skills/*.md` | **Only** Hermes-native docs (see below) |
+| Fleet index | `docs/hermes_skills/_meta.json` | Via `tools/sync_hermes_skills.py --register-meta` |
+
+**Hermes-native** (no `skills/` source): edit directly under `docs/hermes_skills/` — e.g. `town-operator-bridge.md`, `hermeslink-state-capture.md`, `openclaw-*-debug.md`, Path C runbooks.
+
+**Hermes-authoritative:** `memory-steward` — mirror is not overwritten by sync; treat `docs/hermes_skills/memory-steward.md` as source of truth.
+
+Each `_meta.json` entry includes `source_authority` (see audit) describing which path owns the body.
+
+## Repo sync (always run after editing `skills/`)
+
+```bash
+python3 tools/sync_hermes_skills.py
+python3 tools/audit_hermes_skills.py
+git status -sb
+```
+
+Expected clean audit:
+
+- 31 Hermes `.md` files (excluding `harvest_log.md`)
+- 31 registered in `_meta.json`
+- No unregistered files; no mirror drift warnings for cursor-synced skills
+
+Commit mirror changes when sync updates files:
+
+```bash
+git add docs/hermes_skills skills docs/hermes_agents tools
+git commit -m "docs(hermes): sync skills mirror and operator layout runbook"
+```
+
+## Operator runtime (WSL — outside git)
+
+Hermes Gateway / CLI may read skill bodies from paths **not** tracked in this repo:
+
+| Location | Typical use |
+|----------|-------------|
+| `~/.hermes/skills/` | Hermes skill catalog roots |
+| `~/.hermes/skills/devops/` | DevOps / OpenClaw debug skills (cron, pipeline, scope audit) |
+
+Repo backup example (optional): `.hermes/skills/devops/memory-steward.SKILL.md`
+
+### Operational rule
+
+1. Edit `skills/<dir>/SKILL.md` (or Hermes-native doc) in the repo.
+2. Run `sync_hermes_skills.py` + `audit_hermes_skills.py`.
+3. Commit repo mirror + `_meta.json`.
+4. **Only then**, if Hermes on the host still reads `~/.hermes/skills/`, copy updated bodies to the operator runtime.
+
+Do **not** assume `docs/hermes_skills/` and `~/.hermes/skills/` are identical without verification.
+
+### Copy to operator host (when needed)
+
+From repo root on WSL (adjust paths if your clone differs):
+
+```bash
+# Example: refresh one devops skill after repo sync
+cp docs/hermes_skills/openclaw-cron-scheduler-debug.md \
+   ~/.hermes/skills/devops/openclaw-cron-scheduler-debug/SKILL.md
+
+# memory-steward (authoritative in repo mirror)
+cp docs/hermes_skills/memory-steward.md \
+   ~/.hermes/skills/devops/memory-steward/SKILL.md
+```
+
+Prefer copying from `docs/hermes_skills/*.md` (post-sync), not from `skills/` directly, so Hermes-only sections (e.g. Path C in screener-ops) are preserved.
+
+### Verification on operator host
+
+```bash
+hermes -s screener-ops "status"
+hermes -s codegraph "status"
+```
+
+If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.hermes/skills/`** copies before debugging sync logic.
+
+## Rules
+
+- Do **not** hand-edit mirrored files that `source_authority` marks as `skills/.../SKILL.md` or `skills/.../REFERENCE.md` — edit `skills/` and sync.
+- Do **not** treat `docs/hermes_skills/` and `~/.hermes/skills/` as automatically identical.
+- If behavior differs between Cursor and Hermes CLI, compare `source_authority` in `_meta.json` and runtime paths above.
+- Agent **behavior** is not in this tree — use `agents/<name>/SOUL.md` and `AGENT_REGISTRY.json` (see `docs/hermes_agents/agent_roster.md`).
+
+## Related
+
+- Sync implementation: `tools/sync_hermes_skills.py`
+- Audit: `tools/audit_hermes_skills.py`
+- Harvest / sync history: `docs/hermes_skills/harvest_log.md`
+- Agent fleet (separate from skills): `docs/hermes_agents/agent_roster.md`
