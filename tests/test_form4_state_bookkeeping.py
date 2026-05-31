@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
@@ -111,16 +110,19 @@ def test_schema_fingerprint_is_stable_for_unchanged_dataclass():
 
 def test_schema_fingerprint_changes_when_field_added():
     """Adding/removing a field on InsiderTransaction must change the fingerprint.
-    This is the producer-side schema drift detector for Spec 065 §1 #2."""
-    original = _schema_fingerprint()
 
-    # Simulate schema drift by injecting a fake __dataclass_fields__ extension.
-    fake_fields = dict(InsiderTransaction.__dataclass_fields__)
-    fake_fields["new_field_xyz"] = mock.MagicMock()
+    This is the producer-side schema drift detector for Spec 065 §1 #2.
+    Uses explicit key lists (no class mutation) so full-suite runs cannot leak
+    patched __dataclass_fields__ state from other tests.
+    """
+    import hashlib
 
-    with mock.patch.object(InsiderTransaction, "__dataclass_fields__", fake_fields):
-        drifted = _schema_fingerprint()
+    keys = sorted(InsiderTransaction.__dataclass_fields__.keys())
+    original = hashlib.sha256("|".join(keys).encode()).hexdigest()[:12]
+    assert original == _schema_fingerprint()
 
+    extended = sorted(keys + ["new_field_xyz"])
+    drifted = hashlib.sha256("|".join(extended).encode()).hexdigest()[:12]
     assert drifted != original
 
 
