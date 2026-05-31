@@ -2,7 +2,7 @@
 # BIOTECH-SCREENER DEPENDENCIES (Pinned for Reproducibility)
 # ============================================================================
 # Python version: 3.10+
-# Last updated: 2026-05-30
+# Last updated: 2026-05-31
 #
 # After editing this file, regenerate the lock file:
 #   pip-compile --generate-hashes --output-file=requirements.lock requirements.txt
@@ -17,14 +17,14 @@
 # ----------------------------------------------------------------------------
 # Configuration (Required by run_screen.py and run_daily_production.py)
 # ----------------------------------------------------------------------------
-PyYAML==6.0.1
+PyYAML==6.0.3
 python-dotenv==1.2.2
 
 # ----------------------------------------------------------------------------
 # Testing
 # ----------------------------------------------------------------------------
 pytest==9.0.3
-pytest-cov==6.1.1
+pytest-cov==7.1.0
 pytest-timeout==2.4.0
 
 # ----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ pytest-timeout==2.4.0
 # ----------------------------------------------------------------------------
 pandas==2.3.3
 numpy==1.26.3
-requests==2.33.0
+requests==2.34.2
 scipy==1.11.4
 
 # ----------------------------------------------------------------------------
@@ -46,9 +46,9 @@ mypy==2.1.0
 # ----------------------------------------------------------------------------
 # Data Collection (used by collect_market_data.py and collectors)
 # ----------------------------------------------------------------------------
-yfinance==0.2.35
+yfinance==0.2.66
 beautifulsoup4==4.14.3
-lxml==6.1.0
+lxml==6.1.1
 
 # ----------------------------------------------------------------------------
 # Research-only web discovery (no ranker/selector inputs)
