@@ -163,7 +163,7 @@ from past runs that were never cleaned up.
 
 **Observation (2026-05-04):** 42 active sessions, all heartbeating within 1h. This
 is not necessarily a problem — OpenClaw maintains per-agent session state. Normal
-for a 30-agent fleet.
+for a 29-agent fleet (repo registry, 2026-05-30).
 
 **When to investigate:** If session count grows unbounded over weeks, or if specific
 agents show session age > 7 days and those sessions are blocking new runs.
@@ -184,7 +184,7 @@ The agent LLM run and artifact write both succeed; the delivery hook fails silen
 
 **Confirmed instance:** 2026-05-03 runs.sqlite deep-dive — 14 cron failures cluster with
 this error. ops: 13 failures in 6 days, sentinel: 8, qa: 4, grok_biotech_watch: 4,
-bioshort_watch: active as of May 2. All agent outputs present; zero briefings delivered.
+bioshort_watch: active as of May 2 (agent later removed from repo; see agent-registry-reference). All agent outputs present; zero briefings delivered.
 
 **Diagnostic recipe:**
 
@@ -237,35 +237,35 @@ sudo ln -s ~/.nvm/versions/node/v22.22.1/bin/node /usr/local/bin/node
 
 ---
 
-### Class G — Retired agent zombie in fleet (deregistration pending)
+### Class G — Retired agent zombie in gateway (deregistration pending)
 
 **Signature:** `openclaw status` shows an agent with sessions but "unknown/200k" context.
 Fleet receipt lists it as STALE/NO_ARTIFACTS. Crontab shows the agent's entry commented
-out with a RETIRED note. Memory directory is completely empty.
+out with a RETIRED note, **or** the agent was removed from `agents/` and
+`AGENT_REGISTRY.json` but still registered in OpenClaw.
 
-**Confirmed instance:** `shadow_watch` — crontab has `# RETIRED: shadow_watch
-(consolidated into shadow_monitor via heartbeat_checks.py)`. Memory empty. Still
-generating orphan session records and polluting fleet receipt counts.
+**Historical instance (resolved in repo 2026-05-30):** `shadow_watch` — consolidated into
+`shadow_monitor`; directory and registry entry deleted (#326). Operator may still see
+gateway zombies until deregistered.
 
-**Distinguishing retired (shadow_watch) from silently-broken (grok_biotech_watch):**
+**Distinguishing repo-removed vs silently-broken (example: grok_biotech_watch):**
 
 ```
-shadow_watch (confirmed retired):
-  - crontab entry has explicit RETIRED comment
-  - memory/ is empty (zero files, never wrote)
-  - no XAI/API credential required
-  - safe to deregister immediately
+Repo-removed / retired (e.g. shadow_watch, policy_shadow_watch, bioshort_watch):
+  - absent from agents/<name>/ and AGENT_REGISTRY.json
+  - crontab entry commented RETIRED or removed
+  - safe to deregister from OpenClaw after operator confirms no unique work remains
 
-grok_biotech_watch (status uncertain):
-  - crontab entry WAS missing (now fixed to SCAN)
-  - last artifact 34 days ago
-  - requires XAI_API_KEY
-  - may be auth-broken or intentionally paused — confirm before deregistering
+Silently-broken (still in registry):
+  - crontab entry missing or wrong trigger (HEARTBEAT vs SCAN)
+  - last artifact stale but agent still active in registry
+  - may need credential fix — do NOT deregister until root cause confirmed
 ```
 
-**Resolution:** `openclaw agent deregister shadow_watch` (or equivalent). Safe because:
-crontab already commented out, memory empty, functionality consolidated into shadow_monitor.
-Until deregistered, it inflates STALE count and generates misleading openclaw status output.
+**Resolution:** After operator approval, `openclaw agent deregister <id>` for agents
+removed from the repo fleet. Canonical surfaces: portfolio risk → `shadow_monitor`;
+news/digest → `herald`. See
+`docs/hermes_skills/references/agent-registry-reference.md`.
 
 ---
 

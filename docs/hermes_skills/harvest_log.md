@@ -36,10 +36,17 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
-## 2026-05-30 (gap closure)
+## 2026-05-30 (OpenClaw doc refresh)
 
-### Agent & bridge gaps addressed
-- **agent_roster.md:** Split repo fleet (34 agents, `AGENT_REGISTRY.json`) vs Hermes scheduler jobs
+### OpenClaw / Hermes taxonomy
+- **hermes_tools_map.md:** §5 OpenClaw gateway (Lanes A/B/C, `run_openclaw.sh`, debug skills, post-#326 cleanup)
+- **openclaw-session-routing-debug.md:** 29-agent fleet; Class G updated for repo-removed agents
+- **openclaw-agent-scope-audit.md:** `policy_shadow_watch` marked resolved → `shadow_monitor`
+- **hermeslink-state-capture.md:** agent counts 29 active (registry-aligned)
+- **agent_roster.md:** debug skills line 29-agent; tools map cross-link
+
+### Agent & bridge gaps addressed (earlier same day)
+- **agent_roster.md:** Split repo fleet (29 agents after #326, `AGENT_REGISTRY.json`) vs Hermes scheduler jobs
 - **Town-Hermes Phase B:** `common/town_bridge_events.py`; `cron_missed` from `ops_supervisor` + `cron_watchdog`; `contradiction_detected` from knowledge layer + `hermes-contradiction-detector`
 - **Registry:** Added `hermes-contradiction-detector` (31 active agents)
 - **Tests:** `tests/test_town_bridge_events.py`

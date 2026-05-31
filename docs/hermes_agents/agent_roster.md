@@ -15,7 +15,7 @@ This document has **two layers** — do not conflate them:
 
 **Hermes skills (repo vs WSL runtime):** `docs/hermes_agents/operator_host_skills.md` — edit `skills/`, sync to `docs/hermes_skills/`, then copy to `~/.hermes/skills/` only if the gateway reads runtime copies.
 
-**Hermes tools map:** `docs/hermes_agents/hermes_tools_map.md` — MCP vs repo tools vs Lane A jobs vs monitoring (canonical taxonomy).
+**Hermes tools map:** `docs/hermes_agents/hermes_tools_map.md` — MCP vs repo tools vs Lane A jobs vs OpenClaw gateway vs monitoring (canonical taxonomy).
 
 ---
 
@@ -305,7 +305,7 @@ Stored in `docs/hermes_skills/` (repo mirror) and optionally `~/.hermes/skills/d
    D: watchdog loop, E: weekend false-positive, F: LLM/tool mismatch,
    G: announce/webchat delivery errors)
 - openclaw-auth-sync — OAuth drift workaround; sync script + cron 4cfe9fb5d466
-- openclaw-agent-scope-audit — 30-agent SOUL.md scope table + registry reference
+- openclaw-agent-scope-audit — 29-agent SOUL.md scope table + registry reference
 - openclaw-session-routing-debug — auth drift, zombies, delivery channel failures
 - openclaw-data-pipeline-debug — press release contamination, IC ALERT protocol
 
