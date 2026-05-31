@@ -137,8 +137,8 @@ stage_firecrawl() {
 
     local rc=0
     timeout 180 $PYTHON tools/firecrawl_research_ingest.py \
-        --query "biotech clinical trial results FDA approval obesity GLP-1 2026" \
-        --limit 15 \
+        --query "GLP-1 obesity drug FDA approval clinical trial pubmed fda biorxiv clinicaltrials 2026" \
+        --limit 20 \
         --timeout 30 \
         --out "artifacts/research/firecrawl/$TODAY" 2>&1 | tail -5 || rc=$?
     if [ $rc -eq 124 ]; then
