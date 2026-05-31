@@ -15,8 +15,9 @@ Canonical taxonomy for Hermes in this repo. **Hermes is not one thing** — it i
 | **Lane A governance jobs** | Explicit `run_job.py` invocations | Town events + reads; no LLM | `agents/hermes-*/run_job.py` |
 | **Skills + operator CLI** | Skill bodies + WSL runtime | Drift if `~/.hermes` stale | `docs/hermes_skills/`, `hermes -s …` |
 | **Monitoring stack** | Ops signal producers | Writes heartbeat/supervisor artifacts | `tools/agent_heartbeat_checks.py`, etc. |
+| **OpenClaw gateway** | Operator WSL runtime (Node) | Sessions, cron tasks, delivery | `openclaw` CLI, [`tools/run_openclaw.sh`](../../tools/run_openclaw.sh) |
 
-Related docs: [`operator_host_skills.md`](operator_host_skills.md) (skills sync + `~/.hermes`), [`agent_roster.md`](agent_roster.md) (fleet vs scheduler).
+Related docs: [`operator_host_skills.md`](operator_host_skills.md) (skills sync + `~/.hermes`), [`agent_roster.md`](agent_roster.md) (fleet vs scheduler), [`hermes_openclaw_routing_policy.md`](../ops/hermes_openclaw_routing_policy.md) (Lanes A/B/C).
 
 ---
 
@@ -133,7 +134,56 @@ Full runbook: [`operator_host_skills.md`](operator_host_skills.md).
 
 ---
 
-## 5. Monitoring stack
+## 5. OpenClaw gateway (operator WSL)
+
+**OpenClaw** is the Node-based operator gateway for interactive agent sessions and optional cron tasks. It is **not** the same as Hermes MCP (read-only IDE), Lane A `run_job.py` jobs, or repo Python tools.
+
+| Property | Value |
+|----------|--------|
+| Fleet (repo) | **29** active agents in `agents/AGENT_REGISTRY.json` (post #326 consolidation) |
+| Default scheduled LLM path | [`tools/run_agent_direct.py`](../../tools/run_agent_direct.py) — direct API, **no gateway token** |
+| Cron wrapper | [`tools/run_openclaw.sh`](../../tools/run_openclaw.sh) — forces Node v22 on operator host |
+| Routing policy | [`docs/ops/hermes_openclaw_routing_policy.md`](../ops/hermes_openclaw_routing_policy.md) |
+
+### Lanes (summary)
+
+| Lane | Tooling | OpenClaw? |
+|------|---------|-----------|
+| **A** — deterministic production | `run_screen.py`, ingest, QA, Lane A Hermes jobs | Never |
+| **B** — monitoring + cheap escalation | `agent_heartbeat_checks.py`, `run_agent_direct.py` | Optional fallback only |
+| **C** — manual engineering | Hermes/OpenClaw sessions, Claude via `run_agent_direct.py` | Interactive use |
+
+**Constraint:** No production cron may *require* a live gateway. If OpenClaw is down, Lane A and Lane B baseline checks continue; scheduled LLM agents use `run_agent_direct.py`.
+
+### Debug skills (`docs/hermes_skills/`, `HERMES_NATIVE`)
+
+Load on demand (not wired to repo cron). Copy to `~/.hermes/skills/devops/` only when the gateway reads runtime copies — see [`operator_host_skills.md`](operator_host_skills.md).
+
+| Skill | Use when |
+|-------|----------|
+| `openclaw-cron-scheduler-debug.md` | Crontab/Hermes scheduler stalls, watchdog loops |
+| `openclaw-session-routing-debug.md` | OAuth drift, zombie tasks, delivery channel failures |
+| `openclaw-agent-scope-audit.md` | Registry vs SOUL vs actual artifact paths |
+| `openclaw-data-pipeline-debug.md` | Press-release contamination, IC ALERT protocol |
+| `openclaw-agent-optimize.md` | Context bloat, delegation posture (advisory) |
+
+References: [`docs/hermes_skills/references/agent-registry-reference.md`](../hermes_skills/references/agent-registry-reference.md), [`docs/hermes_skills/references/agent-scope-table.md`](../hermes_skills/references/agent-scope-table.md).
+
+### Operator cleanup (post fleet consolidation)
+
+Repo removed `shadow_watch`, `policy_shadow_watch`, `biotech_news_digest`, `company_news_ingest`, `bioshort_watch` (#326). **OpenClaw may still list deregistered agents** until the operator runs gateway cleanup — see Class G in `openclaw-session-routing-debug.md` (historical `shadow_watch` example; canonical portfolio surface is `shadow_monitor`).
+
+```bash
+# Operator WSL — schema-only / diagnose-first
+openclaw status
+openclaw tasks list --json
+# After operator approval only:
+# openclaw agent deregister <removed_agent_id>
+```
+
+---
+
+## 6. Monitoring stack
 
 Produces ops signals consumed by the knowledge layer and heartbeat. **Not** Hermes MCP tools.
 
@@ -148,7 +198,7 @@ Also feeds: `artifacts/heartbeat/`, `artifacts/ops_supervisor/`, fleet receipts 
 
 ---
 
-## 6. Standard operator sequences
+## 7. Standard operator sequences
 
 ### Skills hygiene
 
@@ -197,6 +247,8 @@ python3 tools/build_hermes_knowledge_layer.py
 | `build_knowledge_graph.py` is Hermeslink | That is the **governance KG** — use `build_hermes_knowledge_layer.py` |
 | Lane A jobs run on heartbeat | Heartbeat **SKIP**s them; run `run_job.py` explicitly |
 | Monitoring scripts are Hermes tools | They **feed** ops state; they are not MCP `hermes_*` tools |
+| OpenClaw gateway equals `run_agent_direct.py` | Cron LLM default is **direct API**; gateway is Lane C / optional |
+| Hermes MCP schedules OpenClaw cron | MCP is read-only; use operator WSL + repo tools for mutations |
 | Registry alone defines behavior | **SOUL.md** and runtime scripts override registry for execution |
 
 ---
@@ -211,3 +263,5 @@ python3 tools/build_hermes_knowledge_layer.py
 | Run governance after build | `agents/hermes-*/run_job.py` |
 | Check fleet agent behavior | `agents_get` + `skills_read` (SOUL) |
 | Avoid split-brain with Hermes CLI | [`operator_host_skills.md`](operator_host_skills.md) |
+| Debug OpenClaw sessions / delivery | `openclaw-*-debug.md` skills + §5 above |
+| Lane A/B/C routing rules | [`hermes_openclaw_routing_policy.md`](../ops/hermes_openclaw_routing_policy.md) |

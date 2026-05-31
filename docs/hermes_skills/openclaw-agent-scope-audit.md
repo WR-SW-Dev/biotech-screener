@@ -79,9 +79,11 @@ See `openclaw-data-pipeline-debug` Class F for the full diagnostic and resolutio
 **Signature:** Fleet receipt flags agent as `NO_ARTIFACTS` at its declared paths,
 but the agent is actually running and writing elsewhere.
 
-**Confirmed instances (2026-05-03):**
-- `policy_shadow_watch`: registry declared `artifacts/policy_shadow_watch/` but
-  agent writes to `artifacts/policy_shadow/tier_weighted/`
+**Confirmed instances:**
+- `policy_shadow_watch` (resolved 2026-05-30): registry had declared
+  `artifacts/policy_shadow_watch/` while writes went to `artifacts/policy_shadow/tier_weighted/`.
+  Agent removed; `shadow_monitor` now owns both `artifacts/shadow_monitor/` and
+  `artifacts/policy_shadow/tier_weighted/` per registry.
 - `review_queue_steward`: registry declared `agents/review_queue_steward/memory/`
   but agent is chat-mode only with no artifact contract (by design per SOUL.md/TOOLS.md)
 

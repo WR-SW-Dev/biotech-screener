@@ -171,12 +171,10 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 
 ### Agents
 
-| Status | Count (2026-05-31) | Action |
+| Status | Count (2026-05-30) | Action |
 |--------|-------------------|--------|
-| `active` | 31 | Includes 4 Hermes governance jobs |
-| `deprecated` | 2 | `bioshort_watch`, `company_news_ingest` |
-| `shadow` | 1 | `shadow_watch` (placeholder) |
-| **total** | **34** | From `AGENT_REGISTRY.json` |
+| `active` | 29 | Includes 4 Hermes governance jobs |
+| **total** | **29** | From `AGENT_REGISTRY.json` (overlapping agents removed #326) |
 
 **Action:** If `active` drops significantly, check for failed deployments. Lint: `pytest tests/test_agent_registry.py`.
 
