@@ -26,6 +26,7 @@ LOGS_DIR = REPO_ROOT / "logs"
 OPENCLAW = REPO_ROOT / "tools" / "run_openclaw.sh"
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
 TERMINAL_UNSUPERVISED_AGENTS = {"ops_supervisor"}
+HERMES_JOB_PREFIX = "hermes-"
 
 # Date-bounded carried-alert muffle for ic_health_monitor.
 # When a signal in this list is at ALERT/CRITICAL AND today is on or before
@@ -34,16 +35,9 @@ TERMINAL_UNSUPERVISED_AGENTS = {"ops_supervisor"}
 # escalation when the cause is a known/expected condition with a documented
 # self-heal date. Hard ALERT path is preserved for any signal NOT in this
 # list (P1 #1, Spec-tracked: see audit memo + supervisor.py EXCEPTIONS).
-IC_HEALTH_CARRIED_ALERTS = {
-    "inst_delta_z": {
-        "expires_after": "2026-05-15",
-        "reason": (
-            "expected: 13F cohort rebuild byte-identical artifact; self-heal "
-            "at next 13F refresh ~2026-05-15. See "
-            "regime_post_cohort_change_distortion_2026_04_28.md."
-        ),
-    },
-}
+# Add date-bounded entries only while a known/expected alert is active; remove
+# after expires_after (inst_delta_z muffle removed 2026-05-30 post 13F refresh).
+IC_HEALTH_CARRIED_ALERTS: dict[str, dict[str, str]] = {}
 
 
 STALENESS_DAYS_BY_CADENCE = {
@@ -708,6 +702,13 @@ SPECIALIZED_CHECKS = {
 AGENTS = dict(SPECIALIZED_CHECKS)
 
 
+def heartbeat_skip_reason(name: str, entry: dict) -> str | None:
+    """Return a SKIP reason when daily artifact freshness does not apply."""
+    if entry.get("cadence") == "on_demand" and name.startswith(HERMES_JOB_PREFIX):
+        return "on_demand Hermes job (invoke agents/<name>/run_job.py)"
+    return None
+
+
 def load_registry() -> dict:
     """Load agents/AGENT_REGISTRY.json; return the 'agents' sub-dict or {}."""
     try:
@@ -788,6 +789,10 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
     results: list[CheckResult] = []
     for name in sorted(supervised):
         entry = supervised[name]
+        skip_reason = heartbeat_skip_reason(name, entry)
+        if skip_reason:
+            results.append(CheckResult(name, "SKIP", skip_reason))
+            continue
         check_fn = SPECIALIZED_CHECKS.get(name)
         try:
             result = check_fn(dt) if check_fn is not None else check_generic_freshness(name, entry, dt)
