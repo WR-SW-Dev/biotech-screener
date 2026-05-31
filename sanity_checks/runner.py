@@ -280,7 +280,7 @@ class SanityCheckRunner:
                             level=ReviewLevel(req_dict["level"]),
                             reasons=req_dict["reasons"],
                             requires_memo=req_dict["requires_memo"],
-                            requires_sign_off=req_dict["requires_sign_o"],
+                            requires_sign_off=req_dict["requires_sign_off"],
                             blocking=req_dict["blocking"],
                         )
                     )

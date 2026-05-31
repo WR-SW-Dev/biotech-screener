@@ -97,14 +97,24 @@ def test_production_qa_corrupt_report_is_flagged(hb_mod, tmp_path):
     assert "CORRUPT" in joined
 
 
-def test_news_digest_press_release_freshness_parses_releases_prefix(hb_mod, tmp_path):
-    """Press-release source freshness should parse releases_YYYY-MM-DD.jsonl."""
+def test_news_digest_press_release_freshness_parses_releases_prefix(hb_mod, tmp_path, monkeypatch):
+    """Press-release source freshness should parse releases_YYYY-MM-DD.jsonl (herald check)."""
+    from datetime import datetime
+
     digest_dir = tmp_path / "artifacts" / "news_digest"
     digest_dir.mkdir(parents=True)
     (digest_dir / "biotech_news_digest_2026-05-07_evening.json").write_text("{}")
     pr_dir = tmp_path / "data" / "press_releases"
     pr_dir.mkdir(parents=True)
     (pr_dir / "releases_2026-05-01.jsonl").write_text("{}\n")
+
+    # Before 19:00 ET path checks yesterday's digest (present); isolates press-release staleness.
+    class _FixedDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 5, 8, 10, 0, 0)
+
+    monkeypatch.setattr(hb_mod, "datetime", _FixedDatetime)
 
     result = hb_mod.check_herald_news_pipeline(date.fromisoformat("2026-05-08"))
 
