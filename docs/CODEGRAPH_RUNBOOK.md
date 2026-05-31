@@ -2,7 +2,7 @@
 
 **Status:** Claude/Cursor approved · Cursor Cloud repo config active · Hermes registration deferred
 
-**Last updated:** 2026-05-28
+**Last updated:** 2026-05-30
 
 **Index location:** `.codegraph/` (repo-contained; `.codegraph/.gitignore` excludes `*.db`, `*.db-wal`, `*.db-shm` — ships with codegraph, no manual gitignore entry needed)
 
