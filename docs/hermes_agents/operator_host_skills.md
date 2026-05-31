@@ -94,6 +94,7 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 
 ## Related
 
+- **Canonical tool taxonomy:** [`hermes_tools_map.md`](hermes_tools_map.md) (MCP vs repo tools vs Lane A jobs vs CLI)
 - Sync implementation: `tools/sync_hermes_skills.py`
 - Audit: `tools/audit_hermes_skills.py`
 - Harvest / sync history: `docs/hermes_skills/harvest_log.md`
