@@ -118,12 +118,8 @@ EXCEPTIONS: list[dict] = [
 
 # Per-agent suppression reasons. `in SUPPRESSED_AGENTS` still works (dict
 # membership), so existing callers do not need to change.
-SUPPRESSED_AGENTS = {
-    "shadow_watch": "suppressed placeholder (Spec 085 disposition 2026-05-06; not active, not wired; activation requires separate spec)",
-    "company_news_ingest": "agent retired (replaced by tier-2 heartbeat checks)",
-    "biotech_news_digest": "agent retired (digest consolidated into herald; scripts/build_news_digest.py)",
-    "bioshort_watch": "suppressed_orphaned_upstream (bioshort P2 disposition 2026-05-06; output/hedge_report/ unscheduled and 41-day stale; producer tools/biotech_hedge_report.py preserved; reactivation requires separate spec)",
-}
+# Retired overlapping agents removed from fleet 2026-05-30 (registry + agents/ dirs deleted).
+SUPPRESSED_AGENTS: dict[str, str] = {}
 SUPPRESS_AGENT_PATTERNS = ["massive"]  # paused per license downgrade
 
 

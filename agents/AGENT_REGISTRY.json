@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "as_of": "2026-05-30",
-  "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE \u2014 active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
+  "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agents removed 2026-05-30 (Spec 085 Path B + news consolidation).",
   "enums": {
     "category": [
       "control_plane",
@@ -54,36 +54,6 @@
       "owner": "unassigned",
       "notes": ""
     },
-    "bioshort_watch": {
-      "role": "hedge governance monitor, consumer of artifacts",
-      "category": "portfolio_risk",
-      "cadence": "weekly",
-      "status": "deprecated",
-      "artifact_paths": [
-        "artifacts/bioshort_watch/"
-      ],
-      "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "SUPPRESSED_ORPHANED_UPSTREAM 2026-05-06 (bioshort P2 disposition). Weekly Friday cron `10 18 * * 5 ... bioshort_watch HEARTBEAT` commented out under header '# SUPPRESSED 2026-05-06 (bioshort upstream P2)'. Reason: upstream output/hedge_report/ unscheduled and 41-day stale (last write hedge_report_2026-03-26 17:55). Producer tools/biotech_hedge_report.py preserved. ops_supervisor.SUPPRESSED_AGENTS records the disposition. output/hedge_report/ historical artifacts preserved. Manual invocation via tools/run_agent_direct.py --agent bioshort_watch is preserved (will still read stale upstream until producer is restored). Reactivation requires separate spec: restore upstream producer wiring + confirm hedge governance is still desired + flip status=active. NO scoring / ranker / EV / sizing / Module 3 / Module 5 dependency on this agent \u2014 confirmed by grep against run_screen.py, module_3*.py, module_5*.py, ranker_*.py, selector_engine.py, decision_engine.py, event_ev/, common/ranker_active_contract.py.",
-      "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": false
-    },
-    "biotech_news_digest": {
-      "role": "generate and email biotech news briefs 3x daily",
-      "category": "signal_monitor",
-      "cadence": "daily_after_production",
-      "status": "deprecated",
-      "artifact_paths": [
-        "artifacts/news_digest/"
-      ],
-      "authority_level": "write_artifacts",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "RETIRED 2026-05-30 (Fix #5). Digest scope consolidated into herald; production path is scripts/build_news_digest.py (3x daily cron) writing biotech_news_digest_{date}_{window}.json under artifacts/news_digest/. LLM agent cron retired; heartbeat monitors herald. Directory retained for git history; SOUL.md carries RETIRED header. Manual run_agent_direct NOT supported; reactivation requires a new spec.",
-      "llm_policy": "none",
-      "requires_preflight": false
-    },
     "calibration": {
       "role": "ruleset evaluator, evidence accumulator, promotion recommender",
       "category": "research",
@@ -128,21 +98,6 @@
       "notes": "Crontab: 18:20. LLM elevation rule narrowed 2026-05-06 (P1 #2, partial closure \u2014 LLM-side only): narrative names only deltas where ticker is in-universe AND catalyst_days<=60 AND change-code is HARD or family-changing; suppressed deltas are rollup-summarized, not erased. Deterministic artifact tools/build_catalyst_delta.py and downstream consumer tools/build_options_watch.py UNCHANGED \u2014 the raw artifact remains the source of truth. catalyst_delta_score scoring field (module_3_scoring*.py, module_5_composite.py) UNCHANGED. Artifact-level filtering deferred to a separate explicit change with before/after artifact diffs.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
-    },
-    "company_news_ingest": {
-      "role": "guaranteed company press release coverage via polling",
-      "category": "data_ingestion",
-      "cadence": "daily_premarket",
-      "status": "deprecated",
-      "artifact_paths": [
-        "data/press_releases/"
-      ],
-      "authority_level": "write_artifacts",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "RETIRED 2026-05-06 (P1 #5 disposition; was 'deprecated' as transitional status). Cron retired (consolidated into herald: see crontab '# RETIRED: company_news_ingest' block). Watchdog does not auto-recover. ops_supervisor.py SUPPRESSED_AGENTS records reason 'agent retired (replaced by tier-2 heartbeat checks)'. herald (status=active, daily) is the canonical news ingest agent and writes to data/press_releases/ \u2014 historical artifacts under that path are PRESERVED, not deleted. Directory agents/company_news_ingest/ retained for git history; SOUL.md carries a RETIRED header. Manual invocation NOT supported (no production path); reactivation requires a new spec.",
-      "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": false
     },
     "crt_resolution_watcher": {
       "role": "monitor for new CRT resolutions, update join tables",
@@ -389,21 +344,6 @@
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
     },
-    "policy_shadow_watch": {
-      "role": "hold-discipline and policy-comparison monitor",
-      "category": "portfolio_risk",
-      "cadence": "daily_after_production",
-      "status": "active",
-      "artifact_paths": [
-        "artifacts/policy_shadow/tier_weighted/"
-      ],
-      "authority_level": "observe_only",
-      "supervised_by_orchestrator": true,
-      "owner": "unassigned",
-      "notes": "Partial scope overlap with shadow_monitor; boundary review pending.",
-      "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
-    },
     "postmortem": {
       "role": "event-resolution evidence capture agent",
       "category": "research",
@@ -494,35 +434,20 @@
       "requires_preflight": true
     },
     "shadow_monitor": {
-      "role": "shadow portfolio performance monitor",
+      "role": "shadow portfolio performance + policy-comparison monitor",
       "category": "portfolio_risk",
       "cadence": "daily_after_production",
       "status": "active",
       "artifact_paths": [
         "agents/shadow_monitor/memory/",
-        "artifacts/shadow_monitor/"
+        "artifacts/shadow_monitor/",
+        "artifacts/policy_shadow/tier_weighted/"
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Daily deterministic build via tools/build_shadow_monitor.py invoked by run_daily_production.py \u2014 writes artifacts/shadow_monitor/{date}_monitor.{json,md}. Supervised by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py:check_shadow_monitor. LLM cron entry retired 2026-05-06 (P1 #6 cadence reduction): the prior `25 18 * * 1-5 run_agent_direct.py --agent shadow_monitor --message DAILY --write-memory` was redundant \u2014 deterministic build + Tier 2 heartbeat already cover the surface. Manual invocation preserved: tools/run_agent_direct.py --agent shadow_monitor.",
-      "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
-    },
-    "shadow_watch": {
-      "role": "merged shadow portfolio + policy comparison read-only judge",
-      "category": "portfolio_risk",
-      "cadence": "daily_after_production",
-      "status": "shadow",
-      "artifact_paths": [
-        "agents/shadow_watch/memory/",
-        "artifacts/shadow_watch/"
-      ],
-      "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "SUPPRESSED PLACEHOLDER \u2014 not active. Intended as merged successor of shadow_monitor + policy_shadow_watch but never wired into cron, has no memory/ writes, and produces no artifacts. shadow_monitor and policy_shadow_watch remain the live agents. Activate only after: cron entry added, memory-write verified, artifact_paths confirmed, supervised_by_orchestrator=true. 2026-05-06: classified suppressed_placeholder in governance audit.",
-      "llm_policy": "direct_llama_on_anomaly",
+      "notes": "Canonical portfolio-risk surface (Spec 085 Path B 2026-05-30). Performance: tools/build_shadow_monitor.py (run_daily_production + heartbeat). Policy compare: tools/build_policy_shadow_compare.py (cron 18:05). Removed overlapping agents: shadow_watch (placeholder), policy_shadow_watch (merged here), biotech_news_digest / company_news_ingest / bioshort_watch (retired dirs removed). LLM cron for shadow_monitor retired 2026-05-06; deterministic builds + Tier 2 heartbeat only.",
+      "llm_policy": "none",
       "requires_preflight": true
     },
     "universe_maintenance": {

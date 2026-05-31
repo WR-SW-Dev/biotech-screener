@@ -290,12 +290,18 @@ def check_calibration(dt: date) -> CheckResult:
 
 
 def check_shadow_monitor(dt: date) -> CheckResult:
-    """Check shadow portfolio performance for anomalies."""
+    """Check shadow portfolio performance and policy-comparison artifacts (canonical portfolio-risk)."""
     ds = as_of_date(dt)
     anomalies = []
 
+    policy_path = ARTIFACTS_DIR / "policy_shadow" / "tier_weighted" / f"{ds}_comparison.json"
+    if not policy_path.exists():
+        anomalies.append(f"MISSING: policy_shadow comparison for {ds}")
+
     monitor_path = ARTIFACTS_DIR / "shadow_monitor" / f"{ds}_monitor.json"
     if not monitor_path.exists():
+        if anomalies:
+            return CheckResult("shadow_monitor", "STALE", f"No monitor for {ds}", anomalies)
         return CheckResult("shadow_monitor", "STALE", f"No monitor for {ds}")
 
     try:
@@ -692,10 +698,8 @@ SPECIALIZED_CHECKS = {
 }
 
 # CLI --agent map: registry names only.
-# shadow_watch alias intentionally absent: agent is a SUPPRESSED PLACEHOLDER
-# per Spec 085 disposition (2026-05-06) — directory still exists with planning
-# context, but there are no live heartbeat / cron / artifact obligations.
-# biotech_news_digest retired 2026-05-30 (Fix #5): digest monitoring is under herald.
+# shadow_watch / policy_shadow_watch removed 2026-05-30 (Spec 085 Path B): shadow_monitor canonical.
+# biotech_news_digest / company_news_ingest / bioshort_watch dirs removed; herald + tools own surfaces.
 # Artifact files still use biotech_news_digest_{date}_{window}.json from build_news_digest.py.
 AGENTS = dict(SPECIALIZED_CHECKS)
 

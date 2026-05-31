@@ -119,6 +119,9 @@ def test_shadow_monitor_performance_csv_fallback_uses_real_header(hb_mod, tmp_pa
     monitor_dir = tmp_path / "artifacts" / "shadow_monitor"
     monitor_dir.mkdir(parents=True)
     (monitor_dir / f"{ds}_monitor.json").write_text(json.dumps({"attention": "LOW", "alerts": []}))
+    policy_dir = tmp_path / "artifacts" / "policy_shadow" / "tier_weighted"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / f"{ds}_comparison.json").write_text("{}")
     perf_dir = tmp_path / "artifacts" / "live_shadow"
     perf_dir.mkdir(parents=True)
     rows = ["date,pnl"]
