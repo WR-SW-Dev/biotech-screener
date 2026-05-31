@@ -80,9 +80,9 @@ Cursor MCP launches through `.cursor/mcp.json`:
 codegraph serve --mcp --path ${workspaceFolder}
 ```
 
-Plumbing baseline: `main` @ `7382a9b7` (#312–#316). No further CodeGraph/cloud install or skills sync work unless a new failure appears.
+Plumbing baseline: `main` @ `8dbd1b9c` (#312–#331). Re-run `codegraph sync` after large merges; re-run `sync_hermes_skills.py` when `skills/` changes.
 
-**Hermes MCP** (`mcp_server/hermes_server.py`) is read-only fleet context only — it does **not** expose `codegraph_*` tools. Hermes cron agents that need structural maps use `common/codegraph_guard.py` locally, not Hermes MCP.
+**Hermes MCP** (`mcp_server/hermes_server.py`) is read-only fleet context only — it does **not** expose `codegraph_*` tools. Canonical Hermes surfaces (MCP vs gateway vs `run_agent_direct.py`): `docs/hermes_agents/hermes_tools_map.md`. Hermes cron agents that need structural maps use `common/codegraph_guard.py` locally, not Hermes MCP.
 
 **Authority:** Operator WSL is authoritative for cron, `output/hedge_report/`, and knowledge-layer contradiction truth. Cloud builds may report `UNKNOWN_CLOUD_ENV` or first-fire gaps that are expected on VMs without operator crontab.
 

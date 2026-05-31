@@ -80,7 +80,7 @@ Repo-native "ops brain" that continuously answers:
 
 ### Host authority \(operator WSL vs Cloud\)
 
-*Last reviewed: 2026-05-30 · plumbing baseline `main` @ `b19c36e3` (#311–#313 merged)*
+*Last reviewed: 2026-05-31 · plumbing baseline `main` @ `8dbd1b9c` (#311–#331)*
 
 | Host | Can validate | Cannot validate |
 | --- | --- | --- |
@@ -151,6 +151,20 @@ Hermes job completes
 - **Fallback**: Anthropic Claude SDK \(for Claude-specific models\)
 - **Auto-routing**: "deepseek" models -> OpenRouter \(OpenAI-compatible\), "claude" -> Anthropic SDK
 - **Previous**: Llama 3.3 70B Instruct Turbo \(Together AI, 2026-05-13 to 2026-05-20\)
+
+### Hermes model routing \(surface-specific, 2026-05-31\)
+
+Do not assume one model for all Hermes paths:
+
+| Layer | Truth source | LLM? |
+| --- | --- | --- |
+| Hermes MCP \(Cursor\) | `mcp_server/hermes_server.py` | No — read-only |
+| Lane A `hermes-*` jobs | `agents/hermes-*/run_job.py` | No — `llm_policy: none` |
+| Hermes Gateway / CLI | `~/.hermes/config.yaml` on operator WSL | Yes — verify live after `git pull` |
+| Fleet SOUL intent | `agents/*/SOUL.md`, this skill | `deepseek/deepseek-v4-flash:free` \(OpenRouter\) |
+| `run_agent_direct.py` | `tools/run_agent_direct.py` | Bypasses gateway; defaults to **Together Llama** |
+
+Docs: `docs/hermes_agents/hermes_tools_map.md` §5, `docs/HERMES_GATEWAY_SETUP.md` \(WSL acceptance gate\). Do not change `run_agent_direct.py` routing without operator WSL verification.
 
 ### Inference Tuning \(Llama-optimized, 2026-05-13\)
 
@@ -468,7 +482,7 @@ Key findings \(pseudo-PIT\):
 
 ## Infrastructure
 
-*Last reviewed: 2026-05-30*
+*Last reviewed: 2026-05-31*
 
 - **Production host**: WSL2 on Windows \(operator authority for cron + artifacts\)
 - **Agent model**: `deepseek/deepseek-v4-flash:free` via OpenRouter \(2026-05-20\)
@@ -480,13 +494,16 @@ Key findings \(pseudo-PIT\):
 
 ### Repo plumbing baseline \(Cloud + Cursor\)
 
-*Merged 2026-05-30 · `main` @ `b19c36e3`*
+*Merged through 2026-05-31 · `main` @ `8dbd1b9c`*
 
 | PR | Scope | Status |
 | --- | --- | --- |
-| #311 | Agent registry ↔ `agents/` dirs; 34-agent fleet; Hermes governance agents registered | Done |
-| #312 | CodeGraph `@0.9.7` via `$HOME/.local`; `.cursor/environment.json` | Done |
-| #313 | Knowledge layer: `UNKNOWN_CLOUD_ENV` when `crontab` unavailable; operator-host C3 authority | Done |
+| #311 | Agent registry ↔ `agents/` dirs; Hermes governance agents registered | Done |
+| #312–#313 | CodeGraph cloud install; `UNKNOWN_CLOUD_ENV` for crontab on Cloud | Done |
+| #326 | Fleet consolidated to **29** active agents | Done |
+| #328–#329 | `hermes_tools_map.md`, operator skills runbook | Done |
+| #330 | Hermes model routing docs \(gateway vs MCP vs direct\) | Done |
+| #331 | Python deps bump + `requirements.lock` regen | Done |
 
 ### Cursor Cloud Agent Environment
 
@@ -513,3 +530,15 @@ Key findings \(pseudo-PIT\):
 - Repo-native Hermes MCP works in Cursor Cloud \(registry, SOUL, knowledge artifacts when built locally\).
 - Production Hermes gateway, scheduled jobs, and OpenClaw runtime are **operator-host only** — not visible in Cloud.
 - Triage knowledge-layer alerts on **operator WSL** after `git pull` and `build_hermes_knowledge_layer.py`; see **Host authority** above.
+
+### Cursor skills knowledge \(sync workflow\)
+
+| Step | Command / path |
+| --- | --- |
+| Edit skill source | `skills/<dir>/SKILL.md` or `REFERENCE.md` |
+| Sync to Hermes mirror | `python3 tools/sync_hermes_skills.py` |
+| Audit mirrors + `_meta.json` | `python3 tools/audit_hermes_skills.py` |
+| Commit | `docs/hermes_skills/` + `skills/` when mirrors change |
+| Optional WSL runtime | Copy to `~/.hermes/skills/` only if gateway reads stale copies |
+
+Runbook: `docs/hermes_agents/operator_host_skills.md` · History: `docs/hermes_skills/harvest_log.md`

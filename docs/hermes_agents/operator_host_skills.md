@@ -1,6 +1,6 @@
 # Operator Host Hermes Skills Layout
 
-Last updated: 2026-05-30
+Last updated: 2026-05-31
 
 This runbook separates **repo authority** from **operator runtime copies** so Hermes and Cursor do not drift silently.
 
@@ -91,6 +91,22 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 - Do **not** treat `docs/hermes_skills/` and `~/.hermes/skills/` as automatically identical.
 - If behavior differs between Cursor and Hermes CLI, compare `source_authority` in `_meta.json` and runtime paths above.
 - Agent **behavior** is not in this tree — use `agents/<name>/SOUL.md` and `AGENT_REGISTRY.json` (see `docs/hermes_agents/agent_roster.md`).
+
+## Cursor skills knowledge (index)
+
+| Need | Location |
+|------|----------|
+| Edit Cursor skill source | `skills/<dir>/SKILL.md` or `REFERENCE.md` |
+| Hermes mirror (after sync) | `docs/hermes_skills/*.md` |
+| Sync + register `_meta.json` | `python3 tools/sync_hermes_skills.py --register-meta` |
+| Drift audit | `python3 tools/audit_hermes_skills.py` |
+| Screener ops + fleet model routing | `skills/screener_ops/SKILL.md` → `screener-ops.md` |
+| Codegraph in Cursor | `skills/codegraph/SKILL.md` → `codegraph.md` |
+| Hermes MCP (IDE, read-only) | `mcp_server/hermes_server.py` · bootstrap: `.cursor/rules/hermes-context.mdc` |
+| Model surfaces (gateway vs direct) | [`hermes_tools_map.md`](hermes_tools_map.md) §5 · [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md) |
+| Sync history | [`../hermes_skills/harvest_log.md`](../hermes_skills/harvest_log.md) |
+
+**Rule:** edit `skills/` first, then sync and commit mirrors. Do not hand-edit mirrored files unless `source_authority` is `HERMES_NATIVE` or `memory-steward` (authoritative).
 
 ## Related
 

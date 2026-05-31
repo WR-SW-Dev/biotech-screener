@@ -5,6 +5,19 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-05-31 (Cursor skills knowledge)
+
+### Skill sources refreshed
+- **screener-ops** (`skills/screener_ops/SKILL.md`): Hermes model routing table (MCP / Lane A / gateway / SOUL / `run_agent_direct.py`); plumbing baseline `main` @ `8dbd1b9c` (#326–#331); Cursor sync workflow table
+- **codegraph** (`skills/codegraph/SKILL.md`): baseline `8dbd1b9c`; pointer to `hermes_tools_map.md`
+- **operator_host_skills.md**: Cursor skills knowledge index (sync, audit, model doc links)
+- Ran `sync_hermes_skills.py` — updated `screener-ops.md`, `codegraph.md`
+
+### Governance
+- Skills/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-05-30
 
 ### Sync (Cursor Cloud agent)
