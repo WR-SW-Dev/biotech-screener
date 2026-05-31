@@ -7,27 +7,32 @@ triggers:
   - "audit Hermes governance"
   - "hermeslink status"
 description: >
-  Real-time deterministic state snapshot of Hermes infrastructure (Spec 089 Phase 1 KG builder).
-  Deployed 2026-05-21; live since 2026-05-26. Captures cron jobs, agents, held specs,
-  contradictions, first-fire schedules, git state. Weekly execution (weekdays 5:45 PM ET).
-  Read-only monitoring tool; outputs to artifacts/ops/ and artifacts/audit/.
+  Deterministic Hermes ops state snapshot (Spec 089). Builder: build_hermes_knowledge_layer.py.
+  Captures git, crontab, agent registry, held specs, contradictions, first-fire. Operator-host
+  authoritative for C1/C3 cron checks. Phase B routes hard contradictions to Town (dry-run default).
+  Post-build: hermes-contradiction-detector. Separate from build_knowledge_graph.py (governance KG).
 ---
 
-# Hermeslink State Capture — Knowledge Layer (Phase 2 Step 4 Complete)
+# Hermeslink State Capture — Knowledge Layer (Spec 089)
 
-## Status Update (2026-05-26)
+## Status Update (2026-05-31)
 
-✅ **DEPLOYED & LIVE** — Spec 089 Phase 1 Knowledge Layer fully operational
+**ACTIVE** — Ops knowledge layer + Town-Hermes Phase B egress wired in repo ([PR #322](https://github.com/Warrenpoobear/biotech-screener/pull/322) pending merge).
 
-- **KG Builder:** `tools/build_hermes_knowledge_layer.py` (live, cron active)
-- **CLI Queries:** `tools/query_knowledge_graph.py` (5 query patterns working)
-- **Execution:** Weekdays 5:45 PM ET (automated cron)
-- **Outputs:** artifacts/ops/knowledge_layer/, artifacts/audit/
-- **Tests:** 30/30 PASS (Phase 2 Step 4 completion verified)
+| Component | Tool / path | Notes |
+| --- | --- | --- |
+| **Hermeslink builder** | `tools/build_hermes_knowledge_layer.py` | Spec 089 ops brain (this skill) |
+| **Governance KG** | `tools/build_knowledge_graph.py` + `query_knowledge_graph.py` | Separate graph; not Hermeslink |
+| **Town bridge** | `common/town_bridge_events.py` | Auto `contradiction_detected` after build |
+| **Follow-up job** | `agents/hermes-contradiction-detector/run_job.py` | Re-reads `latest_state.json` warnings |
+| **MCP read** | `knowledge_read(artifact=...)` | `contradiction_ledger` → `latest.md` |
+| **Cron (operator)** | Weekdays ~5:45 PM ET | Run on WSL after `git pull` |
+
+**Agent fleet (registry):** 34 total — 31 active, 2 deprecated, 1 shadow; 4 Hermes governance jobs.
 
 ## Purpose
 
-Provide real-time, deterministic snapshot of Hermes-managed infrastructure state via Knowledge Graph. Answers:
+Provide a deterministic snapshot of Hermes-managed **operational** infrastructure state (not production rankings). Answers:
 
 - "What's the current git state and code version?"
 - "Which cron jobs are active vs suppressed?"
@@ -59,15 +64,30 @@ Provide real-time, deterministic snapshot of Hermes-managed infrastructure state
 - Extract contradictions
 
 **Layer 3: Validate**
-- 5 infrastructure contradiction checks (C1-C5)
-- Verify cron consistency with registry
-- Check artifact freshness thresholds
+- Contradiction checks **C1–C5** (see table below)
+- On Cloud without `crontab`: C1/C3 emit `UNKNOWN_CLOUD_ENV` (not hard failures)
 
 **Layer 4: Emit**
-- `artifacts/ops/knowledge_layer/latest_state.json` (full state)
-- `artifacts/ops/first_fire_ledger/latest.json` (schedules)
-- `artifacts/ops/contradiction_ledger/latest.md` (issues)
-- `artifacts/ops/held_spec_ledger/latest.json` (blockers)
+- `artifacts/ops/knowledge_layer/latest_state.{json,md}`
+- `artifacts/ops/first_fire_ledger/latest.{json,md}`
+- `artifacts/ops/contradiction_ledger/latest.md` (+ dated copy)
+- `artifacts/ops/held_spec_ledger/latest.json`
+- **Phase B:** if any `HARD_CONTRADICTION`, `send_operator_event(contradiction_detected)` (respects `OPERATOR_DELIVERY_DRY_RUN`)
+
+---
+
+## Host authority (operator WSL vs Cloud)
+
+| Check | Operator WSL | Cursor Cloud |
+| --- | --- | --- |
+| C1 bioshort cron vs registry | Authoritative | `UNKNOWN_CLOUD_ENV` |
+| C3 biotech_hedge_report cron | Authoritative | `UNKNOWN_CLOUD_ENV` |
+| C2 watchlist freshness | Partial (file may exist) | Same |
+| C4 git clean | Yes | Yes |
+| C5 BIOSHORT_VERDICT date | Yes if artifact present | Often MISSING in checkout |
+| First-fire FAIL past deadline | Yes if hedge artifacts present | Often MISSING — do not treat as prod failure |
+
+**Rule:** Re-run Hermeslink on operator host before acting on cron or hedge first-fire findings from Cloud builds.
 
 ---
 
@@ -92,37 +112,39 @@ Cursor Cloud limitation: the repo-native Hermes MCP server may work while the
 production Hermes/Hermes Link runtime and local port are absent. Treat this as an
 environment limitation, not a repo failure.
 
-### Command
+### Command (full Hermeslink cycle)
 
 ```bash
 cd /mnt/c/Projects/biotech_screener/biotech-screener
+git pull   # on operator host
+
+# 1. Build ledgers (Spec 089)
 python3 tools/build_hermes_knowledge_layer.py
+
+# 2. Optional explicit Town route (same as step 1 when hard contradictions exist)
+python3 agents/hermes-contradiction-detector/run_job.py
+
+# 3. Review
+cat artifacts/ops/knowledge_layer/latest_state.md
+cat artifacts/ops/contradiction_ledger/latest.md
+cat artifacts/ops/first_fire_ledger/latest.md
+
+# 4. Hermes governance jobs (Phase B — dry-run unless OPERATOR_DELIVERY_DRY_RUN=0)
+python3 agents/hermes-held-spec-ledger/run_job.py
 ```
 
-### Output
+### Example output (2026-05-31, Cloud VM)
 
 ```
-[build_hermes_knowledge_layer] 2026-05-19
-  repo: /mnt/c/Projects/biotech_screener/biotech-screener
-
-Layer 1: capture...
-Layer 2: normalize...
-Layer 3: contradiction scan...
-Layer 4: write outputs...
-  wrote /mnt/c/Projects/biotech_screener/biotech-screener/artifacts/ops/knowledge_layer/latest_state.json
-  wrote /mnt/c/Projects/biotech_screener/biotech-screener/artifacts/ops/knowledge_layer/latest_state.md
-  wrote /mnt/c/Projects/biotech_screener/biotech-screener/artifacts/ops/first_fire_ledger/latest.json
-  wrote /mnt/c/Projects/biotech_screener/biotech-screener/artifacts/ops/first_fire_ledger/latest.md
-  wrote /mnt/c/Projects/biotech_screener/biotech-screener/artifacts/ops/contradiction_ledger/latest.md
-  wrote /mnt/c/Projects/biotech_screener/biotech-screener/artifacts/ops/held_spec_ledger/latest.json
-
-=== Summary ===
-  git head:           be0d26fb
-  uncommitted files:  0
+[build_hermes_knowledge_layer] 2026-05-31
+  crontab surface:    UNKNOWN_CLOUD_ENV
   held items:         6
-  first-fire status:  WARN_DATE_MISMATCH
-  contradictions:     0 hard  /  1 possible
+  first-fire status:  FAIL_ARTIFACT_MISSING_PAST_DEADLINE
+  contradictions:     0 hard  /  2 cloud-env  /  2 possible
+  Cron checks skipped (non-authoritative host) — verify on operator machine.
 ```
+
+On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATOR_HOST` and authoritative C1/C3.
 
 ---
 
@@ -149,13 +171,14 @@ Layer 4: write outputs...
 
 ### Agents
 
-| Status | Count | Action |
-|--------|-------|--------|
-| `active` | 25–30 | Core + specialty agents |
-| `deprecated` | 1–3 | Old agents (OK to exist) |
-| `shadow` | 1–2 | Trial agents (OK if limited) |
+| Status | Count (2026-05-31) | Action |
+|--------|-------------------|--------|
+| `active` | 31 | Includes 4 Hermes governance jobs |
+| `deprecated` | 2 | `bioshort_watch`, `company_news_ingest` |
+| `shadow` | 1 | `shadow_watch` (placeholder) |
+| **total** | **34** | From `AGENT_REGISTRY.json` |
 
-**Action:** If `active` drops significantly, check for failed deployments.
+**Action:** If `active` drops significantly, check for failed deployments. Lint: `pytest tests/test_agent_registry.py`.
 
 ### Held Specs (6 Items)
 
@@ -247,8 +270,13 @@ Status: READY / NOT_READY_ISSUES: __________
 
 **Data lineage:**
 - Source: crontab, git, AGENT_REGISTRY, artifacts/, memory files
-- Transform: build_hermes_knowledge_layer.py
-- Sink: artifacts/ops/ (knowledge_layer/, first_fire_ledger/, contradiction_ledger/, held_spec_ledger/)
+- Transform: `build_hermes_knowledge_layer.py`
+- Sink: `artifacts/ops/` (knowledge_layer/, first_fire_ledger/, contradiction_ledger/, held_spec_ledger/)
+- Egress (Phase B): `common/town_bridge_events` → `common/operator_delivery` → Town email
+
+**Related (not Hermeslink):**
+- `tools/build_knowledge_graph.py` — governance spec graph (Spec 089 KG pilot / Spec 110)
+- `docs/hermes_skills/town-operator-bridge.md` — event types and live-email checklist
 
 ---
 
@@ -303,12 +331,14 @@ Safe sequence:
 
 ## Implementation Notes
 
-- **Tool location:** `tools/build_hermes_knowledge_layer.py` (600 lines)
-- **Language:** Python 3.10+
-- **Dependencies:** pathlib, json, subprocess, datetime
-- **Runtime:** ~2–5 seconds (reads crontab, git, ~1000 files)
-- **Output format:** JSONL (one record per line, newline-delimited JSON)
-- **Cron scheduling:** Optional (manual trigger preferred for now; can enable with `schedule build_hermes_knowledge_layer.py daily 08:00 ET`)
+- **Tool location:** `tools/build_hermes_knowledge_layer.py`
+- **Language:** Python 3.12+
+- **Dependencies:** stdlib only (subprocess for git/crontab)
+- **Runtime:** ~2–5 seconds on operator host
+- **Output format:** JSON + Markdown ledgers under `artifacts/ops/`
+- **Town import:** builder inserts repo root on `sys.path` before `town_bridge_events`
+- **Cron scheduling:** Operator weekdays ~5:45 PM ET (after daily production window); not wired into `run_daily_production.py`
+- **Tests:** `tests/test_build_hermes_knowledge_layer_contradictions.py`, `tests/test_town_bridge_events.py`
 
 ---
 
