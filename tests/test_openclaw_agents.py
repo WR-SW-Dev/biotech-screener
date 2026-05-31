@@ -52,16 +52,20 @@ INCOMPLETE_AGENTS = [
     "ctgov_poller",
     "data_auditor",
     "event_analyst",
-    "hermes-contradiction-detector",
-    "hermes-first-fire-validator",
-    "hermes-held-spec-ledger",
-    "hermes-ruleset-integrity",
     "ic_health_monitor",
     "intraday_mover_watch",
     "price_action_watch",
     "production_qa",
     "shadow_monitor",
     "universe_maintenance",
+]
+# Lane A Hermes governance jobs: deterministic run_job.py only (llm_policy: none).
+# Heartbeat checks SKIP them; no HEARTBEAT.md by design.
+LANE_A_HERMES_AGENTS = [
+    "hermes-contradiction-detector",
+    "hermes-first-fire-validator",
+    "hermes-held-spec-ledger",
+    "hermes-ruleset-integrity",
 ]
 # Retired agent workspaces — merged into other agents, dirs kept for history.
 RETIRED_AGENTS = [
@@ -74,7 +78,7 @@ TERMINAL_AGENTS = ["ops_supervisor"]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
 EXPECTED_RULESET_ID = "8887576e"
 EXPECTED_RULESET_VERSION = "v1.14.0"
-EXPECTED_MODEL = "claude-sonnet-4-6"
+EXPECTED_MODEL = "deepseek/deepseek-v4-flash:free"
 
 
 # ---------------------------------------------------------------------------
@@ -401,6 +405,26 @@ class TestPartialAgents:
         assert EXPECTED_RULESET_ID in soul
 
 
+class TestLaneAHermesAgents:
+    """Hermes governance jobs (Lane A): explicit run_job.py, no LLM heartbeat contract."""
+
+    @pytest.mark.parametrize("name", LANE_A_HERMES_AGENTS)
+    def test_workspace_exists(self, name):
+        assert (AGENTS_DIR / name).is_dir(), f"Lane A Hermes workspace missing: {name}"
+
+    @pytest.mark.parametrize("name", LANE_A_HERMES_AGENTS)
+    def test_run_job_exists(self, name):
+        run_job = AGENTS_DIR / name / "run_job.py"
+        assert run_job.is_file(), f"Lane A Hermes agent {name} missing run_job.py"
+
+    @pytest.mark.parametrize("name", LANE_A_HERMES_AGENTS)
+    def test_no_heartbeat_by_design(self, name):
+        """Heartbeat checks SKIP these agents; HEARTBEAT.md is not required."""
+        assert not (AGENTS_DIR / name / "HEARTBEAT.md").is_file(), (
+            f"Lane A Hermes agent {name} should not have HEARTBEAT.md (use run_job.py)"
+        )
+
+
 class TestIncompleteAgents:
     """Agents known to have incomplete SOUL.md structure.
 
@@ -427,7 +451,12 @@ class TestIncompleteAgents:
     def test_total_agent_count(self):
         """All agent workspaces are accounted for (compliant + partial + incomplete + retired)."""
         all_agents = (
-            set(AGENT_NAMES) | set(PARTIAL_AGENTS) | set(INCOMPLETE_AGENTS) | set(RETIRED_AGENTS) | set(TERMINAL_AGENTS)
+            set(AGENT_NAMES)
+            | set(PARTIAL_AGENTS)
+            | set(INCOMPLETE_AGENTS)
+            | set(LANE_A_HERMES_AGENTS)
+            | set(RETIRED_AGENTS)
+            | set(TERMINAL_AGENTS)
         )
         actual = {d.name for d in AGENTS_DIR.iterdir() if d.is_dir()}
         untracked = actual - all_agents
