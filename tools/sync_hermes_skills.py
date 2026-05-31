@@ -78,6 +78,10 @@ HERMES_AUTHORITATIVE: set[str] = {
     "memory_steward",
 }
 
+# Values stored in _meta.json `source_authority` (audit + operator runbook).
+SOURCE_AUTHORITY_HERMES_NATIVE = "hermes_native"
+SOURCE_AUTHORITY_HERMES_AUTHORITATIVE = "hermes_authoritative"
+
 DISPLAY_NAMES: dict[str, str] = {
     "screener_ops": "Screener Ops & Governance",
     "codegraph": "Codegraph Repo Intelligence",
@@ -167,6 +171,21 @@ def sync_pair(skill_key: str, hermes_name: str, dry_run: bool) -> str:
     return f"SYNC {skill_key} -> {hermes_path.name}"
 
 
+def source_authority_for(meta_key: str, fname: str) -> str:
+    """Resolve canonical edit path for a Hermes skill mirror (_meta.json source_authority)."""
+    for skill_key, hermes_name in SKILL_MAP.items():
+        if hermes_name == fname:
+            if skill_key in HERMES_AUTHORITATIVE:
+                return SOURCE_AUTHORITY_HERMES_AUTHORITATIVE
+            return f"skills/{skill_key}/SKILL.md"
+    for skill_key, hermes_name in REFERENCE_MAP.items():
+        if hermes_name == fname:
+            return f"skills/{skill_key}/REFERENCE.md"
+    if meta_key in HERMES_NATIVE or Path(fname).stem in HERMES_NATIVE:
+        return SOURCE_AUTHORITY_HERMES_NATIVE
+    return "unknown"
+
+
 def register_meta(dry_run: bool) -> list[str]:
     if not META.exists():
         return ["SKIP meta: _meta.json missing"]
@@ -175,20 +194,24 @@ def register_meta(dry_run: bool) -> list[str]:
     lines: list[str] = []
 
     def add(key: str, fname: str, name: str, source: str) -> None:
-        if key in skills and skills[key].get("file") == fname:
-            return
+        authority = source_authority_for(key, fname)
         entry = {
             "name": name,
             "file": fname,
             "status": skills.get(key, {}).get("status", "Active"),
             "source": source,
+            "source_authority": authority,
         }
-        if key not in skills:
-            lines.append(f"ADD  {key} ({source})")
-        else:
-            lines.append(f"PATCH {key} source={source}")
+        is_new = key not in skills
+        prior_auth = skills.get(key, {}).get("source_authority")
+        if is_new:
+            lines.append(f"ADD  {key} ({source}, authority={authority})")
+        elif prior_auth != authority:
+            lines.append(f"PATCH {key} source_authority={authority}")
+        elif skills[key].get("file") != fname:
+            lines.append(f"PATCH {key} file={fname}")
         if not dry_run:
-            merged = {**entry, **{k: v for k, v in skills.get(key, {}).items() if k not in entry}}
+            merged = {**skills.get(key, {}), **entry}
             skills[key] = merged
 
     for key, fname in {**SKILL_MAP, **REFERENCE_MAP}.items():
@@ -201,9 +224,24 @@ def register_meta(dry_run: bool) -> list[str]:
     for meta_key, name in HERMES_NATIVE.items():
         fname = f"{meta_key}.md"
         if (HERMES / fname).exists():
-            add(meta_key, fname, name, "hermes_native")
+            add(meta_key, fname, name, SOURCE_AUTHORITY_HERMES_NATIVE)
+
+    # Backfill source_authority on entries not touched above (e.g. town-operator-bridge extras).
+    for meta_key, entry in skills.items():
+        fname = entry.get("file", f"{meta_key}.md")
+        authority = source_authority_for(meta_key, fname)
+        if entry.get("source_authority") != authority:
+            if not dry_run:
+                entry["source_authority"] = authority
+            lines.append(f"AUTH {meta_key} -> {authority}")
 
     data["last_updated"] = date.today().isoformat()
+    data["source_authority_legend"] = {
+        "skills/SKILL.md": "Edit skills/<dir>/SKILL.md then sync",
+        "skills/<dir>/REFERENCE.md": "Edit skills/<dir>/REFERENCE.md then sync",
+        SOURCE_AUTHORITY_HERMES_NATIVE: "Edit docs/hermes_skills/<file>.md directly",
+        SOURCE_AUTHORITY_HERMES_AUTHORITATIVE: "Edit docs/hermes_skills mirror only (sync skips)",
+    }
     if not dry_run:
         META.write_text(json.dumps(data, indent=2) + "\n")
     return lines

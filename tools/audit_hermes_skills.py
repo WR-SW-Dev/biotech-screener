@@ -18,6 +18,11 @@ from tools.sync_hermes_skills import (  # noqa: E402
     HERMES_NATIVE,
     REFERENCE_MAP,
     SKILL_MAP,
+    SOURCE_AUTHORITY_HERMES_AUTHORITATIVE,
+    SOURCE_AUTHORITY_HERMES_NATIVE,
+    all_sync_keys,
+    sync_pair,
+    source_authority_for,
 )
 
 SKIP_FILES = {"harvest_log.md", "SKILLS_REGISTRY.md"}
@@ -67,7 +72,39 @@ def main() -> int:
     for k in sorted(HERMES_AUTHORITATIVE):
         print(f"  {k}")
 
+    print("\n## source_authority (_meta.json)")
+    missing_auth = [
+        key for key, entry in meta.get("skills", {}).items() if not entry.get("source_authority")
+    ]
+    if missing_auth:
+        print("  MISSING source_authority:")
+        for key in sorted(missing_auth):
+            print(f"    {key}")
+    else:
+        print("  All registered skills have source_authority")
+
+    print("\n## Mirror drift (cursor-synced skills only)")
+    drift: list[str] = []
+    reverse = {v: k for k, v in all_sync_keys().items()}
+    for fname in sorted(synced_targets):
+        skill_key = reverse.get(fname)
+        if not skill_key or skill_key in HERMES_AUTHORITATIVE:
+            continue
+        authority = source_authority_for(Path(fname).stem, fname)
+        if authority in (SOURCE_AUTHORITY_HERMES_NATIVE, SOURCE_AUTHORITY_HERMES_AUTHORITATIVE):
+            continue
+        result = sync_pair(skill_key, fname, dry_run=True)
+        if result.startswith("DRY "):
+            drift.append(f"  {fname}: hand-edited mirror? ({result})")
+    if drift:
+        for line in drift:
+            print(line)
+        print("  Fix: edit skills/ source and run python3 tools/sync_hermes_skills.py")
+    else:
+        print("  No drift detected (mirrors match skills/ sources)")
+
     print("\n## Commands")
+    print("  See docs/hermes_agents/operator_host_skills.md for WSL ~/.hermes layout")
     print("  python3 tools/sync_hermes_skills.py --register-meta")
     print("  python3 tools/sync_hermes_skills.py")
     return 0
