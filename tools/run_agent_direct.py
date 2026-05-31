@@ -47,6 +47,9 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
+REGISTRY_PATH = PROJECT_ROOT / "agents" / "AGENT_REGISTRY.json"
+HERMES_JOB_PREFIX = "hermes-"
+DIRECT_RUN_BLOCKED_STATUSES = frozenset({"deprecated", "shadow"})
 
 # Bare status tokens that indicate a heartbeat-only response — do not write to memory.
 _HEARTBEAT_TOKENS = re.compile(
@@ -90,6 +93,32 @@ _AGENT_SCOPE_KEYWORDS: dict[str, list[str]] = {
     "fleet_steward": ["Ranker/selector/sizing"],
     "sentinel": ["Ranker/selector/sizing"],
 }
+
+
+def load_registry_entry(agent_name: str) -> dict | None:
+    """Load a single agent entry from AGENT_REGISTRY.json, or None if missing."""
+    if not REGISTRY_PATH.exists():
+        return None
+    try:
+        data = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return data.get("agents", {}).get(agent_name)
+
+
+def direct_run_block_reason(agent_name: str, entry: dict | None) -> str | None:
+    """Return a human-readable block reason when run_agent_direct must not dispatch."""
+    if agent_name.startswith(HERMES_JOB_PREFIX):
+        return (
+            f"{agent_name} is a Lane A Hermes job; use agents/{agent_name}/run_job.py "
+            "(not run_agent_direct LLM dispatch)"
+        )
+    if entry is None:
+        return None
+    status = entry.get("status", "")
+    if status in DIRECT_RUN_BLOCKED_STATUSES:
+        return f"{agent_name} status={status} in AGENT_REGISTRY.json"
+    return None
 
 
 def run_preflight(agent_name: str) -> dict | None:
@@ -349,6 +378,13 @@ def main():
                     os.environ[key] = val
 
     resolved_model = resolve_model(args.agent, args.model)
+
+    registry_entry = load_registry_entry(args.agent)
+    block_reason = direct_run_block_reason(args.agent, registry_entry)
+    if block_reason and not args.skip_preflight:
+        print(f"[DIRECT_RUN_BLOCKED] {block_reason}", file=sys.stderr)
+        print("  Use --skip-preflight only for explicit rollback/dev.", file=sys.stderr)
+        return 1
 
     # Preflight governance check
     preflight = None if args.skip_preflight else run_preflight(args.agent)

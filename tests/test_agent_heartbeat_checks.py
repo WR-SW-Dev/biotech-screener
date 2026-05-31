@@ -186,6 +186,40 @@ def test_terminal_unsupervised_agent_does_not_create_coverage_gap(hb_mod, tmp_pa
     assert hb_mod._derive_verdict(results, counts, snapshot_ok=True) == "GREEN"
 
 
+def test_hermes_on_demand_agents_skip_heartbeat_freshness(hb_mod, tmp_path, monkeypatch):
+    registry = {
+        "agents": {
+            "hermes-held-spec-ledger": {
+                "status": "active",
+                "cadence": "on_demand",
+                "artifact_paths": ["artifacts/ops/held_spec_ledger/"],
+                "supervised_by_orchestrator": True,
+                "llm_policy": "none",
+            },
+            "qa": {
+                "status": "active",
+                "cadence": "daily_after_production",
+                "artifact_paths": ["agents/qa/memory/"],
+                "supervised_by_orchestrator": True,
+            },
+        }
+    }
+    (tmp_path / "agents" / "qa" / "memory").mkdir(parents=True)
+    (tmp_path / "agents" / "qa" / "memory" / "2026-05-08.md").write_text("ok")
+    reg_path = tmp_path / "agents" / "AGENT_REGISTRY.json"
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_text(json.dumps(registry), encoding="utf-8")
+    monkeypatch.setattr(hb_mod, "REGISTRY_PATH", reg_path)
+    monkeypatch.setattr(hb_mod, "SPECIALIZED_CHECKS", {"qa": lambda dt: hb_mod.CheckResult("qa", "OK")})
+
+    results, counts = hb_mod.run_registry_checks(date.fromisoformat("2026-05-08"))
+
+    hermes = next(r for r in results if r.agent == "hermes-held-spec-ledger")
+    assert hermes.status == "SKIP"
+    assert "run_job.py" in hermes.detail
+    assert counts["stale_count"] == 0
+
+
 def test_nonterminal_active_unsupervised_agent_still_counts_as_coverage_gap(hb_mod, tmp_path, monkeypatch):
     registry = {
         "agents": {
@@ -293,13 +327,23 @@ def _write_dashboard(hb_mod, ds: str, signals: dict, attention: str = "MEDIUM") 
 class TestCheckIcHealthCarriedMuffle:
     """P1 #1 — carried-alert muffle for ic_health_monitor.
 
-    inst_delta_z ALERT before its expires_after date should downgrade to WARN
-    with [CARRIED] tag (no FAIL escalation). Any other signal at ALERT, OR
-    inst_delta_z ALERT after expiry, must still trigger FAIL — preserves the
-    hard-threshold path.
+    Signals in IC_HEALTH_CARRIED_ALERTS before expires_after downgrade to WARN
+    with [CARRIED] tag (no FAIL escalation). Any other signal at ALERT, OR a
+    carried signal after expiry, must still trigger FAIL.
     """
 
-    def test_carried_alert_pre_expiry_yields_warn(self, hb_mod):
+    @pytest.fixture
+    def carried_inst_delta(self, hb_mod, monkeypatch):
+        monkeypatch.setitem(
+            hb_mod.IC_HEALTH_CARRIED_ALERTS,
+            "inst_delta_z",
+            {
+                "expires_after": "2026-05-15",
+                "reason": "test fixture: expected cohort distortion",
+            },
+        )
+
+    def test_carried_alert_pre_expiry_yields_warn(self, hb_mod, carried_inst_delta):
         ds = "2026-05-06"  # before inst_delta_z expires_after=2026-05-15
         _write_dashboard(
             hb_mod,
@@ -312,7 +356,7 @@ class TestCheckIcHealthCarriedMuffle:
         # Must not falsely report a clean ALERT signal
         assert not any(a == "SIGNAL_ALERT: inst_delta_z" for a in result.anomalies)
 
-    def test_carried_alert_post_expiry_yields_fail(self, hb_mod):
+    def test_carried_alert_post_expiry_yields_fail(self, hb_mod, carried_inst_delta):
         ds = "2026-05-16"  # day after inst_delta_z expires_after
         _write_dashboard(
             hb_mod,
@@ -324,6 +368,14 @@ class TestCheckIcHealthCarriedMuffle:
         assert "SIGNAL_ALERT: inst_delta_z" in result.anomalies
         # Must not be tagged [CARRIED] post-expiry
         assert not any("[CARRIED]" in a for a in result.anomalies)
+
+    def test_inst_delta_alert_fails_without_muffle_entry(self, hb_mod):
+        """Production dict is empty after muffle expiry — ALERT must FAIL."""
+        ds = "2026-05-30"
+        _write_dashboard(hb_mod, ds, {"inst_delta_z": {"health": "ALERT", "ic": -0.1}})
+        result = hb_mod.check_ic_health(date.fromisoformat(ds))
+        assert result.status == "FAIL"
+        assert "SIGNAL_ALERT: inst_delta_z" in result.anomalies
 
     def test_unmuffled_signal_alert_preserves_fail(self, hb_mod):
         """Any signal NOT in IC_HEALTH_CARRIED_ALERTS at ALERT must still FAIL."""
@@ -337,7 +389,7 @@ class TestCheckIcHealthCarriedMuffle:
         assert result.status == "FAIL"
         assert "SIGNAL_ALERT: coinvest_score_z" in result.anomalies
 
-    def test_mixed_carried_and_unmuffled_yields_fail(self, hb_mod):
+    def test_mixed_carried_and_unmuffled_yields_fail(self, hb_mod, carried_inst_delta):
         """If both a carried alert and an unmuffled alert are present, the
         unmuffled one still drives FAIL — carried tag does not mask other
         ALERTs."""

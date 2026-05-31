@@ -179,6 +179,89 @@ def test_preflight_warns_but_proceeds_on_contradiction(direct_mod, tmp_path, mon
     assert "inst_delta_z" in captured.err
 
 
+def test_direct_run_blocks_hermes_job_agent(direct_mod, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_agent_direct.py",
+            "--agent",
+            "hermes-held-spec-ledger",
+            "--message",
+            "TEST",
+            "--log-dir",
+            str(tmp_path / "logs"),
+        ],
+    )
+    rc = direct_mod.main()
+    assert rc == 1
+    captured = capsys.readouterr()
+    assert "[DIRECT_RUN_BLOCKED]" in captured.err
+    assert "run_job.py" in captured.err
+
+
+def test_direct_run_blocks_deprecated_status(direct_mod, tmp_path, monkeypatch, capsys):
+    registry = {
+        "agents": {
+            "bioshort_watch": {
+                "status": "deprecated",
+                "cadence": "weekly",
+            }
+        }
+    }
+    reg_path = tmp_path / "agents" / "AGENT_REGISTRY.json"
+    reg_path.parent.mkdir(parents=True)
+    reg_path.write_text(json.dumps(registry), encoding="utf-8")
+    monkeypatch.setattr(direct_mod, "REGISTRY_PATH", reg_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_agent_direct.py",
+            "--agent",
+            "bioshort_watch",
+            "--message",
+            "HEARTBEAT",
+            "--log-dir",
+            str(tmp_path / "logs"),
+        ],
+    )
+    rc = direct_mod.main()
+    assert rc == 1
+    assert "deprecated" in capsys.readouterr().err
+
+
+def test_direct_run_hermes_allowed_with_skip_preflight(direct_mod, tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_agent_direct.py",
+            "--agent",
+            "hermes-held-spec-ledger",
+            "--message",
+            "TEST",
+            "--skip-preflight",
+            "--log-dir",
+            str(tmp_path / "logs"),
+        ],
+    )
+    monkeypatch.setattr(direct_mod, "resolve_model", lambda agent, default: default)
+    monkeypatch.setattr(
+        direct_mod,
+        "run_agent",
+        lambda agent, message, model, max_tokens: {
+            "agent": agent,
+            "status": "success",
+            "response": "HEARTBEAT_OK",
+            "usage": {"input_tokens": 1, "output_tokens": 1},
+        },
+    )
+    (tmp_path / "agents" / "hermes-held-spec-ledger").mkdir(parents=True)
+    (tmp_path / "agents" / "hermes-held-spec-ledger" / "IDENTITY.md").write_text("# test")
+    assert direct_mod.main() == 0
+
+
 def test_preflight_unavailable_is_non_blocking(direct_mod, tmp_path, monkeypatch):
     """If preflight is unavailable, agent should still run (non-blocking)."""
     monkeypatch.setattr(

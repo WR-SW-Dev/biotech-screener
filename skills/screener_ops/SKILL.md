@@ -484,7 +484,7 @@ Key findings \(pseudo-PIT\):
 
 | PR | Scope | Status |
 | --- | --- | --- |
-| #311 | Agent registry ↔ `agents/` dirs; 33-agent fleet; Hermes governance agents registered | Done |
+| #311 | Agent registry ↔ `agents/` dirs; 34-agent fleet; Hermes governance agents registered | Done |
 | #312 | CodeGraph `@0.9.7` via `$HOME/.local`; `.cursor/environment.json` | Done |
 | #313 | Knowledge layer: `UNKNOWN_CLOUD_ENV` when `crontab` unavailable; operator-host C3 authority | Done |
 
