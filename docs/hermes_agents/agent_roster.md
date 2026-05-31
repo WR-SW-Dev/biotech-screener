@@ -15,6 +15,8 @@ This document has **two layers** — do not conflate them:
 
 **Hermes skills (repo vs WSL runtime):** `docs/hermes_agents/operator_host_skills.md` — edit `skills/`, sync to `docs/hermes_skills/`, then copy to `~/.hermes/skills/` only if the gateway reads runtime copies.
 
+**Hermes tools map:** `docs/hermes_agents/hermes_tools_map.md` — MCP vs repo tools vs Lane A jobs vs monitoring (canonical taxonomy).
+
 ---
 
 ## Repo agent fleet (`agents/`)
