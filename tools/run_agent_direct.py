@@ -157,7 +157,6 @@ AGENT_MODELS = {
     "postmortem": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "ctgov_poller": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "price_action_watch": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    "biotech_news_digest": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "shadow_monitor": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "ops": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
     "sentinel": "meta-llama/Llama-3.3-70B-Instruct-Turbo",

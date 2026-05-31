@@ -7,7 +7,7 @@ Generated from AGENT_REGISTRY.json sweep 2026-05-04 (schema v1.0, as_of 2026-04-
 |---|---|---|---|---|
 | aact_trial_ingest | weekly | data/aact/snapshots/, data/aact/linked/ | agents/aact_trial_ingest/memory/ | active |
 | bioshort_watch | weekly | artifacts/bioshort_watch/ | — | active |
-| biotech_news_digest | daily_after_production | artifacts/news_digest/ | — | active |
+| biotech_news_digest | daily_after_production | artifacts/news_digest/ | — | **deprecated** |
 | calibration | weekly | artifacts/calibration_evidence/ | — | active |
 | calibration_evidence | weekly | artifacts/calibration_evidence/ | — | active |
 | catalyst_delta | daily_after_production | artifacts/catalyst_delta/ | — | active |
@@ -59,6 +59,6 @@ Generated from AGENT_REGISTRY.json sweep 2026-05-04 (schema v1.0, as_of 2026-04-
 
 ## Known dual-active overlaps (scope boundary review pending)
 
-- **herald + biotech_news_digest** — Both write to artifacts/news_digest/. Herald absorbed biotech_news_digest scope but biotech_news_digest still active in registry.
+- **herald + biotech_news_digest** — Resolved 2026-05-30 (Fix #5): `biotech_news_digest` deprecated; herald canonical; digest via `scripts/build_news_digest.py`.
 - **shadow_monitor + policy_shadow_watch + shadow_watch** — Three agents sharing portfolio construction monitoring. shadow_watch is the shadow successor but predecessors remain active.
 - **calibration + calibration_evidence** — Both write to artifacts/calibration_evidence/. Boundary underspecified.
