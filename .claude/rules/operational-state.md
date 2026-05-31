@@ -129,6 +129,7 @@ metadata:
 - **Authoritative (no overwrite from `skills/`):** `memory-steward` — canonical copy at `~/.hermes/skills/devops/memory-steward/`; repo backup `.hermes/skills/devops/memory-steward.SKILL.md`
 - **Recent additions:** `firecrawl-research-discovery` (SDK v2, PR #319), `codegraph` (guard + MCP, PR #307)
 - **Hermes-only sections preserved on sync:** Path C block in `screener-ops.md`
+- **Hermeslink:** `docs/hermes_skills/hermeslink-state-capture.md` updated 2026-05-31 (builder + Phase B + host authority)
 - **Town-Hermes bridge:** Phase B event wiring complete (2026-05-30, all event types); live email delivery awaits `OPERATOR_DELIVERY_DRY_RUN=0`
 - Governance label: Tooling/knowledge-layer expansion only. No model, ranker, selector, sizing, or alpha-promotion change.
 ## What to Update After Every Session

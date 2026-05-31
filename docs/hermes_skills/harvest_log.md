@@ -19,6 +19,23 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-05-31 (Hermeslink)
+
+### hermeslink-state-capture skill refresh
+- Updated `docs/hermes_skills/hermeslink-state-capture.md` for 2026-05-31: host authority table, Phase B Town egress, full run cycle, 34-agent fleet, separation from `build_knowledge_graph.py`
+- Ran `build_hermes_knowledge_layer.py` on Cloud (UNKNOWN_CLOUD_ENV; 0 hard contradictions)
+
+---
+
+## 2026-05-31 (Hermes update)
+
+### Code fixes (PR #322)
+- Fixed `build_hermes_knowledge_layer.py` repo `sys.path` for `town_bridge_events` import
+- Fixed MCP `knowledge_read(contradiction_ledger)` to prefer `latest.md`
+- MCP regression test + harvest log
+
+---
+
 ## 2026-05-30 (gap closure)
 
 ### Agent & bridge gaps addressed
