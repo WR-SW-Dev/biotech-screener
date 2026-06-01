@@ -3967,11 +3967,24 @@ def _score_single_ticker_v3(
 
     weighted_sum = sum(contributions.values())
 
+    # CRITICAL BUG FIX: Use raw/effective component scores for min_critical, not reconstructed values
+    # The old code tried: underlying = contributions[c] / effective_weights[c]
+    # This fails because contributions[c] includes non-linear transforms (asymmetric transform,
+    # confidence weighting) that division cannot undo. When contributions become negative
+    # (from contradiction penalties or other transforms), min_critical becomes deeply negative
+    # and collapses the entire composite to near-zero via 0.15 weighting on the negative minimum.
+    #
+    # The fix: Read raw/effective component scores directly from component_scores list,
+    # which stores the normalized values [0,100] BEFORE transformation into contributions space.
     critical_scores = []
-    for c in CRITICAL_COMPONENTS:
-        if c in contributions and c in effective_weights and effective_weights[c] > EPS:
-            underlying = contributions[c] / effective_weights[c]
-            critical_scores.append(underlying)
+    for comp in component_scores:
+        if comp.name in CRITICAL_COMPONENTS:
+            # Use the normalized (transformed but not confidence-weighted) score [0,100]
+            normalized_val = comp.normalized
+            if normalized_val is not None:
+                # Clamp to [0,100] to ensure min_critical is always non-negative
+                clamped = _clamp(normalized_val, Decimal("0"), Decimal("100"))
+                critical_scores.append(clamped)
 
     min_critical = min(critical_scores) if critical_scores else weighted_sum
 
@@ -4183,9 +4196,13 @@ def _score_single_ticker_v3(
             # Mirror hybrid aggregation
             attn_weighted_sum = sum(attn_contributions.values())
             attn_critical_scores = []
-            for c in CRITICAL_COMPONENTS:
-                if c in attn_contributions and c in attn_weights and attn_weights[c] > EPS:
-                    attn_critical_scores.append(attn_contributions[c] / attn_weights[c])
+            # Apply same fix: use normalized scores directly, not reconstructed from contributions
+            for comp in component_scores:
+                if comp.name in CRITICAL_COMPONENTS:
+                    normalized_val = comp.normalized
+                    if normalized_val is not None:
+                        clamped = _clamp(normalized_val, Decimal("0"), Decimal("100"))
+                        attn_critical_scores.append(clamped)
             attn_min_critical = min(attn_critical_scores) if attn_critical_scores else attn_weighted_sum
             attn_pre_penalty = HYBRID_ALPHA * attn_weighted_sum + (Decimal("1") - HYBRID_ALPHA) * attn_min_critical
             attn_pre_penalty = attn_pre_penalty + interactions.total_interaction_adjustment
