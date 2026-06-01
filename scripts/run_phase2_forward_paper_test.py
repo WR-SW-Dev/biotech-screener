@@ -129,13 +129,14 @@ def simulate_policies(snapshot_date, holdings, test_length_days=1):
     }
 
     # Paper-only stub: return structure without live execution
+    # Use all 30 canonical decision-portfolio holdings (governance-approved)
     artifacts = {
         "snapshot_date": snapshot_date,
         "test_date": datetime.now().isoformat(),
         "test_length_days": test_length_days,
         "paper_only": True,
         "policies": policies,
-        "holdings_snapshot": holdings[:10],  # First 10 for brevity
+        "holdings_snapshot": holdings,  # All 30 holdings from canonical decision portfolio
         "message": "Paper-only. No live trading. No production changes.",
     }
 
