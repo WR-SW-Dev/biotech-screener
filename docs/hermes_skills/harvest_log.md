@@ -5,6 +5,19 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-01 (WSL acceptance gate + CodeGraph bounds)
+
+### Skill sources refreshed
+- **screener-ops** (`skills/screener_ops/SKILL.md`): full operator WSL acceptance gate (Phases 0–4); gateway model check; Spec 087 B1b cron/artifact criteria; first-fire seed note; printable checklist; baseline `main` @ `0bac216a` (#332–#334)
+- **codegraph** (`skills/codegraph/SKILL.md`): surface split table; four-step operating rule; practical CLI examples; baseline `0bac216a`
+- **operator_host_skills.md**: WSL acceptance gate index row
+- Ran `sync_hermes_skills.py` — updated `screener-ops.md`, `codegraph.md`
+
+### Governance
+- Skills/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-05-31 (Cursor skills knowledge)
 
 ### Skill sources refreshed

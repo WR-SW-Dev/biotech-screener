@@ -105,33 +105,18 @@ Repo-native "ops brain" that continuously answers:
 
 ### Host authority (operator WSL vs Cloud)
 
-*Last reviewed: 2026-05-31 · plumbing baseline `main` @ `8dbd1b9c` (#311–#331)*
+*Last reviewed: 2026-06-01 · plumbing baseline `main` @ `0bac216a` (#332–#334)*
 
 | Host | Can validate | Cannot validate |
 | --- | --- | --- |
-| **Operator WSL** | `crontab -l`, `biotech_hedge_report.py` schedule, `output/hedge_report/`, `BIOSHORT_VERDICT.json`, producer logs, B1b/B2/B3 governance | Hermes gateway / OpenClaw job history (separate checks) |
-| **Cursor Cloud** | Repo plumbing, registry/MCP, CodeGraph, ledger **build** (read-only) | Authoritative cron or hedge artifacts |
+| **Operator WSL** | `crontab -l`, `biotech_hedge_report.py` schedule, `output/hedge_report/`, `BIOSHORT_VERDICT.json`, producer logs, B1b/B2/B3 governance, `~/.hermes/config.yaml` | OpenClaw job history (separate checks) |
+| **Cursor Cloud** | Repo plumbing, registry/MCP, CodeGraph, ledger **build** (read-only) | Authoritative cron, hedge artifacts, gateway model |
 
 **Contradiction severities**
 
 - `HARD_CONTRADICTION` — only when `crontab` is available and B1b producer line is missing.
 - `UNKNOWN_CLOUD_ENV` — C1/C3 when `crontab` binary is absent (Cloud Agent VMs). Not a governance pass/fail.
-- First-fire `FAIL_ARTIFACT_MISSING_PAST_DEADLINE` — still emitted on any host when hedge artifacts are missing past deadline. Do not suppress from cloud.
-
-**Operator WSL authority check** (after `git pull` on `main`):
-
-```bash
-cd /mnt/c/Projects/biotech_screener/biotech-screener
-python3 tools/build_hermes_knowledge_layer.py
-cat artifacts/ops/contradiction_ledger/latest.md
-cat artifacts/ops/first_fire_ledger/latest.md
-```
-
-| WSL finding | Meaning |
-| --- | --- |
-| Cron + hedge artifacts present | B1b may be closable on operator evidence |
-| Cron missing or hedge artifacts missing | Narrow **Spec 087 B1b ops repair** (bioshort hedge producer) — not model/ranker/governance redesign |
-| Cron present, artifacts missing | Inspect `logs/biotech_hedge_report.log` before governance change |
+- First-fire `FAIL_ARTIFACT_MISSING_PAST_DEADLINE` — emitted when hedge artifacts are missing past deadline. **Expected on Cloud** (no `output/hedge_report/` in checkout). Authoritative only after WSL rebuild.
 
 **Standing rule:** No further cloud cleanup for registry/MCP/CodeGraph/knowledge-layer plumbing unless a new failure appears.
 
@@ -145,6 +130,97 @@ cat artifacts/ops/first_fire_ledger/latest.md
 
 Temporary catalyst timing policy override with hard exit conditions (floor threshold, drawdown trigger, cohort stability check). Daily cron at 10:15 AM ET. Window close decision on 2026-06-03.
 
+
+### Operator WSL acceptance gate (authoritative)
+
+Run on **operator WSL only** after every `git pull` that touches Hermes, skills, or bioshort/hedge producer paths.
+
+#### Phase 0 — Prep
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+git pull origin main
+git log -1 --oneline
+```
+
+#### Phase 1 — Repo plumbing
+
+```bash
+python3 tools/build_hermes_knowledge_layer.py
+python3 tools/audit_hermes_skills.py
+cat artifacts/ops/contradiction_ledger/latest.md
+cat artifacts/ops/first_fire_ledger/latest.md
+```
+
+**Healthy on WSL:** `0 hard` contradictions; crontab surface **available** (not `UNKNOWN_CLOUD_ENV`).
+
+#### Phase 2 — Gateway model
+
+```bash
+python3 -c "
+import yaml, pathlib
+p = pathlib.Path.home() / '.hermes' / 'config.yaml'
+if not p.exists():
+    print('MISSING', p)
+else:
+    d = yaml.safe_load(p.read_text())
+    m = d.get('model', {})
+    print('model.default:', m.get('default'))
+    print('model.provider:', m.get('provider'))
+    for fb in d.get('fallback_providers', [])[:3]:
+        print('fallback:', fb.get('provider'), fb.get('model'))
+"
+```
+
+**Healthy (2026-05-20+ intent):** `openrouter` primary; `deepseek/deepseek-v4-flash:free` default/active. Together Llama as fallback is OK.
+
+Optional smoke: `hermes gateway status` · `hermes chat -q "Reply with only the model id you are using." -Q`
+
+**Do not** change `run_agent_direct.py` until this gate passes — it bypasses the gateway and defaults to Together Llama.
+
+Docs: `docs/HERMES_GATEWAY_SETUP.md` · `docs/hermes_agents/hermes_tools_map.md` §5.
+
+#### Phase 3 — Spec 087 B1b (bioshort hedge producer)
+
+```bash
+crontab -l | grep biotech_hedge_report | grep -v '^#'
+crontab -l | grep bioshort_watch
+ls -lt output/hedge_report/ | head -10
+tail -50 logs/biotech_hedge_report.log
+python3 tools/build_hermes_knowledge_layer.py
+cat artifacts/ops/first_fire_ledger/latest.md
+```
+
+**Expected cron:** one active Friday `0 18 * * 5` line calling `tools/biotech_hedge_report.py` with explicit `--portfolio-csv data/snapshots/$(date +\%F)/portfolio_positions.csv`.
+
+**Pass criteria:** recent `hedge_report_YYYY-MM-DD.json`; `BIOSHORT_VERDICT.json` with matching `as_of_date`; clean log (no traceback, no `MASSIVE_API_KEY` warnings); bioshort_watch LLM cron **suppressed** only.
+
+**Seed note:** `FIRST_FIRE_SEED` in `build_hermes_knowledge_layer.py` is pinned to `hedge_report_2026-05-08.json`. Spec 087 B2 records formal closure 2026-05-14. If newer Friday artifacts exist but the ledger still FAILs on the May 8 filename, **operator evidence** (cron + recent artifacts + log) governs closure; update the seed in a separate docs PR if needed.
+
+| WSL finding | Meaning |
+| --- | --- |
+| Cron + hedge artifacts present | B1b may be closable on operator evidence |
+| Cron missing or hedge artifacts missing | Narrow **Spec 087 B1b ops repair** — not model/ranker/governance redesign |
+| Cron present, artifacts missing | Inspect `logs/biotech_hedge_report.log`; check snapshot preflight |
+| Gateway still Claude/Llama-only primary | Update `~/.hermes/config.yaml`; `hermes gateway restart` |
+
+#### Phase 4 — Optional runtime skills sync
+
+Only if the gateway reads stale copies from `~/.hermes/skills/` (see `docs/hermes_agents/operator_host_skills.md`). Do **not** overwrite `memory-steward`.
+
+#### Printable checklist
+
+```text
+[ ] git pull main
+[ ] build_hermes_knowledge_layer.py  → 0 HARD on WSL
+[ ] audit_hermes_skills.py           → 31/31 clean
+[ ] ~/.hermes/config.yaml            → openrouter + deepseek-v4-flash default
+[ ] crontab B1b line                 → one Friday 18:00 biotech_hedge_report
+[ ] crontab bioshort_watch           → suppressed only
+[ ] output/hedge_report/             → recent JSON + BIOSHORT_VERDICT
+[ ] logs/biotech_hedge_report.log    → no traceback / no MASSIVE_API_KEY warn
+[ ] first_fire_ledger                → PASS or operator evidence closes B1b
+```
 
 ---
 
@@ -530,7 +606,7 @@ Key findings (pseudo-PIT):
 
 ### Repo plumbing baseline (Cloud + Cursor)
 
-*Merged through 2026-05-31 · `main` @ `8dbd1b9c`*
+*Merged through 2026-06-01 · `main` @ `0bac216a`*
 
 | PR | Scope | Status |
 | --- | --- | --- |
@@ -540,6 +616,8 @@ Key findings (pseudo-PIT):
 | #328–#329 | `hermes_tools_map.md`, operator skills runbook | Done |
 | #330 | Hermes model routing docs (gateway vs MCP vs direct) | Done |
 | #331 | Python deps bump + `requirements.lock` regen | Done |
+| #332 | Cursor skills knowledge refresh (screener-ops, codegraph) | Done |
+| #333–#334 | CI test contract fixes; full suite green (4 Track B skips) | Done |
 
 ### Cursor Cloud Agent Environment
 

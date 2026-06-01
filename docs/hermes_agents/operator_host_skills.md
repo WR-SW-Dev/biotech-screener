@@ -104,6 +104,7 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 | Codegraph in Cursor | `skills/codegraph/SKILL.md` → `codegraph.md` |
 | Hermes MCP (IDE, read-only) | `mcp_server/hermes_server.py` · bootstrap: `.cursor/rules/hermes-context.mdc` |
 | Model surfaces (gateway vs direct) | [`hermes_tools_map.md`](hermes_tools_map.md) §5 · [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md) |
+| WSL acceptance gate (cron + B1b + gateway) | `skills/screener_ops/SKILL.md` → Host authority + acceptance gate sections |
 | Sync history | [`../hermes_skills/harvest_log.md`](../hermes_skills/harvest_log.md) |
 
 **Rule:** edit `skills/` first, then sync and commit mirrors. Do not hand-edit mirrored files unless `source_authority` is `HERMES_NATIVE` or `memory-steward` (authoritative).
