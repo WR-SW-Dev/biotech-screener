@@ -1,13 +1,13 @@
 # Phase 2 Forward Paper Test: Execution Log
 
-**Status:** PENDING_SNAPSHOT (operator assigned, awaiting post-approval trading snapshot for official Day 1)
+**Status:** ACTIVE (Day 1 official baseline captured 2026-06-01)
 
 ## Operational Parameters
 
 | Parameter | Value |
 |-----------|-------|
 | **Operator** | user/operator (locked 2026-05-29) |
-| **Start Date** | NOT LOCKED — Candidate: 2026-06-01 (pending snapshot availability) |
+| **Start Date** | 2026-06-01 (LOCKED — official Day 1 baseline captured) |
 | **Approval** | Option A: Approved (2026-05-29); Operator locked; Start date pending 2026-06-01 snapshot |
 | **Execution Model** | Manual/on-demand (daily) |
 | **Test Period** | 60–90 trading days |
@@ -38,10 +38,10 @@
 
 **Note:** Operator: user/operator (locked). Official Day 1: pending 2026-06-01 snapshot availability. Checkpoints are trading-day based from confirmed Day 1. No cron reminders scheduled. No automation.
 
-## 2026-05-29: DRY-RUN BASELINE CAPTURE (Not Official Phase 2 Day 1)
+## 2026-06-01: OFFICIAL DAY 1 BASELINE (Phase 2 Start)
 
-**Classification:** Baseline dry-run capture only (same-day approval snapshot)  
-**Snapshot:** 2026-05-29 (canonical, approval-day snapshot)  
+**Classification:** Official Phase 2 Day 1 forward test baseline  
+**Snapshot:** 2026-06-01 (canonical source, post-approval trading day)  
 **Holdings:** 30 tickers loaded  
 **Artifacts Generated:**
 - ✓ holdings.json (30 top holdings with scores)
@@ -52,7 +52,13 @@
 
 **Status:** ✓ Success. All artifacts marked `"paper_only": true`. No production changes.
 
-**Note:** This is NOT official Phase 2 Day 1. It captures the baseline state on approval day. Official forward tracking begins on the first valid trading day after approval (likely 2026-06-01) with the official start snapshot.
+**Authorization:** Operator `user/operator` confirmed. Day 1 official baseline captured. Daily tracking now authorized.
+
+---
+
+## Prior: 2026-05-29 Pre-Approval Baseline (Reference Only)
+
+Approval-day dry-run capture (not official Day 1). Used for governance sign-off only. Official tracking now begins from 2026-06-01.
 
 ---
 
@@ -79,18 +85,21 @@ Start (05-29)     |  30-day (06-28)    |  60-day (07-28)    |  90-day (08-27)
 
 ---
 
-## Next Steps (PENDING_SNAPSHOT)
+## Next Steps (ACTIVE — Day 1 LOCKED)
 
 1. ✓ **Operator assignment:** user/operator (locked 2026-05-29)
-2. ⏳ **Check 2026-06-01 snapshot:** Verify data/snapshots/2026-06-01/rankings.csv exists and is valid
-3. ⏳ **Lock official Day 1:** Once 2026-06-01 snapshot confirmed, approve Day 1 run authorization
-4. ⏳ **Begin official Phase 2:** First run on confirmed 2026-06-01 snapshot (if available)
+2. ✓ **2026-06-01 snapshot:** Confirmed and valid ✓
+3. ✓ **Official Day 1 authorization:** Approved (baseline captured 2026-06-01)
+4. ✓ **Official Phase 2 start:** Day 1 baseline complete
 5. ⏳ **Daily manual runs:** Each trading day after Day 1 (no automation, manual only)
-6. ⏳ **30-day checkpoint:** Manual governance review (~30 trading days from Day 1)
-7. ⏳ **60-day checkpoint:** Manual governance review (~60 trading days from Day 1)
-8. ⏳ **90-day checkpoint:** Final governance review (~90 trading days from Day 1)
+6. ⏳ **~Day 30 checkpoint:** Manual governance review (~30 trading days from Day 1)
+7. ⏳ **~Day 60 checkpoint:** Manual governance review (~60 trading days from Day 1)
+8. ⏳ **~Day 90 checkpoint:** Final governance review (~90 trading days from Day 1)
 
-**Do not run daily tracking until 2026-06-01 snapshot is confirmed and Day 1 run is explicitly authorized.**
+**Daily tracking now authorized. Run each trading day:** 
+```bash
+python3 scripts/run_phase2_forward_paper_test.py --test-length 1 --output-dir artifacts/portfolio_policy_forward_test/ --paper-only
+```
 
 ---
 
