@@ -100,7 +100,7 @@ Hermes Link runtime details confirmed 2026-05-25:
 | Component | Location / Value |
 | --- | --- |
 | Package | `@hermespilot/link` |
-| Version | Hermes Link v0.6.5 |
+| Version | Hermes Link v0.7.1 |
 | Mode | Paired, relay-connected |
 | Host | BCM-LPT-012 \(WSL2\) |
 | Local API port | `52379` |
