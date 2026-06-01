@@ -129,6 +129,7 @@ from decision_engine import (
 from ranker_engine import compute_ranker_adjustments
 from ranker_v2_pairwise import RankerV2Config, model_from_dict, score_snapshot
 from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_selector_scores, get_regime_modulation
+from tools.compute_path_c_drawdown import compute_drawdown_vs_xbi
 
 # Spec 050 → v1.14.0: coinvest-only selector (inst_delta_z removed)
 # Validated on true PIT backtest: +2.34pp/mo net, t=2.60, 67 periods (bundle)
@@ -7459,6 +7460,19 @@ def save_validation_snapshot(
                 ),
                 2,
             )
+            # Compute Path C drawdown vs XBI for governance monitoring (locked Day 1 portfolio only)
+            portfolio_holdings = {
+                r.get("ticker", ""): float(r.get("target_weight_pct", 0))
+                for r in position_rows
+                if r.get("ticker", "") and r.get("target_weight_pct", "") not in (None, "")
+            }
+            drawdown_result = compute_drawdown_vs_xbi(
+                portfolio_holdings,
+                snapshot_date=as_of_date,
+                baseline_date="2026-05-29",
+                price_history_path=Path("production_data/price_history_split_adj.csv"),
+            )
+
             positions_payload = {
                 "schema_version": SCHEMA_PORTFOLIO_POSITIONS,
                 "generator_version": VERSION,
@@ -7470,6 +7484,10 @@ def save_validation_snapshot(
                 "tier_filter": "all",  # Spec 050: no tier filter, top-K by final_score
                 "n_positions": len(position_rows),
                 "total_weight_pct": total_wt,
+                "drawdown_vs_xbi_pp": drawdown_result["pp"],
+                "drawdown_vs_xbi_status": drawdown_result["status"],
+                "drawdown_vs_xbi_baseline_date": drawdown_result["baseline_date"],
+                "drawdown_vs_xbi_latest_date": drawdown_result["latest_date"],
                 "positions": [
                     {
                         "ticker": r.get("ticker", ""),

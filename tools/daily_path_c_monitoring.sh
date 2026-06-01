@@ -20,23 +20,30 @@ echo ""
 LATEST_SNAPSHOT=$(ls -td "$REPO_ROOT/data/snapshots"/2026-* 2>/dev/null | head -1)
 if [ -n "$LATEST_SNAPSHOT" ]; then
   echo "[2/4] Portfolio Drawdown vs XBI"
-  PORTFOLIO_FILE=$(find "$LATEST_SNAPSHOT" -maxdepth 1 -name "portfolio_positions.json" -o -name "portfolio_summary.json" | head -1)
+  PORTFOLIO_FILE="$LATEST_SNAPSHOT/portfolio_positions.json"
   if [ -f "$PORTFOLIO_FILE" ]; then
     python3 -c "
 import json
 with open('$PORTFOLIO_FILE') as f:
     data = json.load(f)
-    drawdown = data.get('drawdown_vs_xbi_pp', None)
-    if drawdown is None and isinstance(data, dict) and 'positions' in data:
-      drawdown = data.get('summary', {}).get('drawdown_vs_xbi_pp', None)
-    status = '✓ NORMAL' if drawdown is not None and drawdown < 1.0 else '⚠ WARNING' if drawdown is not None and drawdown < 2.0 else '🔴 CRITICAL' if drawdown is not None else '⏳ AWAITING'
-    if drawdown is not None:
-      print(f'Drawdown vs XBI: {drawdown:.2f}pp {status}')
+    pp = data.get('drawdown_vs_xbi_pp', None)
+    status = data.get('drawdown_vs_xbi_status', 'METRIC_MISSING')
+    baseline = data.get('drawdown_vs_xbi_baseline_date', '?')
+    latest = data.get('drawdown_vs_xbi_latest_date', '?')
+
+    if status == 'METRIC_MISSING':
+      print(f'✗ METRIC_MISSING (fields not found in portfolio_positions.json)')
+    elif status == 'DATA_UNAVAILABLE':
+      print(f'⏳ DATA_UNAVAILABLE (prices not ready yet) [baseline: {baseline}]')
+    elif status == 'PASS':
+      print(f'✓ PASS: {pp:.2f}pp (outperforming XBI)')
+    elif status == 'FAIL_HARD_EXIT':
+      print(f'🔴 FAIL_HARD_EXIT: {pp:.2f}pp (underperforming XBI by 2+pp) [basis: {baseline} → {latest}]')
     else:
-      print(f'Portfolio data available but drawdown metric not found {status}')
-" 2>/dev/null || echo "Portfolio data not available"
+      print(f'? UNKNOWN_STATUS: {status}')
+" 2>/dev/null || echo "Portfolio data error"
   else
-    echo "Portfolio summary not available"
+    echo "✗ METRIC_MISSING (portfolio_positions.json not found)"
   fi
 else
   echo "[2/4] Portfolio Drawdown vs XBI — No recent snapshot"
