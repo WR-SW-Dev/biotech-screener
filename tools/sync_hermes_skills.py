@@ -70,7 +70,7 @@ HERMES_NATIVE: dict[str, str] = {
 
 HERMES_ONLY_SECTIONS: dict[str, list[str]] = {
     "screener-ops.md": [
-        r"(## Path C Governance Monitoring[\s\S]*?)(?=\n---\n\n## Town-Hermes Bridge)",
+        r"(## Path C Governance Monitoring[\s\S]*?)(?=\n\n### Operator WSL acceptance gate|\n---\n\n## Town-Hermes Bridge)",
     ],
 }
 

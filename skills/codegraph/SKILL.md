@@ -24,6 +24,25 @@ Do not use this skill as sole evidence for file-path literals, shell/cron/subpro
 Codegraph first, grep/read second, edit third.
 ```
 
+For this repo, that means:
+
+1. Use CodeGraph to find symbols and dependency edges.
+2. Use direct file reads/grep to verify production-path details.
+3. Only edit after blast-radius is understood.
+4. Treat ranker/selector/scoring paths as **gated** even if CodeGraph reports small impact.
+
+### Surface split
+
+| Surface | Role |
+| --- | --- |
+| CodeGraph MCP | Cursor/Cloud structural navigation |
+| CodeGraph CLI | Shell status/query/index/sync |
+| Hermes MCP | Fleet + ledger context — **not** a code graph |
+| Hermes agents | May use CLI + `common/codegraph_guard.py` — not raw MCP |
+| Grep/read | Literals, cron, subprocess, dynamic dispatch |
+
+CodeGraph is healthy and useful, but **bounded**. It is not authority for cron, runtime artifacts, or governance truth.
+
 ---
 
 ## Startup Check
@@ -60,7 +79,7 @@ Cursor MCP launches through `.cursor/mcp.json`:
 codegraph serve --mcp --path ${workspaceFolder}
 ```
 
-Plumbing baseline: `main` @ `8dbd1b9c` (#312–#331). Re-run `codegraph sync` after large merges; re-run `sync_hermes_skills.py` when `skills/` changes.
+Plumbing baseline: `main` @ `0bac216a` (#312–#334). Re-run `codegraph sync` after large merges; re-run `sync_hermes_skills.py` when `skills/` changes.
 
 **Hermes MCP** (`mcp_server/hermes_server.py`) is read-only fleet context only — it does **not** expose `codegraph_*` tools. Canonical Hermes surfaces (MCP vs gateway vs `run_agent_direct.py`): `docs/hermes_agents/hermes_tools_map.md`. Hermes cron agents that need structural maps use `common/codegraph_guard.py` locally, not Hermes MCP.
 
@@ -147,6 +166,23 @@ If output is non-empty, run those tests before committing.
 3. Direction: `codegraph_callers` / `codegraph_callees`
 4. Before edits: `codegraph_impact("SNAPSHOT_COLUMNS", depth=2)`
 5. Confirm non-static edges (paths, cron, subprocess) with grep/read
+
+### Practical CLI examples
+
+```bash
+codegraph status
+codegraph sync                    # small changes
+codegraph query "save_validation_snapshot"
+codegraph callers save_validation_snapshot
+codegraph impact save_validation_snapshot --depth 2
+```
+
+Full reindex only after a major merge or branch switch:
+
+```bash
+codegraph index
+codegraph status
+```
 
 ---
 
