@@ -1,6 +1,6 @@
 # Phase 2 Forward Paper Test: Execution Log
 
-**Status:** ACTIVE (Day 1 official baseline captured 2026-06-01)
+**Status:** RELOCKED — Phase 2 ACTIVE (Day 1 canonical: decision_portfolio, 2026-06-01 post-Module-5-fix)
 
 ## Operational Parameters
 
@@ -12,7 +12,7 @@
 | **Execution Model** | Manual/on-demand (daily) |
 | **Test Period** | 60–90 trading days |
 | **Terminal Date** | ~2026-08-27 (90 trading days out) |
-| **Snapshot Source** | `data/snapshots/YYYY-MM-DD/rankings.csv` |
+| **Snapshot Source** | `data/snapshots/YYYY-MM-DD/decision_portfolio.csv` (canonical decision engine output) |
 | **Paper-only** | Yes (all artifacts marked) |
 | **Production Impact** | None |
 | **Cron** | None (manual runs only) |
@@ -27,16 +27,16 @@
 
 ## Governance Checkpoints
 
-**Status:** PENDING_SNAPSHOT (checkpoints will be calculated by trading days once Day 1 is confirmed)
+**Status:** RELOCKED — Day 1 CONFIRMED (2026-06-01 decision_portfolio.csv, Module 5 fix `01f9aeda`), daily tracking ACTIVE
 
 | Trading Day | Target Date | Checkpoint | Action Required |
 |-------------|-------------|-----------|-----------------|
-| **Day 1** | 2026-06-01 (candidate, pending snapshot) | **OFFICIAL START** | Confirm 2026-06-01 snapshot available; approve Day 1 run |
-| **~Day 30** | TBD (~30 trading days from Day 1) | 30-day review | Governance gate: continue or defer? |
-| **~Day 60** | TBD (~60 trading days from Day 1) | 60-day review | Attribution review: mechanism clarity? |
-| **~Day 90** | TBD (~90 trading days from Day 1) | 90-day final | Phase 3 decision: promote or close? |
+| **Day 1** | 2026-06-01 (LOCKED — decision_portfolio canonical) | **OFFICIAL START** | ✅ Phase 2 relocked; manual daily tracking active |
+| **~Day 30** | ~2026-06-28 | 30-day review | Governance gate: continue or defer? |
+| **~Day 60** | ~2026-07-28 | 60-day review | Attribution review: mechanism clarity? |
+| **~Day 90** | ~2026-08-27 | 90-day final | Phase 3 decision: promote or close? |
 
-**Note:** Operator: user/operator (locked). Official Day 1: pending 2026-06-01 snapshot availability. Checkpoints are trading-day based from confirmed Day 1. No cron reminders scheduled. No automation.
+**Note:** Operator: user/operator (locked). Official Day 1: 2026-06-01 decision_portfolio canonical. Module 5 fix active. Checkpoints are trading-day based from confirmed Day 1. Daily runs manual (no cron). Governance memo: `PHASE2_RELOCK_DECISION_PORTFOLIO_2026_06_01.md`.
 
 ## 2026-06-01: OFFICIAL DAY 1 BASELINE (Phase 2 Start)
 
