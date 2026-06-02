@@ -1,7 +1,8 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
+**Last updated:** 2026-06-02 (added § 14.6.7 PIT trim shadow study: research-only, forward-window maturity blocker documented, no production action)
+**Prior update:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
 **Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
@@ -2231,6 +2232,50 @@ Post-review (2026-05-28 onward):
 - `baf514b9` — Spec 100 design + scaffold (forward-return wiring pending)
 - `41f2987f` — Status clarification memos (Spec 100 + Markov transition model)
 
+### 14.6.7 PIT Trim Shadow Study (Research-Only, June 2026)
+
+**Study Status:** INCONCLUSIVE — Forward-window maturity blocker (temporal, not data freshness)
+
+**Hypothesis:** Can the Top-30 equal-weight portfolio be improved by removing bottom performers identified via `de_alpha_60d` field?
+
+**Governance Status: LOCKED (Research-Only)**
+- No production portfolio changes
+- No selector/ranker/sizing modifications
+- Artifact-only output under `/artifacts/research/`
+- No promotion path until multi-horizon forward windows mature
+
+**Verification Completed (✓ PASS):**
+1. **PIT Safety of `de_alpha_60d`:** Field uses only T-61 to T-1 historical prices; no forward-looking data
+2. **Trim Rules Defined Ex Ante (before looking at outcomes):**
+   - **No-Trim:** Full 30-position baseline
+   - **Trim-3:** Drop bottom 3 tickers by `de_alpha_60d`
+   - **Trim-6:** Drop bottom 6 tickers by `de_alpha_60d`
+   - **Trim-10:** Drop bottom 10 tickers by `de_alpha_60d`
+3. **Field Coverage:** 178 snapshots with 100% `de_alpha_60d` field coverage
+
+**Forward-Window Maturity Blocker (✗ BLOCKED):**
+- **20-day window:** 23 snapshots eligible (sample too small, exploratory only)
+- **40-day window:** 0 snapshots eligible (requires prices through 2026-07-22)
+- **60-day window:** 0 snapshots eligible (requires prices through 2026-08-19)
+- **Root cause:** Maturity constraint, not data staleness. Future realized returns cannot exist until time elapses.
+
+**Key Governance Distinction:**
+- Price history ends 2026-05-29 (data freshness)
+- 60-day forward returns require outcomes through 2026-08-19 (temporal maturity)
+- **These are not equivalent problems.** Data team cannot create future prices. Only time can.
+
+**Next Valid Action:**
+- Maintain research-artifact-only status
+- Schedule re-run after 2026-08-19 when 60-day forward windows are observable
+- Alternative: Apply to older snapshots only if `de_alpha_60d` is available PIT on pre-2026-04-01 holdings
+- Do NOT run 20-day fallback as evidence; if exploratory only, label explicitly "not decision-suitable"
+
+**Artifacts:**
+- `/artifacts/research/PIT_TRIM_SHADOW_BACKTEST_FINAL_2026_06_02.json` — Study results + blockers
+- `/artifacts/research/PIT_TRIM_BACKTEST_BLOCKER_2026_06_02.md` — Detailed blocker explanation
+- `/artifacts/research/PIT_TRIM_SHADOW_METHODOLOGY.md` — Full methodology document
+- `/artifacts/research/INDEX_PIT_TRIM_STUDY_2026_06_02.md` — Quick reference guide
+
 ---
 
 ## 15. Test Coverage
@@ -2303,4 +2348,4 @@ Post-review (2026-05-28 onward):
 
 ---
 
-*Document updated 2026-04-27 (ruleset reference refreshed 2026-05-06). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively). Latest delta: §14.5 (display + diagnostic layer, model identity unchanged).*
+*Document updated 2026-06-02 (added § 14.6.7 PIT trim shadow study documentation; research-only artifact with forward-window maturity blocker). Prior updates: 2026-05-24 (v1.14.0 sync), 2026-05-06 (ruleset reference), 2026-04-27 (baseline). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
