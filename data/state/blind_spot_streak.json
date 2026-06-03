@@ -1,14 +1,13 @@
 {
-  "PACB": 1,
-  "KROS": 1,
-  "EDIT": 1,
-  "GHRS": 1,
-  "CTKB": 1,
-  "BCYC": 1,
-  "COLL": 1,
-  "PSNL": 1,
-  "HRTX": 1,
-  "OABI": 1,
-  "CSTL": 1,
-  "MCRB": 1
+  "OABI": 2,
+  "BCYC": 2,
+  "EDIT": 2,
+  "MYGN": 1,
+  "GHRS": 2,
+  "AMPH": 1,
+  "NGNE": 1,
+  "TKNO": 1,
+  "ADPT": 1,
+  "HRTX": 2,
+  "XERS": 1
 }
