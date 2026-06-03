@@ -19,6 +19,8 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
+from tools.ic_health_memory_hygiene import MemoryHygieneChecker
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
@@ -208,6 +210,39 @@ def check_ic_health(dt: date) -> CheckResult:
     if anomalies:
         return CheckResult("ic_health_monitor", "WARN", f"attention={attention}", anomalies)
     return CheckResult("ic_health_monitor", "OK", f"attention={attention}")
+
+
+def check_ic_memory_hygiene(dt: date) -> CheckResult:
+    """Check IC health memory consistency — stale memory, missing artifacts, state drift.
+
+    Phase 1 Priority 5: Observability logging for state consistency.
+    Advisory-only, non-blocking; logs mismatches for operator investigation.
+    """
+    checker = MemoryHygieneChecker()
+    report = checker.check_as_of_date(dt)
+    checker.log_findings(report)
+
+    anomalies = []
+
+    # Issue-level findings (missing/corrupt/drift)
+    for issue in report.get("issues", []):
+        anomalies.append(f"ISSUE: {issue['type']} ({issue['severity']}) — {issue['description']}")
+
+    # Warning-level findings (stale, undocumented, inconsistent)
+    for warning in report.get("warnings", []):
+        anomalies.append(f"WARN: {warning['type']} — {warning['description']}")
+
+    summary = report.get("summary", {})
+    status_text = summary.get("status", "UNKNOWN")
+
+    if anomalies:
+        return CheckResult(
+            "ic_memory_hygiene",
+            "WARN" if status_text == "HEALTHY" else "FAIL",
+            f"{summary.get('issue_count', 0)} issue(s), {summary.get('warning_count', 0)} warning(s)",
+            anomalies,
+        )
+    return CheckResult("ic_memory_hygiene", "OK", "Memory and artifacts consistent")
 
 
 # ── Fleet Steward ─────────────────────────────────────────────
@@ -479,9 +514,7 @@ def check_herald_news_pipeline(dt: date) -> CheckResult:
             pass
 
     if anomalies:
-        return CheckResult(
-            agent, "WARN" if len(anomalies) <= 1 else "FAIL", f"{len(anomalies)} issue(s)", anomalies
-        )
+        return CheckResult(agent, "WARN" if len(anomalies) <= 1 else "FAIL", f"{len(anomalies)} issue(s)", anomalies)
     return CheckResult(agent, "OK", f"{len(today_digests)} digest(s) for {ds}")
 
 
@@ -686,6 +719,7 @@ def check_production_qa(dt: date) -> CheckResult:
 SPECIALIZED_CHECKS = {
     "qa": check_qa,
     "ic_health_monitor": check_ic_health,
+    "ic_memory_hygiene": check_ic_memory_hygiene,
     "fleet_steward": check_fleet_steward,
     "calibration": check_calibration,
     "shadow_monitor": check_shadow_monitor,
