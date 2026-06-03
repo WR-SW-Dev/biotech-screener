@@ -138,7 +138,21 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
     """
     hl = headline.lower()
 
-    # Informational patterns
+    # GUARD: Clinical event classification takes priority over informational suppression.
+    # Phase 3 data presentations, ASCO readouts, etc. are substantive catalysts even if
+    # they mention "presentation" or "conference" (Spec remediation 2026-06-02).
+    clinical_guard_keywords = [
+        "phase 3",
+        "phase 2",
+        "phase 1",
+        "clinical data",
+        "data readout",
+        "asco",
+        "clinical trial",
+    ]
+    is_clinical_guard_match = any(kw in hl for kw in clinical_guard_keywords)
+
+    # Informational patterns (skip if clinical guard matched)
     informational_keywords = [
         "financial results",
         "quarterly report",
@@ -151,7 +165,7 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
         "appoints",
         "board of directors",
     ]
-    if any(kw in hl for kw in informational_keywords):
+    if any(kw in hl for kw in informational_keywords) and not is_clinical_guard_match:
         return {
             "event_category": "other",
             "event_subtype": "corporate_update",
