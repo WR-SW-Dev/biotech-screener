@@ -1,6 +1,6 @@
 # Shadow Portfolio Attribution Analysis — 2026-06-02
 
-**Verdict:** Shadow portfolio underperformance of -1.29pp vs XBI is driven by **one-name concentration** (ERAS exclusion) + **catalog-window mismatch** (overweighting near-term vs core).
+**Hypothesis (Pending Validation):** Shadow portfolio underperformance of -1.29pp vs XBI is hypothesized to be driven by **one-name concentration** (ERAS exclusion) + **catalog-window mismatch** (overweighting near-term vs core). Validation pending 2-3 rebalance cycles.
 
 ---
 
@@ -15,7 +15,7 @@
 | **Shortfall** | -31.49pp |
 | **Shadow Excess vs XBI** | -1.29pp (4-period trailing avg) |
 
-The decision portfolio (canonical Phase 2 Day 1 holdings) outperformed the shadow portfolio by ~31.5pp YTD. This shortfall is **not** driven by broad regime or macro effects, but by specific allocation decisions.
+The decision portfolio (canonical Phase 2 Day 1 holdings) outperformed the shadow portfolio by ~31.5pp YTD. Analysis suggests the shortfall is driven by specific allocation differences rather than broad regime effects, but this hypothesis is pending validation across rebalance cycles.
 
 ---
 
@@ -35,7 +35,7 @@ The decision portfolio (canonical Phase 2 Day 1 holdings) outperformed the shado
 - Policy weight cap on specific tiers or archetypes
 - Timing of position entry relative to shadow portfolio rebalance
 
-**Implication:** The -1.29pp underperformance is **idiosyncratic**, not predictable by model. ERAS was a lucky hit in the decision portfolio (Phase 2 Day 1 selection), not a systematic alpha source.
+**Observation:** The -1.29pp underperformance appears **idiosyncratic** and not predictable by model based on current evidence. ERAS may have been a lucky hit in the decision portfolio (Phase 2 Day 1 selection) rather than a systematic alpha source, but this hypothesis requires validation from future rebalance performance.
 
 ---
 
@@ -106,11 +106,12 @@ The 31.5pp gap between decision (+35.33pp alpha) and shadow (+3.84pp alpha) is s
 
 ## Observability Status
 
-**This analysis is READ-ONLY, non-actionable:**
-- Explains historical divergence between decision and shadow portfolios
-- Does not imply changes to decision portfolio policy
-- Helps calibrate shadow portfolio policy constraints for future periods
-- Flags ERAS as an example of single-name luck that won't repeat
+**This analysis is HYPOTHESIS PENDING VALIDATION:**
+- Documents observed divergence between decision and shadow portfolios as of 2026-06-02
+- Proposes attribution hypotheses (ERAS idiosyncratic, bucket mismatch) subject to rebalance-cycle testing
+- Will be validated or refuted by 2-3 subsequent shadow rebalance cycles
+- Does not imply changes to decision portfolio policy at this time
+- Guides instrumentation of future shadow portfolio constraints for diagnostics
 
 ---
 
