@@ -468,6 +468,12 @@ def main():
         print(f"[AUTH_PREFLIGHT_FAIL] {auth_error}", file=sys.stderr)
         return 1
 
+    # Scheduler health check (advisory-only, non-blocking)
+    health_status, health_diagnostics = scheduler_health_check(args.agent)
+    if health_diagnostics:
+        for diag in health_diagnostics:
+            print(f"[SCHEDULER_HEALTH_{health_status}] {diag}", file=sys.stderr)
+
     registry_entry = load_registry_entry(args.agent)
     block_reason = direct_run_block_reason(args.agent, registry_entry)
     if block_reason and not args.skip_preflight:
