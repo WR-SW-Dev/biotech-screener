@@ -29,10 +29,15 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 
+from tools.herald_circuit_breaker import CircuitBreaker
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 logger = logging.getLogger(__name__)
+
+# Herald Circuit Breaker for rate-limit protection
+_circuit_breaker = CircuitBreaker()
 
 SCHEMA_VERSION = "company_pr_raw.v1"
 SOURCES_PATH = PROJECT_ROOT / "production_data" / "company_ir_sources.json"
@@ -124,9 +129,16 @@ def _save_state(state: Dict[str, Any]) -> None:
 
 
 def _fetch_url(url: str, max_retries: int = 3) -> Optional[str]:
-    """Fetch URL content with retry, backoff, and error handling."""
+    """Fetch URL content with circuit breaker, rate-limit protection, and cache fallback.
+
+    Herald Circuit Breaker wraps the fetch with:
+    - Exponential backoff on transient errors
+    - Cache fallback on HTTP 429 rate-limits
+    - Circuit-open state to prevent hammering recently rate-limited domains
+    """
     _rate_limit_domain(url)
-    for attempt in range(max_retries):
+
+    def fetch_impl(url: str, attempt: int) -> str:
         try:
             resp = requests.get(
                 url,
@@ -134,29 +146,20 @@ def _fetch_url(url: str, max_retries: int = 3) -> Optional[str]:
                 timeout=REQUEST_TIMEOUT,
                 allow_redirects=True,
             )
-            if resp.status_code == 429:
-                wait = min(30, 5 * (attempt + 1))
-                logger.info("Rate limited on %s, waiting %ds (attempt %d/%d)", url, wait, attempt + 1, max_retries)
-                time.sleep(wait)
-                continue
             resp.raise_for_status()
             return resp.text
-        except requests.ConnectionError:
-            if attempt < max_retries - 1:
-                time.sleep(3 * (attempt + 1))
-                continue
-            logger.warning("Connection failed for %s after %d attempts", url, max_retries)
-            return None
-        except requests.Timeout:
-            if attempt < max_retries - 1:
-                time.sleep(2)
-                continue
-            logger.warning("Timeout for %s after %d attempts", url, max_retries)
-            return None
+        except requests.ConnectionError as e:
+            raise e  # Re-raise for circuit breaker to handle transient retry
+        except requests.Timeout as e:
+            raise e  # Re-raise for circuit breaker to handle transient retry
         except requests.RequestException as e:
             logger.warning("Fetch failed for %s: %s", url, e)
-            return None
-    return None
+            raise  # Let circuit breaker handle as unknown error (fail immediately)
+
+    result = _circuit_breaker.fetch(url, fetch_impl, max_retries=max_retries)
+    if result is None:
+        logger.warning("Failed to fetch %s (rate-limited or exhausted retries)", url)
+    return result
 
 
 def _extract_globenewswire_releases(html: str, ticker: str) -> List[PressRelease]:
