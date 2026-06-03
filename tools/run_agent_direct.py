@@ -148,6 +148,91 @@ def run_preflight(agent_name: str) -> dict | None:
         return None
 
 
+def auth_preflight_check(agent_name: str) -> tuple[bool, str | None]:
+    """Shared execution-layer auth check (centralized, non-destructive).
+
+    Validates TOGETHER_API_KEY and ANTHROPIC_API_KEY presence before agent
+    dispatch. Runs at runner/gateway layer (not per-agent).
+
+    Returns:
+        (True, None) if credentials present
+        (False, error_message) if credentials missing
+    """
+    together_key = os.environ.get("TOGETHER_API_KEY")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+
+    if together_key and anthropic_key:
+        return True, None
+
+    missing = []
+    if not together_key:
+        missing.append("TOGETHER_API_KEY")
+    if not anthropic_key:
+        missing.append("ANTHROPIC_API_KEY")
+
+    error_msg = f"Missing credentials: {', '.join(missing)}"
+    return False, error_msg
+
+
+def scheduler_health_check(agent_name: str) -> tuple[str, list[str]]:
+    """Scheduler/gateway health check (detect-only mode).
+
+    Monitors for WSL2 sleep, cron silence, and gateway inactivity.
+    Returns (status, diagnostics) tuple:
+    - status: "OK", "WARN", or "ALERT"
+    - diagnostics: list of detection messages (may be empty if OK)
+
+    DETECT-ONLY MODE: No restart action taken. Operator flag required for
+    any recovery action.
+
+    This check detects:
+    1. Stale cron jobs (no recent gateway heartbeat)
+    2. WSL2 sleep indicators (system uptime anomalies)
+    3. Gateway inactivity (no agent dispatch in threshold window)
+    """
+    diagnostics = []
+    status = "OK"
+
+    # Check 1: Detect stale agent heartbeat logs
+    # Gateway stall typically manifests as no agent dispatch for extended period
+    logs_dir = PROJECT_ROOT / "logs" / "agents_direct"
+    if logs_dir.exists():
+        recent_logs = sorted(logs_dir.glob("*.json"))
+        if recent_logs:
+            latest_log = recent_logs[-1]
+            mtime = latest_log.stat().st_mtime
+            age_seconds = datetime.now().timestamp() - mtime
+            age_hours = age_seconds / 3600
+
+            # Threshold: alert if no agent dispatch in 6+ hours
+            if age_hours > 6:
+                status = "ALERT"
+                diagnostics.append(f"Gateway inactivity: last dispatch {age_hours:.1f}h ago")
+            elif age_hours > 2:
+                status = "WARN"
+                diagnostics.append(f"Gateway slow: last dispatch {age_hours:.1f}h ago")
+        else:
+            status = "WARN"
+            diagnostics.append("No agent dispatch logs found")
+
+    # Check 2: Detect WSL2 sleep (system uptime reset)
+    # After WSL2 sleep, system uptime is reset and OAuth tokens expire
+    try:
+        with open("/proc/uptime") as f:
+            uptime_seconds = float(f.read().split()[0])
+            uptime_hours = uptime_seconds / 3600
+
+            # If uptime < 30 minutes, system just woke from sleep
+            if uptime_hours < 0.5:
+                status = "ALERT"
+                diagnostics.append(f"WSL2 sleep detected: system uptime {uptime_hours:.2f}h (credentials may be stale)")
+    except (FileNotFoundError, ValueError):
+        # Not available on non-Linux or system without /proc/uptime
+        pass
+
+    return status, diagnostics
+
+
 # Per-agent model overrides. Agents not listed default to Llama 3.3 70B.
 # Llama is used for all agents via Together AI API.
 # Model format: "llama-3.3-70b" (auto-routed to Together)
@@ -376,6 +461,12 @@ def main():
                     os.environ[key] = val
 
     resolved_model = resolve_model(args.agent, args.model)
+
+    # Auth preflight check (centralized, before any agent execution)
+    auth_ok, auth_error = auth_preflight_check(args.agent)
+    if not auth_ok:
+        print(f"[AUTH_PREFLIGHT_FAIL] {auth_error}", file=sys.stderr)
+        return 1
 
     registry_entry = load_registry_entry(args.agent)
     block_reason = direct_run_block_reason(args.agent, registry_entry)
