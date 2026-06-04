@@ -7430,7 +7430,13 @@ def save_validation_snapshot(
         position_rows = [dict(r) for r in _pos_by_score[:top_k]]
 
         # Recompute weights for this subset (normalizes to 100%)
-        compute_target_weights(position_rows, ruleset=ruleset)
+        if decision_mode == "phase2":
+            # Phase 2: equal weights (paper-only tracking)
+            equal_weight = round(100.0 / len(position_rows), 2) if position_rows else 0.0
+            for row in position_rows:
+                row["target_weight_pct"] = equal_weight
+        else:
+            compute_target_weights(position_rows, ruleset=ruleset)
 
         # Write portfolio_positions.csv
         positions_csv_path = snap_path / "portfolio_positions.csv"
