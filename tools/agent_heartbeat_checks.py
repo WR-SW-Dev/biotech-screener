@@ -19,9 +19,11 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
 from tools.ic_health_memory_hygiene import MemoryHygieneChecker
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 LOGS_DIR = REPO_ROOT / "logs"
