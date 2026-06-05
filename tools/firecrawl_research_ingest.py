@@ -58,17 +58,17 @@ NO_SELECTOR_INPUTS = True
 SOURCE_URL_REQUIRED = True
 FETCH_TIMESTAMP_REQUIRED = True
 
-# Biotech news sources (optional domain hints for operators)
+# Biotech news sources (curated for reliable scraping and clinical/regulatory focus)
+# Filtered: excluded YouTube, ClinicalTrials.gov, PubMed, FDA.gov (blocked/not news sources)
 BIOTECH_NEWS_DOMAINS = [
-    "fiercebiotech.com",
-    "statnews.com",
-    "biopharmadive.com",
-    "biospace.com",
-    "endpoints.news",
-    "xconomy.com",
-    "news.crunchbase.com",
-    "prnewswire.com",
-    "businesswire.com",
+    "biopharmadive.com",  # Primary: biotech/pharma industry news
+    "fiercebiotech.com",  # Primary: early-stage biotech focus
+    "endpoints.news",  # Primary: biotech business & science
+    "statnews.com",  # Primary: biotech/healthcare journalism
+    "biospace.com",  # Secondary: biotech recruiting/news
+    "xconomy.com",  # Secondary: biotech/startup news
+    "fiercepharma.com",  # Secondary: pharma industry coverage
+    "news.crunchbase.com",  # Secondary: venture-backed biotech
 ]
 
 
@@ -188,10 +188,7 @@ class FirecrawlResearchAdapter:
         """
         self.api_key = api_key or os.getenv("FIRECRAWL_API_KEY")
         if not self.api_key:
-            raise ValueError(
-                "FIRECRAWL_API_KEY not set. "
-                "Export env var or pass --api-key to CLI."
-            )
+            raise ValueError("FIRECRAWL_API_KEY not set. " "Export env var or pass --api-key to CLI.")
 
         self.client = Firecrawl(api_key=self.api_key)
         self.sources: list[SourceRecord] = []
@@ -235,9 +232,7 @@ class FirecrawlResearchAdapter:
             logger.error("Search failed: %s", e, exc_info=True)
             raise
 
-    def scrape_urls(
-        self, urls: list[str], timeout_sec: int = 30
-    ) -> list[SourceRecord]:
+    def scrape_urls(self, urls: list[str], timeout_sec: int = 30) -> list[SourceRecord]:
         """Scrape and clean content from URLs via Firecrawl v2.
 
         Args:
@@ -344,12 +339,8 @@ class FirecrawlResearchAdapter:
             "firecrawl_sdk": "firecrawl-py>=4.28",
             "generated_at": datetime.now(UTC).isoformat(),
             "total_sources": len(self.sources),
-            "successful_scrapes": sum(
-                1 for s in self.sources if s.fetch_status == "success"
-            ),
-            "failed_scrapes": sum(
-                1 for s in self.sources if s.fetch_status == "failed"
-            ),
+            "successful_scrapes": sum(1 for s in self.sources if s.fetch_status == "success"),
+            "failed_scrapes": sum(1 for s in self.sources if s.fetch_status == "failed"),
         }
         with open(meta_file, "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2)
@@ -376,18 +367,14 @@ class FirecrawlResearchAdapter:
         if successful:
             summary_lines.append("\n## Scraped Sources\n")
             for source in successful:
-                summary_lines.append(
-                    f"- [{source.title or 'Untitled'}]({source.url})\n"
-                )
+                summary_lines.append(f"- [{source.title or 'Untitled'}]({source.url})\n")
                 if source.summary:
                     summary_lines.append(f"  > {source.summary}\n")
 
         if failed:
             summary_lines.append("\n## Failed Scrapes\n")
             for source in failed:
-                summary_lines.append(
-                    f"- {source.url}: {source.error_message or 'Unknown error'}\n"
-                )
+                summary_lines.append(f"- {source.url}: {source.error_message or 'Unknown error'}\n")
 
         return "".join(summary_lines)
 
@@ -435,10 +422,7 @@ def main():
     parser.add_argument(
         "--out",
         required=True,
-        help=(
-            "Output directory (typically: "
-            "artifacts/research/firecrawl/$(date +%%F))"
-        ),
+        help=("Output directory (typically: " "artifacts/research/firecrawl/$(date +%%F))"),
     )
     parser.add_argument(
         "--api-key",
