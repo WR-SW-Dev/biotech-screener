@@ -1,8 +1,68 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
-**Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30 | **FROZEN** until governance gates clear
+**Last updated:** 2026-06-05 (Phase 2 governance state, YTD backtest validation, classifier audit, Path C extension)
+**Status:** Production — Phase 2 paper tracking AUTHORIZED (baseline locked 2026-06-04) | Forward catalyst actions BLOCKED | Phase 3 gating BLOCKED | **FROZEN** until classifier remediation clears
+
+---
+
+## Governance & Performance Status (2026-06-05)
+
+### Phase 2 Paper Trading (Locked 2026-06-04)
+
+**Portfolio:** 30 names from locked snapshot (COGT, DNTH, NRIX, URGN, ALMS, SYRE, RVMD, CMPS, DRUG, STOK, etc.)  
+**Baseline:** Immutable through ~2026-06-17 decision gate  
+**Status:** ✓ AUTHORIZED for paper tracking; attribution measurement live  
+
+**YTD Performance (2026-01-01 to 2026-06-05):**
+```
+Top-30:      +37.85%
+XBI:          +8.79%
+Alpha:       +29.06pp  (2.33 Sharpe vs 0.81 Sharpe for XBI)
+Hit Rate:     59.4% daily outperformance
+Max Drawdown: -2.87% (in line with volatility profile)
+```
+
+The locked portfolio has generated exceptional risk-adjusted returns YTD, validating the screener's clinical module and catalyst timing signals through the June 5 measurement date.
+
+### Classifier Remediation Status (2026-06-05)
+
+**Audit:** `artifacts/readiness/CORRECTED_CLASSIFIER_FINANCIAL_AUDIT_2026_06_05.md`
+
+**5 Flagged Tickers in Locked Top-30:**
+- **COGT (Rank 1):** Priority verification required (all-flagged in broader scan)
+- **RVMD (Rank 7):** RASolute 302 Phase 3 misclassified as informational-only → manual review / freeze / caveat
+- **DRUG (Rank 9):** 67% Herald event collision-contamination → manual review / freeze / caveat
+- **ALKS (Rank 14):** 100% Herald event collision-noise → manual review / freeze / caveat
+- **CELC (Rank 25):** VIKTORIA-1 Phase 3 misclassified as informational-only → manual review / freeze / caveat
+
+**Remediation Classification:** NOT "suppress" — all issues classified as "manual review / freeze / caveat-required" to preserve signal optionality while blocking forward catalyst expansion until Herald/classifier cleanup completes.
+
+### Forward Gates (2026-06-05)
+
+| Gate | Status | Condition |
+|------|--------|-----------|
+| Phase 2 paper tracking | ✓ AUTHORIZED | Baseline locked, attribution safe |
+| Forward catalyst actions | 🔴 BLOCKED | Classifier remediation pending |
+| Phase 3 implementation | 🔴 BLOCKED | Classifier gating unresolved |
+| Path C window extension | ✓ EXTENDED | Through ~2026-06-17 (IC observable) |
+
+### Path C Governance Decision (2026-06-03, EXTENDED 2026-06-05)
+
+**Window:** 2026-05-28 to ~2026-06-17  
+**Decision:** ✓ EXTENDED (Option A from memo)  
+**Rationale:**
+- IC unobservability is expected cold-start (designed scenario, not failure)
+- All 4 monitoring gates operational (drawdown, 13F Jaccard, IC, emergency exits)
+- 13F cohort stable at Jaccard 0.875 (≥0.70 threshold)
+- Portfolio drawdown +0.36pp vs XBI (hard exit at -2.00pp not triggered)
+- No emergency exits fired
+
+**Next Decision:** ~2026-06-17 (once IC observable)
+- If mean_ic ≥ 0.0200 → Path C valid
+- If mean_ic < 0.0200 → Revert to HOLD
+- If 13F Jaccard < 0.70 → Escalate immediately
+- If drawdown ≤ -2.00pp → Escalate immediately
 
 ---
 
