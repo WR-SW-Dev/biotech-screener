@@ -50,6 +50,7 @@ REFERENCE_MAP: dict[str, str] = {
     "dossier_generation": "dossier-generation.md",
     "excel-xlsx": "excel-xlsx.md",
     "word-docx": "word-docx.md",
+    "self-improving": "self-improving-reference.md",
 }
 
 # Hermes-only docs (no skills/ source) — registered in _meta only
@@ -139,8 +140,12 @@ def inject_after_host_authority(skill_body: str, blocks: list[str]) -> str:
     return skill_body[:insert_at] + injection + skill_body[insert_at:]
 
 
-def _source_path(skill_key: str) -> Path | None:
+def _source_path(skill_key: str, *, hermes_name: str | None = None) -> Path | None:
     d = SKILLS / skill_key
+    reference_names = set(REFERENCE_MAP.values())
+    if hermes_name in reference_names:
+        p = d / "REFERENCE.md"
+        return p if p.exists() else None
     for name in ("SKILL.md", "REFERENCE.md"):
         p = d / name
         if p.exists():
@@ -151,7 +156,7 @@ def _source_path(skill_key: str) -> Path | None:
 def sync_pair(skill_key: str, hermes_name: str, dry_run: bool) -> str:
     if skill_key in HERMES_AUTHORITATIVE:
         return f"SKIP {skill_key}: Hermes mirror authoritative"
-    skill_path = _source_path(skill_key)
+    skill_path = _source_path(skill_key, hermes_name=hermes_name)
     hermes_path = HERMES / hermes_name
     if skill_path is None:
         return f"SKIP {skill_key}: no SKILL.md or REFERENCE.md"

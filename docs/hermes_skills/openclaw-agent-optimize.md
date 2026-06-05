@@ -86,6 +86,7 @@ A common hidden tax is too many always-visible skills in the catalog.
 - Audit global vs routine-specific memories for duplication
 - Remove stale memories that reference deprecated behavior
 - Keep memories actionable and specific, not vague preferences
+- Feed recurring hygiene findings into the **skill recursion loop** (`skills/self-improving/SKILL.md`): compact bloated skills, move detail to `REFERENCE.md`, append `harvest_log.md` when skills change
 
 ### 6) Routine consolidation
 
@@ -125,6 +126,17 @@ After any approved optimization, verify:
 4. Audit model routing and delegation posture
 5. Recommend the smallest viable change first
 6. Verify on a new session when skill/bootstrap snapshotting exists
+
+## Recursive self-improvement (repo)
+
+After an optimization audit that produced durable lessons:
+
+1. Log pattern in `.learnings/LEARNINGS.md` if recurrence ≥ 3 or high impact
+2. Patch the relevant `skills/<dir>/SKILL.md` (never hand-edit mirrored `docs/hermes_skills/` unless Hermes-native)
+3. `python3 tools/sync_hermes_skills.py` + `python3 tools/audit_hermes_skills.py`
+4. Record in `docs/hermes_skills/harvest_log.md`
+
+Full loop: `skills/self-improving/SKILL.md` · templates: `skills/self-improving/REFERENCE.md`
 
 ## Notes
 

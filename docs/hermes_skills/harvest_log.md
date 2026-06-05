@@ -5,6 +5,51 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-01 (HOT memory optimization)
+
+### Memory layer
+- **`memory.md`**: bootstrap-first table (recursion, CodeGraph, host, governance); deduped ops; Pattern-Key tags
+- **`archive/README.md`**: COLD tier demotion policy
+- **LRN-20260329-001**: Status → promoted (raw_count_size_confound already in HOT)
+- **`audit_learnings.py`**: bootstrap line count, HOT Pattern-Keys, LRN/HOT mismatch, compaction hints
+- **README.md** + **self-improving** Rule 6: memory optimization principles
+
+### Governance
+- Memory/docs/tooling only.
+
+---
+
+## 2026-06-01 (knowledge recursion stack)
+
+### Knowledge layer
+- **`.learnings/README.md`**: agent knowledge stack map, load order, promotion rules
+- **`.learnings/domains/agent_ops.md`**: WARM Hermes/Cursor/Cloud authority patterns
+- **`tools/audit_learnings.py`**: read-only tier audit, Pattern-Key promotion candidates, stale hints
+- **`tests/test_audit_learnings.py`**: parser + report smoke
+- Updated `memory.md`, `LEARNINGS.md` (LRN-20260601-001..003), `projects/biotech_screener.md`
+- **self-improving** skill/REFERENCE: `audit_learnings.py` in session-end workflow
+
+### Governance
+- Knowledge/docs/tooling only. No ranker, selector, sizing, or scoring changes.
+
+---
+
+## 2026-06-01 (recursive self-improvement loop)
+
+### Skill sources refreshed
+- **self-improving** (`skills/self-improving/SKILL.md`): biotech-screener recursive loop (Observe→Log→Distill→Promote→Skill-patch→Sync→Verify); Rule 10 governance; session-end trigger
+- **self-improving-reference** (`skills/self-improving/REFERENCE.md`): LRN/harvest templates, session-end audit, skill-patch checklist
+- **screener_ops**, **codegraph**, **openclaw-agent-optimize**: cross-links to recursion loop
+- **operator_host_skills.md**: index row for self-improving + REFERENCE mirror
+- **sync_hermes_skills.py**: register `self-improving-reference.md` in REFERENCE_MAP
+- `.learnings/projects/biotech_screener.md`: skill recursion meta + codegraph 0.9.7 note
+- Ran `sync_hermes_skills.py` — updated mirrors
+
+### Governance
+- Skills/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-06-01 (WSL acceptance gate + CodeGraph bounds)
 
 ### Skill sources refreshed
