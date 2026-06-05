@@ -41,9 +41,12 @@ import os
 import re
 import subprocess
 import sys
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+
+from tools.skills_logger_v2 import log_skill
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
@@ -500,7 +503,35 @@ def main():
             print(f"[PREFLIGHT_INFO] blocked specs: {', '.join(blocked_specs)}", file=sys.stderr)
 
     print(f"Running agent '{args.agent}' (direct SDK, {resolved_model})...")
+
+    # Log skill execution
+    start_time = time.time()
     result = run_agent(args.agent, args.message, resolved_model, args.max_tokens)
+    latency_ms = (time.time() - start_time) * 1000
+
+    # Record execution
+    try:
+        log_skill(
+            skill_name=args.agent,
+            task_context=args.message[:200],
+            inputs={
+                "model": resolved_model,
+                "max_tokens": args.max_tokens,
+                "message_len": len(args.message),
+            },
+            outputs={
+                "response_len": len(result.get("response", "")),
+                "status": result.get("status", "unknown"),
+            },
+            latency_ms=latency_ms,
+            tokens_in=result.get("usage", {}).get("input_tokens", 0),
+            tokens_out=result.get("usage", {}).get("output_tokens", 0),
+            success=(result.get("status") == "success"),
+            error=result.get("error") if result.get("status") != "success" else None,
+            environment="prod",
+        )
+    except Exception as log_error:
+        print(f"[LOG_ERROR] Could not log execution: {log_error}", file=sys.stderr)
 
     if result.get("status") == "success":
         print(f"\n{result['response'][:2000]}")

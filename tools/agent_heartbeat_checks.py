@@ -16,6 +16,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 from datetime import date, datetime
 from pathlib import Path
 
@@ -23,6 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from tools.ic_health_memory_hygiene import MemoryHygieneChecker
+from tools.skills_logger_v2 import log_skill
 
 SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
@@ -833,9 +835,45 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
             continue
         check_fn = SPECIALIZED_CHECKS.get(name)
         try:
+            start_time = time.time()
             result = check_fn(dt) if check_fn is not None else check_generic_freshness(name, entry, dt)
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Log check execution
+            try:
+                log_skill(
+                    skill_name=f"{name}_check",
+                    task_context=f"Health check for {as_of_date(dt)}",
+                    inputs={"check_date": as_of_date(dt), "check_name": name},
+                    outputs={
+                        "status": result.status,
+                        "anomaly_count": len(result.anomalies),
+                        "detail": result.detail[:100],
+                    },
+                    latency_ms=latency_ms,
+                    success=(result.status in ("OK", "WARN", "SKIP")),
+                    error=result.detail if result.status == "FAIL" else None,
+                    environment="prod",
+                )
+            except Exception:
+                pass  # Non-blocking: don't let logging failures break the check
         except Exception as e:  # noqa: BLE001
+            latency_ms = (time.time() - start_time) * 1000
             result = CheckResult(name, "FAIL", f"Check crashed: {e}", [f"EXCEPTION: {e}"])
+            # Log failure
+            try:
+                log_skill(
+                    skill_name=f"{name}_check",
+                    task_context=f"Health check for {as_of_date(dt)}",
+                    inputs={"check_date": as_of_date(dt), "check_name": name},
+                    outputs={"status": "CRASH"},
+                    latency_ms=latency_ms,
+                    success=False,
+                    error=str(e)[:500],
+                    environment="prod",
+                )
+            except Exception:
+                pass  # Non-blocking
         results.append(result)
 
     for name in sorted(opted_out):
