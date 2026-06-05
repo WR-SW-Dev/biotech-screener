@@ -173,18 +173,21 @@ Architecture freeze: skill updates are **Tier 0 docs/plumbing** unless they enco
 
 ---
 
-## Repo commands (skill recursion)
+## Repo commands (skill + knowledge recursion)
 
 ```bash
+# Knowledge hygiene (read-only)
+python3 tools/audit_learnings.py
+
 # After editing skills/<dir>/SKILL.md
 python3 tools/sync_hermes_skills.py
 python3 tools/audit_hermes_skills.py
 
-# Optional knowledge layer (operator WSL authoritative for cron)
+# Ops ledgers (operator WSL authoritative for cron)
 python3 tools/build_hermes_knowledge_layer.py
 ```
 
-Runbook: `docs/hermes_agents/operator_host_skills.md` · History: `docs/hermes_skills/harvest_log.md`
+Knowledge stack map: `.learnings/README.md` · Runbook: `docs/hermes_agents/operator_host_skills.md` · History: `docs/hermes_skills/harvest_log.md`
 
 ---
 

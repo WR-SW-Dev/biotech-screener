@@ -54,11 +54,17 @@ Concrete next step (skill patch, test, operator check).
 
 ## Session-end audit (5 minutes)
 
+```bash
+python3 tools/audit_learnings.py    # tier limits, promotion candidates, stale hints
+```
+
 1. Any user correction? → `corrections.md` + consider `LEARNINGS.md`
-2. Recurrence-Count ≥ 3 for same Pattern-Key? → promote tier
+2. Recurrence-Count ≥ 3 for same Pattern-Key? → promote tier (`memory.md` / `projects/` / `domains/`)
 3. Operator workflow or tooling lesson? → candidate for `skills/*/SKILL.md`
 4. If skill edited: `sync_hermes_skills.py` + `audit_hermes_skills.py`
 5. If skill committed: append `harvest_log.md` section
+
+Full stack: `.learnings/README.md`
 
 ---
 

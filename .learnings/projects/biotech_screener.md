@@ -3,7 +3,9 @@
 <!-- WARM tier — per-project learnings (≤200 lines) -->
 
 ## Skill recursion (meta)
+- Stack map: `.learnings/README.md` · audit: `python3 tools/audit_learnings.py`
 - Durable session lessons → `.learnings/LEARNINGS.md` → HOT `memory.md` → `skills/<dir>/SKILL.md` → `sync_hermes_skills.py` → `harvest_log.md`.
+- Domain ops patterns: `.learnings/domains/agent_ops.md`
 - Ops/hermes lessons: `screener_ops`. Tooling/preflight: `codegraph`. Context bloat: `openclaw-agent-optimize`.
 - Loop spec: `skills/self-improving/SKILL.md`. Do not encode scoring/cron changes in skills without governance Spec.
 

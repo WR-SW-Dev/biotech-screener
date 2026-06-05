@@ -20,7 +20,9 @@
 - run_screen.py --snapshot-dir appends date as subdirectory. Pass parent dir to avoid double nesting.
 - Weekend/non-trading day: run_daily_production.py correctly blocks. Use run_screen.py directly for manual weekend runs.
 - Cursor Cloud agents need Python deps from `pip install -r requirements.txt` before running run_screen.py/pytest. `pytest-xdist` is NOT required — `pyproject.toml` uses `-q -m 'not network'`. Missing dotenv indicates environment.json drift. (LRN-20260528-002)
-- codegraph installed: v0.9.6, pinned in environment.json. Use MCP tools (codegraph_search, etc.) from IDE; CLI equivalents (codegraph query, etc.) from bash. Preflight mandatory before any Tier 2+ edit. (LRN-20260528-001/003)
+- codegraph: v0.9.7 pinned in environment.json. MCP tools in IDE; CLI in shell. **CodeGraph first, grep/read second, edit third.** Bounded — not proof for cron/literals/dynamic dispatch. (LRN-20260528-001/002)
+- Knowledge recursion: `.learnings/` → promote tiers → `skills/` → sync → `harvest_log.md`. Audit: `python3 tools/audit_learnings.py`. Map: `.learnings/README.md`.
+- WSL is authoritative for cron, hedge artifacts, gateway model; Cloud ledger builds emit UNKNOWN_CLOUD_ENV / first-fire FAIL without hedge dir — expected, not production failure.
 - Hermes agents use `common/codegraph_guard.py` (CodegraphGuard) — all 5 acceptance gates enforced. Do NOT call codegraph CLI directly from agent code. (LRN-20260528-004)
 - GitHub Actions "job was not started because an Actions budget is preventing further use" is provider budget/quota, not a code failure. Do not patch PR code for that signal.
 - Track B fail-closed governance contracts live in draft PR #304 as expected-red spec tests only. Do not make them pass or touch ranker/final_score, snapshot writer, promotion, selector, sizing, or KG behavior without explicit governance clearance.

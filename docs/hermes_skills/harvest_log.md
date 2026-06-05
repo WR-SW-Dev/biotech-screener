@@ -5,6 +5,21 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-01 (knowledge recursion stack)
+
+### Knowledge layer
+- **`.learnings/README.md`**: agent knowledge stack map, load order, promotion rules
+- **`.learnings/domains/agent_ops.md`**: WARM Hermes/Cursor/Cloud authority patterns
+- **`tools/audit_learnings.py`**: read-only tier audit, Pattern-Key promotion candidates, stale hints
+- **`tests/test_audit_learnings.py`**: parser + report smoke
+- Updated `memory.md`, `LEARNINGS.md` (LRN-20260601-001..003), `projects/biotech_screener.md`
+- **self-improving** skill/REFERENCE: `audit_learnings.py` in session-end workflow
+
+### Governance
+- Knowledge/docs/tooling only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-06-01 (recursive self-improvement loop)
 
 ### Skill sources refreshed

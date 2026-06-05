@@ -298,3 +298,75 @@ Treat repo-native MCP as verified, Hermes Link/runtime absence as a cloud enviro
 - Related Files: .cursor/mcp.json, mcp_server/hermes_server.py, docs/hermes_skills/hermeslink-state-capture.md
 - Tags: hermes, mcp, hermeslink, cursor_cloud, knowledge_layer
 - Pattern-Key: hermes_mcp_vs_runtime_visibility
+
+## [LRN-20260601-001] knowledge_skill_recursion_loop
+
+**Logged**: 2026-06-01T12:00:00Z
+**Priority**: high
+**Status**: promoted
+**Area**: hermes_ops
+
+### Summary
+Durable agent improvement requires a closed loop across `.learnings/`, `skills/`, and `harvest_log.md` — not skills alone.
+
+### Details
+Sessions produced ops and tooling lessons (WSL gate, CodeGraph bounds, CI budget vs code) that belonged in tiered learnings before mirroring to skills. Without README map and `audit_learnings.py`, agents re-discovered the same stack each session.
+
+### Suggested Action
+Session-end: run `audit_learnings.py`; promote Pattern-Key ≥3 to `memory.md`; patch eligible skills; sync + harvest_log.
+
+### Metadata
+- Source: knowledge_recursion_session_2026-06-01
+- Related Files: .learnings/README.md, tools/audit_learnings.py, skills/self-improving/SKILL.md
+- Tags: knowledge, recursion, skills, harvest
+- Pattern-Key: knowledge_skill_recursion_loop
+- Recurrence-Count: 1
+- Skill-Path: self-improving
+
+## [LRN-20260601-002] codegraph_bounded_not_authority
+
+**Logged**: 2026-06-01T12:00:00Z
+**Priority**: medium
+**Status**: promoted
+**Area**: tooling
+
+### Summary
+CodeGraph is healthy for structural navigation but must not be treated as authority for cron, runtime artifacts, or governance truth.
+
+### Details
+Surface split: MCP (Cursor), CLI (shell), Hermes MCP (fleet only), grep/read (literals, subprocess). Ranker/selector/scoring paths stay gated even when impact looks small.
+
+### Suggested Action
+Keep preflight in skills/codegraph; log tooling gaps to LEARNINGS with Skill-Path codegraph.
+
+### Metadata
+- Source: codegraph_review_2026-06-01
+- Related Files: skills/codegraph/SKILL.md, .cursor/rules/codegraph.mdc
+- Tags: codegraph, governance, bounded_proof
+- Pattern-Key: codegraph_bounded_not_authority
+- Recurrence-Count: 2
+- Skill-Path: codegraph
+
+## [LRN-20260601-003] sync_reference_mirror_source
+
+**Logged**: 2026-06-01T12:00:00Z
+**Priority**: medium
+**Status**: resolved
+**Area**: tooling
+
+### Summary
+`sync_hermes_skills.py` synced REFERENCE mirrors from SKILL.md when both exist, duplicating full skill bodies into `*-reference.md`.
+
+### Details
+Fixed `_source_path()` to prefer REFERENCE.md when target is in REFERENCE_MAP. Prevents mirror drift and context bloat in Hermes copies.
+
+### Suggested Action
+After adding skills/*/REFERENCE.md, always run sync + audit_hermes_skills.
+
+### Metadata
+- Source: skills_recursion_pr_2026-06-01
+- Related Files: tools/sync_hermes_skills.py, docs/hermes_skills/self-improving-reference.md
+- Tags: sync, skills, mirror_drift
+- Pattern-Key: sync_reference_mirror_source
+- Recurrence-Count: 1
+- Skill-Path: self-improving

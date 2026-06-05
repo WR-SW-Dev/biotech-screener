@@ -1,0 +1,40 @@
+# Domain: Agent Operations (WARM)
+
+<!-- Cross-cutting Hermes / Cursor / Cloud patterns. ≤200 lines. -->
+
+## Host authority
+
+| Host | Authoritative for |
+| --- | --- |
+| Operator WSL | `crontab`, `output/hedge_report/`, `~/.hermes/config.yaml`, B1b producer |
+| Cursor Cloud | Repo plumbing, CodeGraph index, skills sync, ledger **build** (read-only) |
+
+Cloud knowledge-layer builds emit `UNKNOWN_CLOUD_ENV` for C1/C3 — not a pass/fail. First-fire `FAIL_ARTIFACT_MISSING_PAST_DEADLINE` is expected without hedge artifacts in checkout.
+
+## Hermes surfaces (do not conflate)
+
+| Surface | Model? | Role |
+| --- | --- | --- |
+| Hermes MCP | No | Fleet registry, SOUL, ledgers when built |
+| Lane A `hermes-*` jobs | No | Deterministic governance |
+| Gateway `~/.hermes/config.yaml` | Yes | OpenRouter / DeepSeek intent on WSL |
+| `run_agent_direct.py` | Yes (bypass) | Defaults Together Llama — not gateway |
+
+## CodeGraph (bounded)
+
+- MCP in Cursor; CLI on shell; Hermes cron uses `common/codegraph_guard.py`
+- Rule: **CodeGraph first, grep/read second, edit third**
+- Not proof for cron, subprocess, file-path literals, or dynamic dispatch
+- Pin: `@colbymchenry/codegraph@0.9.7` in `.cursor/environment.json`
+
+## CI signals
+
+- Actions budget exhaustion pre-start → infrastructure, not PR regression
+- Track B governance tests in draft PR — expected skips, not gates to “fix” toward scoring
+
+## Skill ↔ knowledge recursion
+
+1. Lesson → `LEARNINGS.md` with `Pattern-Key`
+2. Promote → `memory.md` or this file
+3. Executable → `skills/*` + `harvest_log.md`
+4. Audit → `audit_learnings.py` + `audit_hermes_skills.py`
