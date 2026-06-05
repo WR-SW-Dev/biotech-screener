@@ -47,7 +47,8 @@ def generate_monthly_report(month_str: str = None) -> Path:
     executions = load_jsonl(exec_log)
     feedback = load_jsonl(feedback_log)
 
-    # Aggregate by skill
+    # Build execution_id → skill_name mapping and aggregate by skill
+    exec_id_to_skill: Dict[str, str] = {}
     skill_stats: Dict[str, Dict[str, Any]] = defaultdict(
         lambda: {
             "executions": 0,
@@ -63,6 +64,10 @@ def generate_monthly_report(month_str: str = None) -> Path:
 
     for exec_record in executions:
         skill = exec_record.get("skill_name", "unknown")
+        exec_id = exec_record.get("execution_id", "")
+        if exec_id:
+            exec_id_to_skill[exec_id] = skill
+
         stats = skill_stats[skill]
 
         stats["executions"] += 1
@@ -79,8 +84,10 @@ def generate_monthly_report(month_str: str = None) -> Path:
         stats["total_cost"] += metrics.get("cost_usd", 0)
         stats["total_tokens"] += metrics.get("tokens_in", 0) + metrics.get("tokens_out", 0)
 
+    # Join feedback with executions by execution_id
     for fb in feedback:
-        skill = fb.get("skill_name", "unknown")
+        exec_id = fb.get("execution_id", "")
+        skill = exec_id_to_skill.get(exec_id, "unknown")
         if skill in skill_stats:
             skill_stats[skill]["feedback"].append(fb)
 
