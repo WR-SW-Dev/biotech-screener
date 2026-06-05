@@ -5,6 +5,22 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-01 (recursive self-improvement loop)
+
+### Skill sources refreshed
+- **self-improving** (`skills/self-improving/SKILL.md`): biotech-screener recursive loop (Observe→Log→Distill→Promote→Skill-patch→Sync→Verify); Rule 10 governance; session-end trigger
+- **self-improving-reference** (`skills/self-improving/REFERENCE.md`): LRN/harvest templates, session-end audit, skill-patch checklist
+- **screener_ops**, **codegraph**, **openclaw-agent-optimize**: cross-links to recursion loop
+- **operator_host_skills.md**: index row for self-improving + REFERENCE mirror
+- **sync_hermes_skills.py**: register `self-improving-reference.md` in REFERENCE_MAP
+- `.learnings/projects/biotech_screener.md`: skill recursion meta + codegraph 0.9.7 note
+- Ran `sync_hermes_skills.py` — updated mirrors
+
+### Governance
+- Skills/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-06-01 (WSL acceptance gate + CodeGraph bounds)
 
 ### Skill sources refreshed

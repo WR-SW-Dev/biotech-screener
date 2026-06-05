@@ -2,8 +2,13 @@
 
 <!-- WARM tier — per-project learnings (≤200 lines) -->
 
+## Skill recursion (meta)
+- Durable session lessons → `.learnings/LEARNINGS.md` → HOT `memory.md` → `skills/<dir>/SKILL.md` → `sync_hermes_skills.py` → `harvest_log.md`.
+- Ops/hermes lessons: `screener_ops`. Tooling/preflight: `codegraph`. Context bloat: `openclaw-agent-optimize`.
+- Loop spec: `skills/self-improving/SKILL.md`. Do not encode scoring/cron changes in skills without governance Spec.
+
 ## Tooling (codegraph)
-- Installed: v0.9.6 (pinned in `.cursor/environment.json`). Index: 1,677 files / 50,419 nodes / 113,867 edges / 108.5 MB.
+- Installed: v0.9.7 (pinned in `.cursor/environment.json`). Re-verify with `codegraph status` after merges.
 - MCP tools (`codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_context`) for IDE/agent. CLI (`codegraph query`, etc.) for bash.
 - Preflight (search → node → callers → callees → impact) is mandatory before any Tier 2+ edit per `skills/codegraph/SKILL.md`.
 - `codegraph_impact` on each changed symbol is the mechanical verification step for the AGENT_ROUTING_POLICY Tier 2 review trigger.

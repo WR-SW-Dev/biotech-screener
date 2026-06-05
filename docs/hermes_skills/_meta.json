@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0",
-  "last_updated": "2026-06-01",
+  "last_updated": "2026-06-05",
   "skills": {
     "town-operator-bridge": {
       "name": "Town-Hermes Bridge (Spec 090)",
@@ -270,6 +270,13 @@
       "status": "Active",
       "source": "cursor_skill",
       "source_authority": "skills/firecrawl_research/SKILL.md"
+    },
+    "self-improving-reference": {
+      "name": "Self-Improving Agent Loop",
+      "file": "self-improving-reference.md",
+      "status": "Active",
+      "source": "cursor_reference",
+      "source_authority": "skills/self-improving/REFERENCE.md"
     }
   },
   "path_c_governance_window_status": {
