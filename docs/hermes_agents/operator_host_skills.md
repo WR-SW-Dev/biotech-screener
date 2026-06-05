@@ -107,6 +107,7 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 | WSL acceptance gate (cron + B1b + gateway) | `skills/screener_ops/SKILL.md` → Host authority + acceptance gate sections |
 | Sync history | [`../hermes_skills/harvest_log.md`](../hermes_skills/harvest_log.md) |
 | Recursive self-improvement loop | `skills/self-improving/SKILL.md` → `self-improving.md` · `REFERENCE.md` → `self-improving-reference.md` |
+| Knowledge stack + audit | `.learnings/README.md` · `python3 tools/audit_learnings.py` |
 
 **Rule:** edit `skills/` first, then sync and commit mirrors. After significant sessions, run the self-improving loop (log → promote → skill-patch → sync → harvest_log). Do not hand-edit mirrored files unless `source_authority` is `HERMES_NATIVE` or `memory-steward` (authoritative).
 
