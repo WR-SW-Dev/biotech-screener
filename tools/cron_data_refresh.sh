@@ -32,6 +32,9 @@ set -a
 source .env 2>/dev/null || true
 set +a
 
+# Set PYTHONPATH for imports from repo root (common, tools, etc.)
+export PYTHONPATH="${REPO_ROOT}:${PYTHONPATH:-}"
+
 TODAY=$(date +%Y-%m-%d)
 
 mkdir -p "$LOG_DIR"
