@@ -655,4 +655,6 @@ Key findings (pseudo-PIT):
 | Commit | `docs/hermes_skills/` + `skills/` when mirrors change |
 | Optional WSL runtime | Copy to `~/.hermes/skills/` only if gateway reads stale copies |
 
+**Recursive self-improvement:** after significant ops/hermes sessions, run the loop in `skills/self-improving/SKILL.md` (log → promote → skill-patch → sync → `harvest_log.md`). Ops discoveries for this repo usually land in `screener_ops` or `codegraph`.
+
 Runbook: `docs/hermes_agents/operator_host_skills.md` · History: `docs/hermes_skills/harvest_log.md`

@@ -288,6 +288,16 @@ When reporting codegraph findings, include:
 
 ---
 
+## Recursive improvement
+
+When a session fixes a repeatable CodeGraph mistake (MCP vs CLI, stale pin, preflight skip, dynamic-dispatch gap):
+
+1. Log in `.learnings/LEARNINGS.md` with `Pattern-Key` and `Skill-Path: codegraph`
+2. After 3x recurrence, promote to `.learnings/memory.md` or patch this skill
+3. `sync_hermes_skills.py` + `audit_hermes_skills.py` + `harvest_log.md` entry
+
+Meta loop: `skills/self-improving/SKILL.md`
+
 ## References
 
 | Resource | Path |
@@ -296,3 +306,4 @@ When reporting codegraph findings, include:
 | Operator runbook | `docs/CODEGRAPH_RUNBOOK.md` |
 | Hermes guard (cron agents) | `common/codegraph_guard.py` |
 | Hermes skill mirror | `docs/hermes_skills/codegraph.md` (sync via `tools/sync_hermes_skills.py --only codegraph`) |
+| Self-improvement loop | `skills/self-improving/SKILL.md` |
