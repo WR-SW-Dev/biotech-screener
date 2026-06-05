@@ -53,6 +53,22 @@ python3 tools/audit_hermes_skills.py
 - **Skill patch**: operator workflow, tooling, conventions — never scoring weights without Spec
 - **Never**: infer from silence; delete without operator OK
 
+## Memory optimization (HOT tier)
+
+`memory.md` is the **session bootstrap** — optimize for recursion, not encyclopedic coverage.
+
+| Principle | Practice |
+| --- | --- |
+| Bootstrap first | `## Bootstrap (read first)` table: recursion, CodeGraph, host, governance |
+| One home per fact | Detail in `domains/` or `projects/`; HOT holds pointers + Pattern-Keys |
+| Tag promotions | Bold `**pattern_key**:` in HOT; set LRN `Status: promoted` when copied |
+| Stay under budget | ≤100 lines HOT, ≤200 WARM; audit warns at >70 HOT lines |
+| Demote don't delete | Move stale bullets to `.learnings/archive/` with operator OK |
+
+```bash
+python3 tools/audit_learnings.py   # bootstrap lines, compaction hints, LRN/HOT mismatches
+```
+
 ## Governance
 
 Learnings and knowledge files are **Tier 0**. They must not encode ranker/selector/sizing/`final_score` changes. SOUL.md and runtime cron beat stale markdown.

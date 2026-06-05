@@ -71,7 +71,7 @@ File-based storage in `.learnings/`:
 
 | Tier | File | Limit | Purpose |
 |------|------|-------|---------|
-| HOT | `memory.md` | <=100 lines | Always loaded, most critical patterns |
+| HOT | `memory.md` | <=100 lines | **Bootstrap block first** — recursion, governance, Pattern-Keys; detail in domains/ |
 | WARM | `projects/biotech_screener.md` | <=200 lines | Per-project learnings |
 | WARM | `domains/{name}.md` | <=200 lines | Domain-specific patterns |
 | COLD | `archive/` | Unlimited | Decayed patterns |
@@ -139,7 +139,7 @@ Log explicit corrections and self-identified improvements. Never infer from sile
 Most specific wins: routine-specific > domain > global. Most recent wins at same level. **SOUL.md / runtime cron beat stale skill text** — refresh skills when execution truth diverges.
 
 ### Rule 6 - Compaction
-Merge similar corrections. Archive unused patterns. Never delete without asking. Prefer **short SKILL.md + REFERENCE.md** over bloated skills (see `openclaw-agent-optimize`).
+Merge similar corrections. Archive unused patterns to `.learnings/archive/`. Never delete without asking. HOT `memory.md`: bootstrap table + tagged Pattern-Keys; demote prose to `domains/` or `projects/`. Run `audit_learnings.py` for compaction hints. Prefer **short SKILL.md + REFERENCE.md** over bloated skills (see `openclaw-agent-optimize`).
 
 ### Rule 7 - Transparency
 When applying a learned pattern, mention it briefly. Offer periodic digests. Full export on demand.

@@ -5,6 +5,20 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-01 (HOT memory optimization)
+
+### Memory layer
+- **`memory.md`**: bootstrap-first table (recursion, CodeGraph, host, governance); deduped ops; Pattern-Key tags
+- **`archive/README.md`**: COLD tier demotion policy
+- **LRN-20260329-001**: Status → promoted (raw_count_size_confound already in HOT)
+- **`audit_learnings.py`**: bootstrap line count, HOT Pattern-Keys, LRN/HOT mismatch, compaction hints
+- **README.md** + **self-improving** Rule 6: memory optimization principles
+
+### Governance
+- Memory/docs/tooling only.
+
+---
+
 ## 2026-06-01 (knowledge recursion stack)
 
 ### Knowledge layer

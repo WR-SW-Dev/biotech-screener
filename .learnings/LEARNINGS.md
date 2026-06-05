@@ -7,7 +7,7 @@
 
 **Logged**: 2026-03-29T19:00:00Z
 **Priority**: high
-**Status**: pending
+**Status**: promoted
 **Area**: research
 
 ### Summary

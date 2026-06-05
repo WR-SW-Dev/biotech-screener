@@ -5,7 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from tools.audit_learnings import build_report, parse_learnings
+from tools.audit_learnings import (
+    _bootstrap_line_count,
+    _hot_pattern_keys,
+    build_report,
+    parse_learnings,
+)
 
 SAMPLE = """
 # Learnings
@@ -50,3 +55,17 @@ def test_build_report_json_roundtrip():
     payload = json.loads(json.dumps(report, default=lambda o: o.__dict__))
     assert "tier_lines" in payload
     assert "lrn_total" in payload
+
+
+def test_memory_bootstrap_block_present():
+    repo = Path(__file__).resolve().parent.parent
+    memory = (repo / ".learnings" / "memory.md").read_text(encoding="utf-8")
+    assert "## Bootstrap (read first)" in memory
+    assert _bootstrap_line_count(memory) >= 10
+    assert "raw_count_size_confound" in _hot_pattern_keys(memory)
+
+
+def test_no_pending_promotion_for_size_confound():
+    report = build_report()
+    pending_keys = {c["pattern_key"] for c in report.promotion_candidates}
+    assert "raw_count_size_confound" not in pending_keys

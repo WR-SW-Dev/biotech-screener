@@ -27,6 +27,10 @@ TIER_LIMITS = {
     "projects/biotech_screener.md": 200,
 }
 
+DOMAIN_LIMIT = 200
+BOOTSTRAP_MARKER = "## Bootstrap (read first)"
+PATTERN_IN_MEMORY = re.compile(r"\*\*([a-z][a-z0-9_]+)\*\*:|Pattern-Key:\s*(\S+)", re.IGNORECASE)
+
 LRN_HEADING = re.compile(r"^## \[(LRN-\d{8}-\d{3})\]", re.MULTILINE)
 META_LINE = re.compile(r"^- (Pattern-Key|Recurrence-Count|Skill-Path|Status):\s*(.+)$", re.MULTILINE)
 STATUS_LINE = re.compile(r"^\*\*Status\*\*:\s*(\w+)", re.MULTILINE)
@@ -50,6 +54,10 @@ class AuditReport:
     skill_candidates: list[dict] = field(default_factory=list)
     stale_hints: list[str] = field(default_factory=list)
     domain_files: list[str] = field(default_factory=list)
+    memory_bootstrap_lines: int = 0
+    memory_patterns_hot: list[str] = field(default_factory=list)
+    lrn_pending_but_in_hot: list[dict] = field(default_factory=list)
+    compaction_hints: list[str] = field(default_factory=list)
 
 
 def _line_count(path: Path) -> int:
@@ -88,6 +96,42 @@ def parse_learnings(text: str) -> list[LrnEntry]:
     return entries
 
 
+def _bootstrap_line_count(memory_text: str) -> int:
+    if BOOTSTRAP_MARKER not in memory_text:
+        return 0
+    start = memory_text.index(BOOTSTRAP_MARKER)
+    rest = memory_text[start:]
+    end = rest.find("\n---\n")
+    block = rest[:end] if end != -1 else rest
+    return len(block.splitlines())
+
+
+def _hot_pattern_keys(memory_text: str) -> set[str]:
+    keys: set[str] = set()
+    for m in PATTERN_IN_MEMORY.finditer(memory_text):
+        keys.add((m.group(1) or m.group(2) or "").lower())
+    if "raw_count_size_confound" in memory_text.lower():
+        keys.add("raw_count_size_confound")
+    return {k for k in keys if k}
+
+
+def _compaction_hints(memory_text: str, domain_text: str) -> list[str]:
+    hints: list[str] = []
+    if memory_text.count("CodeGraph") > 2 and "domains/agent_ops" not in memory_text:
+        hints.append("memory.md repeats CodeGraph — prefer pointer to domains/agent_ops.md")
+    if memory_text.count("WSL") > 2 and "domains/agent_ops" not in memory_text:
+        hints.append("memory.md repeats WSL authority — consolidate in Bootstrap table + domains/")
+    if _line_count_from_text(memory_text) > 70:
+        hints.append("memory.md >70 lines — demote detail to WARM tiers before next promotion")
+    if domain_text and "Skill ↔ knowledge recursion" in domain_text and "Recursion" in memory_text:
+        pass  # intentional overlap via bootstrap pointer
+    return hints
+
+
+def _line_count_from_text(text: str) -> int:
+    return len(text.splitlines())
+
+
 def _codegraph_pin() -> str | None:
     if not ENV_JSON.exists():
         return None
@@ -109,8 +153,18 @@ def build_report() -> AuditReport:
         }
 
     domains = LEARNINGS / "domains"
+    domain_text = ""
     if domains.is_dir():
         report.domain_files = sorted(p.name for p in domains.glob("*.md"))
+        for p in domains.glob("*.md"):
+            n = _line_count(p)
+            report.tier_lines[f"domains/{p.name}"] = {
+                "lines": n,
+                "limit": DOMAIN_LIMIT,
+                "over": max(0, n - DOMAIN_LIMIT),
+                "exists": True,
+            }
+            domain_text += p.read_text(encoding="utf-8") + "\n"
 
     learnings_path = LEARNINGS / "LEARNINGS.md"
     if not learnings_path.exists():
@@ -149,8 +203,26 @@ def build_report() -> AuditReport:
                     }
                 )
 
+    memory_path = LEARNINGS / "memory.md"
+    memory_text = memory_path.read_text(encoding="utf-8") if memory_path.exists() else ""
+    report.memory_bootstrap_lines = _bootstrap_line_count(memory_text)
+    report.memory_patterns_hot = sorted(_hot_pattern_keys(memory_text))
+    report.compaction_hints = _compaction_hints(memory_text, domain_text)
+
+    hot_patterns = _hot_pattern_keys(memory_text)
+    for pattern, group in by_pattern.items():
+        if pattern.lower() in hot_patterns or pattern.replace("-", "_") in hot_patterns:
+            for e in group:
+                if e.status in ("pending", "unknown"):
+                    report.lrn_pending_but_in_hot.append(
+                        {
+                            "lrn_id": e.lrn_id,
+                            "pattern_key": pattern,
+                            "action": "set LEARNINGS Status to promoted",
+                        }
+                    )
+
     pin = _codegraph_pin()
-    memory_text = (LEARNINGS / "memory.md").read_text(encoding="utf-8") if (LEARNINGS / "memory.md").exists() else ""
     if pin and pin not in memory_text and "codegraph" in memory_text.lower():
         report.stale_hints.append(
             f"memory.md may stale-pin codegraph; environment.json has @{pin}"
@@ -169,6 +241,9 @@ def print_report(report: AuditReport) -> None:
         print(f"- `{rel}`: {info['lines']}/{info['limit']} lines{flag}")
     if report.domain_files:
         print(f"\nDomain files: {', '.join(report.domain_files)}")
+    print(f"\n## HOT memory\n- Bootstrap block: {report.memory_bootstrap_lines} lines")
+    if report.memory_patterns_hot:
+        print(f"- Pattern-Keys in HOT: {', '.join(report.memory_patterns_hot)}")
     print(f"\n## LEARNINGS.md\n- Entries: {report.lrn_total}")
     print(f"- Distinct Pattern-Keys: {len(report.pattern_groups)}")
 
@@ -187,6 +262,20 @@ def print_report(report: AuditReport) -> None:
             print(f"- {c['lrn_id']} → skills/{c['skill_path']}/ ({c['status']})")
         if len(report.skill_candidates) > 15:
             print(f"  ... and {len(report.skill_candidates) - 15} more")
+
+    print("\n## LRN pending but already in HOT memory\n")
+    if not report.lrn_pending_but_in_hot:
+        print("None.")
+    else:
+        for item in report.lrn_pending_but_in_hot:
+            print(f"- {item['lrn_id']} (`{item['pattern_key']}`): {item['action']}")
+
+    print("\n## Memory compaction hints\n")
+    if not report.compaction_hints:
+        print("None.")
+    else:
+        for h in report.compaction_hints:
+            print(f"- {h}")
 
     print("\n## Stale hints\n")
     if not report.stale_hints:
