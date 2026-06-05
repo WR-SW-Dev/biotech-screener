@@ -1,0 +1,960 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /mnt/c/Projects/biotech_screener/biotech-screener
+configfile: pyproject.toml
+plugins: anyio-4.12.1, typeguard-2.13.3, xdist-3.8.0, cov-6.1.1, timeout-2.4.0, langsmith-0.8.0
+timeout: 120.0s
+timeout method: thread
+timeout func_only: False
+collected 16537 items / 161 deselected / 16376 selected
+
+tests/integration/test_container_smoke.py .........                      [  0%]
+tests/integration/test_data_enrichment_integration.py .............      [  0%]
+tests/integration/test_enhancement_error_paths.py ....                   [  0%]
+tests/integration/test_pipeline_determinism_smoke.py ...                 [  0%]
+tests/integration/test_pipeline_enhancements_smoke.py .......            [  0%]
+tests/integration/test_pipeline_robustness.py .......................... [  0%]
+............................                                             [  0%]
+tests/integration/test_run_screen.py ....................                [  0%]
+tests/integration/test_run_screen_suite.py ..........                    [  0%]
+tests/integration/test_snapshot_integration.py ......                    [  0%]
+tests/providers/test_aact_provider.py ...........                        [  0%]
+tests/providers/test_csv_parsing.py .................................... [  1%]
+....                                                                     [  1%]
+tests/providers/test_schema_validation.py ......                         [  1%]
+tests/test_13f_rename_resolution.py ......                               [  1%]
+tests/test_aact_ingest.py ............................                   [  1%]
+tests/test_aact_normalize.py ........................................... [  1%]
+....................                                                     [  1%]
+tests/test_acceptance_replay_ruleset.py .............................    [  1%]
+tests/test_account_sizing.py ....................                        [  2%]
+tests/test_accuracy_enhancements_adapter.py ............................ [  2%]
+                                                                         [  2%]
+tests/test_accuracy_improvements.py .................................... [  2%]
+.........................................................                [  2%]
+tests/test_action_lists.py ............................................. [  3%]
+.                                                                        [  3%]
+tests/test_action_packet.py ..................                           [  3%]
+tests/test_activity_proxy.py ....................                        [  3%]
+tests/test_adaptive_validator.py ....................................    [  3%]
+tests/test_adcom_empirical.py .......................................... [  3%]
+.......                                                                  [  3%]
+tests/test_adcom_vote_features.py ..........................             [  3%]
+tests/test_agent_heartbeat_checks.py ............................        [  4%]
+tests/test_agent_registry.py ..F..............                           [  4%]
+tests/test_alert_dedupe.py .................                             [  4%]
+tests/test_alert_email.py ..............                                 [  4%]
+tests/test_alpha_cohort.py ............................................. [  4%]
+...........                                                              [  4%]
+tests/test_alpha_experiment_runner.py .................................. [  4%]
+.....                                                                    [  4%]
+tests/test_alpha_experiment_sleeve.py .........                          [  5%]
+tests/test_alpha_health_gate.py ..................                       [  5%]
+tests/test_alpha_signal_contract.py ..................................   [  5%]
+tests/test_alpha_table_rebuild.py .....................................  [  5%]
+tests/test_alpha_table_resolver.py ................                      [  5%]
+tests/test_attribution_packet.py ...........................             [  5%]
+tests/test_audit_archive_catalyst.py ..............                      [  5%]
+tests/test_audit_catalyst_coverage.py ............                       [  6%]
+tests/test_audit_development_stage.py .................................. [  6%]
+...                                                                      [  6%]
+tests/test_audit_drawdown_coverage.py ......                             [  6%]
+tests/test_audit_escalation_pool.py ....                                 [  6%]
+tests/test_audit_fixes_2026_04_25.py ......                              [  6%]
+tests/test_audit_framework.py ..............................             [  6%]
+tests/test_audit_hardening_diagnostics.py ........                       [  6%]
+tests/test_audit_learnings.py .....                                      [  6%]
+tests/test_audit_log.py ..............................                   [  6%]
+tests/test_audit_rank_change_monitor.py .......                          [  6%]
+tests/test_audit_return_integrity.py ..........                          [  6%]
+tests/test_auth_preflight_phase1.py ......                               [  6%]
+tests/test_backfill_13f_history.py ...............................       [  7%]
+tests/test_backfill_calendar_slips.py ..............                     [  7%]
+tests/test_backfill_catalyst_event_type.py ........................      [  7%]
+tests/test_backfill_catalysts.py ................                        [  7%]
+tests/test_backfill_clinical_cache.py ..............                     [  7%]
+tests/test_backfill_ctgov_pit_history.py ............................... [  7%]
+..........                                                               [  7%]
+tests/test_backfill_expectation_spec102.py .............                 [  7%]
+tests/test_backfill_shadow_history.py ..........                         [  7%]
+tests/test_backtest.py ......................                            [  8%]
+tests/test_backtest_clinical_design.py ................................. [  8%]
+.....                                                                    [  8%]
+tests/test_backtest_harness_audit.py ...................                 [  8%]
+tests/test_backtest_metrics_m1.py ...........                            [  8%]
+tests/test_backtest_schedule_m1.py ........                              [  8%]
+tests/test_baker_overlay.py ............................................ [  8%]
+.................                                                        [  8%]
+tests/test_binary_quality_score.py ......................                [  9%]
+tests/test_binary_sleeve_cap.py ........................                 [  9%]
+tests/test_biomarker_context.py .............                            [  9%]
+tests/test_bioshort_freshness_guard.py .............                     [  9%]
+tests/test_biotech_hedge_report.py ..................................... [  9%]
+.................                                                        [  9%]
+tests/test_book_split_eval.py ..........................                 [  9%]
+tests/test_book_split_live.py .....                                      [  9%]
+tests/test_branch_sensitivity.py ...............                         [  9%]
+tests/test_broker_orders.py ........                                     [  9%]
+tests/test_bucketed_verdict.py ......                                    [ 10%]
+tests/test_build_catalyst_delta.py ..................................... [ 10%]
+..                                                                       [ 10%]
+tests/test_build_catalyst_events_pit.py .............................    [ 10%]
+tests/test_build_clinical_features_pit.py .............................. [ 10%]
+.......                                                                  [ 10%]
+tests/test_build_clinical_pos_priors_v3.py ............................. [ 10%]
+...                                                                      [ 10%]
+tests/test_build_coinvest_features.py .................................. [ 11%]
+.....                                                                    [ 11%]
+tests/test_build_event_ev_scores.py ........                             [ 11%]
+tests/test_build_graveyard_catalog.py .........................          [ 11%]
+tests/test_build_hermes_knowledge_layer_contradictions.py ...            [ 11%]
+tests/test_build_ic_dashboard.py .........                               [ 11%]
+tests/test_build_options_chartbook.py ....................               [ 11%]
+tests/test_build_options_watch.py ...................................... [ 11%]
+.......                                                                  [ 11%]
+tests/test_build_pdufa_dates_extracted.py .............................. [ 11%]
+....                                                                     [ 11%]
+tests/test_build_pit_bundle.py .......................                   [ 12%]
+tests/test_build_price_action_watch.py ................................. [ 12%]
+...............................                                          [ 12%]
+tests/test_build_shadow_monitor.py ..................                    [ 12%]
+tests/test_build_weekly_orders.py ....................                   [ 12%]
+tests/test_bump_ruleset.py .............................                 [ 12%]
+tests/test_cache_health.py .............................                 [ 13%]
+tests/test_cache_refresh_degraded.py ....                                [ 13%]
+tests/test_calendar_ab_gate.py ......................................... [ 13%]
+                                                                         [ 13%]
+tests/test_calendar_maintenance_packet.py ...........................    [ 13%]
+tests/test_calendar_quality_maintenance.py ..........................    [ 13%]
+tests/test_calendar_slips.py .........................                   [ 13%]
+tests/test_calibrate_ruleset.py ........................................ [ 14%]
+.....                                                                    [ 14%]
+tests/test_calibration_evidence.py ..........                            [ 14%]
+tests/test_canary_dates.py .........                                     [ 14%]
+tests/test_canary_ratchet.py ...................                         [ 14%]
+tests/test_canonical_json.py ..........................................  [ 14%]
+tests/test_cash_burn_engine.py ...............                           [ 14%]
+tests/test_catalyst_attribution_integrity_2026_06_02.py ............     [ 14%]
+tests/test_catalyst_bucket.py ...............................            [ 14%]
+tests/test_catalyst_coverage.py .................                        [ 15%]
+tests/test_catalyst_event_graph.py ..................................... [ 15%]
+.................................................                        [ 15%]
+tests/test_catalyst_family.py ............................               [ 15%]
+tests/test_catalyst_family_carry_fix.py ......                           [ 15%]
+tests/test_catalyst_quality_gate.py .................................... [ 16%]
+.........................                                                [ 16%]
+tests/test_catalyst_resolution_tracker.py .............................. [ 16%]
+...................                                                      [ 16%]
+tests/test_catalyst_risk_overlay.py ..............                       [ 16%]
+tests/test_catalyst_shadow_metrics.py ................................   [ 16%]
+tests/test_cfo_extractor.py .....                                        [ 16%]
+tests/test_check_drift_cli.py ...........                                [ 16%]
+tests/test_check_output_contract.py ............                         [ 16%]
+tests/test_classify_press_releases.py .................................. [ 17%]
+....F..................................................                  [ 17%]
+tests/test_clinical_alpha_z.py ..........................                [ 17%]
+tests/test_clinical_corroboration.py .........................           [ 17%]
+tests/test_clinical_module_calendar_alpha_v2.py ........................ [ 17%]
+...                                                                      [ 17%]
+tests/test_clinical_plus_options_rerank.py ..........................    [ 18%]
+tests/test_clinical_pos_prior_v2.py .........                            [ 18%]
+tests/test_clinical_quality_91_180.py .................................. [ 18%]
+............                                                             [ 18%]
+tests/test_clinical_quality_score.py ................................... [ 18%]
+...............                                                          [ 18%]
+tests/test_clinical_shadow_keying.py ......                              [ 18%]
+tests/test_clinical_transmission.py ......                               [ 18%]
+tests/test_clinical_v2_golden.py ...................                     [ 18%]
+tests/test_clinical_v2_robustness.py ................................... [ 19%]
+........................................                                 [ 19%]
+tests/test_codegraph_guard.py .....................                      [ 19%]
+tests/test_cohort_membership_streak.py ...................               [ 19%]
+tests/test_coinvest_sort.py .....................                        [ 19%]
+tests/test_collect_pdufa_forward.py ...................................  [ 19%]
+tests/test_commercial_tier.py ..........................                 [ 20%]
+tests/test_common_data_consistency.py .................................. [ 20%]
+.........                                                                [ 20%]
+tests/test_common_forward_looking_separation.py ........................ [ 20%]
+.............                                                            [ 20%]
+tests/test_common_staleness_gates.py .................................   [ 20%]
+tests/test_company_calendar_gate.py ........                             [ 20%]
+tests/test_company_calendar_sources.py ...................               [ 20%]
+tests/test_compare_module5_versions.py ................................. [ 21%]
+...                                                                      [ 21%]
+tests/test_compare_rulesets_replay.py ......                             [ 21%]
+tests/test_competitive_intensity_engine.py ...........................   [ 21%]
+tests/test_competitive_pressure_engine.py ........................       [ 21%]
+tests/test_composite_v2_golden.py ...................................... [ 21%]
+..                                                                       [ 21%]
+tests/test_composite_v3.py ............................................. [ 22%]
+..............................................                           [ 22%]
+tests/test_composite_v3_errors.py ...................                    [ 22%]
+tests/test_compute_path_c_drawdown.py .....                              [ 22%]
+tests/test_compute_timing_hazard.py ..................................   [ 22%]
+tests/test_conference_program_collector.py ............................. [ 22%]
+............                                                             [ 22%]
+tests/test_constants.py .............................................    [ 23%]
+tests/test_contract_cash_metric.py ........................              [ 23%]
+tests/test_contract_coverage_mop.py .................................... [ 23%]
+.......................                                                  [ 23%]
+tests/test_contract_determinism.py ..........                            [ 23%]
+tests/test_contract_eligibility_sizing.py .............................. [ 23%]
+...............                                                          [ 24%]
+tests/test_contract_gate_margins.py .....................                [ 24%]
+tests/test_contract_output_schemas.py ...............................    [ 24%]
+tests/test_contract_overlays.py ..................................       [ 24%]
+tests/test_contract_ruleset_io.py ...............                        [ 24%]
+tests/test_contract_split_adjusted_returns.py ..............             [ 24%]
+tests/test_conviction_horizon_overlay.py ...........                     [ 24%]
+tests/test_corporate_actions_audit.py ..........s                        [ 24%]
+tests/test_corporate_actions_registry.py ............................    [ 25%]
+tests/test_cost_aware_sizing.py ....................                     [ 25%]
+tests/test_cost_model.py .........................                       [ 25%]
+tests/test_cost_production_wiring.py ...                                 [ 25%]
+tests/test_crowding_penalty.py ...........                               [ 25%]
+tests/test_crt_calibration.py ........                                   [ 25%]
+tests/test_crt_postmortem_integration.py ...........................     [ 25%]
+tests/test_crt_real_record_fixtures.py ...................               [ 25%]
+tests/test_ctgov_adapter.py ...................................          [ 25%]
+tests/test_ctgov_client.py ...................................           [ 26%]
+tests/test_ctgov_collection_contract.py .......................          [ 26%]
+tests/test_ctgov_future_events_audit.py ....................             [ 26%]
+tests/test_ctgov_pit_cache.py ....                                       [ 26%]
+tests/test_ctgov_pit_dates_gate.py ..........                            [ 26%]
+tests/test_cusip_mapper.py .................................             [ 26%]
+tests/test_cusip_resolver.py ........................................... [ 27%]
+....                                                                     [ 27%]
+tests/test_daily_production_helpers.py ................................. [ 27%]
+.........                                                                [ 27%]
+tests/test_daily_triage.py .....................                         [ 27%]
+tests/test_dashboard_bioshort_freshness.py ......                        [ 27%]
+tests/test_dashboard_timing_hazard.py ......                             [ 27%]
+tests/test_data_collection_health.py ........................            [ 27%]
+tests/test_data_explorer.py .................................            [ 27%]
+tests/test_data_integration.py .................                         [ 27%]
+tests/test_data_integration_contracts.py ............................... [ 28%]
+...............                                                          [ 28%]
+tests/test_data_integrity_audit.py ..................................... [ 28%]
+....                                                                     [ 28%]
+tests/test_data_quality.py ............................................. [ 28%]
+....                                                                     [ 28%]
+tests/test_data_readiness.py ....................................        [ 28%]
+tests/test_date_utils.py ............................................... [ 29%]
+..........                                                               [ 29%]
+tests/test_dealforma_features.py ........................                [ 29%]
+tests/test_decision_actionable_ordering.py ............................. [ 29%]
+.......................................................                  [ 30%]
+tests/test_decision_engine_contract.py ................................. [ 30%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+.............................                                            [ 31%]
+tests/test_decision_engine_determinism.py ..........................     [ 31%]
+tests/test_decision_engine_golden_records.py ............                [ 31%]
+tests/test_decision_engine_qa_report.py ................................ [ 31%]
+.........                                                                [ 31%]
+tests/test_decision_engine_replay_regression.py ........................ [ 31%]
+........................................................                 [ 32%]
+tests/test_decision_explanation_contract.py ...............ss            [ 32%]
+tests/test_decision_golden_records.py ...............................    [ 32%]
+tests/test_decision_memo.py ................                             [ 32%]
+tests/test_decision_ruleset.py ......................................... [ 32%]
+...........................................                              [ 33%]
+tests/test_decision_ruleset_sweep.py ...............                     [ 33%]
+tests/test_decision_strategy_backtest.py ............................... [ 33%]
+........                                                                 [ 33%]
+tests/test_defensive_features_cache.py ..                                [ 33%]
+tests/test_defensive_integration.py ...                                  [ 33%]
+tests/test_defensive_overlay_adapter.py ................................ [ 33%]
+........................................................................ [ 34%]
+................                                                         [ 34%]
+tests/test_development_stage.py ........................................ [ 34%]
+........                                                                 [ 34%]
+tests/test_dilution_risk.py ............................................ [ 34%]
+...                                                                      [ 34%]
+tests/test_dilution_risk_engine.py ..................................... [ 35%]
+....                                                                     [ 35%]
+tests/test_distribution_drift_report.py ............                     [ 35%]
+tests/test_drift_monitoring_gate.py .................................... [ 35%]
+......                                                                   [ 35%]
+tests/test_drift_report.py ............................................. [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 36%]
+..............................                                           [ 36%]
+tests/test_drift_report_helpers.py ....................                  [ 36%]
+tests/test_edgar_13f_extractor.py ....................                   [ 36%]
+tests/test_ees_v3_degradation.py .....                                   [ 36%]
+tests/test_ees_validation_filters.py ......                              [ 37%]
+tests/test_ees_validation_table.py ..........                            [ 37%]
+tests/test_eligibility_drift.py ...................................      [ 37%]
+tests/test_eligibility_reasons_determinism.py ......................     [ 37%]
+tests/test_ema_committee_collector.py .................................. [ 37%]
+........................................................................ [ 38%]
+..............                                                           [ 38%]
+tests/test_endpoint_quality.py .................                         [ 38%]
+tests/test_enhanced_weekly_summary.py ......                             [ 38%]
+tests/test_enhancement_engines.py ...................................    [ 38%]
+tests/test_enhancement_modules.py .....................                  [ 38%]
+tests/test_enrich_catalyst_window.py ..............                      [ 38%]
+tests/test_enrich_intraday_firecrawl.py .                                [ 38%]
+tests/test_ev_validation.py ..............                               [ 38%]
+tests/test_eval_forward_returns.py ..................................... [ 39%]
+........................................................................ [ 39%]
+.....................                                                    [ 39%]
+tests/test_eval_options_alpha.py ....................................... [ 39%]
+                                                                         [ 39%]
+tests/test_eval_ruleset.py .................................             [ 40%]
+tests/test_eval_ruleset_rerank_only.py .....................             [ 40%]
+tests/test_eval_signal_portfolios.py ................................... [ 40%]
+........                                                                 [ 40%]
+tests/test_event_analyst.py .....                                        [ 40%]
+tests/test_event_detector.py ........................................... [ 40%]
+......                                                                   [ 40%]
+tests/test_event_ev_engine.py .......................................... [ 41%]
+..........................                                               [ 41%]
+tests/test_event_ev_promotion_ladder.py ................................ [ 41%]
+....                                                                     [ 41%]
+tests/test_event_ledger.py ..................                            [ 41%]
+tests/test_event_move_lookup.py ........................                 [ 41%]
+tests/test_event_outcome_binder.py ..................                    [ 41%]
+tests/test_event_premium_decomp.py ..........................            [ 41%]
+tests/test_event_quality_confusion.py .............                      [ 42%]
+tests/test_event_quality_features.py ........................            [ 42%]
+tests/test_event_resolution.py .................                         [ 42%]
+tests/test_event_type_overlay.py ......                                  [ 42%]
+tests/test_evidence_snapshot.py ........................................ [ 42%]
+                                                                         [ 42%]
+tests/test_execution_lag_and_costs.py .........                          [ 42%]
+tests/test_expectation_coverage_spec105.py .............                 [ 42%]
+tests/test_expectation_error_model.py .................................. [ 42%]
+.............................                                            [ 43%]
+tests/test_expected_vs_realized.py ......                                [ 43%]
+tests/test_explainability_columns.py .............                       [ 43%]
+tests/test_export_action_lists.py ............................           [ 43%]
+tests/test_exposure_guardrail.py .........                               [ 43%]
+tests/test_expression_attribution.py ................................... [ 43%]
+.....                                                                    [ 43%]
+tests/test_expression_layer.py ......................................... [ 43%]
+.............................................                            [ 44%]
+tests/test_factor_attribution.py ....................................... [ 44%]
+.                                                                        [ 44%]
+tests/test_factor_drift.py ......................................        [ 44%]
+tests/test_family_portfolio.py ............                              [ 44%]
+tests/test_family_sleeve_allocation.py ........................          [ 44%]
+tests/test_family_split.py ................                              [ 44%]
+tests/test_far_horizon_catalyst.py ..................                    [ 45%]
+tests/test_fda_adcom_collector.py ...................................... [ 45%]
+..............                                                           [ 45%]
+tests/test_fda_designation_engine.py ...............                     [ 45%]
+tests/test_fda_pattern_expansion.py ..............................       [ 45%]
+tests/test_fda_regulatory_notices.py ......................              [ 45%]
+tests/test_feature_coverage_report.py ...........                        [ 45%]
+tests/test_feature_registry.py .................                         [ 45%]
+tests/test_fetch_alpha_table_artifact.py ..................              [ 46%]
+tests/test_fill_adjusted_pnl.py .....................                    [ 46%]
+tests/test_financial_module_2_survivability.py ......................... [ 46%]
+.........................                                                [ 46%]
+tests/test_financial_v2_errors.py ....................................   [ 46%]
+tests/test_financial_v2_golden.py ...................................... [ 46%]
+....                                                                     [ 47%]
+tests/test_financials_missing_gate.py ............                       [ 47%]
+tests/test_find_pdufa_candidates.py .................................... [ 47%]
+...................................                                      [ 47%]
+tests/test_finra_short_interest_feed.py ................................ [ 47%]
+...                                                                      [ 47%]
+tests/test_firecrawl_research_ingest.py ......                           [ 47%]
+tests/test_flatten_tier_91_180.py .............                          [ 47%]
+tests/test_fmb.py ............                                           [ 47%]
+tests/test_form4_insider.py ..................................           [ 48%]
+tests/test_form4_state_bookkeeping.py ..........                         [ 48%]
+tests/test_forward_eval_gate.py ..............                           [ 48%]
+tests/test_forward_harness_integrity.py .......                          [ 48%]
+tests/test_gate_ablation.py .........................                    [ 48%]
+tests/test_gate_margins.py ..............................                [ 48%]
+tests/test_golden_baseline.py ..........                                 [ 48%]
+tests/test_golden_ic_regression.py ..................                    [ 48%]
+tests/test_governance.py .................................               [ 49%]
+tests/test_governance_hashing.py ....................................... [ 49%]
+....                                                                     [ 49%]
+tests/test_governance_params_loader.py .......................           [ 49%]
+tests/test_governance_run_id.py .....................                    [ 49%]
+tests/test_hard_catalyst.py ..................                           [ 49%]
+tests/test_hard_catalyst_carry.py .........                              [ 49%]
+tests/test_hard_catalyst_gates.py ..................                     [ 49%]
+tests/test_hard_catalyst_provenance.py ................................. [ 50%]
+....                                                                     [ 50%]
+tests/test_hash_utils.py ......................................          [ 50%]
+tests/test_hedge_regime_classifier.py ........                           [ 50%]
+tests/test_herald_circuit_breaker.py .....................               [ 50%]
+tests/test_herald_crt_intake.py ...................                      [ 50%]
+tests/test_herald_precision_audit.py ................................    [ 50%]
+tests/test_herald_precision_metrics.py .....................             [ 50%]
+tests/test_herald_rate_limiter.py .........                              [ 50%]
+tests/test_hermes_mcp_server.py ...                                      [ 50%]
+tests/test_hint_integration.py ......................                    [ 51%]
+tests/test_hydrate_drawdown.py ......................................... [ 51%]
+.....                                                                    [ 51%]
+tests/test_ic_decomposition.py ......................                    [ 51%]
+tests/test_ic_enhancements.py .......................................... [ 51%]
+........................................................................ [ 52%]
+.........................                                                [ 52%]
+tests/test_ic_health_memory_hygiene.py ....................              [ 52%]
+tests/test_ic_measurement.py ........................................... [ 52%]
+..........................                                               [ 52%]
+tests/test_ic_packet.py ..................                               [ 53%]
+tests/test_ic_pit_validation.py ..................................       [ 53%]
+tests/test_implied_realized_calibration.py ...................           [ 53%]
+tests/test_import_adcom_outcomes.py .................................... [ 53%]
+...............                                                          [ 53%]
+tests/test_import_fills.py .........                                     [ 53%]
+tests/test_indication_mapper.py ....................................     [ 53%]
+tests/test_industry_neutral_eval.py ....................                 [ 54%]
+tests/test_input_validation.py ......................................... [ 54%]
+................................................                         [ 54%]
+tests/test_inputs_manifest.py .......................................... [ 54%]
+.                                                                        [ 54%]
+tests/test_insider_diagnostic_guards.py .......                          [ 54%]
+tests/test_insider_diagnostic_spec104.py .s......                        [ 54%]
+tests/test_insider_rankings_enrichment.py .......                        [ 55%]
+tests/test_institutional_delta.py ...................................... [ 55%]
+.....................................                                    [ 55%]
+tests/test_institutional_summary.py ..............................       [ 55%]
+tests/test_integration_contracts.py .................................... [ 55%]
+...........                                                              [ 55%]
+tests/test_integration_determinism.py ........................           [ 56%]
+tests/test_integration_errors.py ......................                  [ 56%]
+tests/test_intelligent_governance.py ................................... [ 56%]
+...........................                                              [ 56%]
+tests/test_internal_consistency_scorecard.py ........................... [ 56%]
+...................                                                      [ 56%]
+tests/test_intraday_mover_watch.py ..................................... [ 57%]
+............                                                             [ 57%]
+tests/test_ir_events_collector.py .........................              [ 57%]
+tests/test_kg_contradictions.py ...........                              [ 57%]
+tests/test_kg_integration.py .............                               [ 57%]
+tests/test_kg_loader.py ..................                               [ 57%]
+tests/test_kg_queries.py ..........                                      [ 57%]
+tests/test_knowledge_graph_spec089.py ..............................     [ 57%]
+tests/test_less_binary_inversion.py ...................                  [ 57%]
+tests/test_less_binary_sleeve.py ....................                    [ 58%]
+tests/test_liquidity_scoring.py ................................         [ 58%]
+tests/test_live_performance_tracker.py ....................              [ 58%]
+tests/test_live_shadow_portfolio.py .................................... [ 58%]
+......................                                                   [ 58%]
+tests/test_live_sim_weekly_ab.py ............                            [ 58%]
+tests/test_logging_config.py ........................................... [ 59%]
+....                                                                     [ 59%]
+tests/test_logistic_catalyst_decay.py ................                   [ 59%]
+tests/test_long_call_candidates.py ....................                  [ 59%]
+tests/test_m3_calibrator.py .................                            [ 59%]
+tests/test_m3_evaluation.py .......................                      [ 59%]
+tests/test_macro_data_collector.py .........................             [ 59%]
+tests/test_maintain_universe.py .............                            [ 59%]
+tests/test_make_ic_onepager.py ....................                      [ 59%]
+tests/test_manager_momentum_v1.py .....................................  [ 60%]
+tests/test_manager_scoring.py .......                                    [ 60%]
+tests/test_mapping_loader.py ...................................         [ 60%]
+tests/test_market_calendar.py .........................                  [ 60%]
+tests/test_massive_chain_analytics.py ...............                    [ 60%]
+tests/test_metrics.py ......................                             [ 60%]
+tests/test_microcap_sleeve.py .............                              [ 60%]
+tests/test_milestone_optionality.py ...................                  [ 60%]
+tests/test_minimum_suite.py ......................                       [ 61%]
+tests/test_missingness_defaults.py ..........................            [ 61%]
+tests/test_missingness_penalty.py ............................           [ 61%]
+tests/test_module3_pit_filter.py ..                                      [ 61%]
+tests/test_module5_weight_loading.py ..................................  [ 61%]
+tests/test_module_1_universe.py ........................................ [ 61%]
+.................                                                        [ 62%]
+tests/test_module_2.py .....                                             [ 62%]
+tests/test_module_2_financial_v2_unit.py ............................... [ 62%]
+.........................................................                [ 62%]
+tests/test_module_3_catalyst_events.py .............................     [ 62%]
+tests/test_module_3_errors.py ................                           [ 62%]
+tests/test_module_3_scoring_helpers.py ...........................       [ 63%]
+tests/test_module_3_scoring_v2.py ..........................             [ 63%]
+tests/test_module_3_smoke.py ......................                      [ 63%]
+tests/test_module_3_vnext.py ........................................... [ 63%]
+..................                                                       [ 63%]
+tests/test_module_3a.py ................s                                [ 63%]
+tests/test_module_5_coinvest.py ...............                          [ 63%]
+tests/test_module_5_composite_v3_unit.py ............................... [ 64%]
+.....................................                                    [ 64%]
+tests/test_module_5_composite_with_defensive_unit.py ....s.........      [ 64%]
+tests/test_module_5_defensive.py ............                            [ 64%]
+tests/test_module_5_diagnostics_v3.py .....................              [ 64%]
+tests/test_module_5_v2_integration.py .......................            [ 64%]
+tests/test_module_5_v3_regression.py ...........................         [ 64%]
+tests/test_module_5_weakest_link_regression.py ..                        [ 64%]
+tests/test_modules.py .................                                  [ 64%]
+tests/test_momentum_health_monitor.py .............................      [ 65%]
+tests/test_monitoring_artifact.py ..................                     [ 65%]
+tests/test_monitoring_gate.py .......................................    [ 65%]
+tests/test_morningstar_pit.py ...........................                [ 65%]
+tests/test_news_feed.py ...........................                      [ 65%]
+tests/test_normalize_financial_field_alias.py .........                  [ 65%]
+tests/test_null_safety.py .............................................. [ 66%]
+........................................................................ [ 66%]
+............                                                             [ 66%]
+tests/test_openclaw_agents.py .......................................... [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 67%]
+.........................................F                               [ 68%]
+tests/test_openfda_drugs_collector.py .............                      [ 68%]
+tests/test_operator_alerts.py .......................                    [ 68%]
+tests/test_operator_delivery.py .............................            [ 68%]
+tests/test_ops_supervisor.py .                                           [ 68%]
+tests/test_options_ab_readiness.py ...............                       [ 68%]
+tests/test_options_construction_overlay.py ................              [ 68%]
+tests/test_options_diagnostics.py ...................................... [ 68%]
+...........................................                              [ 69%]
+tests/test_options_fallback.py ........                                  [ 69%]
+tests/test_options_greeks.py ...................................         [ 69%]
+tests/test_options_monitor_v11.py ...................................    [ 69%]
+tests/test_options_monitor_v11_model.py ...................              [ 69%]
+tests/test_options_quality.py .................                          [ 69%]
+tests/test_options_review_queue.py .....................                 [ 70%]
+tests/test_options_risk_controls.py ..................                   [ 70%]
+tests/test_options_snapshot.py ...............................           [ 70%]
+tests/test_options_surface_signals.py ...........................        [ 70%]
+tests/test_options_verdict_features.py .........                         [ 70%]
+tests/test_outcome_provenance.py ................                        [ 70%]
+tests/test_output_writer.py ..................................           [ 70%]
+tests/test_overlap_correction.py ...................                     [ 70%]
+tests/test_parked_levers_registry.py ..............                      [ 71%]
+tests/test_partnership_engine.py ................................        [ 71%]
+tests/test_patches.py ..........................                         [ 71%]
+tests/test_phase1b_herald_integration.py ......                          [ 71%]
+tests/test_phase1b_ic_memory_integration.py F.....                       [ 71%]
+tests/test_phase1b_scheduler_integration.py ...                          [ 71%]
+tests/test_phase2_daily_runner.py .......................                [ 71%]
+tests/test_phase2_delta_hook.py .........                                [ 71%]
+tests/test_phase2_health_gate.py ...........................             [ 71%]
+tests/test_phase2_portfolio_regression.py ..............                 [ 71%]
+tests/test_phase2_recalibration.py ........                              [ 71%]
+tests/test_phase2_snapshot_delta.py .................................... [ 72%]
+....                                                                     [ 72%]
+tests/test_phase2_tracking_scope.py .                                    [ 72%]
+tests/test_phase_momentum_engine.py ..................                   [ 72%]
+tests/test_phase_momentum_interaction.py ......................          [ 72%]
+tests/test_pi_features.py ..................................             [ 72%]
+tests/test_pipeline_diversity_engine.py ...............                  [ 72%]
+tests/test_pipeline_runner.py ..............................             [ 72%]
+tests/test_pit_bundle_health_gate.py .......                             [ 72%]
+tests/test_pit_date_plumbing.py ........................                 [ 73%]
+tests/test_pit_discipline.py ....                                        [ 73%]
+tests/test_pit_enforcement.py .......................................    [ 73%]
+tests/test_pit_mode.py ..                                                [ 73%]
+tests/test_pit_regression.py ..............                              [ 73%]
+tests/test_pnl_attribution.py .................                          [ 73%]
+tests/test_portfolio_alerts.py ..................                        [ 73%]
+tests/test_portfolio_metrics.py .....................                    [ 73%]
+tests/test_portfolio_report.py ...........                               [ 73%]
+tests/test_portfolio_risk_layer.py ..........................            [ 74%]
+tests/test_portfolio_sizing_cq_tilt.py .................                 [ 74%]
+tests/test_portfolio_vol_corr_layer.py ................                  [ 74%]
+tests/test_pos_coverage_regression.py ......................             [ 74%]
+tests/test_pos_divergence.py ..................                          [ 74%]
+tests/test_pos_engine.py ............................................... [ 74%]
+................                                                         [ 74%]
+tests/test_pos_model_v2.py .............                                 [ 74%]
+tests/test_pos_model_v2_pure.py ...............                          [ 75%]
+tests/test_pos_prior_engine.py ......................................... [ 75%]
+.....                                                                    [ 75%]
+tests/test_post_promotion_monitor.py ........                            [ 75%]
+tests/test_post_promotion_smoke_gate.py ...............                  [ 75%]
+tests/test_post_snapshot_supervisor.py .                                 [ 75%]
+tests/test_postmortem_artifacts.py ....................................  [ 75%]
+tests/test_pre_trade_check.py .......................................... [ 75%]
+                                                                         [ 75%]
+tests/test_pre_trade_ruleset_gate.py ...........                         [ 76%]
+tests/test_press_release_collector.py .................................. [ 76%]
+.........                                                                [ 76%]
+tests/test_price_action_watch.py .........................               [ 76%]
+tests/test_price_gap_report.py .                                         [ 76%]
+tests/test_price_outlier_filter.py ..................                    [ 76%]
+tests/test_price_store.py ..........                                     [ 76%]
+tests/test_production_baseline_regression.py ............                [ 76%]
+tests/test_production_gates.py ..................                        [ 76%]
+tests/test_production_hardening.py ..................................... [ 77%]
+...........................................................              [ 77%]
+tests/test_production_monitor.py ..................                      [ 77%]
+tests/test_production_qa_check.py ..............                         [ 77%]
+tests/test_production_qa_classifier_check.py ......                      [ 77%]
+tests/test_promote_ruleset.py ......................                     [ 77%]
+tests/test_promote_ruleset_rollback.py ..........                        [ 77%]
+tests/test_promotion_battery.py ......                                   [ 77%]
+tests/test_promotion_gate.py ...............                             [ 77%]
+tests/test_promotion_weekly_gate.py .............                        [ 78%]
+tests/test_protocol_quality.py ...................                       [ 78%]
+tests/test_provenance.py ..............................................  [ 78%]
+tests/test_provenance_graph.py ......................                    [ 78%]
+tests/test_pubmed_client.py ..........................                   [ 78%]
+tests/test_purple_book_features.py ................                      [ 78%]
+tests/test_quality_tilt.py ......................                        [ 78%]
+tests/test_random_state.py ............................................. [ 79%]
+...                                                                      [ 79%]
+tests/test_rank_change_monitor.py ................                       [ 79%]
+tests/test_rank_ic_backtest.py ...........                               [ 79%]
+tests/test_ranker_engine.py ......................                       [ 79%]
+tests/test_ranker_v2_config.py .................                         [ 79%]
+tests/test_ranker_v2_pairwise.py ....................................... [ 79%]
+...............                                                          [ 79%]
+tests/test_ranker_v2_production.py ..................                    [ 80%]
+tests/test_ranking_mode.py ............................................  [ 80%]
+tests/test_readiness_gate.py .....................                       [ 80%]
+tests/test_realtime_quote_client.py .................................... [ 80%]
+.                                                                        [ 80%]
+tests/test_rebalance_cost_model.py .................                     [ 80%]
+tests/test_reclassify_cache.py ......                                    [ 80%]
+tests/test_record_fills.py ..............                                [ 80%]
+tests/test_regime.py ..............                                      [ 81%]
+tests/test_regime_engine.py ............................................ [ 81%]
+.......................................                                  [ 81%]
+tests/test_regulatory_calendar.py ...........................            [ 81%]
+tests/test_regulatory_calendar_gate.py ..............                    [ 81%]
+tests/test_regulatory_confidence_tilt.py ......................          [ 81%]
+tests/test_regulatory_coverage_audit.py ...........                      [ 81%]
+tests/test_regulatory_coverage_summary.py .........                      [ 82%]
+tests/test_regulatory_coverage_telemetry.py .........                    [ 82%]
+tests/test_regulatory_ladder.py .........................                [ 82%]
+tests/test_regulatory_sources.py .....................                   [ 82%]
+tests/test_release_summary.py ..............                             [ 82%]
+tests/test_repair_price_history_splits.py .............                  [ 82%]
+tests/test_replay_bundle.py ..............................               [ 82%]
+tests/test_replay_diff.py .............................................. [ 83%]
+........................                                                 [ 83%]
+tests/test_repo_env.py ..                                                [ 83%]
+tests/test_resilient_session.py ...........                              [ 83%]
+tests/test_restamp_snapshot_sources.py ............                      [ 83%]
+tests/test_returns_provider.py ..............................            [ 83%]
+tests/test_review_packet.py ...........                                  [ 83%]
+tests/test_review_queue.py ...................                           [ 83%]
+tests/test_risk_gates.py ..................................              [ 83%]
+tests/test_risk_rails.py ...........                                     [ 83%]
+tests/test_robustness.py .....................................           [ 84%]
+tests/test_robustness_extended.py ...................................... [ 84%]
+..........                                                               [ 84%]
+tests/test_rollback_drill.py .................................           [ 84%]
+tests/test_rollup_guardrails.py .F.FFF.                                  [ 84%]
+tests/test_rollup_shadow_metrics.py ....................                 [ 84%]
+tests/test_ruleset_governance_gate.py .........                          [ 84%]
+tests/test_ruleset_health_monitor.py ...........................         [ 85%]
+tests/test_ruleset_manifest_invariants.py .....                          [ 85%]
+tests/test_run_agent_direct.py ........                                  [ 85%]
+tests/test_run_daily.py .............................                    [ 85%]
+tests/test_run_daily_production_manifest.py ...                          [ 85%]
+tests/test_run_manifest.py ............................................. [ 85%]
+....                                                                     [ 85%]
+tests/test_run_screen.py ..............................................  [ 85%]
+tests/test_run_screen_from_bundle.py ................................... [ 86%]
+...........                                                              [ 86%]
+tests/test_run_screen_output_default.py ...                              [ 86%]
+tests/test_run_screen_units.py ......................................... [ 86%]
+......................................                                   [ 86%]
+tests/test_run_summary.py .....................................          [ 86%]
+tests/test_runway_severity.py ...............................            [ 87%]
+tests/test_sanity_checks.py ..............................               [ 87%]
+tests/test_sanity_metrics.py .....................                       [ 87%]
+tests/test_scheduler_health_phase1.py ..........                         [ 87%]
+tests/test_schema_registry.py ....................................       [ 87%]
+tests/test_schema_validation.py .......................                  [ 87%]
+tests/test_score_to_er.py .............................................. [ 88%]
+........................                                                 [ 88%]
+tests/test_score_utils.py .............................................. [ 88%]
+....................................                                     [ 88%]
+tests/test_scoring_robustness.py ...............................         [ 88%]
+tests/test_sec_13f.py ...............................                    [ 89%]
+tests/test_sec_6k_coverage.py .........                                  [ 89%]
+tests/test_sec_8k_extraction.py .............                            [ 89%]
+tests/test_sec_collector.py ..........................................   [ 89%]
+tests/test_sec_collector_staleness.py ...                                [ 89%]
+tests/test_sec_multi_form.py ........................................... [ 89%]
+.                                                                        [ 89%]
+tests/test_secondary_regulatory.py ...........                           [ 89%]
+tests/test_selector_engine.py ..........................                 [ 90%]
+tests/test_semantic_audit_exit_codes.py ................                 [ 90%]
+tests/test_send_alert.py ...............                                 [ 90%]
+tests/test_sentinel_ticker_report.py ...........                         [ 90%]
+tests/test_sharadar_provider.py ....................................     [ 90%]
+tests/test_short_interest_engine.py ................................     [ 90%]
+tests/test_signal_backtest_robustness.py ............................... [ 90%]
+...............................................                          [ 91%]
+tests/test_signal_evidence.py ........................                   [ 91%]
+tests/test_slo_tracker.py ................                               [ 91%]
+tests/test_smart_money_alignment.py .............                        [ 91%]
+tests/test_smart_money_reinforcement_semantics.py .......                [ 91%]
+tests/test_snapshot_integrity.py .........                               [ 91%]
+tests/test_snapshot_integrity_report.py .................                [ 91%]
+tests/test_snapshot_manifest.py .......                                  [ 91%]
+tests/test_snapshot_preflight.py ....................................... [ 92%]
+...............                                                          [ 92%]
+tests/test_snapshots.py .............................                    [ 92%]
+tests/test_sort_contributions.py ....................................... [ 92%]
+...........                                                              [ 92%]
+tests/test_source_reliability.py ....................................... [ 92%]
+..                                                                       [ 92%]
+tests/test_split_adjustment_contract.py .........                        [ 92%]
+tests/test_stability_attribution.py ..........................           [ 93%]
+tests/test_startup_preflight.py ..........                               [ 93%]
+tests/test_stats_bootstrap.py ........                                   [ 93%]
+tests/test_stats_calibration.py ........                                 [ 93%]
+tests/test_stats_cross_sectional.py .........                            [ 93%]
+tests/test_stats_multiple_testing.py ........                            [ 93%]
+tests/test_stats_robustness.py ...                                       [ 93%]
+tests/test_stochastic_determinism.py ....                                [ 93%]
+tests/test_submit_research.py .............                              [ 93%]
+tests/test_surface_delta_monitor.py .................................... [ 93%]
+.........                                                                [ 93%]
+tests/test_surface_diagnostics.py ...................                    [ 93%]
+tests/test_sync_hermes_skills.py .....                                   [ 93%]
+tests/test_telegram_command_handler.py ...........................       [ 94%]
+tests/test_term_structure_validator.py .................                 [ 94%]
+tests/test_thesis_gate_stage_classification.py ..................        [ 94%]
+tests/test_ticker_explain_pack.py ...............................        [ 94%]
+tests/test_ticker_validator.py ..............                            [ 94%]
+tests/test_time_decay_scoring.py ........................                [ 94%]
+tests/test_timeline_slippage_engine.py .............................     [ 94%]
+tests/test_timing_buckets.py ............                                [ 94%]
+tests/test_timing_event_quality_v3.py ...............................    [ 95%]
+tests/test_timing_hazard_review.py ..........                            [ 95%]
+tests/test_town_bridge_events.py .....                                   [ 95%]
+tests/test_track_b_governance_contracts.py ssss                          [ 95%]
+tests/test_trade_decision.py ....................................        [ 95%]
+tests/test_trade_deltas.py ...........................                   [ 95%]
+tests/test_trade_plan.py ................                                [ 95%]
+tests/test_transition_model.py ................                          [ 95%]
+tests/test_triage_gate_fail.py ................................          [ 95%]
+tests/test_trial_registry_collectors.py ................................ [ 96%]
+......................                                                   [ 96%]
+tests/test_trials_collector.py ......................................... [ 96%]
+...................                                                      [ 96%]
+tests/test_types.py ..................................                   [ 96%]
+tests/test_validate_pit_inputs.py ..........................             [ 97%]
+tests/test_validation_config.py ........................................ [ 97%]
+......                                                                   [ 97%]
+tests/test_verdict_template.py ..............................            [ 97%]
+tests/test_verify_snapshot_collapse_guards.py ..........                 [ 97%]
+tests/test_wake_robin_context.py .....                                   [ 97%]
+tests/test_walkforward.py ...............                                [ 97%]
+tests/test_walkforward_oos_m3.py .......................                 [ 97%]
+tests/test_warm_13f_cache.py ........................................... [ 98%]
+....                                                                     [ 98%]
+tests/test_warm_caches.py ...........................................    [ 98%]
+tests/test_warm_caches_ctgov.py .......                                  [ 98%]
+tests/test_warm_caches_delta.py ...........                              [ 98%]
+tests/test_warm_caches_sticky.py ....................................... [ 98%]
+.......                                                                  [ 98%]
+tests/test_warm_fda_regulatory.py ....                                   [ 98%]
+tests/test_warm_price_cache.py ......................................... [ 99%]
+                                                                         [ 99%]
+tests/test_weekly_execution.py ..............                            [ 99%]
+tests/test_weekly_execution_caps.py .................................    [ 99%]
+tests/test_weekly_go_nogo.py .............................               [ 99%]
+tests/test_weekly_health_packet.py ........................              [ 99%]
+tests/test_weekly_readiness_scorecard.py ............................... [ 99%]
+...........                                                              [ 99%]
+tests/test_weekly_rebalance.py ...............                           [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_every_directory_in_registry _______________________
+tests/test_agent_registry.py:61: in test_every_directory_in_registry
+    assert (
+E   AssertionError: Agent directories missing from AGENT_REGISTRY.json: ['bioshort_watch', 'biotech_news_digest', 'company_news_ingest', 'policy_shadow_watch', 'shadow_watch']
+E   assert not {'bioshort_watch', 'biotech_news_digest', 'company_news_ingest', 'policy_shadow_watch', 'shadow_watch'}
+_________ TestClassificationPriority.test_informational_beats_clinical _________
+tests/test_classify_press_releases.py:240: in test_informational_beats_clinical
+    assert r["informational_only"] is True
+E   assert False is True
+_________________ TestIncompleteAgents.test_total_agent_count __________________
+tests/test_openclaw_agents.py:463: in test_total_agent_count
+    assert not untracked, f"Agent workspace(s) not in any agent list: {untracked}"
+E   AssertionError: Agent workspace(s) not in any agent list: {'bioshort_watch', 'company_news_ingest', 'policy_shadow_watch', 'biotech_news_digest', 'shadow_watch'}
+E   assert not {'bioshort_watch', 'biotech_news_digest', 'company_news_ingest', 'policy_shadow_watch', 'shadow_watch'}
+______________ test_ic_memory_hygiene_invoked_in_heartbeat_checks ______________
+tests/test_phase1b_ic_memory_integration.py:22: in test_ic_memory_hygiene_invoked_in_heartbeat_checks
+    assert SPECIALIZED_CHECKS["ic_memory_hygiene"] == check_ic_memory_hygiene
+E   assert <function check_ic_memory_hygiene at 0xf88aef2082c0> == check_ic_memory_hygiene
+____________________ TestSteadyStateChurn.test_g2b_bounded _____________________
+tests/test_rollup_guardrails.py:98: in test_g2b_bounded
+    assert g2b <= MAX_DAILY_G2B, f"{r['as_of_date']}: G→B={g2b} exceeds {MAX_DAILY_G2B}"
+E   AssertionError: 2026-03-08: G→B=11 exceeds 5
+E   assert 11 <= 5
+_________________ TestATierStability.test_a_tier_above_minimum _________________
+tests/test_rollup_guardrails.py:120: in test_a_tier_above_minimum
+    assert a >= MIN_A_TIER, f"{r['as_of_date']}: A-tier={a} below {MIN_A_TIER}"
+E   AssertionError: 2026-03-30: A-tier=18 below 25
+E   assert 18 >= 25
+___________________ TestOverlapStability.test_top60_overlap ____________________
+tests/test_rollup_guardrails.py:131: in test_top60_overlap
+    assert v >= MIN_TOP60_OVERLAP, f"{r['as_of_date']}: top60_overlap={v:.2f} below {MIN_TOP60_OVERLAP}"
+E   AssertionError: 2026-02-20: top60_overlap=0.35 below 0.7
+E   assert 0.3483 >= 0.7
+___________________ TestOverlapStability.test_top100_overlap ___________________
+tests/test_rollup_guardrails.py:138: in test_top100_overlap
+    assert v >= MIN_TOP100_OVERLAP, f"{r['as_of_date']}: top100_overlap={v:.2f} below {MIN_TOP100_OVERLAP}"
+E   AssertionError: 2026-02-20: top100_overlap=0.40 below 0.85
+E   assert 0.3986 >= 0.85
+=============================== warnings summary ===============================
+../../../../../home/arrenchulz/.local/lib/python3.12/site-packages/firecrawl/v2/types.py:979
+  /home/arrenchulz/.local/lib/python3.12/site-packages/firecrawl/v2/types.py:979: UserWarning: Field name "json" in "MonitorPageDiff" shadows an attribute in parent "BaseModel"
+    class MonitorPageDiff(BaseModel):
+
+../../../../../home/arrenchulz/.local/lib/python3.12/site-packages/firecrawl/v2/types.py:994
+  /home/arrenchulz/.local/lib/python3.12/site-packages/firecrawl/v2/types.py:994: UserWarning: Field name "json" in "MonitorPageSnapshot" shadows an attribute in parent "BaseModel"
+    class MonitorPageSnapshot(BaseModel):
+
+tests/test_pos_model_v2.py:44
+  /mnt/c/Projects/biotech_screener/biotech-screener/tests/test_pos_model_v2.py:44: PytestCollectionWarning: cannot collect test class 'TestResults' because it has a __init__ constructor (from: tests/test_pos_model_v2.py)
+    class TestResults:
+
+tests/test_build_ic_dashboard.py::TestBuildIcDashboard::test_writes_artifacts
+tests/test_forward_harness_integrity.py::TestICDashboardHistoryDedup::test_dedup_prevents_duplicate_dates
+tests/test_live_shadow_portfolio.py::TestEndToEndActionLoop::test_full_action_loop
+  /home/arrenchulz/.local/lib/python3.12/site-packages/scipy/stats/_stats_py.py:5445: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+    warnings.warn(stats.ConstantInputWarning(warn_msg))
+
+tests/test_catalyst_attribution_integrity_2026_06_02.py::test_cogt_trace_no_impact_assumption
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_catalyst_attribution_integrity_2026_06_02.py::test_cogt_trace_no_impact_assumption returned <class 'dict'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_catalyst_attribution_integrity_2026_06_02.py::test_snapshot_smoke_eras_collision_exclusion
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_catalyst_attribution_integrity_2026_06_02.py::test_snapshot_smoke_eras_collision_exclusion returned <class 'dict'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_catalyst_attribution_integrity_2026_06_02.py::test_snapshot_smoke_drug_collision_exclusion
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_catalyst_attribution_integrity_2026_06_02.py::test_snapshot_smoke_drug_collision_exclusion returned <class 'dict'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_defensive_integration.py::test_adapter_functions
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_defensive_integration.py::test_adapter_functions returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_defensive_integration.py::test_wrapper
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_defensive_integration.py::test_wrapper returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_defensive_integration.py::test_existing_module
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_defensive_integration.py::test_existing_module returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_module_5_weakest_link_regression.py::test_weakest_link_with_normal_components
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_module_5_weakest_link_regression.py::test_weakest_link_with_normal_components returned <class 'dict'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_module_5_weakest_link_regression.py::test_weakest_link_with_negative_financial
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_module_5_weakest_link_regression.py::test_weakest_link_with_negative_financial returned <class 'dict'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_options_diagnostics.py::TestFetchWithMock::test_basic_fetch
+tests/test_options_diagnostics.py::TestFetchWithMock::test_term_slope_computed
+tests/test_options_diagnostics.py::TestFetchWithMock::test_single_expiry_no_back
+  /home/arrenchulz/.local/lib/python3.12/site-packages/tastytrade/streamer.py:397: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
+    async with AsyncClient(
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/test_pos_model_v2.py::test_enum_parsing
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_enum_parsing returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_base_rate_lookup
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_base_rate_lookup returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_modifier_calculations
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_modifier_calculations returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_boundary_conditions
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_boundary_conditions returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_decimal_precision
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_decimal_precision returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_audit_trail
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_audit_trail returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_integration_helpers
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_integration_helpers returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_model_validation
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_model_validation returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_string_input_convenience
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_string_input_convenience returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_fixture_loading
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_fixture_loading returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_fixture_validation_errors
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_fixture_validation_errors returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_fixture_roundtrip
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_fixture_roundtrip returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+tests/test_pos_model_v2.py::test_fixture_provenance_in_results
+  /home/arrenchulz/.local/lib/python3.12/site-packages/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_fixture_provenance_in_results returned <class 'tests.test_pos_model_v2.TestResults'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_agent_registry.py::test_every_directory_in_registry - Asser...
+FAILED tests/test_classify_press_releases.py::TestClassificationPriority::test_informational_beats_clinical
+FAILED tests/test_openclaw_agents.py::TestIncompleteAgents::test_total_agent_count
+FAILED tests/test_phase1b_ic_memory_integration.py::test_ic_memory_hygiene_invoked_in_heartbeat_checks
+FAILED tests/test_rollup_guardrails.py::TestSteadyStateChurn::test_g2b_bounded
+FAILED tests/test_rollup_guardrails.py::TestATierStability::test_a_tier_above_minimum
+FAILED tests/test_rollup_guardrails.py::TestOverlapStability::test_top60_overlap
+FAILED tests/test_rollup_guardrails.py::TestOverlapStability::test_top100_overlap
+= 8 failed, 16358 passed, 10 skipped, 161 deselected, 30 warnings in 1299.39s (0:21:39) =
