@@ -4135,6 +4135,33 @@ def run_daily(
 
     # --- Idempotent rerun check ---
     _final_snap = final_snapshots_dir / as_of_date
+
+    def _emit_self_improvement_artifacts(snapshot_dir: Path, manifest_obj: Dict[str, Any]) -> None:
+        """Write governed RSI artifacts without affecting gate outcomes."""
+        try:
+            from tools.self_improvement_harness import (
+                DEFAULT_OUTPUT_DIR,
+                week_for_as_of_date,
+                write_daily_model_diagnosis,
+                write_weekly_remediation_queue_from_dir,
+            )
+
+            _paths = write_daily_model_diagnosis(
+                snapshot_dir,
+                manifest_obj,
+                as_of_date,
+                DEFAULT_OUTPUT_DIR,
+            )
+            _logger.info(f"Self-improvement diagnosis → {_paths['markdown']}")
+            _week_paths = write_weekly_remediation_queue_from_dir(
+                DEFAULT_OUTPUT_DIR,
+                week_for_as_of_date(as_of_date),
+                DEFAULT_OUTPUT_DIR,
+            )
+            _logger.info(f"Self-improvement weekly queue → {_week_paths['markdown']}")
+        except Exception as exc:
+            _logger.warning(f"Could not write self-improvement diagnosis: {exc}")
+
     if _step_done(_final_snap, "manifest_written"):
         _logger.info(f"\n  Snapshot for {as_of_date} already has a completed manifest.")
         _logger.info("Skipping expensive steps (price, cache, screen, audit, gates).")
@@ -4142,6 +4169,7 @@ def run_daily(
         _rm_path = _final_snap / "run_manifest.json"
         existing_manifest = json.loads(_rm_path.read_text(encoding="utf-8")) if _rm_path.exists() else None
         if existing_manifest:
+            _emit_self_improvement_artifacts(_final_snap, existing_manifest)
             return existing_manifest
         # No manifest found despite progress marker — fall through
 
@@ -4165,6 +4193,7 @@ def run_daily(
         )
         if gov_gate.value:
             manifest["governance_mode"] = gov_gate.value
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
     # Stamp governance mode for manifest
     _governance_mode = gov_gate.value or "STRICT"
@@ -4186,6 +4215,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     # --- Step 1: Price refresh ---
@@ -4222,6 +4252,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     # --- Step 1.4: CTgov daily trial status poll (non-blocking) ---
@@ -4289,6 +4320,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     if effective_as_of_date != as_of_date:
@@ -4313,6 +4345,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     # --- Gate: market data schema ---
@@ -4332,6 +4365,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     # --- Gate: market data staleness ---
@@ -4373,6 +4407,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     # --- Gate: market data coverage ---
@@ -4392,6 +4427,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     # --- Step 2: Run screen into staging dir ---
@@ -4432,6 +4468,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
     if screen_proc.returncode == 1:
@@ -4485,6 +4522,7 @@ def run_daily(
                 git_pre_run=git_pre_run,
                 data_dir=data_dir,
             )
+            _emit_self_improvement_artifacts(staging_date_dir, manifest)
             return manifest
 
     elif screen_proc.returncode == 2:
@@ -4512,6 +4550,7 @@ def run_daily(
             git_pre_run=git_pre_run,
             data_dir=data_dir,
         )
+        _emit_self_improvement_artifacts(staging_date_dir, manifest)
         return manifest
 
     # --- Step 2.5: PIT price anchor from staging rankings.csv (before gates) ---
@@ -4827,6 +4866,8 @@ def run_daily(
         _logger.info(f"Gate ledger → {GATE_LEDGER_PATH}")
     except Exception as e:
         _logger.warning(f"Could not append gate ledger: {e}")
+
+    _emit_self_improvement_artifacts(staging_date_dir, manifest)
 
     # --- Promotion decision ---
     overall = manifest["overall_status"]
