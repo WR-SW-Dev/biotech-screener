@@ -88,6 +88,59 @@ def test_daily_diagnosis_treats_missing_expectation_fields_as_plumbing_gap(tmp_p
     assert "selector" in " ".join(diagnosis["do_not_change"]).lower()
 
 
+def test_daily_diagnosis_surfaces_probabilistic_feature_feedback_gap(tmp_path):
+    snapshot = tmp_path / "snapshot"
+    _write_rankings(
+        snapshot / "rankings.csv",
+        [
+            {
+                "ticker": "AAA",
+                "eligible": "1",
+                "actionable_rank": "1",
+                "confidence_overall": "0.90",
+                "confidence_pos": "",
+                "p_move_gt_implied": "0.75",
+            },
+            {
+                "ticker": "BBB",
+                "eligible": "1",
+                "actionable_rank": "2",
+                "confidence_overall": "",
+                "confidence_pos": "1.20",
+                "p_move_gt_implied": "0.99",
+            },
+        ],
+        [
+            "ticker",
+            "eligible",
+            "actionable_rank",
+            "confidence_overall",
+            "confidence_pos",
+            "p_move_gt_implied",
+        ],
+    )
+    manifest = {
+        "effective_as_of_date": "2026-06-05",
+        "overall_status": "WARN",
+        "gates": [],
+    }
+
+    diagnosis = build_daily_model_diagnosis(snapshot, manifest, "2026-06-05")
+    feedback = diagnosis["probabilistic_feature_feedback"]
+    finding_ids = {item["id"] for item in diagnosis["findings"]}
+
+    assert feedback["observed_fields"] == [
+        "confidence_overall",
+        "confidence_pos",
+        "p_move_gt_implied",
+    ]
+    assert (
+        feedback["fields"]["confidence_pos"]["out_of_bounds_count"] == 1
+    )
+    assert "probabilistic_feature_feedback_gap" in finding_ids
+    assert "probabilistic_feature_contract_violation" in finding_ids
+
+
 def test_daily_diagnosis_writes_markdown_and_machine_readable_json(tmp_path):
     snapshot = tmp_path / "snapshot"
     _write_rankings(
