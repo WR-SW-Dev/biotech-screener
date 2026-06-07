@@ -11457,6 +11457,54 @@ def _default_output_path(*, as_of_date: str, data_dir: Path, snapshot_dir: Optio
     return base / as_of_date / "screen_output.json"
 
 
+def _managed_snapshot_dir(*, as_of_date: str, data_dir: Path, snapshot_dir: Optional[Path]) -> Path:
+    """Return the dated snapshot directory managed by run_screen.py."""
+    if snapshot_dir is not None:
+        base = snapshot_dir
+    else:
+        base = data_dir.parent / "data" / "snapshots"
+    return base / as_of_date
+
+
+def _same_filesystem_path(left: Path, right: Path) -> bool:
+    """Compare paths without requiring them to exist."""
+    try:
+        return left.resolve(strict=False) == right.resolve(strict=False)
+    except OSError:
+        return left.absolute() == right.absolute()
+
+
+def _output_targets_managed_snapshot_dir(
+    output_path: Path,
+    *,
+    as_of_date: str,
+    data_dir: Path,
+    snapshot_dir: Optional[Path],
+) -> bool:
+    """Return True when an output path writes directly into the managed snapshot dir."""
+    managed_dir = _managed_snapshot_dir(as_of_date=as_of_date, data_dir=data_dir, snapshot_dir=snapshot_dir)
+    return _same_filesystem_path(output_path.parent, managed_dir)
+
+
+def _enforce_snapshot_output_overwrite_policy(
+    output_path: Path,
+    *,
+    as_of_date: str,
+    data_dir: Path,
+    snapshot_dir: Optional[Path],
+    force_overwrite: bool,
+) -> None:
+    """Apply CCFT frozen-snapshot policy before writing managed snapshot outputs."""
+    managed_dir = _managed_snapshot_dir(as_of_date=as_of_date, data_dir=data_dir, snapshot_dir=snapshot_dir)
+    if force_overwrite or not _same_filesystem_path(output_path.parent, managed_dir):
+        return
+    if managed_dir.exists():
+        raise FileExistsError(
+            f"Snapshot already exists at {managed_dir}; refusing to write {output_path.name} "
+            "without --force-overwrite."
+        )
+
+
 def main() -> int:
     """CLI entrypoint."""
     parser = argparse.ArgumentParser(
@@ -12120,14 +12168,25 @@ Module 3 Catalyst Detection:
     # =========================================================================
     # Validate argument combinations
     # =========================================================================
-    if not args.dry_run and args.output is None:
-        args.output = _default_output_path(
-            as_of_date=args.as_of_date,
-            data_dir=Path(args.data_dir),
-            snapshot_dir=getattr(args, "snapshot_dir", None),
-        )
+    if not args.dry_run:
+        if args.output is None:
+            args.output = _default_output_path(
+                as_of_date=args.as_of_date,
+                data_dir=Path(args.data_dir),
+                snapshot_dir=getattr(args, "snapshot_dir", None),
+            )
+            logger.info(f"[OUTPUT] --output not provided; defaulting to {args.output}")
+        try:
+            _enforce_snapshot_output_overwrite_policy(
+                args.output,
+                as_of_date=args.as_of_date,
+                data_dir=Path(args.data_dir),
+                snapshot_dir=getattr(args, "snapshot_dir", None),
+                force_overwrite=getattr(args, "force_overwrite", False),
+            )
+        except FileExistsError as exc:
+            parser.error(str(exc))
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"[OUTPUT] --output not provided; defaulting to {args.output}")
 
     if args.resume_from and not args.checkpoint_dir:
         parser.error("--resume-from requires --checkpoint-dir")
