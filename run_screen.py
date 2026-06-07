@@ -340,6 +340,13 @@ VERSION = "1.6.0"  # Bumped for governance-friendly CLI enhancements
 DETERMINISTIC_TIMESTAMP_SUFFIX = "T00:00:00Z"
 GOVERNANCE_SCHEMA_VERSION = "screen_output_governance.v1"
 SCORE_AFFECTING_CSV_INPUTS = ("price_history.csv",)
+GENERATED_JSON_OUTPUT_PREFIXES = (
+    "catalyst_events_",
+    "catalyst_events_vnext_",
+    "diagnostics_",
+    "run_log",
+    "screen_",
+)
 SCHEMA_DECISION_PORTFOLIO = "decision_portfolio.v1"
 SCHEMA_PORTFOLIO_POSITIONS = "portfolio_positions.v1"
 SCHEMA_METADATA = "metadata.v1"
@@ -1018,8 +1025,8 @@ def _compute_run_input_hashes(data_dir: Path) -> Dict[str, str]:
     """Hash primary run inputs, including score-affecting non-JSON inputs."""
     content_hashes: Dict[str, str] = {}
     for json_file in sorted(data_dir.glob("*.json")):
-        if json_file.name.startswith("run_log"):
-            continue  # Skip run logs - they're outputs, not inputs
+        if json_file.name.startswith(GENERATED_JSON_OUTPUT_PREFIXES):
+            continue  # Skip generated sidecars - they're outputs, not inputs
         content_hashes[json_file.name] = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
 
     for csv_name in SCORE_AFFECTING_CSV_INPUTS:

@@ -352,6 +352,7 @@ class TestDeterministicProvenanceHelpers:
     def test_compute_run_input_hashes_includes_score_affecting_price_csv(self, tmp_path):
         (tmp_path / "universe.json").write_text('[{"ticker":"ABC"}]\n', encoding="utf-8")
         (tmp_path / "run_log_2026-03-06.json").write_text('{"wall_clock": true}\n', encoding="utf-8")
+        (tmp_path / "catalyst_events_2026-03-06.json").write_text('[{"ticker":"ABC"}]\n', encoding="utf-8")
         (tmp_path / "price_history.csv").write_text("date,ticker,close\n2026-03-05,ABC,10\n", encoding="utf-8")
 
         hashes = _compute_run_input_hashes(tmp_path)
@@ -359,6 +360,7 @@ class TestDeterministicProvenanceHelpers:
         assert "universe.json" in hashes
         assert "price_history.csv" in hashes
         assert "run_log_2026-03-06.json" not in hashes
+        assert "catalyst_events_2026-03-06.json" not in hashes
         assert len(hashes["price_history.csv"]) == 16
 
     def test_governance_envelope_has_required_fields(self):
