@@ -1,6 +1,6 @@
 # Hermes Tools Map
 
-Last updated: 2026-05-30
+Last updated: 2026-06-07 · baseline `main` @ `ec4b2726`
 
 Canonical taxonomy for Hermes in this repo. **Hermes is not one thing** — it is four related surfaces plus a monitoring feed. Use this map before invoking tools so layers are not conflated.
 
@@ -69,6 +69,9 @@ Deterministic scripts in `tools/`. These **can** write repo artifacts and docs; 
 | [`tools/build_hermes_knowledge_layer.py`](../../tools/build_hermes_knowledge_layer.py) | Spec 089 **Hermeslink** ops brain: git, crontab, registry, held specs, contradiction checks C1–C5 → `artifacts/ops/*` |
 | [`tools/sync_hermes_skills.py`](../../tools/sync_hermes_skills.py) | `skills/` → `docs/hermes_skills/`; maintains `_meta.json` (`source_authority`) |
 | [`tools/audit_hermes_skills.py`](../../tools/audit_hermes_skills.py) | Registry coverage, authority completeness, mirror drift vs `skills/` |
+| [`tools/audit_learnings.py`](../../tools/audit_learnings.py) | `.learnings/` tier hygiene: HOT/WARM limits, Pattern-Key promotion candidates (read-only) |
+| [`tools/skills_execution_logger.py`](../../tools/skills_execution_logger.py) | Skill invocation telemetry → `artifacts/skills_learning/` JSONL |
+| [`tools/hermes_skills_learning_loop_v2.py`](../../tools/hermes_skills_learning_loop_v2.py) | Monthly skills performance report; advisory-only (no auto-routing) |
 | [`tools/agent_preflight.py`](../../tools/agent_preflight.py) | Pre-dispatch governance report (used by `run_agent_direct.py`) |
 | [`tools/notify_cron_missed.py`](../../tools/notify_cron_missed.py) | Town bridge: `cron_missed` events |
 | [`tools/smoke_operator_delivery.py`](../../tools/smoke_operator_delivery.py) | Smoke-test Town email (`OPERATOR_DELIVERY_DRY_RUN`) |
@@ -254,7 +257,7 @@ python3 tools/sync_hermes_skills.py
 python3 tools/audit_hermes_skills.py
 ```
 
-Expected: 31 Hermes `.md` files, 31 registered in `_meta.json`, no mirror drift.
+Expected: **32** Hermes `.md` files (excl. `harvest_log.md`), **32** registered in `_meta.json`, no mirror drift.
 
 ### Knowledge layer (operator WSL — crontab checks authoritative)
 
@@ -277,8 +280,11 @@ python3 tools/run_agent_direct.py --agent <name> --message "…"   # blocked age
 ```bash
 git pull origin main
 python3 tools/sync_hermes_skills.py && python3 tools/audit_hermes_skills.py
+python3 tools/audit_learnings.py
 python3 tools/build_hermes_knowledge_layer.py
+cat artifacts/ops/contradiction_ledger/latest.md
 # Optional: refresh ~/.hermes/skills/ from docs/hermes_skills/ (see operator_host_skills.md)
+# Optional: monthly skills report — tools/hermes_skills_learning_loop_v2.py
 ```
 
 ---
