@@ -36,6 +36,23 @@ This skill is organized into two sections:
 
 ---
 
+## Repo scale (agent orientation)
+
+Use this to calibrate blast-radius and where complexity lives — not to justify skipping CodeGraph preflight.
+
+| Layer | Approx. Python LOC | Character |
+| --- | ---: | --- |
+| Scoring engines | ~4,000 | `decision_engine` + `selector_engine` + `ranker_engine` — **compact, high leverage** |
+| Screen orchestrator | ~13,000 | `run_screen.py` — daily production path |
+| Production stack | ~176,000 | `src/`, `common/`, `tools/`, agents, governance, engines |
+| Tests | ~254,000 | Contract, leakage, regression — largest layer |
+| Research scripts | ~90,000 | `scripts/research/` backfills and studies |
+| All Python (excl. data dirs) | ~750,000 | Full repo |
+
+**Summary:** small scoring core inside a medium institutional pipeline with a **heavy verification shell**. Edits to engines or `final_score` paths are gated regardless of how “small” the diff looks.
+
+---
+
 # SECTION 1: FRAMEWORK REFERENCE
 
 ---
@@ -105,7 +122,7 @@ Repo-native "ops brain" that continuously answers:
 
 ### Host authority (operator WSL vs Cloud)
 
-*Last reviewed: 2026-06-01 · plumbing baseline `main` @ `0bac216a` (#332–#334)*
+*Last reviewed: 2026-06-07 · plumbing baseline `main` @ `31a74d42`*
 
 | Host | Can validate | Cannot validate |
 | --- | --- | --- |
@@ -148,6 +165,7 @@ git log -1 --oneline
 ```bash
 python3 tools/build_hermes_knowledge_layer.py
 python3 tools/audit_hermes_skills.py
+python3 tools/audit_learnings.py
 cat artifacts/ops/contradiction_ledger/latest.md
 cat artifacts/ops/first_fire_ledger/latest.md
 ```
@@ -606,18 +624,14 @@ Key findings (pseudo-PIT):
 
 ### Repo plumbing baseline (Cloud + Cursor)
 
-*Merged through 2026-06-01 · `main` @ `0bac216a`*
+*Last reviewed: 2026-06-07 · `main` @ `31a74d42`*
 
-| PR | Scope | Status |
-| --- | --- | --- |
-| #311 | Agent registry ↔ `agents/` dirs; Hermes governance agents registered | Done |
-| #312–#313 | CodeGraph cloud install; `UNKNOWN_CLOUD_ENV` for crontab on Cloud | Done |
-| #326 | Fleet consolidated to **29** active agents | Done |
-| #328–#329 | `hermes_tools_map.md`, operator skills runbook | Done |
-| #330 | Hermes model routing docs (gateway vs MCP vs direct) | Done |
-| #331 | Python deps bump + `requirements.lock` regen | Done |
-| #332 | Cursor skills knowledge refresh (screener-ops, codegraph) | Done |
-| #333–#334 | CI test contract fixes; full suite green (4 Track B skips) | Done |
+| Area | Status |
+| --- | --- |
+| Skills + knowledge recursion | `self-improving`, `.learnings/`, `audit_learnings.py` on `main` |
+| CodeGraph | v0.9.7 pinned; MCP + CLI; bounded proof model |
+| Hermes fleet | 29 active agents; WSL acceptance gate for cron/gateway |
+| CI / tests | Full suite green; Track B skips intentional; Actions budget ≠ code failure |
 
 ### Cursor Cloud Agent Environment
 
@@ -652,6 +666,7 @@ Key findings (pseudo-PIT):
 | Edit skill source | `skills/<dir>/SKILL.md` or `REFERENCE.md` |
 | Sync to Hermes mirror | `python3 tools/sync_hermes_skills.py` |
 | Audit mirrors + `_meta.json` | `python3 tools/audit_hermes_skills.py` |
+| Audit learnings tiers | `python3 tools/audit_learnings.py` |
 | Commit | `docs/hermes_skills/` + `skills/` when mirrors change |
 | Optional WSL runtime | Copy to `~/.hermes/skills/` only if gateway reads stale copies |
 

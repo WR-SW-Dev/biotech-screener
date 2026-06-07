@@ -1,6 +1,6 @@
 # Operator Host Hermes Skills Layout
 
-Last updated: 2026-05-31
+Last updated: 2026-06-07
 
 This runbook separates **repo authority** from **operator runtime copies** so Hermes and Cursor do not drift silently.
 
@@ -100,7 +100,7 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 | Hermes mirror (after sync) | `docs/hermes_skills/*.md` |
 | Sync + register `_meta.json` | `python3 tools/sync_hermes_skills.py --register-meta` |
 | Drift audit | `python3 tools/audit_hermes_skills.py` |
-| Screener ops + fleet model routing | `skills/screener_ops/SKILL.md` → `screener-ops.md` |
+| Screener ops + fleet model routing | `skills/screener_ops/SKILL.md` → `screener-ops.md` (incl. repo scale table) |
 | Codegraph in Cursor | `skills/codegraph/SKILL.md` → `codegraph.md` |
 | Hermes MCP (IDE, read-only) | `mcp_server/hermes_server.py` · bootstrap: `.cursor/rules/hermes-context.mdc` |
 | Model surfaces (gateway vs direct) | [`hermes_tools_map.md`](hermes_tools_map.md) §5 · [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md) |

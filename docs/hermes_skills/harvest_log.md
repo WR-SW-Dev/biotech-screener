@@ -5,6 +5,20 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-07 (repo scale + skills refresh)
+
+### Skill sources refreshed
+- **screener-ops**: Repo scale orientation table (~4k engines / ~176k production / ~750k total); baseline `main` @ `31a74d42`; `audit_learnings.py` in WSL gate Phase 1 + sync workflow
+- **selector-ranker**: Codebase context — compact high-leverage engines; governance tier unchanged
+- **codegraph**: baseline `31a74d42`, index file count note
+- **self-improving**: Distill step → memory bootstrap block
+- Ran `sync_hermes_skills.py` — updated mirrors
+
+### Governance
+- Skills/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-06-01 (HOT memory optimization)
 
 ### Memory layer

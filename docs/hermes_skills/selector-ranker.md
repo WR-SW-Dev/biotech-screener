@@ -29,6 +29,8 @@ This skill is organized into two sections:
 1. **Framework Reference** - Stable architecture, engines, dead lanes, and governance (changes only with code updates)
 2. **Operational State** - Volatile research status and metrics that require periodic refresh
 
+**Codebase context:** the three production engines total ~4,000 Python lines — a **compact, high-leverage** surface. `run_screen.py` (~13k lines) orchestrates them into daily output. Repo scale does not reduce governance tier; it increases the cost of small-looking edits.
+
 ---
 
 ## Codegraph Preflight (mandatory before any code edit)
