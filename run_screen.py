@@ -44,7 +44,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 # Load .env file (credentials, API keys) before any module reads os.environ
@@ -338,6 +338,8 @@ except ImportError as e:
 
 VERSION = "1.6.0"  # Bumped for governance-friendly CLI enhancements
 DETERMINISTIC_TIMESTAMP_SUFFIX = "T00:00:00Z"
+GOVERNANCE_SCHEMA_VERSION = "screen_output_governance.v1"
+SCORE_AFFECTING_CSV_INPUTS = ("price_history.csv",)
 SCHEMA_DECISION_PORTFOLIO = "decision_portfolio.v1"
 SCHEMA_PORTFOLIO_POSITIONS = "portfolio_positions.v1"
 SCHEMA_METADATA = "metadata.v1"
@@ -935,6 +937,11 @@ def _force_deterministic_generated_at(obj: Any, generated_at: str) -> None:
             _force_deterministic_generated_at(item, generated_at)
 
 
+def _deterministic_timestamp(as_of_date: str) -> str:
+    """Return the deterministic timestamp used in reproducible artifacts."""
+    return as_of_date + DETERMINISTIC_TIMESTAMP_SUFFIX
+
+
 def validate_as_of_date_param(as_of_date: str) -> None:
     """
     Validate as_of_date format with strict security checks.
@@ -1005,6 +1012,70 @@ def _filter_ctgov_fallback_records_for_pit(
         and (r.get("first_posted") or "9999")[:10] <= pit_cutoff
     ]
     return filtered, pit_cutoff
+
+
+def _compute_run_input_hashes(data_dir: Path) -> Dict[str, str]:
+    """Hash primary run inputs, including score-affecting non-JSON inputs."""
+    content_hashes: Dict[str, str] = {}
+    for json_file in sorted(data_dir.glob("*.json")):
+        if json_file.name.startswith("run_log"):
+            continue  # Skip run logs - they're outputs, not inputs
+        content_hashes[json_file.name] = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
+
+    for csv_name in SCORE_AFFECTING_CSV_INPUTS:
+        csv_file = data_dir / csv_name
+        if csv_file.exists():
+            content_hashes[csv_file.name] = hashlib.sha256(csv_file.read_bytes()).hexdigest()[:16]
+
+    return dict(sorted(content_hashes.items()))
+
+
+def _sha256_prefixed(obj: Any) -> str:
+    payload = json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _build_governance_envelope(
+    *,
+    as_of_date: str,
+    run_metadata: Dict[str, Any],
+) -> Dict[str, str]:
+    """Build top-level deterministic governance metadata for primary output."""
+    parameter_keys = (
+        "version",
+        "enhancements_enabled",
+        "catalyst_window",
+        "catalyst_decay",
+        "catalyst_half_life_days",
+        "enable_smart_money",
+        "smart_money_source",
+        "min_component_coverage",
+        "min_component_coverage_mode",
+        "defensive_multiplier_enabled",
+        "defensive_config",
+        "position_sizing_enabled",
+        "pit_mode",
+        "catalyst_mode",
+    )
+    parameter_payload = {key: run_metadata.get(key) for key in parameter_keys}
+    parameters_hash = _sha256_prefixed(parameter_payload)
+    run_id_payload = {
+        "as_of_date": as_of_date,
+        "input_hashes": run_metadata.get("input_hashes", {}),
+        "parameters_hash": parameters_hash,
+        "schema_version": GOVERNANCE_SCHEMA_VERSION,
+        "score_version": VERSION,
+    }
+    return {
+        "run_id": hashlib.sha256(
+            json.dumps(run_id_payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+        ).hexdigest()[:16],
+        "score_version": VERSION,
+        "schema_version": GOVERNANCE_SCHEMA_VERSION,
+        "parameters_hash": parameters_hash,
+        "pit_cutoff": _ctgov_fallback_pit_cutoff(as_of_date),
+        "as_of_date": as_of_date,
+    }
 
 
 def _maybe_refresh_price_history_live(
@@ -2820,6 +2891,11 @@ def _load_pdufa_manual(
     return records
 
 
+def _load_snapshot_pdufa_manual(data_dir: Optional[Path], as_of_date: str) -> List[Dict[str, str]]:
+    """Load snapshot PDUFA manual records from the active run data directory."""
+    return _load_pdufa_manual(data_dir=data_dir, as_of_date=as_of_date)
+
+
 def _nearest_regulatory_catalyst(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
@@ -3703,6 +3779,7 @@ def _write_coverage_quality(
     as_of_date: str,
     log: logging.Logger,
     options_freshness: Optional[Dict[str, Any]] = None,
+    generated_at: Optional[str] = None,
 ) -> None:
     """Generate coverage_quality.json and coverage_quality.md in the snapshot dir.
 
@@ -3824,7 +3901,7 @@ def _write_coverage_quality(
     cq: Dict[str, Any] = {
         "schema_version": "coverage_quality.v1",
         "as_of_date": as_of_date,
-        "generated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": generated_at or _deterministic_timestamp(as_of_date),
         "phase2_health": {
             "status": health.get("status"),
             "reasons": health.get("reasons", []),
@@ -4121,6 +4198,7 @@ def save_validation_snapshot(
     force_overwrite: bool = False,
     regime_result: Optional[Dict[str, Any]] = None,
     ranker_mode: str = "pairwise_minimal",
+    data_dir: Optional[Path] = None,
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -4197,7 +4275,7 @@ def save_validation_snapshot(
     # Load PDUFA manual dates once for secondary regulatory catalyst scan.
     # This ensures tickers with PDUFA dates in the manual file get flagged
     # even when M3 events don't include the PDUFA entry.
-    _pdufa_manual = _load_pdufa_manual(as_of_date=as_of_date)
+    _pdufa_manual = _load_snapshot_pdufa_manual(data_dir=data_dir, as_of_date=as_of_date)
 
     # Load source reliability table (empirical slip-based trust actions).
     # Used to penalize noisy calendar sources in priority ranking.
@@ -7912,7 +7990,7 @@ def save_validation_snapshot(
         "generator_version": VERSION,
         "config_fingerprint": _config_fingerprint,
         "as_of_date": as_of_date,
-        "saved_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "saved_at": _deterministic_timestamp(as_of_date),
         "decision_mode": decision_mode,
         "ranking_mode": ranking_mode,
         "ranker_mode": ranker_mode,
@@ -8169,7 +8247,15 @@ def save_validation_snapshot(
 
     # --- Coverage quality artifact (v1) ---
     try:
-        _write_coverage_quality(snap_path, csv_rows, metadata, as_of_date, logger, _options_freshness)
+        _write_coverage_quality(
+            snap_path,
+            csv_rows,
+            metadata,
+            as_of_date,
+            logger,
+            _options_freshness,
+            generated_at=_deterministic_timestamp(as_of_date),
+        )
     except Exception as _cq_exc:
         logger.debug("Coverage quality artifact skipped: %s", _cq_exc)
 
@@ -9352,13 +9438,9 @@ def run_screening_pipeline(
     # Determine resume index
     resume_index = get_resume_module_index(resume_from)
 
-    # Compute content hashes for audit trail
-    # DETERMINISM: Exclude run_log files (they contain timestamps that change each run)
-    content_hashes = {}
-    for json_file in sorted(data_dir.glob("*.json")):
-        if json_file.name.startswith("run_log"):
-            continue  # Skip run logs - they're outputs, not inputs
-        content_hashes[json_file.name] = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
+    # Compute content hashes for audit trail.
+    # DETERMINISM: Exclude run_log files (they contain timestamps that change each run).
+    content_hashes = _compute_run_input_hashes(data_dir)
 
     # Create audit record if audit log path provided
     if audit_log_path:
@@ -11080,36 +11162,38 @@ def run_screening_pipeline(
     m3_serialized = _serialize_m3_result(m3_result)
 
     # Assemble results
+    run_metadata = {
+        "as_of_date": as_of_date,
+        "version": VERSION,
+        "deterministic_timestamp": _deterministic_timestamp(as_of_date),
+        "input_hashes": dict(sorted(content_hashes.items())),
+        "enhancements_enabled": enable_enhancements,
+        # New governance-friendly parameters
+        "catalyst_window": f"{catalyst_window[0]}-{catalyst_window[1]}" if catalyst_window else "15-45",
+        "catalyst_decay": catalyst_decay,
+        "catalyst_half_life_days": catalyst_half_life_days if catalyst_decay == "exp" else None,
+        "enable_smart_money": enable_smart_money,
+        "smart_money_source": smart_money_source,
+        "min_component_coverage": min_component_coverage,
+        "min_component_coverage_mode": min_component_coverage_mode,
+        "defensive_multiplier_enabled": apply_defensive_multiplier,
+        "defensive_config": defensive_config if apply_defensive_multiplier else None,
+        "position_sizing_enabled": enable_position_sizing,
+        "pit_mode": pit_mode,
+        "pit_violation_sources": [pit_violation] if pit_violation else [],
+        "catalyst_mode": m3_result.get("catalyst_mode", "full"),
+        # PIT audit + holdings schema for reproducibility
+        "coinvest_audit": coinvest_audit_data if coinvest_audit_data else None,
+        "holdings_detailed_schema": holdings_schema_data,
+        # Conviction horizon overlay audit (Enhancement 12)
+        "conviction_horizon_overlay_applied": (
+            m5_result.get("diagnostic_counts", {}).get("conviction_horizon_overlay_applied", 0) if m5_result else 0
+        ),
+        "inputs_manifest": _inputs_manifest,
+    }
     results = {
-        "run_metadata": {
-            "as_of_date": as_of_date,
-            "version": VERSION,
-            "deterministic_timestamp": as_of_date + DETERMINISTIC_TIMESTAMP_SUFFIX,
-            "input_hashes": dict(sorted(content_hashes.items())),
-            "enhancements_enabled": enable_enhancements,
-            # New governance-friendly parameters
-            "catalyst_window": f"{catalyst_window[0]}-{catalyst_window[1]}" if catalyst_window else "15-45",
-            "catalyst_decay": catalyst_decay,
-            "catalyst_half_life_days": catalyst_half_life_days if catalyst_decay == "exp" else None,
-            "enable_smart_money": enable_smart_money,
-            "smart_money_source": smart_money_source,
-            "min_component_coverage": min_component_coverage,
-            "min_component_coverage_mode": min_component_coverage_mode,
-            "defensive_multiplier_enabled": apply_defensive_multiplier,
-            "defensive_config": defensive_config if apply_defensive_multiplier else None,
-            "position_sizing_enabled": enable_position_sizing,
-            "pit_mode": pit_mode,
-            "pit_violation_sources": [pit_violation] if pit_violation else [],
-            "catalyst_mode": m3_result.get("catalyst_mode", "full"),
-            # PIT audit + holdings schema for reproducibility
-            "coinvest_audit": coinvest_audit_data if coinvest_audit_data else None,
-            "holdings_detailed_schema": holdings_schema_data,
-            # Conviction horizon overlay audit (Enhancement 12)
-            "conviction_horizon_overlay_applied": (
-                m5_result.get("diagnostic_counts", {}).get("conviction_horizon_overlay_applied", 0) if m5_result else 0
-            ),
-            "inputs_manifest": _inputs_manifest,
-        },
+        "_governance": _build_governance_envelope(as_of_date=as_of_date, run_metadata=run_metadata),
+        "run_metadata": run_metadata,
         "module_1_universe": m1_result,
         "module_2_financial": m2_result,
         "module_3_catalyst": m3_serialized,
@@ -11203,7 +11287,7 @@ def run_screening_pipeline(
             results["baker_overlay"] = {"error": f"{type(e).__name__}: {e}"}
 
     # Force deterministic timestamps for byte-identical outputs
-    deterministic_ts = as_of_date + DETERMINISTIC_TIMESTAMP_SUFFIX
+    deterministic_ts = _deterministic_timestamp(as_of_date)
     _force_deterministic_generated_at(results, deterministic_ts)
 
     return results
@@ -12594,6 +12678,7 @@ Module 3 Catalyst Detection:
                 as_of_date=args.as_of_date,
                 results=results,
                 version=VERSION,
+                data_dir=args.data_dir,
                 decision_mode=args.decision_mode,
                 ruleset=de_ruleset,
                 price_history_path=args.data_dir / "price_history.csv",

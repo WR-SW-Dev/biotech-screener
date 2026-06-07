@@ -9,6 +9,8 @@ z-score computation helpers, and coverage guard logic.
 
 from __future__ import annotations
 
+import json
+import logging
 import math
 import sys
 from datetime import date
@@ -20,15 +22,22 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from run_screen import (
+    GOVERNANCE_SCHEMA_VERSION,
+    VERSION,
+    _build_governance_envelope,
     _clinical_proximity,
+    _compute_run_input_hashes,
     _ctgov_fallback_pit_cutoff,
+    _deterministic_timestamp,
     _filter_ctgov_fallback_records_for_pit,
     _filter_price_outliers,
     _force_deterministic_generated_at,
+    _load_snapshot_pdufa_manual,
     _maybe_refresh_price_history_live,
     _parse_trial_date,
     _require_current_as_of_date_for_live_modes,
     _validate_price_splits,
+    _write_coverage_quality,
     apply_clinical_activity_filter,
     classify_company_archetype,
     compute_catalyst_decay_weight,
@@ -329,6 +338,91 @@ class TestForceDeterministicGeneratedAt:
         obj = {"data": 1}
         _force_deterministic_generated_at(obj, "time")
         assert obj == {"data": 1}
+
+
+# =============================================================================
+# deterministic provenance helpers
+# =============================================================================
+
+
+class TestDeterministicProvenanceHelpers:
+    def test_deterministic_timestamp_uses_as_of_date(self):
+        assert _deterministic_timestamp("2026-03-06") == "2026-03-06T00:00:00Z"
+
+    def test_compute_run_input_hashes_includes_score_affecting_price_csv(self, tmp_path):
+        (tmp_path / "universe.json").write_text('[{"ticker":"ABC"}]\n', encoding="utf-8")
+        (tmp_path / "run_log_2026-03-06.json").write_text('{"wall_clock": true}\n', encoding="utf-8")
+        (tmp_path / "price_history.csv").write_text("date,ticker,close\n2026-03-05,ABC,10\n", encoding="utf-8")
+
+        hashes = _compute_run_input_hashes(tmp_path)
+
+        assert "universe.json" in hashes
+        assert "price_history.csv" in hashes
+        assert "run_log_2026-03-06.json" not in hashes
+        assert len(hashes["price_history.csv"]) == 16
+
+    def test_governance_envelope_has_required_fields(self):
+        run_metadata = {
+            "version": VERSION,
+            "input_hashes": {"universe.json": "abc123"},
+            "enhancements_enabled": False,
+            "catalyst_window": "15-45",
+            "catalyst_decay": "step",
+            "catalyst_half_life_days": None,
+            "enable_smart_money": False,
+            "smart_money_source": "auto",
+            "min_component_coverage": None,
+            "min_component_coverage_mode": "applied",
+            "defensive_multiplier_enabled": False,
+            "defensive_config": None,
+            "position_sizing_enabled": False,
+            "pit_mode": "strict",
+            "catalyst_mode": "full",
+        }
+
+        gov = _build_governance_envelope(as_of_date="2026-03-06", run_metadata=run_metadata)
+        gov_again = _build_governance_envelope(as_of_date="2026-03-06", run_metadata=run_metadata)
+
+        assert gov == gov_again
+        assert set(gov) == {
+            "run_id",
+            "score_version",
+            "schema_version",
+            "parameters_hash",
+            "pit_cutoff",
+            "as_of_date",
+        }
+        assert gov["score_version"] == VERSION
+        assert gov["schema_version"] == GOVERNANCE_SCHEMA_VERSION
+        assert gov["parameters_hash"].startswith("sha256:")
+        assert gov["pit_cutoff"] == "2026-03-05"
+        assert gov["as_of_date"] == "2026-03-06"
+
+    def test_snapshot_pdufa_loader_passes_active_data_dir(self, monkeypatch, tmp_path):
+        calls = []
+
+        def fake_loader(*, data_dir=None, as_of_date=None):
+            calls.append((data_dir, as_of_date))
+            return [{"ticker": "ABC"}]
+
+        monkeypatch.setattr("run_screen._load_pdufa_manual", fake_loader)
+
+        records = _load_snapshot_pdufa_manual(tmp_path, "2026-03-06")
+
+        assert records == [{"ticker": "ABC"}]
+        assert calls == [(tmp_path, "2026-03-06")]
+
+    def test_coverage_quality_generated_at_is_deterministic(self, tmp_path):
+        _write_coverage_quality(
+            tmp_path,
+            csv_rows=[],
+            metadata={"options_diagnostics": {}},
+            as_of_date="2026-03-06",
+            log=logging.getLogger("test"),
+        )
+
+        coverage = json.loads((tmp_path / "coverage_quality.json").read_text(encoding="utf-8"))
+        assert coverage["generated_at"] == "2026-03-06T00:00:00Z"
 
 
 # =============================================================================
