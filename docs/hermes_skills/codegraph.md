@@ -99,7 +99,7 @@ Cursor MCP launches through `.cursor/mcp.json`:
 codegraph serve --mcp --path ${workspaceFolder}
 ```
 
-Plumbing baseline: `main` @ `0bac216a` (#312–#334). Re-run `codegraph sync` after large merges; re-run `sync_hermes_skills.py` when `skills/` changes.
+Plumbing baseline: `main` @ `31a74d42`. Index ~1,683 Python files / ~50k nodes. Re-run `codegraph sync` after large merges; re-run `sync_hermes_skills.py` when `skills/` changes.
 
 **Hermes MCP** (`mcp_server/hermes_server.py`) is read-only fleet context only — it does **not** expose `codegraph_*` tools. Canonical Hermes surfaces (MCP vs gateway vs `run_agent_direct.py`): `docs/hermes_agents/hermes_tools_map.md`. Hermes cron agents that need structural maps use `common/codegraph_guard.py` locally, not Hermes MCP.
 
