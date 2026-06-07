@@ -28,6 +28,25 @@ EXPECTED_EXPORT_FIELDS: tuple[str, ...] = (
     "priced_move_pct",
 )
 
+CORE_PROBABILISTIC_FEATURE_FIELDS: tuple[str, ...] = (
+    "confidence_overall",
+    "confidence_financial",
+    "confidence_clinical",
+    "confidence_catalyst",
+    "confidence_pos",
+)
+
+OPTIONAL_PROBABILISTIC_FEATURE_FIELDS: tuple[str, ...] = (
+    "p_move_gt_implied",
+    "p_iv_crush",
+    "p_false_positive",
+)
+
+PROBABILISTIC_FEATURE_FIELDS: tuple[str, ...] = (
+    *CORE_PROBABILISTIC_FEATURE_FIELDS,
+    *OPTIONAL_PROBABILISTIC_FEATURE_FIELDS,
+)
+
 DO_NOT_CHANGE: tuple[str, ...] = (
     "No ranker, selector, sizing, final_score, or alpha changes from this artifact.",
     "Do not invent insider signal or treat unwired insider buying as validated alpha.",
@@ -87,6 +106,40 @@ def _read_rankings(rankings_path: Path) -> tuple[list[str], list[dict[str, str]]
 def _non_null(value: Any) -> bool:
     text = str(value or "").strip()
     return bool(text) and text.lower() not in {"nan", "none", "null"}
+
+
+def _parse_probability(value: Any) -> float | None:
+    if not _non_null(value):
+        return None
+    text = str(value).strip().lower()
+    confidence_labels = {
+        "high": 0.9,
+        "med": 0.6,
+        "medium": 0.6,
+        "low": 0.3,
+    }
+    if text in confidence_labels:
+        return confidence_labels[text]
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_probabilistic_feature_field(fieldname: str) -> bool:
+    name = fieldname.lower()
+    if name in PROBABILISTIC_FEATURE_FIELDS:
+        return True
+    if name.startswith("confidence_") or name.endswith("_confidence"):
+        return True
+    if name.startswith("p_"):
+        return True
+    return (
+        "probability" in name
+        or name.endswith("_prob")
+        or "_prob_" in name
+        or name.endswith("_probability")
+    )
 
 
 def _gate_by_name(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -150,6 +203,99 @@ def _field_coverage(
         "eligible_count": sum(
             1 for row in rows if str(row.get("eligible", "")).strip() == "1"
         ),
+        "fields": fields,
+    }
+
+
+def _probabilistic_feature_feedback(
+    fieldnames: list[str], rows: list[dict[str, str]]
+) -> dict[str, Any]:
+    row_count = len(rows)
+    observed_fields = [
+        field for field in fieldnames if _is_probabilistic_feature_field(field)
+    ]
+    all_fields = [
+        *CORE_PROBABILISTIC_FEATURE_FIELDS,
+        *[
+            field
+            for field in observed_fields
+            if field not in CORE_PROBABILISTIC_FEATURE_FIELDS
+        ],
+    ]
+    fields: dict[str, dict[str, Any]] = {}
+    for field in all_fields:
+        if field not in fieldnames:
+            fields[field] = {
+                "status": "MISSING_COLUMN",
+                "present": False,
+                "non_null_count": 0,
+                "numeric_count": 0,
+                "parse_error_count": 0,
+                "coverage_pct": 0.0,
+                "out_of_bounds_count": 0,
+                "extreme_count": 0,
+                "extreme_rate_pct": 0.0,
+                "min": None,
+                "max": None,
+            }
+            continue
+
+        non_null_values = [row.get(field) for row in rows if _non_null(row.get(field))]
+        parsed_values = [
+            parsed
+            for parsed in (_parse_probability(value) for value in non_null_values)
+            if parsed is not None
+        ]
+        out_of_bounds = [
+            value for value in parsed_values if value < 0.0 or value > 1.0
+        ]
+        bounded_values = [
+            value for value in parsed_values if 0.0 <= value <= 1.0
+        ]
+        extreme_count = sum(
+            1 for value in bounded_values if value <= 0.05 or value >= 0.95
+        )
+        non_null_count = len(non_null_values)
+        numeric_count = len(parsed_values)
+        parse_error_count = non_null_count - numeric_count
+        coverage_pct = (
+            round((non_null_count / row_count) * 100, 2) if row_count else 0.0
+        )
+        extreme_rate_pct = (
+            round((extreme_count / len(bounded_values)) * 100, 2)
+            if bounded_values
+            else 0.0
+        )
+        if non_null_count == 0:
+            status = "EMPTY"
+        elif parse_error_count:
+            status = "NON_NUMERIC"
+        elif out_of_bounds:
+            status = "OUT_OF_BOUNDS"
+        elif non_null_count < row_count:
+            status = "PARTIAL"
+        else:
+            status = "COMPLETE"
+        fields[field] = {
+            "status": status,
+            "present": True,
+            "non_null_count": non_null_count,
+            "numeric_count": numeric_count,
+            "parse_error_count": parse_error_count,
+            "coverage_pct": coverage_pct,
+            "out_of_bounds_count": len(out_of_bounds),
+            "extreme_count": extreme_count,
+            "extreme_rate_pct": extreme_rate_pct,
+            "min": round(min(parsed_values), 4) if parsed_values else None,
+            "max": round(max(parsed_values), 4) if parsed_values else None,
+        }
+
+    return {
+        "rankings_present": bool(fieldnames),
+        "row_count": row_count,
+        "core_fields": list(CORE_PROBABILISTIC_FEATURE_FIELDS),
+        "optional_fields": list(OPTIONAL_PROBABILISTIC_FEATURE_FIELDS),
+        "observed_fields": observed_fields,
         "fields": fields,
     }
 
@@ -253,6 +399,147 @@ def _build_data_coverage_findings(
             promotion_status="Pending fresh snapshot evidence.",
         )
     ]
+
+
+def _build_probabilistic_feature_findings(
+    feedback: dict[str, Any],
+) -> list[dict[str, Any]]:
+    fields = feedback["fields"]
+    core_missing = sorted(
+        field
+        for field in CORE_PROBABILISTIC_FEATURE_FIELDS
+        if fields[field]["status"] == "MISSING_COLUMN"
+    )
+    empty = sorted(
+        name for name, stats in fields.items() if stats["status"] == "EMPTY"
+    )
+    partial = sorted(
+        name
+        for name, stats in fields.items()
+        if stats["status"] == "PARTIAL" and float(stats["coverage_pct"]) < 95.0
+    )
+    non_numeric = sorted(
+        name for name, stats in fields.items() if stats["status"] == "NON_NUMERIC"
+    )
+    out_of_bounds = sorted(
+        name for name, stats in fields.items() if stats["status"] == "OUT_OF_BOUNDS"
+    )
+    degenerate = sorted(
+        name
+        for name, stats in fields.items()
+        if int(stats["numeric_count"]) >= 5 and float(stats["extreme_rate_pct"]) >= 80.0
+    )
+
+    findings: list[dict[str, Any]] = []
+    if core_missing or empty or partial or non_numeric:
+        evidence = []
+        if not feedback["observed_fields"]:
+            evidence.append("No probabilistic feature columns were found in rankings.csv")
+        if core_missing:
+            evidence.append(
+                f"Missing core probabilistic fields: {', '.join(core_missing)}"
+            )
+        if empty:
+            evidence.append(
+                f"Probabilistic fields are present but empty: {', '.join(empty)}"
+            )
+        if partial:
+            details = ", ".join(
+                f"{name}={fields[name]['coverage_pct']}%" for name in partial
+            )
+            evidence.append(f"Probabilistic fields below 95% coverage: {details}")
+        if non_numeric:
+            details = ", ".join(
+                f"{name} parse_errors={fields[name]['parse_error_count']}"
+                for name in non_numeric
+            )
+            evidence.append(f"Probabilistic fields contain non-numeric values: {details}")
+        findings.append(
+            _finding(
+                finding_id="probabilistic_feature_feedback_gap",
+                title="Probabilistic feature feedback loop has observability gaps",
+                area="Probabilistic features",
+                severity="MEDIUM" if core_missing or empty else "LOW",
+                classification="Probability feature export/feedback gap",
+                allowed_hypothesis="Missing or partial probabilistic feature telemetry",
+                proposal_type="Diagnostic fix",
+                risk_level="Low",
+                governance_classification="AUTO_SAFE_DIAGNOSTIC",
+                evidence=evidence,
+                likely_cause="Probability-like model outputs are not fully exported for recursive diagnosis and calibration review.",
+                suggested_owner="Diagnostics / daily production",
+                forbidden_changes=[
+                    "Do not change probability model weights from this diagnostic.",
+                    "Do not rescale confidence or probability outputs without governance approval.",
+                ],
+                verification="Confirm the next rankings.csv exports non-null bounded probabilistic feature columns.",
+                promotion_status="Diagnostic-only; no production effect.",
+            )
+        )
+
+    if out_of_bounds:
+        evidence = [
+            ", ".join(
+                f"{name} out_of_bounds={fields[name]['out_of_bounds_count']} "
+                f"min={fields[name]['min']} max={fields[name]['max']}"
+                for name in out_of_bounds
+            )
+        ]
+        findings.append(
+            _finding(
+                finding_id="probabilistic_feature_contract_violation",
+                title="Probabilistic features contain values outside [0, 1]",
+                area="Probabilistic features",
+                severity="HIGH",
+                classification="Probability feature export contract issue",
+                allowed_hypothesis="Malformed probability or confidence export",
+                proposal_type="Plumbing fix",
+                risk_level="Low",
+                governance_classification="AUTO_SAFE_DIAGNOSTIC",
+                evidence=evidence,
+                likely_cause="A probability-like field is emitted on the wrong scale or without validation before export.",
+                suggested_owner="Data plumbing / diagnostics",
+                forbidden_changes=[
+                    "Do not silently clip probabilities in scoring paths.",
+                    "Do not alter ranker, selector, sizing, or final_score behavior.",
+                ],
+                verification="Re-run the daily diagnosis and require all probability-like fields to be bounded in [0, 1].",
+                promotion_status="Diagnostic-only until fixed by an explicit export contract change.",
+            )
+        )
+
+    if degenerate:
+        evidence = [
+            ", ".join(
+                f"{name} extreme_rate={fields[name]['extreme_rate_pct']}% "
+                f"n={fields[name]['numeric_count']}"
+                for name in degenerate
+            )
+        ]
+        findings.append(
+            _finding(
+                finding_id="probabilistic_feature_degenerate_distribution",
+                title="Probabilistic features are concentrated at extreme values",
+                area="Probabilistic features",
+                severity="MEDIUM",
+                classification="Calibration or cohort-mix diagnostic",
+                allowed_hypothesis="Degenerate probability distribution",
+                proposal_type="Model fix",
+                risk_level="High",
+                governance_classification="RESEARCH_ONLY",
+                evidence=evidence,
+                likely_cause="A cohort, calibration table, or fallback path may be collapsing probabilities near zero or one.",
+                suggested_owner="Research / calibration",
+                forbidden_changes=[
+                    "Do not recalibrate live probabilities from this artifact alone.",
+                    "Do not promote a model change without out-of-sample evidence.",
+                ],
+                verification="Accumulate repeated snapshots and compare against resolved-event calibration before any model proposal.",
+                promotion_status="Research-only; no production effect.",
+            )
+        )
+
+    return findings
 
 
 def _build_gate_findings(gates: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -455,10 +742,13 @@ def build_daily_model_diagnosis(
     )
     fieldnames, rows = _read_rankings(snapshot_date_dir / "rankings.csv")
     data_coverage = _field_coverage(fieldnames, rows)
+    probabilistic_feature_feedback = _probabilistic_feature_feedback(fieldnames, rows)
     gates = _gate_by_name(manifest)
 
     findings = _sort_findings(
-        _build_data_coverage_findings(data_coverage) + _build_gate_findings(gates)
+        _build_data_coverage_findings(data_coverage)
+        + _build_probabilistic_feature_findings(probabilistic_feature_feedback)
+        + _build_gate_findings(gates)
     )
 
     return {
@@ -475,6 +765,7 @@ def build_daily_model_diagnosis(
         },
         "overall_status": manifest.get("overall_status"),
         "data_coverage": data_coverage,
+        "probabilistic_feature_feedback": probabilistic_feature_feedback,
         "findings": findings,
         "top_failure_modes": findings[:5],
         "do_not_change": list(DO_NOT_CHANGE),
@@ -536,6 +827,23 @@ def render_daily_model_diagnosis_markdown(diagnosis: dict[str, Any]) -> str:
             f"| {field} | {stats['status']} | {stats['non_null_count']} | {stats['coverage_pct']} |"
         )
     lines.extend(["", *_finding_lines(by_area("Data coverage"))])
+    lines.extend(
+        [
+            "",
+            "### Probabilistic feature feedback",
+            "",
+            "| Field | Status | Non-null count | Coverage % | Out-of-bounds | Extreme rate % |",
+            "|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    prob_feedback = diagnosis["probabilistic_feature_feedback"]
+    for field, stats in prob_feedback["fields"].items():
+        lines.append(
+            f"| {field} | {stats['status']} | {stats['non_null_count']} | "
+            f"{stats['coverage_pct']} | {stats['out_of_bounds_count']} | "
+            f"{stats['extreme_rate_pct']} |"
+        )
+    lines.extend(["", *_finding_lines(by_area("Probabilistic features"))])
 
     section_map = [
         ("2. Catalyst attribution anomalies", "Catalyst attribution"),
