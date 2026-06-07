@@ -5,6 +5,22 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-07 (Hermes taxonomy + learning loop refresh)
+
+### Hermes-native docs
+- **hermes_tools_map.md**: baseline `ec4b2726`; `audit_learnings`, skills telemetry + learning loop v2; 32-skill audit expectation; WSL sequence updated
+- **hermeslink-state-capture.md**: fleet count fixed (29 active); skills learning tools; PR #322 merged state
+- **agent_roster.md**: date refresh; registry count aligned
+- **operator_host_skills.md**: 32/32 audit; skills learning telemetry index
+
+### Skill mirror
+- **screener-ops**: baseline `ec4b2726`; checklist 32/32
+
+### Governance
+- Docs/tooling only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-06-07 (repo scale + skills refresh)
 
 ### Skill sources refreshed

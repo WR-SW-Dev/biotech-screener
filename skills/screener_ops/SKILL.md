@@ -97,7 +97,7 @@ Repo-native "ops brain" that continuously answers:
 
 ### Host authority \(operator WSL vs Cloud\)
 
-*Last reviewed: 2026-06-07 · plumbing baseline `main` @ `31a74d42`*
+*Last reviewed: 2026-06-07 · plumbing baseline `main` @ `ec4b2726`*
 
 | Host | Can validate | Cannot validate |
 | --- | --- | --- |
@@ -195,7 +195,7 @@ Only if the gateway reads stale copies from `~/.hermes/skills/` \(see `docs/herm
 ```text
 [ ] git pull main
 [ ] build_hermes_knowledge_layer.py  → 0 HARD on WSL
-[ ] audit_hermes_skills.py           → 31/31 clean
+[ ] audit_hermes_skills.py           → 32/32 clean
 [ ] ~/.hermes/config.yaml            → openrouter + deepseek-v4-flash default
 [ ] crontab B1b line                 → one Friday 18:00 biotech_hedge_report
 [ ] crontab bioshort_watch           → suppressed only
@@ -588,7 +588,7 @@ Key findings \(pseudo-PIT\):
 
 ### Repo plumbing baseline \(Cloud + Cursor\)
 
-*Last reviewed: 2026-06-07 · `main` @ `31a74d42`*
+*Last reviewed: 2026-06-07 · `main` @ `ec4b2726`*
 
 | Area | Status |
 | --- | --- |

@@ -15,20 +15,23 @@ description: >
 
 # Hermeslink State Capture — Knowledge Layer (Spec 089)
 
-## Status Update (2026-05-31)
+## Status Update (2026-06-07)
 
-**ACTIVE** — Ops knowledge layer + Town-Hermes Phase B egress wired in repo ([PR #322](https://github.com/Warrenpoobear/biotech-screener/pull/322) pending merge).
+**ACTIVE** — Ops knowledge layer + Town-Hermes Phase B egress on `main`. Baseline `ec4b2726`.
 
 | Component | Tool / path | Notes |
 | --- | --- | --- |
 | **Hermeslink builder** | `tools/build_hermes_knowledge_layer.py` | Spec 089 ops brain (this skill) |
+| **Learnings audit** | `tools/audit_learnings.py` | HOT/WARM tier hygiene; read-only |
+| **Skills telemetry** | `tools/skills_execution_logger.py` | JSONL under `artifacts/skills_learning/` |
+| **Skills learning report** | `tools/hermes_skills_learning_loop_v2.py` | Monthly advisory report; no auto-routing |
 | **Governance KG** | `tools/build_knowledge_graph.py` + `query_knowledge_graph.py` | Separate graph; not Hermeslink |
 | **Town bridge** | `common/town_bridge_events.py` | Auto `contradiction_detected` after build |
 | **Follow-up job** | `agents/hermes-contradiction-detector/run_job.py` | Re-reads `latest_state.json` warnings |
 | **MCP read** | `knowledge_read(artifact=...)` | `contradiction_ledger` → `latest.md` |
-| **Cron (operator)** | Weekdays ~5:45 PM ET | Run on WSL after `git pull` |
+| **Cron (operator)** | Weekdays ~5:45 PM ET | Run on **operator WSL** after `git pull` |
 
-**Agent fleet (registry):** 34 total — 30 active, 3 deprecated, 1 shadow; 4 Hermes governance jobs.
+**Agent fleet (registry):** **29 active** (includes 4 Hermes governance jobs). Lint: `pytest tests/test_agent_registry.py`.
 
 ## Purpose
 
