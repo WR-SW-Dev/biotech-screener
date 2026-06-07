@@ -56,7 +56,7 @@ load_dotenv()
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from statistics import median, quantiles
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -960,6 +960,90 @@ def validate_as_of_date_param(as_of_date: str) -> None:
 
     # NOTE: Do not compare to date.today() here (wall-clock dependency breaks time-invariance).
     # Lookahead protection should be enforced via PIT filters and/or input snapshot dating.
+
+
+def _live_mode_today_iso(today: Optional[date] = None) -> str:
+    """Return today's ISO date for explicit live-mode guards only."""
+    return (today or date.today()).isoformat()
+
+
+def _require_current_as_of_date_for_live_modes(
+    as_of_date: str,
+    live_modes: Dict[str, bool],
+    *,
+    today: Optional[date] = None,
+) -> None:
+    """Fail closed when live data sources are requested for historical runs."""
+    enabled = sorted(name for name, is_enabled in live_modes.items() if is_enabled)
+    if not enabled:
+        return
+
+    today_iso = _live_mode_today_iso(today)
+    if as_of_date != today_iso:
+        joined = ", ".join(enabled)
+        raise ValueError(
+            f"{joined} only allowed when --as-of-date equals today ({today_iso}); "
+            f"got {as_of_date}. Fetching live data for a historical date would violate PIT discipline."
+        )
+
+
+def _ctgov_fallback_pit_cutoff(as_of_date: str) -> str:
+    """Standard PIT cutoff for unfiltered CTGov fallback records."""
+    return (date.fromisoformat(as_of_date) - timedelta(days=1)).isoformat()
+
+
+def _filter_ctgov_fallback_records_for_pit(
+    trial_records: List[Dict[str, Any]],
+    as_of_date: str,
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Filter unversioned CTGov fallback records to standard prior-day PIT availability."""
+    pit_cutoff = _ctgov_fallback_pit_cutoff(as_of_date)
+    filtered = [
+        r
+        for r in trial_records
+        if (r.get("last_update_posted") or "9999")[:10] <= pit_cutoff
+        and (r.get("first_posted") or "9999")[:10] <= pit_cutoff
+    ]
+    return filtered, pit_cutoff
+
+
+def _maybe_refresh_price_history_live(
+    *,
+    as_of_date: str,
+    data_dir: Path,
+    enabled: bool,
+    today: Optional[date] = None,
+    refresh_func: Optional[Callable[[List[str]], int]] = None,
+) -> bool:
+    """Refresh price history only when explicitly requested for a current-date live run."""
+    if not enabled:
+        return False
+
+    _require_current_as_of_date_for_live_modes(
+        as_of_date,
+        {"--refresh-price-history-live": True},
+        today=today,
+    )
+
+    price_csv = data_dir / "price_history.csv"
+    if not price_csv.exists():
+        logger.info("[PRICE_REFRESH] price_history.csv not found; skipping live refresh")
+        return False
+
+    try:
+        if refresh_func is None:
+            from scripts.refresh_price_history import main as refresh_func
+
+        logger.info("[PRICE_REFRESH] Refreshing price_history.csv in explicit live mode...")
+        refresh_rc = refresh_func(["--price-csv", str(price_csv), "--days-back", "5"])
+        if refresh_rc == 0:
+            logger.info("[PRICE_REFRESH] Done")
+        else:
+            logger.warning("[PRICE_REFRESH] Non-zero return: %d", refresh_rc)
+        return True
+    except Exception as exc:
+        logger.debug("Price refresh skipped: %s", exc)
+        return False
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -9509,22 +9593,16 @@ def run_screening_pipeline(
     trial_records = load_json_data(trial_records_path, "Trials")
 
     # PIT safety net: if we fell back to unfiltered trial_records.json, apply
-    # a runtime PIT filter so that trials with last_update_posted > as_of_date
-    # are excluded. This prevents status leakage from future updates.
+    # a runtime PIT filter so records must have been posted before the screen
+    # date. Same-day CTGov posts are unavailable to historical scoring.
     if _ctgov_cache is None and ctgov_cache_dir is not False and trial_records:
-        _pit_cutoff = as_of_date  # inclusive same-day
         _pre_count = len(trial_records)
-        trial_records = [
-            r
-            for r in trial_records
-            if (r.get("last_update_posted") or "9999")[:10] <= _pit_cutoff
-            and (r.get("first_posted") or "9999")[:10] <= _pit_cutoff
-        ]
+        trial_records, _pit_cutoff = _filter_ctgov_fallback_records_for_pit(trial_records, as_of_date)
         _post_count = len(trial_records)
         if _pre_count != _post_count:
             logger.info(
                 f"  PIT fallback filter: {_pre_count} → {_post_count} trials "
-                f"(removed {_pre_count - _post_count} with posting date > {as_of_date})"
+                f"(removed {_pre_count - _post_count} with posting date > {_pit_cutoff})"
             )
 
     market_records = load_json_data(data_dir / "market_data.json", "Market data")
@@ -11833,6 +11911,13 @@ Module 3 Catalyst Detection:
         "Only allowed when --as-of-date equals today (PIT safety).",
     )
     parser.add_argument(
+        "--refresh-price-history-live",
+        action="store_true",
+        default=False,
+        help="Explicitly refresh price_history.csv from live yfinance before scoring. "
+        "Only allowed when --as-of-date equals today (PIT safety).",
+    )
+    parser.add_argument(
         "--phase-scores-v1",
         action="store_true",
         default=False,
@@ -12093,16 +12178,22 @@ Module 3 Catalyst Detection:
         except ValueError as e:
             parser.error(f"Invalid --snapshot-date-prior: {e}")
 
-    # Validate --sec-8k-live PIT safety: only allowed when as_of_date == today
-    if args.sec_8k_live:
-        from datetime import date as _date
+    # Validate live-source PIT safety: live fetches are current-date only.
+    try:
+        _require_current_as_of_date_for_live_modes(
+            args.as_of_date,
+            {
+                "--sec-8k-live": args.sec_8k_live,
+                "--sec-multi-form-mode=live": args.sec_multi_form_mode == "live",
+                "--fda-regulatory-mode=live": args.fda_regulatory_mode == "live",
+                "--refresh-price-history-live": args.refresh_price_history_live,
+            },
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
 
-        if args.as_of_date != _date.today().isoformat():
-            parser.error(
-                f"--sec-8k-live is only allowed when --as-of-date equals today "
-                f"({_date.today().isoformat()}), got {args.as_of_date}. "
-                f"Fetching live EDGAR data for a historical date would violate PIT discipline."
-            )
+    if args.verify_against and args.refresh_price_history_live:
+        parser.error("--refresh-price-history-live cannot be combined with --verify-against")
 
     # Set diagnostics output path default if full diagnostics enabled
     diagnostics_out = args.diagnostics_out
@@ -12219,20 +12310,11 @@ Module 3 Catalyst Detection:
             )
             return 1
 
-        # Refresh price_history.csv with latest prices (non-blocking)
-        try:
-            from scripts.refresh_price_history import main as _refresh_prices
-
-            _price_csv = args.data_dir / "price_history.csv"
-            if _price_csv.exists():
-                logger.info("[PRICE_REFRESH] Refreshing price_history.csv...")
-                _refresh_rc = _refresh_prices(["--price-csv", str(_price_csv), "--days-back", "5"])
-                if _refresh_rc == 0:
-                    logger.info("[PRICE_REFRESH] Done")
-                else:
-                    logger.warning("[PRICE_REFRESH] Non-zero return: %d", _refresh_rc)
-        except Exception as _pr_exc:
-            logger.debug("Price refresh skipped: %s", _pr_exc)
+        _maybe_refresh_price_history_live(
+            as_of_date=args.as_of_date,
+            data_dir=args.data_dir,
+            enabled=args.refresh_price_history_live,
+        )
 
         # Run pipeline
         results = run_screening_pipeline(

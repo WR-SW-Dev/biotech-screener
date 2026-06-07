@@ -21,9 +21,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from run_screen import (
     _clinical_proximity,
+    _ctgov_fallback_pit_cutoff,
+    _filter_ctgov_fallback_records_for_pit,
     _filter_price_outliers,
     _force_deterministic_generated_at,
+    _maybe_refresh_price_history_live,
     _parse_trial_date,
+    _require_current_as_of_date_for_live_modes,
     _validate_price_splits,
     apply_clinical_activity_filter,
     classify_company_archetype,
@@ -347,6 +351,98 @@ class TestValidateAsOfDateParam:
     def test_empty_raises(self):
         with pytest.raises(ValueError):
             validate_as_of_date_param("")
+
+
+# =============================================================================
+# PIT live-source guards
+# =============================================================================
+
+
+class TestPitLiveSourceGuards:
+    def test_live_source_mode_rejects_historical_as_of_date(self):
+        with pytest.raises(ValueError, match="historical date would violate PIT discipline"):
+            _require_current_as_of_date_for_live_modes(
+                "2026-03-06",
+                {"--sec-multi-form-mode=live": True},
+                today=date(2026, 3, 7),
+            )
+
+    def test_live_source_mode_allows_current_as_of_date(self):
+        _require_current_as_of_date_for_live_modes(
+            "2026-03-07",
+            {"--fda-regulatory-mode=live": True},
+            today=date(2026, 3, 7),
+        )
+
+    def test_ctgov_fallback_cutoff_uses_prior_day(self):
+        assert _ctgov_fallback_pit_cutoff("2026-03-06") == "2026-03-05"
+
+    def test_ctgov_fallback_filter_excludes_same_day_records(self):
+        records = [
+            {"nct_id": "prior", "first_posted": "2026-03-04", "last_update_posted": "2026-03-05"},
+            {
+                "nct_id": "same_day_first",
+                "first_posted": "2026-03-06",
+                "last_update_posted": "2026-03-05",
+            },
+            {
+                "nct_id": "same_day_update",
+                "first_posted": "2026-03-04",
+                "last_update_posted": "2026-03-06",
+            },
+        ]
+
+        filtered, cutoff = _filter_ctgov_fallback_records_for_pit(records, "2026-03-06")
+
+        assert cutoff == "2026-03-05"
+        assert [r["nct_id"] for r in filtered] == ["prior"]
+
+    def test_price_refresh_default_is_noop(self, tmp_path):
+        calls = []
+        (tmp_path / "price_history.csv").write_text("date,ticker,close\n2026-03-06,XBI,100\n")
+
+        refreshed = _maybe_refresh_price_history_live(
+            as_of_date="2026-03-06",
+            data_dir=tmp_path,
+            enabled=False,
+            today=date(2026, 3, 6),
+            refresh_func=lambda argv: calls.append(argv) or 0,
+        )
+
+        assert refreshed is False
+        assert calls == []
+
+    def test_price_refresh_rejects_historical_as_of_date_before_mutation(self, tmp_path):
+        calls = []
+        (tmp_path / "price_history.csv").write_text("date,ticker,close\n2026-03-06,XBI,100\n")
+
+        with pytest.raises(ValueError, match="--refresh-price-history-live only allowed"):
+            _maybe_refresh_price_history_live(
+                as_of_date="2026-03-06",
+                data_dir=tmp_path,
+                enabled=True,
+                today=date(2026, 3, 7),
+                refresh_func=lambda argv: calls.append(argv) or 0,
+            )
+
+        assert calls == []
+
+    def test_price_refresh_explicit_current_date_invokes_refresh(self, tmp_path):
+        calls = []
+        (tmp_path / "price_history.csv").write_text("date,ticker,close\n2026-03-06,XBI,100\n")
+
+        refreshed = _maybe_refresh_price_history_live(
+            as_of_date="2026-03-06",
+            data_dir=tmp_path,
+            enabled=True,
+            today=date(2026, 3, 6),
+            refresh_func=lambda argv: calls.append(argv) or 0,
+        )
+
+        assert refreshed is True
+        assert calls == [
+            ["--price-csv", str(tmp_path / "price_history.csv"), "--days-back", "5"]
+        ]
 
 
 # =============================================================================
