@@ -1,14 +1,13 @@
 {
-  "ADPT": 1,
-  "OABI": 5,
-  "HRTX": 1,
-  "PRQR": 1,
-  "CTKB": 1,
-  "LFCR": 1,
-  "PACB": 1,
-  "TKNO": 4,
-  "EDIT": 5,
-  "BCYC": 5,
-  "MCRB": 3,
-  "AVXL": 3
+  "TKNO": 6,
+  "PSNL": 1,
+  "AVXL": 5,
+  "CTKB": 3,
+  "GHRS": 1,
+  "EDIT": 7,
+  "LFCR": 3,
+  "MCRB": 5,
+  "HRTX": 3,
+  "PACB": 3,
+  "OABI": 7
 }
