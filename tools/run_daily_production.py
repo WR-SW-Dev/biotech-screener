@@ -456,7 +456,8 @@ def run_screen(
     """Run run_screen.py in phase2 mode with decision ranking."""
     # run_screen.py requires --output for the raw JSON results
     output_json = snapshot_dir / as_of_date / "screen_output.json"
-    output_json.parent.mkdir(parents=True, exist_ok=True)
+    # Do NOT pre-create output_json.parent here — run_screen.py creates it after
+    # its overwrite-policy check. Pre-creating triggers "Snapshot already exists".
     cmd = [
         sys.executable,
         str(REPO_ROOT / "run_screen.py"),
