@@ -61,7 +61,7 @@ def select_top_k(portfolio: dict, top_k: int = 30) -> list[dict]:
 
 
 def apply_trading_guardrails(positions: list[dict]) -> list[dict]:
-    """Filter positions by Phase 2 guardrails."""
+    """Filter positions by catalyst guardrail only. Tier is informational."""
     filtered = []
     dropped = []
 
@@ -71,11 +71,7 @@ def apply_trading_guardrails(positions: list[dict]) -> list[dict]:
         tier = pos.get("tier_any", "")
 
         if catalyst_days <= 7:
-            dropped.append((ticker, f"catalyst too imminent ({catalyst_days}d)"))
-            continue
-
-        if tier not in ["A", "B"]:
-            dropped.append((ticker, f"tier {tier} not eligible"))
+            dropped.append((ticker, f"catalyst too imminent ({catalyst_days}d), Tier {tier}"))
             continue
 
         filtered.append(pos)
@@ -167,7 +163,8 @@ def generate_blotter(plan: dict, snapshot_date: str, top_k: int, account: str, a
             "no_shorts": True,
             "no_after_hours": True,
             "catalyst_min_days": 8,
-            "tier_eligible": ["A", "B"],
+            "tier_filter_enabled": False,
+            "tier_note": "Tier is informational only; all eligible tickers (A/B/C) are included if catalyst >= 8 days",
         },
         "plan": plan,
         "review_status": "PENDING_HUMAN_REVIEW",

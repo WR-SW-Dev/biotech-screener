@@ -39,11 +39,11 @@ python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
 
 ### Guardrails Applied
 
-- ✅ Tier C filtered out
-- ✅ Catalyst ≤7 days filtered out
+- ✅ Catalyst ≤7 days filtered out (only guardrail on rank selection)
+- ✅ Tier is informational only — A/B/C all included if catalyst ≥ 8 days
 - ✅ Max 10% per name
 - ✅ Min $1 order size
-- ✅ No margin, no shorts, no options
+- ✅ No margin, no shorts, no options, no after-hours
 
 ### What It Does NOT Do
 
@@ -201,9 +201,11 @@ Write a Claude Code agent that:
 ✅ Agentic account only ($100 cash limit)
 ✅ Buy-only (no sells)
 ✅ Fractional shares allowed
+✅ Catalyst ≥ 8 days (imminent catalysts excluded)
 ✅ Real quotes (not stubs)
-✅ Real Robinhood review before approval
+✅ Real Robinhood review before approval (stage 2)
 ✅ No orders placed without "EXECUTE APPROVED ORDERS"
+✅ Tier is informational (all A/B/C included if catalyst allows)
 ✅ Fail-closed if snapshot/quote/cash/MCP missing
 
 ---

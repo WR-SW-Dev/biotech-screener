@@ -40,17 +40,19 @@ python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
 **Expected Output (Option A - top 15, $5 min):**
 - ✓ Snapshot loaded (2026-06-10)
 - ✓ 15 eligible tickers selected
-- ✓ ~2 dropped by Tier C guardrail
-- ✓ ~13 orders generated ($65-75 gross, ~$5-6 each)
+- ✓ 15 orders generated (unless catalyst guardrail removes some)
+- ✓ ~$6.67 per order (~$100 total gross)
+- ✓ Includes all tiers (A/B/C) if catalyst ≥ 8 days
 - ✓ Blotter saved to `artifacts/trading/robinhood_top15_plan_2026-06-10.json`
 
 **Expected Output (Option B - top 30, $1 min, fractional):**
 - ✓ Snapshot loaded (2026-06-10)
 - ✓ 30 eligible tickers selected
-- ✓ ~3-5 dropped by Tier C guardrail
-- ✓ ~25-27 orders generated (~$100 gross, ~$3.33-4 each with fractional shares)
-- ✓ Blotter saved to `artifacts/trading/robinhood_top30_plan_2026-06-10.json`
+- ✓ ~30 orders generated unless catalyst guardrail removes some
+- ✓ ~$3.33 per order (~$100 total gross)
+- ✓ Includes all tiers (A/B/C) if catalyst ≥ 8 days
 - ✓ Fractional shares: e.g., 0.0667 shares @ $50 = $3.33
+- ✓ Blotter saved to `artifacts/trading/robinhood_top30_plan_2026-06-10.json`
 
 **Both options:**
 - ✓ No orders placed
@@ -84,11 +86,12 @@ cat artifacts/trading/robinhood_top15_plan_2026-06-10.json | jq '.plan.orders | 
 ```
 
 **Checklist:**
-- [ ] No Tier C tickers present
-- [ ] No catalysts < 8 days
-- [ ] Per-name notional ≤ 5% of $100 ($5 cap, but averaging ~$3.33-4 for top 30)
+- [ ] All tickers have catalyst ≥ 8 days
+- [ ] Tier is included in order reason (informational, not filtering)
+- [ ] Per-name notional ≤ 5% of $100
 - [ ] All orders ≥ min order size ($1 for fractional, $5 for conservative)
 - [ ] Tickers match top K screener picks (COGT rank 1, DNTH rank 2, etc.)
+- [ ] Includes all tiers (A/B/C) if catalyst allows
 - [ ] Fractional shares supported for small orders (e.g., 0.0667 shares)
 
 **Example Acceptable Blotter (top 15, $5 min):**
@@ -291,8 +294,9 @@ If something goes wrong:
 ## Success Criteria
 
 **Phase 1 & 2 PASS:**
-- Blotter generated correctly with guardrails applied
-- 13-15 orders, $65-75 gross, all Tier A/B, catalyst ≥8d
+- Blotter generated correctly with catalyst guardrail (≥8d) applied
+- 15 orders for top-15 ($100 gross, ~$6.67 each), unless catalyst removes some
+- Includes all tiers (A/B/C) in orders; tier is informational only
 
 **Phase 3 PASS:**
 - Execution workflow runs without errors
