@@ -2,8 +2,9 @@
 
 ## Summary
 
-**Dry-run (blotter generation only): ✅ GO**
-**Live execution (real MCP calls): ⏸ NO-GO (stubs only)**
+**Stage 1 — Blotter Generation: ✅ GO** (real guardrails, stub prices)
+**Stage 2 — Stub Simulator: ✅ PASS** (approval flow works, no real orders placed)
+**Live Execution (real MCP calls): ❌ NO-GO** (requires Claude Code agent, not this script)
 
 ---
 
@@ -106,47 +107,76 @@ For real $100 / top-15 trading, a Claude Code agent must:
 **To use with real quotes in a Claude Code agent:**
 - Replace `fetch_real_quotes()` stub with actual `mcp_call("get_equity_quotes", ...)`
 
-### robinhood_execute_trades_v2_mcp.py
+### robinhood_execute_trades_v2_mcp.py — STUB SIMULATOR ONLY
 
-**Status:** ⏸ NO-GO (stubs only)
+**Status:** ✅ PASS (stub simulation), ❌ NOT FOR LIVE TRADING
 
-- Loads blotter ✅
-- Prompts for approval ✅
-- Has `review_and_place_orders()` with MCP comments (TODO: uncomment + wire)
-- Generates fake order IDs ❌
-- Does NOT call real Robinhood MCP tools ❌
+**What it does:**
+- ✅ Loads blotter
+- ✅ Reviews orders (all marked "OK")
+- ✅ Prompts for explicit approval (`EXECUTE APPROVED ORDERS`)
+- ✅ Simulates order placement with stub order IDs prefixed `STUB_ORDER_`
+- ✅ Logs execution artifact with `execution_mode: "STUB_SIMULATION"` and `live_orders_placed: false`
+- ✅ Prevents `--skip-approval + --live-mcp` combo
+- ✅ Rejects `--live-mcp` flag with clear error message
 
-**To use for real execution:**
-- Uncomment the MCP calls in `review_and_place_orders()`
-- Replace `review_equity_order_stub()` with real `mcp_call("review_equity_order", ...)`
-- Replace `place_equity_order_stub()` with real `mcp_call("place_equity_order", ...)`
-- Use returned `order_id` from real response
+**What it does NOT do:**
+- ❌ Does NOT call real Robinhood MCP tools
+- ❌ Does NOT place real orders
+- ❌ Does NOT return real order IDs
+- ❌ Does NOT update account balances
+
+**Important:**
+- This script is for **approval flow testing only**
+- Stub PASS does **NOT** imply live trading readiness
+- Stub order IDs (e.g., `STUB_ORDER_COGT_abc12345`) are NOT real Robinhood order IDs
+- The artifact explicitly marks execution as stub simulation
+
+**For real $100 / top-15 trading:**
+- Use a Claude Code agent with direct Robinhood MCP calls (see "Option B" below)
+- The agent must call:
+  - `mcp__robinhood-trading__get_equity_quotes`
+  - `mcp__robinhood-trading__review_equity_order`
+  - `mcp__robinhood-trading__place_equity_order`
+  - `mcp__robinhood-trading__get_portfolio` (for buying power check)
 
 ---
 
-## Recommended Path to Live Trading
+## LIVE TRADING REQUIRES CLAUDE CODE AGENT (Not This Script)
 
-### Option A: Wire v2 Scripts (1-2 hours)
+The stub scripts (`robinhood_top30_trade_plan_v2_mcp.py`, `robinhood_execute_trades_v2_mcp.py`) are for:
+- ✅ Blotter generation and structure validation
+- ✅ Guardrails testing
+- ✅ Approval flow UX testing (with stubs)
 
-1. Update `fetch_real_quotes()` in `robinhood_top30_trade_plan_v2_mcp.py`
-2. Update `review_and_place_orders()` in `robinhood_execute_trades_v2_mcp.py`
-3. Test dry-run with real quotes
-4. Test approval flow
-5. Test live execution on Agentic account ($100)
+They are **NOT** intended for live execution. To trade real dollars on the Agentic account:
 
-### Option B: Build Claude Code Agent (2-4 hours, recommended)
+### Build a Claude Code Agent
 
-1. Write a Claude Code agent that orchestrates the full flow
-2. Agent calls:
-   - `load_snapshot()` (local)
-   - `mcp_call("get_equity_quotes", ...)` (real)
-   - `mcp_call("get_portfolio", ...)` (real)
-   - `mcp_call("review_equity_order", ...)` per order (real)
-   - `mcp_call("place_equity_order", ...)` per order (real)
-3. Agent handles all logic in one place (no executor script needed)
-4. Direct access to MCP tools, no stubs
+Write a Claude Code agent that:
 
-**Recommendation:** Option B is cleaner. The v2 scripts are reference implementations; the real system should call MCP directly.
+1. **Loads the snapshot** → `load_snapshot()`
+2. **Selects top K** → `select_top_k(portfolio, k=15)`
+3. **Applies guardrails** → `apply_trading_guardrails(positions)`
+4. **Fetches real quotes** → `mcp_call("get_equity_quotes", {"symbols": tickers})`
+5. **Checks buying power** → `mcp_call("get_portfolio", {"account_number": "802349084"})`
+6. **Reviews each order** → `mcp_call("review_equity_order", {...})` per order
+7. **Shows user the blotter** with real prices, estimated costs, buying power
+8. **Requires explicit approval** → User types exactly: `EXECUTE APPROVED ORDERS`
+9. **Places orders** → `mcp_call("place_equity_order", {...})` per approved order
+10. **Logs execution** with real order IDs and status
+
+**Why this approach:**
+- Direct access to real Robinhood MCP tools (no stubs)
+- All decisions in one context (no script-to-script passing)
+- Fail-closed on missing data (quotes, buying power, MCP availability)
+- Full audit trail with real order IDs
+- No confusion between stub and live execution
+
+**Timeline:**
+- Agent development: ~2-3 hours
+- Testing on Agentic: ~1 hour
+- Go-live: ~2026-06-12 (pending approval)
 
 ---
 

@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 """
-Stage 2: Execute approved trades with real Robinhood MCP integration.
+Stage 2: STUB SIMULATOR for trade execution approval flow.
 
-This script:
+⚠️  THIS SCRIPT USES STUB ORDER IDS. NO REAL ORDERS ARE PLACED.
+
+For live Robinhood trading, use a Claude Code agent with direct MCP calls:
+  - mcp__robinhood-trading__review_equity_order
+  - mcp__robinhood-trading__place_equity_order
+
+This stub simulator:
 1. Loads trade plan blotter
-2. Calls MCP review_equity_order for each order
+2. Reviews orders (stub: always "OK")
 3. Prompts for explicit approval
-4. Calls MCP place_equity_order after approval
-5. Logs execution artifact
+4. Simulates order placement with fake order IDs
+5. Logs simulation artifact with execution_mode: "STUB_SIMULATION"
 
 Usage:
-  # Review only (no approval needed)
   python3 tools/robinhood_execute_trades_v2_mcp.py --blotter artifacts/trading/plan.json --account agentic
 
-  # Or with approval (test):
-  python3 tools/robinhood_execute_trades_v2_mcp.py --blotter artifacts/trading/plan.json --account agentic --skip-approval
-
-This requires:
-- MCP context (cloud agent or Claude Code with Robinhood trading tools)
-- Account must have agentic_allowed=true
-- No orders placed without explicit approval
+Note:
+  --skip-approval is allowed for testing only.
+  --live-mcp flag not yet implemented (fails closed).
+  Real execution requires Claude Code agent orchestration.
 """
 
 import argparse
@@ -130,9 +132,9 @@ def review_and_place_orders(blotter: dict, account_number: str, skip_approval: b
         print("Execution cancelled.")
         return []
 
-    # Place orders (with MCP)
+    # Simulate order placement (stub, no real MCP calls)
     print("\n" + "=" * 90)
-    print("PLACING ORDERS")
+    print("SIMULATING ORDER PLACEMENT (STUB EXECUTION)")
     print("=" * 90)
 
     for i, order in enumerate(orders, 1):
@@ -151,32 +153,48 @@ def review_and_place_orders(blotter: dict, account_number: str, skip_approval: b
         # })
         # order_id = place_result.get("id")
 
-        order_id = f"ORDER_{ticker}_{uuid.uuid4().hex[:8]}"
+        stub_order_id = f"STUB_ORDER_{ticker}_{uuid.uuid4().hex[:8]}"
 
         placed_orders.append(
             {
                 "ticker": ticker,
                 "side": "BUY",
                 "quantity": quantity,
-                "order_id": order_id,
+                "order_id": stub_order_id,
                 "placed_at": datetime.now().isoformat(),
-                "status": "PENDING",
+                "status": "SIMULATED",
+                "note": "Stub order ID only — no real order placed",
             }
         )
 
-        print(f"✓ {i:2}. Placed: {ticker:6} {quantity:8.4f} shares | Order ID: {order_id}")
+        print(f"◯ {i:2}. Simulated: {ticker:6} {quantity:8.4f} shares | Stub ID: {stub_order_id}")
 
     return placed_orders
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Stage 2: Review and execute approved orders")
+    parser = argparse.ArgumentParser(description="Stage 2: STUB simulator for trade execution approval flow")
     parser.add_argument("--blotter", required=True, help="Path to trade plan blotter JSON")
     parser.add_argument("--account", default="agentic", help="Account name (e.g., agentic)")
     parser.add_argument("--account-number", default="802349084", help="Account number (default: agentic)")
     parser.add_argument("--skip-approval", action="store_true", help="Skip approval (testing only)")
+    parser.add_argument("--live-mcp", action="store_true", help="(not yet implemented) real Robinhood execution")
 
     args = parser.parse_args()
+
+    # Fail closed: --live-mcp not implemented yet
+    if args.live_mcp:
+        print("❌ LIVE_MCP execution is not implemented in this script.")
+        print("   For real Robinhood trading, use a Claude Code agent with direct MCP calls:")
+        print("   - mcp__robinhood-trading__review_equity_order")
+        print("   - mcp__robinhood-trading__place_equity_order")
+        sys.exit(1)
+
+    # Prevent dangerous combo
+    if args.skip_approval and args.live_mcp:
+        print("❌ FATAL: --skip-approval + --live-mcp is not allowed.")
+        print("   Real trading requires explicit human approval.")
+        sys.exit(1)
 
     try:
         blotter_path = Path(args.blotter)
@@ -192,13 +210,16 @@ def main():
             print("\nNo orders placed.")
             sys.exit(0)
 
-        # Log execution
+        # Log execution artifact (stub simulation)
         execution_artifact = {
+            "execution_mode": "STUB_SIMULATION",
+            "live_orders_placed": False,
+            "note": "This is a stub simulator. No real orders were placed. See execution_mode field.",
             "blotter_file": str(blotter_path),
             "account": args.account,
             "timestamp": datetime.now().isoformat(),
-            "placed_orders": placed_orders,
-            "n_placed": len(placed_orders),
+            "simulated_orders": placed_orders,
+            "n_simulated": len(placed_orders),
             "gross_notional": blotter["plan"]["gross_notional_dollars"],
         }
 
@@ -208,8 +229,10 @@ def main():
         with open(output_file, "w") as f:
             json.dump(execution_artifact, f, indent=2)
 
-        print(f"\n✓ Execution logged: {output_file}")
-        print(f"✓ {len(placed_orders)} orders placed successfully")
+        print(f"\n✓ Simulation logged: {output_file}")
+        print(f"✓ {len(placed_orders)} stub orders simulated successfully")
+        print("\n⚠️  REMINDER: This is stub simulation only. No real orders placed.")
+        print("   For live execution, use a Claude Code agent with direct Robinhood MCP integration.")
 
     except (FileNotFoundError, ValueError) as e:
         print(f"{e}")
