@@ -171,6 +171,7 @@ class TestOutputContracts:
 
     def test_top_level_keys(self, pipeline_result):
         expected = {
+            "_governance",
             "run_metadata",
             "module_1_universe",
             "module_2_financial",
@@ -183,6 +184,20 @@ class TestOutputContracts:
             "company_archetypes",
         }
         assert expected.issubset(pipeline_result.keys()), f"Missing keys: {expected - pipeline_result.keys()}"
+
+    def test_governance_envelope_keys(self, pipeline_result):
+        gov = pipeline_result["_governance"]
+        expected = {
+            "run_id",
+            "score_version",
+            "schema_version",
+            "parameters_hash",
+            "pit_cutoff",
+            "as_of_date",
+        }
+        assert expected.issubset(gov.keys()), f"Missing _governance keys: {expected - gov.keys()}"
+        assert gov["as_of_date"] == AS_OF_DATE
+        assert gov["parameters_hash"].startswith("sha256:")
 
     def test_run_metadata_keys(self, pipeline_result):
         meta = pipeline_result["run_metadata"]

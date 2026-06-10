@@ -435,7 +435,7 @@ def build_inputs_manifest(
     return {
         "manifest_version": MANIFEST_VERSION,
         "as_of_date": as_of_date,
-        "generated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": f"{as_of_date}T00:00:00Z",
         "data_dir": str(data_dir),
         "dependencies": dependencies,
         "validation": {

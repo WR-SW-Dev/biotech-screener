@@ -5,6 +5,36 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-07 (Hermes taxonomy + learning loop refresh)
+
+### Hermes-native docs
+- **hermes_tools_map.md**: baseline `ec4b2726`; `audit_learnings`, skills telemetry + learning loop v2; 32-skill audit expectation; WSL sequence updated
+- **hermeslink-state-capture.md**: fleet count fixed (29 active); skills learning tools; PR #322 merged state
+- **agent_roster.md**: date refresh; registry count aligned
+- **operator_host_skills.md**: 32/32 audit; skills learning telemetry index
+
+### Skill mirror
+- **screener-ops**: baseline `ec4b2726`; checklist 32/32
+
+### Governance
+- Docs/tooling only. No ranker, selector, sizing, or scoring changes.
+
+---
+
+## 2026-06-07 (repo scale + skills refresh)
+
+### Skill sources refreshed
+- **screener-ops**: Repo scale orientation table (~4k engines / ~176k production / ~750k total); baseline `main` @ `31a74d42`; `audit_learnings.py` in WSL gate Phase 1 + sync workflow
+- **selector-ranker**: Codebase context — compact high-leverage engines; governance tier unchanged
+- **codegraph**: baseline `31a74d42`, index file count note
+- **self-improving**: Distill step → memory bootstrap block
+- Ran `sync_hermes_skills.py` — updated mirrors
+
+### Governance
+- Skills/docs only. No ranker, selector, sizing, or scoring changes.
+
+---
+
 ## 2026-06-01 (HOT memory optimization)
 
 ### Memory layer

@@ -21,7 +21,7 @@ Observe → Log → Distill → Promote → Skill-patch → Sync → Verify → 
 | --- | --- | --- |
 | **Observe** | Correction, CI surprise, ops gate miss, codegraph gap | Session context |
 | **Log** | Raw event | `.learnings/corrections.md` or `.learnings/LEARNINGS.md` `[LRN-...]` |
-| **Distill** | 3x same Pattern-Key in 7 days | `.learnings/memory.md` (HOT) or `.learnings/projects/biotech_screener.md` (WARM) |
+| **Distill** | 3x same Pattern-Key in 7 days | `.learnings/memory.md` bootstrap block (HOT) or `projects/` / `domains/` (WARM) |
 | **Promote** | Cross-session, operator-relevant workflow | `skills/<dir>/SKILL.md` |
 | **Sync** | Hermes mirror + registry | `python3 tools/sync_hermes_skills.py` |
 | **Verify** | No drift | `python3 tools/audit_hermes_skills.py` |

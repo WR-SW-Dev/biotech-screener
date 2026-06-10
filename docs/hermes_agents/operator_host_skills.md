@@ -1,6 +1,6 @@
 # Operator Host Hermes Skills Layout
 
-Last updated: 2026-05-31
+Last updated: 2026-06-07 · Hermes baseline `main` @ `ec4b2726`
 
 This runbook separates **repo authority** from **operator runtime copies** so Hermes and Cursor do not drift silently.
 
@@ -29,8 +29,8 @@ git status -sb
 
 Expected clean audit:
 
-- 31 Hermes `.md` files (excluding `harvest_log.md`)
-- 31 registered in `_meta.json`
+- **32** Hermes `.md` files (excluding `harvest_log.md`)
+- **32** registered in `_meta.json`
 - No unregistered files; no mirror drift warnings for cursor-synced skills
 
 Commit mirror changes when sync updates files:
@@ -100,7 +100,7 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 | Hermes mirror (after sync) | `docs/hermes_skills/*.md` |
 | Sync + register `_meta.json` | `python3 tools/sync_hermes_skills.py --register-meta` |
 | Drift audit | `python3 tools/audit_hermes_skills.py` |
-| Screener ops + fleet model routing | `skills/screener_ops/SKILL.md` → `screener-ops.md` |
+| Screener ops + fleet model routing | `skills/screener_ops/SKILL.md` → `screener-ops.md` (incl. repo scale table) |
 | Codegraph in Cursor | `skills/codegraph/SKILL.md` → `codegraph.md` |
 | Hermes MCP (IDE, read-only) | `mcp_server/hermes_server.py` · bootstrap: `.cursor/rules/hermes-context.mdc` |
 | Model surfaces (gateway vs direct) | [`hermes_tools_map.md`](hermes_tools_map.md) §5 · [`HERMES_GATEWAY_SETUP.md`](../HERMES_GATEWAY_SETUP.md) |
@@ -108,6 +108,8 @@ If Cursor shows updated guidance but Hermes CLI does not, check for **stale `~/.
 | Sync history | [`../hermes_skills/harvest_log.md`](../hermes_skills/harvest_log.md) |
 | Recursive self-improvement loop | `skills/self-improving/SKILL.md` → `self-improving.md` · `REFERENCE.md` → `self-improving-reference.md` |
 | Knowledge stack + audit | `.learnings/README.md` · `python3 tools/audit_learnings.py` |
+| Skills learning telemetry | `tools/skills_execution_logger.py` · `tools/hermes_skills_learning_loop_v2.py` → `artifacts/skills_learning/` |
+| Hermes taxonomy | [`hermes_tools_map.md`](hermes_tools_map.md) · [`agent_roster.md`](agent_roster.md) |
 
 **Rule:** edit `skills/` first, then sync and commit mirrors. After significant sessions, run the self-improving loop (log → promote → skill-patch → sync → harvest_log). Do not hand-edit mirrored files unless `source_authority` is `HERMES_NATIVE` or `memory-steward` (authoritative).
 

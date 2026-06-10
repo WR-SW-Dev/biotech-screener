@@ -44,7 +44,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 # Load .env file (credentials, API keys) before any module reads os.environ
@@ -56,7 +56,7 @@ load_dotenv()
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from statistics import median, quantiles
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -338,6 +338,15 @@ except ImportError as e:
 
 VERSION = "1.6.0"  # Bumped for governance-friendly CLI enhancements
 DETERMINISTIC_TIMESTAMP_SUFFIX = "T00:00:00Z"
+GOVERNANCE_SCHEMA_VERSION = "screen_output_governance.v1"
+SCORE_AFFECTING_CSV_INPUTS = ("price_history.csv",)
+GENERATED_JSON_OUTPUT_PREFIXES = (
+    "catalyst_events_",
+    "catalyst_events_vnext_",
+    "diagnostics_",
+    "run_log",
+    "screen_",
+)
 SCHEMA_DECISION_PORTFOLIO = "decision_portfolio.v1"
 SCHEMA_PORTFOLIO_POSITIONS = "portfolio_positions.v1"
 SCHEMA_METADATA = "metadata.v1"
@@ -935,6 +944,11 @@ def _force_deterministic_generated_at(obj: Any, generated_at: str) -> None:
             _force_deterministic_generated_at(item, generated_at)
 
 
+def _deterministic_timestamp(as_of_date: str) -> str:
+    """Return the deterministic timestamp used in reproducible artifacts."""
+    return as_of_date + DETERMINISTIC_TIMESTAMP_SUFFIX
+
+
 def validate_as_of_date_param(as_of_date: str) -> None:
     """
     Validate as_of_date format with strict security checks.
@@ -960,6 +974,154 @@ def validate_as_of_date_param(as_of_date: str) -> None:
 
     # NOTE: Do not compare to date.today() here (wall-clock dependency breaks time-invariance).
     # Lookahead protection should be enforced via PIT filters and/or input snapshot dating.
+
+
+def _live_mode_today_iso(today: Optional[date] = None) -> str:
+    """Return today's ISO date for explicit live-mode guards only."""
+    return (today or date.today()).isoformat()
+
+
+def _require_current_as_of_date_for_live_modes(
+    as_of_date: str,
+    live_modes: Dict[str, bool],
+    *,
+    today: Optional[date] = None,
+) -> None:
+    """Fail closed when live data sources are requested for historical runs."""
+    enabled = sorted(name for name, is_enabled in live_modes.items() if is_enabled)
+    if not enabled:
+        return
+
+    today_iso = _live_mode_today_iso(today)
+    if as_of_date != today_iso:
+        joined = ", ".join(enabled)
+        raise ValueError(
+            f"{joined} only allowed when --as-of-date equals today ({today_iso}); "
+            f"got {as_of_date}. Fetching live data for a historical date would violate PIT discipline."
+        )
+
+
+def _ctgov_fallback_pit_cutoff(as_of_date: str) -> str:
+    """Standard PIT cutoff for unfiltered CTGov fallback records."""
+    return (date.fromisoformat(as_of_date) - timedelta(days=1)).isoformat()
+
+
+def _filter_ctgov_fallback_records_for_pit(
+    trial_records: List[Dict[str, Any]],
+    as_of_date: str,
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Filter unversioned CTGov fallback records to standard prior-day PIT availability."""
+    pit_cutoff = _ctgov_fallback_pit_cutoff(as_of_date)
+    filtered = [
+        r
+        for r in trial_records
+        if (r.get("last_update_posted") or "9999")[:10] <= pit_cutoff
+        and (r.get("first_posted") or "9999")[:10] <= pit_cutoff
+    ]
+    return filtered, pit_cutoff
+
+
+def _compute_run_input_hashes(data_dir: Path) -> Dict[str, str]:
+    """Hash primary run inputs, including score-affecting non-JSON inputs."""
+    content_hashes: Dict[str, str] = {}
+    for json_file in sorted(data_dir.glob("*.json")):
+        if json_file.name.startswith(GENERATED_JSON_OUTPUT_PREFIXES):
+            continue  # Skip generated sidecars - they're outputs, not inputs
+        content_hashes[json_file.name] = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
+
+    for csv_name in SCORE_AFFECTING_CSV_INPUTS:
+        csv_file = data_dir / csv_name
+        if csv_file.exists():
+            content_hashes[csv_file.name] = hashlib.sha256(csv_file.read_bytes()).hexdigest()[:16]
+
+    return dict(sorted(content_hashes.items()))
+
+
+def _sha256_prefixed(obj: Any) -> str:
+    payload = json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
+    return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _build_governance_envelope(
+    *,
+    as_of_date: str,
+    run_metadata: Dict[str, Any],
+) -> Dict[str, str]:
+    """Build top-level deterministic governance metadata for primary output."""
+    parameter_keys = (
+        "version",
+        "enhancements_enabled",
+        "catalyst_window",
+        "catalyst_decay",
+        "catalyst_half_life_days",
+        "enable_smart_money",
+        "smart_money_source",
+        "min_component_coverage",
+        "min_component_coverage_mode",
+        "defensive_multiplier_enabled",
+        "defensive_config",
+        "position_sizing_enabled",
+        "pit_mode",
+        "catalyst_mode",
+    )
+    parameter_payload = {key: run_metadata.get(key) for key in parameter_keys}
+    parameters_hash = _sha256_prefixed(parameter_payload)
+    run_id_payload = {
+        "as_of_date": as_of_date,
+        "input_hashes": run_metadata.get("input_hashes", {}),
+        "parameters_hash": parameters_hash,
+        "schema_version": GOVERNANCE_SCHEMA_VERSION,
+        "score_version": VERSION,
+    }
+    return {
+        "run_id": hashlib.sha256(
+            json.dumps(run_id_payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+        ).hexdigest()[:16],
+        "score_version": VERSION,
+        "schema_version": GOVERNANCE_SCHEMA_VERSION,
+        "parameters_hash": parameters_hash,
+        "pit_cutoff": _ctgov_fallback_pit_cutoff(as_of_date),
+        "as_of_date": as_of_date,
+    }
+
+
+def _maybe_refresh_price_history_live(
+    *,
+    as_of_date: str,
+    data_dir: Path,
+    enabled: bool,
+    today: Optional[date] = None,
+    refresh_func: Optional[Callable[[List[str]], int]] = None,
+) -> bool:
+    """Refresh price history only when explicitly requested for a current-date live run."""
+    if not enabled:
+        return False
+
+    _require_current_as_of_date_for_live_modes(
+        as_of_date,
+        {"--refresh-price-history-live": True},
+        today=today,
+    )
+
+    price_csv = data_dir / "price_history.csv"
+    if not price_csv.exists():
+        logger.info("[PRICE_REFRESH] price_history.csv not found; skipping live refresh")
+        return False
+
+    try:
+        if refresh_func is None:
+            from scripts.refresh_price_history import main as refresh_func
+
+        logger.info("[PRICE_REFRESH] Refreshing price_history.csv in explicit live mode...")
+        refresh_rc = refresh_func(["--price-csv", str(price_csv), "--days-back", "5"])
+        if refresh_rc == 0:
+            logger.info("[PRICE_REFRESH] Done")
+        else:
+            logger.warning("[PRICE_REFRESH] Non-zero return: %d", refresh_rc)
+        return True
+    except Exception as exc:
+        logger.debug("Price refresh skipped: %s", exc)
+        return False
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -2736,6 +2898,11 @@ def _load_pdufa_manual(
     return records
 
 
+def _load_snapshot_pdufa_manual(data_dir: Optional[Path], as_of_date: str) -> List[Dict[str, str]]:
+    """Load snapshot PDUFA manual records from the active run data directory."""
+    return _load_pdufa_manual(data_dir=data_dir, as_of_date=as_of_date)
+
+
 def _nearest_regulatory_catalyst(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
@@ -3619,6 +3786,7 @@ def _write_coverage_quality(
     as_of_date: str,
     log: logging.Logger,
     options_freshness: Optional[Dict[str, Any]] = None,
+    generated_at: Optional[str] = None,
 ) -> None:
     """Generate coverage_quality.json and coverage_quality.md in the snapshot dir.
 
@@ -3740,7 +3908,7 @@ def _write_coverage_quality(
     cq: Dict[str, Any] = {
         "schema_version": "coverage_quality.v1",
         "as_of_date": as_of_date,
-        "generated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": generated_at or _deterministic_timestamp(as_of_date),
         "phase2_health": {
             "status": health.get("status"),
             "reasons": health.get("reasons", []),
@@ -4037,6 +4205,7 @@ def save_validation_snapshot(
     force_overwrite: bool = False,
     regime_result: Optional[Dict[str, Any]] = None,
     ranker_mode: str = "pairwise_minimal",
+    data_dir: Optional[Path] = None,
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -4113,7 +4282,7 @@ def save_validation_snapshot(
     # Load PDUFA manual dates once for secondary regulatory catalyst scan.
     # This ensures tickers with PDUFA dates in the manual file get flagged
     # even when M3 events don't include the PDUFA entry.
-    _pdufa_manual = _load_pdufa_manual(as_of_date=as_of_date)
+    _pdufa_manual = _load_snapshot_pdufa_manual(data_dir=data_dir, as_of_date=as_of_date)
 
     # Load source reliability table (empirical slip-based trust actions).
     # Used to penalize noisy calendar sources in priority ranking.
@@ -7828,7 +7997,7 @@ def save_validation_snapshot(
         "generator_version": VERSION,
         "config_fingerprint": _config_fingerprint,
         "as_of_date": as_of_date,
-        "saved_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "saved_at": _deterministic_timestamp(as_of_date),
         "decision_mode": decision_mode,
         "ranking_mode": ranking_mode,
         "ranker_mode": ranker_mode,
@@ -8085,7 +8254,15 @@ def save_validation_snapshot(
 
     # --- Coverage quality artifact (v1) ---
     try:
-        _write_coverage_quality(snap_path, csv_rows, metadata, as_of_date, logger, _options_freshness)
+        _write_coverage_quality(
+            snap_path,
+            csv_rows,
+            metadata,
+            as_of_date,
+            logger,
+            _options_freshness,
+            generated_at=_deterministic_timestamp(as_of_date),
+        )
     except Exception as _cq_exc:
         logger.debug("Coverage quality artifact skipped: %s", _cq_exc)
 
@@ -9268,13 +9445,9 @@ def run_screening_pipeline(
     # Determine resume index
     resume_index = get_resume_module_index(resume_from)
 
-    # Compute content hashes for audit trail
-    # DETERMINISM: Exclude run_log files (they contain timestamps that change each run)
-    content_hashes = {}
-    for json_file in sorted(data_dir.glob("*.json")):
-        if json_file.name.startswith("run_log"):
-            continue  # Skip run logs - they're outputs, not inputs
-        content_hashes[json_file.name] = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
+    # Compute content hashes for audit trail.
+    # DETERMINISM: Exclude run_log files (they contain timestamps that change each run).
+    content_hashes = _compute_run_input_hashes(data_dir)
 
     # Create audit record if audit log path provided
     if audit_log_path:
@@ -9509,22 +9682,16 @@ def run_screening_pipeline(
     trial_records = load_json_data(trial_records_path, "Trials")
 
     # PIT safety net: if we fell back to unfiltered trial_records.json, apply
-    # a runtime PIT filter so that trials with last_update_posted > as_of_date
-    # are excluded. This prevents status leakage from future updates.
+    # a runtime PIT filter so records must have been posted before the screen
+    # date. Same-day CTGov posts are unavailable to historical scoring.
     if _ctgov_cache is None and ctgov_cache_dir is not False and trial_records:
-        _pit_cutoff = as_of_date  # inclusive same-day
         _pre_count = len(trial_records)
-        trial_records = [
-            r
-            for r in trial_records
-            if (r.get("last_update_posted") or "9999")[:10] <= _pit_cutoff
-            and (r.get("first_posted") or "9999")[:10] <= _pit_cutoff
-        ]
+        trial_records, _pit_cutoff = _filter_ctgov_fallback_records_for_pit(trial_records, as_of_date)
         _post_count = len(trial_records)
         if _pre_count != _post_count:
             logger.info(
                 f"  PIT fallback filter: {_pre_count} → {_post_count} trials "
-                f"(removed {_pre_count - _post_count} with posting date > {as_of_date})"
+                f"(removed {_pre_count - _post_count} with posting date > {_pit_cutoff})"
             )
 
     market_records = load_json_data(data_dir / "market_data.json", "Market data")
@@ -11002,36 +11169,38 @@ def run_screening_pipeline(
     m3_serialized = _serialize_m3_result(m3_result)
 
     # Assemble results
+    run_metadata = {
+        "as_of_date": as_of_date,
+        "version": VERSION,
+        "deterministic_timestamp": _deterministic_timestamp(as_of_date),
+        "input_hashes": dict(sorted(content_hashes.items())),
+        "enhancements_enabled": enable_enhancements,
+        # New governance-friendly parameters
+        "catalyst_window": f"{catalyst_window[0]}-{catalyst_window[1]}" if catalyst_window else "15-45",
+        "catalyst_decay": catalyst_decay,
+        "catalyst_half_life_days": catalyst_half_life_days if catalyst_decay == "exp" else None,
+        "enable_smart_money": enable_smart_money,
+        "smart_money_source": smart_money_source,
+        "min_component_coverage": min_component_coverage,
+        "min_component_coverage_mode": min_component_coverage_mode,
+        "defensive_multiplier_enabled": apply_defensive_multiplier,
+        "defensive_config": defensive_config if apply_defensive_multiplier else None,
+        "position_sizing_enabled": enable_position_sizing,
+        "pit_mode": pit_mode,
+        "pit_violation_sources": [pit_violation] if pit_violation else [],
+        "catalyst_mode": m3_result.get("catalyst_mode", "full"),
+        # PIT audit + holdings schema for reproducibility
+        "coinvest_audit": coinvest_audit_data if coinvest_audit_data else None,
+        "holdings_detailed_schema": holdings_schema_data,
+        # Conviction horizon overlay audit (Enhancement 12)
+        "conviction_horizon_overlay_applied": (
+            m5_result.get("diagnostic_counts", {}).get("conviction_horizon_overlay_applied", 0) if m5_result else 0
+        ),
+        "inputs_manifest": _inputs_manifest,
+    }
     results = {
-        "run_metadata": {
-            "as_of_date": as_of_date,
-            "version": VERSION,
-            "deterministic_timestamp": as_of_date + DETERMINISTIC_TIMESTAMP_SUFFIX,
-            "input_hashes": dict(sorted(content_hashes.items())),
-            "enhancements_enabled": enable_enhancements,
-            # New governance-friendly parameters
-            "catalyst_window": f"{catalyst_window[0]}-{catalyst_window[1]}" if catalyst_window else "15-45",
-            "catalyst_decay": catalyst_decay,
-            "catalyst_half_life_days": catalyst_half_life_days if catalyst_decay == "exp" else None,
-            "enable_smart_money": enable_smart_money,
-            "smart_money_source": smart_money_source,
-            "min_component_coverage": min_component_coverage,
-            "min_component_coverage_mode": min_component_coverage_mode,
-            "defensive_multiplier_enabled": apply_defensive_multiplier,
-            "defensive_config": defensive_config if apply_defensive_multiplier else None,
-            "position_sizing_enabled": enable_position_sizing,
-            "pit_mode": pit_mode,
-            "pit_violation_sources": [pit_violation] if pit_violation else [],
-            "catalyst_mode": m3_result.get("catalyst_mode", "full"),
-            # PIT audit + holdings schema for reproducibility
-            "coinvest_audit": coinvest_audit_data if coinvest_audit_data else None,
-            "holdings_detailed_schema": holdings_schema_data,
-            # Conviction horizon overlay audit (Enhancement 12)
-            "conviction_horizon_overlay_applied": (
-                m5_result.get("diagnostic_counts", {}).get("conviction_horizon_overlay_applied", 0) if m5_result else 0
-            ),
-            "inputs_manifest": _inputs_manifest,
-        },
+        "_governance": _build_governance_envelope(as_of_date=as_of_date, run_metadata=run_metadata),
+        "run_metadata": run_metadata,
         "module_1_universe": m1_result,
         "module_2_financial": m2_result,
         "module_3_catalyst": m3_serialized,
@@ -11125,7 +11294,7 @@ def run_screening_pipeline(
             results["baker_overlay"] = {"error": f"{type(e).__name__}: {e}"}
 
     # Force deterministic timestamps for byte-identical outputs
-    deterministic_ts = as_of_date + DETERMINISTIC_TIMESTAMP_SUFFIX
+    deterministic_ts = _deterministic_timestamp(as_of_date)
     _force_deterministic_generated_at(results, deterministic_ts)
 
     return results
@@ -11377,6 +11546,54 @@ def _default_output_path(*, as_of_date: str, data_dir: Path, snapshot_dir: Optio
     else:
         base = data_dir.parent / "data" / "snapshots"
     return base / as_of_date / "screen_output.json"
+
+
+def _managed_snapshot_dir(*, as_of_date: str, data_dir: Path, snapshot_dir: Optional[Path]) -> Path:
+    """Return the dated snapshot directory managed by run_screen.py."""
+    if snapshot_dir is not None:
+        base = snapshot_dir
+    else:
+        base = data_dir.parent / "data" / "snapshots"
+    return base / as_of_date
+
+
+def _same_filesystem_path(left: Path, right: Path) -> bool:
+    """Compare paths without requiring them to exist."""
+    try:
+        return left.resolve(strict=False) == right.resolve(strict=False)
+    except OSError:
+        return left.absolute() == right.absolute()
+
+
+def _output_targets_managed_snapshot_dir(
+    output_path: Path,
+    *,
+    as_of_date: str,
+    data_dir: Path,
+    snapshot_dir: Optional[Path],
+) -> bool:
+    """Return True when an output path writes directly into the managed snapshot dir."""
+    managed_dir = _managed_snapshot_dir(as_of_date=as_of_date, data_dir=data_dir, snapshot_dir=snapshot_dir)
+    return _same_filesystem_path(output_path.parent, managed_dir)
+
+
+def _enforce_snapshot_output_overwrite_policy(
+    output_path: Path,
+    *,
+    as_of_date: str,
+    data_dir: Path,
+    snapshot_dir: Optional[Path],
+    force_overwrite: bool,
+) -> None:
+    """Apply CCFT frozen-snapshot policy before writing managed snapshot outputs."""
+    managed_dir = _managed_snapshot_dir(as_of_date=as_of_date, data_dir=data_dir, snapshot_dir=snapshot_dir)
+    if force_overwrite or not _same_filesystem_path(output_path.parent, managed_dir):
+        return
+    if managed_dir.exists():
+        raise FileExistsError(
+            f"Snapshot already exists at {managed_dir}; refusing to write {output_path.name} "
+            "without --force-overwrite."
+        )
 
 
 def main() -> int:
@@ -11833,6 +12050,13 @@ Module 3 Catalyst Detection:
         "Only allowed when --as-of-date equals today (PIT safety).",
     )
     parser.add_argument(
+        "--refresh-price-history-live",
+        action="store_true",
+        default=False,
+        help="Explicitly refresh price_history.csv from live yfinance before scoring. "
+        "Only allowed when --as-of-date equals today (PIT safety).",
+    )
+    parser.add_argument(
         "--phase-scores-v1",
         action="store_true",
         default=False,
@@ -12035,14 +12259,25 @@ Module 3 Catalyst Detection:
     # =========================================================================
     # Validate argument combinations
     # =========================================================================
-    if not args.dry_run and args.output is None:
-        args.output = _default_output_path(
-            as_of_date=args.as_of_date,
-            data_dir=Path(args.data_dir),
-            snapshot_dir=getattr(args, "snapshot_dir", None),
-        )
+    if not args.dry_run:
+        if args.output is None:
+            args.output = _default_output_path(
+                as_of_date=args.as_of_date,
+                data_dir=Path(args.data_dir),
+                snapshot_dir=getattr(args, "snapshot_dir", None),
+            )
+            logger.info(f"[OUTPUT] --output not provided; defaulting to {args.output}")
+        try:
+            _enforce_snapshot_output_overwrite_policy(
+                args.output,
+                as_of_date=args.as_of_date,
+                data_dir=Path(args.data_dir),
+                snapshot_dir=getattr(args, "snapshot_dir", None),
+                force_overwrite=getattr(args, "force_overwrite", False),
+            )
+        except FileExistsError as exc:
+            parser.error(str(exc))
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"[OUTPUT] --output not provided; defaulting to {args.output}")
 
     if args.resume_from and not args.checkpoint_dir:
         parser.error("--resume-from requires --checkpoint-dir")
@@ -12093,16 +12328,22 @@ Module 3 Catalyst Detection:
         except ValueError as e:
             parser.error(f"Invalid --snapshot-date-prior: {e}")
 
-    # Validate --sec-8k-live PIT safety: only allowed when as_of_date == today
-    if args.sec_8k_live:
-        from datetime import date as _date
+    # Validate live-source PIT safety: live fetches are current-date only.
+    try:
+        _require_current_as_of_date_for_live_modes(
+            args.as_of_date,
+            {
+                "--sec-8k-live": args.sec_8k_live,
+                "--sec-multi-form-mode=live": args.sec_multi_form_mode == "live",
+                "--fda-regulatory-mode=live": args.fda_regulatory_mode == "live",
+                "--refresh-price-history-live": args.refresh_price_history_live,
+            },
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
 
-        if args.as_of_date != _date.today().isoformat():
-            parser.error(
-                f"--sec-8k-live is only allowed when --as-of-date equals today "
-                f"({_date.today().isoformat()}), got {args.as_of_date}. "
-                f"Fetching live EDGAR data for a historical date would violate PIT discipline."
-            )
+    if args.verify_against and args.refresh_price_history_live:
+        parser.error("--refresh-price-history-live cannot be combined with --verify-against")
 
     # Set diagnostics output path default if full diagnostics enabled
     diagnostics_out = args.diagnostics_out
@@ -12219,20 +12460,11 @@ Module 3 Catalyst Detection:
             )
             return 1
 
-        # Refresh price_history.csv with latest prices (non-blocking)
-        try:
-            from scripts.refresh_price_history import main as _refresh_prices
-
-            _price_csv = args.data_dir / "price_history.csv"
-            if _price_csv.exists():
-                logger.info("[PRICE_REFRESH] Refreshing price_history.csv...")
-                _refresh_rc = _refresh_prices(["--price-csv", str(_price_csv), "--days-back", "5"])
-                if _refresh_rc == 0:
-                    logger.info("[PRICE_REFRESH] Done")
-                else:
-                    logger.warning("[PRICE_REFRESH] Non-zero return: %d", _refresh_rc)
-        except Exception as _pr_exc:
-            logger.debug("Price refresh skipped: %s", _pr_exc)
+        _maybe_refresh_price_history_live(
+            as_of_date=args.as_of_date,
+            data_dir=args.data_dir,
+            enabled=args.refresh_price_history_live,
+        )
 
         # Run pipeline
         results = run_screening_pipeline(
@@ -12453,6 +12685,7 @@ Module 3 Catalyst Detection:
                 as_of_date=args.as_of_date,
                 results=results,
                 version=VERSION,
+                data_dir=args.data_dir,
                 decision_mode=args.decision_mode,
                 ruleset=de_ruleset,
                 price_history_path=args.data_dir / "price_history.csv",

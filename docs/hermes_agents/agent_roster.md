@@ -1,12 +1,12 @@
 # Hermes & OpenClaw Agent Roster
 
-Last updated: 2026-05-30
+Last updated: 2026-06-07
 
 This document has **two layers** — do not conflate them:
 
-| Layer | Source of truth | Count (2026-05-30) |
+| Layer | Source of truth | Count (registry `as_of` 2026-05-30) |
 | --- | --- | --- |
-| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | 29 directories, 29 active |
+| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | **29** directories, **29** active |
 | **Hermes scheduler jobs** | Hermes gateway (`hermes cron list`) | ~19 jobs (below; IDs may drift) |
 
 **Lint:** `pytest tests/test_agent_registry.py -q -p no:warnings` (bidirectional registry ↔ disk).

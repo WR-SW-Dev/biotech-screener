@@ -705,6 +705,7 @@ class TestMetadataRankingMode:
 
         meta = json.loads((snap / "metadata.json").read_text())
         assert meta["ranking_mode"] == "decision"
+        assert meta["saved_at"] == "2026-01-01T00:00:00Z"
 
     def test_ranking_mode_composite_in_metadata(self, tmp_path):
         """metadata.json records composite when that mode is used."""

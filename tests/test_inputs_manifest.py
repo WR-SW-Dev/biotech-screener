@@ -244,13 +244,11 @@ class TestFunctional:
         assert "holdings_detailed" in dep_keys
 
     def test_deterministic_ordering(self, data_dir, all_conditions_off):
-        """Two builds with same input → same JSON (ignoring generated_at)."""
+        """Two builds with same input → same JSON."""
         m1 = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
         m2 = build_inputs_manifest("2026-02-17", data_dir, all_conditions_off)
-        # Strip generated_at for comparison
-        m1.pop("generated_at")
-        m2.pop("generated_at")
         assert json.dumps(m1, sort_keys=True) == json.dumps(m2, sort_keys=True)
+        assert m1["generated_at"] == "2026-02-17T00:00:00Z"
 
     def test_resolved_paths_override(self, data_dir, all_conditions_off):
         """Override trial_records to a custom path."""
