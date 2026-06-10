@@ -114,9 +114,10 @@ def generate_trade_plan(
     orders = []
     gross_notional = 0
 
-    if quotes_map is None:
+    if not quotes_map:
         quotes_map = {}
-        print("ℹ️  Using stub prices ($50/share). For real quotes, run with --fetch-real-quotes")
+        if not quotes_map:  # Still empty after MCP call attempt
+            print("ℹ️  Using stub prices ($50/share). For real quotes, ensure Robinhood MCP available.")
 
     for pos in top_k_positions:
         ticker = pos["ticker"]
@@ -205,15 +206,32 @@ def print_summary(blotter: dict):
     print("\n⚠️  NEXT STEP: Review blotter, then execute with approval")
 
 
+def fetch_real_quotes(tickers: list[str]) -> dict:
+    """Fetch real quotes via MCP get_equity_quotes.
+
+    In cloud agent context, this becomes:
+      mcp_call("get_equity_quotes", {"symbols": tickers})
+
+    For now, returns empty dict (falls back to stubs).
+    """
+    # TODO: Integrate real MCP call when available
+    # symbols = ",".join(tickers[:20])  # API limit
+    # quotes = mcp_tool_call("get_equity_quotes", {"symbols": symbols})
+    # return {q["symbol"]: q["last_trade_price"] for q in quotes}
+    return {}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Stage 1: Generate trade plan (dry-run, review-only)")
     parser.add_argument("--snapshot", default="latest", help="Snapshot date or 'latest'")
     parser.add_argument("--top-k", type=int, default=30, help="Top K positions")
     parser.add_argument("--account", default="agentic", help="Account: agentic|roth|traditional|default")
-    parser.add_argument("--target-gross-dollars", type=float, default=100.0, help="Target notional")
+    parser.add_argument("--target-gross-dollars", type=float, default=100.0, help="Target gross notional")
     parser.add_argument("--max-single-name-pct", type=float, default=5.0, help="Max concentration %")
-    parser.add_argument("--min-order-dollars", type=float, default=5.0, help="Min order size")
-    parser.add_argument("--fetch-real-quotes", action="store_true", help="Fetch real quotes via MCP")
+    parser.add_argument(
+        "--min-order-dollars", type=float, default=1.0, help="Min order size (default: $1 for fractional)"
+    )
+    parser.add_argument("--fetch-real-quotes", action="store_true", help="Attempt to fetch real quotes via MCP")
     parser.add_argument("--dry-run", action="store_true", default=True, help="Review only (default)")
 
     args = parser.parse_args()
@@ -223,8 +241,11 @@ def main():
         top_k_positions = select_top_k(portfolio, args.top_k)
         eligible = apply_trading_guardrails(top_k_positions)
 
-        # TODO: If --fetch-real-quotes, call MCP get_equity_quotes here
-        quotes_map = {} if args.fetch_real_quotes else None
+        # Attempt to fetch real quotes if requested
+        quotes_map = {}
+        if args.fetch_real_quotes:
+            tickers = [pos["ticker"] for pos in eligible]
+            quotes_map = fetch_real_quotes(tickers)
 
         plan = generate_trade_plan(
             eligible, args.target_gross_dollars, args.max_single_name_pct, args.min_order_dollars, quotes_map

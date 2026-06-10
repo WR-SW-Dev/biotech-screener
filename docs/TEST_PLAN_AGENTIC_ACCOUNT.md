@@ -20,20 +20,39 @@ End-to-end testing of the two-stage review-first Robinhood trading system on the
 ```bash
 cd /mnt/c/Projects/biotech_screener/biotech-screener
 
+# Option A: Conservative (top 15, $5 minimum order)
 python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
   --top-k 15 \
   --target-gross-dollars 100 \
   --account agentic \
   --min-order-dollars 5 \
   --dry-run
+
+# Option B: Full diversification (top 30, fractional shares)
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
+  --top-k 30 \
+  --target-gross-dollars 100 \
+  --account agentic \
+  --min-order-dollars 1 \
+  --dry-run
 ```
 
-**Expected Output:**
+**Expected Output (Option A - top 15, $5 min):**
 - ✓ Snapshot loaded (2026-06-10)
 - ✓ 15 eligible tickers selected
 - ✓ ~2 dropped by Tier C guardrail
-- ✓ ~13 orders generated ($65-75 gross)
+- ✓ ~13 orders generated ($65-75 gross, ~$5-6 each)
 - ✓ Blotter saved to `artifacts/trading/robinhood_top15_plan_2026-06-10.json`
+
+**Expected Output (Option B - top 30, $1 min, fractional):**
+- ✓ Snapshot loaded (2026-06-10)
+- ✓ 30 eligible tickers selected
+- ✓ ~3-5 dropped by Tier C guardrail
+- ✓ ~25-27 orders generated (~$100 gross, ~$3.33-4 each with fractional shares)
+- ✓ Blotter saved to `artifacts/trading/robinhood_top30_plan_2026-06-10.json`
+- ✓ Fractional shares: e.g., 0.0667 shares @ $50 = $3.33
+
+**Both options:**
 - ✓ No orders placed
 - ✓ Status: `PENDING_HUMAN_REVIEW`
 
@@ -67,20 +86,41 @@ cat artifacts/trading/robinhood_top15_plan_2026-06-10.json | jq '.plan.orders | 
 **Checklist:**
 - [ ] No Tier C tickers present
 - [ ] No catalysts < 8 days
-- [ ] Per-name notional ≤ 5% of $100 ($5)
-- [ ] All orders ≥ $5 min size
-- [ ] Tickers match top 15 screener picks (COGT, DNTH, etc.)
+- [ ] Per-name notional ≤ 5% of $100 ($5 cap, but averaging ~$3.33-4 for top 30)
+- [ ] All orders ≥ min order size ($1 for fractional, $5 for conservative)
+- [ ] Tickers match top K screener picks (COGT rank 1, DNTH rank 2, etc.)
+- [ ] Fractional shares supported for small orders (e.g., 0.0667 shares)
 
-**Example Acceptable Blotter:**
+**Example Acceptable Blotter (top 15, $5 min):**
 ```json
 {
   "ticker": "COGT",
-  "quantity": 0.100,
+  "quantity": 0.1,
   "estimated_price": 50.0,
   "notional_dollars": 5.0,
   "reason": "Rank 1, Tier A"
 }
 ```
+
+**Example Acceptable Blotter (top 30, $1 min, fractional):**
+```json
+{
+  "ticker": "COGT",
+  "quantity": 0.0667,
+  "estimated_price": 50.0,
+  "notional_dollars": 3.33,
+  "reason": "Rank 1, Tier A"
+},
+{
+  "ticker": "DNTH",
+  "quantity": 0.0666,
+  "estimated_price": 50.0,
+  "notional_dollars": 3.33,
+  "reason": "Rank 2, Tier A"
+}
+```
+
+Note: Robinhood may reject very small notional orders. Stage 2 will drop orders that fail `review_equity_order`.
 
 ---
 

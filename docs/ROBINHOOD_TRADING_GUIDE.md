@@ -6,11 +6,22 @@ Two-stage execution system for biotech screener top-K portfolio construction.
 
 ### Stage 1: Generate Trade Plan (Review Only)
 
+**Option A: Top 15 (Conservative, $5 minimum)**
 ```bash
-python3 tools/robinhood_top30_trade_plan.py \
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
   --top-k 15 \
   --target-gross-dollars 100 \
-  --account agentic
+  --account agentic \
+  --min-order-dollars 5
+```
+
+**Option B: Top 30 (Full diversification with fractional shares)**
+```bash
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
+  --top-k 30 \
+  --target-gross-dollars 100 \
+  --account agentic \
+  --min-order-dollars 1
 ```
 
 Output: Human-readable blotter + JSON artifact in `artifacts/trading/`
@@ -39,8 +50,8 @@ SUMMARY
 **Only after reviewing the blotter above:**
 
 ```bash
-python3 tools/robinhood_execute_trades.py \
-  --blotter artifacts/trading/robinhood_top15_plan_2026-06-10.json \
+python3 tools/robinhood_execute_trades_v2_mcp.py \
+  --blotter artifacts/trading/robinhood_top30_plan_2026-06-10.json \
   --account agentic
 ```
 
@@ -74,8 +85,8 @@ Orders are placed, execution logged to `artifacts/trading/execution_*.json`.
 - **Tier A/B only** — Tier C positions dropped
 - **Catalyst ≥8 days** — avoid imminent catalysts in new positions
 - **Max 5% per name** (configurable)
-- **Min order size $5** (configurable)
-- **Min cash reserve $5** (configurable)
+- **Min order size $1** (default, supports fractional shares; configurable)
+- **Fractional shares supported** (0.0001 to 6 decimal places)
 
 ### Fail-Closed Behavior
 
@@ -86,63 +97,89 @@ Script refuses to trade if:
 
 ## Command-Line Reference
 
-### Trade Plan Generation
+### Trade Plan Generation (v2 with MCP hooks)
 
 ```bash
-python3 tools/robinhood_top30_trade_plan.py \
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
   [--snapshot latest|YYYY-MM-DD]    # Default: latest snapshot
   [--top-k N]                        # Default: 30
   [--account NAME]                   # agentic|roth|traditional|default
   [--target-gross-dollars AMOUNT]    # Default: 100.0
-  [--max-single-name-pct PCT]        # Default: 5.0
-  [--min-cash-reserve-dollars AMT]   # Default: 5.0
-  [--min-order-dollars AMT]          # Default: 5.0
-  [--allow-sells]                    # Allow selling non-screen holdings (default: false)
+  [--max-single-name-pct PCT]        # Default: 5.0 (per-name cap in $)
+  [--min-order-dollars AMT]          # Default: 1.0 (supports fractional)
+  [--fetch-real-quotes]              # Attempt real quotes via MCP (optional)
   [--dry-run]                        # Default: true (generate only)
 ```
 
-### Order Execution
+**Sizing guide for fractional shares:**
+- Top 15 @ $100: ~$6.67/name ($5 min) → 13-15 orders
+- Top 30 @ $100: ~$3.33/name ($1 min) → 25-30 orders
+- Top 30 @ $500: ~$16.67/name ($5 min) → 28-30 orders (safer margin)
+
+### Order Execution (v2 with MCP hooks)
 
 ```bash
-python3 tools/robinhood_execute_trades.py \
+python3 tools/robinhood_execute_trades_v2_mcp.py \
   --blotter PATH                     # Path to trade plan JSON
   [--account NAME]                   # Default: agentic
-  [--skip-approval]                  # Skip approval prompt (testing only)
+  [--account-number NNNNNNNNNN]      # Default: 802349084 (Agentic)
+  [--skip-approval]                  # Skip approval (testing only)
 ```
+
+**Note:** Stage 2 calls `review_equity_order` on each trade and skips any Robinhood rejects (minimum notional, tradability, etc.).
 
 ## Workflow Examples
 
-### Example 1: Top 15, $100 Target, Agentic Account
+### Example 1: Top 15, $100, Conservative ($5 minimum)
 
 ```bash
 # Stage 1: Generate
-python3 tools/robinhood_top30_trade_plan.py \
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
   --top-k 15 \
   --target-gross-dollars 100 \
-  --account agentic
+  --account agentic \
+  --min-order-dollars 5
 
-# Review the blotter... then
+# Review blotter, then
 
 # Stage 2: Execute
-python3 tools/robinhood_execute_trades.py \
+python3 tools/robinhood_execute_trades_v2_mcp.py \
   --blotter artifacts/trading/robinhood_top15_plan_2026-06-10.json \
   --account agentic
 ```
 
-### Example 2: Top 30, $500 Target, Roth IRA
+### Example 2: Top 30, $100, Fractional Shares ($1 minimum)
 
 ```bash
-# Generate (no execution)
-python3 tools/robinhood_top30_trade_plan.py \
+# Stage 1: Generate
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
+  --top-k 30 \
+  --target-gross-dollars 100 \
+  --account agentic \
+  --min-order-dollars 1
+
+# Review blotter, then
+
+# Stage 2: Execute
+python3 tools/robinhood_execute_trades_v2_mcp.py \
+  --blotter artifacts/trading/robinhood_top30_plan_2026-06-10.json \
+  --account agentic
+```
+
+### Example 3: Top 30, $500, Better Safety Margin
+
+```bash
+# Stage 1: Generate
+python3 tools/robinhood_top30_trade_plan_v2_mcp.py \
   --top-k 30 \
   --target-gross-dollars 500 \
-  --account roth \
-  --max-single-name-pct 3
+  --account agentic \
+  --min-order-dollars 5
 
-# Review blotter, then execute
-python3 tools/robinhood_execute_trades.py \
+# Stage 2: Execute
+python3 tools/robinhood_execute_trades_v2_mcp.py \
   --blotter artifacts/trading/robinhood_top30_plan_2026-06-10.json \
-  --account roth
+  --account agentic
 ```
 
 ### Example 3: Single Name, Manual Approval
