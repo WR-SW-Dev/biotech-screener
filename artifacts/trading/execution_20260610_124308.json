@@ -1,0 +1,113 @@
+{
+  "blotter_file": "artifacts/trading/robinhood_top15_plan_2026-06-10.json",
+  "account": "agentic",
+  "timestamp": "2026-06-10T12:43:08.560010",
+  "placed_orders": [
+    {
+      "ticker": "COGT",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_COGT_40c050a3",
+      "placed_at": "2026-06-10T12:43:08.559763",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "DNTH",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_DNTH_dd1f8ee9",
+      "placed_at": "2026-06-10T12:43:08.559822",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "NRIX",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_NRIX_be95c020",
+      "placed_at": "2026-06-10T12:43:08.559838",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "URGN",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_URGN_f2b459e9",
+      "placed_at": "2026-06-10T12:43:08.559850",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "ALMS",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_ALMS_d5fe12e3",
+      "placed_at": "2026-06-10T12:43:08.559862",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "SYRE",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_SYRE_8d9a9053",
+      "placed_at": "2026-06-10T12:43:08.559874",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "RVMD",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_RVMD_0975ef7e",
+      "placed_at": "2026-06-10T12:43:08.559886",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "SLDB",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_SLDB_5ecea8b6",
+      "placed_at": "2026-06-10T12:43:08.559897",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "DRUG",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_DRUG_75a55362",
+      "placed_at": "2026-06-10T12:43:08.559951",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "STOK",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_STOK_e470a734",
+      "placed_at": "2026-06-10T12:43:08.559965",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "PRAX",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_PRAX_673163f7",
+      "placed_at": "2026-06-10T12:43:08.559976",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "ERAS",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_ERAS_8e10fbab",
+      "placed_at": "2026-06-10T12:43:08.559988",
+      "status": "PENDING"
+    },
+    {
+      "ticker": "XENE",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "ORDER_XENE_b08182ac",
+      "placed_at": "2026-06-10T12:43:08.559999",
+      "status": "PENDING"
+    }
+  ],
+  "n_placed": 13,
+  "gross_notional": 100.0
+}

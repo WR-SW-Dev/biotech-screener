@@ -1,0 +1,148 @@
+{
+  "metadata": {
+    "timestamp": "2026-06-10T12:52:46.658881",
+    "snapshot_date": "2026-06-10",
+    "mode": "DRY_RUN",
+    "top_k": 15,
+    "account": "agentic",
+    "target_gross_dollars": 100.0,
+    "max_single_name_pct": 10.0,
+    "min_order_dollars": 1.0
+  },
+  "guardrails": {
+    "no_options": true,
+    "no_margin": true,
+    "no_shorts": true,
+    "no_after_hours": true,
+    "catalyst_min_days": 8,
+    "tier_filter_enabled": false,
+    "tier_note": "Tier is informational only; all eligible tickers (A/B/C) are included if catalyst >= 8 days"
+  },
+  "plan": {
+    "n_orders": 15,
+    "gross_notional_dollars": 100.0,
+    "orders": [
+      {
+        "ticker": "COGT",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 1, Tier A"
+      },
+      {
+        "ticker": "DNTH",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 2, Tier A"
+      },
+      {
+        "ticker": "NRIX",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 3, Tier A"
+      },
+      {
+        "ticker": "URGN",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 4, Tier A"
+      },
+      {
+        "ticker": "ALMS",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 5, Tier A"
+      },
+      {
+        "ticker": "SYRE",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 6, Tier B"
+      },
+      {
+        "ticker": "RVMD",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 7, Tier B"
+      },
+      {
+        "ticker": "CMPS",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 8, Tier C"
+      },
+      {
+        "ticker": "SLDB",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 9, Tier A"
+      },
+      {
+        "ticker": "DRUG",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 10, Tier A"
+      },
+      {
+        "ticker": "STOK",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 11, Tier A"
+      },
+      {
+        "ticker": "PRAX",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 12, Tier B"
+      },
+      {
+        "ticker": "TRVI",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 13, Tier C"
+      },
+      {
+        "ticker": "ERAS",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 14, Tier A"
+      },
+      {
+        "ticker": "XENE",
+        "side": "BUY",
+        "quantity": 0.133333,
+        "estimated_price": 50.0,
+        "notional_dollars": 6.67,
+        "reason": "Rank 15, Tier B"
+      }
+    ]
+  },
+  "review_status": "PENDING_HUMAN_REVIEW"
+}

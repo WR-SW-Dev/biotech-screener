@@ -1,0 +1,75 @@
+{
+  "timestamp": "2026-06-10T17:17:17.465298Z",
+  "batch_type": "investor_profile_unblocked_retry",
+  "account_number": "802349084",
+  "orders_attempted": 4,
+  "placed": [],
+  "blocked": [],
+  "errors": [],
+  "orders_attempted_detail": [
+    {
+      "symbol": "DNTH",
+      "qty": 0.092928,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "params": {
+        "account_number": "802349084",
+        "symbol": "DNTH",
+        "side": "buy",
+        "type": "market",
+        "quantity": "0.092928",
+        "market_hours": "regular_hours",
+        "ref_id": "from-artifact",
+        "time_in_force": "gfd"
+      }
+    },
+    {
+      "symbol": "NRIX",
+      "qty": 0.430232,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "params": {
+        "account_number": "802349084",
+        "symbol": "NRIX",
+        "side": "buy",
+        "type": "market",
+        "quantity": "0.430232",
+        "market_hours": "regular_hours",
+        "ref_id": "from-artifact",
+        "time_in_force": "gfd"
+      }
+    },
+    {
+      "symbol": "URGN",
+      "qty": 0.237681,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "params": {
+        "account_number": "802349084",
+        "symbol": "URGN",
+        "side": "buy",
+        "type": "market",
+        "quantity": "0.237681",
+        "market_hours": "regular_hours",
+        "ref_id": "from-artifact",
+        "time_in_force": "gfd"
+      }
+    },
+    {
+      "symbol": "ALMS",
+      "qty": 0.326013,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "params": {
+        "account_number": "802349084",
+        "symbol": "ALMS",
+        "side": "buy",
+        "type": "market",
+        "quantity": "0.326013",
+        "market_hours": "regular_hours",
+        "ref_id": "from-artifact",
+        "time_in_force": "gfd"
+      }
+    }
+  ]
+}

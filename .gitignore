@@ -63,6 +63,12 @@ artifacts/audit/*
 !artifacts/audit/*.md
 !artifacts/**/*.md
 !artifacts/**/*.txt
+# Allow trading execution logs (real order IDs and audit trail)
+!artifacts/trading/
+artifacts/trading/*
+!artifacts/trading/execution_*.json
+!artifacts/trading/retry_*.json
+!artifacts/trading/robinhood_*.json
 # Re-ignore ephemeral analysis artifacts (walkforward sweeps, inversion reports, etc.)
 artifacts/walkforward_report_2024_*.md
 artifacts/walkforward_report_2025_*.md

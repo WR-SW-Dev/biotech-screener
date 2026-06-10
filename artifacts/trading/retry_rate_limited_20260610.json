@@ -1,0 +1,89 @@
+{
+  "retry_batch": "rate_limited_orders",
+  "timestamp": "2026-06-10T17:21:07.875274+00:00",
+  "placed_orders": [
+    {
+      "ticker": "SYRE",
+      "qty": 0.088041,
+      "real_quote": 75.7598,
+      "robinhood_order_id": "6a299ce1-97f8-4d68-aa9d-ce47432c764a",
+      "status": "PLACED",
+      "execution_price": 76.06
+    },
+    {
+      "ticker": "RVMD",
+      "qty": 0.046465,
+      "real_quote": 143.55,
+      "robinhood_order_id": "6a299ce2-7e28-4912-ba85-9f4cf85e5463",
+      "status": "PLACED",
+      "execution_price": 143.8
+    },
+    {
+      "ticker": "CMPS",
+      "qty": 0.590265,
+      "real_quote": 11.3,
+      "robinhood_order_id": "6a299ce4-224f-4a9f-9d91-423d4975eb18",
+      "status": "PLACED",
+      "execution_price": 11.31
+    },
+    {
+      "ticker": "SLDB",
+      "qty": 1.028527,
+      "real_quote": 6.485,
+      "robinhood_order_id": "6a299ce5-6a70-4cac-ba60-03760dbcf9af",
+      "status": "PLACED",
+      "execution_price": 6.49
+    },
+    {
+      "ticker": "DRUG",
+      "qty": 0.105839,
+      "real_quote": 63.02,
+      "robinhood_order_id": "6a299ce5-f97e-40da-a129-190569653a55",
+      "status": "PLACED",
+      "execution_price": 63.72
+    },
+    {
+      "ticker": "STOK",
+      "qty": 0.231758,
+      "real_quote": 28.78,
+      "robinhood_order_id": "6a299ce6-31ff-4db2-8d76-a01352853376",
+      "status": "PLACED",
+      "execution_price": 28.75
+    },
+    {
+      "ticker": "PRAX",
+      "qty": 0.02753,
+      "real_quote": 242.285,
+      "robinhood_order_id": "6a299ce6-1869-46dd-8d51-3f9413e77f5e",
+      "status": "PLACED",
+      "execution_price": 242.14
+    },
+    {
+      "ticker": "TRVI",
+      "qty": 0.496649,
+      "real_quote": 13.43,
+      "robinhood_order_id": "6a299ce7-cf65-42d0-adbd-e99cd2e59276",
+      "status": "PLACED",
+      "execution_price": 13.44
+    },
+    {
+      "ticker": "ERAS",
+      "qty": 0.503396,
+      "real_quote": 13.25,
+      "robinhood_order_id": "6a299ce8-bfa1-45e5-9919-12e94ff05e3c",
+      "status": "PLACED",
+      "execution_price": 13.26
+    },
+    {
+      "ticker": "XENE",
+      "qty": 0.128578,
+      "real_quote": 51.875,
+      "robinhood_order_id": "6a299ce9-739d-4f21-84b3-96985bd23d7f",
+      "status": "PLACED",
+      "execution_price": 51.92
+    }
+  ],
+  "total_placed": 10,
+  "total_gross_at_quote": 66.7,
+  "note": "All 10 orders placed with fresh market quotes. Orders in 'unconfirmed' state — may not have filled yet."
+}

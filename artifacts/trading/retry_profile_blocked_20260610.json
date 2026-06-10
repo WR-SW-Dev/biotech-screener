@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-06-10T13:17:35.057716",
+  "batch_type": "investor_profile_unblocked_retry_20260610",
+  "account_number": "802349084",
+  "retry_status": "FAILED - INVESTOR_PROFILE_STILL_REQUIRED",
+  "orders_attempted": 4,
+  "placed": 0,
+  "still_blocked": 4,
+  "block_reason": "investor_profile_incomplete",
+  "setup_link": "https://applink.robinhood.com/investment_profile?account_number=802349084&context=second_trade",
+  "orders": [
+    {
+      "symbol": "DNTH",
+      "qty": 0.092928,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "status": "blocked",
+      "error": "investor_profile_incomplete"
+    },
+    {
+      "symbol": "NRIX",
+      "qty": 0.430232,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "status": "blocked",
+      "error": "investor_profile_incomplete"
+    },
+    {
+      "symbol": "URGN",
+      "qty": 0.237681,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "status": "blocked",
+      "error": "investor_profile_incomplete"
+    },
+    {
+      "symbol": "ALMS",
+      "qty": 0.326013,
+      "notional": 6.67,
+      "ref_id": "from-artifact",
+      "status": "blocked",
+      "error": "investor_profile_incomplete"
+    }
+  ],
+  "next_action": "User must complete investor profile at setup link, then retry these 4 orders with same ref_ids"
+}

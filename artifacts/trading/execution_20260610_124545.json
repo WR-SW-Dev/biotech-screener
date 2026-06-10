@@ -1,0 +1,129 @@
+{
+  "execution_mode": "STUB_SIMULATION",
+  "live_orders_placed": false,
+  "note": "This is a stub simulator. No real orders were placed. See execution_mode field.",
+  "blotter_file": "artifacts/trading/robinhood_top15_plan_2026-06-10.json",
+  "account": "agentic",
+  "timestamp": "2026-06-10T12:45:45.724891",
+  "simulated_orders": [
+    {
+      "ticker": "COGT",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_COGT_e2e80cb8",
+      "placed_at": "2026-06-10T12:45:45.724815",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "DNTH",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_DNTH_d322fcd0",
+      "placed_at": "2026-06-10T12:45:45.724840",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "NRIX",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_NRIX_c28022f5",
+      "placed_at": "2026-06-10T12:45:45.724846",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "URGN",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_URGN_29be42a6",
+      "placed_at": "2026-06-10T12:45:45.724850",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "ALMS",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_ALMS_15d1e958",
+      "placed_at": "2026-06-10T12:45:45.724856",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "SYRE",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_SYRE_77bedad4",
+      "placed_at": "2026-06-10T12:45:45.724861",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "RVMD",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_RVMD_eb92050e",
+      "placed_at": "2026-06-10T12:45:45.724865",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "SLDB",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_SLDB_841578b3",
+      "placed_at": "2026-06-10T12:45:45.724869",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "DRUG",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_DRUG_5db09571",
+      "placed_at": "2026-06-10T12:45:45.724872",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "STOK",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_STOK_6e635353",
+      "placed_at": "2026-06-10T12:45:45.724876",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "PRAX",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_PRAX_16a60465",
+      "placed_at": "2026-06-10T12:45:45.724880",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "ERAS",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_ERAS_fc8c1391",
+      "placed_at": "2026-06-10T12:45:45.724884",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    },
+    {
+      "ticker": "XENE",
+      "side": "BUY",
+      "quantity": 0.153846,
+      "order_id": "STUB_ORDER_XENE_02c3ef6f",
+      "placed_at": "2026-06-10T12:45:45.724888",
+      "status": "SIMULATED",
+      "note": "Stub order ID only \u2014 no real order placed"
+    }
+  ],
+  "n_simulated": 13,
+  "gross_notional": 100.0
+}

@@ -1,0 +1,50 @@
+{
+  "action": "RETRY_BLOCKED_ORDERS_POST_PROFILE_COMPLETION",
+  "timestamp": "2026-06-10T17:19:30.544018Z",
+  "account_number": "802349084",
+  "orders_to_retry": [
+    {
+      "order_index": 2,
+      "ticker": "DNTH",
+      "rank": 2,
+      "quantity": "0.092928",
+      "notional": 6.67,
+      "ref_id": "6aef1188-64f0-11f1-b7ec-00155d868173",
+      "status": "PENDING_PLACEMENT"
+    },
+    {
+      "order_index": 3,
+      "ticker": "NRIX",
+      "rank": 3,
+      "quantity": "0.430232",
+      "notional": 6.67,
+      "ref_id": "6af52c6c-64f0-11f1-a73f-00155d868173",
+      "status": "PENDING_PLACEMENT"
+    },
+    {
+      "order_index": 4,
+      "ticker": "URGN",
+      "rank": 4,
+      "quantity": "0.237681",
+      "notional": 6.67,
+      "ref_id": "6af52ce6-64f0-11f1-b2dd-00155d868173",
+      "status": "PENDING_PLACEMENT"
+    },
+    {
+      "order_index": 5,
+      "ticker": "ALMS",
+      "rank": 5,
+      "quantity": "0.326013",
+      "notional": 6.67,
+      "ref_id": "6af52d10-64f0-11f1-8bae-00155d868173",
+      "status": "PENDING_PLACEMENT"
+    }
+  ],
+  "total_notional": 26.68,
+  "notes": [
+    "Generated new ref_ids (UUID v1) for idempotent retry",
+    "Investment profile gate now cleared - orders should process",
+    "All orders use market order type with regular_hours",
+    "Ready for Robinhood API call via mcp__robinhood-trading__place_equity_order"
+  ]
+}

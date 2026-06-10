@@ -1,0 +1,195 @@
+{
+  "blotter_file": "artifacts/trading/robinhood_top15_plan_2026-06-10.json",
+  "execution": {
+    "placed_orders": [
+      {
+        "ticker": "COGT",
+        "order_id": "ORDER_COGT_1781104907.506509",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506529"
+      },
+      {
+        "ticker": "DNTH",
+        "order_id": "ORDER_DNTH_1781104907.506537",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506539"
+      },
+      {
+        "ticker": "NRIX",
+        "order_id": "ORDER_NRIX_1781104907.506543",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506544"
+      },
+      {
+        "ticker": "URGN",
+        "order_id": "ORDER_URGN_1781104907.506546",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506548"
+      },
+      {
+        "ticker": "ALMS",
+        "order_id": "ORDER_ALMS_1781104907.50655",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506554"
+      },
+      {
+        "ticker": "SYRE",
+        "order_id": "ORDER_SYRE_1781104907.506557",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506558"
+      },
+      {
+        "ticker": "RVMD",
+        "order_id": "ORDER_RVMD_1781104907.506561",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506562"
+      },
+      {
+        "ticker": "SLDB",
+        "order_id": "ORDER_SLDB_1781104907.506564",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506565"
+      },
+      {
+        "ticker": "DRUG",
+        "order_id": "ORDER_DRUG_1781104907.506567",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506569"
+      },
+      {
+        "ticker": "STOK",
+        "order_id": "ORDER_STOK_1781104907.506571",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506572"
+      },
+      {
+        "ticker": "PRAX",
+        "order_id": "ORDER_PRAX_1781104907.506575",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506576"
+      },
+      {
+        "ticker": "ERAS",
+        "order_id": "ORDER_ERAS_1781104907.506578",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506580"
+      },
+      {
+        "ticker": "XENE",
+        "order_id": "ORDER_XENE_1781104907.506582",
+        "status": "PENDING",
+        "placed_at": "2026-06-10T11:21:47.506583"
+      }
+    ],
+    "n_placed": 13,
+    "placed_at": "2026-06-10T11:21:47.506586"
+  },
+  "reviews": [
+    {
+      "ticker": "COGT",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "DNTH",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "NRIX",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "URGN",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "ALMS",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "SYRE",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "RVMD",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "SLDB",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "DRUG",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "STOK",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "PRAX",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "ERAS",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    },
+    {
+      "ticker": "XENE",
+      "side": "BUY",
+      "quantity": 0.1,
+      "review_status": "OK",
+      "estimated_fill_time": "0.5s",
+      "potential_slippage_bps": 5
+    }
+  ],
+  "account": "agentic",
+  "timestamp": "2026-06-10T11:21:47.506588"
+}

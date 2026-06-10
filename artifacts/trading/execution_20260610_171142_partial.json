@@ -1,0 +1,150 @@
+{
+  "execution_mode": "LIVE_ROBINHOOD_FRACTIONAL_PARTIAL",
+  "live_orders_placed": true,
+  "account_number": "802349084",
+  "approval_phrase_verified": "EXECUTE APPROVED ORDERS (AGENT INITIATED)",
+  "execution_timestamp": "2026-06-10T17:11:42.307024Z",
+  "snapshot_date": "2026-06-10",
+  "status": "PARTIAL_EXECUTION_WITH_BLOCKERS",
+  "execution_summary": {
+    "total_orders_submitted": 15,
+    "successful_placements": 1,
+    "investor_profile_gate_blocks": 4,
+    "rate_limit_throttles": 10,
+    "submitted_for_retry": 4
+  },
+  "placed_orders": [
+    {
+      "ticker": "COGT",
+      "rank": 1,
+      "tier": "A",
+      "catalyst_days": 21,
+      "real_quote": 31.33,
+      "quantity": 0.212789,
+      "notional": 6.67,
+      "ref_id": "8a7f1e42-9c3b-11ed-a8fc-0242ac120002",
+      "robinhood_order_id": "6a299ace-96a3-431a-9ec0-00994fd47eb5",
+      "status": "PLACED",
+      "state": "unconfirmed",
+      "placed_at": "2026-06-10T17:11:42.307024Z"
+    }
+  ],
+  "blocked_orders": [
+    {
+      "order_index": 2,
+      "ticker": "DNTH",
+      "rank": 2,
+      "tier": "A",
+      "catalyst_days": 20,
+      "real_quote": 71.68,
+      "quantity": 0.092928,
+      "notional": 6.67,
+      "block_reason": "investor_profile_gate",
+      "block_detail": "Account requires investor profile completion before 2nd+ trade",
+      "resolution_url": "https://applink.robinhood.com/investment_profile?account_number=802349084&context=second_trade",
+      "blocked_at": "2026-06-10T17:11:43.200000Z"
+    },
+    {
+      "order_index": 3,
+      "ticker": "NRIX",
+      "rank": 3,
+      "tier": "A",
+      "catalyst_days": 52,
+      "block_reason": "investor_profile_gate"
+    },
+    {
+      "order_index": 4,
+      "ticker": "URGN",
+      "rank": 4,
+      "tier": "A",
+      "catalyst_days": 83,
+      "block_reason": "investor_profile_gate"
+    },
+    {
+      "order_index": 5,
+      "ticker": "ALMS",
+      "rank": 5,
+      "tier": "A",
+      "catalyst_days": 21,
+      "block_reason": "investor_profile_gate"
+    }
+  ],
+  "throttled_orders": [
+    {
+      "order_index": 6,
+      "ticker": "SYRE",
+      "rank": 6,
+      "block_reason": "rate_limit_429",
+      "retry_after_seconds": 13
+    },
+    {
+      "order_index": 7,
+      "ticker": "RVMD",
+      "rank": 7,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 8,
+      "ticker": "CMPS",
+      "rank": 8,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 9,
+      "ticker": "SLDB",
+      "rank": 9,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 10,
+      "ticker": "DRUG",
+      "rank": 10,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 11,
+      "ticker": "STOK",
+      "rank": 11,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 12,
+      "ticker": "PRAX",
+      "rank": 12,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 13,
+      "ticker": "TRVI",
+      "rank": 13,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 14,
+      "ticker": "ERAS",
+      "rank": 14,
+      "block_reason": "rate_limit_429"
+    },
+    {
+      "order_index": 15,
+      "ticker": "XENE",
+      "rank": 15,
+      "block_reason": "rate_limit_429"
+    }
+  ],
+  "summary": {
+    "total_orders_intended": 15,
+    "total_gross_notional_intended": 100.0,
+    "total_gross_notional_placed": 6.67,
+    "average_notional_placed": 6.67,
+    "buying_power_remaining": 193.33,
+    "urgent_action_required": "Complete investor profile at resolution_url to unblock DNTH/NRIX/URGN/ALMS"
+  },
+  "execution_notes": [
+    "COGT order placed successfully on Robinhood (state: unconfirmed)",
+    "Investor profile gate blocks orders 2-5 (DNTH, NRIX, URGN, ALMS) - legal requirement by Robinhood",
+    "Rate limiting throttles affected orders 6-15 - can retry after throttle window expires",
+    "First trade executed; completion of investor profile enables 2nd-4th trades",
+    "Rate-limited orders can be resubmitted after waiting"
+  ]
+}
