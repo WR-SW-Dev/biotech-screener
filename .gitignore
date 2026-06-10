@@ -69,6 +69,12 @@ artifacts/trading/*
 !artifacts/trading/execution_*.json
 !artifacts/trading/retry_*.json
 !artifacts/trading/robinhood_*.json
+# Allow daily monitoring logs (portfolio health, gates, positions)
+!artifacts/monitoring/
+artifacts/monitoring/*
+!artifacts/monitoring/README.md
+!artifacts/monitoring/PHASE2_*.md
+!artifacts/monitoring/daily_*.json
 # Re-ignore ephemeral analysis artifacts (walkforward sweeps, inversion reports, etc.)
 artifacts/walkforward_report_2024_*.md
 artifacts/walkforward_report_2025_*.md
