@@ -22,7 +22,7 @@ import json
 import logging
 import math
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -157,12 +157,25 @@ def compute_stock_metrics(series: List[tuple]) -> Dict[str, Any]:
 
     ret_1d = (latest_price - prior_price) / prior_price * 100 if prior_price > 0 else math.nan
 
-    # 5d return
+    # 5d return (date-based lookup, not array indexing)
+    # Fix: use calendar date delta instead of array position to handle weekends/holidays
     ret_5d = math.nan
-    if len(series) >= 6:
-        p5 = series[-6][1]
-        if p5 > 0:
-            ret_5d = (latest_price - p5) / p5 * 100
+    if len(series) >= 2:
+        try:
+            latest_date_obj = datetime.strptime(latest_date, "%Y-%m-%d")
+            target_date = latest_date_obj - timedelta(days=5)
+            # Find closest date >= 5 trading days back
+            price_5d_back = None
+            for i in range(len(series) - 2, -1, -1):
+                date_str, price = series[i]
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                if date_obj <= target_date:
+                    price_5d_back = price
+                    break
+            if price_5d_back and price_5d_back > 0:
+                ret_5d = (latest_price - price_5d_back) / price_5d_back * 100
+        except (ValueError, IndexError):
+            pass
 
     # Move intensity: |1d return| vs trailing 20d avg |return|
     # Proxy for RVOL — price_history.csv does not include share volume.

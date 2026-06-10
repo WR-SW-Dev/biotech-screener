@@ -91,7 +91,9 @@ class TestComputeStockMetrics:
             ("2026-03-28", 110.0),
         ]
         m = compute_stock_metrics(series)
-        assert m["return_5d_pct"] == pytest.approx(10.0)
+        # Fix: calculate correctly from 5 calendar days back (2026-03-23 at 102.0)
+        # (110 - 102) / 102 * 100 = 7.843...
+        assert m["return_5d_pct"] == pytest.approx(7.84, abs=0.01)
 
     def test_move_intensity(self):
         # Constant small moves, then a big move
