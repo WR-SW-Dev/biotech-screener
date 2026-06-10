@@ -1,0 +1,22 @@
+{
+  "description": "Robinhood portfolio holdings snapshot. Update this file when portfolio changes to keep catalyst monitoring accurate.",
+  "updated_at": "2026-06-10T15:07:00Z",
+  "source": "Robinhood API (Roth IRA + Traditional IRA)",
+  "account_value_usd": 40315.71,
+  "tickers": [
+    "ACADIAN", "ACM", "ALMS", "ALNY", "AMAT", "AMLX", "ANNX", "APH", "APGE", "ARM",
+    "ASND", "ATMU", "AVAV", "AVGO", "BE", "BSX", "CAT", "CELC", "CIEN", "CLOA",
+    "COGT", "CPER", "CRH", "CRS", "CRVS", "DDOG", "DNTH", "EPRX", "ERAS", "FER",
+    "FIX", "FNV", "GH", "GOOGL", "IBB", "IMVT", "INDV", "INBX", "IONS", "IVV",
+    "JAZZ", "JNJ", "KOD", "KTOS", "KRYS", "KYMR", "LLY", "MCK", "MAGS", "MIRM",
+    "MRVL", "MSFT", "MU", "NVDA", "OTF", "ORKA", "PHVS", "PRAX", "PTGX", "REMX",
+    "RITM", "RNA", "ROIV", "RVMD", "RYTM", "SGOL", "SGOV", "SIVR", "SION", "SNDK",
+    "SRRK", "STRL", "TEVA", "TNGX", "TLT", "TYRA", "VRT", "WM", "XENE", "XBI"
+  ],
+  "notes": [
+    "Holdings refreshed from Robinhood API on 2026-06-10",
+    "Includes both Roth IRA (436970727) and Traditional IRA (928174010)",
+    "Catalyst monitor uses this for daily filtering against screener picks",
+    "Update before running catalyst monitor if portfolio has changed"
+  ]
+}
