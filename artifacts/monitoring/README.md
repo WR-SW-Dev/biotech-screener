@@ -1,16 +1,27 @@
 # Phase 2 Daily Monitoring Index
 
-**Current Status:** Day 1 monitoring live (2026-06-10)  
+**Current Status:** Day 2 monitoring live (2026-06-11) — 2 gap alerts, drawdown gate needs manual check  
 **Portfolio:** Top-15 live (from top-30 decision portfolio)  
 **Operator:** dschulz@brooks.us.com  
-**Frequency:** Daily Mon–Fri through ~2026-06-17 (IC window + Path C decision)
+**Frequency:** Daily Mon–Fri through ~2026-06-30 (IC window + governance checkpoints)
 
 ---
 
 ## Quick Access
 
-### Today's Report (2026-06-10)
-- **Full HTML/Markdown Report:** [`PHASE2_DAY1_MONITORING_2026_06_10.md`](./PHASE2_DAY1_MONITORING_2026_06_10.md)
+### Today's Report (2026-06-11) — Day 2
+- **Full Markdown Report:** [`PHASE2_DAY2_MONITORING_2026_06_11.md`](./PHASE2_DAY2_MONITORING_2026_06_11.md)
+- **Machine-Readable JSON:** [`daily_2026_06_11.json`](./daily_2026_06_11.json)
+
+### Key Findings (Day 2)
+- **Portfolio Performance (price-avg):** -10.27% avg P&L vs entry (yfinance); prior equity basis: -14.73%
+- **GAP ALERTS:** DNTH -9.64% (2.27x vol), DRUG -9.20% (1.49x vol) — manual news check required
+- **Governance Gates:** ⚠️ CONDITIONAL TRIP on Drawdown (-6.70pp price-avg; manual equity check required) | Jaccard 0.875 ✓
+- **Critical Positions:** DRUG -28.82%, PRAX -28.81%, CMPS -24.56% (>20% loss from entry)
+- **Catalyst Watch:** SYRE T+11 (near-term), 6 names at T+19-20 horizon
+
+### Prior Report (2026-06-10) — Day 1 Baseline
+- **Full Markdown Report:** [`PHASE2_DAY1_MONITORING_2026_06_10.md`](./PHASE2_DAY1_MONITORING_2026_06_10.md)
 - **Machine-Readable JSON:** [`daily_2026_06_10_baseline.json`](./daily_2026_06_10_baseline.json)
 
 ### Key Findings (Day 1)
@@ -69,7 +80,8 @@
 
 | Checkpoint | Date | Days | Action |
 |------------|------|------|--------|
-| Day 1 | 2026-06-10 | 0 | ✓ BASELINE CAPTURED (you are here) |
+| Day 1 | 2026-06-10 | 0 | ✓ BASELINE CAPTURED |
+| **Day 2** | **2026-06-11** | **1** | **⚠️ 2 gap alerts, drawdown gate check (you are here)** |
 | Day 5 | 2026-06-14 | 5 | Weekly summary (collect Layer B outputs) |
 | IC Print + Decision | ~2026-06-17 | ~10 | **CRITICAL:** IC first print; extend or revert? |
 | Day 30 | ~2026-07-01 | 30 | Governance review: continue or exit? |
