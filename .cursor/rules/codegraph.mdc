@@ -138,7 +138,7 @@ Blast-radius review (before accepting any patch):
 
 ### Hermes Status
 
-Codegraph is NOT registered with Hermes. Do not assume Hermes agents have access to codegraph tools. Hermes registration is deferred pending a disambiguation wrapper policy.
+Hermes MCP has no `codegraph_*` tools. Cron agents use `common/codegraph_guard.py` locally; do not assume Hermes MCP or gateway exposes CodeGraph.
 
 ### Reference
 

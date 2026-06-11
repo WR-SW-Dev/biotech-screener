@@ -2,11 +2,11 @@
 
 **Status:** Claude/Cursor approved · Cursor Cloud repo config active · Hermes registration deferred
 
-**Last updated:** 2026-05-30
+**Last updated:** 2026-06-11
 
 **Index location:** `.codegraph/` (repo-contained; `.codegraph/.gitignore` excludes `*.db`, `*.db-wal`, `*.db-shm` — ships with codegraph, no manual gitignore entry needed)
 
-**Tool version:** codegraph v0.9.7 · Node 22 · npm install to `$HOME/.local` (Cloud Agent)
+**Tool version:** codegraph v0.9.9 · Node 22 · npm install to `$HOME/.local` (Cloud Agent)
 
 **Skill:** `skills/codegraph/SKILL.md`
 
@@ -221,7 +221,7 @@ Current index: **1,677 files · 50,419 nodes · 113,867 edges · 108.5 MB**
 
 Repo-level Cursor Cloud setup lives in:
 
-- `.cursor/environment.json` — installs `@colbymchenry/codegraph@0.9.7`, installs Python deps from `requirements.txt`, then syncs or initializes the local index from the project root.
+- `.cursor/environment.json` — installs `@colbymchenry/codegraph@0.9.9` to `$HOME/.local`, installs Python deps from `requirements.txt`, then syncs or initializes the local index from the project root.
 - `.cursor/mcp.json` — registers the Cursor MCP server as `codegraph serve --mcp --path ${workspaceFolder}`.
 
 The install command must remain idempotent. Keep `.codegraph/` database files gitignored.
@@ -266,7 +266,7 @@ if hit:
 | Target | Registered | Notes |
 |---|---|---|
 | Cursor IDE | ✅ `.cursor/mcp.json` | MCP tools available |
-| Cloud Agent env | ✅ `.cursor/environment.json` | v0.9.7 pinned |
+| Cloud Agent env | ✅ `.cursor/environment.json` | v0.9.9 pinned |
 | Hermes agents | ✅ `common/codegraph_guard.py` | Use guard, not raw CLI |
 
 ---
