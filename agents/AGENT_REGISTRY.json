@@ -156,7 +156,7 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Doc gap: TOOLS.md and AGENTS.md missing per 2026-04-24 audit; HEARTBEAT marks workspace as PENDING.",
+      "notes": "Daily integrity audit runs via agents/data_auditor/run_audit.py and tools/cron_data_auditor.sh; heartbeat verifies artifacts/data_auditor integrity reports.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
     },
@@ -202,7 +202,7 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Director role. Last receipt 2026-04-03; daily-receipt successor pending in Fix #3.",
+      "notes": "Director role. Deterministic fleet receipts restored via tools/agent_heartbeat_checks.py and written to agents/fleet_steward/memory/.",
       "llm_policy": "manual_only",
       "requires_preflight": true
     },
@@ -402,7 +402,7 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Inspector role. Feature-coverage check (short_interest_pct, close_price, market_cap_mm, priced_move_pct, insider_net_buy_value_90d) pending in Fix #4.",
+      "notes": "Inspector role. Feature-coverage contract is tracked in tools/production_qa_check.py (core fields required; insider_net_buy_value_90d tracked nonblocking).",
       "llm_policy": "manual_only",
       "requires_preflight": true
     },

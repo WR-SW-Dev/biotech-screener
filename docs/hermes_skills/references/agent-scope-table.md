@@ -1,5 +1,5 @@
-# Agent Scope Table — 29 Agents
-Updated 2026-05-30 after overlapping-agent removal.
+# Agent Scope Table — 29 Active Agents
+Updated 2026-06-12 after retired-directory registry reconciliation.
 
 ## Trigger note
 All agents use `--message "HEARTBEAT"` as the universal work trigger EXCEPT:
@@ -48,9 +48,9 @@ Flagged 2026-05-04 SOUL.md sweep:
 
 1. **universe_maintenance** — SOUL.md critically sparse (7 lines). No Identity, no Boundaries section, no Prohibit block, no model reference, no trigger. Scope functionally implied, not stated.
 
-2. **shadow portfolio risk** — **Resolved 2026-05-30 (Spec 085 Path B).** `shadow_monitor` canonical; `shadow_watch` and `policy_shadow_watch` removed from fleet.
+2. **shadow portfolio risk** — **Resolved 2026-05-30 (Spec 085 Path B).** `shadow_monitor` canonical; `shadow_watch` is retained as a deprecated historical directory, and `policy_shadow_watch` is absent.
 
-3. **herald / news** — **Resolved 2026-05-30.** Herald canonical; `biotech_news_digest` and `company_news_ingest` dirs removed.
+3. **herald / news** — **Resolved 2026-05-30.** Herald canonical; `biotech_news_digest` and `company_news_ingest` directories are absent.
 
 4. **calibration + calibration_evidence** — Both write to artifacts/calibration_evidence/. Boundary between who writes what is underspecified.
 
