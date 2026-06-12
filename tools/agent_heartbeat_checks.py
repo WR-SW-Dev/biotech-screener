@@ -23,8 +23,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from tools.ic_health_memory_hygiene import MemoryHygieneChecker
-from tools.skills_logger_v2 import log_skill
+from tools.ic_health_memory_hygiene import MemoryHygieneChecker  # noqa: E402
+from tools.skills_logger_v2 import log_skill  # noqa: E402
 
 SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
