@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -33,6 +34,7 @@ OPENCLAW = REPO_ROOT / "tools" / "run_openclaw.sh"
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
 TERMINAL_UNSUPERVISED_AGENTS = {"ops_supervisor"}
 HERMES_JOB_PREFIX = "hermes-"
+CLOUD_ARTIFACT_STALENESS_PREFIXES = ("MISSING:", "NO_ARTIFACTS:", "STALE", "STALE_")
 
 # Date-bounded carried-alert muffle for ic_health_monitor.
 # When a signal in this list is at ALERT/CRITICAL AND today is on or before
@@ -54,6 +56,13 @@ STALENESS_DAYS_BY_CADENCE = {
     "on_demand": None,
     "unknown": None,
 }
+
+
+def is_cloud_agent_environment() -> bool:
+    """Return true when this checkout is running in Cursor Cloud, not operator WSL."""
+    if os.environ.get("CURSOR_CLOUD_AGENT") or os.environ.get("CURSOR_AGENT"):
+        return True
+    return Path("/tmp/cursor").exists()
 
 # ── Result types ──────────────────────────────────────────────
 
@@ -799,6 +808,23 @@ def check_generic_freshness(name: str, entry: dict, dt: date) -> CheckResult:
     return CheckResult(name, "OK", f"newest={newest_date} ({age_days:.1f}d, cadence={cadence})")
 
 
+def _is_artifact_gap(result: CheckResult) -> bool:
+    """Classify results caused by missing/stale local artifacts, not agent logic."""
+    if result.status == "STALE":
+        return True
+    if result.status != "WARN" or not result.anomalies:
+        return False
+    return all(a.startswith(CLOUD_ARTIFACT_STALENESS_PREFIXES) for a in result.anomalies)
+
+
+def _cloud_unknown_result(result: CheckResult) -> CheckResult:
+    detail = (
+        "UNKNOWN_CLOUD_ENV: operator-host artifacts unavailable on this host; "
+        f"original {result.status}: {result.detail}"
+    )
+    return CheckResult(result.agent, "SKIP", detail)
+
+
 def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
     """Iterate every active+supervised agent in the registry and run its check.
 
@@ -827,6 +853,7 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
     }
 
     results: list[CheckResult] = []
+    cloud_env = is_cloud_agent_environment()
     for name in sorted(supervised):
         entry = supervised[name]
         skip_reason = heartbeat_skip_reason(name, entry)
@@ -874,6 +901,8 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
                 )
             except Exception:
                 pass  # Non-blocking
+        if cloud_env and _is_artifact_gap(result):
+            result = _cloud_unknown_result(result)
         results.append(result)
 
     for name in sorted(opted_out):
@@ -932,8 +961,9 @@ def write_fleet_receipt(results: list[CheckResult], counts: dict, dt: date) -> P
     out_path = receipt_dir / f"{ds}_receipt.md"
 
     snapshot_ok = (SNAPSHOT_DIR / ds / "rankings.csv").exists()
+    snapshot_unknown = is_cloud_agent_environment() and not snapshot_ok
     prev_snapshot = _find_previous_snapshot(dt)
-    verdict = _derive_verdict(results, counts, snapshot_ok)
+    verdict = _derive_verdict(results, counts, snapshot_ok or snapshot_unknown)
 
     buckets: dict[str, list[CheckResult]] = {"OK": [], "WARN": [], "FAIL": [], "STALE": [], "SKIP": []}
     for r in results:
@@ -947,7 +977,11 @@ def write_fleet_receipt(results: list[CheckResult], counts: dict, dt: date) -> P
     )
 
     lines.append("\n## Pipeline\n")
-    lines.append(f"- Today's snapshot ({ds}): {'OK' if snapshot_ok else 'MISSING'}\n")
+    if snapshot_unknown:
+        snapshot_status = "UNKNOWN_CLOUD_ENV"
+    else:
+        snapshot_status = "OK" if snapshot_ok else "MISSING"
+    lines.append(f"- Today's snapshot ({ds}): {snapshot_status}\n")
     lines.append(f"- Previous snapshot: {prev_snapshot if prev_snapshot else 'none found'}\n")
 
     lines.append("\n## Fleet (AGENT_REGISTRY.json)\n")

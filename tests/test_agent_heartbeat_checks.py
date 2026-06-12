@@ -256,6 +256,33 @@ def test_nonterminal_active_unsupervised_agent_still_counts_as_coverage_gap(hb_m
     assert counts["missing_count"] == 1
 
 
+def test_cloud_environment_downgrades_artifact_staleness_to_skip(hb_mod, tmp_path, monkeypatch):
+    registry = {
+        "agents": {
+            "artifact_agent": {
+                "status": "active",
+                "cadence": "daily_after_production",
+                "artifact_paths": ["artifacts/artifact_agent/"],
+                "supervised_by_orchestrator": True,
+            }
+        }
+    }
+    reg_path = tmp_path / "agents" / "AGENT_REGISTRY.json"
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    reg_path.write_text(json.dumps(registry), encoding="utf-8")
+    monkeypatch.setattr(hb_mod, "REGISTRY_PATH", reg_path)
+    monkeypatch.setattr(hb_mod, "SPECIALIZED_CHECKS", {})
+    monkeypatch.setattr(hb_mod, "is_cloud_agent_environment", lambda: True)
+
+    results, counts = hb_mod.run_registry_checks(date.fromisoformat("2026-05-08"))
+
+    assert counts["stale_count"] == 0
+    result = results[0]
+    assert result.status == "SKIP"
+    assert "UNKNOWN_CLOUD_ENV" in result.detail
+    assert "no artifacts at any declared path" in result.detail
+
+
 def test_derive_verdict_yellow_on_warn_or_stale(hb_mod):
     r = [_mk_result(hb_mod, "a", "WARN"), _mk_result(hb_mod, "b", "OK")]
     assert hb_mod._derive_verdict(r, {"missing_count": 0}, snapshot_ok=True) == "YELLOW"
@@ -321,6 +348,25 @@ def test_write_fleet_receipt_green_verdict_minimal(hb_mod, tmp_path):
     text = out_path.read_text()
     assert "Verdict: GREEN" in text
     assert "## Escalated to ops" not in text
+
+
+def test_write_fleet_receipt_cloud_missing_snapshot_is_unknown_not_red(hb_mod, monkeypatch):
+    ds = "2026-04-24"
+    monkeypatch.setattr(hb_mod, "is_cloud_agent_environment", lambda: True)
+
+    results = [_mk_result(hb_mod, "qa", "SKIP", "UNKNOWN_CLOUD_ENV: artifact unavailable")]
+    counts = {
+        "active_count": 1,
+        "monitored_count": 1,
+        "stale_count": 0,
+        "missing_count": 0,
+        "deprecated_count": 0,
+    }
+    out_path = hb_mod.write_fleet_receipt(results, counts, date.fromisoformat(ds))
+
+    text = out_path.read_text()
+    assert "Verdict: GREEN" in text
+    assert "Today's snapshot (2026-04-24): UNKNOWN_CLOUD_ENV" in text
 
 
 # ── check_ic_health: carried-alert muffle (P1 #1) ─────────────

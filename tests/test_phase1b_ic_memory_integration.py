@@ -5,7 +5,6 @@ Phase 1 Priority 5: Observability logging for IC health state consistency.
 
 from __future__ import annotations
 
-import json
 from datetime import date
 from unittest.mock import patch
 
@@ -16,10 +15,10 @@ from tools.agent_heartbeat_checks import check_ic_memory_hygiene
 
 def test_ic_memory_hygiene_invoked_in_heartbeat_checks():
     """Verify check_ic_memory_hygiene is registered in SPECIALIZED_CHECKS."""
-    from tools.agent_heartbeat_checks import SPECIALIZED_CHECKS
+    from tools import agent_heartbeat_checks as mod
 
-    assert "ic_memory_hygiene" in SPECIALIZED_CHECKS
-    assert SPECIALIZED_CHECKS["ic_memory_hygiene"] == check_ic_memory_hygiene
+    assert "ic_memory_hygiene" in mod.SPECIALIZED_CHECKS
+    assert mod.SPECIALIZED_CHECKS["ic_memory_hygiene"] == mod.check_ic_memory_hygiene
 
 
 def test_ic_memory_hygiene_check_healthy():
