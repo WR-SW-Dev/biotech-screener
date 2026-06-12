@@ -736,8 +736,8 @@ SPECIALIZED_CHECKS = {
 }
 
 # CLI --agent map: registry names only.
-# shadow_watch / policy_shadow_watch removed 2026-05-30 (Spec 085 Path B): shadow_monitor canonical.
-# biotech_news_digest / company_news_ingest / bioshort_watch dirs removed; herald + tools own surfaces.
+# shadow_watch / policy_shadow_watch retired 2026-05-30 (Spec 085 Path B): shadow_monitor canonical.
+# biotech_news_digest / company_news_ingest retired into herald; bioshort_watch LLM consumer remains suppressed.
 # Artifact files still use biotech_news_digest_{date}_{window}.json from build_news_digest.py.
 AGENTS = dict(SPECIALIZED_CHECKS)
 
