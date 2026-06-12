@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(python3 tools/run_daily_production.py*)",
+      "Bash(python3 tools/build_ops_digest.py*)",
+      "Bash(python3 scripts/build_news_digest.py*)",
+      "Bash(python3 -m tools*)",
+      "Bash(PYTHONPATH* python3 tools*)",
+      "Bash(PYTHONPATH* python3 scripts*)"
+    ]
+  },
   "hooks": {
     "UserPromptSubmit": [
       {
