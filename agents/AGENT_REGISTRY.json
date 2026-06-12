@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-05-30",
-  "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agents removed 2026-05-30 (Spec 085 Path B + news consolidation).",
+  "as_of": "2026-06-12",
+  "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agent directories may be retained for history and must be registered with status=deprecated.",
   "enums": {
     "category": [
       "control_plane",
@@ -53,6 +53,22 @@
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
       "notes": ""
+    },
+    "bioshort_watch": {
+      "role": "retired LLM hedge-governance consumer; deterministic bioshort producer remains canonical",
+      "category": "signal_monitor",
+      "cadence": "unknown",
+      "status": "deprecated",
+      "artifact_paths": [
+        "artifacts/bioshort_watch/",
+        "output/hedge_report/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "unassigned",
+      "notes": "LLM agent suppressed 2026-05-06 (bioshort upstream P2). Directory retained for historical context only; reactivation requires a separate approved spec. Deterministic producer/status tooling remains outside this deprecated OpenClaw workspace.",
+      "llm_policy": "none",
+      "requires_preflight": true
     },
     "calibration": {
       "role": "ruleset evaluator, evidence accumulator, promotion recommender",
@@ -446,7 +462,23 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Canonical portfolio-risk surface (Spec 085 Path B 2026-05-30). Performance: tools/build_shadow_monitor.py (run_daily_production + heartbeat). Policy compare: tools/build_policy_shadow_compare.py (cron 18:05). Removed overlapping agents: shadow_watch (placeholder), policy_shadow_watch (merged here), biotech_news_digest / company_news_ingest / bioshort_watch (retired dirs removed). LLM cron for shadow_monitor retired 2026-05-06; deterministic builds + Tier 2 heartbeat only.",
+      "notes": "Canonical portfolio-risk surface (Spec 085 Path B 2026-05-30). Performance: tools/build_shadow_monitor.py (run_daily_production + heartbeat). Policy compare: tools/build_policy_shadow_compare.py (cron 18:05). Supersedes overlapping agents: shadow_watch (placeholder), policy_shadow_watch (merged here), biotech_news_digest / company_news_ingest (merged into herald), and bioshort_watch (suppressed LLM consumer). LLM cron for shadow_monitor retired 2026-05-06; deterministic builds + Tier 2 heartbeat only.",
+      "llm_policy": "none",
+      "requires_preflight": true
+    },
+    "shadow_watch": {
+      "role": "retired placeholder shadow portfolio monitor; shadow_monitor is canonical",
+      "category": "portfolio_risk",
+      "cadence": "unknown",
+      "status": "deprecated",
+      "artifact_paths": [
+        "artifacts/live_shadow/",
+        "agents/shadow_watch/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "unassigned",
+      "notes": "Retired by Spec 085 Path B consolidation. Directory retained for historical context only; active monitoring is owned by shadow_monitor and deterministic builders.",
       "llm_policy": "none",
       "requires_preflight": true
     },

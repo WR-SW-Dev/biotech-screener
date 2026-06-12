@@ -69,7 +69,9 @@ LANE_A_HERMES_AGENTS = [
 ]
 # Retired agent workspaces — merged into other agents, dirs kept for history.
 RETIRED_AGENTS = [
+    "bioshort_watch",  # LLM consumer suppressed; deterministic producer retained
     "calibration_evidence",  # merged into calibration (dir retained)
+    "shadow_watch",  # placeholder retired; shadow_monitor is canonical
 ]
 # Terminal supervisor workspace: intentionally active but unsupervised and
 # does not carry a HEARTBEAT.md because tools/agent_supervisor_sentinel.py is
