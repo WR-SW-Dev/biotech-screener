@@ -6,8 +6,10 @@ forward returns. Persists a JSONL time series for trend analysis.
 
 Signals tracked:
   - score_rank_pct (composite)
-  - clinical_optionality_pct_dev (optionality anchor)
   - inst_delta_z (institutional delta)
+
+Removed (Spec 111 2026-06-12):
+  - clinical_optionality_pct_dev (deprecated: negative IC, poor hit rate)
 
 Read-only — does not affect rankings, scoring, or execution.
 
@@ -44,12 +46,14 @@ SCHEMA_VERSION = "ic_dashboard.v1"
 # Signals to track
 SIGNALS = [
     ("score_rank_pct", False),  # (field, higher_is_better)
-    ("clinical_optionality_pct_dev", True),
     ("inst_delta_z", True),
 ]
 
-# Closed-lane signals excluded from monitoring (kept for reference)
-# ("clinical_score_v2_z", True),  # CLOSED: rejected as selector/ranker 2026-04
+# Removed signals (closed-lane or deprecated)
+# ("clinical_optionality_pct_dev", True),
+#    REMOVED: Spec 111 2026-06-12. Signal backwards: mean_ic=-0.0338, hit_rate=23.68%
+# ("clinical_score_v2_z", True),
+#    CLOSED: rejected as selector/ranker 2026-04
 
 DEFAULT_LOOKBACK = 12  # snapshots
 DEFAULT_HORIZON = 20  # trading days
