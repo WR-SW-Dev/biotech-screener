@@ -1,6 +1,6 @@
 # Operator Host Hermes Skills Layout
 
-Last updated: 2026-06-07 · Hermes baseline `main` @ `ec4b2726`
+Last updated: 2026-06-16 · Hermes Agent v0.16.0 update check documented
 
 This runbook separates **repo authority** from **operator runtime copies** so Hermes and Cursor do not drift silently.
 
@@ -59,6 +59,22 @@ Repo backup example (optional): `.hermes/skills/devops/memory-steward.SKILL.md`
 4. **Only then**, if Hermes on the host still reads `~/.hermes/skills/`, copy updated bodies to the operator runtime.
 
 Do **not** assume `docs/hermes_skills/` and `~/.hermes/skills/` are identical without verification.
+
+### Hermes Agent version update check
+
+Hermes Agent v0.16.0 / v2026.6.5 is available upstream. This Cloud checkout
+cannot verify or update the operator-host install, so run the non-mutating
+preflight on WSL before changing runtime skills:
+
+```bash
+hermes version || hermes --version
+hermes update --check
+```
+
+Before `hermes update`, back up `~/.hermes/config.yaml` and
+`~/.hermes/skills/`; v0.16.0 has a known first-config-write risk that can
+expand defaults and drop hand-curated provider blocks. Full checklist:
+`docs/HERMES_GATEWAY_SETUP.md`.
 
 ### Copy to operator host (when needed)
 

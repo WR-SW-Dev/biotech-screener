@@ -7,6 +7,12 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ## 2026-06-16 (Hermes registry + Cloud staleness refresh)
 
+### Hermes Agent v0.16.0 update check
+- Public release metadata confirms Hermes Agent v0.16.0 / v2026.6.5 ("The Surface Release") is available upstream.
+- Cloud checkout has no `hermes` CLI or `~/.hermes/hermes-agent`; live version/update remains operator-WSL authority.
+- Added operator-safe checklist to `docs/HERMES_GATEWAY_SETUP.md`: `hermes update --check`, backup `~/.hermes/config.yaml` + `~/.hermes/skills/`, then run update/config/doctor/gateway checks.
+- Added v0.16.0 caution for first config persistence possibly rewriting `config.yaml` and dropping hand-curated provider blocks; compare against backup before gateway restart.
+
 ### Agent profiles / skills / memory follow-up
 - **screener-ops:** registry profile line updated to 31 directories = 29 active + 2 deprecated; mirror synced.
 - **memory layer:** HOT/WARM learnings updated for CodeGraph v0.9.9 and registry bidirectional invariant.
