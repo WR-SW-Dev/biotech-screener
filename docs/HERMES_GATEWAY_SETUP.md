@@ -1,7 +1,63 @@
 # Hermes Gateway & LLM Model Routing
 
-**Last updated**: 2026-05-30  
+**Last updated**: 2026-06-16  
 **Status**: Operator-host config is live source of truth (not this file alone)
+
+---
+
+## Hermes Agent v0.16.0 update check (operator WSL only)
+
+Public release metadata shows **Hermes Agent v0.16.0 / v2026.6.5**
+("The Surface Release") published on 2026-06-06 with release date
+2026-06-05. This Cloud checkout has no `hermes` CLI or
+`~/.hermes/hermes-agent`, so the live installed version must be checked on
+operator WSL.
+
+Run on operator WSL:
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+
+# Identify current install and version.
+command -v hermes
+hermes version || hermes --version
+
+# Non-mutating update preflight.
+hermes update --check
+```
+
+Before applying v0.16.0, preserve the live operator config and state:
+
+```bash
+backup_dir="$HOME/hermes-backup-$(date +%F-%H%M%S)"
+mkdir -p "$backup_dir"
+cp -a "$HOME/.hermes/config.yaml" "$backup_dir/config.yaml"
+cp -a "$HOME/.hermes/skills" "$backup_dir/skills"
+sha256sum "$HOME/.hermes/config.yaml" > "$backup_dir/config.yaml.sha256"
+```
+
+Then update only after the backup exists:
+
+```bash
+hermes update
+hermes version || hermes --version
+hermes config check
+hermes doctor
+hermes gateway status
+```
+
+**v0.16.0 caution:** a reported 0.16.0 issue can rewrite
+`$HERMES_HOME/config.yaml` on the first config persistence after upgrade and
+drop hand-curated `custom_providers` / comments. After the first post-update
+launch or dashboard/config write, compare the config against the backup:
+
+```bash
+sha256sum "$HOME/.hermes/config.yaml"
+diff -u "$backup_dir/config.yaml" "$HOME/.hermes/config.yaml" | sed -n '1,160p'
+```
+
+If the config expands to defaults or loses provider blocks, restore the backup
+and re-run `hermes config migrate` manually before restarting gateway.
 
 ---
 
