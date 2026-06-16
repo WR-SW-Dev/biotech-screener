@@ -8,11 +8,12 @@
 | --- | --- |
 | Recursion | `LEARNINGS.md` → `memory.md` / `domains/` / `projects/` → `skills/` → sync → `harvest_log.md` |
 | Audit | `python3 tools/audit_learnings.py` · map: `.learnings/README.md` |
-| CodeGraph | **First → grep/read → edit.** v0.9.7 pinned. Bounded — not cron/literals/dispatch proof. |
+| CodeGraph | **First → grep/read → edit.** v0.9.9 pinned. Bounded — not cron/literals/dispatch proof. |
 | Host | **WSL** = cron, hedge, gateway. **Cloud** = repo/CI/skills; `UNKNOWN_CLOUD_ENV` expected. |
 | Governance | No ranker/selector/sizing/`final_score` without Spec. Track B skips = expected. |
 | CI | Actions budget pre-start ≠ code failure. |
 | Hermes | MCP = read-only fleet; cron agents → `codegraph_guard.py`; gateway on WSL only. |
+| Agents | Registry has 31 dirs: 29 active + 2 deprecated (`bioshort_watch`, `shadow_watch`). |
 
 Detail: `domains/agent_ops.md` · skills: `self-improving`, `codegraph`, `screener_ops`
 

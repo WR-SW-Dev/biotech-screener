@@ -7,6 +7,12 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ## 2026-06-16 (Hermes registry + Cloud staleness refresh)
 
+### Agent profiles / skills / memory follow-up
+- **screener-ops:** registry profile line updated to 31 directories = 29 active + 2 deprecated; mirror synced.
+- **memory layer:** HOT/WARM learnings updated for CodeGraph v0.9.9 and registry bidirectional invariant.
+- **memory-steward:** deployment/profile guidance reconciled across `docs/hermes_skills/memory-steward.md` and `.hermes/skills/devops/memory-steward.SKILL.md`.
+- Ran `python3 tools/audit_learnings.py` — no stale hints or compaction issues.
+
 ### Hermes sync/audit
 - Ran `python3 tools/sync_hermes_skills.py --register-meta` and `python3 tools/sync_hermes_skills.py` — 32 registered Hermes docs, 19 cursor mirrors unchanged/skipped except `screener-ops` after CodeGraph pin refresh.
 - Ran `python3 tools/audit_hermes_skills.py` — all Hermes `.md` files registered, source_authority complete, no mirror drift.

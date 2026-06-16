@@ -24,6 +24,19 @@ and noncanonical memory — while preserving all project-critical knowledge.
 
 Default mode: READ-ONLY AUDIT.
 
+## Deployment (three-layer stack — keep in sync when updating)
+
+  1. .claude/agents/memory-steward.md              — Claude Code subagent (repo)
+  2. ~/.hermes/skills/devops/memory-steward/        — operator-host runtime copy
+  3. .hermes/skills/devops/memory-steward.SKILL.md  — repo backup of runtime copy
+  4. docs/hermes_skills/memory-steward.md           — Hermes docs mirror (this file)
+  5. Hermes cron job 876bb90e5295                   — weekly Sun 10:00 ET
+
+First live run: 2026-05-06 13:16 ET — completed ok.
+
+After operator-host edits, copy the runtime skill back into
+`.hermes/skills/devops/memory-steward.SKILL.md` and reconcile this mirror.
+
 ---
 
 ## What is never touched (forbidden list)
@@ -119,7 +132,7 @@ cusip_static_map_SAMPLE.json (these may be active reference data).
 ### 1. Hermes job roster and recent run health
 
 ```bash
-hermes jobs list 2>/dev/null || echo "hermes CLI not available"
+hermes cron list 2>/dev/null || echo "hermes CLI not available"
 ```
 
 ### 2. OpenClaw agent/session status

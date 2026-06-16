@@ -10,12 +10,15 @@
 - Loop spec: `skills/self-improving/SKILL.md`. Do not encode scoring/cron changes in skills without governance Spec.
 
 ## Tooling (codegraph)
-- Installed: v0.9.7 (pinned in `.cursor/environment.json`). Re-verify with `codegraph status` after merges.
+- Installed: v0.9.9 (pinned in `.cursor/environment.json`). Re-verify with `codegraph status` after merges.
 - MCP tools (`codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_context`) for IDE/agent. CLI (`codegraph query`, etc.) for bash.
 - Preflight (search → node → callers → callees → impact) is mandatory before any Tier 2+ edit per `skills/codegraph/SKILL.md`.
 - `codegraph_impact` on each changed symbol is the mechanical verification step for the AGENT_ROUTING_POLICY Tier 2 review trigger.
 - Hermes agents use `common/codegraph_guard.py` (CodegraphGuard). All 5 gates implemented. Registration no longer deferred.
 - `@latest` caused non-deterministic installs — always pin version explicitly when upgrading.
+
+## Agent registry / Hermes
+- Repo agent fleet: 31 directories = 29 active + 2 deprecated (`bioshort_watch`, `shadow_watch`). Do not re-add absent overlap dirs (`policy_shadow_watch`, `biotech_news_digest`, `company_news_ingest`) to `AGENT_REGISTRY.json` unless their directories are restored.
 
 ## Enrichment
 - indication_master --min-tickers 3 is the right cutoff (1,568 conditions, covers all shared by 3+ companies)
