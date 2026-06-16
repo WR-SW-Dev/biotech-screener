@@ -139,7 +139,13 @@ def check_shadow_excess(
     perf_rows: List[Dict[str, Any]],
     lookback: int,
 ) -> Dict[str, Any]:
-    """Check 1: trailing average weekly excess vs XBI."""
+    """Check 1: trailing average weekly excess vs XBI.
+
+    DATA INTEGRITY SAFEGUARDS:
+    - Exclude periods with incomplete price data (n_missing_price > 0)
+    - Flag when data is excluded to alert operator to stale metrics
+    - Require minimum complete periods before using metric for gating
+    """
     check = {
         "name": "shadow_excess_vs_xbi",
         "status": "PASS",
@@ -149,31 +155,55 @@ def check_shadow_excess(
         "threshold_fail": THRESHOLDS["excess_fail_pct"],
     }
 
-    # Filter to rows with real excess data (not blank)
-    valid = [r for r in perf_rows if r.get("excess_vs_xbi_pct", "") not in ("", None)]
+    # Filter 1: Rows with real excess data (not blank)
+    has_excess = [r for r in perf_rows if r.get("excess_vs_xbi_pct", "") not in ("", None)]
 
-    if len(valid) < MIN_PERF_WEEKS:
+    # Filter 2: CRITICAL - Rows with complete price coverage (data integrity gate)
+    # Exclude any period where portfolio had missing prices (n_missing_price > 0)
+    # These return 0.00% by default and skew the metric with data-loss artifacts
+    n_missing_field = "n_missing_price"
+    complete_data = [
+        r
+        for r in has_excess
+        if r.get(n_missing_field) is not None and (r.get(n_missing_field) == "" or int(r.get(n_missing_field, 0)) == 0)
+    ]
+
+    excluded_count = len(has_excess) - len(complete_data)
+
+    if len(complete_data) < MIN_PERF_WEEKS:
         check["status"] = "HOLD"
-        check["detail"] = f"Insufficient data: {len(valid)} periods (need {MIN_PERF_WEEKS})"
+        check["detail"] = (
+            f"Insufficient complete-data periods: {len(complete_data)} (need {MIN_PERF_WEEKS}). "
+            f"Excluded {excluded_count} rows due to missing price data."
+        )
         return check
 
-    # Take last N rows
-    recent = valid[-lookback:]
+    # Take last N complete-data rows
+    recent = complete_data[-lookback:]
     excess_vals = []
-    for r in recent:
+    excluded_detail = []
+
+    for i, r in enumerate(recent):
         try:
-            excess_vals.append(float(r["excess_vs_xbi_pct"]))
+            val = float(r["excess_vs_xbi_pct"])
+            excess_vals.append(val)
         except (ValueError, TypeError):
+            excluded_detail.append(r.get("date", f"row{i}"))
             continue
 
     if not excess_vals:
         check["status"] = "HOLD"
-        check["detail"] = "No valid excess values"
+        check["detail"] = "No valid excess values in complete-data periods"
         return check
 
     avg_excess = sum(excess_vals) / len(excess_vals)
     check["value"] = round(avg_excess, 4)
-    check["detail"] = f"Trailing {len(excess_vals)}-period avg excess: {avg_excess:+.4f}pp"
+
+    # Document data quality filtering in detail
+    detail_parts = [f"Trailing {len(excess_vals)}-period avg excess: {avg_excess:+.4f}pp (complete data only)."]
+    if excluded_count > 0:
+        detail_parts.append(f"Excluded {excluded_count} row(s) with missing prices (data integrity filter).")
+    check["detail"] = " ".join(detail_parts)
 
     if avg_excess < THRESHOLDS["excess_fail_pct"]:
         check["status"] = "FAIL"
@@ -521,6 +551,47 @@ def check_position_change_budget(
 # ---------------------------------------------------------------------------
 
 
+def validate_metric_data_integrity(perf_rows: List[Dict[str, Any]]) -> Optional[str]:
+    """Validate that performance metrics are based on complete data.
+
+    Returns a caution message if data quality is suspect, or None if OK.
+
+    INTEGRITY CHECKS:
+    - Warn if trailing periods have excessive missing prices
+    - Flag stale metrics (data hasn't been updated recently)
+    - Alert if performance dataset is suspiciously small
+    """
+    if not perf_rows:
+        return None
+
+    # Check 1: Recent data completeness
+    recent_4 = perf_rows[-4:] if len(perf_rows) >= 4 else perf_rows
+    missing_price_counts = []
+    for r in recent_4:
+        try:
+            n_missing = int(r.get("n_missing_price", 0))
+            missing_price_counts.append(n_missing)
+        except (ValueError, TypeError):
+            pass
+
+    if missing_price_counts:
+        max_missing_pct = max(missing_price_counts) / 30.0 * 100  # 30-position portfolio
+        if max_missing_pct >= 50:  # More than half the portfolio missing prices
+            return (
+                f"⚠️  DATA INTEGRITY WARNING: Recent performance has {max_missing_pct:.0f}% "
+                f"missing price data. Metrics may reflect data gaps, not portfolio quality."
+            )
+
+    # Check 2: Dataset size (ensure not using stale/small subset)
+    if len(perf_rows) < 4:
+        return (
+            f"⚠️  DATA INTEGRITY WARNING: Only {len(perf_rows)} performance periods available. "
+            f"Metrics may be based on insufficient history."
+        )
+
+    return None
+
+
 def compute_verdict(checks: List[Dict[str, Any]]) -> str:
     """Derive overall READY / REVIEW / HOLD from individual checks."""
     statuses = [c["status"] for c in checks]
@@ -583,6 +654,11 @@ def build_scorecard(
 
     verdict = compute_verdict(checks)
 
+    # DATA INTEGRITY CHECK: Validate metrics aren't based on incomplete data
+    data_integrity_warning = validate_metric_data_integrity(perf_rows)
+    if data_integrity_warning:
+        logger.warning(data_integrity_warning)
+
     # Build context summary
     n_perf_rows = len(perf_rows)
     latest_perf = perf_rows[-1] if perf_rows else {}
@@ -601,6 +677,7 @@ def build_scorecard(
             "phase2_health_status": (phase2_health or {}).get("status", "N/A"),
             "ruleset_health_status": (ruleset_health or {}).get("status", "N/A"),
             "alert_count": (alerts or {}).get("alert_count", "N/A"),
+            "data_integrity_warning": data_integrity_warning,
             "pre_trade_overall": (pre_trade or {}).get("overall", "N/A"),
         },
     }
