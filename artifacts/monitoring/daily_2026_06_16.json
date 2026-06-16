@@ -1,0 +1,485 @@
+{
+  "date": "2026-06-16",
+  "monitoring_day": 6,
+  "timestamp": "2026-06-16T13:08:02.047650Z",
+  "phase": "Phase 2 Monitoring (Path C active)",
+  "data_as_of": "2026-06-15 close (yfinance); pre-market 2026-06-16",
+  "note": "Robinhood MCP not available. Prices from yfinance 2026-06-15 close. ALMS 6/15 NaN \u2014 using 2026-06-12 close as proxy. XBI 6/15 NaN \u2014 using 2026-06-12 close as proxy.",
+  "account": {
+    "account_id": "Robinhood 802349084",
+    "equity_fetchable": false,
+    "equity_note": "Robinhood MCP unavailable \u2014 baseline equity: start=$100.19, 2026-06-10=$85.43 (-14.73%); Day 6 not refreshed",
+    "cash": 99.87,
+    "buying_power": 200.06,
+    "data_source": "baseline_2026-06-10 (not refreshed)"
+  },
+  "portfolio_overview": {
+    "total_positions": 15,
+    "positions_flagged": 5,
+    "avg_current_price": 59.05,
+    "avg_pnl_vs_entry_pct": -2.43,
+    "avg_entry_price": 65.43,
+    "positions_positive": 5,
+    "positions_negative": 10,
+    "positions_critical": 2
+  },
+  "positions": [
+    {
+      "ticker": "COGT",
+      "company_name": "Cogent Biosciences, Inc.",
+      "entry_price": 35.24,
+      "current_price": 33.17,
+      "prev_close": 33.1,
+      "pnl_vs_entry_pct": -5.87,
+      "day_change_pct": 0.21,
+      "volume": 1974700,
+      "avg_volume_3d": 1759400,
+      "vol_ratio": 1.12,
+      "catalyst_days_remaining": 15,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "FLAG",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "DNTH",
+      "company_name": "Dianthus Therapeutics, Inc.",
+      "entry_price": 90.94,
+      "current_price": 82.51,
+      "prev_close": 82.07,
+      "pnl_vs_entry_pct": -9.27,
+      "day_change_pct": 0.54,
+      "volume": 764500,
+      "avg_volume_3d": 1195667,
+      "vol_ratio": 0.64,
+      "catalyst_days_remaining": 14,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "FLAG",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "NRIX",
+      "company_name": "Nurix Therapeutics, Inc.",
+      "entry_price": 17.51,
+      "current_price": 17.04,
+      "prev_close": 16.95,
+      "pnl_vs_entry_pct": -2.68,
+      "day_change_pct": 0.53,
+      "volume": 2682600,
+      "avg_volume_3d": 3091533,
+      "vol_ratio": 0.87,
+      "catalyst_days_remaining": 46,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "URGN",
+      "company_name": "UroGen Pharma Ltd.",
+      "entry_price": 26.43,
+      "current_price": 30.86,
+      "prev_close": 29.72,
+      "pnl_vs_entry_pct": 16.76,
+      "day_change_pct": 3.84,
+      "volume": 804900,
+      "avg_volume_3d": 639500,
+      "vol_ratio": 1.26,
+      "catalyst_days_remaining": 77,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "ALMS",
+      "company_name": "Alumis Inc.",
+      "entry_price": 20.3,
+      "current_price": 24.15,
+      "prev_close": 24.15,
+      "pnl_vs_entry_pct": 18.97,
+      "day_change_pct": 0.0,
+      "volume": 1546454,
+      "avg_volume_3d": 1832785,
+      "vol_ratio": 0.84,
+      "catalyst_days_remaining": 15,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": true
+    },
+    {
+      "ticker": "SYRE",
+      "company_name": "Spyre Therapeutics, Inc.",
+      "entry_price": 70.48,
+      "current_price": 83.58,
+      "prev_close": 80.79,
+      "pnl_vs_entry_pct": 18.59,
+      "day_change_pct": 3.45,
+      "volume": 1156400,
+      "avg_volume_3d": 1127633,
+      "vol_ratio": 1.03,
+      "catalyst_days_remaining": 6,
+      "mom_state": "tailwind",
+      "tier": "B",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "RVMD",
+      "company_name": "Revolution Medicines, Inc.",
+      "entry_price": 161.26,
+      "current_price": 160.06,
+      "prev_close": 153.87,
+      "pnl_vs_entry_pct": -0.74,
+      "day_change_pct": 4.02,
+      "volume": 2131300,
+      "avg_volume_3d": 1971333,
+      "vol_ratio": 1.08,
+      "catalyst_days_remaining": 288,
+      "mom_state": "tailwind",
+      "tier": "B",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "CMPS",
+      "company_name": "COMPASS Pathways Plc",
+      "entry_price": 14.62,
+      "current_price": 11.79,
+      "prev_close": 12.08,
+      "pnl_vs_entry_pct": -19.36,
+      "day_change_pct": -2.4,
+      "volume": 2073200,
+      "avg_volume_3d": 2761033,
+      "vol_ratio": 0.75,
+      "catalyst_days_remaining": 14,
+      "mom_state": "tailwind",
+      "tier": "C",
+      "target_weight_pct": 3.33,
+      "status": "FLAG",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "SLDB",
+      "company_name": "Solid Biosciences Inc.",
+      "entry_price": 7.26,
+      "current_price": 7.36,
+      "prev_close": 7.14,
+      "pnl_vs_entry_pct": 1.38,
+      "day_change_pct": 3.08,
+      "volume": 2064000,
+      "avg_volume_3d": 2210433,
+      "vol_ratio": 0.93,
+      "catalyst_days_remaining": 121,
+      "mom_state": "neutral",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "DRUG",
+      "company_name": "Bright Minds Biosciences Inc.",
+      "entry_price": 86.48,
+      "current_price": 59.17,
+      "prev_close": 60.95,
+      "pnl_vs_entry_pct": -31.58,
+      "day_change_pct": -2.92,
+      "volume": 938900,
+      "avg_volume_3d": 726833,
+      "vol_ratio": 1.29,
+      "catalyst_days_remaining": 138,
+      "mom_state": "neutral",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "CRITICAL",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "STOK",
+      "company_name": "Stoke Therapeutics, Inc.",
+      "entry_price": 30.51,
+      "current_price": 30.0,
+      "prev_close": 29.82,
+      "pnl_vs_entry_pct": -1.67,
+      "day_change_pct": 0.6,
+      "volume": 833900,
+      "avg_volume_3d": 603733,
+      "vol_ratio": 1.38,
+      "catalyst_days_remaining": 106,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "PRAX",
+      "company_name": "Praxis Precision Medicines, Inc.",
+      "entry_price": 338.06,
+      "current_price": 264.54,
+      "prev_close": 266.58,
+      "pnl_vs_entry_pct": -21.75,
+      "day_change_pct": -0.77,
+      "volume": 544200,
+      "avg_volume_3d": 465433,
+      "vol_ratio": 1.17,
+      "catalyst_days_remaining": 15,
+      "mom_state": "tailwind",
+      "tier": "B",
+      "target_weight_pct": 3.33,
+      "status": "CRITICAL",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "TRVI",
+      "company_name": "Trevi Therapeutics, Inc.",
+      "entry_price": 13.99,
+      "current_price": 14.66,
+      "prev_close": 14.21,
+      "pnl_vs_entry_pct": 4.79,
+      "day_change_pct": 3.17,
+      "volume": 1351100,
+      "avg_volume_3d": 1168833,
+      "vol_ratio": 1.16,
+      "catalyst_days_remaining": 14,
+      "mom_state": "neutral",
+      "tier": "C",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "ERAS",
+      "company_name": "Erasca, Inc.",
+      "entry_price": 14.68,
+      "current_price": 14.43,
+      "prev_close": 14.05,
+      "pnl_vs_entry_pct": -1.7,
+      "day_change_pct": 2.7,
+      "volume": 2916400,
+      "avg_volume_3d": 3565600,
+      "vol_ratio": 0.82,
+      "catalyst_days_remaining": 168,
+      "mom_state": "tailwind",
+      "tier": "A",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    },
+    {
+      "ticker": "XENE",
+      "company_name": "Xenon Pharmaceuticals Inc.",
+      "entry_price": 53.66,
+      "current_price": 52.4,
+      "prev_close": 52.1,
+      "pnl_vs_entry_pct": -2.35,
+      "day_change_pct": 0.58,
+      "volume": 1168400,
+      "avg_volume_3d": 1199933,
+      "vol_ratio": 0.97,
+      "catalyst_days_remaining": 46,
+      "mom_state": "tailwind",
+      "tier": "B",
+      "target_weight_pct": 3.33,
+      "status": "OK",
+      "gap_flag": false,
+      "price_stale": false
+    }
+  ],
+  "performance_summary": {
+    "top_3_gainers": [
+      {
+        "ticker": "ALMS",
+        "company_name": "Alumis Inc.",
+        "entry_price": 20.3,
+        "current_price": 24.15,
+        "pnl_vs_entry_pct": 18.97,
+        "day_change_pct": 0.0
+      },
+      {
+        "ticker": "SYRE",
+        "company_name": "Spyre Therapeutics, Inc.",
+        "entry_price": 70.48,
+        "current_price": 83.58,
+        "pnl_vs_entry_pct": 18.59,
+        "day_change_pct": 3.45
+      },
+      {
+        "ticker": "URGN",
+        "company_name": "UroGen Pharma Ltd.",
+        "entry_price": 26.43,
+        "current_price": 30.86,
+        "pnl_vs_entry_pct": 16.76,
+        "day_change_pct": 3.84
+      }
+    ],
+    "top_3_losers": [
+      {
+        "ticker": "CMPS",
+        "company_name": "COMPASS Pathways Plc",
+        "entry_price": 14.62,
+        "current_price": 11.79,
+        "pnl_vs_entry_pct": -19.36,
+        "day_change_pct": -2.4
+      },
+      {
+        "ticker": "PRAX",
+        "company_name": "Praxis Precision Medicines, Inc.",
+        "entry_price": 338.06,
+        "current_price": 264.54,
+        "pnl_vs_entry_pct": -21.75,
+        "day_change_pct": -0.77
+      },
+      {
+        "ticker": "DRUG",
+        "company_name": "Bright Minds Biosciences Inc.",
+        "entry_price": 86.48,
+        "current_price": 59.17,
+        "pnl_vs_entry_pct": -31.58,
+        "day_change_pct": -2.92
+      }
+    ]
+  },
+  "alerts": {
+    "gap_events_gt5pct": [],
+    "gap_count": 0,
+    "positions_gt20pct_loss": [
+      {
+        "ticker": "DRUG",
+        "pnl_vs_entry_pct": -31.58
+      },
+      {
+        "ticker": "PRAX",
+        "pnl_vs_entry_pct": -21.75
+      }
+    ],
+    "critical_position_count": 2,
+    "drawdown_gate_flag": true,
+    "drawdown_gate_note": "TRIPPED: portfolio avg -2.43% vs XBI 0.127% \u2192 relative -2.56pp (threshold -2.0pp). IMPROVING TREND: Day2:-6.70 \u2192 Day3:-5.84 \u2192 Day5:-3.80 \u2192 Day6:-2.56. MANUAL REVIEW required.",
+    "emergency_exit_armed": true
+  },
+  "governance_gates": {
+    "drawdown_vs_xbi_pp": -2.56,
+    "portfolio_return_pct": -2.43,
+    "xbi_return_since_entry_pct": 0.127,
+    "xbi_entry_price": 133.62,
+    "xbi_current_price": 133.79,
+    "xbi_day_change_pct": 0.0,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "TRIPPED \u2014 -2.56pp vs -2.0pp; improving (Day2:-6.70\u2192Day3:-5.84\u2192Day5:-3.80\u2192Day6:-2.56)",
+    "ic_observable": "NO_DATA (first print expected 2026-06-17 \u2014 TOMORROW)",
+    "jaccard_13f": 0.875,
+    "jaccard_threshold": 0.7,
+    "jaccard_status": "PASS",
+    "emergency_exit_armed": true,
+    "all_gates_clear": false
+  },
+  "catalyst_watch": {
+    "imminent_7d": [
+      {
+        "ticker": "SYRE",
+        "catalyst_days_remaining": 6,
+        "mom_state": "tailwind",
+        "tier": "B",
+        "pnl_vs_entry_pct": 18.59
+      }
+    ],
+    "near_term_14d": [
+      {
+        "ticker": "DNTH",
+        "catalyst_days_remaining": 14,
+        "mom_state": "tailwind",
+        "tier": "A"
+      },
+      {
+        "ticker": "CMPS",
+        "catalyst_days_remaining": 14,
+        "mom_state": "tailwind",
+        "tier": "C"
+      },
+      {
+        "ticker": "TRVI",
+        "catalyst_days_remaining": 14,
+        "mom_state": "neutral",
+        "tier": "C"
+      }
+    ],
+    "horizon_21d": [
+      {
+        "ticker": "COGT",
+        "catalyst_days_remaining": 15,
+        "mom_state": "tailwind",
+        "tier": "A"
+      },
+      {
+        "ticker": "ALMS",
+        "catalyst_days_remaining": 15,
+        "mom_state": "tailwind",
+        "tier": "A"
+      },
+      {
+        "ticker": "PRAX",
+        "catalyst_days_remaining": 15,
+        "mom_state": "tailwind",
+        "tier": "B"
+      }
+    ]
+  },
+  "benchmark": {
+    "xbi_day_change_pct": 0.0,
+    "xbi_since_entry_pct": 0.127,
+    "portfolio_avg_vs_xbi_pp": -2.56,
+    "drawdown_trend_pp": [
+      -6.7,
+      -5.84,
+      -3.8,
+      -2.56
+    ],
+    "drawdown_trend_dates": [
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16"
+    ]
+  },
+  "operational_status": {
+    "price_data_currency": "2026-06-15 close (yfinance) \u2713",
+    "snapshot_generation": "\u2713 2026-06-16 pre-market",
+    "portfolio_immutability": "\u2713 Read-only observation (no trades executed)",
+    "no_unauthorized_trades": true,
+    "robinhood_mcp_status": "UNAVAILABLE \u2014 install mcp-server-robinhood for live account data",
+    "missed_run_flag": false
+  },
+  "next_monitoring_actions": [
+    "1. [CRITICAL] SYRE T-6 \u2014 catalyst IMMINENT; position +18.59% vs entry; monitor for pre-readout drift or halt",
+    "2. [MONITOR] DRUG critical loss: -31.58% vs entry; read-only observation",
+    "3. [MONITOR] PRAX critical loss: -21.75% vs entry; read-only observation",
+    "4. [GATE] Drawdown gate: -2.56pp (threshold -2.0pp) \u2014 TRIPPED; improving; manual review required",
+    "5. [CRITICAL] IC First Print expected 2026-06-17 (TOMORROW) \u2014 extend-vs-revert decision framework required for Day 7",
+    "6. [MONITOR] CMPS approaching -20% CRITICAL threshold at -19.36%"
+  ]
+}
