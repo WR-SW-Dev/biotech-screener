@@ -27,15 +27,17 @@ Default mode: READ-ONLY AUDIT.
 ## Deployment (three-layer stack — keep in sync when updating)
 
   1. .claude/agents/memory-steward.md              — Claude Code subagent (repo)
-  2. ~/.hermes/skills/devops/memory-steward/        — THIS FILE (canonical)
+  2. ~/.hermes/skills/devops/memory-steward/        — operator-host runtime copy
   3. .hermes/skills/devops/memory-steward.SKILL.md  — repo backup of this file
-  4. Hermes cron job 876bb90e5295                   — weekly Sun 10:00 ET
+  4. docs/hermes_skills/memory-steward.md           — Hermes docs mirror
+  5. Hermes cron job 876bb90e5295                   — weekly Sun 10:00 ET
 
 First live run: 2026-05-06 13:16 ET — completed ok.
 
-To update repo backup after patching this skill:
+To update repo backup after patching the operator-host runtime skill:
   cp ~/.hermes/skills/devops/memory-steward/SKILL.md \
      /mnt/c/Projects/biotech_screener/biotech-screener/.hermes/skills/devops/memory-steward.SKILL.md
+Then reconcile docs/hermes_skills/memory-steward.md.
 
 ---
 

@@ -241,7 +241,7 @@ Hermes job completes
 ### Model Configuration \(updated 2026-05-20\)
 
 - **Primary model**: `deepseek/deepseek-v4-flash:free` \(OpenRouter\) - fleet-wide migration 2026-05-20
-- **Registry**: 29 agents \(29 active\) — includes 4 Hermes governance jobs in `agents/` \(held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector\) — see `agents/AGENT_REGISTRY.json`
+- **Registry**: 31 agent directories \(29 active, 2 deprecated historical workspaces\) — includes 4 Hermes governance jobs in `agents/` \(held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector\) — see `agents/AGENT_REGISTRY.json`
 - **Fallback**: Anthropic Claude SDK \(for Claude-specific models\)
 - **Auto-routing**: "deepseek" models -> OpenRouter \(OpenAI-compatible\), "claude" -> Anthropic SDK
 - **Previous**: Llama 3.3 70B Instruct Turbo \(Together AI, 2026-05-13 to 2026-05-20\)
@@ -588,18 +588,18 @@ Key findings \(pseudo-PIT\):
 
 ### Repo plumbing baseline \(Cloud + Cursor\)
 
-*Last reviewed: 2026-06-07 · `main` @ `ec4b2726`*
+*Last reviewed: 2026-06-16 · `cursor/update-openclaw-ed92`*
 
 | Area | Status |
 | --- | --- |
 | Skills + knowledge recursion | `self-improving`, `.learnings/`, `audit_learnings.py` on `main` |
-| CodeGraph | v0.9.7 pinned; MCP + CLI; bounded proof model |
+| CodeGraph | v0.9.9 pinned; MCP + CLI; bounded proof model |
 | Hermes fleet | 29 active agents; WSL acceptance gate for cron/gateway |
 | CI / tests | Full suite green; Track B skips intentional; Actions budget ≠ code failure |
 
 ### Cursor Cloud Agent Environment
 
-- Install hook: `.cursor/environment.json` — `npm install -g @colbymchenry/codegraph@0.9.7 --prefix "$HOME/.local"`, then `pip install -r requirements.txt`, then `codegraph sync` or `codegraph index`.
+- Install hook: `.cursor/environment.json` — `npm install -g @colbymchenry/codegraph@0.9.9 --prefix "$HOME/.local"`, then `pip install -r requirements.txt`, then `codegraph sync` or `codegraph index`.
 - MCP: `.cursor/mcp.json` — `codegraph` + repo-native `hermes` (`mcp_server/hermes_server.py`, read-only).
 - Python deps from `requirements.txt` only; **`pytest-xdist` not required** (`pyproject.toml` uses `-q -m 'not network'`).
 - Cloud can run registry tests and build knowledge-layer ledgers; **cannot** authoritatively validate operator cron or `output/hedge_report/`.

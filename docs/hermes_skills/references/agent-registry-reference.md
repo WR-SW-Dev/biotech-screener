@@ -1,11 +1,12 @@
 # Agent Registry Reference Table
-Generated from AGENT_REGISTRY.json (auto-sync 2026-05-30).
+Generated from AGENT_REGISTRY.json (auto-sync 2026-06-16; registry `as_of` 2026-06-12).
 
 ## Full Reference Table
 
 | agent_id | cadence | status | artifact_paths |
 |---|---|---|---|
 | aact_trial_ingest | weekly | active | `data/aact/snapshots/`, `data/aact/linked/`, … |
+| bioshort_watch | unknown | deprecated | `artifacts/bioshort_watch/`, `output/hedge_report/` |
 | calibration | weekly | active | `artifacts/calibration_evidence/` |
 | calibration_evidence | weekly | active | `artifacts/calibration_evidence/` |
 | catalyst_delta | daily_after_production | active | `artifacts/catalyst_delta/` |
@@ -33,11 +34,14 @@ Generated from AGENT_REGISTRY.json (auto-sync 2026-05-30).
 | review_queue_steward | daily_after_production | active | — |
 | sentinel | daily_after_production | active | `agents/sentinel/memory/` |
 | shadow_monitor | daily_after_production | active | `agents/shadow_monitor/memory/`, `artifacts/shadow_monitor/`, … |
+| shadow_watch | unknown | deprecated | `artifacts/live_shadow/`, `agents/shadow_watch/` |
 | universe_maintenance | weekly | active | `artifacts/universe_maintenance/` |
 
-## Removed 2026-05-30 (overlapping agents)
+## Deprecated / absent overlapping agents
 
-`shadow_watch`, `policy_shadow_watch`, `biotech_news_digest`, `company_news_ingest`, `bioshort_watch` — directories and registry entries deleted. Surfaces owned by `shadow_monitor` (portfolio risk) and `herald` (news).
+- `shadow_watch` — retained as a deprecated historical directory; active portfolio-risk monitoring is owned by `shadow_monitor`.
+- `bioshort_watch` — retained as a deprecated historical directory; deterministic bioshort producer/status tooling is canonical and LLM reactivation requires a separate approved spec.
+- `policy_shadow_watch`, `biotech_news_digest`, and `company_news_ingest` — absent from `agents/`; surfaces are owned by `shadow_monitor` (portfolio risk) and `herald` (news).
 
 ## Known overlaps (remaining)
 
