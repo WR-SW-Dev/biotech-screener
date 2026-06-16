@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-05-19T11:17:02.526340",
+  "last_check": "2026-06-16T11:08:52.161129",
   "filed": {
     "0001493215": {
       "name": "RTW Investments",
@@ -230,16 +230,51 @@
       "name": "D.E. Shaw",
       "filed_date": "2026-05-15",
       "accession": "000110465926062472"
+    },
+    "0001892134": {
+      "name": "Frazier Life Sciences Management",
+      "filed_date": "2026-05-15",
+      "accession": "000189213426000002"
+    },
+    "0002005245": {
+      "name": "Siren LLC",
+      "filed_date": "2026-05-14",
+      "accession": "000200524526000006"
+    },
+    "0001839948": {
+      "name": "TCG Crossover Management",
+      "filed_date": "2026-05-15",
+      "accession": "000121465926006367"
+    },
+    "0001920938": {
+      "name": "Braidwell LP",
+      "filed_date": "2026-05-15",
+      "accession": "000142050626001145"
+    },
+    "0001773206": {
+      "name": "Integral Health Asset Management",
+      "filed_date": "2026-05-15",
+      "accession": "000117266126002081"
+    },
+    "0001773195": {
+      "name": "Affinity Asset Advisors",
+      "filed_date": "2026-05-14",
+      "accession": "000131586326000411"
+    },
+    "0001855655": {
+      "name": "Paradigm Biocapital Advisors",
+      "filed_date": "2026-05-15",
+      "accession": "000185565526000011"
     }
   },
   "pending": {
     "0001601692": {
       "name": "Broadfin Capital (Kotler)",
-      "checked_at": "2026-05-19T11:17:09.875667"
+      "checked_at": "2026-06-16T11:08:52.673614"
     },
     "0000909661": {
       "name": "Farallon Capital",
-      "checked_at": "2026-05-19T11:17:11.331530"
+      "checked_at": "2026-06-16T11:08:54.606961"
     }
   },
   "started_at": "2026-05-15T00:00:00",
