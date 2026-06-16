@@ -1,8 +1,9 @@
 # Hermes Agent Skills System — Operational Profile
 
 **System:** Distributed agent orchestration for biotech screener signals, governance, and operations  
-**Status:** Phase 2 operational (2026-06-05)  
-**Skills Deployed:** 31 active across 3 execution layers  
+**Status:** Phase 2 operational (2026-06-05; repo audit refreshed 2026-06-16)  
+**Repo Hermes skills:** 32 registered docs in `docs/hermes_skills/_meta.json`; 19 Cursor mirrors in sync  
+**Repo agent fleet:** 29 active agents + 2 deprecated historical workspaces in `agents/AGENT_REGISTRY.json`  
 **Integration:** Daily cron pipeline, Phase 2 governance gates, signal monitoring  
 
 ---
@@ -50,7 +51,7 @@
 
 ---
 
-## 31 Skills Inventory
+## Skills Inventory
 
 ### Skill Registry (`_meta.json`)
 
@@ -92,7 +93,7 @@
 | browser_automation | — | 📚 DOCS | Web scraping, form filling | N/A |
 | self_improving | — | 📚 DOCS | Skill optimization, feedback loops | N/A |
 
-**Total: 31 skills (21 active HERMES_NATIVE, 10 foundational docs-only)**
+**Repo audit (2026-06-16):** 32 Hermes skill docs registered in `_meta.json`; no mirror drift across cursor-synced skills. The operational layer inventory below is a conceptual operator-host profile, not the authoritative repo skill count.
 
 ---
 

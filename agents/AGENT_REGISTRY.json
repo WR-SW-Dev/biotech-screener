@@ -70,21 +70,6 @@
       "llm_policy": "none",
       "requires_preflight": true
     },
-    "biotech_news_digest": {
-      "role": "retired news digest consolidation; herald is canonical",
-      "category": "data_ingestion",
-      "cadence": "unknown",
-      "status": "deprecated",
-      "artifact_paths": [
-        "agents/biotech_news_digest/"
-      ],
-      "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "Consolidated into herald agent (Fix #5 2026-05-30). Directory retained for historical context only; active news collection is owned by herald (tools/fetch_company_press_releases.py + scripts/build_news_digest.py).",
-      "llm_policy": "none",
-      "requires_preflight": true
-    },
     "calibration": {
       "role": "ruleset evaluator, evidence accumulator, promotion recommender",
       "category": "research",
@@ -157,21 +142,6 @@
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
       "notes": "Crontab: 14:30.",
-      "llm_policy": "none",
-      "requires_preflight": true
-    },
-    "company_news_ingest": {
-      "role": "retired news ingest consolidation; herald is canonical",
-      "category": "data_ingestion",
-      "cadence": "unknown",
-      "status": "deprecated",
-      "artifact_paths": [
-        "agents/company_news_ingest/"
-      ],
-      "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "Consolidated into herald agent (Fix #5 2026-05-30). Directory retained for historical context only; active news collection is owned by herald (tools/fetch_company_press_releases.py + scripts/build_news_digest.py).",
       "llm_policy": "none",
       "requires_preflight": true
     },
@@ -403,21 +373,6 @@
       "owner": "unassigned",
       "notes": "Crontab: 18:35.",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
-    },
-    "policy_shadow_watch": {
-      "role": "retired policy shadow monitoring consolidation; shadow_monitor is canonical",
-      "category": "portfolio_risk",
-      "cadence": "unknown",
-      "status": "deprecated",
-      "artifact_paths": [
-        "agents/policy_shadow_watch/"
-      ],
-      "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
-      "owner": "unassigned",
-      "notes": "Consolidated into shadow_monitor agent (Spec 085 Path B 2026-05-30). LLM agent suppressed; deterministic builder remains canonical. Directory retained for historical context only; active monitoring is owned by shadow_monitor and tools/build_policy_shadow_compare.py.",
-      "llm_policy": "none",
       "requires_preflight": true
     },
     "price_action_watch": {

@@ -244,15 +244,15 @@ Fleet receipt lists it as STALE/NO_ARTIFACTS. Crontab shows the agent's entry co
 out with a RETIRED note, **or** the agent was removed from `agents/` and
 `AGENT_REGISTRY.json` but still registered in OpenClaw.
 
-**Historical instance (resolved in repo 2026-05-30):** `shadow_watch` — consolidated into
-`shadow_monitor`; directory and registry entry deleted (#326). Operator may still see
-gateway zombies until deregistered.
+**Historical instance (resolved in repo 2026-06-12):** `shadow_watch` — consolidated into
+`shadow_monitor`; retained in `AGENT_REGISTRY.json` as `status=deprecated` for historical
+traceability. Operator may still see gateway zombies until deregistered.
 
 **Distinguishing repo-removed vs silently-broken (example: grok_biotech_watch):**
 
 ```
 Repo-removed / retired (e.g. shadow_watch, policy_shadow_watch, bioshort_watch):
-  - absent from agents/<name>/ and AGENT_REGISTRY.json
+  - absent from agents/<name>/ and AGENT_REGISTRY.json, OR present with status=deprecated
   - crontab entry commented RETIRED or removed
   - safe to deregister from OpenClaw after operator confirms no unique work remains
 

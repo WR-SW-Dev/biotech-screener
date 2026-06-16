@@ -571,7 +571,9 @@ def _write(message: Any) -> None:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import json
+    import sys
+
     if "--health" in sys.argv:
         print(json.dumps({"ok": True, "server": "hermes", "mode": "stdio"}))
         raise SystemExit(0)
