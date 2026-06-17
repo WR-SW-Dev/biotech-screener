@@ -75,6 +75,9 @@ _EMPTY_DIAGNOSTICS["opt_has_data"] = "0"
 _EMPTY_DIAGNOSTICS["opt_liquidity_ok"] = "0"
 _EMPTY_DIAGNOSTICS["opt_liquidity_state"] = "absent"
 
+# Track Massive API authorization failures (e.g., subscription limit)
+_massive_auth_failed = False
+
 
 def empty_diagnostics(reason: str = "") -> Dict[str, Any]:
     """Return empty diagnostic row with optional reason."""
@@ -854,8 +857,18 @@ def _massive_fallback_batch(
 
     Returns diagnostic dicts with opt_diagnostic_basis="massive_chain_snapshot".
     Gracefully degrades to empty diagnostics if Massive is unavailable.
+
+    NOTE: If Massive returns NOT_AUTHORIZED (subscription limit), disables fallback
+    for this run and returns empty diagnostics. Tastytrade will be primary source.
     """
+    global _massive_auth_failed
+
     results: Dict[str, Dict[str, Any]] = {}
+
+    # Check if Massive auth already failed in a prior call
+    if _massive_auth_failed:
+        logger.info("Massive authorization failed in prior attempt -- using Tastytrade only")
+        return {s: empty_diagnostics("massive_auth_failed") for s in symbols}
 
     try:
 
@@ -951,8 +964,23 @@ def _massive_fallback_batch(
             results[symbol] = diag
 
         except Exception as exc:
-            logger.warning("Massive fallback failed for %s: %s", symbol, exc)
-            results[symbol] = empty_diagnostics(f"massive_error: {exc}")
+            # Check for authorization errors (e.g., NOT_AUTHORIZED)
+            exc_str = str(exc).lower()
+            if "not_authorized" in exc_str or "not entitled" in exc_str:
+                _massive_auth_failed = True
+                logger.error(
+                    "Massive API authorization failed (subscription limit?). "
+                    "Disabling Massive fallback for this run. Using Tastytrade primary: %s",
+                    exc,
+                )
+                # Return empty diagnostics for all remaining symbols
+                for s in symbols:
+                    if s not in results:
+                        results[s] = empty_diagnostics("massive_auth_failed")
+                break
+            else:
+                logger.warning("Massive fallback failed for %s: %s", symbol, exc)
+                results[symbol] = empty_diagnostics(f"massive_error: {exc}")
 
     n_filled = sum(1 for d in results.values() if d.get("opt_has_data") == "1")
     logger.info("Massive fallback: %d/%d symbols got data", n_filled, len(symbols))
@@ -1005,6 +1033,7 @@ def fetch_options_with_fallback(
         return {s: empty_diagnostics("no_historical_chain") for s in symbols}
 
     # Primary: Tastytrade (current / live runs only)
+    logger.info("[OPTIONS_WARM] Starting Tastytrade fetch for %d symbols", len(symbols))
     result = fetch_options_diagnostics(symbols, as_of_date, is_test)
 
     # Identify absent tickers
@@ -1015,15 +1044,24 @@ def fetch_options_with_fallback(
         and result.get(s, {}).get("opt_diagnostic_basis", "") in ("no_metrics", "no_credentials", "")
     ]
 
+    tt_filled = len(symbols) - len(absent)
+    logger.info("[OPTIONS_WARM] Tastytrade: %d/%d symbols got data", tt_filled, len(symbols))
+
     if not absent:
+        logger.info("[OPTIONS_WARM] All symbols covered by Tastytrade, skipping Massive fallback")
         return result
 
-    logger.info("Attempting Massive fallback for %d absent tickers", len(absent))
+    # Fallback to Massive for absent tickers (will handle auth failures gracefully)
+    logger.info("[OPTIONS_WARM] Attempting Massive fallback for %d absent tickers", len(absent))
     fallback = _massive_fallback_batch(absent, as_of_date)
 
     # Merge: only replace if fallback got data
     for s, diag in fallback.items():
         if diag.get("opt_has_data") == "1":
             result[s] = diag
+
+    # Final summary
+    final_filled = sum(1 for d in result.values() if d.get("opt_has_data") == "1")
+    logger.info("[OPTIONS_WARM] Final coverage: %d/%d symbols", final_filled, len(symbols))
 
     return result
