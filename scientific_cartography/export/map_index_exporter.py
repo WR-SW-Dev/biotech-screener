@@ -57,12 +57,12 @@ class MapIndexExporter:
         diseases_list = []
         for disease_key in sorted(disease_map.keys()):
             disease_data = disease_map[disease_key]
-            disease_data["disease_id"] = disease_data.get("disease_id", "unknown")
-            disease_data["disease_name"] = disease_data.get("disease_name", "unknown")
+            disease_data["disease_id"] = disease_data.get("disease_id") or "unknown"
+            disease_data["disease_name"] = disease_data.get("disease_name") or "unknown"
             diseases_list.append(disease_data)
 
         # Sort: known diseases first, unknown last
-        diseases_list.sort(key=lambda d: (d["disease_name"] == "unknown", d["disease_name"]))
+        diseases_list.sort(key=lambda d: (d["disease_name"] == "unknown", d["disease_name"] or ""))
 
         index = {
             "as_of_date": self.as_of_date,
