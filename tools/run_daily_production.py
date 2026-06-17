@@ -4072,6 +4072,83 @@ def promote_snapshot(
 
 
 # ---------------------------------------------------------------------------
+# Phase 7B: Scientific Cartography diagnostic hook
+# ---------------------------------------------------------------------------
+
+
+def run_scientific_cartography_diagnostics(
+    as_of_date: str,
+    snapshot_dir: Path,
+    ctgov_cache_dir: Path,
+    output_dir: Path,
+    strict: bool = False,
+) -> bool:
+    """Run Phase 7A diagnostic wrapper as optional post-snapshot hook.
+
+    Non-blocking by default: returns False on failure but does not raise.
+    With strict=True: raises exception on failure.
+
+    Args:
+        as_of_date: snapshot date (YYYY-MM-DD)
+        snapshot_dir: path to promoted snapshot directory
+        ctgov_cache_dir: path to CTGov cache directory (may not exist)
+        output_dir: path where diagnostic artifacts will be written
+        strict: if True, raise on wrapper failure; if False, log warning and return False
+
+    Returns:
+        True if wrapper succeeded, False if wrapper failed (non-strict mode only)
+    """
+    wrapper_script = REPO_ROOT / "tools" / "run_scientific_cartography_diagnostics.py"
+    if not wrapper_script.exists():
+        msg = f"Scientific cartography wrapper not found: {wrapper_script}"
+        if strict:
+            raise RuntimeError(msg)
+        _logger.warning(f"Scientific cartography hook skipped: {msg}")
+        return False
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    cmd = [
+        sys.executable,
+        str(wrapper_script),
+        "--as-of-date",
+        as_of_date,
+        "--snapshot-dir",
+        str(snapshot_dir),
+        "--ctgov-cache",
+        str(ctgov_cache_dir),
+        "--output-dir",
+        str(output_dir),
+    ]
+
+    if not strict:
+        # Non-strict mode: continue even if wrapper fails
+        cmd.append("--quiet")
+
+    try:
+        proc = _run_subprocess(
+            cmd,
+            label="scientific_cartography_diagnostics",
+            timeout=300,  # 5 minutes for diagnostic generation
+        )
+        if proc.returncode == 0:
+            _logger.info(f"Scientific cartography diagnostics → {output_dir}")
+            return True
+        else:
+            msg = f"Scientific cartography wrapper failed (exit {proc.returncode})"
+            if strict:
+                raise RuntimeError(msg)
+            _logger.warning(f"Scientific cartography hook: {msg} (non-blocking)")
+            return False
+    except Exception as e:
+        msg = f"Scientific cartography hook error: {e}"
+        if strict:
+            raise RuntimeError(msg) from e
+        _logger.warning(f"{msg} (non-blocking)")
+        return False
+
+
+# ---------------------------------------------------------------------------
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
@@ -4101,6 +4178,8 @@ def run_daily(
     auto_refresh_market_data: bool = True,
     allow_candidate: bool = False,
     enrich_pubmed: bool = False,
+    run_scientific_cartography: bool = False,
+    scientific_cartography_strict: bool = False,
 ) -> Dict[str, Any]:
     """Execute the full daily Phase-2 pipeline.
 
@@ -4895,6 +4974,27 @@ def run_daily(
                 if g.status == "WARN":
                     _logger.info(f"[{g.status}] {g.name}: {g.detail}")
         _logger.info(f"{'='*70}")
+
+        # --- Step 4.5: Scientific Cartography diagnostics (optional, disabled-by-default) ---
+        # Runs Phase 7A wrapper to generate diagnostic artifacts if explicitly enabled.
+        # Non-blocking by default; failures logged but do not halt pipeline.
+        if run_scientific_cartography:
+            try:
+                _sc_output_dir = REPO_ROOT / "artifacts" / "scientific_cartography" / as_of_date
+                _sc_ctgov_cache = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov" / as_of_date)
+                run_scientific_cartography_diagnostics(
+                    as_of_date=as_of_date,
+                    snapshot_dir=final_path,
+                    ctgov_cache_dir=_sc_ctgov_cache,
+                    output_dir=_sc_output_dir,
+                    strict=scientific_cartography_strict,
+                )
+            except Exception as _sc_err:
+                if scientific_cartography_strict:
+                    _logger.error(f"Scientific cartography strict mode failure: {_sc_err}")
+                    raise
+                else:
+                    _logger.warning(f"Scientific cartography hook error (non-blocking): {_sc_err}")
 
         # --- Step 5a: Update forward_eval IC ledger (Path C monitoring) ---
         # Extracts mean_ic from forward_eval gate results and appends to
@@ -6306,6 +6406,16 @@ def main():
         action="store_true",
         help="Enable PubMed literature enrichment in Event EV scoring (optional, cached).",
     )
+    parser.add_argument(
+        "--run-scientific-cartography",
+        action="store_true",
+        help="Enable optional Scientific Cartography Phase 7A diagnostic artifacts (post-snapshot, non-blocking).",
+    )
+    parser.add_argument(
+        "--scientific-cartography-strict",
+        action="store_true",
+        help="If enabled with --run-scientific-cartography, fail the run if diagnostics fail.",
+    )
     args = parser.parse_args()
 
     # -- Logging setup (must be before any logger calls) --
@@ -6346,6 +6456,8 @@ def main():
             auto_refresh_market_data=not args.no_auto_refresh_market_data,
             allow_candidate=args.allow_candidate,
             enrich_pubmed=args.enrich_pubmed,
+            run_scientific_cartography=args.run_scientific_cartography,
+            scientific_cartography_strict=args.scientific_cartography_strict,
         )
     except Exception as exc:
         # Ensure a FAIL manifest + ledger entry exist even on unhandled crash
