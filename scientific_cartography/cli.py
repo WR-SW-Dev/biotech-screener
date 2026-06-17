@@ -7,8 +7,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
+from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
 from scientific_cartography.normalize.stage_normalizer import StageNormalizer
+from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
+from scientific_cartography.schemas.landscape_feature_schema import LandscapeFeatureRecord
+from scientific_cartography.schemas.program_schema import ProgramRecord
 
 
 def build_command(args: argparse.Namespace) -> int:
@@ -75,6 +79,137 @@ def build_command(args: argparse.Namespace) -> int:
         cluster_coverage_path = output_dir / "cluster_coverage_report.json"
         cluster_builder.write_coverage_report(coverage_report, cluster_coverage_path)
         print(f"✓ Cluster coverage report written to {cluster_coverage_path}")
+
+    return 0
+
+
+def export_artifacts_command(args: argparse.Namespace) -> int:
+    """Export Phase 6 diagnostic artifacts from existing records.
+
+    Arguments:
+        args.as_of_date: Date for artifacts (YYYY-MM-DD).
+        args.artifact_dir: Directory containing program_records.jsonl, etc.
+        args.output_dir: Output directory for exported artifacts.
+        args.created_at_utc: Optional deterministic timestamp for manifest.
+    """
+    artifact_dir = Path(args.artifact_dir)
+    output_dir = Path(args.output_dir)
+
+    # Validate artifact directory exists
+    if not artifact_dir.exists():
+        print(f"ERROR: Artifact directory not found: {artifact_dir}", file=sys.stderr)
+        return 1
+
+    # Load program records (required)
+    programs_path = artifact_dir / "program_records.jsonl"
+    if not programs_path.exists():
+        print(f"ERROR: program_records.jsonl not found in {artifact_dir}", file=sys.stderr)
+        return 1
+
+    try:
+        programs = []
+        with open(programs_path) as f:
+            for line in f:
+                if line.strip():
+                    data = json.loads(line)
+                    programs.append(ProgramRecord(**data))
+        print(f"✓ Loaded {len(programs)} program records", file=sys.stderr)
+    except (json.JSONDecodeError, TypeError) as e:
+        print(f"ERROR: Failed to parse program_records.jsonl: {e}", file=sys.stderr)
+        return 1
+
+    # Load competitive clusters (optional)
+    clusters = []
+    clusters_path = artifact_dir / "competitive_clusters.jsonl"
+    if clusters_path.exists():
+        try:
+            with open(clusters_path) as f:
+                for line in f:
+                    if line.strip():
+                        data = json.loads(line)
+                        clusters.append(CompetitiveClusterRecord(**data))
+            print(f"✓ Loaded {len(clusters)} competitive cluster records", file=sys.stderr)
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"⚠ Warning: Failed to parse competitive_clusters.jsonl: {e}", file=sys.stderr)
+    else:
+        print("⚠ Warning: competitive_clusters.jsonl not found; continuing with empty clusters", file=sys.stderr)
+
+    # Load landscape features (optional)
+    features = []
+    features_path = artifact_dir / "landscape_features.jsonl"
+    if features_path.exists():
+        try:
+            with open(features_path) as f:
+                for line in f:
+                    if line.strip():
+                        data = json.loads(line)
+                        features.append(LandscapeFeatureRecord(**data))
+            print(f"✓ Loaded {len(features)} landscape feature records", file=sys.stderr)
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"⚠ Warning: Failed to parse landscape_features.jsonl: {e}", file=sys.stderr)
+    else:
+        print("⚠ Warning: landscape_features.jsonl not found; continuing with empty features", file=sys.stderr)
+
+    # Create output directory
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build and write map index
+    map_exporter = MapIndexExporter(as_of_date=args.as_of_date)
+    map_index = map_exporter.build_index(programs, clusters, features)
+    map_index_path = output_dir / "map_index.json"
+    map_exporter.write_index(map_index, map_index_path)
+    print(f"✓ Wrote map_index.json ({map_index_path.stat().st_size} bytes)", file=sys.stderr)
+
+    # Build and write disease summary (JSON)
+    disease_exporter = DiseaseMapExporter(as_of_date=args.as_of_date)
+    disease_summary = disease_exporter.build_disease_summary(programs, clusters, features)
+    disease_summary_json_path = output_dir / "disease_map_summary.json"
+    disease_exporter.write_disease_summary(disease_summary, disease_summary_json_path)
+    print(
+        f"✓ Wrote disease_map_summary.json ({disease_summary_json_path.stat().st_size} bytes)",
+        file=sys.stderr,
+    )
+
+    # Build and write disease summary (Markdown)
+    disease_summary_md_path = output_dir / "disease_map_summary.md"
+    disease_exporter.write_disease_summary_markdown(disease_summary, disease_summary_md_path)
+    print(
+        f"✓ Wrote disease_map_summary.md ({disease_summary_md_path.stat().st_size} bytes)",
+        file=sys.stderr,
+    )
+
+    # Build and write artifact manifest
+    manifest_exporter = ArtifactManifestExporter(
+        as_of_date=args.as_of_date,
+        created_at_utc=args.created_at_utc,
+    )
+    manifest = manifest_exporter.build_manifest(
+        inputs={
+            "program_records": str(programs_path.relative_to(artifact_dir)),
+            "competitive_clusters": str(clusters_path.relative_to(artifact_dir)) if clusters_path.exists() else None,
+            "landscape_features": str(features_path.relative_to(artifact_dir)) if features_path.exists() else None,
+        },
+        outputs=[
+            "map_index.json",
+            "disease_map_summary.json",
+            "disease_map_summary.md",
+            "artifact_manifest.json",
+        ],
+    )
+    # Remove None values from inputs
+    manifest["inputs"] = {k: v for k, v in manifest["inputs"].items() if v is not None}
+    manifest_path = output_dir / "artifact_manifest.json"
+    manifest_exporter.write_manifest(manifest, manifest_path)
+    print(f"✓ Wrote artifact_manifest.json ({manifest_path.stat().st_size} bytes)", file=sys.stderr)
+
+    # Print summary
+    print("", file=sys.stderr)
+    print(
+        f"✓ Export complete: {len(disease_summary['diseases'])} diseases, "
+        f"{len(programs)} programs, {len(clusters)} clusters, {len(features)} features",
+        file=sys.stderr,
+    )
+    print(f"✓ Output directory: {output_dir}", file=sys.stderr)
 
     return 0
 
@@ -165,6 +300,37 @@ def main() -> int:
         help="Phase 4: Build competitive clusters (count-only, no scoring)",
     )
     build_parser.set_defaults(func=build_command)
+
+    # export-artifacts command (Phase 6.1)
+    export_parser = subparsers.add_parser(
+        "export-artifacts",
+        help="Export Phase 6 diagnostic artifacts (CLI ergonomics)",
+    )
+    export_parser.add_argument(
+        "--as-of-date",
+        type=str,
+        required=True,
+        help="Date for artifacts (YYYY-MM-DD)",
+    )
+    export_parser.add_argument(
+        "--artifact-dir",
+        type=str,
+        required=True,
+        help="Directory containing program_records.jsonl, etc.",
+    )
+    export_parser.add_argument(
+        "--output-dir",
+        type=str,
+        required=True,
+        help="Output directory for exported artifacts",
+    )
+    export_parser.add_argument(
+        "--created-at-utc",
+        type=str,
+        default=None,
+        help="Optional deterministic timestamp for manifest (YYYY-MM-DDTHH:MM:SSZ)",
+    )
+    export_parser.set_defaults(func=export_artifacts_command)
 
     # qa command
     qa_parser = subparsers.add_parser("qa", help="Run QA on artifacts")
