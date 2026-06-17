@@ -1,13 +1,16 @@
 {
-  "TKNO": 6,
-  "PSNL": 1,
-  "AVXL": 5,
-  "CTKB": 3,
-  "GHRS": 1,
-  "EDIT": 7,
-  "LFCR": 3,
-  "MCRB": 5,
-  "HRTX": 3,
-  "PACB": 3,
-  "OABI": 7
+  "LFCR": 4,
+  "EDIT": 8,
+  "PRVA": 1,
+  "AMPH": 1,
+  "COLL": 1,
+  "BCYC": 1,
+  "CTKB": 4,
+  "OABI": 8,
+  "AVXL": 6,
+  "CSTL": 1,
+  "MYGN": 1,
+  "PAHC": 1,
+  "TKNO": 7,
+  "PACB": 4
 }

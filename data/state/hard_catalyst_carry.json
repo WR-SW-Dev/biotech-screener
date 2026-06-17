@@ -552,13 +552,6 @@
     "first_seen_date": "2026-06-01",
     "estimated_event_date": "2026-12-01"
   },
-  "ARVN": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 4,
-    "first_seen_date": "2026-06-01",
-    "estimated_event_date": "2026-06-05"
-  },
   "TARA": {
     "catalyst_event_type": "DATA_READOUT",
     "catalyst_source": "SEC_8K_FILING",
@@ -579,13 +572,6 @@
     "catalyst_days_at_first_seen": 183,
     "first_seen_date": "2026-06-01",
     "estimated_event_date": "2026-12-01"
-  },
-  "ARQT": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 14,
-    "first_seen_date": "2026-06-01",
-    "estimated_event_date": "2026-06-15"
   },
   "CLLS": {
     "catalyst_event_type": "FDA_PDUFA_DATE",
@@ -656,13 +642,6 @@
     "catalyst_days_at_first_seen": 183,
     "first_seen_date": "2026-06-01",
     "estimated_event_date": "2026-12-01"
-  },
-  "MNKD": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 14,
-    "first_seen_date": "2026-06-01",
-    "estimated_event_date": "2026-06-15"
   },
   "GILD": {
     "catalyst_event_type": "FDA_PDUFA_DATE",
@@ -768,5 +747,40 @@
     "catalyst_days_at_first_seen": 118,
     "first_seen_date": "2026-06-04",
     "estimated_event_date": "2026-09-30"
+  },
+  "PHVS": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_6K_FILING",
+    "catalyst_days_at_first_seen": 14,
+    "first_seen_date": "2026-06-17",
+    "estimated_event_date": "2026-07-01"
+  },
+  "ARQT": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 12,
+    "first_seen_date": "2026-06-17",
+    "estimated_event_date": "2026-06-29"
+  },
+  "EXEL": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 3,
+    "first_seen_date": "2026-06-17",
+    "estimated_event_date": "2026-06-20"
+  },
+  "VNDA": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 76,
+    "first_seen_date": "2026-06-17",
+    "estimated_event_date": "2026-09-01"
+  },
+  "MNKD": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 39,
+    "first_seen_date": "2026-06-17",
+    "estimated_event_date": "2026-07-26"
   }
 }
