@@ -57,12 +57,17 @@ STALENESS_DAYS_BY_CADENCE = {
     "unknown": None,
 }
 
+# Stale memory detection: if memory/ mtime is >7 days older than artifact mtime,
+# flag for investigation (may indicate code bug or memory write failure).
+STALE_MEMORY_THRESHOLD_DAYS = 7
+
 
 def is_cloud_agent_environment() -> bool:
     """Return true when this checkout is running in Cursor Cloud, not operator WSL."""
     if os.environ.get("CURSOR_CLOUD_AGENT") or os.environ.get("CURSOR_AGENT"):
         return True
     return Path("/tmp/cursor").exists()
+
 
 # ── Result types ──────────────────────────────────────────────
 
@@ -825,6 +830,63 @@ def _cloud_unknown_result(result: CheckResult) -> CheckResult:
     return CheckResult(result.agent, "SKIP", detail)
 
 
+def check_stale_memory(name: str, entry: dict, dt: date) -> str | None:
+    """Check if agent's memory/ directory is stale (>7d behind artifact mtime).
+
+    Returns anomaly string if stale, None otherwise.
+    Applies to agents with memory/ artifact paths.
+    """
+    memory_paths = [p for p in entry.get("artifact_paths", []) if "memory/" in p]
+    if not memory_paths:
+        return None  # No memory directory declared
+
+    # Get memory mtime
+    memory_dir = REPO_ROOT / memory_paths[0]  # Use first memory path
+    if not memory_dir.is_dir():
+        return None  # Memory dir doesn't exist yet (OK for new agents)
+
+    try:
+        memory_mtime = datetime.fromtimestamp(memory_dir.stat().st_mtime).date()
+    except OSError:
+        return None  # Can't read mtime, skip
+
+    # Get artifact mtimes (non-memory paths)
+    artifact_paths = [p for p in entry.get("artifact_paths", []) if "memory/" not in p]
+    if not artifact_paths:
+        return None  # No artifacts to compare against
+
+    newest_artifact_mtime = None
+    for rel_path in artifact_paths:
+        p = REPO_ROOT / rel_path
+        if p.is_file():
+            try:
+                mtime = datetime.fromtimestamp(p.stat().st_mtime).date()
+                if newest_artifact_mtime is None or mtime > newest_artifact_mtime:
+                    newest_artifact_mtime = mtime
+            except OSError:
+                pass
+        elif p.is_dir():
+            files = [f for f in p.rglob("*") if f.is_file()]
+            if files:
+                for f in files:
+                    try:
+                        mtime = datetime.fromtimestamp(f.stat().st_mtime).date()
+                        if newest_artifact_mtime is None or mtime > newest_artifact_mtime:
+                            newest_artifact_mtime = mtime
+                    except OSError:
+                        pass
+
+    if newest_artifact_mtime is None:
+        return None  # No artifacts found
+
+    # Check staleness
+    gap_days = (newest_artifact_mtime - memory_mtime).days
+    if gap_days > STALE_MEMORY_THRESHOLD_DAYS:
+        return f"STALE_MEMORY: memory {gap_days}d behind artifacts (threshold {STALE_MEMORY_THRESHOLD_DAYS}d)"
+
+    return None
+
+
 def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
     """Iterate every active+supervised agent in the registry and run its check.
 
@@ -903,6 +965,18 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
                 pass  # Non-blocking
         if cloud_env and _is_artifact_gap(result):
             result = _cloud_unknown_result(result)
+
+        # Check for stale memory artifacts (memory mtime >7d behind artifact mtime)
+        if result.status not in ("SKIP", "FAIL"):  # Don't override SKIP/FAIL
+            stale_memory_anomaly = check_stale_memory(name, entry, dt)
+            if stale_memory_anomaly:
+                # Add stale-memory finding without changing overall status
+                # (treats it as a WARN-level observation, not a blocker)
+                result.anomalies.append(stale_memory_anomaly)
+                if result.status == "OK":
+                    result.status = "WARN"
+                    result.detail = "Memory staleness detected"
+
         results.append(result)
 
     for name in sorted(opted_out):

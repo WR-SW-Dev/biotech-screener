@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-06-12",
+  "as_of": "2026-06-17",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agent directories may be retained for history and must be registered with status=deprecated.",
   "enums": {
     "category": [
@@ -51,7 +51,7 @@
       "llm_policy": "none",
       "requires_preflight": true,
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "data_lead",
       "notes": ""
     },
     "bioshort_watch": {
@@ -65,7 +65,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
-      "owner": "unassigned",
+      "owner": "ops",
       "notes": "LLM agent suppressed 2026-05-06 (bioshort upstream P2). Directory retained for historical context only; reactivation requires a separate approved spec. Deterministic producer/status tooling remains outside this deprecated OpenClaw workspace.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -80,7 +80,7 @@
       ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "research_lead",
       "notes": "",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -95,7 +95,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "research_lead",
       "notes": "Shares artifact path with calibration; downstream consumer.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -110,7 +110,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "Crontab: 18:20. LLM elevation rule narrowed 2026-05-06 (P1 #2, partial closure \u2014 LLM-side only): narrative names only deltas where ticker is in-universe AND catalyst_days<=60 AND change-code is HARD or family-changing; suppressed deltas are rollup-summarized, not erased. Deterministic artifact tools/build_catalyst_delta.py and downstream consumer tools/build_options_watch.py UNCHANGED \u2014 the raw artifact remains the source of truth. catalyst_delta_score scoring field (module_3_scoring*.py, module_5_composite.py) UNCHANGED. Artifact-level filtering deferred to a separate explicit change with before/after artifact diffs.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -125,7 +125,7 @@
       ],
       "authority_level": "mutate_data",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "research_lead",
       "notes": "Crontab: 18:00.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -140,7 +140,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "data_lead",
       "notes": "Crontab: 14:30.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -155,7 +155,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "qa_lead",
       "notes": "Daily integrity audit runs via agents/data_auditor/run_audit.py and tools/cron_data_auditor.sh; heartbeat verifies artifacts/data_auditor integrity reports.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -170,7 +170,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "data_lead",
       "notes": "",
       "llm_policy": "none",
       "requires_preflight": true
@@ -185,7 +185,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "research_lead",
       "notes": "Weekly Friday cadence (P1 #4 reduction landed 2026-05-06). LLM agent fires Fri 18:55 ET; deterministic builder fires Fri 19:10 ET. Was previously daily Mon-Fri (both entries); reduced to Friday-only after ROI/noise audit. Watchdog event_analyst auto-recovery removed in the same change to prevent re-firing on Mon-Thu. Manual invocation path preserved: tools/run_agent_direct.py --agent event_analyst, tools/build_event_analyst.py --as-of-date YYYY-MM-DD.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -201,7 +201,7 @@
       ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "fleet_director",
       "notes": "Director role. Deterministic fleet receipts restored via tools/agent_heartbeat_checks.py and written to agents/fleet_steward/memory/.",
       "llm_policy": "manual_only",
       "requires_preflight": true
@@ -216,7 +216,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -232,7 +232,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "data_lead",
       "notes": "Canonical news pipeline: fetch/dedupe/classify (tools/fetch_company_press_releases.py, dedupe, classify) + 3x daily digest (scripts/build_news_digest.py). Absorbs company_news_ingest and biotech_news_digest (Fix #5 2026-05-30). Crontab: 14:35 premarket fetch; digest windows via build_news_digest cron.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -248,7 +248,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "governance_lead",
       "notes": "Spec 089 Phase 2. Hermes job: one-shot after new cron first run. Entry: agents/hermes-first-fire-validator/run_job.py. Reads artifacts/ops/first_fire_ledger/latest.json.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -263,7 +263,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "governance_lead",
       "notes": "Spec 089/090 Phase 2. Mon 08:45 ET + daily while specs open. Entry: agents/hermes-held-spec-ledger/run_job.py.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -278,7 +278,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "governance_lead",
       "notes": "Spec 089 governance lane. Entry: agents/hermes-ruleset-integrity/run_job.py.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -294,7 +294,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "governance_lead",
       "notes": "Spec 090 Phase B. Entry: agents/hermes-contradiction-detector/run_job.py. Also invoked from build_hermes_knowledge_layer.py.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -309,7 +309,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -324,7 +324,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "Doc gap: memory/ directory missing per 2026-04-24 audit.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -340,7 +340,7 @@
       ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "duty_officer",
       "notes": "Crontab: 17:00. Duty Officer role.",
       "llm_policy": "manual_only",
       "requires_preflight": true
@@ -355,7 +355,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "Crontab: 18:40.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -370,7 +370,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "Crontab: 18:35.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -385,7 +385,7 @@
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "Crontab: 18:30.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
@@ -401,7 +401,7 @@
       ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "qa_lead",
       "notes": "Inspector role. Feature-coverage contract is tracked in tools/production_qa_check.py (core fields required; insider_net_buy_value_90d tracked nonblocking).",
       "llm_policy": "manual_only",
       "requires_preflight": true
@@ -416,7 +416,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "qa_lead",
       "notes": "",
       "llm_policy": "manual_only",
       "requires_preflight": true
@@ -429,7 +429,7 @@
       "artifact_paths": [],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "signal_lead",
       "notes": "Chat-mode only \u2014 no artifact files by design. Freshness checked via logs/agents_direct/review_queue_steward_*.json (specialized check_review_queue_steward in agent_heartbeat_checks.py). Crontab: 18:50.",
       "llm_policy": "manual_only",
       "requires_preflight": true
@@ -444,7 +444,7 @@
       ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "fleet_director",
       "notes": "Crontab: 17:15.",
       "llm_policy": "manual_only",
       "requires_preflight": true
@@ -461,7 +461,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "risk_lead",
       "notes": "Canonical portfolio-risk surface (Spec 085 Path B 2026-05-30). Performance: tools/build_shadow_monitor.py (run_daily_production + heartbeat). Policy compare: tools/build_policy_shadow_compare.py (cron 18:05). Supersedes overlapping agents: shadow_watch (placeholder), policy_shadow_watch (merged here), biotech_news_digest / company_news_ingest (merged into herald), and bioshort_watch (suppressed LLM consumer). LLM cron for shadow_monitor retired 2026-05-06; deterministic builds + Tier 2 heartbeat only.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -477,7 +477,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
-      "owner": "unassigned",
+      "owner": "risk_lead",
       "notes": "Retired by Spec 085 Path B consolidation. Directory retained for historical context only; active monitoring is owned by shadow_monitor and deterministic builders.",
       "llm_policy": "none",
       "requires_preflight": true
@@ -492,7 +492,7 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
-      "owner": "unassigned",
+      "owner": "data_lead",
       "notes": "",
       "llm_policy": "none",
       "requires_preflight": true
@@ -508,10 +508,49 @@
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
-      "owner": "unassigned",
+      "owner": "fleet_director",
       "notes": "Last interpretive layer. Sentinel (tools/agent_supervisor_sentinel.py) verifies its output. Per feedback_no_recursive_supervision, no further layer above this.",
       "llm_policy": "manual_only",
       "requires_preflight": true
+    },
+    "biotech_news_digest": {
+      "role": "retired biotech news consumer; absorbed into herald (2026-05-30)",
+      "category": "data_ingestion",
+      "cadence": "unknown",
+      "status": "deprecated",
+      "artifact_paths": [],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "ops",
+      "notes": "Consolidated into herald 2026-05-30. Directory retained for historical context only.",
+      "llm_policy": "none",
+      "requires_preflight": false
+    },
+    "company_news_ingest": {
+      "role": "retired company news ingest; absorbed into herald (2026-05-30)",
+      "category": "data_ingestion",
+      "cadence": "unknown",
+      "status": "deprecated",
+      "artifact_paths": [],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "ops",
+      "notes": "Consolidated into herald 2026-05-30. Directory retained for historical context only.",
+      "llm_policy": "none",
+      "requires_preflight": false
+    },
+    "policy_shadow_watch": {
+      "role": "retired policy shadow comparison; merged into shadow_monitor (2026-05-30)",
+      "category": "portfolio_risk",
+      "cadence": "unknown",
+      "status": "deprecated",
+      "artifact_paths": [],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "risk_lead",
+      "notes": "Merged into shadow_monitor 2026-05-30. Directory retained for historical context only.",
+      "llm_policy": "none",
+      "requires_preflight": false
     }
   }
 }
