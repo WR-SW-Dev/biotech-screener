@@ -5,6 +5,35 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-16 (Hermes registry + Cloud staleness refresh)
+
+### Hermes Agent v0.16.0 update check
+- Public release metadata confirms Hermes Agent v0.16.0 / v2026.6.5 ("The Surface Release") is available upstream.
+- Cloud checkout has no `hermes` CLI or `~/.hermes/hermes-agent`; live version/update remains operator-WSL authority.
+- Added operator-safe checklist to `docs/HERMES_GATEWAY_SETUP.md`: `hermes update --check`, backup `~/.hermes/config.yaml` + `~/.hermes/skills/`, then run update/config/doctor/gateway checks.
+- Added v0.16.0 caution for first config persistence possibly rewriting `config.yaml` and dropping hand-curated provider blocks; compare against backup before gateway restart.
+
+### Agent profiles / skills / memory follow-up
+- **screener-ops:** registry profile line updated to 31 directories = 29 active + 2 deprecated; mirror synced.
+- **memory layer:** HOT/WARM learnings updated for CodeGraph v0.9.9 and registry bidirectional invariant.
+- **memory-steward:** deployment/profile guidance reconciled across `docs/hermes_skills/memory-steward.md` and `.hermes/skills/devops/memory-steward.SKILL.md`.
+- Ran `python3 tools/audit_learnings.py` — no stale hints or compaction issues.
+
+### Hermes sync/audit
+- Ran `python3 tools/sync_hermes_skills.py --register-meta` and `python3 tools/sync_hermes_skills.py` — 32 registered Hermes docs, 19 cursor mirrors unchanged/skipped except `screener-ops` after CodeGraph pin refresh.
+- Ran `python3 tools/audit_hermes_skills.py` — all Hermes `.md` files registered, source_authority complete, no mirror drift.
+
+### Registry and runtime authority
+- **agent_roster.md / agent-registry-reference.md:** registry-aligned counts now show 31 directories = 29 active + 2 deprecated (`bioshort_watch`, `shadow_watch`).
+- **openclaw-session-routing-debug.md:** retired gateway-zombie guidance now handles retained `status=deprecated` directories.
+- **HERMES_OPERATIONAL_PROFILE.md:** distinguishes repo audit counts (32 skill docs, 29 active agents + 2 deprecated workspaces) from conceptual operator-host layers.
+- **screener-ops:** CodeGraph pin refreshed to v0.9.9 to match `.cursor/environment.json` and `docs/CODEGRAPH_RUNBOOK.md`.
+
+### Governance
+- Docs/metadata/heartbeat plumbing only. No selector, ranker, sizing, final score, decision engine, KG, cron, or runtime scoring changes.
+
+---
+
 ## 2026-06-07 (Hermes taxonomy + learning loop refresh)
 
 ### Hermes-native docs

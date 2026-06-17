@@ -174,7 +174,7 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 
 ### Agents
 
-| Status | Count (2026-05-30) | Action |
+| Status | Count (2026-06-12 registry) | Action |
 |--------|-------------------|--------|
 | `active` | 29 | Includes 4 Hermes governance jobs |
 | **total** | **29** | From `AGENT_REGISTRY.json` (overlapping agents removed #326) |

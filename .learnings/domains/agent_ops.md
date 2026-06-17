@@ -25,7 +25,12 @@ Cloud knowledge-layer builds emit `UNKNOWN_CLOUD_ENV` for C1/C3 — not a pass/f
 - MCP in Cursor; CLI on shell; Hermes cron uses `common/codegraph_guard.py`
 - Rule: **CodeGraph first, grep/read second, edit third**
 - Not proof for cron, subprocess, file-path literals, or dynamic dispatch
-- Pin: `@colbymchenry/codegraph@0.9.7` in `.cursor/environment.json`
+- Pin: `@colbymchenry/codegraph@0.9.9` in `.cursor/environment.json`
+
+## Agent registry profiles
+
+- Current repo fleet: 31 directories = 29 active + 2 deprecated retained workspaces (`bioshort_watch`, `shadow_watch`).
+- Registry is bidirectional: every entry must have a matching `agents/<name>/` directory; absent retired overlaps stay documented in Hermes docs, not in `AGENT_REGISTRY.json`.
 
 ## CI signals
 
