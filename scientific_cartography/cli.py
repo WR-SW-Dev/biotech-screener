@@ -6,6 +6,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
 from scientific_cartography.normalize.stage_normalizer import StageNormalizer
 
@@ -18,6 +19,7 @@ def build_command(args: argparse.Namespace) -> int:
         args.snapshot_dir: Path to snapshot directory.
         args.output_dir: Output directory for artifacts.
         args.cache_only: Must be True for this version.
+        args.build_clusters: If True, build competitive clusters (Phase 4).
     """
     if not args.cache_only:
         print("ERROR: Phase 0/1 implementation requires --cache-only mode", file=sys.stderr)
@@ -57,6 +59,23 @@ def build_command(args: argparse.Namespace) -> int:
 
     print(f"✓ Build report written to {report_path}")
     print(f"✓ Phase 0/1 skeleton initialized for {args.as_of_date}")
+
+    # Phase 4: Build clusters if requested and programs exist
+    if args.build_clusters:
+        cluster_builder = CompetitiveClusterBuilder(as_of_date=args.as_of_date)
+        # Empty program list for now (would be populated from Phase 2/3 data in production)
+        clusters, coverage_report = cluster_builder.build_from_programs([])
+
+        # Write clusters JSONL
+        clusters_path = output_dir / "competitive_clusters.jsonl"
+        cluster_builder.write_clusters_jsonl(clusters, clusters_path)
+        print(f"✓ Competitive clusters written to {clusters_path}")
+
+        # Write cluster coverage report
+        cluster_coverage_path = output_dir / "cluster_coverage_report.json"
+        cluster_builder.write_coverage_report(coverage_report, cluster_coverage_path)
+        print(f"✓ Cluster coverage report written to {cluster_coverage_path}")
+
     return 0
 
 
@@ -138,6 +157,12 @@ def main() -> int:
         action="store_true",
         default=True,
         help="Production mode: cache-only (no network calls)",
+    )
+    build_parser.add_argument(
+        "--build-clusters",
+        action="store_true",
+        default=False,
+        help="Phase 4: Build competitive clusters (count-only, no scoring)",
     )
     build_parser.set_defaults(func=build_command)
 

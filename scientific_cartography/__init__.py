@@ -11,13 +11,17 @@ GOVERNANCE:
 - NO_ALPHA_PROMOTION
 """
 
+from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
 from scientific_cartography.normalize.mechanism_normalizer import MechanismNormalizer
 from scientific_cartography.normalize.stage_normalizer import StageNormalizer
+from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
 from scientific_cartography.schemas.disease_schema import DiseaseRecord
 from scientific_cartography.schemas.program_schema import ProgramRecord
 
 __all__ = [
+    "CompetitiveClusterBuilder",
+    "CompetitiveClusterRecord",
     "DiseaseNormalizer",
     "MechanismNormalizer",
     "StageNormalizer",
