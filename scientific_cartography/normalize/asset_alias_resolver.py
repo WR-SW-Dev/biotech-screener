@@ -44,6 +44,17 @@ class AssetAliasResolver:
         Returns:
             Dict with asset info or None if resolution fails badly.
         """
+        # Handle None or empty asset name
+        if not raw_asset_name or not isinstance(raw_asset_name, str):
+            return {
+                "asset_name": None,
+                "asset_id": None,
+                "confidence": 0.0,
+                "resolution_status": "unknown",
+                "warnings": ["Invalid or missing asset name"],
+                "source_refs": [],
+            }
+
         # Check cache
         cache_key = self._normalize_for_lookup(raw_asset_name)
         if cache_key in self._cache:

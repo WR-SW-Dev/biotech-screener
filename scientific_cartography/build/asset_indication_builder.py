@@ -84,7 +84,13 @@ class AssetIndicationBuilder:
 
             # Create program for each intervention/condition pair
             for intervention in interventions:
+                # Skip None or empty interventions
+                if not intervention or not isinstance(intervention, str):
+                    continue
                 for condition in conditions:
+                    # Skip None or empty conditions
+                    if not condition or not isinstance(condition, str):
+                        continue
                     program = self._create_program_from_trial(
                         trial=trial,
                         intervention=intervention,
