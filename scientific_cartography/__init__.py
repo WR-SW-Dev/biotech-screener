@@ -12,12 +12,14 @@ GOVERNANCE:
 """
 
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
+from scientific_cartography.normalize.mechanism_normalizer import MechanismNormalizer
 from scientific_cartography.normalize.stage_normalizer import StageNormalizer
 from scientific_cartography.schemas.disease_schema import DiseaseRecord
 from scientific_cartography.schemas.program_schema import ProgramRecord
 
 __all__ = [
     "DiseaseNormalizer",
+    "MechanismNormalizer",
     "StageNormalizer",
     "DiseaseRecord",
     "ProgramRecord",

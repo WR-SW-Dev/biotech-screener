@@ -1,0 +1,7 @@
+raw_text,mechanism_class,target,modality,confidence,notes
+JAK inhibitor,JAK inhibitor,JAK,small molecule,1.00,
+TYK2 inhibitor,TYK2 inhibitor,TYK2,small molecule,1.00,
+IL-13 mAb,IL-13 monoclonal antibody,IL13,monoclonal antibody,1.00,
+anti-CD19 CAR-T,CD19 CAR-T,CD19,cell therapy,1.00,
+PCSK9 siRNA,PCSK9 siRNA,PCSK9,RNA therapy,1.00,
+AAV gene therapy,AAV gene therapy,,gene therapy,0.90,target not specified
