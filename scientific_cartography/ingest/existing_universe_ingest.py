@@ -146,7 +146,7 @@ class ExistingUniverseIngest:
     def ingest_from_rankings_csv(self, csv_path: Path) -> list[CompanyRecord]:
         """Ingest from standard rankings.csv format.
 
-        Looks for ticker column and derives company info.
+        Looks for ticker and company columns for sponsor resolution.
 
         Args:
             csv_path: Path to rankings.csv.
@@ -165,6 +165,7 @@ class ExistingUniverseIngest:
 
                 for row in reader:
                     ticker = row.get("ticker", "").strip() if row.get("ticker") else None
+                    company = row.get("company", "").strip() if row.get("company") else None
 
                     if not ticker:
                         continue
@@ -173,15 +174,21 @@ class ExistingUniverseIngest:
                         continue
                     seen.add(ticker.lower())
 
-                    company_id = self._make_company_id(ticker, None)
+                    # Use company name if available, otherwise fall back to ticker
+                    company_name = company or ticker
+                    company_id = self._make_company_id(ticker, company_name)
+
+                    # Higher confidence if we have both ticker and company name
+                    confidence = 0.95 if company else 0.85
+
                     record = CompanyRecord(
                         company_id=company_id,
                         ticker=ticker,
-                        company_name=ticker,  # Use ticker as fallback name
+                        company_name=company_name,
                         is_public=True,
                         as_of_date=self.as_of_date,
                         source_refs=[str(csv_path)],
-                        confidence=0.80,  # Lower confidence without company name
+                        confidence=confidence,
                     )
                     records.append(record)
 

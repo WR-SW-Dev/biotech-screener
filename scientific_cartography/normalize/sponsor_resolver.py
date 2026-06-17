@@ -1,5 +1,6 @@
 """Resolve sponsor names to company records conservatively."""
 
+import re
 from typing import Optional
 
 from scientific_cartography.schemas.company_schema import CompanyRecord
@@ -7,6 +8,32 @@ from scientific_cartography.schemas.company_schema import CompanyRecord
 
 class SponsorResolver:
     """Resolve raw sponsor names to company records."""
+
+    # Common corporate suffixes for conservative stripping
+    CORPORATE_SUFFIXES = [
+        # Comma-prefixed variants (highest priority)
+        r",\s*incorporated\s*$",
+        r",\s*inc\.?\s*$",
+        r",\s*corporation\s*$",
+        r",\s*corp\.?\s*$",
+        r",\s*limited\s*$",
+        r",\s*ltd\.?\s*$",
+        # Space-prefixed variants
+        r"\s+incorporated\s*$",
+        r"\s+inc\.?\s*$",
+        r"\s+corporation\s*$",
+        r"\s+corp\.?\s*$",
+        r"\s+limited\s*$",
+        r"\s+ltd\.?\s*$",
+        r"\s+limited\s+liability\s+company\s*$",
+        r"\s+llc\s*$",
+        r"\s+therapeutics\s*$",
+        r"\s+pharmaceuticals\s*$",
+        r"\s+biosciences\s*$",
+        r"\s+biotech\s*$",
+        r"\s+biopharm\s*$",
+        r"\s+plc\s*$",
+    ]
 
     def __init__(
         self,
@@ -28,6 +55,7 @@ class SponsorResolver:
         """Build lookup indices for fast company matching."""
         self.by_ticker = {}
         self.by_name = {}
+        self.by_name_normalized = {}
         self.by_cik = {}
 
         for company in self.company_records:
@@ -36,6 +64,10 @@ class SponsorResolver:
 
             if company.company_name:
                 self.by_name[company.company_name.lower()] = company
+                # Also index normalized (suffix-stripped) version
+                normalized = self._strip_corporate_suffix(company.company_name)
+                if normalized and normalized != company.company_name.lower():
+                    self.by_name_normalized[normalized] = company
 
             if company.cik:
                 self.by_cik[company.cik.lower()] = company
@@ -43,10 +75,29 @@ class SponsorResolver:
             # Index aliases
             for alias in company.aliases:
                 self.by_name[alias.lower()] = company
+                normalized = self._strip_corporate_suffix(alias)
+                if normalized and normalized != alias.lower():
+                    self.by_name_normalized[normalized] = company
 
     def _normalize_for_lookup(self, sponsor_name: str) -> str:
-        """Normalize sponsor name for lookup."""
+        """Normalize sponsor name for lookup (lowercase + strip whitespace)."""
         return sponsor_name.lower().strip()
+
+    def _strip_corporate_suffix(self, name: str) -> str:
+        """Strip common corporate suffixes from name (conservative).
+
+        Args:
+            name: Company or sponsor name.
+
+        Returns:
+            Name with corporate suffix removed (or original if no suffix).
+        """
+        normalized = self._normalize_for_lookup(name)
+        for suffix_pattern in self.CORPORATE_SUFFIXES:
+            result = re.sub(suffix_pattern, "", normalized, flags=re.IGNORECASE)
+            if result != normalized:
+                return result.strip()
+        return normalized
 
     def resolve(self, raw_sponsor_name: str) -> Optional[dict]:
         """Resolve raw sponsor name to company record.
@@ -136,6 +187,22 @@ class SponsorResolver:
                 }
                 self._cache[cache_key] = result
                 return result
+
+        # Try normalized (suffix-stripped) company name match
+        normalized_sponsor = self._strip_corporate_suffix(raw_sponsor_name)
+        if normalized_sponsor != normalized and normalized_sponsor in self.by_name_normalized:
+            company = self.by_name_normalized[normalized_sponsor]
+            result = {
+                "company_id": company.company_id,
+                "ticker": company.ticker,
+                "company_name": company.company_name,
+                "confidence": 0.85,  # Slightly lower confidence for suffix-stripped match
+                "resolution_status": "resolved_public" if company.is_public else "resolved_private_or_unknown",
+                "warnings": ["matched via normalized name (suffix stripped)"],
+                "is_public": company.is_public,
+            }
+            self._cache[cache_key] = result
+            return result
 
         # No match found
         warnings.append("Sponsor not found in known company list")
