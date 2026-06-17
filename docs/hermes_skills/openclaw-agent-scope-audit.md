@@ -22,6 +22,10 @@ Diagnose-only by default.
 
 ## Failure taxonomy
 
+### Review/runtime patterns reference
+
+For code-level review of OpenClaw agent launchers, heartbeat checks, post-snapshot supervisors, and ops_supervisor anomaly carry-forward, see `references/openclaw-agent-runtime-monitoring-patterns.md`. It captures regression-test shapes for: nonzero process exits on agent failure, collision-resistant direct logs, terminal-unsupervised agent handling, embedded-date parsing, CSV header handling, complete done predicates, and exact anomaly identity.
+
 ### Class A — Cron prompt-string misconfig (HEARTBEAT vs SCAN)
 
 **Signature:** An agent that should be doing active work is instead running its
@@ -79,25 +83,44 @@ See `openclaw-data-pipeline-debug` Class F for the full diagnostic and resolutio
 **Signature:** Fleet receipt flags agent as `NO_ARTIFACTS` at its declared paths,
 but the agent is actually running and writing elsewhere.
 
-**Confirmed instances:**
-- `policy_shadow_watch` (resolved 2026-05-30): registry had declared
-  `artifacts/policy_shadow_watch/` while writes went to `artifacts/policy_shadow/tier_weighted/`.
-  Agent removed; `shadow_monitor` now owns both `artifacts/shadow_monitor/` and
-  `artifacts/policy_shadow/tier_weighted/` per registry.
+**Confirmed instances (2026-05-03):**
+- `policy_shadow_watch`: registry declared `artifacts/policy_shadow_watch/` but
+  agent writes to `artifacts/policy_shadow/tier_weighted/`
 - `review_queue_steward`: registry declared `agents/review_queue_steward/memory/`
   but agent is chat-mode only with no artifact contract (by design per SOUL.md/TOOLS.md)
 
 **Diagnostic recipe:**
 
 ```bash
-# 1. What does the registry say?
-python3 -c "
+# 1. What does the registry say? (schema-tolerant: agents can be list[str], list[dict], or dict)
+python3 - <<'PY'
 import json
 r = json.load(open('agents/AGENT_REGISTRY.json'))
-ag = [a for a in r['agents'] if a['id'] == '<agent_id>'][0]
-print('Registry artifact_paths:', ag.get('artifact_paths', []))
-print('Registry memory_path:', ag.get('memory_path', ''))
-"
+raw = r.get('agents', [])
+agent_id = '<agent_id>'
+
+def normalize(raw_agents):
+    out = []
+    if isinstance(raw_agents, dict):
+        for k, v in raw_agents.items():
+            if isinstance(v, dict):
+                d = dict(v)
+                d.setdefault('id', k)
+                out.append(d)
+    elif isinstance(raw_agents, list):
+        for item in raw_agents:
+            if isinstance(item, dict):
+                out.append(item)
+            elif isinstance(item, str):
+                out.append({'id': item})
+    return out
+
+agents = normalize(raw)
+ag = next((a for a in agents if a.get('id') == agent_id), None)
+print('Registry found:', ag is not None)
+print('Registry artifact_paths:', (ag or {}).get('artifact_paths', []))
+print('Registry memory_path:', (ag or {}).get('memory_path', ''))
+PY
 
 # 2. What does AGENTS.md actually say?
 cat agents/<name>/AGENTS.md | grep -E "Write|Output|Produce|artifact|memory"
@@ -131,6 +154,12 @@ with one symptom in the receipt.
   6 invocations on Apr 30 alone. Memory-write broke at commit `2f45c6a7`.
 - `calibration_evidence`: STALE_LEDGER 14d, but artifact files written 2026-05-02
   via weekend catch-up. Memory directory stayed empty.
+- `bioshort_watch`: confirmed 2026-06-17 — mem_age=45d (last memory 2026-05-03),
+  art_age=1d (artifacts/bioshort_watch/latest_status.json fresh Jun 16). Gap=43d.
+  Memory-write step broken; artifacts fresh via pipeline.
+- `qa`: confirmed 2026-06-17 — memory frozen since 2026-05-05 (43d stale).
+  QA artifact (artifacts/production_qa/<date>_report.md) fresh daily. Same pattern
+  as event_analyst regression — memory-write step broken while artifact pipeline healthy.
 
 **Diagnostic recipe:**
 
@@ -281,6 +310,68 @@ series as the ruleset promotion.
 **Add to ruleset promotion checklist:**
 - [ ] grep agents/*/SOUL.md for old ruleset ID, update any found
 
+**Safe edit method for batch SOUL.md updates (prevents diff blowups):**
+- Avoid round-tripping files through readers that inject line-number prefixes.
+- Preserve file newline behavior when writing (no implicit normalization).
+- After insertion, run `git diff --stat` immediately.
+  - Expected for this class of doc-only change: small `+`-only deltas (for this ruleset block, ~`+5` per file).
+  - If you see large insert/delete churn, abort and restore files before retrying with newline-preserving direct file I/O.
+- Re-validate after patch:
+  1. every registry agent still has `AGENTS.md` + `SOUL.md`
+  2. no registry agent is missing `## Active ruleset` + current ID
+
+---
+
+### Class H — Cron task ruleset ID mismatch (cron parameter layer, not SOUL.md)
+
+**Signature:** Agent's SOUL.md correctly references the current active ruleset ID, but
+the CRON TASK that triggers the agent's heartbeat or diagnostic run passes a DIFFERENT
+(stale) ruleset ID as a command-line parameter. The agent's LLM-driven runs use the
+correct ID from SOUL.md, but the cron-triggered automated checks compare against the
+wrong baseline.
+
+**Confirmed instance (2026-06-17):** Sentinel's SOUL.md correctly references
+`8887576e` (v1.14.0). However, the sentinel heartbeat cron task passes `2a3e79eb`
+(v1.13.0, retired 2026-05-04) as its ruleset parameter. This means sentinel's
+cron-triggered drift checks anchor against the old ruleset, while the LLM-driven
+sentinel memory notes (which read SOUL.md) use the correct ID. Day 9+ of mismatch.
+
+**How this differs from Class F:** Class F covers stale ruleset IDs in SOUL.md itself.
+This class covers the case where SOUL.md is CORRECT but a separate cron task parameter
+is WRONG. The re-anchor procedure (updating SOUL.md in sentinel, catalyst_delta,
+shadow_monitor) does not catch this because it only patches the SOUL.md files, not the
+cron task parameters.
+
+**Diagnostic recipe:**
+
+```bash
+# 1. Verify SOUL.md is correct (this will show the RIGHT ID)
+grep -n 'ID:' agents/<name>/SOUL.md | head -3
+
+# 2. Check the cron task parameters (this is where the mismatch hides)
+# For Hermes cron jobs, use mcp_cronjob action='list' and inspect the prompt
+# For Linux crontab:
+crontab -l | grep <agent_name>
+# Look for --ruleset or similar parameter in the command
+
+# 3. Check the agent's memory for notes about the mismatch
+grep -r 'ruleset.*mismatch\|cron.*reference\|wrong.*ruleset' agents/<name>/memory/ | head -5
+
+# 4. Compare: SOUL.md ID vs cron parameter ID vs manifest active ID
+grep -A4 '"status": "active"' production_data/decision_rulesets/manifest.json | grep '"id"'
+```
+
+**Resolution:**
+1. Identify the cron task (Hermes or Linux) that passes the stale ruleset ID.
+2. Update the parameter to the current active ruleset ID from the manifest.
+3. For Hermes cron jobs: `mcp_cronjob action='update'` with corrected prompt.
+4. For Linux crontab: use the preview-then-apply contract.
+5. Verify on next scheduled run that the agent uses the correct ID.
+
+**Add to ruleset promotion checklist:**
+- [ ] grep agents/*/SOUL.md for old ruleset ID, update any found (existing step)
+- [ ] grep crontab -l AND mcp_cronjob list for old ruleset ID in task parameters (NEW step)
+
 ---
 
 ## Pre-audit checklist (run before any agent analysis)
@@ -308,6 +399,14 @@ find artifacts/<name> -maxdepth 2 -type f | head -5
 ```
 
 ---
+
+## All-agent code review expansion
+
+When the user asks to review "all OpenClaw agents" or the fleet's agent code,
+expand beyond one agent's SOUL/AGENTS files. Review contracts, shared runtime
+launchers, heartbeat/supervisor code, and data-producing scripts referenced by
+TOOLS.md. Use `references/openclaw-all-agent-code-review.md` for the checklist
+and session-derived pitfalls.
 
 ## Report format
 

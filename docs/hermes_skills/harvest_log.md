@@ -5,6 +5,45 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-17 (Fleet monitoring blind spot + Scientific Cartography + memory-write bugs)
+
+### Git activity (past 24h)
+- **biotech-screener** (13 commits):
+  - Scientific Cartography Layer phases 0/1–7B (11 commits): new `scientific_cartography/` module with competitive clustering, landscape features, export layer, diagnostic pipeline. Phase 7B adds optional disabled-by-default diagnostic hook to `tools/run_daily_production.py` (non-blocking, controlled via `--run-scientific-cartography` flag).
+  - Fix: MapIndexExporter handles None disease_name in sort (0058b940)
+  - Day 7 pre-market monitoring snapshot (b2c4bb1c)
+  - PR #350 merge (61c70db7)
+- **asset-allocation** (1 commit):
+  - docs(tracking): MODE A sync 2026-06-17 — fix self-ref, stale gov flag escalation (32b2ab3)
+
+### Sessions reviewed: 3
+- cron_4f360d005436 (fleet triage 2026-06-17): FLEET VERDICT RED — receipt 5d stale, sentinel ROLLBACK_RECOMMENDED, drift pipeline broken, multiple agent STALE
+- cron_876bb90e5295 (memory steward 2026-06-17): ~/.hermes/ grew to 3.4 GB, 2 Hermes cron jobs with stale errors (weekly-skill-harvester 30d, morning-briefing 24d)
+- cron_3d1e09988873 (aa-model tracker 2026-06-17): routine MODE A sync, no new findings
+
+### Skill patches
+- **openclaw-cron-scheduler-debug**: Added Class H (heartbeat checker stall — monitor-of-monitors blind spot) and Class I (Hermes cron job silent failure — NameError/RuntimeError unnoticed for weeks). Updated quick-reference triage with both new classes. Confirmed instance: fleet receipt 5d stale (2026-06-17), 2 Hermes cron jobs failing 24-30d silently.
+- **openclaw-agent-scope-audit**: Added Class H (cron task ruleset ID mismatch — cron parameter layer, not SOUL.md). SOUL.md correct but cron task passes stale ruleset ID. Confirmed instance: sentinel cron task passing 2a3e79eb while SOUL.md correctly shows 8887576e (2026-06-17, Day 9+). Also added bioshort_watch and qa to Class C confirmed memory-write bug instances.
+- **openclaw-data-pipeline-debug**: Added Class J (drift report pipeline broken — sentinel blinded on overlap/rank-shift). drift_guardrails/ missing from snapshots 5+ days, ruleset_health_history.jsonl stale 6+ weeks. Updated cross-skill routing section.
+
+### New skills created: none
+### No new findings skipped: all actionable findings patched
+
+### Notable: Scientific Cartography Layer
+- New `scientific_cartography/` module built across 11 commits (phases 0/1 through 7B)
+- Phase 7B integrates into `tools/run_daily_production.py` as optional diagnostic hook
+- Disabled by default (`--run-scientific-cartography` flag required)
+- Non-blocking: failures logged but do not halt pipeline
+- No governance concern: diagnostic-only, does not modify production scoring or rankings
+
+### Notable: Hermes cron job health gap
+- weekly-skill-harvester (a15dbdcb6f41): NameError, 30d stale — this is the job that runs THIS harvest
+- morning-briefing (a955f533907b): RuntimeError, 24d stale
+- No monitoring exists for Hermes cron job failures — they fail silently until manually discovered
+- Recommended: add Hermes cron job health check to fleet steward heartbeat
+
+---
+
 ## 2026-06-16 (Hermes registry + Cloud staleness refresh)
 
 ### Hermes Agent v0.16.0 update check
