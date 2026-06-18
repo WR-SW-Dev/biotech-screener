@@ -367,6 +367,143 @@ def refresh_prices(
     return stats
 
 
+def validate_xbi_freshness(
+    price_csv: Path,
+    through_date: str,
+    max_gap_days: int = 5,
+) -> Dict[str, Any]:
+    """Post-refresh validation: ensure XBI is fresh and re-fetch if needed.
+
+    Returns validation result dict with validation status and any revalidation stats.
+    """
+    from datetime import datetime, timedelta
+
+    xbi_last = _get_ticker_last_date(price_csv, "XBI")
+
+    result = {
+        "xbi_last_date": xbi_last,
+        "through_date": through_date,
+        "validation_passed": False,
+        "revalidation_needed": False,
+        "revalidation_stats": None,
+    }
+
+    if not xbi_last:
+        result["validation_error"] = "XBI not found in price file after refresh"
+        return result
+
+    # Check staleness gap
+    last_dt = datetime.strptime(xbi_last, "%Y-%m-%d")
+    through_dt = datetime.strptime(through_date, "%Y-%m-%d")
+    delta = through_dt - last_dt
+
+    # Count trading days gap (weekdays only)
+    trading_days = sum(1 for i in range(1, delta.days + 1) if (last_dt + timedelta(days=i)).weekday() < 5)
+
+    result["trading_days_gap"] = trading_days
+    result["max_gap_days"] = max_gap_days
+
+    if trading_days <= max_gap_days:
+        result["validation_passed"] = True
+        _logger.info(f"✓ XBI validation PASS: {xbi_last} (gap={trading_days} days)")
+        return result
+
+    # XBI is stale — attempt targeted re-fetch
+    _logger.warning(f"✗ XBI validation FAIL: last={xbi_last}, through={through_date}, gap={trading_days} days")
+    result["revalidation_needed"] = True
+
+    try:
+        _logger.info(f"Attempting targeted XBI re-fetch from {xbi_last} through {through_date}...")
+
+        import csv as csv_module
+        import tempfile
+
+        import yfinance as yf
+
+        # Fetch XBI data from last known date to through_date
+        start_dt = last_dt + timedelta(days=1)
+        end_dt = through_dt + timedelta(days=1)
+
+        xbi = yf.Ticker("XBI")
+        hist = xbi.history(start=start_dt.isoformat(), end=end_dt.isoformat())
+
+        if hist.empty:
+            result["revalidation_error"] = f"yfinance returned no XBI data for {start_dt.date()} to {through_dt.date()}"
+            _logger.error(result["revalidation_error"])
+            return result
+
+        # Read existing price file
+        existing_rows = []
+        if price_csv.exists():
+            with open(price_csv, "r", encoding="utf-8") as f:
+                existing_rows = list(csv_module.DictReader(f))
+
+        # Add new XBI rows
+        new_rows = []
+        for idx, row in hist.iterrows():
+            dt = idx.strftime("%Y-%m-%d")
+            new_rows.append(
+                {
+                    "date": dt,
+                    "ticker": "XBI",
+                    "open": str(row["Open"]),
+                    "high": str(row["High"]),
+                    "low": str(row["Low"]),
+                    "close": str(row["Close"]),
+                    "volume": str(int(row["Volume"])),
+                }
+            )
+
+        # Deduplicate: keep last occurrence per (ticker, date)
+        all_rows = existing_rows + new_rows
+        seen = {}
+        for i, row in enumerate(all_rows):
+            key = ((row.get("ticker") or "").upper(), (row.get("date") or "")[:10])
+            seen[key] = i
+        deduped = [all_rows[i] for i in sorted(seen.values())]
+
+        # Atomic write
+        if new_rows:
+            price_csv.parent.mkdir(parents=True, exist_ok=True)
+            fd, tmp_path = tempfile.mkstemp(suffix=".csv", dir=price_csv.parent)
+            try:
+                with open(fd, "w", newline="", encoding="utf-8") as f:
+                    fieldnames = ["date", "ticker", "open", "high", "low", "close", "volume"]
+                    writer = csv_module.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for row in deduped:
+                        writer.writerow({k: row.get(k, "") for k in fieldnames})
+                Path(tmp_path).replace(price_csv)
+
+                _logger.info(f"✓ XBI re-fetch successful: added {len(new_rows)} rows")
+                result["revalidation_stats"] = {
+                    "rows_added": len(new_rows),
+                    "xbi_last_after_revalidation": new_rows[-1]["date"],
+                }
+
+                # Re-check staleness
+                new_xbi_last = _get_ticker_last_date(price_csv, "XBI")
+                if new_xbi_last:
+                    new_last_dt = datetime.strptime(new_xbi_last, "%Y-%m-%d")
+                    new_trading_days = sum(
+                        1
+                        for i in range(1, (through_dt - new_last_dt).days + 1)
+                        if (new_last_dt + timedelta(days=i)).weekday() < 5
+                    )
+                    if new_trading_days <= max_gap_days:
+                        result["validation_passed"] = True
+                        _logger.info(f"✓ XBI re-validation PASS: {new_xbi_last} (gap={new_trading_days} days)")
+            except Exception as e:
+                Path(tmp_path).unlink(missing_ok=True)
+                result["revalidation_error"] = f"Failed to write XBI data: {e}"
+                _logger.error(result["revalidation_error"])
+    except Exception as e:
+        result["revalidation_error"] = f"XBI re-fetch failed: {e}"
+        _logger.error(result["revalidation_error"])
+
+    return result
+
+
 def _get_ticker_last_date(price_csv: Path, ticker: str) -> Optional[str]:
     """Read price_history.csv and return the last date for a given ticker."""
     if not price_csv.exists():
@@ -4314,6 +4451,18 @@ def run_daily(
     else:
         _logger.info("\n[1/5] Price refresh skipped (--skip-price-refresh)")
         price_stats["xbi_last_date"] = _get_ticker_last_date(price_csv, "XBI")
+
+    # --- Post-refresh validation: ensure XBI is fresh (re-fetch if needed) ---
+    if not skip_price_refresh:
+        _logger.info("[1/5] Validating XBI freshness post-refresh ...")
+        xbi_validation = validate_xbi_freshness(price_csv, as_of_date, max_gap_days=config.xbi_stale_days)
+        if xbi_validation["revalidation_stats"]:
+            price_stats["xbi_revalidation"] = xbi_validation["revalidation_stats"]
+        if not xbi_validation["validation_passed"] and xbi_validation["revalidation_needed"]:
+            _logger.warning(
+                f"XBI validation required targeted re-fetch (gap={xbi_validation.get('trading_days_gap', '?')} days). "
+                f"Re-fetch {'successful' if xbi_validation['revalidation_stats'] else 'failed'}."
+            )
 
     # --- Gate: XBI staleness (check early, before expensive screen run) ---
     xbi_gate = check_xbi_staleness(price_csv, as_of_date, config.xbi_stale_days)
