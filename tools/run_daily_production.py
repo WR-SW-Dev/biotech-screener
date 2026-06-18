@@ -4213,6 +4213,73 @@ def promote_snapshot(
 # ---------------------------------------------------------------------------
 
 
+def run_scientific_cartography_phase13c_export(
+    as_of_date: str,
+    snapshot_dir: Path,
+    ctgov_cache_dir: Path,
+    output_dir: Path,
+    strict: bool = False,
+) -> bool:
+    """Run Phase 13C disease map artifact export as optional post-snapshot hook.
+
+    Non-blocking by default: returns False on failure but does not raise.
+    With strict=True: raises exception on failure.
+
+    Args:
+        as_of_date: snapshot date (YYYY-MM-DD)
+        snapshot_dir: path to promoted snapshot directory
+        ctgov_cache_dir: path to CTGov cache directory (may not exist)
+        output_dir: path where per-disease artifacts will be written
+        strict: if True, raise on export failure; if False, log warning and return False
+
+    Returns:
+        True if export succeeded, False if export failed (non-strict mode only)
+    """
+    export_script = REPO_ROOT / "tools" / "run_scientific_cartography_phase13c_export.py"
+    if not export_script.exists():
+        msg = f"Phase 13C export script not found: {export_script}"
+        if strict:
+            raise RuntimeError(msg)
+        _logger.warning(f"Phase 13C export hook skipped: {msg}")
+        return False
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(export_script),
+                "--as-of-date",
+                as_of_date,
+                "--snapshot-dir",
+                str(snapshot_dir),
+                "--ctgov-cache",
+                str(ctgov_cache_dir),
+                "--output-dir",
+                str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        if proc.returncode == 0:
+            _logger.info(f"Phase 13C disease map export → {output_dir}")
+            return True
+        else:
+            msg = f"Phase 13C export failed (exit {proc.returncode})"
+            if strict:
+                raise RuntimeError(msg)
+            _logger.warning(f"Phase 13C hook: {msg} (non-blocking)")
+            return False
+    except Exception as e:
+        msg = f"Phase 13C export error: {e}"
+        if strict:
+            raise RuntimeError(msg) from e
+        _logger.warning(f"{msg} (non-blocking)")
+        return False
+
+
 def run_scientific_cartography_diagnostics(
     as_of_date: str,
     snapshot_dir: Path,
@@ -4317,6 +4384,8 @@ def run_daily(
     enrich_pubmed: bool = False,
     run_scientific_cartography: bool = False,
     scientific_cartography_strict: bool = False,
+    run_scientific_cartography_phase13c: bool = False,
+    scientific_cartography_phase13c_strict: bool = False,
 ) -> Dict[str, Any]:
     """Execute the full daily Phase-2 pipeline.
 
@@ -5144,6 +5213,27 @@ def run_daily(
                     raise
                 else:
                     _logger.warning(f"Scientific cartography hook error (non-blocking): {_sc_err}")
+
+        # --- Step 4.6: Phase 13C Disease Map Artifact Export (optional, disabled-by-default) ---
+        # Runs Phase 13C export to generate per-disease artifacts if explicitly enabled.
+        # Non-blocking by default; failures logged but do not halt pipeline.
+        if run_scientific_cartography_phase13c:
+            try:
+                _sc13c_output_dir = REPO_ROOT / "artifacts" / "scientific_cartography" / as_of_date / "diseases"
+                _sc_ctgov_cache = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov" / as_of_date)
+                run_scientific_cartography_phase13c_export(
+                    as_of_date=as_of_date,
+                    snapshot_dir=final_path,
+                    ctgov_cache_dir=_sc_ctgov_cache,
+                    output_dir=_sc13c_output_dir,
+                    strict=scientific_cartography_phase13c_strict,
+                )
+            except Exception as _sc13c_err:
+                if scientific_cartography_phase13c_strict:
+                    _logger.error(f"Phase 13C strict mode failure: {_sc13c_err}")
+                    raise
+                else:
+                    _logger.warning(f"Phase 13C hook error (non-blocking): {_sc13c_err}")
 
         # --- Step 5a: Update forward_eval IC ledger (Path C monitoring) ---
         # Extracts mean_ic from forward_eval gate results and appends to
@@ -6565,6 +6655,16 @@ def main():
         action="store_true",
         help="If enabled with --run-scientific-cartography, fail the run if diagnostics fail.",
     )
+    parser.add_argument(
+        "--run-scientific-cartography-phase13c",
+        action="store_true",
+        help="Enable optional Phase 13C disease map artifact export (per-disease JSON/CSV/MD, post-snapshot, non-blocking).",
+    )
+    parser.add_argument(
+        "--scientific-cartography-phase13c-strict",
+        action="store_true",
+        help="If enabled with --run-scientific-cartography-phase13c, fail the run if export fails.",
+    )
     args = parser.parse_args()
 
     # -- Logging setup (must be before any logger calls) --
@@ -6607,6 +6707,8 @@ def main():
             enrich_pubmed=args.enrich_pubmed,
             run_scientific_cartography=args.run_scientific_cartography,
             scientific_cartography_strict=args.scientific_cartography_strict,
+            run_scientific_cartography_phase13c=args.run_scientific_cartography_phase13c,
+            scientific_cartography_phase13c_strict=args.scientific_cartography_phase13c_strict,
         )
     except Exception as exc:
         # Ensure a FAIL manifest + ledger entry exist even on unhandled crash
