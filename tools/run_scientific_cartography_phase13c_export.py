@@ -94,21 +94,27 @@ def scan_for_forbidden_fields(directory: Path) -> Optional[list[str]]:
 
 
 def validate_governance_flags(directory: Path) -> bool:
-    """Verify all JSON artifacts have read_only_diagnostic=true."""
-    for json_file in directory.rglob("*.json"):
+    """Verify Phase 13C-generated JSON artifacts have read_only_diagnostic=true.
+
+    Only validates the Phase 13C manifest, not upstream (Phase 7A/12) artifacts.
+    """
+    manifest_file = directory / "scientific_cartography_manifest.json"
+
+    # Only check the manifest file that Phase 13C generates
+    if manifest_file.exists():
         try:
-            with open(json_file) as f:
+            with open(manifest_file) as f:
                 data = json.load(f)
 
-            # Check for governance flags
             if isinstance(data, dict):
                 governance = data.get("governance", {})
                 if isinstance(governance, dict):
                     if not governance.get("read_only_diagnostic"):
-                        _logger.error(f"{json_file.name}: governance.read_only_diagnostic not set")
+                        _logger.error("manifest: governance.read_only_diagnostic not set")
                         return False
-        except (json.JSONDecodeError, IOError):
-            continue
+        except (json.JSONDecodeError, IOError) as e:
+            _logger.error(f"Failed to validate manifest: {e}")
+            return False
 
     return True
 
