@@ -246,13 +246,47 @@ class DiseaseNormalizer:
             self._disease_cache[cache_key] = record
             return record
 
-        # Priority 2: MONDO exact or synonym match (ontology-backed)
+        # Priority 2: Try exact normalized match in MONDO cache first
+        if cache_key in self.mondo_cache:
+            mondo_data = self.mondo_cache[cache_key]
+            record = DiseaseRecord(
+                disease_id=mondo_data.get("id", self._make_disease_id(raw_disease, None)),
+                raw_name=raw_disease,
+                normalized_name=mondo_data.get("name", raw_disease),
+                mondo_id=mondo_data.get("id"),
+                therapeutic_area=mondo_data.get("therapeutic_area"),
+                synonyms=mondo_data.get("synonyms", []),
+                source="mondo",
+                confidence=0.95,
+                as_of_date=self.as_of_date,
+            )
+            self._disease_cache[cache_key] = record
+            return record
+
+        # Priority 3: Try synonym match in MONDO cache
+        for syn_raw, mondo_data in self.mondo_cache.items():
+            if raw_disease.lower() in [s.lower() for s in mondo_data.get("synonyms", [])]:
+                record = DiseaseRecord(
+                    disease_id=mondo_data.get("id", self._make_disease_id(raw_disease, None)),
+                    raw_name=raw_disease,
+                    normalized_name=mondo_data.get("name", raw_disease),
+                    mondo_id=mondo_data.get("id"),
+                    therapeutic_area=mondo_data.get("therapeutic_area"),
+                    synonyms=mondo_data.get("synonyms", []),
+                    source="mondo_synonym",
+                    confidence=0.90,
+                    as_of_date=self.as_of_date,
+                )
+                self._disease_cache[cache_key] = record
+                return record
+
+        # Priority 4: MONDO built-in index exact or synonym match (ontology-backed)
         if cache_key in self._mondo_index:
             record = self._mondo_index[cache_key]
             self._disease_cache[cache_key] = record
             return record
 
-        # Priority 3: Substring matching against MONDO synonyms
+        # Priority 5: Substring matching against MONDO index synonyms
         # (e.g., "moderate-to-severe atopic dermatitis" → MONDO:0004980)
         for normalized_name, record in self._mondo_index.items():
             if normalized_name in cache_key or cache_key in normalized_name:
@@ -270,40 +304,6 @@ class DiseaseNormalizer:
                 )
                 self._disease_cache[cache_key] = matched_record
                 return matched_record
-
-        # Try exact normalized match in MONDO cache
-        if cache_key in self.mondo_cache:
-            mondo_data = self.mondo_cache[cache_key]
-            record = DiseaseRecord(
-                disease_id=mondo_data.get("id", self._make_disease_id(raw_disease, None)),
-                raw_name=raw_disease,
-                normalized_name=mondo_data.get("name", raw_disease),
-                mondo_id=mondo_data.get("id"),
-                therapeutic_area=mondo_data.get("therapeutic_area"),
-                synonyms=mondo_data.get("synonyms", []),
-                source="mondo",
-                confidence=0.95,
-                as_of_date=self.as_of_date,
-            )
-            self._disease_cache[cache_key] = record
-            return record
-
-        # Try synonym match in MONDO
-        for syn_raw, mondo_data in self.mondo_cache.items():
-            if raw_disease.lower() in [s.lower() for s in mondo_data.get("synonyms", [])]:
-                record = DiseaseRecord(
-                    disease_id=mondo_data.get("id", self._make_disease_id(raw_disease, None)),
-                    raw_name=raw_disease,
-                    normalized_name=mondo_data.get("name", raw_disease),
-                    mondo_id=mondo_data.get("id"),
-                    therapeutic_area=mondo_data.get("therapeutic_area"),
-                    synonyms=mondo_data.get("synonyms", []),
-                    source="mondo_synonym",
-                    confidence=0.90,
-                    as_of_date=self.as_of_date,
-                )
-                self._disease_cache[cache_key] = record
-                return record
 
         # Unmapped: preserve raw disease with low confidence
         disease_id = self._make_disease_id(raw_disease, None)
