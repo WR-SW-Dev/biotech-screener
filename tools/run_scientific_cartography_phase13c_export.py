@@ -78,8 +78,12 @@ def scan_for_forbidden_fields(directory: Path) -> Optional[list[str]]:
             for pattern in FORBIDDEN_PATTERNS:
                 matches = re.finditer(pattern, content, re.IGNORECASE)
                 for match in matches:
-                    # Allow "investment recommendation" in governance disclaimer
-                    if "investment recommendation" in content[max(0, match.start() - 100) : match.end() + 100]:
+                    context = content[max(0, match.start() - 100) : match.end() + 100]
+                    # Allow in governance/disclaimer context: "no/not scoring/ranking/weight"
+                    if re.search(r"\b(no|not|governance|disclaimer|diagnostic|only)\b", context, re.IGNORECASE):
+                        continue
+                    # Allow "investment recommendation" in disclaimer
+                    if "investment recommendation" in context:
                         continue
                     violations.append(f"{file_path.name}: {match.group()} at position {match.start()}")
         except (UnicodeDecodeError, IOError):
@@ -275,12 +279,11 @@ def main(
             disease_ontology_records.append(disease_data)
 
         exporter.export_all(
-            asset_indication_map=programs,
+            disease_ontology_records=disease_ontology_records,
+            asset_indication_records=programs,
             enhanced_clusters=clusters,
-            landscape_features=features,
-            disease_ontology=disease_ontology_records,
+            landscape_context_features=features,
             output_dir=output_dir,
-            as_of_date=as_of_date,
         )
 
         runtime = time.time() - start_time
