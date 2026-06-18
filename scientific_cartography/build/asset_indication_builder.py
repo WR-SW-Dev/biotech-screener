@@ -87,6 +87,10 @@ class AssetIndicationBuilder:
                 # Skip None or empty interventions
                 if not intervention or not isinstance(intervention, str):
                     continue
+                # Skip control/placebo interventions (not meaningful assets)
+                intervention_lower = intervention.lower()
+                if any(skip in intervention_lower for skip in ["placebo", "control", "vehicle", "sham"]):
+                    continue
                 for condition in conditions:
                     # Skip None or empty conditions
                     if not condition or not isinstance(condition, str):

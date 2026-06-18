@@ -169,6 +169,45 @@ class MechanismNormalizer:
                 "target": None,
                 "modality": "protein/enzyme therapy",
             },
+            "mek inhibitor": {"mechanism_class": "MEK inhibitor", "target": "MEK", "modality": "small molecule"},
+            "pi3k inhibitor": {"mechanism_class": "PI3K inhibitor", "target": "PI3K", "modality": "small molecule"},
+            "akt inhibitor": {"mechanism_class": "AKT inhibitor", "target": "AKT", "modality": "small molecule"},
+            "flt3 inhibitor": {"mechanism_class": "FLT3 inhibitor", "target": "FLT3", "modality": "small molecule"},
+            "bcr-abl inhibitor": {
+                "mechanism_class": "BCR-ABL inhibitor",
+                "target": "BCR-ABL",
+                "modality": "small molecule",
+            },
+            "hif inhibitor": {"mechanism_class": "HIF inhibitor", "target": "HIF", "modality": "small molecule"},
+            "wnt inhibitor": {"mechanism_class": "WNT inhibitor", "target": "WNT", "modality": "small molecule"},
+            "notch inhibitor": {"mechanism_class": "NOTCH inhibitor", "target": "NOTCH", "modality": "small molecule"},
+            "hedgehog inhibitor": {
+                "mechanism_class": "Hedgehog inhibitor",
+                "target": "GLI",
+                "modality": "small molecule",
+            },
+            "alpha-1 antitrypsin": {
+                "mechanism_class": "Alpha-1 antitrypsin",
+                "target": "SERPINA1",
+                "modality": "protein/enzyme therapy",
+            },
+            "igf-1r inhibitor": {
+                "mechanism_class": "IGF-1R inhibitor",
+                "target": "IGF1R",
+                "modality": "small molecule",
+            },
+            "met inhibitor": {"mechanism_class": "MET inhibitor", "target": "MET", "modality": "small molecule"},
+            "tie-2 inhibitor": {"mechanism_class": "TIE-2 inhibitor", "target": "TIE2", "modality": "small molecule"},
+            "fgf receptor inhibitor": {
+                "mechanism_class": "FGFR inhibitor",
+                "target": "FGFR",
+                "modality": "small molecule",
+            },
+            "map kinase inhibitor": {
+                "mechanism_class": "MAP kinase inhibitor",
+                "target": "MAPK",
+                "modality": "small molecule",
+            },
         }
 
     def _normalize_for_lookup(self, raw_text: str) -> str:
