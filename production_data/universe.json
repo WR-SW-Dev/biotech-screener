@@ -130,8 +130,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0000318306"
+    "status": "pending_data_collection",
+    "cik": "0000318306",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ABOS",
@@ -147,8 +156,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001576885"
+    "status": "pending_data_collection",
+    "cik": "0001576885",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ABSI",
@@ -1502,8 +1520,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001781174"
+    "status": "pending_data_collection",
+    "cik": "0001781174",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ADCT",
@@ -1630,7 +1657,7 @@
     "name": "ADPT",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -1682,7 +1709,16 @@
     "ShareholdersEquity": 204435000,
     "R&D": 72006000,
     "NetIncome": -45920000,
-    "Revenue": 205295000
+    "Revenue": 205295000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "AGIO",
@@ -1808,8 +1844,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001541157"
+    "status": "pending_data_collection",
+    "cik": "0001541157",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ALDX",
@@ -1825,8 +1870,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001341235"
+    "status": "pending_data_collection",
+    "cik": "0001341235",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ALGS",
@@ -1842,8 +1896,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001799448"
+    "status": "pending_data_collection",
+    "cik": "0001799448",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ALKS",
@@ -4031,8 +4094,8 @@
   {
     "ticker": "ARCT",
     "name": "Arcturus Therapeutics Holdings Inc.",
-    "status": "active",
-    "status_reason": "active",
+    "status": "pending_data_collection",
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
     "market_cap_usd": "186113536",
     "price_usd": "6.55",
     "shares_outstanding": "28414279",
@@ -4136,7 +4199,15 @@
     "ShareholdersEquity": 224559000,
     "R&D": 87736000,
     "NetIncome": -36704000,
-    "Revenue": 74835000
+    "Revenue": 74835000,
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ARDX",
@@ -5148,8 +5219,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001817241"
+    "status": "pending_data_collection",
+    "cik": "0001817241",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ARVN",
@@ -5384,8 +5464,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001426800"
+    "status": "pending_data_collection",
+    "cik": "0001426800",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ASND",
@@ -5436,7 +5525,7 @@
     "name": "ATAI",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -5488,7 +5577,16 @@
     "ShareholdersEquity": 159751000,
     "Revenue": 3023000,
     "R&D": 400000,
-    "NetIncome": -115234000
+    "NetIncome": -115234000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "AUPH",
@@ -5613,7 +5711,7 @@
     "name": "AUTL",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -5665,7 +5763,16 @@
     "ShareholdersEquity": 265452000,
     "Revenue": 51099000,
     "R&D": 82056000,
-    "NetIncome": -197196000
+    "NetIncome": -197196000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "AVBP",
@@ -7823,8 +7930,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001889109"
+    "status": "pending_data_collection",
+    "cik": "0001889109",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "BMEA",
@@ -7840,8 +7956,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001840439"
+    "status": "pending_data_collection",
+    "cik": "0001840439",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "BMRN",
@@ -9034,7 +9159,7 @@
     "name": "BRKR",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -9087,7 +9212,16 @@
     "Revenue": 2459300000,
     "COGS": 1330800000,
     "R&D": 295600000,
-    "NetIncome": -34600000
+    "NetIncome": -34600000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "CABA",
@@ -9499,7 +9633,7 @@
     "name": "CDXS",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -9551,7 +9685,16 @@
     "ShareholdersEquity": 38544000,
     "Revenue": 31472000,
     "R&D": 40586000,
-    "NetIncome": -53575000
+    "NetIncome": -53575000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "CELC",
@@ -9567,8 +9710,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001603454"
+    "status": "pending_data_collection",
+    "cik": "0001603454",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "CERS",
@@ -9931,8 +10083,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001768446"
+    "status": "pending_data_collection",
+    "cik": "0001768446",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "CMPS",
@@ -11757,7 +11918,7 @@
     "name": "CSTL",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -11810,14 +11971,23 @@
     "COGS": 52713000,
     "R&D": 38335000,
     "NetIncome": -21826000,
-    "Revenue": 257219000
+    "Revenue": 257219000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "CTKB",
     "name": "CTKB",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -11869,7 +12039,16 @@
     "ShareholdersEquity": 378571000,
     "Revenue": 139352000,
     "R&D": 27506000,
-    "NetIncome": -11402000
+    "NetIncome": -11402000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "CTMX",
@@ -12104,7 +12283,7 @@
     "name": "MNMD (was MNMD)",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -12155,7 +12334,16 @@
     "CurrentLiabilities": 65416000,
     "ShareholdersEquity": 130596000,
     "R&D": 84144000,
-    "NetIncome": -133357000
+    "NetIncome": -133357000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "DNA",
@@ -12340,8 +12528,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001690585"
+    "status": "pending_data_collection",
+    "cik": "0001690585",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "DRMA",
@@ -12466,8 +12663,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001827401"
+    "status": "pending_data_collection",
+    "cik": "0001827401",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "DSGN",
@@ -12769,8 +12975,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001404281"
+    "status": "pending_data_collection",
+    "cik": "0001404281",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ELVN",
@@ -12844,8 +13059,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001980845"
+    "status": "pending_data_collection",
+    "cik": "0001980845",
+    "status_reason": "coverage_pending:company_name,clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ENTA",
@@ -14061,7 +14285,7 @@
     "name": "ETON",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -14113,7 +14337,16 @@
     "ShareholdersEquity": 23126000,
     "R&D": 5985000,
     "NetIncome": -6084000,
-    "Revenue": 58669000
+    "Revenue": 58669000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "EWTX",
@@ -15580,7 +15813,7 @@
     "name": "FLGT",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -15633,14 +15866,23 @@
     "Revenue": 239335000,
     "COGS": 141042000,
     "R&D": 39735000,
-    "NetIncome": -37095000
+    "NetIncome": -37095000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "FTRE",
     "name": "FTRE",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -15691,7 +15933,16 @@
     "CurrentLiabilities": 914400000,
     "ShareholdersEquity": 580800000,
     "NetIncome": -953700000,
-    "Revenue": 2062900000
+    "Revenue": 2062900000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "FULC",
@@ -17587,8 +17838,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001785530"
+    "status": "pending_data_collection",
+    "cik": "0001785530",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "HRMY",
@@ -18009,15 +18269,24 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001750149"
+    "status": "pending_data_collection",
+    "cik": "0001750149",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "ILMN",
     "name": "ILMN",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -18069,7 +18338,16 @@
     "COGS": 1073000000,
     "R&D": 728000000,
     "NetIncome": 516000000,
-    "Revenue": 3184000000
+    "Revenue": 3184000000,
+    "status_reason": "coverage_pending:scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "covered",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "IMCR",
@@ -18351,8 +18629,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001809196"
+    "status": "pending_data_collection",
+    "cik": "0001809196",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "IMVT",
@@ -22378,14 +22665,23 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001798749"
+    "status": "pending_data_collection",
+    "cik": "0001798749",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "KALA",
     "name": "KALA BIO, Inc.",
-    "status": "active",
-    "status_reason": "active",
+    "status": "pending_data_collection",
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
     "market_cap_usd": "16144609",
     "price_usd": "0.69",
     "shares_outstanding": "23249725",
@@ -22489,7 +22785,15 @@
     "ShareholdersEquity": -8665000,
     "Revenue": 0,
     "R&D": 18414000,
-    "NetIncome": -27666000
+    "NetIncome": -27666000,
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "KALV",
@@ -24163,8 +24467,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001691082"
+    "status": "pending_data_collection",
+    "cik": "0001691082",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "LCTX",
@@ -24384,7 +24697,7 @@
     "name": "LFCR",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -24437,13 +24750,22 @@
     "Revenue": 557559000,
     "COGS": 309463000,
     "R&D": 1963000,
-    "NetIncome": -9991000
+    "NetIncome": -9991000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "LGND",
     "name": "Ligand Pharmaceuticals Incorporated",
-    "status": "active",
-    "status_reason": "active",
+    "status": "pending_data_collection",
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
     "market_cap_usd": "3828074752",
     "price_usd": "194.50",
     "shares_outstanding": "19681720",
@@ -24547,7 +24869,15 @@
     "ShareholdersEquity": 950171000,
     "Revenue": 208421000,
     "R&D": 77671000,
-    "NetIncome": 79669000
+    "NetIncome": 79669000,
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "LQDA",
@@ -25235,7 +25565,7 @@
     "name": "MENS",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -25272,7 +25602,16 @@
       "vol_20d": 2.1936,
       "ret_21d": -0.2463,
       "corr_xbi": "0.0143"
-    }
+    },
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "MESO",
@@ -25323,7 +25662,7 @@
     "name": "MGTX",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -25375,7 +25714,16 @@
     "ShareholdersEquity": -40557000,
     "Revenue": 6027000,
     "R&D": 98807000,
-    "NetIncome": -129289000
+    "NetIncome": -129289000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "MIRM",
@@ -25450,8 +25798,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001821586"
+    "status": "pending_data_collection",
+    "cik": "0001821586",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "MLYS",
@@ -25681,8 +26038,8 @@
   {
     "ticker": "MRVI",
     "name": "Maravai LifeSciences Holdings, Inc.",
-    "status": "active",
-    "status_reason": "active",
+    "status": "pending_data_collection",
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
     "market_cap_usd": "1406941056",
     "price_usd": "3.84",
     "shares_outstanding": "145022751",
@@ -25756,14 +26113,22 @@
     "COGS": 114729000,
     "R&D": 13614000,
     "NetIncome": -95092000,
-    "Revenue": 135877000
+    "Revenue": 135877000,
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "MYGN",
     "name": "MYGN",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -25816,7 +26181,16 @@
     "Revenue": 614700000,
     "COGS": 110700000,
     "R&D": 81300000,
-    "NetIncome": -358000000
+    "NetIncome": -358000000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "NAMS",
@@ -25891,8 +26265,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001808805"
+    "status": "pending_data_collection",
+    "cik": "0001808805",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "NBIX",
@@ -25958,7 +26341,7 @@
     "name": "NBP",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -26011,7 +26394,16 @@
     "Revenue": 3893000,
     "COGS": 3949000,
     "R&D": 4071000,
-    "NetIncome": -8654000
+    "NetIncome": -8654000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "NGNE",
@@ -26086,8 +26478,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001787400"
+    "status": "pending_data_collection",
+    "cik": "0001787400",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "NMRA",
@@ -26829,7 +27230,7 @@
     "name": "OBIO",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -26882,7 +27283,16 @@
     "Revenue": 2565000,
     "COGS": 139000,
     "R&D": 41362000,
-    "NetIncome": -58946000
+    "NetIncome": -58946000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "OCGN",
@@ -27008,8 +27418,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001953530"
+    "status": "pending_data_collection",
+    "cik": "0001953530",
+    "status_reason": "coverage_pending:company_name,clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "OCUL",
@@ -27536,7 +27955,7 @@
     "name": "PACB",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -27589,14 +28008,23 @@
     "Revenue": 115360000,
     "COGS": 86146000,
     "R&D": 74428000,
-    "NetIncome": -506005000
+    "NetIncome": -506005000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "PAHC",
     "name": "PAHC",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -27648,7 +28076,16 @@
     "ShareholdersEquity": 311681000,
     "Revenue": 363893000,
     "R&D": 23726000,
-    "NetIncome": 26527000
+    "NetIncome": 26527000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "PBYI",
@@ -28274,8 +28711,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001678660"
+    "status": "pending_data_collection",
+    "cik": "0001678660",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "PRME",
@@ -28350,8 +28796,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001612940"
+    "status": "pending_data_collection",
+    "cik": "0001612940",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "PRTA",
@@ -28576,7 +29031,7 @@
     "name": "PSNL",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -28629,7 +29084,16 @@
     "COGS": 38426000,
     "R&D": 37192000,
     "NetIncome": -57458000,
-    "Revenue": 52303000
+    "Revenue": 52303000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "PTCT",
@@ -28865,8 +29329,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001583648"
+    "status": "pending_data_collection",
+    "cik": "0001583648",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "PYXS",
@@ -28993,7 +29466,7 @@
     "name": "QTRX",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -29046,7 +29519,16 @@
     "Revenue": 95042000,
     "COGS": 50121000,
     "R&D": 27126000,
-    "NetIncome": -84033000
+    "NetIncome": -84033000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "QURE",
@@ -32038,7 +32520,7 @@
     "name": "RPRX",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -32089,7 +32571,16 @@
     "CurrentLiabilities": 530802000,
     "Revenue": 1756203000,
     "R&D": 401500000,
-    "NetIncome": 556742000
+    "NetIncome": 556742000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "RVMD",
@@ -32204,8 +32695,8 @@
   {
     "ticker": "RXRX",
     "name": "Recursion Pharmaceuticals, Inc.",
-    "status": "active",
-    "status_reason": "active",
+    "status": "pending_data_collection",
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
     "market_cap_usd": "2345682432",
     "price_usd": "4.50",
     "shares_outstanding": "514190251",
@@ -32309,7 +32800,15 @@
     "ShareholdersEquity": 1046948000,
     "R&D": 379331000,
     "NetIncome": -536637000,
-    "Revenue": 39143000
+    "Revenue": 39143000,
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "RYTM",
@@ -33405,8 +33904,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001833214"
+    "status": "pending_data_collection",
+    "cik": "0001833214",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "SANA",
@@ -33894,8 +34402,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001516551"
+    "status": "pending_data_collection",
+    "cik": "0001516551",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "SLDB",
@@ -35470,7 +35987,7 @@
     "name": "Surrozen, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_date": "2026-01-31",
     "description": "Wnt pathway tissue repair/regeneration. 3 Tier 1 managers, +161% 2Y.",
     "market_cap": 187199840,
@@ -35505,7 +36022,16 @@
       "conditions": [],
       "top_trials": []
     },
-    "market_cap_mm": 187.19984
+    "market_cap_mm": 187.19984,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "STOK",
@@ -35630,7 +36156,7 @@
     "name": "STVN",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -35667,7 +36193,16 @@
       "vol_20d": 0.4947,
       "ret_21d": -0.1713,
       "corr_xbi": "0.3127"
-    }
+    },
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "SUPN",
@@ -35857,8 +36392,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001359931"
+    "status": "pending_data_collection",
+    "cik": "0001359931",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "TARS",
@@ -36093,8 +36637,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001783328"
+    "status": "pending_data_collection",
+    "cik": "0001783328",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "TECH",
@@ -36335,8 +36888,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0000034956"
+    "status": "pending_data_collection",
+    "cik": "0000034956",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "TEVA",
@@ -36479,7 +37041,7 @@
     "name": "TKNO",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -36531,7 +37093,16 @@
     "ShareholdersEquity": 72650000,
     "R&D": 1675000,
     "NetIncome": -12501000,
-    "Revenue": 30536000
+    "Revenue": 30536000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "TNGX",
@@ -38578,8 +39149,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001607678"
+    "status": "pending_data_collection",
+    "cik": "0001607678",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "VNDA",
@@ -38708,8 +39288,17 @@
       "sector": "Healthcare",
       "industry": "Biotechnology"
     },
-    "status": "active",
-    "cik": "0001590750"
+    "status": "pending_data_collection",
+    "cik": "0001590750",
+    "status_reason": "coverage_pending:company_name",
+    "coverage_status": {
+      "company_name": "pending",
+      "market_data": "covered",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "VRTX",
@@ -39766,7 +40355,7 @@
     "name": "VTRS",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -39818,7 +40407,16 @@
     "ShareholdersEquity": -201000000,
     "Revenue": 10559700000,
     "R&D": 691200000,
-    "NetIncome": -170000000
+    "NetIncome": -170000000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "VYGR",
@@ -40002,7 +40600,7 @@
     "name": "XERS",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -40054,7 +40652,16 @@
     "ShareholdersEquity": -861000,
     "Revenue": 206038000,
     "R&D": 23291000,
-    "NetIncome": -10527000
+    "NetIncome": -10527000,
+    "status_reason": "coverage_pending:clinical_trials,scientific_cartography",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "covered",
+      "financials": "covered",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   },
   {
     "ticker": "XNCR",
@@ -41159,10 +41766,19 @@
     "name": "Kyntra Bio",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "active",
+    "status": "pending_data_collection",
     "added_date": "2026-04-04",
     "added_from_etf": false,
     "description": "Formerly FibroGen. Oncology/rare disease. CD46 ADC, roxadustat.",
-    "cik": "0000921299"
+    "cik": "0000921299",
+    "status_reason": "coverage_pending:market_data",
+    "coverage_status": {
+      "company_name": "covered",
+      "market_data": "pending",
+      "financials": "pending",
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
+    },
+    "coverage_refreshed_as_of": "2026-06-19"
   }
 ]

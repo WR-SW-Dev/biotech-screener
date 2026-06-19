@@ -121,6 +121,13 @@ class TestClassifyStatus:
         status, reason = _classify_status(record)
         assert status == StatusGate.EXCLUDED_ACQUIRED
 
+    def test_pending_data_collection_status(self):
+        """Pending data collection should be excluded as missing data."""
+        record = {"status": "pending_data_collection", "market_cap_mm": 100}
+        status, reason = _classify_status(record)
+        assert status == StatusGate.EXCLUDED_MISSING_DATA
+        assert "pending_data_collection" in reason
+
     def test_ma_status(self):
         """M&A status should be EXCLUDED_ACQUIRED."""
         record = {"status": "m&a", "market_cap_mm": 100}
