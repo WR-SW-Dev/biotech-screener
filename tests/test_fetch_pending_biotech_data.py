@@ -77,7 +77,8 @@ def test_fetch_pending_data_keeps_row_pending_without_trials():
         sleep_seconds=0,
     )
 
-    assert refreshed[0]["status"] == "pending_data_collection"
-    assert refreshed[0]["coverage_status"]["clinical_trials"] == "pending"
+    assert refreshed[0]["status"] == "pending_coverage"
+    assert refreshed[0]["coverage_status"]["clinical_trials"] == "unavailable"
+    assert refreshed[0]["coverage_status"]["scientific_cartography"] == "unavailable"
     assert merged_trials == []
     assert report["trial_success"] == []

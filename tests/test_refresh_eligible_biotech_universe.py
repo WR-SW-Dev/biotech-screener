@@ -44,6 +44,8 @@ def test_refresh_marks_uncovered_biotech_pending():
     assert refreshed[0]["coverage_status"]["scientific_cartography"] == "pending"
     assert refreshed[0]["coverage_refreshed_as_of"] == "2026-06-19"
     assert report["marked_pending_tickers"] == ["MISS"]
+    assert report["pending_collection_tickers"] == ["MISS"]
+    assert report["pending_coverage_tickers"] == []
 
 
 def test_refresh_promotes_pending_ticker_when_coverage_is_complete():
@@ -67,3 +69,17 @@ def test_refresh_marks_trial_without_intervention_pending_for_cartography():
     assert refreshed[0]["status"] == "pending_data_collection"
     assert refreshed[0]["coverage_status"]["clinical_trials"] == "covered"
     assert refreshed[0]["coverage_status"]["scientific_cartography"] == "pending"
+
+
+def test_refresh_finalize_marks_unavailable_coverage():
+    universe = [_row("NTRI", status="pending_data_collection")]
+    trials = []
+
+    refreshed, report = refresh_universe(universe, trials, "2026-06-19", finalize_collection=True)
+
+    assert refreshed[0]["status"] == "pending_coverage"
+    assert refreshed[0]["status_reason"] == "coverage_unavailable:clinical_trials,scientific_cartography"
+    assert refreshed[0]["coverage_status"]["clinical_trials"] == "unavailable"
+    assert refreshed[0]["coverage_status"]["scientific_cartography"] == "unavailable"
+    assert report["pending_collection_tickers"] == []
+    assert report["pending_coverage_tickers"] == ["NTRI"]

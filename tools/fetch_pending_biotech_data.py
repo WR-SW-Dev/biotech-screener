@@ -214,7 +214,12 @@ def fetch_pending_data(
     report["trial_records_added"] = added
     report["trial_records_updated"] = updated
 
-    refreshed_universe, refresh_report = refresh_universe(universe, merged_trials, as_of_date)
+    refreshed_universe, refresh_report = refresh_universe(
+        universe,
+        merged_trials,
+        as_of_date,
+        finalize_collection=True,
+    )
     report["refresh_report"] = refresh_report
     return refreshed_universe, merged_trials, report
 

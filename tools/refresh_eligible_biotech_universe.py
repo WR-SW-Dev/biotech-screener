@@ -115,11 +115,14 @@ def refresh_universe(
     universe: list[dict[str, Any]],
     trial_records: list[dict[str, Any]],
     as_of_date: str,
+    *,
+    finalize_collection: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Return refreshed universe rows and a summary report."""
     trial_tickers, intervention_tickers = _trial_ticker_sets(trial_records)
     refreshed = deepcopy(universe)
-    pending_tickers = []
+    pending_collection_tickers = []
+    pending_coverage_tickers = []
     promoted_tickers = []
     refreshable_biotech_count = 0
 
@@ -145,17 +148,34 @@ def refresh_universe(
             row["coverage_refreshed_as_of"] = as_of_date
             continue
 
-        row["status"] = "pending_data_collection"
-        row["status_reason"] = "coverage_pending:" + ",".join(pending_reasons)
+        collection_complete = (
+            finalize_collection
+            and set(pending_reasons).issubset({"clinical_trials", "scientific_cartography"})
+            and coverage["company_name"] == "covered"
+            and coverage["market_data"] == "covered"
+        )
+        if collection_complete:
+            row["status"] = "pending_coverage"
+            row["status_reason"] = "coverage_unavailable:" + ",".join(pending_reasons)
+            for reason in pending_reasons:
+                coverage[reason] = "unavailable"
+            pending_coverage_tickers.append(ticker)
+        else:
+            row["status"] = "pending_data_collection"
+            row["status_reason"] = "coverage_pending:" + ",".join(pending_reasons)
+            pending_collection_tickers.append(ticker)
         row["coverage_status"] = coverage
         row["coverage_refreshed_as_of"] = as_of_date
-        pending_tickers.append(ticker)
 
     report = {
         "as_of_date": as_of_date,
         "refreshable_biotech_count": refreshable_biotech_count,
-        "marked_pending_count": len(pending_tickers),
-        "marked_pending_tickers": sorted(pending_tickers),
+        "marked_pending_count": len(pending_collection_tickers) + len(pending_coverage_tickers),
+        "marked_pending_tickers": sorted(pending_collection_tickers + pending_coverage_tickers),
+        "pending_collection_count": len(pending_collection_tickers),
+        "pending_collection_tickers": sorted(pending_collection_tickers),
+        "pending_coverage_count": len(pending_coverage_tickers),
+        "pending_coverage_tickers": sorted(pending_coverage_tickers),
         "promoted_active_count": len(promoted_tickers),
         "promoted_active_tickers": sorted(promoted_tickers),
     }
@@ -167,11 +187,21 @@ def main() -> int:
     parser.add_argument("--as-of-date", required=True)
     parser.add_argument("--universe-path", type=Path, default=REPO_ROOT / "production_data" / "universe.json")
     parser.add_argument("--trial-records-path", type=Path, default=REPO_ROOT / "production_data" / "trial_records.json")
+    parser.add_argument(
+        "--finalize-collection",
+        action="store_true",
+        help="Mark post-fetch clinical/cartography gaps as pending_coverage instead of pending collection.",
+    )
     args = parser.parse_args()
 
     universe = json.loads(args.universe_path.read_text(encoding="utf-8"))
     trial_records = json.loads(args.trial_records_path.read_text(encoding="utf-8"))
-    refreshed, report = refresh_universe(universe, trial_records, args.as_of_date)
+    refreshed, report = refresh_universe(
+        universe,
+        trial_records,
+        args.as_of_date,
+        finalize_collection=args.finalize_collection,
+    )
 
     args.universe_path.write_text(json.dumps(refreshed, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, sort_keys=True))
