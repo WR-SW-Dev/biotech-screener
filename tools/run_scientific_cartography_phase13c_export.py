@@ -94,26 +94,27 @@ def scan_for_forbidden_fields(directory: Path) -> Optional[list[str]]:
 
 
 def validate_governance_flags(directory: Path) -> bool:
-    """Verify Phase 13C-generated JSON artifacts have read_only_diagnostic=true.
+    """Verify Phase 13C-generated JSON artifacts have read_only_diagnostic=true."""
+    json_files = sorted(path for path in directory.rglob("*.json") if path.is_file())
 
-    Only validates the Phase 13C manifest, not upstream (Phase 7A/12) artifacts.
-    """
-    manifest_file = directory / "scientific_cartography_manifest.json"
-
-    # Only check the manifest file that Phase 13C generates
-    if manifest_file.exists():
+    for file_path in json_files:
         try:
-            with open(manifest_file) as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            _logger.error("Failed to validate %s: %s", file_path.relative_to(directory), e)
+            return False
 
-            if isinstance(data, dict):
-                governance = data.get("governance", {})
-                if isinstance(governance, dict):
-                    if not governance.get("read_only_diagnostic"):
-                        _logger.error("manifest: governance.read_only_diagnostic not set")
-                        return False
-        except (json.JSONDecodeError, IOError) as e:
-            _logger.error(f"Failed to validate manifest: {e}")
+        if not isinstance(data, dict):
+            _logger.error("%s: JSON artifact is not an object", file_path.relative_to(directory))
+            return False
+
+        governance = data.get("governance")
+        if not isinstance(governance, dict) or governance.get("read_only_diagnostic") is not True:
+            _logger.error(
+                "%s: governance.read_only_diagnostic not set",
+                file_path.relative_to(directory),
+            )
             return False
 
     return True
