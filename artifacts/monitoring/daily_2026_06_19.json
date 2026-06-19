@@ -1,0 +1,159 @@
+{
+  "date": "2026-06-19",
+  "monitoring_day": 9,
+  "timestamp": "2026-06-19T09:00:00.000000Z",
+  "phase": "Phase 2 Monitoring (Path C active)",
+  "data_as_of": "2026-06-18 close (yfinance, all 15 tickers + XBI confirmed). June 19 is pre-market — no intraday data.",
+  "note": "Robinhood MCP not available. All 15 tickers confirmed at June 18 close. SLDB +13.95% with 4.33x volume spike — CRITICAL INVESTIGATION (corporate event). TRVI third consecutive >5% gap day. ERAS 9.64M volume on down day. Portfolio avg P&L +1.88% (improved +2.90pp from Day 8). PRAX exited critical zone. SYRE catalyst T-3 (~June 22). IC governance decision overdue.",
+  "account": {
+    "account_id": "Robinhood 802349084",
+    "equity_fetchable": false,
+    "equity_note": "Robinhood MCP unavailable — baseline equity: start=$100.19 (2026-06-01); Day 9 not refreshed from broker",
+    "cash": 99.87,
+    "buying_power": 200.06,
+    "data_source": "baseline_2026-06-10 (not refreshed)"
+  },
+  "portfolio_overview": {
+    "total_positions": 15,
+    "positions_critical": 1,
+    "positions_flagged": 1,
+    "positions_at_risk": 1,
+    "positions_positive": 8,
+    "positions_negative": 7,
+    "avg_current_price": 61.43,
+    "avg_entry_price": 65.43,
+    "avg_pnl_vs_entry_pct": 1.88,
+    "avg_day_change_pct": 2.94,
+    "vs_day8_pnl_pct_absolute_change": 2.9,
+    "pnl_absolute_change_note": "Portfolio improved +2.90pp vs Day 8 (-1.02% -> +1.88%). Portfolio outperformed XBI on June 18 (+2.94% vs +0.95% = +1.99pp). PRAX exited critical zone, CMPS improved significantly. SLDB surge (+13.95%) contributed. Drawdown vs XBI improved -5.34pp -> -3.43pp (still tripped)."
+  },
+  "positions": [
+    {"ticker": "COGT", "company_name": "Cogent Biosciences, Inc.", "entry_price": 35.24, "current_price": 34.54, "prev_close": 33.67, "pnl_vs_entry_pct": -1.99, "day_change_pct": 2.58, "volume_june18": 4896400, "volume_june17": 2068000, "vol_ratio_june18_vs_june17": 2.37, "catalyst_days_remaining": 12, "catalyst_date_approx": "~2026-07-01", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_VOLUME", "gap_flag": false, "volume_spike_flag": true, "price_as_of": "2026-06-18", "note": "Volume spike 2.37x on June18 (4.90M vs 2.07M). Price +2.58%. Approaching catalyst T-12. Investigate for filing or news driver."},
+    {"ticker": "DNTH", "company_name": "Dianthus Therapeutics, Inc.", "entry_price": 90.94, "current_price": 82.49, "prev_close": 81.89, "pnl_vs_entry_pct": -9.29, "day_change_pct": 0.73, "volume_june18": 2478000, "volume_june17": 870300, "vol_ratio_june18_vs_june17": 2.85, "catalyst_days_remaining": 11, "catalyst_date_approx": "~2026-06-30", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_VOLUME", "gap_flag": false, "volume_spike_flag": true, "price_as_of": "2026-06-18", "note": "Volume spike 2.85x on June18 (2.48M vs 0.87M). Price only +0.73%. High volume on small price move may indicate institutional accumulation near catalyst T-11. Monitor."},
+    {"ticker": "NRIX", "company_name": "Nurix Therapeutics, Inc.", "entry_price": 17.51, "current_price": 17.55, "prev_close": 17.12, "pnl_vs_entry_pct": 0.23, "day_change_pct": 2.51, "volume_june18": 4250800, "volume_june17": 2513900, "vol_ratio_june18_vs_june17": 1.69, "catalyst_days_remaining": 43, "catalyst_date_approx": "~2026-07-31", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18"},
+    {"ticker": "URGN", "company_name": "UroGen Pharma Ltd.", "entry_price": 26.43, "current_price": 33.57, "prev_close": 32.81, "pnl_vs_entry_pct": 27.01, "day_change_pct": 2.32, "volume_june18": 847100, "volume_june17": 547600, "vol_ratio_june18_vs_june17": 1.55, "catalyst_days_remaining": 74, "catalyst_date_approx": "~2026-09-01", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18"},
+    {"ticker": "ALMS", "company_name": "Alumis Inc.", "entry_price": 20.3, "current_price": 23.41, "prev_close": 23.05, "pnl_vs_entry_pct": 15.32, "day_change_pct": 1.56, "volume_june18": 1883300, "volume_june17": 1423500, "vol_ratio_june18_vs_june17": 1.32, "catalyst_days_remaining": 12, "catalyst_date_approx": "~2026-07-01", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18"},
+    {"ticker": "SYRE", "company_name": "Spyre Therapeutics, Inc.", "entry_price": 70.48, "current_price": 88.34, "prev_close": 87.49, "pnl_vs_entry_pct": 25.34, "day_change_pct": 0.97, "volume_june18": 2420400, "volume_june17": 1537200, "vol_ratio_june18_vs_june17": 1.57, "catalyst_days_remaining": 3, "catalyst_date_approx": "~2026-06-22", "mom_state": "tailwind", "tier": "B", "target_weight_pct": 3.33, "status": "FLAG_CATALYST_IMMINENT", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18", "note": "CATALYST IMMINENT T-3: ~June 22. Position +25.34%. Day change +0.97% (modest pre-catalyst move). Volume 1.57x. Position has been strongly positive — MANUAL WATCH for catalyst readout. READ-ONLY."},
+    {"ticker": "RVMD", "company_name": "Revolution Medicines, Inc.", "entry_price": 161.26, "current_price": 162.99, "prev_close": 157.77, "pnl_vs_entry_pct": 1.07, "day_change_pct": 3.31, "volume_june18": 4701600, "volume_june17": 2227400, "vol_ratio_june18_vs_june17": 2.11, "catalyst_days_remaining": 285, "catalyst_date_approx": "~2027-03-31", "mom_state": "tailwind", "tier": "B", "target_weight_pct": 3.33, "status": "FLAG_VOLUME", "gap_flag": false, "volume_spike_flag": true, "price_as_of": "2026-06-18"},
+    {"ticker": "CMPS", "company_name": "COMPASS Pathways Plc", "entry_price": 14.62, "current_price": 12.53, "prev_close": 11.94, "pnl_vs_entry_pct": -14.3, "day_change_pct": 4.94, "volume_june18": 3623400, "volume_june17": 2073400, "vol_ratio_june18_vs_june17": 1.75, "catalyst_days_remaining": 11, "catalyst_date_approx": "~2026-06-30", "mom_state": "tailwind", "tier": "C", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18", "note": "IMPROVING: Loss improved from -18.33% (Day8) to -14.30% (Day9). +4.94% on June18 with 1.74x volume. T-11 catalyst ~June 30. Recovery pattern encouraging — pulled away from -20% threshold."},
+    {"ticker": "SLDB", "company_name": "Solid Biosciences Inc.", "entry_price": 7.26, "current_price": 8.33, "prev_close": 7.31, "pnl_vs_entry_pct": 14.74, "day_change_pct": 13.95, "volume_june18": 14756400, "volume_june17": 3405200, "vol_ratio_june18_vs_june17": 4.33, "catalyst_days_remaining": 118, "catalyst_date_approx": "~2026-10-14", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "CRITICAL_INVESTIGATION", "gap_flag": true, "volume_spike_flag": true, "price_as_of": "2026-06-18", "note": "CRITICAL INVESTIGATION: +13.95% on 14.76M volume (4.33x). Prior Days: 2.64x June17 (+3.39%), 1x June16. Three-day volume escalation with accelerating price. Likely major corporate event — clinical result, partnership, or M&A. Position now +14.74% vs entry. READ-ONLY."},
+    {"ticker": "DRUG", "company_name": "Bright Minds Biosciences Inc.", "entry_price": 86.48, "current_price": 60.66, "prev_close": 59.52, "pnl_vs_entry_pct": -29.86, "day_change_pct": 1.92, "volume_june18": 239400, "volume_june17": 152600, "vol_ratio_june18_vs_june17": 1.57, "catalyst_days_remaining": 135, "catalyst_date_approx": "~2026-10-31", "mom_state": "neutral", "tier": "A", "target_weight_pct": 3.33, "status": "CRITICAL", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18", "note": "Critical loss -29.86%. Volume low: 239K (Jun18) vs 153K (Jun17) = 1.57x — still thin. No apparent catalyst driver. Read-only observation."},
+    {"ticker": "STOK", "company_name": "Stoke Therapeutics, Inc.", "entry_price": 30.51, "current_price": 31.0, "prev_close": 30.26, "pnl_vs_entry_pct": 1.61, "day_change_pct": 2.45, "volume_june18": 1971100, "volume_june17": 953800, "vol_ratio_june18_vs_june17": 2.07, "catalyst_days_remaining": 103, "catalyst_date_approx": "~2026-09-29", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_VOLUME", "gap_flag": false, "volume_spike_flag": true, "price_as_of": "2026-06-18"},
+    {"ticker": "PRAX", "company_name": "Praxis Precision Medicines, Inc.", "entry_price": 338.06, "current_price": 282.31, "prev_close": 270.01, "pnl_vs_entry_pct": -16.49, "day_change_pct": 4.56, "volume_june18": 698600, "volume_june17": 473500, "vol_ratio_june18_vs_june17": 1.48, "catalyst_days_remaining": 12, "catalyst_date_approx": "~2026-07-01", "mom_state": "tailwind", "tier": "B", "target_weight_pct": 3.33, "status": "FLAG_LOSS", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18", "note": "IMPROVING: Exited critical zone. Loss improved from -20.13% (Day8) to -16.49% (Day9). +4.56% on June18. T-12 catalyst ~July 1. Volume 1.48x. Recovery trend positive — watch for continuation."},
+    {"ticker": "TRVI", "company_name": "Trevi Therapeutics, Inc.", "entry_price": 13.99, "current_price": 17.21, "prev_close": 16.37, "pnl_vs_entry_pct": 23.02, "day_change_pct": 5.13, "volume_june18": 2960000, "volume_june17": 2675600, "vol_ratio_june18_vs_june17": 1.11, "catalyst_days_remaining": 11, "catalyst_date_approx": "~2026-06-30", "mom_state": "neutral", "tier": "C", "target_weight_pct": 3.33, "status": "FLAG_GAP", "gap_flag": true, "volume_spike_flag": false, "price_as_of": "2026-06-18", "note": "GAP +5.13% June17->18 (THIRD consecutive >5% day: +5.05% Jun15->16, +6.30% Jun16->17, +5.13% Jun17->18). Position +23.02% vs entry. T-11 catalyst ~June 30. Volume 1.11x (calmer after prior spikes). News driver still unidentified from repo data."},
+    {"ticker": "ERAS", "company_name": "Erasca, Inc.", "entry_price": 14.68, "current_price": 13.67, "prev_close": 13.98, "pnl_vs_entry_pct": -6.88, "day_change_pct": -2.22, "volume_june18": 9642000, "volume_june17": 4491200, "vol_ratio_june18_vs_june17": 2.15, "catalyst_days_remaining": 165, "catalyst_date_approx": "~2026-12-01", "mom_state": "tailwind", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_VOLUME_DOWN", "gap_flag": false, "volume_spike_flag": true, "price_as_of": "2026-06-18", "note": "FLAG: Down -2.22% on 9.64M volume (2.15x June17). Three-day pattern: -7.28% (Jun16, 3.93M), +4.48% (Jun17, 4.49M), -2.22% (Jun18, 9.64M). Volume escalating on both up and down days — active institutional trading. Investigate for M&A, 13D/13G filing, or major news."},
+    {"ticker": "XENE", "company_name": "Xenon Pharmaceuticals Inc.", "entry_price": 53.66, "current_price": 52.91, "prev_close": 53.2, "pnl_vs_entry_pct": -1.4, "day_change_pct": -0.55, "volume_june18": 1927700, "volume_june17": 1155300, "vol_ratio_june18_vs_june17": 1.67, "catalyst_days_remaining": 43, "catalyst_date_approx": "~2026-07-31", "mom_state": "tailwind", "tier": "B", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "volume_spike_flag": false, "price_as_of": "2026-06-18"}
+  ],
+  "performance_summary": {
+    "top_3_gainers": [
+      {"ticker": "URGN", "company_name": "UroGen Pharma Ltd.", "entry_price": 26.43, "current_price": 33.57, "pnl_vs_entry_pct": 27.01, "day_change_pct": 2.32},
+      {"ticker": "SYRE", "company_name": "Spyre Therapeutics, Inc.", "entry_price": 70.48, "current_price": 88.34, "pnl_vs_entry_pct": 25.34, "day_change_pct": 0.97},
+      {"ticker": "TRVI", "company_name": "Trevi Therapeutics, Inc.", "entry_price": 13.99, "current_price": 17.21, "pnl_vs_entry_pct": 23.02, "day_change_pct": 5.13}
+    ],
+    "top_3_losers": [
+      {"ticker": "CMPS", "company_name": "COMPASS Pathways Plc", "entry_price": 14.62, "current_price": 12.53, "pnl_vs_entry_pct": -14.3, "day_change_pct": 4.94},
+      {"ticker": "PRAX", "company_name": "Praxis Precision Medicines, Inc.", "entry_price": 338.06, "current_price": 282.31, "pnl_vs_entry_pct": -16.49, "day_change_pct": 4.56},
+      {"ticker": "DRUG", "company_name": "Bright Minds Biosciences Inc.", "entry_price": 86.48, "current_price": 60.66, "pnl_vs_entry_pct": -29.86, "day_change_pct": 1.92}
+    ]
+  },
+  "alerts": {
+    "gap_events_gt5pct": [
+      {"ticker": "SLDB", "day_change_pct": 13.95, "date": "2026-06-18", "vol_ratio": 4.33, "volume": 14756400, "note": "CRITICAL: +13.95% on 14.76M volume (4.33x). Three-day volume escalation: 1.29M (Jun16) -> 3.41M (Jun17) -> 14.76M (Jun18). Almost certainly a major corporate event. Investigate IMMEDIATELY for clinical readout, partnership, M&A, or SEC filing."},
+      {"ticker": "TRVI", "day_change_pct": 5.13, "date": "2026-06-18", "vol_ratio": 1.11, "volume": 2960000, "note": "THIRD consecutive >5% up day: +5.05% Jun15->16, +6.30% Jun16->17, +5.13% Jun17->18. Position +23.02% vs entry. T-11 catalyst ~June 30. Volume calmed (1.11x) — continuation rather than new event."}
+    ],
+    "gap_count": 2,
+    "volume_flags": [
+      {"ticker": "ERAS", "vol_ratio": 2.15, "volume_june18": 9642000, "volume_june17": 4491200, "price_change_pct": -2.22, "severity": "HIGH", "note": "9.64M volume on DOWN day (-2.22%). Three-day abnormal volume: 3.93M (Jun16, -7.28%), 4.49M (Jun17, +4.48%), 9.64M (Jun18, -2.22%). Total ~18M vs prior ADV ~2M. Pattern consistent with M&A or major block trading. INVESTIGATE."},
+      {"ticker": "DNTH", "vol_ratio": 2.85, "volume_june18": 2478000, "volume_june17": 870300, "price_change_pct": 0.73, "severity": "MEDIUM", "note": "2.85x volume spike on small +0.73% price move. T-11 catalyst approaching. May reflect institutional positioning."},
+      {"ticker": "COGT", "vol_ratio": 2.37, "volume_june18": 4896400, "volume_june17": 2068000, "price_change_pct": 2.58, "severity": "MEDIUM", "note": "2.37x volume spike with +2.58% price. T-12 catalyst. Monitor for news or institutional activity."},
+      {"ticker": "RVMD", "vol_ratio": 2.11, "volume_june18": 4701600, "volume_june17": 2227400, "price_change_pct": 3.31, "severity": "LOW", "note": "2.11x volume with +3.31% price. No near-term catalyst (T-285). Likely sector-driven."},
+      {"ticker": "STOK", "vol_ratio": 2.06, "volume_june18": 1971100, "volume_june17": 953800, "price_change_pct": 2.45, "severity": "LOW", "note": "2.06x volume with +2.45% price. Second volume spike in two days. T-103 catalyst. Monitor."}
+    ],
+    "positions_gt20pct_loss": [{"ticker": "DRUG", "pnl_vs_entry_pct": -29.86}],
+    "positions_gt15pct_loss": [{"ticker": "PRAX", "pnl_vs_entry_pct": -16.49}],
+    "positions_approaching_loss": [{"ticker": "CMPS", "pnl_vs_entry_pct": -14.3}],
+    "critical_position_count": 1,
+    "drawdown_gate_flag": true,
+    "drawdown_gate_note": "TRIPPED: portfolio avg +1.88% vs XBI +5.31% since entry -> relative -3.43pp (threshold -2.0pp). IMPROVING from Day 8 (-5.34pp). Portfolio outperformed XBI on day (+1.99pp). Drawdown narrowing but still exceeds threshold.",
+    "emergency_exit_armed": true,
+    "ic_first_print_governance_checkpoint": "OVERDUE",
+    "ic_first_print_note": "IC First Print checkpoint was June 17 (Day 7). Now Day 9 — no governance decision recorded. EXTEND vs REVERT decision outstanding. OPERATOR ACTION REQUIRED.",
+    "special_alert": {
+      "title": "SLDB CORPORATE EVENT — INVESTIGATE IMMEDIATELY",
+      "detail": "SLDB +13.95% on 14.76M volume (4.33x) on June 18. Three-day volume escalation (1.29M->3.41M->14.76M) preceded by Day 8 flag. Almost certainly a major event: clinical readout, partnership, or M&A. Position flipped from +0.69% (Day8) to +14.74% (Day9). Read-only — manual investigation needed.",
+      "eras_secondary_alert": "ERAS 9.64M volume on June 18 (2.15x) on down day (-2.22%). Three-day cumulative volume ~18M vs prior ADV ~2M. Investigate SEC 13D/13G filings and news."
+    }
+  },
+  "governance_gates": {
+    "portfolio_return_pct": 1.88,
+    "xbi_entry_price": 133.62,
+    "xbi_current_price": 140.72,
+    "xbi_return_since_entry_pct": 5.31,
+    "drawdown_vs_xbi_pp": -3.43,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "TRIPPED — -3.43pp vs -2.0pp threshold. IMPROVING from Day 8 (-5.34pp). Portfolio outperformed XBI June 18 (+1.99pp). Governance action required.",
+    "ic_observable": "OVERDUE — IC checkpoint passed June 17. No governance decision recorded. EXTEND or REVERT required.",
+    "jaccard_13f": 0.875,
+    "jaccard_threshold": 0.7,
+    "jaccard_status": "PASS",
+    "emergency_exit_armed": true,
+    "all_gates_clear": false
+  },
+  "catalyst_watch": {
+    "imminent_3d": [{"ticker": "SYRE", "catalyst_days_remaining": 3, "catalyst_date_approx": "~2026-06-22", "mom_state": "tailwind", "tier": "B", "pnl_vs_entry_pct": 25.34, "day_change_pct": 0.97, "volume_june18": 2420400, "vol_ratio": 1.57, "note": "EXTREMELY IMMINENT T-3. Position +25.34%. Modest +0.97% June18. Volume 1.57x. Strong pre-catalyst drift. MANUAL WATCH. Read-only."}],
+    "near_term_7d": [],
+    "horizon_14d": [
+      {"ticker": "DNTH", "catalyst_days_remaining": 11, "catalyst_date_approx": "~2026-06-30", "tier": "A", "pnl_vs_entry_pct": -9.29, "note": "Vol spike 2.85x June18. Monitor."},
+      {"ticker": "CMPS", "catalyst_days_remaining": 11, "catalyst_date_approx": "~2026-06-30", "tier": "C", "pnl_vs_entry_pct": -14.3, "note": "Recovering. Binary risk at catalyst."},
+      {"ticker": "TRVI", "catalyst_days_remaining": 11, "catalyst_date_approx": "~2026-06-30", "tier": "C", "pnl_vs_entry_pct": 23.02, "note": "Third consecutive >5% gap. Strong pre-catalyst drift."},
+      {"ticker": "COGT", "catalyst_days_remaining": 12, "catalyst_date_approx": "~2026-07-01", "tier": "A", "pnl_vs_entry_pct": -1.99},
+      {"ticker": "ALMS", "catalyst_days_remaining": 12, "catalyst_date_approx": "~2026-07-01", "tier": "A", "pnl_vs_entry_pct": 15.32},
+      {"ticker": "PRAX", "catalyst_days_remaining": 12, "catalyst_date_approx": "~2026-07-01", "tier": "B", "pnl_vs_entry_pct": -16.49, "note": "Recovering, exited critical zone. T-12 binary event."}
+    ]
+  },
+  "benchmark": {
+    "xbi_day_change_pct": 0.95,
+    "xbi_current_price": 140.72,
+    "xbi_prev_close": 139.39,
+    "xbi_entry_price": 133.62,
+    "xbi_since_entry_pct": 5.31,
+    "xbi_volume_june18": 9563000,
+    "portfolio_avg_vs_xbi_pp": -3.43,
+    "portfolio_outperformed_on_day": true,
+    "portfolio_day_vs_xbi_pp": 1.99,
+    "drawdown_trend_pp": [-6.70, -5.84, -3.80, -2.56, -4.32, -5.34, -3.43],
+    "drawdown_trend_dates": ["2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19"],
+    "trend_note": "Drawdown improved from -5.34pp (Day8) to -3.43pp (Day9). Portfolio +2.94% outpaced XBI +0.95% (+1.99pp). Trend reversed — improving after two consecutive worsening days. XBI now +5.31% since entry. Bear/neutral alpha engine in bull conditions."
+  },
+  "data_quality": {
+    "all_tickers_fresh_june18": true,
+    "yfinance_data_available_for_all_15": true,
+    "tickers_with_june18_close": ["COGT","DNTH","NRIX","URGN","ALMS","SYRE","RVMD","CMPS","SLDB","DRUG","STOK","PRAX","TRVI","ERAS","XENE"],
+    "xbi_june18_confirmed": true,
+    "robinhood_mcp_status": "UNAVAILABLE",
+    "data_source": "yfinance",
+    "data_currency_note": "All 15 tickers + XBI confirmed at June 18 close. NRIX confirmed individually (resolves NaN in bulk download). June 19 is pre-market — will refresh to June 19 close in Day 10."
+  },
+  "operational_status": {
+    "price_data_currency": "2026-06-18 close (all 15 tickers + XBI, confirmed via yfinance)",
+    "snapshot_generation": "2026-06-19 pre-market",
+    "portfolio_immutability": "Read-only observation (no trades executed)",
+    "no_unauthorized_trades": true,
+    "robinhood_mcp_status": "UNAVAILABLE",
+    "missed_run_flag": false,
+    "governance_action_required": true,
+    "governance_action": "IC First Print decision OVERDUE (was due June 17). EXTEND or REVERT required. Drawdown gate tripped at -3.43pp (threshold -2.0pp), improving. SYRE catalyst T-3 (~June 22). SLDB corporate event needs manual investigation."
+  },
+  "next_monitoring_actions": [
+    "1. [GOVERNANCE — OVERDUE] IC First Print decision: was due June 17. Now Day 9. EXTEND (continue to Day 30 ~July 1) or REVERT. Drawdown at -3.43pp improving — may inform decision.",
+    "2. [CRITICAL INVESTIGATE] SLDB: +13.95% on 14.76M volume (4.33x) June 18. Three-day volume escalation. Almost certainly a major corporate event — clinical readout, partnership, or M&A. Check SEC EDGAR, clinicaltrials.gov, news.",
+    "3. [INVESTIGATE] ERAS: 9.64M volume June 18 (2.15x) on -2.22% day. Three-day cumulative ~18M vs prior ADV ~2M. Investigate SEC 13D/13G, news.",
+    "4. [CATALYST T-3] SYRE: ~June 22 readout. Position +25.34%. Momentum sustained. Monitor for halt/announcement. Read-only.",
+    "5. [MONITOR] TRVI: Third consecutive >5% gap day. Position +23.02%. T-11 catalyst. Identify news driver.",
+    "6. [IMPROVING — WATCH] PRAX: Exited critical zone (-20.13% -> -16.49%). +4.56% June 18. T-12 catalyst.",
+    "7. [IMPROVING — WATCH] CMPS: Improved significantly (-18.33% -> -14.30%). T-11 catalyst. Binary risk remains.",
+    "8. [CRITICAL — OBSERVE] DRUG: -29.86%. Thin volume. Read-only.",
+    "9. [GATE] Drawdown gate -3.43pp (threshold -2.0pp), improving. Portfolio outperformed XBI June 18.",
+    "10. [CATALYST CLUSTER] DNTH/CMPS/TRVI T-11 (~June 30), COGT/ALMS/PRAX T-12 (~July 1). Six catalysts within 12 days. High event risk window approaching."
+  ]
+}
