@@ -13,6 +13,96 @@ from datetime import date
 from pathlib import Path
 
 
+def _normalise_ticker(ticker):
+    """Return a clean uppercase ticker string."""
+    return str(ticker or "").strip().upper()
+
+
+def _iter_holdings_for_source(holdings, source_key):
+    """Yield ticker rows from either legacy list or richer ETF holding objects."""
+    rows = holdings.get(source_key, [])
+    if isinstance(rows, dict) and "constituents" in rows:
+        rows = rows["constituents"]
+    if not isinstance(rows, list):
+        return
+    for row in rows:
+        yield row
+
+
+def _ticker_from_holding(row):
+    """Extract ticker from a holding row."""
+    if isinstance(row, str):
+        return _normalise_ticker(row)
+    if not isinstance(row, dict):
+        return ""
+    for key in ("ticker", "symbol", "Ticker", "Symbol"):
+        if row.get(key):
+            return _normalise_ticker(row[key])
+    return ""
+
+
+def _company_name_from_holding(row):
+    """Extract company/security name from a holding row when ETF metadata has it."""
+    if not isinstance(row, dict):
+        return None
+    for key in ("company_name", "name", "security_name", "Security Name", "Name", "issuer", "Issuer"):
+        value = row.get(key)
+        if value and str(value).strip():
+            return str(value).strip()
+    return None
+
+
+def _extract_ticker_metadata(holdings):
+    """Build ticker -> source/name metadata from ETF holdings."""
+    metadata = {}
+    for source_key, source_name in (("xbi", "XBI"), ("ibb", "IBB"), ("nbi", "NBI")):
+        for row in _iter_holdings_for_source(holdings, source_key):
+            ticker = _ticker_from_holding(row)
+            if not ticker:
+                continue
+            entry = metadata.setdefault(ticker, {"sources": set(), "company_name": None})
+            entry["sources"].add(source_name)
+            company_name = _company_name_from_holding(row)
+            if company_name and not entry["company_name"]:
+                entry["company_name"] = company_name
+
+    return {
+        ticker: {
+            "sources": sorted(values["sources"]),
+            "company_name": values["company_name"],
+        }
+        for ticker, values in metadata.items()
+    }
+
+
+def _build_new_security(ticker, metadata, today):
+    """Create a new universe entry for an ETF ticker awaiting data coverage."""
+    company_name = metadata.get("company_name")
+    sources = metadata.get("sources", [])
+    entry = {
+        "ticker": ticker,
+        "name": company_name,
+        "exchange": metadata.get("exchange") or "",
+        "sector": "Biotechnology",
+        "status": "pending_data_collection",
+        "added_from_etf": True,
+        "added_date": today,
+        "etf_sources": sources,
+        "market_cap": None,
+        "description": f'Added from ETF holdings ({", ".join(sources)})',
+        "coverage_status": {
+            "market_data": "pending",
+            "financials": "pending",
+            "clinical_trials": "pending",
+            "scientific_cartography": "pending",
+        },
+    }
+    if company_name:
+        entry["company_name"] = company_name
+        entry["market_data"] = {"company_name": company_name}
+    return entry
+
+
 def add_etf_tickers_to_universe():
     """Add complete ETF holdings to universe"""
 
@@ -31,11 +121,9 @@ def add_etf_tickers_to_universe():
     with open(etf_file) as f:
         holdings = json.load(f)
 
-    # Get all unique ETF tickers
-    all_etf_tickers = set()
-    all_etf_tickers.update(holdings.get("xbi", []))
-    all_etf_tickers.update(holdings.get("ibb", []))
-    all_etf_tickers.update(holdings.get("nbi", []))
+    # Get all unique ETF tickers and any available company-name metadata.
+    ticker_metadata = _extract_ticker_metadata(holdings)
+    all_etf_tickers = set(ticker_metadata)
 
     print(f"\n📊 Complete ETF universe: {len(all_etf_tickers)} tickers")
 
@@ -68,14 +156,7 @@ def add_etf_tickers_to_universe():
     print(f"📊 Missing from universe: {len(missing_tickers)} tickers")
     print("\n📝 Tickers to add (first 20):")
     for i, ticker in enumerate(sorted(missing_tickers)[:20], 1):
-        # Determine which ETFs contain this ticker
-        sources = []
-        if ticker in holdings.get("xbi", []):
-            sources.append("XBI")
-        if ticker in holdings.get("ibb", []):
-            sources.append("IBB")
-        if ticker in holdings.get("nbi", []):
-            sources.append("NBI")
+        sources = ticker_metadata[ticker]["sources"]
 
         print(f"   {i:2d}. {ticker:6s}  ({', '.join(sources)})")
 
@@ -95,28 +176,8 @@ def add_etf_tickers_to_universe():
     today = date.today().isoformat()
 
     for ticker in sorted(missing_tickers):
-        # Determine which ETFs contain this ticker
-        sources = []
-        if ticker in holdings.get("xbi", []):
-            sources.append("XBI")
-        if ticker in holdings.get("ibb", []):
-            sources.append("IBB")
-        if ticker in holdings.get("nbi", []):
-            sources.append("NBI")
-
-        # Create new security entry
-        new_security = {
-            "ticker": ticker,
-            "name": f"{ticker}",  # Will be populated by data collection
-            "exchange": "NASDAQ",  # Most biotech are NASDAQ (update later if needed)
-            "sector": "Biotechnology",
-            "status": "active",
-            "added_from_et": True,
-            "added_date": today,
-            "etf_sources": sources,
-            "market_cap": None,  # Populate later
-            "description": f'Added from ETF holdings ({", ".join(sources)})',
-        }
+        # Create new security entry as pending until market/scientific data is populated.
+        new_security = _build_new_security(ticker, ticker_metadata[ticker], today)
 
         universe.append(new_security)
         added_count += 1
