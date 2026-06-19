@@ -1881,7 +1881,7 @@
     "name": "Adaptive Biotechnologies Corporation",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -1964,13 +1964,12 @@
     "R&D": 72006000,
     "NetIncome": -20033000,
     "Revenue": 70874000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Adaptive Biotechnologies Corporation"
@@ -10104,7 +10103,7 @@
     "name": "Bruker Corporation",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -10190,13 +10189,12 @@
     "COGS": 1330800000,
     "R&D": 295600000,
     "NetIncome": 14400000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Bruker Corporation"
@@ -10651,7 +10649,7 @@
     "name": "Codexis, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -10734,13 +10732,12 @@
     "Revenue": 15248000,
     "R&D": 40586000,
     "NetIncome": -8704000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Codexis, Inc."
@@ -13192,7 +13189,7 @@
     "name": "Castle Biosciences, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -13283,13 +13280,12 @@
     "R&D": 38335000,
     "NetIncome": -14522000,
     "Revenue": 83679000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Castle Biosciences, Inc."
@@ -13643,7 +13639,7 @@
     "name": "Definium Therapeutics, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -13719,13 +13715,12 @@
     "ShareholdersEquity": 130596000,
     "R&D": 84144000,
     "NetIncome": -77098000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Definium Therapeutics, Inc."
@@ -17512,7 +17507,7 @@
     "name": "Fulgent Genetics, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -17594,13 +17589,12 @@
     "COGS": 141042000,
     "R&D": 39735000,
     "NetIncome": -24826000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Fulgent Genetics, Inc."
@@ -17610,7 +17604,7 @@
     "name": "Fortrea Holdings Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -17688,13 +17682,12 @@
     "ShareholdersEquity": 580800000,
     "NetIncome": -23600000,
     "Revenue": 636500000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Fortrea Holdings Inc."
@@ -27180,8 +27173,7 @@
   {
     "ticker": "LGND",
     "name": "Ligand Pharmaceuticals Incorporated",
-    "status": "pending_coverage",
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
+    "status": "active",
     "market_cap_usd": "3828074752",
     "price_usd": "194.50",
     "shares_outstanding": "19681720",
@@ -27314,8 +27306,8 @@
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Ligand Pharmaceuticals Incorporated",
@@ -28818,7 +28810,7 @@
     "name": "Myriad Genetics, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -28905,13 +28897,12 @@
     "COGS": 110700000,
     "R&D": 81300000,
     "NetIncome": -34100000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Myriad Genetics, Inc."
@@ -32301,7 +32292,7 @@
     "name": "Personalis, Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -32381,13 +32372,12 @@
     "R&D": 37192000,
     "NetIncome": -30032000,
     "Revenue": 15472000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Personalis, Inc."
@@ -36238,8 +36228,7 @@
   {
     "ticker": "RXRX",
     "name": "Recursion Pharmaceuticals, Inc.",
-    "status": "pending_coverage",
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
+    "status": "active",
     "market_cap_usd": "2345682432",
     "price_usd": "4.50",
     "shares_outstanding": "514190251",
@@ -36370,8 +36359,8 @@
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Recursion Pharmaceuticals, Inc.",
@@ -44663,7 +44652,7 @@
     "name": "Viatris Inc.",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
-    "status": "pending_coverage",
+    "status": "active",
     "added_from_etf": true,
     "added_date": "2026-01-07",
     "etf_sources": [
@@ -44744,13 +44733,12 @@
     "Revenue": 3509700000,
     "R&D": 691200000,
     "NetIncome": -170000000,
-    "status_reason": "coverage_unavailable:clinical_trials,scientific_cartography",
     "coverage_status": {
       "company_name": "covered",
       "market_data": "covered",
       "financials": "covered",
-      "clinical_trials": "unavailable",
-      "scientific_cartography": "unavailable"
+      "clinical_trials": "covered",
+      "scientific_cartography": "covered"
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Viatris Inc."

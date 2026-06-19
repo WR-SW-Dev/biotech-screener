@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from collect_ctgov_data import get_trials_for_ticker  # noqa: E402
+from collect_ctgov_data import _fetch_all_trials, get_trials_for_ticker  # noqa: E402
 from collect_financial_data import get_cik_from_ticker, get_company_facts  # noqa: E402
 from tools.refresh_eligible_biotech_universe import refresh_universe  # noqa: E402
 
@@ -26,7 +26,80 @@ def _ticker(row: dict[str, Any]) -> str:
 
 
 def _pending_tickers(universe: list[dict[str, Any]]) -> list[str]:
-    return sorted({_ticker(row) for row in universe if _ticker(row) and row.get("status") == "pending_data_collection"})
+    return sorted(
+        {
+            _ticker(row)
+            for row in universe
+            if _ticker(row) and row.get("status") in {"pending_data_collection", "pending_coverage"}
+        }
+    )
+
+
+def _company_search_names(row: dict[str, Any]) -> list[str]:
+    """Return sponsor search names from universe company metadata."""
+    market_data = row.get("market_data") if isinstance(row.get("market_data"), dict) else {}
+    candidates = [
+        row.get("company_name"),
+        row.get("company"),
+        market_data.get("company_name"),
+        row.get("name"),
+    ]
+    names = []
+    seen = set()
+    for value in candidates:
+        if not value:
+            continue
+        name = str(value).strip()
+        if not name or name.lower() in {"healthcare", "biotechnology", "biotech", "unknown"}:
+            continue
+        for variant in (name, _strip_company_suffix(name)):
+            if not variant or variant.lower() in seen:
+                continue
+            seen.add(variant.lower())
+            names.append(variant)
+    return names
+
+
+def _strip_company_suffix(name: str) -> str:
+    """Strip common corporate suffixes without reducing to a generic first word."""
+    import re
+
+    current = name.strip()
+    suffixes = [
+        r",?\s+incorporated\.?$",
+        r",?\s+inc\.?$",
+        r",?\s+corporation$",
+        r",?\s+corp\.?$",
+        r",?\s+limited$",
+        r",?\s+ltd\.?$",
+        r",?\s+plc$",
+        r",?\s+s\.?a\.?$",
+        r",?\s+se$",
+        r",?\s+ag$",
+        r",?\s+n\.?v\.?$",
+    ]
+    for _ in range(4):
+        for pattern in suffixes:
+            stripped = re.sub(pattern, "", current, flags=re.IGNORECASE).strip(" ,.-")
+            if stripped != current and stripped:
+                current = stripped
+                break
+        else:
+            return current
+    return current
+
+
+def _fetch_trials_for_universe_row(row: dict[str, Any], ticker: str) -> list[dict[str, Any]]:
+    """Fetch CTGov trials via sponsor-specific company-name searches."""
+    seen = set()
+    trials = []
+    for name in _company_search_names(row):
+        for trial in _fetch_all_trials({"query.spons": name}, ticker):
+            nct_id = trial.get("nct_id")
+            if nct_id and nct_id not in seen:
+                seen.add(nct_id)
+                trials.append(trial)
+    return trials
 
 
 def _fetch_market_data(ticker: str, as_of_date: str) -> dict[str, Any] | None:
@@ -164,6 +237,7 @@ def fetch_pending_data(
     market_fetcher: Callable[[str, str], dict[str, Any] | None] = _fetch_market_data,
     financial_fetcher: Callable[[dict[str, Any], str, str], dict[str, Any] | None] = _fetch_financial_data,
     trial_fetcher: Callable[[str], list[dict[str, Any]]] = get_trials_for_ticker,
+    fallback_trial_fetcher: Callable[[dict[str, Any], str], list[dict[str, Any]]] = _fetch_trials_for_universe_row,
     sleep_seconds: float = 0.2,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     """Fetch and merge data for pending rows."""
@@ -201,6 +275,8 @@ def fetch_pending_data(
 
         try:
             trials = trial_fetcher(ticker)
+            if not trials:
+                trials = fallback_trial_fetcher(row, ticker)
             if trials:
                 fetched_trials.extend(trials)
                 report["trial_success"].append(ticker)

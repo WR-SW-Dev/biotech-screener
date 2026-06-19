@@ -47,6 +47,7 @@ def test_fetch_pending_data_promotes_fully_covered_row():
         market_fetcher=market_fetcher,
         financial_fetcher=financial_fetcher,
         trial_fetcher=trial_fetcher,
+        fallback_trial_fetcher=lambda row, ticker: [],
         sleep_seconds=0,
     )
 
@@ -74,6 +75,7 @@ def test_fetch_pending_data_keeps_row_pending_without_trials():
         },
         financial_fetcher=lambda row, ticker, as_of_date: {"ticker": ticker, "cash": 1},
         trial_fetcher=lambda ticker: [],
+        fallback_trial_fetcher=lambda row, ticker: [],
         sleep_seconds=0,
     )
 
@@ -82,3 +84,36 @@ def test_fetch_pending_data_keeps_row_pending_without_trials():
     assert refreshed[0]["coverage_status"]["scientific_cartography"] == "unavailable"
     assert merged_trials == []
     assert report["trial_success"] == []
+
+
+def test_fetch_pending_data_uses_company_name_trial_fallback():
+    universe = [_pending_row("FALL")]
+    universe[0]["company_name"] = "Fallback Therapeutics, Inc."
+    trials = []
+
+    refreshed, merged_trials, report = fetch_pending_data(
+        universe,
+        trials,
+        "2026-06-19",
+        market_fetcher=lambda ticker, as_of_date: {
+            "price": 12.0,
+            "market_cap": 600_000_000,
+            "company_name": "Fallback Therapeutics, Inc.",
+            "industry": "Biotechnology",
+        },
+        financial_fetcher=lambda row, ticker, as_of_date: {"ticker": ticker, "cash": 1},
+        trial_fetcher=lambda ticker: [],
+        fallback_trial_fetcher=lambda row, ticker: [
+            {
+                "ticker": ticker,
+                "nct_id": "NCT00000002",
+                "conditions": ["Disease"],
+                "interventions": ["FALL-101"],
+            }
+        ],
+        sleep_seconds=0,
+    )
+
+    assert refreshed[0]["status"] == "active"
+    assert len(merged_trials) == 1
+    assert report["trial_success"] == ["FALL"]
