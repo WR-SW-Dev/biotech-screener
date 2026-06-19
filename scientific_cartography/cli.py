@@ -33,8 +33,8 @@ def build_command(args: argparse.Namespace) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Initialize normalizers
-    disease_normalizer = DiseaseNormalizer(as_of_date=args.as_of_date)
-    stage_normalizer = StageNormalizer()
+    _disease_normalizer = DiseaseNormalizer(as_of_date=args.as_of_date)
+    _stage_normalizer = StageNormalizer()
 
     # Write a basic coverage report (Phase 1)
     report = {

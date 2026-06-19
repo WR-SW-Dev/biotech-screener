@@ -22,6 +22,16 @@ def test_default_behavior_unchanged():
     assert sig.parameters["scientific_cartography_phase13c_strict"].default is False
 
 
+def test_phase13c_uses_date_level_cartography_output_dir():
+    """Phase 13C should not receive a pre-nested diseases/ output directory."""
+    from tools.run_daily_production import _scientific_cartography_output_dir
+
+    output_dir = _scientific_cartography_output_dir("2026-06-18")
+
+    assert output_dir.as_posix().endswith("artifacts/scientific_cartography/2026-06-18")
+    assert output_dir.name != "diseases"
+
+
 def test_manifest_generation():
     """Verify manifest.json structure and content."""
     from tools.run_scientific_cartography_phase13c_export import generate_manifest

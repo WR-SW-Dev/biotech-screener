@@ -3,7 +3,6 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
 from scientific_cartography.schemas.landscape_feature_schema import LandscapeFeatureRecord

@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 # Import the wrapper function
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "tools"))
@@ -68,7 +67,7 @@ class TestPhase7DiagnosticPipeline:
                 mock_ctgov_inst.load_from_cache.return_value = []
                 mock_ctgov.return_value = mock_ctgov_inst
 
-                result = run_diagnostics(args)
+                run_diagnostics(args)
 
                 # May succeed or have warnings, but should write status
                 assert (output_dir / "scientific_cartography_status.json").exists()

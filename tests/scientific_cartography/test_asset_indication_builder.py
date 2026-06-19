@@ -3,8 +3,6 @@
 import pytest
 
 from scientific_cartography.build.asset_indication_builder import AssetIndicationBuilder
-from scientific_cartography.ingest.ctgov_ingest import CTGovIngest
-from scientific_cartography.ingest.existing_universe_ingest import ExistingUniverseIngest
 from scientific_cartography.normalize.asset_alias_resolver import AssetAliasResolver
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
 from scientific_cartography.normalize.sponsor_resolver import SponsorResolver

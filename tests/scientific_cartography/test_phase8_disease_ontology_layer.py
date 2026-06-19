@@ -5,7 +5,7 @@ Tests for deterministic disease ontology mapping with MONDO spine.
 
 import pytest
 
-from scientific_cartography.build.disease_ontology_builder import DiseaseOntologyBuilder, DiseaseOntologyCoverageReport
+from scientific_cartography.build.disease_ontology_builder import DiseaseOntologyBuilder
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
 from scientific_cartography.schemas.disease_ontology_schema import DiseaseOntologyRecord
 

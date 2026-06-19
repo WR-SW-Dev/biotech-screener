@@ -4,7 +4,6 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from scientific_cartography.cli import export_artifacts_command
 from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord

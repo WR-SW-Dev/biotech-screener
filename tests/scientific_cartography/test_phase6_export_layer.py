@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter
-from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
 from scientific_cartography.schemas.landscape_feature_schema import LandscapeFeatureRecord
 from scientific_cartography.schemas.program_schema import ProgramRecord
 

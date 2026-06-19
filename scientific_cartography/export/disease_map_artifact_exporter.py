@@ -163,7 +163,6 @@ class DiseaseMapArtifactExporter:
         asset_records = disease_data["asset_records"]
         clusters = disease_data["clusters"]
         context_features = disease_data["context_features"]
-        ontology = disease_data["disease_ontology"]
 
         # Disease identity
         normalized_disease_name = asset_records[0].normalized_disease_name if asset_records else disease_key

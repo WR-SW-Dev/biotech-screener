@@ -1,6 +1,5 @@
 """Tests for Scientific Cartography ticker mapping resolution via sponsor matching."""
 
-import pytest
 
 from scientific_cartography.build.asset_indication_builder import AssetIndicationBuilder
 from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
@@ -109,6 +108,61 @@ class TestSponsorResolverSuffixStripping:
         result = resolver.resolve("Test Company Ltd")
         assert result is not None
         assert result["ticker"] == "TEST"
+
+    def test_multi_suffix_company_name_match(self):
+        """'Alnylam Pharmaceuticals' should match 'Alnylam Pharmaceuticals, Inc.'."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ALNY",
+                ticker="ALNY",
+                company_name="Alnylam Pharmaceuticals, Inc.",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+        resolver = SponsorResolver(company_records=companies)
+        result = resolver.resolve("Alnylam Pharmaceuticals")
+        assert result is not None
+        assert result["ticker"] == "ALNY"
+        assert result["confidence"] == 0.85
+
+    def test_international_suffix_punctuation_match(self):
+        """'Abivax S.A.' should match universe company name 'Abivax SA'."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ABVX",
+                ticker="ABVX",
+                company_name="Abivax SA",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+        resolver = SponsorResolver(company_records=companies)
+        result = resolver.resolve("Abivax S.A.")
+        assert result is not None
+        assert result["ticker"] == "ABVX"
+
+    def test_normalized_exact_stem_match(self):
+        """'argenx' should match universe company name 'argenx SE'."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ARGX",
+                ticker="ARGX",
+                company_name="argenx SE",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+        resolver = SponsorResolver(company_records=companies)
+        result = resolver.resolve("argenx")
+        assert result is not None
+        assert result["ticker"] == "ARGX"
 
     def test_unknown_sponsor_remains_null(self):
         """Unknown sponsor should result in null ticker."""
@@ -237,6 +291,101 @@ class TestAssetIndicationBuilderTickerMapping:
         programs, _ = builder.build_from_trials([trial], companies)
         assert len(programs) > 0
         assert programs[0].ticker == "VRTX"
+
+    def test_program_record_uses_trial_ticker_when_sponsor_unmatched(self):
+        """Ticker-bearing local trial records should map even with institution sponsor text."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ABSI",
+                ticker="ABSI",
+                company_name="Absci Corporation",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+
+        builder = AssetIndicationBuilder(
+            disease_normalizer=DiseaseNormalizer(),
+            stage_normalizer=StageNormalizer(),
+            asset_alias_resolver=AssetAliasResolver(),
+            sponsor_resolver=SponsorResolver(company_records=companies),
+            as_of_date="2026-06-17",
+        )
+
+        from scientific_cartography.schemas.trial_schema import TrialRecord
+
+        trial = TrialRecord(
+            nct_id="NCT87654321",
+            brief_title="Institution-sponsored mapped study",
+            sponsor="Peking University People's Hospital",
+            ticker="ABSI",
+            conditions=["Cancer"],
+            interventions=["ABSI-101"],
+            phases=["Phase 1"],
+            overall_status="Recruiting",
+            source_ref="nct_87654321",
+        )
+
+        programs, diagnostics = builder.build_from_trials([trial], companies)
+
+        assert len(programs) == 1
+        assert programs[0].ticker == "ABSI"
+        assert programs[0].company_id == "COMPANY_TICKER_ABSI"
+        assert programs[0].company_name == "Peking University People's Hospital"
+        assert diagnostics["programs_with_unknown_sponsor"] == 0
+
+    def test_program_record_prefers_trial_ticker_over_different_public_sponsor(self):
+        """Local trial ticker should prevent sponsor-text cross-ticker attribution."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_AMGN",
+                ticker="AMGN",
+                company_name="Amgen Inc.",
+                cik=None,
+                is_public=True,
+                aliases=["Amgen"],
+                as_of_date="2026-06-17",
+            ),
+            CompanyRecord(
+                company_id="COMPANY_TICKER_AZN",
+                ticker="AZN",
+                company_name="AstraZeneca PLC",
+                cik=None,
+                is_public=True,
+                aliases=["AstraZeneca"],
+                as_of_date="2026-06-17",
+            ),
+        ]
+
+        builder = AssetIndicationBuilder(
+            disease_normalizer=DiseaseNormalizer(),
+            stage_normalizer=StageNormalizer(),
+            asset_alias_resolver=AssetAliasResolver(),
+            sponsor_resolver=SponsorResolver(company_records=companies),
+            as_of_date="2026-06-17",
+        )
+
+        from scientific_cartography.schemas.trial_schema import TrialRecord
+
+        trial = TrialRecord(
+            nct_id="NCT11112222",
+            brief_title="Mapped local trial",
+            sponsor="Amgen",
+            ticker="AZN",
+            conditions=["Cancer"],
+            interventions=["AZN-101"],
+            phases=["Phase 2"],
+            overall_status="Recruiting",
+        )
+
+        programs, _ = builder.build_from_trials([trial], companies)
+
+        assert len(programs) == 1
+        assert programs[0].ticker == "AZN"
+        assert programs[0].company_id == "COMPANY_TICKER_AZN"
+        assert programs[0].company_name == "Amgen"
 
 
 class TestCompetitiveClusterTickerAggregation:

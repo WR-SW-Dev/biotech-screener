@@ -17,7 +17,6 @@ Into: "Company X targets JAK1 (88% association with AD per OT),
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from scientific_cartography.enrich.chembl_enricher import ChEMBLCompound, ChEMBLEnricher
 from scientific_cartography.enrich.open_targets_enricher import OpenTargetsEnricher, TargetDiseaseAssociation

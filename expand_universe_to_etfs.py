@@ -13,6 +13,7 @@ import json
 from datetime import date
 from pathlib import Path
 
+from add_etf_tickers_to_universe import _build_new_security
 from check_etf_coverage import get_ibb_constituents, get_nbi_constituents, get_xbi_constituents
 
 
@@ -66,27 +67,21 @@ def expand_universe(
     expanded_universe = universe_data.copy()
 
     for ticker in sorted(missing_tickers):
-        # Add minimal stub entry
-        # You'll need to populate these with real data later
-        new_security = {
-            "ticker": ticker,
-            "name": f"{ticker} (Added from ETF)",
-            "exchange": "NASDAQ",  # Placeholder
-            "sector": "Biotechnology",
-            "market_cap": None,  # Populate later
-            "status": "active",
-            "added_from_et": True,
-            "added_date": date.today().isoformat(),
-            "sources": [],
-        }
-
         # Add source information
+        sources = []
         if include_xbi and ticker in get_xbi_constituents():
-            new_security["sources"].append("XBI")
+            sources.append("XBI")
         if include_ibb and ticker in get_ibb_constituents():
-            new_security["sources"].append("IBB")
+            sources.append("IBB")
         if include_nbi and ticker in get_nbi_constituents():
-            new_security["sources"].append("NBI")
+            sources.append("NBI")
+
+        # Add pending entry; downstream data collection promotes coverage.
+        new_security = _build_new_security(
+            ticker,
+            {"sources": sources, "company_name": None},
+            date.today().isoformat(),
+        )
 
         expanded_universe.append(new_security)
 
@@ -124,10 +119,10 @@ Examples:
   python expand_universe_to_etfs.py --universe production_data/universe.json --dry-run
 
 Note:
-  New securities will have placeholder data. You'll need to populate:
+  New securities are marked pending_data_collection until you populate:
   - Market cap
-  - Company name (currently uses ticker)
-  - Exchange (currently defaults to NASDAQ)
+  - Company name
+  - Exchange
 
   Run collect_universe_data.py afterward to fetch full data.
         """,

@@ -95,6 +95,8 @@ def _classify_status(record: Dict[str, Any]) -> tuple[StatusGate, Optional[str]]
         return (StatusGate.EXCLUDED_DELISTED, "status=delisted")
     if status in ("acquired", "m&a", "excluded_acquired"):
         return (StatusGate.EXCLUDED_ACQUIRED, "status=acquired")
+    if status in ("pending_data_collection", "pending_coverage"):
+        return (StatusGate.EXCLUDED_MISSING_DATA, f"status={status}")
 
     # Check for shell indicators in company name
     name = record.get("company_name", "")
