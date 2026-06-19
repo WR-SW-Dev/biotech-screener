@@ -350,6 +350,81 @@ Do not blur these boundaries. LangGraph must not influence:
 - trading actions
 ```
 
+## LG3 — Scheduled Review Runtime
+
+LG3 is a cron-compatible wrapper for automated scheduled review execution (Mode B).
+
+### Purpose
+
+Run LG1 review orchestrator on a daily schedule via cron, capturing decisions automatically.
+
+### Status
+
+**Operational** (cron active since 2026-06-19, observation period 2026-06-19 to 2026-07-03)
+
+### Usage
+
+See `docs/scientific_cartography_lg3_cron_setup.md` for cron installation and operation.
+
+Manual invocation:
+```bash
+python3 tools/run_scientific_cartography_scheduled_review.py --auto-run-latest
+```
+
+### Governance
+
+- Non-blocking failure (exit 0 always)
+- Read-only diagnostic outputs
+- Append-only audit trail (JSONL)
+- automation_approval immutably False
+- Independent from LG2 decisions
+
+---
+
+## LG4 — Dashboard Design
+
+LG4 is a **read-only artifact browser** for Scientific Cartography review outputs.
+
+### Status
+
+**Design-only** (no implementation, no runtime)
+
+```
+LANGGRAPH_PHASE_LG4_DASHBOARD_DESIGN
+DESIGN_ONLY
+NO_RUNTIME_DASHBOARD
+NO_PRODUCTION_HOOK
+NO_SCORING_UI
+```
+
+### Purpose
+
+Operators and researchers can explore LG1/LG2/LG3 review artifacts without command-line tools.
+
+LG4 does **not** compute scores, make recommendations, rank assets, size positions, or approve automation.
+
+### Design Document
+
+See `docs/scientific_cartography_lg4_dashboard_design.md` for complete specification.
+
+### Proposed Views
+
+1. **Review Run Index** — Available runs by as_of_date and status
+2. **Disease Map Browser** — Browse disease maps for research review (no ranking)
+3. **Human Decision Audit Trail** — LG2 decisions with immutable automation_approval flag
+4. **Scheduled Review Health** — LG3 cron execution audit trail
+5. **Governance Boundary Panel** — Display all governance invariants (scoring=false, automation_approval=false, etc.)
+
+### Implementation Options
+
+- **Option A (Recommended)**: Static HTML generator (no server, no runtime)
+- **Option B (Deferred)**: Local Streamlit viewer (interactive, requires dependency)
+- **Option C (Deferred)**: Integration into existing dashboard (highest risk)
+
+**LG4 runtime implementation requires separate operator approval** (not approved yet).
+
+---
+
 ## Governance Statement
 
 This workflow operates **entirely outside** the production scoring and ranking pipeline.
