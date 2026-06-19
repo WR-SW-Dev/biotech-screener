@@ -63,7 +63,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Aardvark Therapeutics, Inc."
   },
   {
     "ticker": "ABCL",
@@ -130,7 +131,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "AbCellera Biologics Inc."
   },
   {
     "ticker": "ABEO",
@@ -353,7 +355,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Absci Corporation"
   },
   {
     "ticker": "ABUS",
@@ -420,7 +423,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Arbutus Biopharma Corporation"
   },
   {
     "ticker": "ABVX",
@@ -472,7 +476,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ABIVAX Soci\u00e9t\u00e9 Anonyme"
   },
   {
     "ticker": "ACAD",
@@ -1552,7 +1557,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ACADIA Pharmaceuticals Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ACIU",
@@ -1604,7 +1611,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "AC Immune SA"
   },
   {
     "ticker": "ACRS",
@@ -1672,7 +1680,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Aclaris Therapeutics, Inc."
   },
   {
     "ticker": "ACRV",
@@ -1806,7 +1815,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ADC Therapeutics SA"
   },
   {
     "ticker": "ADMA",
@@ -1874,7 +1884,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ADMA Biologics, Inc."
   },
   {
     "ticker": "ADPT",
@@ -2089,7 +2100,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Agios Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "AKTX",
@@ -2368,7 +2381,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Alkermes plc"
   },
   {
     "ticker": "ALLO",
@@ -2485,7 +2499,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Allogene Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ALMS",
@@ -2552,7 +2568,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Alumis Inc."
   },
   {
     "ticker": "ALNY",
@@ -3666,7 +3683,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Alnylam Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ALT",
@@ -3733,7 +3752,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Altimmune, Inc."
   },
   {
     "ticker": "ALVO",
@@ -3785,7 +3805,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Alvotech"
   },
   {
     "ticker": "AMGN",
@@ -3893,7 +3914,9 @@
     "CurrentLiabilities": 21791000000,
     "ShareholdersEquity": 9619000000,
     "Revenue": 26885000000,
-    "NetIncome": 6378000000
+    "NetIncome": 6378000000,
+    "company_name": "Amgen Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "AMLX",
@@ -3960,7 +3983,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Amylyx Pharmaceuticals, Inc."
   },
   {
     "ticker": "AMPH",
@@ -4028,7 +4052,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Amphastar Pharmaceuticals, Inc."
   },
   {
     "ticker": "AMRX",
@@ -4095,7 +4120,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Amneal Pharmaceuticals, Inc."
   },
   {
     "ticker": "ANAB",
@@ -4161,7 +4187,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "AnaptysBio, Inc."
   },
   {
     "ticker": "ANIP",
@@ -4229,7 +4256,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ANI Pharmaceuticals, Inc."
   },
   {
     "ticker": "ANNX",
@@ -4295,7 +4323,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Annexon, Inc."
   },
   {
     "ticker": "ANRO",
@@ -4426,7 +4455,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Apogee Therapeutics, Inc."
   },
   {
     "ticker": "APLS",
@@ -4543,7 +4573,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Apellis Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "AQST",
@@ -4610,7 +4642,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Aquestive Therapeutics, Inc."
   },
   {
     "ticker": "ARCT",
@@ -4821,7 +4854,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ardelyx, Inc."
   },
   {
     "ticker": "ARGX",
@@ -5706,7 +5740,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "argenx SE",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ARQT",
@@ -5773,7 +5809,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Arcutis Biotherapeutics, Inc."
   },
   {
     "ticker": "ARTV",
@@ -5959,7 +5996,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Arvinas, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ARWR",
@@ -6075,7 +6114,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Arrowhead Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ASMB",
@@ -6194,7 +6235,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ascendis Pharma A/S"
   },
   {
     "ticker": "ATAI",
@@ -6361,7 +6403,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Aurinia Pharmaceuticals Inc."
   },
   {
     "ticker": "AURA",
@@ -6427,7 +6470,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Aura Biosciences, Inc."
   },
   {
     "ticker": "AUTL",
@@ -6586,7 +6630,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ArriVent BioPharma, Inc."
   },
   {
     "ticker": "AVIR",
@@ -6653,7 +6698,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Atea Pharmaceuticals, Inc."
   },
   {
     "ticker": "AVTR",
@@ -6731,7 +6777,9 @@
     "CurrentLiabilities": 1516500000,
     "ShareholdersEquity": 5570200000,
     "Revenue": 4888600000,
-    "NetIncome": -582600000
+    "NetIncome": -582600000,
+    "company_name": "Avantor, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "AVXL",
@@ -6797,7 +6845,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Anavex Life Sciences Corp."
   },
   {
     "ticker": "AXSM",
@@ -6915,7 +6964,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Axsome Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "AZN",
@@ -6967,7 +7018,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "AstraZeneca PLC"
   },
   {
     "ticker": "BBIO",
@@ -7976,7 +8028,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "BridgeBio Pharma, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BBOT",
@@ -8042,7 +8096,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "BridgeBio Oncology Therapeutics, Inc."
   },
   {
     "ticker": "BCAX",
@@ -8108,7 +8163,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Bicara Therapeutics Inc."
   },
   {
     "ticker": "BCRX",
@@ -8218,7 +8274,9 @@
     "ShareholdersEquity": -387889000,
     "Revenue": 25186000,
     "R&D": 125259000,
-    "NetIncome": 18016000
+    "NetIncome": 18016000,
+    "company_name": "BioCryst Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BCYC",
@@ -8402,7 +8460,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Black Diamond Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BEAM",
@@ -8519,7 +8579,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Beam Therapeutics Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BHVN",
@@ -8585,7 +8647,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Biohaven Ltd."
   },
   {
     "ticker": "BIIB",
@@ -8696,7 +8759,9 @@
     "Revenue": 7611200000,
     "COGS": 133749000,
     "R&D": 284340000,
-    "NetIncome": 1341800000
+    "NetIncome": 1341800000,
+    "company_name": "Biogen Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BIOA",
@@ -8763,7 +8828,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "BioAge Labs, Inc."
   },
   {
     "ticker": "BLTE",
@@ -9994,7 +10060,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "BioMarin Pharmaceutical Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BNTX",
@@ -10096,7 +10164,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "BioNTech SE",
+    "sector": "Healthcare"
   },
   {
     "ticker": "BRKR",
@@ -10263,7 +10333,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Cabaletta Bio, Inc."
   },
   {
     "ticker": "CADL",
@@ -10330,7 +10401,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Candel Therapeutics, Inc."
   },
   {
     "ticker": "CAI",
@@ -10397,7 +10469,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Caris Life Sciences, Inc."
   },
   {
     "ticker": "CATX",
@@ -10464,7 +10537,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Perspective Therapeutics, Inc."
   },
   {
     "ticker": "CCCC",
@@ -10531,7 +10605,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "C4 Therapeutics, Inc."
   },
   {
     "ticker": "CDNA",
@@ -10642,7 +10717,9 @@
     "Revenue": 271419000,
     "COGS": 27417000,
     "R&D": 52123000,
-    "NetIncome": -17246000
+    "NetIncome": -17246000,
+    "company_name": "CareDx, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "CDXS",
@@ -10834,7 +10911,17 @@
       "industry": "Medical Devices"
     },
     "status": "active",
-    "cik": "0001020214"
+    "cik": "0001020214",
+    "company_name": "Cerus Corporation",
+    "sector": "Healthcare",
+    "financial_data": {
+      "cash": 80425000,
+      "debt": 97358000,
+      "revenue_ttm": 216555008,
+      "assets": null,
+      "liabilities": null,
+      "equity": null
+    }
   },
   {
     "ticker": "CGEM",
@@ -10901,7 +10988,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Cullinan Therapeutics, Inc."
   },
   {
     "ticker": "CGON",
@@ -10967,7 +11055,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "CG Oncology, Inc."
   },
   {
     "ticker": "CHRS",
@@ -11034,7 +11123,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Coherus Oncology, Inc."
   },
   {
     "ticker": "CLDX",
@@ -11151,7 +11241,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Celldex Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "CLLS",
@@ -11203,7 +11295,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Cellectis S.A."
   },
   {
     "ticker": "CLYM",
@@ -11337,7 +11430,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "COMPASS Pathways plc"
   },
   {
     "ticker": "CMPX",
@@ -11395,7 +11489,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Compass Therapeutics, Inc."
   },
   {
     "ticker": "CNTA",
@@ -11461,7 +11556,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Centessa Pharmaceuticals plc"
   },
   {
     "ticker": "CNTX",
@@ -11511,7 +11607,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Context Therapeutics Inc."
   },
   {
     "ticker": "COGT",
@@ -11577,7 +11674,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Cogent Biosciences, Inc."
   },
   {
     "ticker": "COLL",
@@ -11644,7 +11742,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Collegium Pharmaceutical, Inc."
   },
   {
     "ticker": "CRBU",
@@ -11761,7 +11860,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Caribou Biosciences, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "CRL",
@@ -11827,7 +11928,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Charles River Laboratories International, Inc."
   },
   {
     "ticker": "CRMD",
@@ -11895,7 +11997,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "CorMedix Inc."
   },
   {
     "ticker": "CRNX",
@@ -12012,7 +12115,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Crinetics Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "CRSP",
@@ -13066,7 +13171,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "CRISPR Therapeutics AG",
+    "sector": "Healthcare"
   },
   {
     "ticker": "CRVS",
@@ -13182,7 +13289,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Corvus Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "CSTL",
@@ -13448,7 +13557,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "CytomX Therapeutics, Inc."
   },
   {
     "ticker": "CTNM",
@@ -13515,7 +13625,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Contineum Therapeutics, Inc."
   },
   {
     "ticker": "CYTK",
@@ -13632,7 +13743,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Cytokinetics, Incorporated",
+    "sector": "Healthcare"
   },
   {
     "ticker": "DFTX",
@@ -13790,7 +13903,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ginkgo Bioworks Holdings, Inc."
   },
   {
     "ticker": "DNLI",
@@ -13907,7 +14021,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Denali Therapeutics Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "DNTH",
@@ -14094,7 +14210,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Dermata Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "DRUG",
@@ -14197,7 +14315,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Design Therapeutics, Inc."
   },
   {
     "ticker": "DYN",
@@ -14263,7 +14382,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Dyne Therapeutics, Inc."
   },
   {
     "ticker": "EBS",
@@ -14330,7 +14450,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Emergent BioSolutions Inc."
   },
   {
     "ticker": "EDIT",
@@ -14447,7 +14568,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Editas Medicine, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ELDN",
@@ -14579,7 +14702,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Enliven Therapeutics, Inc."
   },
   {
     "ticker": "ENGN",
@@ -14711,7 +14835,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Enanta Pharmaceuticals, Inc."
   },
   {
     "ticker": "EOLS",
@@ -14778,7 +14903,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Evolus, Inc."
   },
   {
     "ticker": "EPRX",
@@ -15762,7 +15888,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Eupraxia Pharmaceuticals Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ERAS",
@@ -15827,7 +15955,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Erasca, Inc."
   },
   {
     "ticker": "ESPR",
@@ -15893,7 +16022,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Esperion Therapeutics, Inc."
   },
   {
     "ticker": "ETON",
@@ -16059,7 +16189,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Edgewise Therapeutics, Inc."
   },
   {
     "ticker": "EXEL",
@@ -17183,7 +17314,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Exelixis, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "EYPT",
@@ -17250,7 +17383,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "EyePoint, Inc."
   },
   {
     "ticker": "FATE",
@@ -17366,7 +17500,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Fate Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "FDMT",
@@ -17433,7 +17569,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "4D Molecular Therapeutics, Inc."
   },
   {
     "ticker": "FHTX",
@@ -17500,7 +17637,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Foghorn Therapeutics Inc."
   },
   {
     "ticker": "FLGT",
@@ -17807,7 +17945,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Fulcrum Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "GERN",
@@ -17873,7 +18013,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Geron Corporation"
   },
   {
     "ticker": "GH",
@@ -17940,7 +18081,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Guardant Health, Inc."
   },
   {
     "ticker": "GHRS",
@@ -17992,7 +18134,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "GH Research PLC"
   },
   {
     "ticker": "GILD",
@@ -18101,7 +18244,9 @@
     "ShareholdersEquity": 21540000000,
     "Revenue": 21518000000,
     "R&D": 1101000000,
-    "NetIncome": 6327000000
+    "NetIncome": 6327000000,
+    "company_name": "Gilead Sciences, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "GLPG",
@@ -18203,7 +18348,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Lakefront Biotherapeutics NV",
+    "sector": "Healthcare"
   },
   {
     "ticker": "GLUE",
@@ -18269,7 +18416,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Monte Rosa Therapeutics, Inc."
   },
   {
     "ticker": "GMAB",
@@ -18321,7 +18469,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Genmab A/S"
   },
   {
     "ticker": "GOSS",
@@ -19360,7 +19509,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Gossamer Bio, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "GPCR",
@@ -19426,7 +19577,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Structure Therapeutics Inc."
   },
   {
     "ticker": "GRAL",
@@ -19493,7 +19645,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "GRAIL, Inc."
   },
   {
     "ticker": "GRFS",
@@ -19546,7 +19699,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Grifols, S.A."
   },
   {
     "ticker": "HALO",
@@ -19663,7 +19817,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Halozyme Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "HOWL",
@@ -19802,7 +19958,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Harmony Biosciences Holdings, Inc."
   },
   {
     "ticker": "HROW",
@@ -19869,7 +20026,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Harrow, Inc."
   },
   {
     "ticker": "HRTX",
@@ -19986,7 +20144,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Heron Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "HUMA",
@@ -20053,7 +20213,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Humacyte, Inc."
   },
   {
     "ticker": "IBRX",
@@ -20120,7 +20281,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ImmunityBio, Inc."
   },
   {
     "ticker": "IDYA",
@@ -20187,7 +20349,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "IDEAYA Biosciences, Inc."
   },
   {
     "ticker": "IKT",
@@ -20472,7 +20635,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Immunocore Holdings plc",
+    "sector": "Healthcare"
   },
   {
     "ticker": "IMMP",
@@ -20574,7 +20739,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Immutep Limited",
+    "sector": "Healthcare"
   },
   {
     "ticker": "IMRX",
@@ -20642,7 +20809,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Immuneering Corporation"
   },
   {
     "ticker": "IMTX",
@@ -20828,7 +20996,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Immunovant, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "INBX",
@@ -20895,7 +21065,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Inhibrx Biosciences, Inc."
   },
   {
     "ticker": "INCY",
@@ -22014,7 +22185,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Incyte Corporation",
+    "sector": "Healthcare"
   },
   {
     "ticker": "INDV",
@@ -22080,7 +22253,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Indivior Pharmaceuticals, Inc."
   },
   {
     "ticker": "INSM",
@@ -22147,7 +22321,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Insmed Incorporated"
   },
   {
     "ticker": "INVA",
@@ -22213,7 +22388,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Innoviva, Inc."
   },
   {
     "ticker": "IONS",
@@ -23321,7 +23497,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ionis Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "IOVA",
@@ -23389,7 +23567,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Iovance Biotherapeutics, Inc."
   },
   {
     "ticker": "IRON",
@@ -23455,7 +23634,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Disc Medicine, Inc."
   },
   {
     "ticker": "IRWD",
@@ -23565,7 +23745,9 @@
     "Revenue": 248442000,
     "COGS": 19097000,
     "R&D": 73273000,
-    "NetIncome": 26293000
+    "NetIncome": 26293000,
+    "company_name": "Ironwood Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "IVVD",
@@ -23632,7 +23814,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Invivyd, Inc."
   },
   {
     "ticker": "JANX",
@@ -23698,7 +23881,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Janux Therapeutics, Inc."
   },
   {
     "ticker": "JAZZ",
@@ -24817,7 +25001,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Jazz Pharmaceuticals plc",
+    "sector": "Healthcare"
   },
   {
     "ticker": "JBIO",
@@ -25148,7 +25334,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "KalVista Pharmaceuticals Inc",
+    "sector": "Healthcare"
   },
   {
     "ticker": "KMDA",
@@ -25208,7 +25396,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Kamada Ltd."
   },
   {
     "ticker": "KNSA",
@@ -25275,7 +25464,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Kiniksa Pharmaceuticals International, plc"
   },
   {
     "ticker": "KOD",
@@ -25341,7 +25531,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Kodiak Sciences Inc."
   },
   {
     "ticker": "KROS",
@@ -25408,7 +25599,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Keros Therapeutics, Inc."
   },
   {
     "ticker": "KRYS",
@@ -25525,7 +25717,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Krystal Biotech, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "KURA",
@@ -25592,7 +25786,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Kura Oncology, Inc."
   },
   {
     "ticker": "KYMR",
@@ -26633,7 +26828,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Kymera Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "KYTX",
@@ -26699,7 +26896,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Kyverna Therapeutics, Inc."
   },
   {
     "ticker": "LAB",
@@ -26767,7 +26965,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Standard BioTools Inc."
   },
   {
     "ticker": "LBRX",
@@ -26901,7 +27100,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Lineage Cell Therapeutics, Inc."
   },
   {
     "ticker": "LEGN",
@@ -27003,7 +27203,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Legend Biotech Corporation",
+    "sector": "Healthcare"
   },
   {
     "ticker": "LENZ",
@@ -27069,7 +27271,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "LENZ Therapeutics, Inc."
   },
   {
     "ticker": "LFCR",
@@ -27429,7 +27632,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Liquidia Corporation",
+    "sector": "Healthcare"
   },
   {
     "ticker": "LRMR",
@@ -27496,7 +27701,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Larimar Therapeutics, Inc."
   },
   {
     "ticker": "LXEO",
@@ -27563,7 +27769,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Lexeo Therapeutics, Inc."
   },
   {
     "ticker": "LYEL",
@@ -27630,7 +27837,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Lyell Immunopharma, Inc."
   },
   {
     "ticker": "MAZE",
@@ -27697,7 +27905,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Maze Therapeutics, Inc."
   },
   {
     "ticker": "MBX",
@@ -27763,7 +27972,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "MBX Biosciences, Inc."
   },
   {
     "ticker": "MCRB",
@@ -27880,7 +28090,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Seres Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "MDGL",
@@ -27996,7 +28208,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Madrigal Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "MEDP",
@@ -28062,7 +28276,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Medpace Holdings, Inc."
   },
   {
     "ticker": "MENS",
@@ -28199,7 +28414,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Mesoblast Limited"
   },
   {
     "ticker": "MGTX",
@@ -28359,7 +28575,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Mirum Pharmaceuticals, Inc."
   },
   {
     "ticker": "MLTX",
@@ -28496,7 +28713,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Mineralys Therapeutics, Inc."
   },
   {
     "ticker": "MNKD",
@@ -28562,7 +28780,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "MannKind Corporation"
   },
   {
     "ticker": "MRNA",
@@ -28679,7 +28898,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Moderna, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "MRVI",
@@ -28972,7 +29193,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "NewAmsterdam Pharma Company N.V."
   },
   {
     "ticker": "NAUT",
@@ -29105,7 +29327,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Neurocrine Biosciences, Inc."
   },
   {
     "ticker": "NBP",
@@ -29264,7 +29487,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Neurogene Inc."
   },
   {
     "ticker": "NKTX",
@@ -29399,7 +29623,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Neumora Therapeutics, Inc."
   },
   {
     "ticker": "NRIX",
@@ -29466,7 +29691,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Nurix Therapeutics, Inc."
   },
   {
     "ticker": "NTLA",
@@ -29583,7 +29809,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Intellia Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "NTRA",
@@ -29693,7 +29921,9 @@
     "ShareholdersEquity": 1252188000,
     "Revenue": 1640615000,
     "R&D": 448917000,
-    "NetIncome": -255418000
+    "NetIncome": -255418000,
+    "company_name": "Natera, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "NUVB",
@@ -29760,7 +29990,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Nuvation Bio Inc."
   },
   {
     "ticker": "NUVL",
@@ -29826,7 +30057,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Nuvalent, Inc."
   },
   {
     "ticker": "NVAX",
@@ -29944,7 +30176,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Novavax, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "NVCR",
@@ -30055,7 +30289,9 @@
     "Revenue": 481003000,
     "COGS": 124722000,
     "R&D": 163639000,
-    "NetIncome": -111728000
+    "NetIncome": -111728000,
+    "company_name": "NovoCure Limited",
+    "sector": "Healthcare"
   },
   {
     "ticker": "OABI",
@@ -30122,7 +30358,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "OmniAb, Inc."
   },
   {
     "ticker": "OBIO",
@@ -30341,7 +30578,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ocugen, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "OCS",
@@ -30482,7 +30721,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ocular Therapeutix, Inc."
   },
   {
     "ticker": "OLMA",
@@ -30548,7 +30788,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Olema Pharmaceuticals, Inc."
   },
   {
     "ticker": "OMER",
@@ -30614,7 +30855,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Omeros Corporation"
   },
   {
     "ticker": "ONC",
@@ -30681,7 +30923,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "BeOne Medicines AG"
   },
   {
     "ticker": "OPCH",
@@ -30791,7 +31034,9 @@
     "ShareholdersEquity": 1358659000,
     "Revenue": 4184073000,
     "COGS": 3446735000,
-    "NetIncome": 149081000
+    "NetIncome": 149081000,
+    "company_name": "Option Care Health, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "OPK",
@@ -30858,7 +31103,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "OPKO Health, Inc."
   },
   {
     "ticker": "ORIC",
@@ -30924,7 +31170,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ORIC Pharmaceuticals, Inc."
   },
   {
     "ticker": "ORKA",
@@ -30991,7 +31238,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Oruka Therapeutics, Inc."
   },
   {
     "ticker": "PACB",
@@ -31254,7 +31502,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Puma Biotechnology, Inc."
   },
   {
     "ticker": "PCRX",
@@ -31365,7 +31614,9 @@
     "Revenue": 529538000,
     "COGS": 109450000,
     "R&D": 79859000,
-    "NetIncome": 5397000
+    "NetIncome": 5397000,
+    "company_name": "Pacira BioSciences, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PCVX",
@@ -31481,7 +31732,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vaxcyte, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PEPG",
@@ -31547,7 +31800,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "PepGen Inc."
   },
   {
     "ticker": "PGEN",
@@ -31664,7 +31918,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Precigen, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PHAT",
@@ -31732,7 +31988,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Phathom Pharmaceuticals, Inc."
   },
   {
     "ticker": "PHVS",
@@ -31784,7 +32041,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Pharvaris N.V."
   },
   {
     "ticker": "PRAX",
@@ -31851,7 +32109,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Praxis Precision Medicines, Inc."
   },
   {
     "ticker": "PRLD",
@@ -31987,7 +32246,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Prime Medicine, Inc."
   },
   {
     "ticker": "PRQR",
@@ -32177,7 +32437,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Prothena Corporation plc",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PRVA",
@@ -32285,7 +32547,9 @@
     "Liabilities": 588226000,
     "CurrentLiabilities": 582914000,
     "ShareholdersEquity": 709124000,
-    "NetIncome": 13768000
+    "NetIncome": 13768000,
+    "company_name": "Privia Health Group, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PSNL",
@@ -32497,7 +32761,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "PTC Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PTGX",
@@ -32614,7 +32880,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Protagonist Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "PVLA",
@@ -32754,7 +33022,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Pyxis Oncology, Inc."
   },
   {
     "ticker": "QSI",
@@ -32822,7 +33091,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Quantum-Si incorporated"
   },
   {
     "ticker": "QTRX",
@@ -32987,7 +33257,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "uniQure N.V."
   },
   {
     "ticker": "RANI",
@@ -33054,7 +33325,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Rani Therapeutics Holdings, Inc."
   },
   {
     "ticker": "RAPP",
@@ -33120,7 +33392,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Rapport Therapeutics, Inc."
   },
   {
     "ticker": "RARE",
@@ -34223,7 +34496,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Ultragenyx Pharmaceutical Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "RCKT",
@@ -34290,7 +34565,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Rocket Pharmaceuticals, Inc."
   },
   {
     "ticker": "RCUS",
@@ -34357,7 +34633,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Arcus Biosciences, Inc."
   },
   {
     "ticker": "REGN",
@@ -34424,7 +34701,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Regeneron Pharmaceuticals, Inc."
   },
   {
     "ticker": "REPL",
@@ -34491,7 +34769,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Replimune Group, Inc."
   },
   {
     "ticker": "RGEN",
@@ -34601,7 +34880,9 @@
     "ShareholdersEquity": 2083087000,
     "Revenue": 44830000,
     "R&D": 41057000,
-    "NetIncome": 35607000
+    "NetIncome": 35607000,
+    "company_name": "Repligen Corporation",
+    "sector": "Healthcare"
   },
   {
     "ticker": "RGNX",
@@ -34718,7 +34999,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "REGENXBIO Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "RIGL",
@@ -34785,7 +35068,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Rigel Pharmaceuticals, Inc."
   },
   {
     "ticker": "RLAY",
@@ -34852,7 +35136,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Relay Therapeutics, Inc."
   },
   {
     "ticker": "RNA",
@@ -35908,7 +36193,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Atrium Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "ROIV",
@@ -36007,7 +36294,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Roivant Sciences Ltd.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "RPRX",
@@ -36223,7 +36512,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Revolution Medicines, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "RXRX",
@@ -37453,7 +37744,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Rhythm Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "SABS",
@@ -37636,7 +37929,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sana Biotechnology, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "SEPN",
@@ -37703,7 +37998,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Septerna, Inc."
   },
   {
     "ticker": "SERA",
@@ -37720,7 +38016,17 @@
       "industry": "Medical Devices"
     },
     "status": "active",
-    "cik": "0001534969"
+    "cik": "0001534969",
+    "company_name": "Sera Prognostics, Inc.",
+    "sector": "Healthcare",
+    "financial_data": {
+      "cash": 47401000,
+      "debt": 2505000,
+      "revenue_ttm": 57000,
+      "assets": null,
+      "liabilities": null,
+      "equity": null
+    }
   },
   {
     "ticker": "SGMO",
@@ -37837,7 +38143,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sangamo Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "SGMT",
@@ -37904,7 +38212,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sagimet Biosciences Inc."
   },
   {
     "ticker": "SIGA",
@@ -37972,7 +38281,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "SIGA Technologies, Inc."
   },
   {
     "ticker": "SION",
@@ -38038,7 +38348,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sionna Therapeutics, Inc."
   },
   {
     "ticker": "SKYE",
@@ -38171,7 +38482,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Solid Biosciences Inc."
   },
   {
     "ticker": "SLN",
@@ -38238,7 +38550,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Silence Therapeutics plc"
   },
   {
     "ticker": "SMMT",
@@ -38305,7 +38618,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Summit Therapeutics Inc."
   },
   {
     "ticker": "SNDX",
@@ -38422,7 +38736,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Syndax Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "SNY",
@@ -38474,7 +38790,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sanofi"
   },
   {
     "ticker": "SPRY",
@@ -38591,7 +38908,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "ARS Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "SRPT",
@@ -39667,7 +39986,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sarepta Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "SRRK",
@@ -39734,7 +40055,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Scholar Rock Holding Corporation"
   },
   {
     "ticker": "SRZN",
@@ -39883,7 +40205,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Stoke Therapeutics, Inc."
   },
   {
     "ticker": "STRO",
@@ -39950,7 +40273,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Sutro Biopharma, Inc."
   },
   {
     "ticker": "STVN",
@@ -40104,7 +40428,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Supernus Pharmaceuticals, Inc."
   },
   {
     "ticker": "SVRA",
@@ -40171,7 +40496,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Savara Inc."
   },
   {
     "ticker": "SYRE",
@@ -40238,7 +40564,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Spyre Therapeutics, Inc."
   },
   {
     "ticker": "TARA",
@@ -40423,7 +40750,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Tarsus Pharmaceuticals, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "TBPH",
@@ -40539,7 +40868,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Theravance Biopharma, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "TCRX",
@@ -40731,7 +41062,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Bio-Techne Corporation",
+    "sector": "Healthcare"
   },
   {
     "ticker": "TECX",
@@ -40797,7 +41130,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Tectonic Therapeutic, Inc."
   },
   {
     "ticker": "TEM",
@@ -40864,7 +41198,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Tempus AI, Inc."
   },
   {
     "ticker": "TENX",
@@ -40958,6 +41293,15 @@
       "company_name": "Teva Pharmaceutical Industries Ltd",
       "sector": "Healthcare",
       "industry": "Drug Manufacturers - Specialty & Generic"
+    },
+    "company_name": "Teva Pharmaceutical Industries Limited",
+    "financial_data": {
+      "cash": 3740999936,
+      "debt": 16924999680,
+      "revenue_ttm": 17348999168,
+      "assets": null,
+      "liabilities": null,
+      "equity": null
     }
   },
   {
@@ -41076,7 +41420,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "TG Therapeutics, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "TKNO",
@@ -41244,7 +41590,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Tango Therapeutics, Inc."
   },
   {
     "ticker": "TNYA",
@@ -41310,7 +41657,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Tenaya Therapeutics, Inc."
   },
   {
     "ticker": "TRDA",
@@ -41377,7 +41725,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Entrada Therapeutics, Inc."
   },
   {
     "ticker": "TRVI",
@@ -41443,7 +41792,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Trevi Therapeutics, Inc."
   },
   {
     "ticker": "TSHA",
@@ -41510,7 +41860,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Taysha Gene Therapies, Inc."
   },
   {
     "ticker": "TVTX",
@@ -41577,7 +41928,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Travere Therapeutics, Inc."
   },
   {
     "ticker": "TWST",
@@ -41644,7 +41996,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Twist Bioscience Corporation"
   },
   {
     "ticker": "TXG",
@@ -41711,7 +42064,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "10x Genomics, Inc."
   },
   {
     "ticker": "TYRA",
@@ -41777,7 +42131,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Tyra Biosciences, Inc."
   },
   {
     "ticker": "UPB",
@@ -41844,7 +42199,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Upstream Bio, Inc."
   },
   {
     "ticker": "URGN",
@@ -41912,7 +42268,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "UroGen Pharma Ltd."
   },
   {
     "ticker": "UTHR",
@@ -43008,7 +43365,9 @@
     "Revenue": 2392500000,
     "R&D": 410500000,
     "NetIncome": 970400000,
-    "status": "active"
+    "status": "active",
+    "company_name": "United Therapeutics Corporation",
+    "sector": "Healthcare"
   },
   {
     "ticker": "VCEL",
@@ -43075,7 +43434,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vericel Corporation"
   },
   {
     "ticker": "VCYT",
@@ -43186,7 +43546,9 @@
     "Revenue": 376509000,
     "COGS": 36077000,
     "R&D": 49965000,
-    "NetIncome": 25204000
+    "NetIncome": 25204000,
+    "company_name": "Veracyte, Inc.",
+    "sector": "Healthcare"
   },
   {
     "ticker": "VERA",
@@ -43252,7 +43614,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vera Therapeutics, Inc."
   },
   {
     "ticker": "VIR",
@@ -43320,7 +43683,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vir Biotechnology, Inc."
   },
   {
     "ticker": "VKTX",
@@ -43454,7 +43818,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vanda Pharmaceuticals Inc."
   },
   {
     "ticker": "VOR",
@@ -43516,7 +43881,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vor Biopharma Inc."
   },
   {
     "ticker": "VRDN",
@@ -44645,7 +45011,9 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Vertex Pharmaceuticals Incorporated",
+    "sector": "Healthcare"
   },
   {
     "ticker": "VTRS",
@@ -44808,7 +45176,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Voyager Therapeutics, Inc."
   },
   {
     "ticker": "WVE",
@@ -44875,7 +45244,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Wave Life Sciences Ltd."
   },
   {
     "ticker": "XENE",
@@ -44942,7 +45312,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Xenon Pharmaceuticals Inc."
   },
   {
     "ticker": "XERS",
@@ -45110,7 +45481,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Xencor, Inc."
   },
   {
     "ticker": "ZBIO",
@@ -45245,7 +45617,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Zai Lab Limited"
   },
   {
     "ticker": "ZVRA",
@@ -45313,7 +45686,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Zevra Therapeutics, Inc."
   },
   {
     "ticker": "ZYME",
@@ -45380,7 +45754,8 @@
       "clinical_trials": "covered",
       "scientific_cartography": "covered"
     },
-    "coverage_refreshed_as_of": "2026-06-19"
+    "coverage_refreshed_as_of": "2026-06-19",
+    "company_name": "Zymeworks Inc."
   },
   {
     "ticker": "_XBI_BENCHMARK_",
