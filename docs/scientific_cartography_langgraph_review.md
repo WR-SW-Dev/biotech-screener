@@ -311,6 +311,16 @@ Each line is a JSON record with decision state, actor, reason, timestamp, and go
 
 This approves only review workflow continuation, **NOT** production deployment, automation, portfolio actions, or any biotech model changes.
 
+## LG3 — Scheduled Review Design
+
+LG3 is currently **design-only**. No runtime cron, scheduling, or production hooks are enabled.
+
+See `docs/scientific_cartography_lg3_scheduled_review_design.md` for full design.
+
+**Key rule**: LG2 decision artifacts approve review continuation only and do not authorize schedule enablement. Any future scheduled review jobs would require separate operator action (config flag, environment variable, or cron installation).
+
+**Status**: Design complete, implementation deferred pending operator decision.
+
 ## Known Limitations
 
 1. **Mechanism/target sparse by design** — The normalizer is conservative; sparse coverage is expected, not a failure.
