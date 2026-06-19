@@ -134,6 +134,7 @@ class CTGovIngest:
             brief_title=brief_title,
             official_title=data.get("official_title"),
             sponsor=data.get("sponsor"),
+            ticker=data.get("ticker"),
             collaborators=data.get("collaborators", []),
             conditions=self._ensure_list(data.get("conditions", [])),
             interventions=self._ensure_list(data.get("interventions", [])),

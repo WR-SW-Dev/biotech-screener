@@ -151,6 +151,7 @@ class TestCTGovIngest:
             "nct_id": "NCT12345678",
             "brief_title": "Test Trial",
             "sponsor": "Test Sponsor",
+            "ticker": "TEST",
             "conditions": ["Disease A"],
             "interventions": ["Drug A"],
             "phases": ["Phase 2"],
@@ -161,6 +162,7 @@ class TestCTGovIngest:
 
         assert record.nct_id == "NCT12345678"
         assert record.sponsor == "Test Sponsor"
+        assert record.ticker == "TEST"
         assert record.conditions == ["Disease A"]
 
     def test_ingest_handles_missing_nct_id(self, ingest):

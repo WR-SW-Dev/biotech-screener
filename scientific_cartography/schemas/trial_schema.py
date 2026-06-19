@@ -20,6 +20,9 @@ class TrialRecord:
     sponsor: Optional[str] = None
     """Sponsor name (raw, preserved exactly)."""
 
+    ticker: Optional[str] = None
+    """Mapped screener ticker when provided by local trial fixtures/cache."""
+
     collaborators: list[str] = field(default_factory=list)
     """Collaborator names if any."""
 
@@ -81,6 +84,7 @@ class TrialRecord:
             "brief_title": self.brief_title,
             "official_title": self.official_title,
             "sponsor": self.sponsor,
+            "ticker": self.ticker,
             "collaborators": self.collaborators,
             "conditions": self.conditions,
             "interventions": self.interventions,
@@ -109,6 +113,7 @@ class TrialRecord:
             brief_title=data["brief_title"],
             official_title=data.get("official_title"),
             sponsor=data.get("sponsor"),
+            ticker=data.get("ticker"),
             collaborators=data.get("collaborators", []),
             conditions=data.get("conditions", []),
             interventions=data.get("interventions", []),
