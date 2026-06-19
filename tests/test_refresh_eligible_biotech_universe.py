@@ -29,6 +29,7 @@ def test_refresh_keeps_fully_covered_biotech_active():
 
     assert refreshed[0]["status"] == "active"
     assert report["marked_pending_count"] == 0
+    assert report["promoted_active_count"] == 0
 
 
 def test_refresh_marks_uncovered_biotech_pending():
@@ -43,6 +44,18 @@ def test_refresh_marks_uncovered_biotech_pending():
     assert refreshed[0]["coverage_status"]["scientific_cartography"] == "pending"
     assert refreshed[0]["coverage_refreshed_as_of"] == "2026-06-19"
     assert report["marked_pending_tickers"] == ["MISS"]
+
+
+def test_refresh_promotes_pending_ticker_when_coverage_is_complete():
+    universe = [_row("DONE", status="pending_data_collection", status_reason="coverage_pending:clinical_trials")]
+    trials = [{"ticker": "DONE", "interventions": ["DONE-101"]}]
+
+    refreshed, report = refresh_universe(universe, trials, "2026-06-19")
+
+    assert refreshed[0]["status"] == "active"
+    assert "status_reason" not in refreshed[0]
+    assert refreshed[0]["coverage_status"]["scientific_cartography"] == "covered"
+    assert report["promoted_active_tickers"] == ["DONE"]
 
 
 def test_refresh_marks_trial_without_intervention_pending_for_cartography():

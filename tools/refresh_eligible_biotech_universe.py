@@ -25,6 +25,15 @@ def _is_active_status(row: dict[str, Any]) -> bool:
     return str(row.get("status", "active") or "active").strip().lower() in {"", "active"}
 
 
+def _is_refreshable_status(row: dict[str, Any]) -> bool:
+    return str(row.get("status", "active") or "active").strip().lower() in {
+        "",
+        "active",
+        "pending_data_collection",
+        "pending_coverage",
+    }
+
+
 def _is_biotech(row: dict[str, Any]) -> bool:
     market_data = row.get("market_data") if isinstance(row.get("market_data"), dict) else {}
     text = " ".join(
@@ -111,14 +120,15 @@ def refresh_universe(
     trial_tickers, intervention_tickers = _trial_ticker_sets(trial_records)
     refreshed = deepcopy(universe)
     pending_tickers = []
-    active_biotech_count = 0
+    promoted_tickers = []
+    refreshable_biotech_count = 0
 
     for row in refreshed:
         ticker = _ticker(row)
-        if not ticker or not _is_active_status(row) or not _is_biotech(row):
+        if not ticker or not _is_refreshable_status(row) or not _is_biotech(row):
             continue
 
-        active_biotech_count += 1
+        refreshable_biotech_count += 1
         coverage = _coverage_status(row, trial_tickers, intervention_tickers)
         pending_reasons = [
             name
@@ -127,6 +137,12 @@ def refresh_universe(
         ]
 
         if not pending_reasons:
+            if str(row.get("status", "")).strip().lower() in {"pending_data_collection", "pending_coverage"}:
+                promoted_tickers.append(ticker)
+            row["status"] = "active"
+            row.pop("status_reason", None)
+            row["coverage_status"] = coverage
+            row["coverage_refreshed_as_of"] = as_of_date
             continue
 
         row["status"] = "pending_data_collection"
@@ -137,9 +153,11 @@ def refresh_universe(
 
     report = {
         "as_of_date": as_of_date,
-        "active_biotech_before": active_biotech_count,
+        "refreshable_biotech_count": refreshable_biotech_count,
         "marked_pending_count": len(pending_tickers),
         "marked_pending_tickers": sorted(pending_tickers),
+        "promoted_active_count": len(promoted_tickers),
+        "promoted_active_tickers": sorted(promoted_tickers),
     }
     return refreshed, report
 
