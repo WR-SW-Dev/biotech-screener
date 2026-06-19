@@ -167,7 +167,6 @@ class CTGovIngest:
         id_section = protocol.get("identificationModule", {})
         status_section = protocol.get("statusModule", {})
         design_section = protocol.get("designModule", {})
-        contacts_section = protocol.get("contactsLocationsModule", {})
         arms_section = protocol.get("armsInterventionsModule", {})
         outcomes_section = protocol.get("outcomesModule", {})
 

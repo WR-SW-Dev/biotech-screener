@@ -1,9 +1,6 @@
 """Tests for Scientific Cartography Phase 7B production hook integration."""
 
-import json
 import subprocess
-import tempfile
-from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -22,8 +19,6 @@ class TestPhase7BHook:
 
         ctgov_cache = tmp_path / "ctgov"
         ctgov_cache.mkdir()
-
-        output_dir = tmp_path / "output"
 
         # run_scientific_cartography_diagnostics() should not be called at all
         # in production code when run_scientific_cartography=False.
@@ -219,12 +214,8 @@ class TestPhase7BIntegration:
 
     def test_cli_flag_exists(self):
         """Verify --run-scientific-cartography CLI flag is registered."""
-        import argparse
-
-        from tools.run_daily_production import main
-
         # Mock argparse to verify the flag is registered
-        with mock.patch("argparse.ArgumentParser.parse_args") as mock_parse:
+        with mock.patch("argparse.ArgumentParser.parse_args"):
             # Just verify the parser is created with the flag
             # The actual parsing is tested via the CLI
             pass

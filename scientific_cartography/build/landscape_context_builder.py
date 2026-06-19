@@ -7,7 +7,6 @@ from pathlib import Path
 
 from scientific_cartography.schemas.asset_indication_map_schema import AssetIndicationMapRecord
 from scientific_cartography.schemas.enhanced_cluster_schema import (
-    EnhancedClusterCoverageReport,
     EnhancedCompetitiveClusterRecord,
 )
 from scientific_cartography.schemas.landscape_context_schema import (

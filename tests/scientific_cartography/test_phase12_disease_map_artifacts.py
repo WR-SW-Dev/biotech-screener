@@ -4,7 +4,6 @@ Tests for per-disease artifact export using Phase 8-11 records.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 

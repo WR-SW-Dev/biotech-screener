@@ -18,17 +18,17 @@ repo_root = Path(__file__).parent.parent
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
-from scientific_cartography.build.asset_indication_builder import AssetIndicationBuilder
-from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
-from scientific_cartography.build.landscape_feature_builder import LandscapeFeatureBuilder
-from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter
-from scientific_cartography.ingest.ctgov_ingest import CTGovIngest
-from scientific_cartography.ingest.existing_universe_ingest import ExistingUniverseIngest
-from scientific_cartography.normalize.asset_alias_resolver import AssetAliasResolver
-from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
-from scientific_cartography.normalize.mechanism_normalizer import MechanismNormalizer
-from scientific_cartography.normalize.sponsor_resolver import SponsorResolver
-from scientific_cartography.normalize.stage_normalizer import StageNormalizer
+from scientific_cartography.build.asset_indication_builder import AssetIndicationBuilder  # noqa: E402
+from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder  # noqa: E402
+from scientific_cartography.build.landscape_feature_builder import LandscapeFeatureBuilder  # noqa: E402
+from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter  # noqa: E402
+from scientific_cartography.ingest.ctgov_ingest import CTGovIngest  # noqa: E402
+from scientific_cartography.ingest.existing_universe_ingest import ExistingUniverseIngest  # noqa: E402
+from scientific_cartography.normalize.asset_alias_resolver import AssetAliasResolver  # noqa: E402
+from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer  # noqa: E402
+from scientific_cartography.normalize.mechanism_normalizer import MechanismNormalizer  # noqa: E402
+from scientific_cartography.normalize.sponsor_resolver import SponsorResolver  # noqa: E402
+from scientific_cartography.normalize.stage_normalizer import StageNormalizer  # noqa: E402
 
 
 def run_diagnostics(args: argparse.Namespace) -> int:

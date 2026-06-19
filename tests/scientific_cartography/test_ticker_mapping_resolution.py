@@ -1,6 +1,5 @@
 """Tests for Scientific Cartography ticker mapping resolution via sponsor matching."""
 
-import pytest
 
 from scientific_cartography.build.asset_indication_builder import AssetIndicationBuilder
 from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
