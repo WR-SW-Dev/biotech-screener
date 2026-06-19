@@ -2,6 +2,7 @@
 
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -334,6 +335,93 @@ def write_review_outputs(state: CartographyReviewState) -> CartographyReviewStat
         "review_summary_path": str(summary_json_path),
         "review_markdown_path": str(summary_md_path),
         "review_state_path": str(state_json_path),
+    }
+
+
+def capture_human_decision(state: CartographyReviewState) -> CartographyReviewState:
+    """Capture explicit human decision on review workflow continuation."""
+    approve_review = state.get("approve_review", False)
+    reject_review = state.get("reject_review", False)
+    hold_review = state.get("hold_review", False)
+    decision_reason = state.get("decision_reason")
+    decision_actor = state.get("decision_actor", "operator")
+
+    decision_state = "NO_DECISION_RECORDED"
+    review_continuation_approved = False
+    automation_approval = False
+
+    if not (approve_review or reject_review or hold_review):
+        return {
+            **state,
+            "decision_state": decision_state,
+            "decision_actor": None,
+            "decision_reason": None,
+            "decision_created_at_utc": None,
+            "decision_artifact_path": None,
+            "review_continuation_approved": review_continuation_approved,
+            "automation_approval": automation_approval,
+        }
+
+    if approve_review:
+        decision_state = "APPROVED_FOR_REVIEW_CONTINUATION"
+        review_continuation_approved = True
+        if not decision_reason:
+            decision_reason = "Review continuation approved by human operator."
+
+    elif reject_review:
+        if not decision_reason:
+            raise ValueError("--reject-review requires --decision-reason")
+        decision_state = "REJECTED_WITH_REASON"
+
+    elif hold_review:
+        if not decision_reason:
+            raise ValueError("--hold-review requires --decision-reason")
+        decision_state = "HOLD_PENDING_MORE_REVIEW"
+
+    created_at = datetime.utcnow().isoformat() + "Z"
+
+    decision_artifact = {
+        "artifact_type": "scientific_cartography_langgraph_human_decision",
+        "schema_version": "1.0",
+        "created_at_utc": created_at,
+        "as_of_date": state.get("as_of_date", "unknown"),
+        "decision_state": decision_state,
+        "decision_actor": decision_actor,
+        "decision_reason": decision_reason,
+        "review_continuation_approved": review_continuation_approved,
+        "automation_approval": automation_approval,
+        "review_summary_path": state.get("review_summary_path"),
+        "review_state_path": state.get("review_state_path"),
+        "governance": {
+            "read_only_diagnostic": True,
+            "review_workflow_approval_only": True,
+            "production_model_change": False,
+            "ranker_change": False,
+            "selector_change": False,
+            "sizing_change": False,
+            "final_score_change": False,
+            "alpha_promotion": False,
+            "trading_or_portfolio_action": False,
+            "automation_approval": False,
+        },
+    }
+
+    review_dir = Path(state.get("review_dir", "artifacts/scientific_cartography/review"))
+    review_dir.mkdir(parents=True, exist_ok=True)
+    decisions_path = review_dir / "langgraph_human_decisions.jsonl"
+
+    with open(decisions_path, "a") as f:
+        f.write(json.dumps(decision_artifact) + "\n")
+
+    return {
+        **state,
+        "decision_state": decision_state,
+        "decision_actor": decision_actor,
+        "decision_reason": decision_reason,
+        "decision_created_at_utc": created_at,
+        "decision_artifact_path": str(decisions_path),
+        "review_continuation_approved": review_continuation_approved,
+        "automation_approval": automation_approval,
     }
 
 

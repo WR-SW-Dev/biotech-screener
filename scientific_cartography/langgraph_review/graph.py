@@ -10,6 +10,7 @@ except ImportError:
 
 from scientific_cartography.langgraph_review.nodes import (
     build_review_summary,
+    capture_human_decision,
     finalize,
     initialize_review,
     load_artifact_index,
@@ -46,6 +47,7 @@ def build_cartography_review_graph():
     graph.add_node("select_review_diseases", select_review_diseases)
     graph.add_node("build_review_summary", build_review_summary)
     graph.add_node("optional_human_review_gate", optional_human_review_gate)
+    graph.add_node("capture_human_decision", capture_human_decision)
     graph.add_node("write_review_outputs", write_review_outputs)
     graph.add_node("finalize", finalize)
 
@@ -57,7 +59,8 @@ def build_cartography_review_graph():
     graph.add_edge("run_governance_scan", "select_review_diseases")
     graph.add_edge("select_review_diseases", "build_review_summary")
     graph.add_edge("build_review_summary", "optional_human_review_gate")
-    graph.add_edge("optional_human_review_gate", "write_review_outputs")
+    graph.add_edge("optional_human_review_gate", "capture_human_decision")
+    graph.add_edge("capture_human_decision", "write_review_outputs")
     graph.add_edge("write_review_outputs", "finalize")
     graph.add_edge("finalize", END)
 

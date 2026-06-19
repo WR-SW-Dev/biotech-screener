@@ -20,6 +20,16 @@ def write_review_summary_json(review_dir: Path, state: CartographyReviewState) -
         **summary,
     }
 
+    decision_state = state.get("decision_state", "NO_DECISION_RECORDED")
+    if decision_state and decision_state != "NO_DECISION_RECORDED":
+        output["human_decision"] = {
+            "decision_state": decision_state,
+            "decision_actor": state.get("decision_actor"),
+            "decision_reason": state.get("decision_reason"),
+            "review_continuation_approved": state.get("review_continuation_approved", False),
+            "automation_approval": state.get("automation_approval", False),
+        }
+
     output_path = review_dir / "langgraph_review_summary.json"
     with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
@@ -108,7 +118,20 @@ def write_review_summary_md(review_dir: Path, state: CartographyReviewState) -> 
             lines.append(f"- {warning}")
         lines.append("")
 
-    lines.append("## Decision")
+    decision_state = state.get("decision_state", "NO_DECISION_RECORDED")
+    if decision_state and decision_state != "NO_DECISION_RECORDED":
+        lines.append("## Human Decision")
+        lines.append("")
+        lines.append(f"**Decision State**: {decision_state}")
+        lines.append(f"**Decision Actor**: {state.get('decision_actor', 'unknown')}")
+        decision_reason = state.get("decision_reason")
+        if decision_reason:
+            lines.append(f"**Decision Reason**: {decision_reason}")
+        lines.append(f"**Review Continuation Approved**: {state.get('review_continuation_approved', False)}")
+        lines.append(f"**Automation Approval**: {state.get('automation_approval', False)}")
+        lines.append("")
+
+    lines.append("## Recommendation")
     lines.append("")
     decision = summary.get("decision", "UNKNOWN")
     lines.append(f"**Recommended Decision**: {decision}")

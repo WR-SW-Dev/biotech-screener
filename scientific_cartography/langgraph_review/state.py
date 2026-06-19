@@ -45,6 +45,20 @@ class CartographyReviewState(TypedDict, total=False):
     human_decision: str | None
     approved_for_next_step: bool
 
+    # LG2: Human decision artifacts
+    decision_state: str
+    decision_actor: str | None
+    decision_reason: str | None
+    decision_created_at_utc: str | None
+    decision_artifact_path: str | None
+    review_continuation_approved: bool
+    automation_approval: bool
+
+    # CLI decision flags
+    approve_review: bool
+    reject_review: bool
+    hold_review: bool
+
     # Test/CLI flags
     auto_approve_for_test: bool
     strict: bool

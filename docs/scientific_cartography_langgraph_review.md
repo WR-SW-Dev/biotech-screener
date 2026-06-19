@@ -81,8 +81,9 @@ The workflow is a linear pipeline of deterministic nodes:
 5. **select_review_diseases** — Choose representative diseases for human review
 6. **build_review_summary** — Compile summary and decision
 7. **optional_human_review_gate** — Non-interactive approval gate (test mode available)
-8. **write_review_outputs** — Write JSON, Markdown, state files
-9. **finalize** — Return final state
+8. **capture_human_decision** — Capture explicit human decision on review continuation (LG2)
+9. **write_review_outputs** — Write JSON, Markdown, state files (with decision info if captured)
+10. **finalize** — Return final state
 
 ## Governance Boundaries
 
@@ -260,11 +261,61 @@ pip install langgraph
 
 If LangGraph is not available, the CLI automatically falls back to running deterministic nodes without the graph wrapper.
 
+## LG2 — Human Decision Artifacts
+
+LG2 extends LG1 with explicit human decision capture for the review workflow.
+
+### Decision States
+
+```text
+APPROVED_FOR_REVIEW_CONTINUATION — Human approves workflow continuation
+REJECTED_WITH_REASON — Human rejects workflow continuation
+HOLD_PENDING_MORE_REVIEW — Human requests more review before deciding
+NO_DECISION_RECORDED — No explicit decision made (default)
+```
+
+### CLI Examples
+
+Approve workflow continuation:
+```bash
+python3 tools/run_scientific_cartography_langgraph_review.py \
+  --as-of-date 2026-06-18 \
+  --artifact-dir artifacts/scientific_cartography/2026-06-18 \
+  --approve-review \
+  --decision-actor darren \
+  --decision-reason "Reviewed selected disease maps; continue workflow."
+```
+
+Reject workflow continuation:
+```bash
+python3 tools/run_scientific_cartography_langgraph_review.py \
+  --as-of-date 2026-06-18 \
+  --artifact-dir artifacts/scientific_cartography/2026-06-18 \
+  --reject-review \
+  --decision-actor darren \
+  --decision-reason "Source refs insufficient for continuation."
+```
+
+### Append-Only Decision Artifact
+
+Decisions are appended to:
+```
+artifacts/scientific_cartography/<as_of_date>/review/langgraph_human_decisions.jsonl
+```
+
+Each line is a JSON record with decision state, actor, reason, timestamp, and governance block. Multiple decisions create multiple lines (audit history).
+
+### Critical Governance Rule
+
+**automation_approval is ALWAYS false in LG2.**
+
+This approves only review workflow continuation, **NOT** production deployment, automation, portfolio actions, or any biotech model changes.
+
 ## Known Limitations
 
 1. **Mechanism/target sparse by design** — The normalizer is conservative; sparse coverage is expected, not a failure.
 2. **Disease selection limited to first ~10 disease dirs** — Prevents timeout on massive artifact sets.
-3. **Human approval is placeholder** — LG1 does not have real interactive interrupts; LG2 will add that.
+3. **LG2 is non-interactive** — CLI flags only; no real-time prompts (future: LG3 with scheduled review jobs).
 
 ## Next Phases
 

@@ -578,3 +578,250 @@ class TestWriteReviewOutputs:
         assert review_md.exists()
         content = review_md.read_text()
         assert "Scientific Cartography" in content
+
+
+class TestCaptureHumanDecision:
+    def test_no_decision_recorded_by_default(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+            write_review_outputs,
+        )
+
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(tmp_path / "review"),
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+        result = capture_human_decision(state)
+
+        assert result["decision_state"] == "NO_DECISION_RECORDED"
+        assert result["review_continuation_approved"] is False
+        assert result["automation_approval"] is False
+
+    def test_approve_review_decision(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+        )
+
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(tmp_path / "review"),
+                "approve_review": True,
+                "decision_actor": "darren",
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+        result = capture_human_decision(state)
+
+        assert result["decision_state"] == "APPROVED_FOR_REVIEW_CONTINUATION"
+        assert result["review_continuation_approved"] is True
+        assert result["automation_approval"] is False
+        assert result["decision_actor"] == "darren"
+
+    def test_reject_review_decision(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+        )
+
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(tmp_path / "review"),
+                "reject_review": True,
+                "decision_reason": "Source refs insufficient",
+                "decision_actor": "darren",
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+        result = capture_human_decision(state)
+
+        assert result["decision_state"] == "REJECTED_WITH_REASON"
+        assert result["review_continuation_approved"] is False
+        assert result["automation_approval"] is False
+
+    def test_hold_review_decision(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+        )
+
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(tmp_path / "review"),
+                "hold_review": True,
+                "decision_reason": "Waiting for Q3 data",
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+        result = capture_human_decision(state)
+
+        assert result["decision_state"] == "HOLD_PENDING_MORE_REVIEW"
+        assert result["review_continuation_approved"] is False
+        assert result["automation_approval"] is False
+
+    def test_reject_requires_reason(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+        )
+
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(tmp_path / "review"),
+                "reject_review": True,
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+
+        with pytest.raises(ValueError, match="--reject-review requires --decision-reason"):
+            capture_human_decision(state)
+
+    def test_decision_artifact_jsonl_created(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+        )
+
+        review_dir = tmp_path / "review"
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(review_dir),
+                "approve_review": True,
+                "decision_actor": "darren",
+                "decision_reason": "Test approval",
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+        result = capture_human_decision(state)
+
+        jsonl_path = review_dir / "langgraph_human_decisions.jsonl"
+        assert jsonl_path.exists()
+
+        with open(jsonl_path) as f:
+            line = f.readline()
+            artifact = json.loads(line)
+
+        assert artifact["artifact_type"] == "scientific_cartography_langgraph_human_decision"
+        assert artifact["decision_state"] == "APPROVED_FOR_REVIEW_CONTINUATION"
+        assert artifact["automation_approval"] is False
+        assert artifact["review_continuation_approved"] is True
+
+    def test_automation_approval_always_false(self, synthetic_artifact_dir, tmp_path):
+        from scientific_cartography.langgraph_review.nodes import (
+            build_review_summary,
+            capture_human_decision,
+            initialize_review,
+            load_artifact_index,
+            optional_human_review_gate,
+            run_governance_scan,
+            select_review_diseases,
+            validate_artifact_structure,
+        )
+
+        review_dir = tmp_path / "review"
+        state = initialize_review(
+            {
+                "as_of_date": "2026-06-18",
+                "artifact_dir": str(synthetic_artifact_dir),
+                "review_dir": str(review_dir),
+                "approve_review": True,
+            }
+        )
+        state = load_artifact_index(state)
+        state = validate_artifact_structure(state)
+        state = run_governance_scan(state)
+        state = select_review_diseases(state)
+        state = build_review_summary(state)
+        state = optional_human_review_gate(state)
+        result = capture_human_decision(state)
+
+        assert result["automation_approval"] is False
+
+        jsonl_path = review_dir / "langgraph_human_decisions.jsonl"
+        if jsonl_path.exists():
+            with open(jsonl_path) as f:
+                line = f.readline()
+                artifact = json.loads(line)
+                assert artifact["automation_approval"] is False
+                assert artifact["governance"]["automation_approval"] is False

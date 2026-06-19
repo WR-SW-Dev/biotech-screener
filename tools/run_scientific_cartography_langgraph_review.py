@@ -26,6 +26,7 @@ if str(REPO_ROOT) not in sys.path:
 from scientific_cartography.langgraph_review.graph import run_cartography_review_workflow
 from scientific_cartography.langgraph_review.nodes import (
     build_review_summary,
+    capture_human_decision,
     finalize,
     initialize_review,
     load_artifact_index,
@@ -45,6 +46,11 @@ def run_deterministic_pipeline(
     max_diseases: int = 5,
     auto_approve_for_test: bool = False,
     strict: bool = False,
+    approve_review: bool = False,
+    reject_review: bool = False,
+    hold_review: bool = False,
+    decision_reason: str | None = None,
+    decision_actor: str | None = None,
 ) -> CartographyReviewState:
     """Run the review pipeline using deterministic nodes (graph-independent)."""
     if review_dir is None:
@@ -57,6 +63,11 @@ def run_deterministic_pipeline(
         "max_diseases": max_diseases,
         "auto_approve_for_test": auto_approve_for_test,
         "strict": strict,
+        "approve_review": approve_review,
+        "reject_review": reject_review,
+        "hold_review": hold_review,
+        "decision_reason": decision_reason,
+        "decision_actor": decision_actor or "operator",
     }
 
     state = initialize_review(state)
@@ -66,6 +77,7 @@ def run_deterministic_pipeline(
     state = select_review_diseases(state)
     state = build_review_summary(state)
     state = optional_human_review_gate(state)
+    state = capture_human_decision(state)
     state = write_review_outputs(state)
     state = finalize(state)
 
@@ -79,6 +91,11 @@ def run_graph_pipeline(
     max_diseases: int = 5,
     auto_approve_for_test: bool = False,
     strict: bool = False,
+    approve_review: bool = False,
+    reject_review: bool = False,
+    hold_review: bool = False,
+    decision_reason: str | None = None,
+    decision_actor: str | None = None,
 ) -> CartographyReviewState:
     """Run the review pipeline using LangGraph (if available)."""
     if review_dir is None:
@@ -91,6 +108,11 @@ def run_graph_pipeline(
         "max_diseases": max_diseases,
         "auto_approve_for_test": auto_approve_for_test,
         "strict": strict,
+        "approve_review": approve_review,
+        "reject_review": reject_review,
+        "hold_review": hold_review,
+        "decision_reason": decision_reason,
+        "decision_actor": decision_actor or "operator",
     }
 
     try:
@@ -107,6 +129,11 @@ def run_graph_pipeline(
             max_diseases=max_diseases,
             auto_approve_for_test=auto_approve_for_test,
             strict=strict,
+            approve_review=approve_review,
+            reject_review=reject_review,
+            hold_review=hold_review,
+            decision_reason=decision_reason,
+            decision_actor=decision_actor,
         )
 
 
@@ -136,8 +163,42 @@ def main():
         default=True,
         help="Use LangGraph if available (default)",
     )
+    parser.add_argument(
+        "--approve-review",
+        action="store_true",
+        help="Approve workflow continuation (LG2)",
+    )
+    parser.add_argument(
+        "--reject-review",
+        action="store_true",
+        help="Reject workflow continuation (LG2, requires --decision-reason)",
+    )
+    parser.add_argument(
+        "--hold-review",
+        action="store_true",
+        help="Hold for more review (LG2, requires --decision-reason)",
+    )
+    parser.add_argument(
+        "--decision-reason",
+        default=None,
+        help="Reason for decision (required for --reject-review or --hold-review)",
+    )
+    parser.add_argument(
+        "--decision-actor",
+        default="operator",
+        help="Actor making the decision (default: operator)",
+    )
 
     args = parser.parse_args()
+
+    decision_flags = [args.approve_review, args.reject_review, args.hold_review]
+    if sum(decision_flags) > 1:
+        print("ERROR: Only one of --approve-review, --reject-review, --hold-review can be used", file=sys.stderr)
+        sys.exit(1)
+
+    if (args.reject_review or args.hold_review) and not args.decision_reason:
+        print("ERROR: --reject-review and --hold-review require --decision-reason", file=sys.stderr)
+        sys.exit(1)
 
     artifact_dir = Path(args.artifact_dir)
     if not artifact_dir.exists():
@@ -152,6 +213,11 @@ def main():
             max_diseases=args.max_diseases,
             auto_approve_for_test=args.auto_approve_for_test,
             strict=args.strict,
+            approve_review=args.approve_review,
+            reject_review=args.reject_review,
+            hold_review=args.hold_review,
+            decision_reason=args.decision_reason,
+            decision_actor=args.decision_actor,
         )
     else:
         result = run_deterministic_pipeline(
@@ -161,6 +227,11 @@ def main():
             max_diseases=args.max_diseases,
             auto_approve_for_test=args.auto_approve_for_test,
             strict=args.strict,
+            approve_review=args.approve_review,
+            reject_review=args.reject_review,
+            hold_review=args.hold_review,
+            decision_reason=args.decision_reason,
+            decision_actor=args.decision_actor,
         )
 
     review_dir = result.get("review_dir", "unknown")
@@ -197,6 +268,12 @@ def main():
     state_path = result.get("review_state_path")
     if state_path:
         print(f"  State: {state_path}")
+
+    decision_artifact_path = result.get("decision_artifact_path")
+    if decision_artifact_path:
+        print(f"  Decision Artifact (JSONL): {decision_artifact_path}")
+        decision_state = result.get("decision_state", "NO_DECISION_RECORDED")
+        print(f"  Decision State: {decision_state}")
 
     print("\nDone.")
 
