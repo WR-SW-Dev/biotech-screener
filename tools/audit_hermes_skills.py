@@ -26,14 +26,20 @@ from tools.sync_hermes_skills import (  # noqa: E402
 )
 
 SKIP_FILES = {"harvest_log.md", "SKILLS_REGISTRY.md"}
+SKIP_PREFIXES = ("SKILLS_AUDIT_",)
+
+
+def should_skip_hermes_doc(path: Path) -> bool:
+    """Exclude operational reports that live beside Hermes skill docs."""
+    return path.name in SKIP_FILES or (
+        path.suffix == ".md" and path.name.startswith(SKIP_PREFIXES)
+    )
 
 
 def main() -> int:
     meta = json.loads(META.read_text()) if META.exists() else {"skills": {}}
     registered = set(meta.get("skills", {}))
-    hermes_files = sorted(
-        p for p in HERMES.glob("*.md") if p.name not in SKIP_FILES
-    )
+    hermes_files = sorted(p for p in HERMES.glob("*.md") if not should_skip_hermes_doc(p))
     synced_targets = set(SKILL_MAP.values()) | set(REFERENCE_MAP.values())
 
     print("# Hermes Skills Audit\n")

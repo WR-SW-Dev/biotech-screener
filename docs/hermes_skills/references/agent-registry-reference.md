@@ -1,15 +1,23 @@
 # Agent Registry Reference Table
-Generated from AGENT_REGISTRY.json (auto-sync 2026-06-16; registry `as_of` 2026-06-12).
+Generated from AGENT_REGISTRY.json (auto-sync 2026-06-19; registry `as_of` 2026-06-19).
+
+Summary: 34 registry entries = 29 active, 1 suppressed, 4 deprecated. There are
+31 agent directories on disk; three deprecated historical entries
+(`biotech_news_digest`, `company_news_ingest`, `policy_shadow_watch`) do not have
+directories and are retained only as registry tombstones pending operator
+reconciliation.
 
 ## Full Reference Table
 
 | agent_id | cadence | status | artifact_paths |
 |---|---|---|---|
 | aact_trial_ingest | weekly | active | `data/aact/snapshots/`, `data/aact/linked/`, … |
-| bioshort_watch | unknown | deprecated | `artifacts/bioshort_watch/`, `output/hedge_report/` |
+| bioshort_watch | unknown | suppressed | `artifacts/bioshort_watch/`, `output/hedge_report/` |
+| biotech_news_digest | unknown | deprecated | — |
 | calibration | weekly | active | `artifacts/calibration_evidence/` |
 | calibration_evidence | weekly | active | `artifacts/calibration_evidence/` |
 | catalyst_delta | daily_after_production | active | `artifacts/catalyst_delta/` |
+| company_news_ingest | unknown | deprecated | — |
 | crt_resolution_watcher | daily_after_production | active | `output/catalyst_ev/` |
 | ctgov_poller | daily_premarket | active | `artifacts/ctgov_daily/` |
 | data_auditor | daily_after_production | active | `artifacts/data_auditor/` |
@@ -27,6 +35,7 @@ Generated from AGENT_REGISTRY.json (auto-sync 2026-06-16; registry `as_of` 2026-
 | ops | daily_after_production | active | `agents/ops/memory/`, `artifacts/ops_digest/` |
 | ops_supervisor | daily_after_production | active | `artifacts/ops_supervisor/`, `agents/ops_supervisor/memory/` |
 | options_watch | daily_after_production | active | `artifacts/options_watch/` |
+| policy_shadow_watch | unknown | deprecated | — |
 | postmortem | daily_after_production | active | `artifacts/postmortem/` |
 | price_action_watch | daily_after_production | active | `artifacts/price_action_watch/` |
 | production_qa | daily_after_production | active | `artifacts/production_qa/`, `agents/production_qa/memory/` |
@@ -37,11 +46,11 @@ Generated from AGENT_REGISTRY.json (auto-sync 2026-06-16; registry `as_of` 2026-
 | shadow_watch | unknown | deprecated | `artifacts/live_shadow/`, `agents/shadow_watch/` |
 | universe_maintenance | weekly | active | `artifacts/universe_maintenance/` |
 
-## Deprecated / absent overlapping agents
+## Suppressed / deprecated / absent overlapping agents
 
 - `shadow_watch` — retained as a deprecated historical directory; active portfolio-risk monitoring is owned by `shadow_monitor`.
-- `bioshort_watch` — retained as a deprecated historical directory; deterministic bioshort producer/status tooling is canonical and LLM reactivation requires a separate approved spec.
-- `policy_shadow_watch`, `biotech_news_digest`, and `company_news_ingest` — absent from `agents/`; surfaces are owned by `shadow_monitor` (portfolio risk) and `herald` (news).
+- `bioshort_watch` — retained as a suppressed historical directory; deterministic bioshort producer/status tooling is canonical and LLM reactivation requires a separate approved spec.
+- `policy_shadow_watch`, `biotech_news_digest`, and `company_news_ingest` — absent from `agents/`; retained as deprecated registry tombstones pending operator reconciliation. Canonical surfaces are `shadow_monitor` (portfolio risk) and `herald` (news).
 
 ## Known overlaps (remaining)
 

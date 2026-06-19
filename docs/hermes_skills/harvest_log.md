@@ -5,6 +5,23 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-19 (Hermes context refresh + registry tombstone split)
+
+### Hermes sync/audit
+- Ran `python3 tools/audit_hermes_skills.py` and found the dated skills audit report was being counted as an unregistered skill doc.
+- Updated `tools/audit_hermes_skills.py` so `SKILLS_AUDIT_*.md` reports remain audit artifacts, not skill registry entries.
+- Synced `screener-ops` through `tools/sync_hermes_skills.py --only screener_ops`; cursor-synced mirrors remain source-driven.
+
+### Registry and runtime authority
+- **agent_roster.md / agent-registry-reference.md / hermes_tools_map.md / hermeslink-state-capture.md:** refreshed counts to registry `as_of` 2026-06-19: 34 entries = 29 active, 1 suppressed, 4 deprecated; 31 directories on disk.
+- **Known registry invariant gap:** `biotech_news_digest`, `company_news_ingest`, and `policy_shadow_watch` are deprecated registry tombstones without directories. This is an operator-owned registry/directory reconciliation, not a scoring or runtime change.
+- **Cloud limitation:** live Hermes CLI/OpenClaw scheduler state remains operator-WSL-only; repo docs do not assert current job IDs or last-run status beyond the existing 2026-05-05 snapshot.
+
+### Governance
+- Docs/tooling only. No selector, ranker, sizing, final score, decision engine, production KG, cron, or runtime scoring changes.
+
+---
+
 ## 2026-06-17 (Fleet monitoring blind spot + Scientific Cartography + memory-write bugs)
 
 ### Git activity (past 24h)
