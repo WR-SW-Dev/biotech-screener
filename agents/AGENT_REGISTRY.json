@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-06-17",
+  "as_of": "2026-06-19",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agent directories may be retained for history and must be registered with status=deprecated.",
   "enums": {
     "category": [
@@ -320,12 +320,13 @@
       "cadence": "intraday",
       "status": "active",
       "artifact_paths": [
-        "artifacts/intraday_mover_watch/"
+        "artifacts/intraday_mover_watch/",
+        "agents/intraday_mover_watch/memory/"
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "signal_lead",
-      "notes": "Doc gap: memory/ directory missing per 2026-04-24 audit.",
+      "notes": "Memory directory created 2026-06-17. Doc gap resolved.",
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
     },
