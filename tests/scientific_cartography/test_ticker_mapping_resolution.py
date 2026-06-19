@@ -109,6 +109,61 @@ class TestSponsorResolverSuffixStripping:
         assert result is not None
         assert result["ticker"] == "TEST"
 
+    def test_multi_suffix_company_name_match(self):
+        """'Alnylam Pharmaceuticals' should match 'Alnylam Pharmaceuticals, Inc.'."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ALNY",
+                ticker="ALNY",
+                company_name="Alnylam Pharmaceuticals, Inc.",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+        resolver = SponsorResolver(company_records=companies)
+        result = resolver.resolve("Alnylam Pharmaceuticals")
+        assert result is not None
+        assert result["ticker"] == "ALNY"
+        assert result["confidence"] == 0.85
+
+    def test_international_suffix_punctuation_match(self):
+        """'Abivax S.A.' should match universe company name 'Abivax SA'."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ABVX",
+                ticker="ABVX",
+                company_name="Abivax SA",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+        resolver = SponsorResolver(company_records=companies)
+        result = resolver.resolve("Abivax S.A.")
+        assert result is not None
+        assert result["ticker"] == "ABVX"
+
+    def test_normalized_exact_stem_match(self):
+        """'argenx' should match universe company name 'argenx SE'."""
+        companies = [
+            CompanyRecord(
+                company_id="COMPANY_TICKER_ARGX",
+                ticker="ARGX",
+                company_name="argenx SE",
+                cik=None,
+                is_public=True,
+                aliases=[],
+                as_of_date="2026-06-17",
+            )
+        ]
+        resolver = SponsorResolver(company_records=companies)
+        result = resolver.resolve("argenx")
+        assert result is not None
+        assert result["ticker"] == "ARGX"
+
     def test_unknown_sponsor_remains_null(self):
         """Unknown sponsor should result in null ticker."""
         companies = [

@@ -57,6 +57,56 @@ class TestExistingUniverseIngest:
         assert records[0].ticker == "COGT"
         assert records[1].ticker == "DNTH"
 
+    def test_ingest_from_production_universe_json_schema(self, ingest, tmp_path):
+        """Should use production universe company-name fields for sponsor matching."""
+        json_path = tmp_path / "universe.json"
+        json_path.write_text(
+            """[
+                {
+                    "ticker": "AARD",
+                    "name": "AARD",
+                    "exchange": "NASDAQ",
+                    "market_data": {
+                        "company_name": "Aardvark Therapeutics, Inc.",
+                        "industry": "Biotechnology"
+                    },
+                    "cik": "0001774857"
+                }
+            ]"""
+        )
+
+        records = ingest.ingest_from_json(json_path)
+
+        assert len(records) == 1
+        assert records[0].ticker == "AARD"
+        assert records[0].company_name == "Aardvark Therapeutics, Inc."
+        assert records[0].aliases == []
+        assert records[0].exchange == "NASDAQ"
+        assert records[0].confidence == 0.95
+
+    def test_ingest_from_json_skips_generic_market_company_name(self, ingest, tmp_path):
+        """Generic sector labels should not be used as company names."""
+        json_path = tmp_path / "universe.json"
+        json_path.write_text(
+            """[
+                {
+                    "ticker": "ABEO",
+                    "market_data": {
+                        "company_name": "Healthcare",
+                        "industry": "Biotechnology"
+                    }
+                }
+            ]"""
+        )
+
+        records = ingest.ingest_from_json(json_path)
+
+        assert len(records) == 1
+        assert records[0].ticker == "ABEO"
+        assert records[0].company_name == "ABEO"
+        assert records[0].aliases == []
+        assert records[0].confidence == 0.85
+
     def test_company_records_have_as_of_date(self, ingest, universe_csv):
         """All company records should include as_of_date."""
         records = ingest.ingest_from_csv(universe_csv)

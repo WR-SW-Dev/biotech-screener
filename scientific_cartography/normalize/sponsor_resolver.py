@@ -9,6 +9,16 @@ from scientific_cartography.schemas.company_schema import CompanyRecord
 class SponsorResolver:
     """Resolve raw sponsor names to company records."""
 
+    GENERIC_NORMALIZED_NAMES = {
+        "therapeutics",
+        "pharmaceuticals",
+        "biosciences",
+        "biotech",
+        "biopharm",
+        "company",
+        "corporation",
+    }
+
     # Common corporate suffixes for conservative stripping
     CORPORATE_SUFFIXES = [
         # Comma-prefixed variants (highest priority)
@@ -33,6 +43,11 @@ class SponsorResolver:
         r"\s+biotech\s*$",
         r"\s+biopharm\s*$",
         r"\s+plc\s*$",
+        r"\s+s\.?a\.?\s*$",
+        r"\s+se\s*$",
+        r"\s+ag\s*$",
+        r"\s+n\.?v\.?\s*$",
+        r"\s+gmbh\s*$",
     ]
 
     def __init__(
@@ -66,7 +81,11 @@ class SponsorResolver:
                 self.by_name[company.company_name.lower()] = company
                 # Also index normalized (suffix-stripped) version
                 normalized = self._strip_corporate_suffix(company.company_name)
-                if normalized and normalized != company.company_name.lower():
+                if (
+                    normalized
+                    and normalized != company.company_name.lower()
+                    and normalized not in self.GENERIC_NORMALIZED_NAMES
+                ):
                     self.by_name_normalized[normalized] = company
 
             if company.cik:
@@ -76,7 +95,7 @@ class SponsorResolver:
             for alias in company.aliases:
                 self.by_name[alias.lower()] = company
                 normalized = self._strip_corporate_suffix(alias)
-                if normalized and normalized != alias.lower():
+                if normalized and normalized != alias.lower() and normalized not in self.GENERIC_NORMALIZED_NAMES:
                     self.by_name_normalized[normalized] = company
 
     def _normalize_for_lookup(self, sponsor_name: str) -> str:
@@ -93,11 +112,16 @@ class SponsorResolver:
             Name with corporate suffix removed (or original if no suffix).
         """
         normalized = self._normalize_for_lookup(name)
-        for suffix_pattern in self.CORPORATE_SUFFIXES:
-            result = re.sub(suffix_pattern, "", normalized, flags=re.IGNORECASE)
-            if result != normalized:
-                return result.strip()
-        return normalized
+        current = normalized
+        for _ in range(5):
+            for suffix_pattern in self.CORPORATE_SUFFIXES:
+                result = re.sub(suffix_pattern, "", current, flags=re.IGNORECASE).strip()
+                if result and result != current:
+                    current = result
+                    break
+            else:
+                return current
+        return current
 
     def resolve(self, raw_sponsor_name: str) -> Optional[dict]:
         """Resolve raw sponsor name to company record.
@@ -190,7 +214,7 @@ class SponsorResolver:
 
         # Try normalized (suffix-stripped) company name match
         normalized_sponsor = self._strip_corporate_suffix(raw_sponsor_name)
-        if normalized_sponsor != normalized and normalized_sponsor in self.by_name_normalized:
+        if normalized_sponsor not in self.GENERIC_NORMALIZED_NAMES and normalized_sponsor in self.by_name_normalized:
             company = self.by_name_normalized[normalized_sponsor]
             result = {
                 "company_id": company.company_id,

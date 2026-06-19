@@ -12,6 +12,8 @@ from scientific_cartography.schemas.company_schema import CompanyRecord
 class ExistingUniverseIngest:
     """Read screener universe from local cache/snapshot files."""
 
+    GENERIC_COMPANY_NAMES = {"healthcare", "biotechnology", "biotech", "unknown"}
+
     def __init__(self, as_of_date: str = ""):
         """Initialize ingester.
 
@@ -31,6 +33,40 @@ class ExistingUniverseIngest:
             return f"COMPANY_{hash_hex}"
 
         return f"COMPANY_UNKNOWN_{hash([company_name, ticker])}"
+
+    def _extract_json_company_name(self, item: dict) -> Optional[str]:
+        """Extract company name from supported universe JSON schemas."""
+        market_data = item.get("market_data") if isinstance(item.get("market_data"), dict) else {}
+        for value in (
+            item.get("company"),
+            market_data.get("company_name"),
+            item.get("company_name"),
+            item.get("name"),
+        ):
+            if value and str(value).strip():
+                company_name = str(value).strip()
+                if company_name.lower() in self.GENERIC_COMPANY_NAMES:
+                    continue
+                return company_name
+        return None
+
+    def _extract_json_aliases(self, item: dict, company_name: Optional[str], ticker: Optional[str]) -> list[str]:
+        """Extract deterministic aliases from alternate universe name fields."""
+        market_data = item.get("market_data") if isinstance(item.get("market_data"), dict) else {}
+        aliases = []
+        seen = {value.lower() for value in (company_name, ticker) if value}
+        for value in (item.get("company"), market_data.get("company_name"), item.get("company_name"), item.get("name")):
+            if not value:
+                continue
+            alias = str(value).strip()
+            if not alias or alias.lower() in self.GENERIC_COMPANY_NAMES:
+                continue
+            key = alias.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            aliases.append(alias)
+        return aliases
 
     def ingest_from_csv(self, csv_path: Path) -> list[CompanyRecord]:
         """Ingest universe from CSV with ticker/company columns.
@@ -88,7 +124,9 @@ class ExistingUniverseIngest:
     def ingest_from_json(self, json_path: Path) -> list[CompanyRecord]:
         """Ingest universe from JSON array of company objects.
 
-        Expected structure: [{"ticker": "...", "company": "...", "cik": "..."}, ...]
+        Expected structure:
+        - [{"ticker": "...", "company": "...", "cik": "..."}, ...]
+        - production_data/universe.json rows with market_data.company_name/name.
 
         Args:
             json_path: Path to JSON file.
@@ -114,8 +152,10 @@ class ExistingUniverseIngest:
                     continue
 
                 ticker = item.get("ticker", "").strip() if item.get("ticker") else None
-                company = item.get("company", "").strip() if item.get("company") else None
+                company = self._extract_json_company_name(item)
                 cik = item.get("cik", "").strip() if item.get("cik") else None
+                market_data = item.get("market_data") if isinstance(item.get("market_data"), dict) else {}
+                exchange = item.get("exchange") or market_data.get("exchange")
 
                 if not (ticker or company):
                     continue
@@ -131,10 +171,12 @@ class ExistingUniverseIngest:
                     ticker=ticker,
                     company_name=company or ticker or "Unknown",
                     cik=cik,
+                    aliases=self._extract_json_aliases(item, company, ticker),
+                    exchange=exchange,
                     is_public=bool(ticker),
                     as_of_date=self.as_of_date,
                     source_refs=[str(json_path)],
-                    confidence=0.95 if (ticker and company) else 0.85,
+                    confidence=0.95 if (ticker and company and company != ticker) else 0.85,
                 )
                 records.append(record)
 
