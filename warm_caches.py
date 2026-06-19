@@ -705,7 +705,7 @@ def warm_ctis(
     as_of_date: date,
     data_dir: Path,
     cache_dir: Path,
-    enrich_detail: bool = True,
+    enrich_detail: bool = False,
 ) -> int:
     """Fetch and cache CTIS trial records. Returns count."""
     from wake_robin_data_pipeline.collectors.ctis_collector import collect_ctis_trials

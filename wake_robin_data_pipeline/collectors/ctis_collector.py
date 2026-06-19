@@ -107,7 +107,7 @@ def collect_ctis_trials(
     as_of_date: date,
     cache_dir: Path,
     cache_only: bool = False,
-    enrich_detail: bool = True,
+    enrich_detail: bool = False,
 ) -> List[dict]:
     """Collect CTIS trials for tickers in universe.
 
@@ -118,7 +118,8 @@ def collect_ctis_trials(
         cache_only: If True, only read from cache (no network).
         enrich_detail: If True, call detail endpoint for records missing
             primary_completion_date to get corrected status, NCT IDs,
-            and future completion dates.
+            and future completion dates. Default False to avoid timeout
+            (1000+ sequential detail API calls at 0.5s rate limit = ~30 min).
 
     Returns:
         List of normalized TrialRecord dicts.
