@@ -4213,6 +4213,11 @@ def promote_snapshot(
 # ---------------------------------------------------------------------------
 
 
+def _scientific_cartography_output_dir(as_of_date: str) -> Path:
+    """Return the date-level Scientific Cartography artifact directory."""
+    return REPO_ROOT / "artifacts" / "scientific_cartography" / as_of_date
+
+
 def run_scientific_cartography_phase13c_export(
     as_of_date: str,
     snapshot_dir: Path,
@@ -5198,7 +5203,7 @@ def run_daily(
         # Non-blocking by default; failures logged but do not halt pipeline.
         if run_scientific_cartography:
             try:
-                _sc_output_dir = REPO_ROOT / "artifacts" / "scientific_cartography" / as_of_date
+                _sc_output_dir = _scientific_cartography_output_dir(as_of_date)
                 _sc_ctgov_cache = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov" / as_of_date)
                 run_scientific_cartography_diagnostics(
                     as_of_date=as_of_date,
@@ -5219,7 +5224,7 @@ def run_daily(
         # Non-blocking by default; failures logged but do not halt pipeline.
         if run_scientific_cartography_phase13c:
             try:
-                _sc13c_output_dir = REPO_ROOT / "artifacts" / "scientific_cartography" / as_of_date / "diseases"
+                _sc13c_output_dir = _scientific_cartography_output_dir(as_of_date)
                 _sc_ctgov_cache = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov" / as_of_date)
                 run_scientific_cartography_phase13c_export(
                     as_of_date=as_of_date,
