@@ -11300,13 +11300,102 @@ def run_screening_pipeline(
     return results
 
 
+def _attach_phase2_decision_ruleset_manifest(
+    results: Dict[str, Any],
+    ruleset_path: Path,
+) -> Optional[Dict[str, Any]]:
+    """Attach the Phase-2 decision ruleset to the run inputs manifest.
+
+    The pipeline builds its manifest before the CLI resolves the Phase-2 ruleset.
+    Patch it before writing outputs so manifest verify/replay covers ruleset drift.
+    """
+    manifest = (results.get("run_metadata") or {}).get("inputs_manifest")
+    if not isinstance(manifest, dict):
+        return None
+
+    entry: Dict[str, Any] = {
+        "key": "decision_ruleset",
+        "path": str(ruleset_path),
+        "required": True,
+        "exists": ruleset_path.exists(),
+        "resolved_from": "production_data",
+        "load_site": "run_screen.py:phase2_cli",
+        "sha256": sha256_file(ruleset_path) if ruleset_path.exists() else None,
+        "record_count": None,
+    }
+
+    dependencies = [d for d in manifest.get("dependencies", []) if d.get("key") != "decision_ruleset"]
+    dependencies.append(entry)
+    dependencies.sort(key=lambda d: d["key"])
+    manifest["dependencies"] = dependencies
+
+    validation = manifest.setdefault("validation", {})
+    errors = [e for e in validation.get("errors", []) if not str(e).startswith("decision_ruleset:")]
+    if not entry["exists"]:
+        errors.append(f"decision_ruleset: required file missing ({ruleset_path})")
+    validation["errors"] = errors
+    validation["all_required_present"] = len(errors) == 0
+    validation.setdefault("warnings", [])
+    return entry
+
+
+def _verify_inputs_manifest_after_cli_patch(
+    results: Dict[str, Any],
+    verify_path: Optional[Path],
+) -> None:
+    """Re-run manifest verification after CLI-only dependencies are patched in."""
+    manifest = (results.get("run_metadata") or {}).get("inputs_manifest")
+    if not isinstance(manifest, dict):
+        raise FileNotFoundError("Input manifest verify failed: manifest missing from results")
+    if not verify_inputs_manifest(manifest):
+        raise FileNotFoundError("Input manifest verify failed: " + "; ".join(manifest["validation"]["errors"]))
+    if not verify_path:
+        raise FileNotFoundError("--inputs-manifest verify requires --inputs-manifest-path")
+    if not verify_path.exists():
+        raise FileNotFoundError(f"Prior inputs_manifest not found: {verify_path}")
+    with open(verify_path, "r", encoding="utf-8") as _mf:
+        prior_manifest = json.load(_mf)
+    drift_errors = verify_against_prior_manifest(manifest, prior_manifest)
+    if drift_errors:
+        for drift_error in drift_errors:
+            logger.error(f"[INPUT MANIFEST DRIFT] {drift_error}")
+        raise FileNotFoundError("Input manifest drift vs prior: " + "; ".join(drift_errors))
+
+
+def _load_decision_ruleset_for_cli(args: argparse.Namespace) -> DecisionRuleset:
+    """Resolve and validate the CLI decision ruleset before any outputs are written."""
+    if args.ruleset:
+        de_ruleset = DecisionRuleset.from_json(str(args.ruleset))
+        if args.decision_mode == "phase2" and de_ruleset.ruleset_id != PHASE2_PINNED_RULESET_ID:
+            logger.warning(
+                f"Phase-2 ruleset override: {de_ruleset.ruleset_id} != "
+                f"pinned {PHASE2_PINNED_RULESET_ID} (explicit --ruleset)"
+            )
+        return de_ruleset
+
+    if args.decision_mode == "phase2":
+        if not PHASE2_DEFAULT_RULESET_PATH.exists():
+            raise FileNotFoundError(f"Phase-2 pinned ruleset not found: {PHASE2_DEFAULT_RULESET_PATH}")
+        de_ruleset = DecisionRuleset.from_json(str(PHASE2_DEFAULT_RULESET_PATH))
+        logger.info(
+            f"Phase-2 mode: loaded pinned ruleset {de_ruleset.ruleset_id} "
+            f"from {PHASE2_DEFAULT_RULESET_PATH.name}"
+        )
+        if de_ruleset.ruleset_id != PHASE2_PINNED_RULESET_ID:
+            raise ValueError(
+                f"PHASE2 GUARDRAIL: loaded ruleset {de_ruleset.ruleset_id} != "
+                f"pinned {PHASE2_PINNED_RULESET_ID}. File may be corrupted: {PHASE2_DEFAULT_RULESET_PATH}"
+            )
+        return de_ruleset
+
+    return DEFAULT_RULESET
+
+
 def compute_data_hash(data_dir: Path) -> str:
-    """Compute hash of input data files for seed derivation."""
-    h = hashlib.sha256()
-    for json_file in sorted(data_dir.glob("*.json")):
-        h.update(json_file.name.encode("utf-8"))
-        h.update(json_file.read_bytes())
-    return h.hexdigest()[:16]
+    """Compute an input-only hash for deterministic bootstrap seed derivation."""
+    payload = _compute_run_input_hashes(data_dir)
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:16]
 
 
 def add_bootstrap_analysis(
@@ -11350,7 +11439,6 @@ def add_bootstrap_analysis(
     )
 
     results["bootstrap_analysis"] = bootstrap_result
-    results["regime_result"] = regime_result  # noqa: F821 — defined at line 8377
     return results
 
 
@@ -11861,6 +11949,12 @@ Module 3 Catalyst Detection:
         default=True,
         help="Enable co-invest overlay (requires coinvest_signals.json or holdings_snapshots.json in data-dir). "
         "Enabled by default.",
+    )
+    parser.add_argument(
+        "--no-coinvest",
+        action="store_false",
+        dest="enable_coinvest",
+        help="Disable co-invest overlay.",
     )
 
     parser.add_argument(
@@ -12558,6 +12652,18 @@ Module 3 Catalyst Detection:
                 "error": str(e),
             }
 
+        # Load decision ruleset and patch CLI-only manifest inputs before any
+        # output is written, so failed guardrails cannot leave partial outputs.
+        de_ruleset = _load_decision_ruleset_for_cli(args)
+        if args.decision_mode == "phase2" and args.inputs_manifest != "off":
+            _rs_path = Path(args.ruleset) if args.ruleset else PHASE2_DEFAULT_RULESET_PATH
+            _attach_phase2_decision_ruleset_manifest(results, _rs_path)
+            if args.inputs_manifest == "verify":
+                _verify_inputs_manifest_after_cli_patch(
+                    results,
+                    getattr(args, "inputs_manifest_path", None),
+                )
+
         # Write output
         logger.info(f"[OUTPUT] Writing results to {args.output}")
         write_json_output(args.output, results)
@@ -12595,39 +12701,6 @@ Module 3 Catalyst Detection:
             logger.info(f"Audit log:          {args.audit_log}")
         logger.info("=" * 60)
 
-        # Load decision engine ruleset (custom JSON or built-in defaults)
-        if args.ruleset:
-            de_ruleset = DecisionRuleset.from_json(str(args.ruleset))
-        elif args.decision_mode == "phase2":
-            if not PHASE2_DEFAULT_RULESET_PATH.exists():
-                logger.error(f"Phase-2 pinned ruleset not found: {PHASE2_DEFAULT_RULESET_PATH}")
-                return 1
-            de_ruleset = DecisionRuleset.from_json(str(PHASE2_DEFAULT_RULESET_PATH))
-            logger.info(
-                f"Phase-2 mode: loaded pinned ruleset {de_ruleset.ruleset_id} "
-                f"from {PHASE2_DEFAULT_RULESET_PATH.name}"
-            )
-        else:
-            de_ruleset = DEFAULT_RULESET
-
-        # Fail-closed guardrail: verify Phase-2 ruleset identity
-        if args.decision_mode == "phase2":
-            if de_ruleset.ruleset_id != PHASE2_PINNED_RULESET_ID:
-                if not args.ruleset:
-                    # Fail-closed: refuse to proceed with wrong default
-                    logger.error(
-                        f"PHASE2 GUARDRAIL: loaded ruleset {de_ruleset.ruleset_id} != "
-                        f"pinned {PHASE2_PINNED_RULESET_ID}. "
-                        f"File may be corrupted: {PHASE2_DEFAULT_RULESET_PATH}"
-                    )
-                    return 1
-                else:
-                    # User explicitly overrode — warn but allow
-                    logger.warning(
-                        f"Phase-2 ruleset override: {de_ruleset.ruleset_id} != "
-                        f"pinned {PHASE2_PINNED_RULESET_ID} (explicit --ruleset)"
-                    )
-
         # Save validation snapshot for future forward-looking backtests
         if not args.no_snapshot:
             snapshot_dir = args.snapshot_dir or (args.data_dir.parent / "data" / "snapshots")
@@ -12661,24 +12734,6 @@ Module 3 Catalyst Detection:
                         }
                     except Exception as e:
                         logger.warning(f"Could not load market_data for cost sizing: {e}")
-
-            # Post-patch inputs manifest with decision ruleset (only known in main)
-            if args.inputs_manifest != "off" and args.decision_mode == "phase2":
-                _manifest = results.get("run_metadata", {}).get("inputs_manifest")
-                if _manifest is not None:
-                    _rs_path = Path(args.ruleset) if args.ruleset else PHASE2_DEFAULT_RULESET_PATH
-                    _rs_entry: Dict[str, Any] = {
-                        "key": "decision_ruleset",
-                        "path": str(_rs_path),
-                        "required": False,
-                        "exists": _rs_path.exists(),
-                        "resolved_from": "production_data",
-                        "load_site": "run_screen.py:6544",
-                        "sha256": sha256_file(_rs_path) if _rs_path.exists() else None,
-                        "record_count": None,
-                    }
-                    _manifest["dependencies"].append(_rs_entry)
-                    _manifest["dependencies"].sort(key=lambda d: d["key"])
 
             snap_result = save_validation_snapshot(
                 snapshot_dir=snapshot_dir,
