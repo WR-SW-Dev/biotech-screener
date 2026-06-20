@@ -22,7 +22,6 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -91,7 +90,7 @@ def save_run_log(
         Path to the saved run log
     """
     run_log = {
-        "run_timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "run_timestamp": f"{as_of_date}T00:00:00Z",
         "as_of_date": as_of_date,
         "success": success,
         "outputs": {

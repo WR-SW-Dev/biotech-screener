@@ -28,7 +28,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -48,6 +48,20 @@ from archive_snapshot import get_git_info
 # Ops contract constants
 # ---------------------------------------------------------------------------
 MANIFEST_VERSION = "1.3.0"
+
+
+def _deterministic_timestamp(as_of_date: str) -> str:
+    """Return the canonical deterministic timestamp for an as-of date."""
+    return f"{as_of_date}T00:00:00Z"
+
+
+def _timestamp_for_snapshot_dir(snap_dir: Path) -> str:
+    """Derive progress timestamps from the snapshot date directory name."""
+    try:
+        date.fromisoformat(snap_dir.name)
+        return _deterministic_timestamp(snap_dir.name)
+    except ValueError:
+        return "1970-01-01T00:00:00Z"
 
 # Canonical gate names — every gate emitted by run_daily() MUST be in this set.
 # Adding a new gate requires updating this allowlist.
@@ -4015,7 +4029,7 @@ def build_run_manifest(
         "requested_as_of_date": _requested,
         "effective_as_of_date": as_of_date,
         "as_of_date": as_of_date,  # backward compat alias
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": _deterministic_timestamp(as_of_date),
         "git": git_block,
         "ruleset": ruleset_info,
         "row_counts": row_counts,
@@ -4096,19 +4110,20 @@ def _load_progress(snap_dir: Path) -> Dict[str, Any]:
             return json.loads(p.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             pass
-    return {"steps": {}, "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    return {"steps": {}, "started_at": _timestamp_for_snapshot_dir(snap_dir)}
 
 
 def _mark_step(snap_dir: Path, step_name: str, status: str = "done", detail: str = "") -> None:
     """Mark a pipeline step as completed. Enables idempotent reruns."""
     progress = _load_progress(snap_dir)
+    timestamp = _timestamp_for_snapshot_dir(snap_dir)
     progress["steps"][step_name] = {
         "status": status,
-        "completed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "completed_at": timestamp,
         "detail": detail,
     }
     progress["last_step"] = step_name
-    progress["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    progress["last_updated"] = timestamp
     snap_dir.mkdir(parents=True, exist_ok=True)
     (snap_dir / _PROGRESS_FILE).write_text(json.dumps(progress, indent=2) + "\n", encoding="utf-8")
 
@@ -4123,6 +4138,32 @@ def _step_done(snap_dir: Path, step_name: str) -> bool:
 # ---------------------------------------------------------------------------
 # Snapshot promotion
 # ---------------------------------------------------------------------------
+
+
+def _snapshot_backup_path(
+    final_snapshots_dir: Path,
+    final_date_dir: Path,
+    staging_date_dir: Path,
+    as_of_date: str,
+) -> Path:
+    """Build a deterministic backup path from old/new snapshot content hashes."""
+    existing_rankings = final_date_dir / "rankings.csv"
+    staging_rankings = staging_date_dir / "rankings.csv"
+    existing_hash = (
+        hashlib.sha256(existing_rankings.read_bytes()).hexdigest()[:12] if existing_rankings.exists() else "noold"
+    )
+    staging_hash = (
+        hashlib.sha256(staging_rankings.read_bytes()).hexdigest()[:12] if staging_rankings.exists() else "nonew"
+    )
+    base = final_snapshots_dir / f"{as_of_date}__pre_{existing_hash}_{staging_hash}"
+    if not base.exists():
+        return base
+    suffix = 1
+    while True:
+        candidate = final_snapshots_dir / f"{base.name}_{suffix:02d}"
+        if not candidate.exists():
+            return candidate
+        suffix += 1
 
 
 def promote_snapshot(
@@ -4165,9 +4206,8 @@ def promote_snapshot(
                 return final_date_dir
 
     if final_date_dir.exists():
-        # Archive existing by renaming with timestamp
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        backup = final_snapshots_dir / f"{as_of_date}__pre_{ts}"
+        # Archive existing by renaming with content-derived suffix.
+        backup = _snapshot_backup_path(final_snapshots_dir, final_date_dir, staging_date_dir, as_of_date)
         import logging
 
         logging.getLogger(__name__).info(
@@ -6725,7 +6765,7 @@ def main():
         manifest = {
             "manifest_version": MANIFEST_VERSION,
             "as_of_date": args.as_of_date,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": _deterministic_timestamp(args.as_of_date),
             "overall_status": "FAIL",
             "gates": [],
             "crash": {
