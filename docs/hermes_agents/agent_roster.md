@@ -31,12 +31,11 @@ Canonical registry: **`agents/AGENT_REGISTRY.json`** (`as_of` field on file).
 | suppressed | 1 | `bioshort_watch` |
 | deprecated | 4 | `biotech_news_digest`, `company_news_ingest`, `policy_shadow_watch`, `shadow_watch` |
 
-**Known registry invariant gap (2026-06-19):** `biotech_news_digest`,
-`company_news_ingest`, and `policy_shadow_watch` remain in the registry as
-deprecated historical entries but no longer have directories on disk. Until an
-operator reconciles either the registry entries or archival directories,
-`pytest tests/test_agent_registry.py -q -p no:warnings` is expected to flag
-those dangling registry rows.
+**Registry tombstone policy (2026-06-20):** `biotech_news_digest`,
+`company_news_ingest`, and `policy_shadow_watch` remain as deprecated registry
+tombstones without directories. Registry lint permits only fully marked
+deprecated tombstones (`requires_preflight=false`, unsupervised, no artifacts)
+to be directory-less; active and suppressed entries must still have workspaces.
 
 ### Hermes governance agents (Lane A, `llm_policy: none`)
 

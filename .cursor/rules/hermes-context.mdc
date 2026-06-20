@@ -14,7 +14,7 @@ globs:
 
 Before modifying agent-related code in this repo, load fleet context via Hermes MCP.
 
-Canonical tool taxonomy: `docs/hermes_agents/hermes_tools_map.md`. MCP tools are **read-only** — never mutate registry, cron, scoring, snapshots, skills, or governance artifacts from the IDE.
+Canonical tool taxonomy: `docs/hermes_agents/hermes_tools_map.md`. The repo-native Hermes MCP tools are **read-only** — never mutate registry, cron, scoring, snapshots, skills, or governance artifacts from the IDE. Do not substitute upstream `hermes mcp serve`; that upstream server is write-capable.
 
 ## Session Start (when touching scoped paths)
 
@@ -40,7 +40,8 @@ Registry metadata must never override runtime identity documents.
 
 ## Key Constraints
 
-- All MCP tools are **read-only** -- no mutation from IDE sessions
+- Repo-native Hermes MCP tools are **read-only** -- no mutation from IDE sessions
+- Upstream `hermes mcp serve` is not approved for Cursor on this repo because it can send messages and respond to approvals
 - Lane A agents (deterministic) must not depend on LLM gateway tokens
 - Only `crt_resolution_watcher` has `mutate_data` authority
 - No agent has `mutate_config` -- operator-only

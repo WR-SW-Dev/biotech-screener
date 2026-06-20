@@ -52,7 +52,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
 REGISTRY_PATH = PROJECT_ROOT / "agents" / "AGENT_REGISTRY.json"
 HERMES_JOB_PREFIX = "hermes-"
-DIRECT_RUN_BLOCKED_STATUSES = frozenset({"deprecated", "shadow"})
+DIRECT_RUN_BLOCKED_STATUSES = frozenset({"deprecated", "shadow", "suppressed"})
 
 # Bare status tokens that indicate a heartbeat-only response — do not write to memory.
 _HEARTBEAT_TOKENS = re.compile(
@@ -465,6 +465,13 @@ def main():
 
     resolved_model = resolve_model(args.agent, args.model)
 
+    registry_entry = load_registry_entry(args.agent)
+    block_reason = direct_run_block_reason(args.agent, registry_entry)
+    if block_reason and not args.skip_preflight:
+        print(f"[DIRECT_RUN_BLOCKED] {block_reason}", file=sys.stderr)
+        print("  Use --skip-preflight only for explicit rollback/dev.", file=sys.stderr)
+        return 1
+
     # Auth preflight check (centralized, before any agent execution)
     auth_ok, auth_error = auth_preflight_check(args.agent)
     if not auth_ok:
@@ -476,13 +483,6 @@ def main():
     if health_diagnostics:
         for diag in health_diagnostics:
             print(f"[SCHEDULER_HEALTH_{health_status}] {diag}", file=sys.stderr)
-
-    registry_entry = load_registry_entry(args.agent)
-    block_reason = direct_run_block_reason(args.agent, registry_entry)
-    if block_reason and not args.skip_preflight:
-        print(f"[DIRECT_RUN_BLOCKED] {block_reason}", file=sys.stderr)
-        print("  Use --skip-preflight only for explicit rollback/dev.", file=sys.stderr)
-        return 1
 
     # Preflight governance check
     preflight = None if args.skip_preflight else run_preflight(args.agent)

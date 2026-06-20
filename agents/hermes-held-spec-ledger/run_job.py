@@ -12,7 +12,6 @@ Usage:
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Setup
@@ -25,7 +24,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from common.operator_delivery import send_operator_event
+from common.operator_delivery import send_operator_event  # noqa: E402
+
+
+APPROVED_STATUSES = {"APPROVED", "CLEARED", "RELEASED"}
+BLOCKED_STATUSES = {"HELD", "HELD_SUPPRESSED", "SPEC_REQUIRED", "BLOCKED"}
+WAITING_STATUSES = {"AWAITING_FIRST_FIRE", "WAITING_CLEARANCE", "NEEDS_OPERATOR_DECISION"}
+
+
+def _status_for(spec: dict) -> str:
+    return str(spec.get("state") or spec.get("status") or "").upper()
 
 
 def main():
@@ -62,11 +70,11 @@ def main():
         )
         return 1
 
-    # Extract summary
-    held_specs = ledger.get("held_specs", [])
-    approved = [s for s in held_specs if s.get("state") == "approved"]
-    blocked = [s for s in held_specs if s.get("state") == "blocked"]
-    waiting = [s for s in held_specs if s.get("state") == "waiting_clearance"]
+    # The knowledge-layer builder writes `items`; older ledgers used `held_specs`.
+    held_specs = ledger.get("items", ledger.get("held_specs", []))
+    approved = [s for s in held_specs if _status_for(s) in APPROVED_STATUSES]
+    blocked = [s for s in held_specs if _status_for(s) in BLOCKED_STATUSES]
+    waiting = [s for s in held_specs if _status_for(s) in WAITING_STATUSES]
 
     logger.info(f"Held specs: {len(held_specs)} total ({len(approved)} approved, {len(blocked)} blocked, {len(waiting)} waiting)")
 

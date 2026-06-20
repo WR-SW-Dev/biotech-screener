@@ -4,7 +4,7 @@ Last updated: 2026-06-07 · baseline `main` @ `ec4b2726`
 
 Canonical taxonomy for Hermes in this repo. **Hermes is not one thing** — it is four related surfaces plus a monitoring feed. Use this map before invoking tools so layers are not conflated.
 
-> **Governance rule (non-negotiable):** Cursor MCP Hermes tools are **read-only** and must never mutate registry, cron, scoring, snapshots, skills, or governance artifacts. IDE convenience must not become a production-control surface.
+> **Governance rule (non-negotiable):** Cursor MCP Hermes tools are **read-only** and must never mutate registry, cron, scoring, snapshots, skills, or governance artifacts. IDE convenience must not become a production-control surface. Do **not** wire upstream `hermes mcp serve` into Cursor for this repo; that upstream MCP can send messages and respond to approvals.
 
 ## Surface overview
 
@@ -31,6 +31,12 @@ python3 -m mcp_server.hermes_server --health
 ```
 
 Tests: [`tests/test_hermes_mcp_server.py`](../../tests/test_hermes_mcp_server.py).
+
+**Authority guardrail:** The only approved Cursor MCP for Hermes in this repo is
+the repo-native `mcp_server.hermes_server`. Upstream Hermes Agent's
+`hermes mcp serve` is a different, write-capable MCP surface; keep it out of
+Cursor/IDE production workflows unless a separate governance review explicitly
+approves that mutation surface.
 
 | Tool | Purpose |
 |------|---------|

@@ -19,6 +19,7 @@ def direct_mod(tmp_path, monkeypatch):
 
     mod = importlib.reload(mod)
     monkeypatch.setattr(mod, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(mod, "auth_preflight_check", lambda agent: (True, None))
     return mod
 
 
@@ -229,6 +230,37 @@ def test_direct_run_blocks_deprecated_status(direct_mod, tmp_path, monkeypatch, 
     rc = direct_mod.main()
     assert rc == 1
     assert "deprecated" in capsys.readouterr().err
+
+
+def test_direct_run_blocks_suppressed_status(direct_mod, tmp_path, monkeypatch, capsys):
+    registry = {
+        "agents": {
+            "bioshort_watch": {
+                "status": "suppressed",
+                "cadence": "unknown",
+            }
+        }
+    }
+    reg_path = tmp_path / "agents" / "AGENT_REGISTRY.json"
+    reg_path.parent.mkdir(parents=True)
+    reg_path.write_text(json.dumps(registry), encoding="utf-8")
+    monkeypatch.setattr(direct_mod, "REGISTRY_PATH", reg_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_agent_direct.py",
+            "--agent",
+            "bioshort_watch",
+            "--message",
+            "HEARTBEAT",
+            "--log-dir",
+            str(tmp_path / "logs"),
+        ],
+    )
+    rc = direct_mod.main()
+    assert rc == 1
+    assert "suppressed" in capsys.readouterr().err
 
 
 def test_direct_run_hermes_allowed_with_skip_preflight(direct_mod, tmp_path, monkeypatch):
