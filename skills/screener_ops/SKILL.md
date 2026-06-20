@@ -241,7 +241,7 @@ Hermes job completes
 ### Model Configuration \(updated 2026-05-20\)
 
 - **Primary model**: `deepseek/deepseek-v4-flash:free` \(OpenRouter\) - fleet-wide migration 2026-05-20
-- **Registry**: 31 agent directories \(29 active, 2 deprecated historical workspaces\) — includes 4 Hermes governance jobs in `agents/` \(held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector\) — see `agents/AGENT_REGISTRY.json`
+- **Registry**: 34 registry entries \(29 active, 1 suppressed, 4 deprecated; 31 directories on disk\) — includes 4 Hermes governance jobs in `agents/` \(held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector\) — see `agents/AGENT_REGISTRY.json`
 - **Fallback**: Anthropic Claude SDK \(for Claude-specific models\)
 - **Auto-routing**: "deepseek" models -> OpenRouter \(OpenAI-compatible\), "claude" -> Anthropic SDK
 - **Previous**: Llama 3.3 70B Instruct Turbo \(Together AI, 2026-05-13 to 2026-05-20\)
@@ -594,7 +594,7 @@ Key findings \(pseudo-PIT\):
 | --- | --- |
 | Skills + knowledge recursion | `self-improving`, `.learnings/`, `audit_learnings.py` on `main` |
 | CodeGraph | v0.9.9 pinned; MCP + CLI; bounded proof model |
-| Hermes fleet | 29 active agents; WSL acceptance gate for cron/gateway |
+| Hermes fleet | 29 active agents + registry tombstones; WSL acceptance gate for cron/gateway |
 | CI / tests | Full suite green; Track B skips intentional; Actions budget ≠ code failure |
 
 ### Cursor Cloud Agent Environment

@@ -31,7 +31,7 @@ description: >
 | **MCP read** | `knowledge_read(artifact=...)` | `contradiction_ledger` → `latest.md` |
 | **Cron (operator)** | Weekdays ~5:45 PM ET | Run on **operator WSL** after `git pull` |
 
-**Agent fleet (registry):** **29 active** (includes 4 Hermes governance jobs). Lint: `pytest tests/test_agent_registry.py`.
+**Agent fleet (registry):** **29 active** (includes 4 Hermes governance jobs), plus 1 suppressed and 4 deprecated registry entries. Lint: `pytest tests/test_agent_registry.py`.
 
 ## Purpose
 
@@ -174,10 +174,12 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 
 ### Agents
 
-| Status | Count (2026-06-12 registry) | Action |
+| Status | Count (2026-06-19 registry) | Action |
 |--------|-------------------|--------|
 | `active` | 29 | Includes 4 Hermes governance jobs |
-| **total** | **29** | From `AGENT_REGISTRY.json` (overlapping agents removed #326) |
+| `suppressed` | 1 | `bioshort_watch`; reactivation requires operator approval and a separate spec |
+| `deprecated` | 4 | Historical tombstones/workspaces owned by `shadow_monitor` or `herald` |
+| **total registry entries** | **34** | From `AGENT_REGISTRY.json`; 31 directories currently exist on disk |
 
 **Action:** If `active` drops significantly, check for failed deployments. Lint: `pytest tests/test_agent_registry.py`.
 

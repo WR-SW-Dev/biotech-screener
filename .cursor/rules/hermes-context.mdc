@@ -49,7 +49,7 @@ Registry metadata must never override runtime identity documents.
 
 ## Agent Fleet Quick Reference
 
-- 29 total: 29 active; 4 Hermes governance jobs (held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector). Retired overlaps removed 2026-05-30 (shadow_watch, policy_shadow_watch, bioshort_watch, company_news_ingest, biotech_news_digest).
+- Registry `as_of` 2026-06-19: 34 entries = 29 active, 1 suppressed (`bioshort_watch`), 4 deprecated (`biotech_news_digest`, `company_news_ingest`, `policy_shadow_watch`, `shadow_watch`); 31 directories on disk. Active fleet includes 4 Hermes governance jobs (held-spec-ledger, first-fire-validator, ruleset-integrity, contradiction-detector).
 - Model: DeepSeek v4 flash via OpenRouter (switched 2026-05-20; gateway fixed to openrouter primary 2026-05-25)
 - Cron: 5:30 PM ET weekdays (daily production), 10:00 AM ET (universe maintenance)
 - Monitoring: heartbeat -> supervisor -> post-snapshot -> sentinel (4-layer stack)

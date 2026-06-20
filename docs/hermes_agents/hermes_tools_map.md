@@ -190,7 +190,7 @@ else:
 
 | Property | Value |
 |----------|--------|
-| Fleet (repo) | **29** active agents in `agents/AGENT_REGISTRY.json` (post #326 consolidation) |
+| Fleet (repo) | **29** active agents in `agents/AGENT_REGISTRY.json`, plus suppressed/deprecated historical entries (2026-06-19 registry: 34 entries, 31 directories) |
 | Default scheduled LLM path | [`tools/run_agent_direct.py`](../../tools/run_agent_direct.py) — direct API, **no gateway token** |
 | Cron wrapper | [`tools/run_openclaw.sh`](../../tools/run_openclaw.sh) — forces Node v22 on operator host |
 | Routing policy | [`docs/ops/hermes_openclaw_routing_policy.md`](../ops/hermes_openclaw_routing_policy.md) |
@@ -221,7 +221,7 @@ References: [`docs/hermes_skills/references/agent-registry-reference.md`](../her
 
 ### Operator cleanup (post fleet consolidation)
 
-Repo removed `shadow_watch`, `policy_shadow_watch`, `biotech_news_digest`, `company_news_ingest`, `bioshort_watch` (#326). **OpenClaw may still list deregistered agents** until the operator runs gateway cleanup — see Class G in `openclaw-session-routing-debug.md` (historical `shadow_watch` example; canonical portfolio surface is `shadow_monitor`).
+Repo retained `bioshort_watch` as suppressed and `shadow_watch` as a deprecated historical directory; `policy_shadow_watch`, `biotech_news_digest`, and `company_news_ingest` remain deprecated registry tombstones without directories. **OpenClaw may still list deregistered agents** until the operator runs gateway cleanup — see Class G in `openclaw-session-routing-debug.md` (historical `shadow_watch` example; canonical portfolio surface is `shadow_monitor`).
 
 ```bash
 # Operator WSL — schema-only / diagnose-first
