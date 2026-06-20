@@ -4,7 +4,7 @@ Lint for agents/AGENT_REGISTRY.json.
 
 Bidirectional consistency:
 - Every subdirectory of agents/ must appear in the registry exactly once.
-- Every registry entry must correspond to an existing subdirectory.
+- Every non-tombstone registry entry must correspond to an existing subdirectory.
 - Every entry must carry all required fields with enum-valid values.
 """
 
@@ -66,8 +66,18 @@ def test_every_directory_in_registry(registry, agent_dirs):
 def test_every_registry_entry_has_directory(registry, agent_dirs):
     registered = set(registry["agents"].keys())
     on_disk = set(agent_dirs)
-    dangling = registered - on_disk
-    assert not dangling, f"AGENT_REGISTRY.json references missing directories: {sorted(dangling)}"
+    dangling = []
+    for name in sorted(registered - on_disk):
+        entry = registry["agents"][name]
+        is_tombstone = (
+            entry.get("status") == "deprecated"
+            and entry.get("requires_preflight") is False
+            and entry.get("supervised_by_orchestrator") is False
+            and entry.get("artifact_paths") == []
+        )
+        if not is_tombstone:
+            dangling.append(name)
+    assert not dangling, f"AGENT_REGISTRY.json references missing non-tombstone directories: {dangling}"
 
 
 @pytest.mark.parametrize(

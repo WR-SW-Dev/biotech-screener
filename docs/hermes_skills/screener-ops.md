@@ -288,7 +288,7 @@ Do not assume one model for all Hermes paths:
 
 | Layer | Truth source | LLM? |
 | --- | --- | --- |
-| Hermes MCP (Cursor) | `mcp_server/hermes_server.py` | No — read-only |
+| Hermes MCP (Cursor) | `mcp_server/hermes_server.py` | No — repo-native read-only MCP; do not substitute upstream `hermes mcp serve` |
 | Lane A `hermes-*` jobs | `agents/hermes-*/run_job.py` | No — `llm_policy: none` |
 | Hermes Gateway / CLI | `~/.hermes/config.yaml` on operator WSL | Yes — verify live after `git pull` |
 | Fleet SOUL intent | `agents/*/SOUL.md`, this skill | `deepseek/deepseek-v4-flash:free` (OpenRouter) |
@@ -350,7 +350,7 @@ Agent AGENTS.md docs updated with Llama-specific procedures:
 | carried | YELLOW | Same anomaly seen yesterday (exact text match) |
 | resolved | GREEN | Previously seen, now gone |
 
-Terminal agents (e.g., ops\_supervisor) are intentionally unsupervised and do not carry HEARTBEAT.md.
+Terminal agents (e.g., ops\_supervisor) and deterministic Lane A `hermes-*` jobs are intentionally unsupervised/on-demand and do not carry HEARTBEAT.md.
 
 ### Herald Pipeline
 
@@ -636,7 +636,7 @@ Key findings (pseudo-PIT):
 ### Cursor Cloud Agent Environment
 
 - Install hook: `.cursor/environment.json` — `npm install -g @colbymchenry/codegraph@0.9.9 --prefix "$HOME/.local"`, then `pip install -r requirements.txt`, then `codegraph sync` or `codegraph index`.
-- MCP: `.cursor/mcp.json` — `codegraph` + repo-native `hermes` (`mcp_server/hermes_server.py`, read-only).
+- MCP: `.cursor/mcp.json` — `codegraph` + repo-native `hermes` (`mcp_server/hermes_server.py`, read-only). Upstream `hermes mcp serve` is write-capable and is not approved for Cursor on this repo.
 - Python deps from `requirements.txt` only; **`pytest-xdist` not required** (`pyproject.toml` uses `-q -m 'not network'`).
 - Cloud can run registry tests and build knowledge-layer ledgers; **cannot** authoritatively validate operator cron or `output/hedge_report/`.
 - Expected cloud build summary: `0 hard / N cloud-env / M possible`; first-fire FAIL may still appear if hedge artifacts are absent in the checkout.

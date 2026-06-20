@@ -12,7 +12,6 @@ Usage:
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Setup
@@ -25,7 +24,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from common.operator_delivery import send_operator_event
+from common.operator_delivery import send_operator_event  # noqa: E402
+
+
+def _is_failure_status(status: str) -> bool:
+    normalized = status.upper()
+    return normalized in {"FAIL", "FAILED"} or normalized.startswith("FAIL_")
 
 
 def main():
@@ -69,12 +73,12 @@ def main():
 
     for job in jobs:
         job_name = job.get("job", "unknown")
-        eval_status = job.get("eval", job.get("status", "UNKNOWN"))
+        eval_status = str(job.get("eval", job.get("status", "UNKNOWN")))
 
         if eval_status == "PASS":
             passes.append(job)
             logger.info(f"First-fire PASS: {job_name}")
-        elif eval_status in ("FAIL", "FAILED"):
+        elif _is_failure_status(eval_status):
             failures.append(job)
             logger.warning(f"First-fire FAIL: {job_name}")
         else:

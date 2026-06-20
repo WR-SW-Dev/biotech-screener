@@ -21,6 +21,7 @@
     "status": [
       "active",
       "shadow",
+        "suppressed",
       "deprecated"
     ],
     "authority_level": [

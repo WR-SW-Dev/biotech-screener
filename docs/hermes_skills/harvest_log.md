@@ -7,6 +7,19 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ## 2026-06-19 (Hermes context refresh + registry tombstone split)
 
+### Follow-up contract fixes (2026-06-20 UTC)
+- **Lane A jobs:** Added contract tests for builder-output schemas and fixed `hermes-held-spec-ledger` to read `items` from `held_spec_ledger/latest.json`.
+- **First-fire routing:** `hermes-first-fire-validator` now treats builder `FAIL_*` eval statuses as failures and routes `first_fire_fail`.
+- **Registry lint:** Added `suppressed` as an explicit status and made directory-less registry entries legal only for fully marked deprecated tombstones.
+- **Direct dispatch guard:** `run_agent_direct.py` blocks `suppressed` agents as well as deprecated/shadow agents.
+- **Lane A heartbeat contract:** Removed stub `HEARTBEAT.md` files from deterministic `hermes-*` jobs; heartbeat checks skip these on-demand jobs by design.
+- **MCP guardrail:** Docs now explicitly forbid substituting upstream write-capable `hermes mcp serve` for the repo-native read-only Cursor MCP.
+
+### Governance
+- Hermes docs/tooling/Lane A plumbing only. No selector, ranker, sizing, final score, decision engine, production KG, cron, or runtime scoring changes.
+
+---
+
 ### Hermes sync/audit
 - Ran `python3 tools/audit_hermes_skills.py` and found the dated skills audit report was being counted as an unregistered skill doc.
 - Updated `tools/audit_hermes_skills.py` so `SKILLS_AUDIT_*.md` reports remain audit artifacts, not skill registry entries.

@@ -105,6 +105,22 @@ cd /mnt/c/Projects/biotech_screener/biotech-screener
 git pull
 python3 tools/build_hermes_knowledge_layer.py
 python3 tools/audit_hermes_skills.py
+
+# Cursor/IDE must use the repo-native read-only MCP, not upstream write-capable
+# `hermes mcp serve`.
+python3 - <<'PY'
+import json
+from pathlib import Path
+p = Path(".cursor/mcp.json")
+d = json.loads(p.read_text())
+cmd = d.get("mcpServers", {}).get("hermes", {}).get("args", [])
+print("cursor hermes MCP args:", cmd)
+assert "mcp_server.hermes_server" in " ".join(cmd)
+PY
+
+# Runtime guardrails to inspect on operator WSL. These commands are read-only.
+grep -nE 'ALLOW_ALL_USERS|YOLO|guard_agent_created|cron_mode' "$HOME/.hermes/config.yaml" || true
+
 python3 -c "
 import yaml, pathlib
 p = pathlib.Path.home() / '.hermes' / 'config.yaml'
