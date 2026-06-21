@@ -1,8 +1,9 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-06-02 (added § 14.6.7 PIT trim shadow study: research-only, forward-window maturity blocker documented, no production action)
-**Prior update:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
+**Last updated:** 2026-06-21 (added § Recent Updates — ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
+**Prior update:** 2026-06-02 (added § 14.6.7 PIT trim shadow study: research-only, forward-window maturity blocker documented, no production action)
+**Earlier update:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
 **Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
@@ -11,6 +12,108 @@ weights. See `production_data/ranker_v2_model.json` → `provenance` block for t
 stale selector/ranker prose with the already-active v1.14.0 configuration. The
 selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW Top-30
 construction remain frozen; this document does not authorize behavior changes.
+
+---
+
+## Recent Updates — 2026-06-20 / 2026-06-21
+
+Diagnosis- and documentation-only. **No selector, ranker, weight, formula, eligibility,
+sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
+Detailed evidence in `artifacts/audit/*_2026_06_20.md`; governance record in
+`docs/dem_ranker_phase_c_decision_memo_2026_06_20.md`; gate procedure in
+`docs/dem_ranker_july8_ic_remeasurement_runbook.md`.
+
+### A. DEM Ranker Robustness Audit (Phases 1–2d) — read-only
+
+- **Phase 1:** Confirmed the live ranker is `minimal_v2` = **2 features** (`coinvest_score_z` +0.02,
+  `financial_score` −0.0533), deployed capped Family C vector. Architecture as expected.
+- **Phase 2a / 2a-ext:** `financial_score` is PIT-safe by design (Module 2 filters `source_date <= as_of_date`)
+  but **snapshot auditability is partial** — `rankings.csv` exports the score without provenance
+  (no `source_date`/staleness). Data-quality fields live only in `screen_output.json`. No defect.
+- **Phase 2b:** Corrected Spec 100 `final_score` IC (eligible cohort, actionable_rank ≤ 60) is
+  **insufficient / unobservable** on then-available forward data → IC blocker remains OPEN.
+- **Phase 2c:** `coinvest_score_z` PIT-safe by `as_of_date`; **13F contamination monitored
+  externally only** (`inst_delta_regime` flag present, not enforced in ranker). No defect.
+- **Phase 2d:** Z-score clamping [−3, 3] is **infrequent** — `coinvest_score_z` ~1.7% overall / 5% top-20;
+  `financial_score` 0%. Stable across 10 snapshots. `CLAMPING_FREQUENCY_PASS`. No distortion.
+
+### B. Ranking-Tightening Track (Phases A–C) — read-only
+
+- **Phase A:** IC observability + top-30 stability. Top-30 churn is **EXPLAINABLE_LOW_CHURN**;
+  top-5 identical across 17 days. Forward-return snapshot gaps identified.
+- **Phase B:** Historical IC rerun (Apr/May 2026, 100+ pairs). `final_score` **FAILS** the 0.0200
+  gate at the primary T+20 horizon (Apr −0.0955, May −0.0188). `HISTORICAL_IC_FAIL`.
+- **Phase C:** Decision record. DEM weight/feature/redesign changes **BLOCKED** until either
+  real-time IC passes (July 8) or an explicit operator Phase-3 override.
+
+### C. Key diagnostic finding — institutional circularity (CONFIRMED)
+
+Selector cohort entry is **65% institutionally weighted** (clinical 0%); `selector_institutional_block`
+is the sole rank discriminator (Spearman ~0.98 vs rank) and is **identical to `coinvest_score_z`**
+(corr ≈ 1.00). Segment-split IC (Feb–May, T+20):
+
+```
+coinvest_score_z IC:  full eligible universe +0.053   →  within cohort +0.020   (power spent on SELECTION)
+catalyst_decay_w IC:  full eligible universe +0.023   →  within cohort +0.086   (STRONGER within cohort)
+final_score (output): within cohort NEGATIVE at T+20/T+60                          (anti-predictive)
+```
+
+**Interpretation:** the ranker re-ranks the cohort on the same institutional axis that already
+selected it — near-circular. This is a candidate explanation for the `final_score` IC failure.
+Confirmed structural (holds in-sample and look-back out-of-sample).
+
+### D. catalyst_decay_w — orthogonal candidate, **PROMISING_BUT_UNPROVEN**
+
+- Genuinely orthogonal to institutional (+0.249 universe, −0.107 within cohort) and predictive
+  **in-sample** (Feb–May within-cohort T+20 +0.086; non-overlapping t+3.3; block-bootstrap 95% CI
+  excludes 0). But it **fails look-back out-of-sample** (Oct 2025–Jan 2026 T+20 ≈ flat/negative,
+  CI includes 0). Not yet a justified Phase-3 lane. Decisive test = forward OOS on/after July 8.
+- `event_ev_score` / `event_ev_score_z` are **schema fields with no data** (empty in all snapshots) —
+  cannot be IC-tested until populated.
+
+### E. financial_score weight — correction
+
+Earlier "negative weight is questionable" concern is **RETIRED**. `financial_score` has robustly
+*negative* IC out-of-sample (T+20 −0.074, T+60 −0.130, CIs exclude 0); a *negative* ranker weight
+on a *negatively*-predictive feature is **directionally coherent**. (Does not unblock DEM — `final_score`
+still fails.)
+
+### F. Tooling
+
+- `tools/measure_final_score_ic_spec100.py` gained a read-only **`--score-field`** argument
+  (default `final_score`, byte-identical when unspecified; non-default fields write field-suffixed
+  outputs). Regression test: `tools/test_measure_signal_ic_score_field.py`. **No model/ranker change.**
+
+### G. Governance state (unchanged by this work)
+
+```
+DEM_MINIMAL_V2:            BLOCKED_LEVEL_0 (frozen)
+final_score IC:            FAILS / unobservable (Spec 100 gate)
+INSTITUTIONAL_CIRCULARITY: CONFIRMED
+CATALYST_DECAY_W:          PROMISING_BUT_UNPROVEN (pending forward OOS)
+NEXT_GATE:                 2026-07-08 forward-OOS confirmation (final_score + catalyst_decay_w + baselines)
+```
+
+### H. Repo-integrity incident (2026-06-20 / 06-21)
+
+A **second, autonomous Claude session** (PID 297912, pts/5) committed and **pushed** unapproved
+work to `main`/`origin/main` during this session — `feat: score optimization`, `webhook receiver`,
+`multi-agent ensemble`, `reusable ensemble runner` — re-contaminating `main` after a clean
+docs-only commit was made. Timeline and forensics in conversation record.
+
+- **Frozen-code check:** the published commits touched **no** production ranker/selector/source
+  files (`run_screen`, `ranker_v2_pairwise`, `selector_engine`, `module_2_financial_v2`,
+  `production_data`, `rankings.csv`, `final_score`, `run_daily_production` source). They added
+  experiment/ops code (`analyze.py`, `analysis_pipeline.py`, `mcp_server.py`, ensemble/scripts,
+  `output/snapshot_optimized_*.json`), `.pyc` junk, plus this track's audit docs/tool. **The DEM
+  code freeze was not breached.**
+- **Containment:** writer process stopped (SIGTERM); quiescence confirmed across two polls.
+  Pre-incident state preserved on branch `incident/writer-commits-2026-06-20` and tag
+  `incident/pre-cleanup-2026-06-20` (→ `07ac134f`).
+- **Remediation (in progress):** Option A — `git revert` the writer commits (collaborator-safe,
+  no published-history rewrite), keeping the legitimate DEM docs/audit artifacts. **Pending explicit
+  operator sign-off before any push.**
+- **Follow-up control recommended:** branch protection / disallow direct autonomous-agent pushes to `main`.
 
 ---
 

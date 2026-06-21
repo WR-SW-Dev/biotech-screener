@@ -444,3 +444,6 @@ _*.json
 
 # Scraped web page cache (contains third-party embedded API keys)
 data/herald_cache/
+
+__pycache__/
+*.pyc
