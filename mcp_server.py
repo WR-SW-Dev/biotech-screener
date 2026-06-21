@@ -295,7 +295,15 @@ def tool_screen_universe(as_of: str = "", filters: str = "") -> str:
         results = [r for r in results if r["trial_count"] >= min_t]
     if "min_score" in filter_dict:
         min_s = float(filter_dict["min_score"])
-        results = [r for r in results if r.get("composite_score") is not None and r["composite_score"] >= min_s]
+        def _safe_score(r):
+            s = r.get("composite_score")
+            if s is None:
+                return False
+            try:
+                return float(s) >= min_s
+            except (TypeError, ValueError):
+                return False
+        results = [r for r in results if _safe_score(r)]
 
     return json.dumps({
         "as_of": as_of or "latest",
