@@ -1,9 +1,9 @@
 """Export artifact manifest for Phase 6 exports."""
 
-import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+from scientific_cartography.io import deterministic_timestamp, write_json
 
 
 class ArtifactManifestExporter:
@@ -17,7 +17,7 @@ class ArtifactManifestExporter:
             created_at_utc: Override creation timestamp for deterministic tests.
         """
         self.as_of_date = as_of_date
-        self.created_at_utc = created_at_utc or datetime.now(timezone.utc).isoformat()
+        self.created_at_utc = created_at_utc or deterministic_timestamp(as_of_date)
 
     def build_manifest(
         self,
@@ -59,6 +59,4 @@ class ArtifactManifestExporter:
             manifest: Manifest dict.
             output_path: Output path.
         """
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w") as f:
-            json.dump(manifest, f, indent=2)
+        write_json(output_path, manifest)

@@ -6,13 +6,14 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from scientific_cartography.normalize.constants import GENERIC_COMPANY_NAMES
 from scientific_cartography.schemas.company_schema import CompanyRecord
 
 
 class ExistingUniverseIngest:
     """Read screener universe from local cache/snapshot files."""
 
-    GENERIC_COMPANY_NAMES = {"healthcare", "biotechnology", "biotech", "unknown"}
+    GENERIC_COMPANY_NAMES = GENERIC_COMPANY_NAMES
 
     def __init__(self, as_of_date: str = ""):
         """Initialize ingester.

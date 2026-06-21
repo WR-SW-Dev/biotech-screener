@@ -3,11 +3,11 @@
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
 from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter
+from scientific_cartography.io import deterministic_timestamp, write_json
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer
 from scientific_cartography.normalize.stage_normalizer import StageNormalizer
 from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
@@ -39,7 +39,7 @@ def build_command(args: argparse.Namespace) -> int:
     # Write a basic coverage report (Phase 1)
     report = {
         "as_of_date": args.as_of_date,
-        "as_of_timestamp": datetime.now(timezone.utc).isoformat(),
+        "as_of_timestamp": deterministic_timestamp(args.as_of_date),
         "status": "Phase 0/1: Skeleton and normalizers initialized",
         "modules": {
             "disease_normalizer": {"status": "ready", "cached_records": 0},
@@ -58,8 +58,7 @@ def build_command(args: argparse.Namespace) -> int:
     }
 
     report_path = output_dir / "build_report.json"
-    with open(report_path, "w") as f:
-        json.dump(report, f, indent=2)
+    write_json(report_path, report)
 
     print(f"✓ Build report written to {report_path}")
     print(f"✓ Phase 0/1 skeleton initialized for {args.as_of_date}")
@@ -248,10 +247,8 @@ def qa_command(args: argparse.Namespace) -> int:
     coverage_path = artifact_dir / "coverage_report.json"
     pit_path = artifact_dir / "point_in_time_audit.json"
 
-    with open(coverage_path, "w") as f:
-        json.dump(coverage_report, f, indent=2)
-    with open(pit_path, "w") as f:
-        json.dump(point_in_time_audit, f, indent=2)
+    write_json(coverage_path, coverage_report)
+    write_json(pit_path, point_in_time_audit)
 
     print(f"✓ Coverage report: {coverage_path}")
     print(f"✓ PIT audit report: {pit_path}")

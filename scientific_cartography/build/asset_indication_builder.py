@@ -143,14 +143,22 @@ class AssetIndicationBuilder:
         # text can name an institution, collaborator, subsidiary, or comparator.
         trial_ticker = trial.ticker.strip().upper() if trial.ticker else None
         ticker_resolved = self.sponsor_resolver.resolve(trial_ticker) if trial_ticker else None
+        ticker_resolution_source = "trial_ticker" if ticker_resolved and ticker_resolved.get("ticker") else None
         sponsor_resolved = (
             ticker_resolved
             if ticker_resolved and ticker_resolved.get("ticker")
             else self.sponsor_resolver.resolve(trial.sponsor or "Unknown")
         )
+        if ticker_resolution_source is None:
+            if sponsor_resolved and sponsor_resolved.get("ticker"):
+                ticker_resolution_source = "sponsor_resolver"
+            else:
+                ticker_resolution_source = "unresolved"
         company_id = sponsor_resolved.get("company_id") if sponsor_resolved else None
         ticker = sponsor_resolved.get("ticker") if sponsor_resolved else None
         sponsor_is_public = sponsor_resolved.get("is_public", False) if sponsor_resolved else False
+        ticker_resolution_confidence = sponsor_resolved.get("confidence", 0.0) if sponsor_resolved else 0.0
+        ticker_resolution_warnings = sponsor_resolved.get("warnings", []) if sponsor_resolved else []
 
         # Resolve asset name
         asset_resolved = self.asset_alias_resolver.resolve(intervention, trial.sponsor)
@@ -190,6 +198,9 @@ class AssetIndicationBuilder:
             asset_name=asset_name,
             company_id=company_id,
             ticker=ticker,
+            ticker_resolution_source=ticker_resolution_source,
+            ticker_resolution_confidence=ticker_resolution_confidence,
+            ticker_resolution_warnings=ticker_resolution_warnings,
             company_name=trial.sponsor,
             disease_id=disease_id,
             disease_name=disease_name,

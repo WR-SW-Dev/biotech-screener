@@ -8,6 +8,7 @@ import hashlib
 from typing import Optional
 
 from scientific_cartography.build.disease_ontology_builder import DiseaseOntologyBuilder
+from scientific_cartography.normalize.constants import SOURCE_PRIORITY
 from scientific_cartography.schemas.asset_indication_map_schema import (
     AssetIndicationMapCoverageReport,
     AssetIndicationMapRecord,
@@ -99,22 +100,8 @@ class AssetIndicationMapBuilder:
         disease_ontology_confidence = disease_record.confidence if disease_record else 0.0
 
         # Determine source priority (based on source_priority field)
-        source_priority_map = {
-            "sec": 1,
-            "sec_filing": 1,
-            "investor_deck": 2,
-            "deck": 2,
-            "ctgov": 3,
-            "fda": 4,
-            "fda_label": 4,
-            "open_targets": 5,
-            "chembl": 6,
-            "pubmed": 7,
-            "manual": 8,
-            "manual_override": 8,
-        }
         source_type = program.source_priority if program.source_priority else "unknown"
-        source_priority = source_priority_map.get(source_type.lower(), 9)
+        source_priority = SOURCE_PRIORITY.get(source_type.lower(), 9)
 
         # Compute overall confidence
         # Consider both disease ontology confidence and original program confidence

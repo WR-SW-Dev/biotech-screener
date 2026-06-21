@@ -192,6 +192,8 @@ def main() -> int:
         action="store_true",
         help="Mark post-fetch clinical/cartography gaps as pending_coverage instead of pending collection.",
     )
+    parser.add_argument("--apply", action="store_true", help="Write refreshed universe.json. Defaults to dry-run.")
+    parser.add_argument("--report-path", type=Path, default=None, help="Optional path for refresh report JSON.")
     args = parser.parse_args()
 
     universe = json.loads(args.universe_path.read_text(encoding="utf-8"))
@@ -203,7 +205,12 @@ def main() -> int:
         finalize_collection=args.finalize_collection,
     )
 
-    args.universe_path.write_text(json.dumps(refreshed, indent=2) + "\n", encoding="utf-8")
+    report["dry_run"] = not args.apply
+    if args.apply:
+        args.universe_path.write_text(json.dumps(refreshed, indent=2) + "\n", encoding="utf-8")
+    if args.report_path:
+        args.report_path.parent.mkdir(parents=True, exist_ok=True)
+        args.report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
 

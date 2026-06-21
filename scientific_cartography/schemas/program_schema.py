@@ -28,6 +28,15 @@ class ProgramRecord:
     ticker: Optional[str] = None
     """Stock ticker of sponsor (if public)."""
 
+    ticker_resolution_source: Optional[str] = None
+    """How ticker was resolved: trial_ticker, sponsor_resolver, manual_alias, exact_ticker, or unresolved."""
+
+    ticker_resolution_confidence: float = 0.0
+    """Confidence in ticker/company resolution (0.0 to 1.0)."""
+
+    ticker_resolution_warnings: list[str] = field(default_factory=list)
+    """Warnings emitted during ticker/company resolution."""
+
     company_name: Optional[str] = None
     """Sponsor company name (preserves source exactly)."""
 
@@ -93,6 +102,9 @@ class ProgramRecord:
             "asset_name": self.asset_name,
             "company_id": self.company_id,
             "ticker": self.ticker,
+            "ticker_resolution_source": self.ticker_resolution_source,
+            "ticker_resolution_confidence": round(self.ticker_resolution_confidence, 4),
+            "ticker_resolution_warnings": self.ticker_resolution_warnings,
             "company_name": self.company_name,
             "disease_id": self.disease_id,
             "disease_name": self.disease_name,
@@ -123,6 +135,9 @@ class ProgramRecord:
             asset_name=data["asset_name"],
             company_id=data.get("company_id"),
             ticker=data.get("ticker"),
+            ticker_resolution_source=data.get("ticker_resolution_source"),
+            ticker_resolution_confidence=data.get("ticker_resolution_confidence", 0.0),
+            ticker_resolution_warnings=data.get("ticker_resolution_warnings", []),
             company_name=data.get("company_name"),
             disease_id=data.get("disease_id", ""),
             disease_name=data.get("disease_name", ""),

@@ -307,6 +307,7 @@ def main() -> int:
     parser.add_argument("--trial-records-path", type=Path, default=REPO_ROOT / "production_data" / "trial_records.json")
     parser.add_argument("--report-path", type=Path, default=REPO_ROOT / "artifacts" / "universe_refresh" / "pending_fetch_report.json")
     parser.add_argument("--sleep-seconds", type=float, default=0.2)
+    parser.add_argument("--apply", action="store_true", help="Write fetched universe/trial data. Defaults to dry-run.")
     args = parser.parse_args()
 
     universe = json.loads(args.universe_path.read_text(encoding="utf-8"))
@@ -318,8 +319,10 @@ def main() -> int:
         sleep_seconds=args.sleep_seconds,
     )
 
-    args.universe_path.write_text(json.dumps(refreshed_universe, indent=2) + "\n", encoding="utf-8")
-    args.trial_records_path.write_text(json.dumps(merged_trials, indent=2) + "\n", encoding="utf-8")
+    report["dry_run"] = not args.apply
+    if args.apply:
+        args.universe_path.write_text(json.dumps(refreshed_universe, indent=2) + "\n", encoding="utf-8")
+        args.trial_records_path.write_text(json.dumps(merged_trials, indent=2) + "\n", encoding="utf-8")
     args.report_path.parent.mkdir(parents=True, exist_ok=True)
     args.report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, sort_keys=True))
