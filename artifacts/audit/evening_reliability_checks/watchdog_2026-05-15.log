@@ -1,0 +1,18 @@
+[2026-05-15T16:14:15-04:00] Evening reliability check for prior trading day: 2026-05-14
+[2026-05-15T16:14:15-04:00] ⚠️  Missing inst_delta checkpoint for 2026-05-14; running backfill...
+[2026-05-15T16:14:15-04:00] ✅ inst_delta backfill completed for 2026-05-14
+[2026-05-15T16:14:15-04:00] ⚠️  Missing cross_signal buckets for 2026-05-14; running backfill...
+[2026-05-15T16:14:15-04:00] ✅ cross_signal backfill completed for 2026-05-14
+[2026-05-15T16:14:15-04:00] Evening reliability check complete
+[2026-05-15T16:14:22-04:00] Evening reliability check for prior trading day: 2026-05-14
+[2026-05-15T16:14:22-04:00] ✅ inst_delta checkpoint exists: 2026-05-14
+[2026-05-15T16:14:22-04:00] ✅ cross_signal buckets exist: 2026-05-14
+[2026-05-15T16:14:22-04:00] Evening reliability check complete
+[2026-05-15T16:19:29-04:00] Evening reliability check for prior trading day: 2026-05-14
+[2026-05-15T16:19:29-04:00] ✅ inst_delta checkpoint exists: 2026-05-14
+[2026-05-15T16:19:29-04:00] ✅ cross_signal buckets exist: 2026-05-14
+[2026-05-15T16:19:29-04:00] Evening reliability check complete
+[2026-05-15T16:37:26-04:00] Evening reliability check for prior trading day: 2026-05-14
+[2026-05-15T16:37:26-04:00] ✅ inst_delta checkpoint exists: 2026-05-14
+[2026-05-15T16:37:26-04:00] ✅ cross_signal buckets exist: 2026-05-14
+[2026-05-15T16:37:26-04:00] Evening reliability check complete

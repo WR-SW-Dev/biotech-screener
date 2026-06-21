@@ -1,0 +1,947 @@
+{
+  "as_of": "2026-04-30",
+  "T0": "2026-04-28",
+  "trading_days_since_T0": 2,
+  "is_horizon_milestone": false,
+  "horizon_label": null,
+  "xbi_cum_return": -0.019207827097168284,
+  "portfolio_metrics": {
+    "current_top10": {
+      "cum_return": -0.04356,
+      "mean_daily_return": -0.005062,
+      "vol_daily": 0.019382,
+      "vol_annualized": 0.307683,
+      "sharpe_annualized": -4.1461,
+      "max_drawdown": -0.018768,
+      "excess_vs_xbi": -0.024353,
+      "n_observations": 3,
+      "hit_rate": 0.0,
+      "per_ticker_top5": [
+        [
+          "INSM",
+          -0.0046745991712040524
+        ],
+        [
+          "DNTH",
+          -0.01663437553051328
+        ],
+        [
+          "NRIX",
+          -0.03578701136051732
+        ],
+        [
+          "ANNX",
+          -0.03892940350416918
+        ],
+        [
+          "COGT",
+          -0.0417057881598385
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ],
+        [
+          "PRAX",
+          -0.05606929824082041
+        ],
+        [
+          "SLDB",
+          -0.041994711237550164
+        ],
+        [
+          "STOK",
+          -0.04178843524735554
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 10,
+        "total_signed_return_sum": -0.435605,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-0.4356 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.4915,
+        "hhi_abs": 0.1263
+      },
+      "artifact_member_count": 2,
+      "artifact_mean_return": -0.038746,
+      "non_artifact_mean_return": -0.044764
+    },
+    "counterfactual_top10": {
+      "cum_return": -0.0438,
+      "mean_daily_return": -0.006084,
+      "vol_daily": 0.025267,
+      "vol_annualized": 0.401108,
+      "sharpe_annualized": -3.8221,
+      "max_drawdown": -0.02395,
+      "excess_vs_xbi": -0.024592,
+      "n_observations": 3,
+      "hit_rate": 0.0,
+      "per_ticker_top5": [
+        [
+          "CTNM",
+          -0.005384591909555314
+        ],
+        [
+          "RCUS",
+          -0.023709875657890844
+        ],
+        [
+          "TSHA",
+          -0.02796673457001042
+        ],
+        [
+          "EWTX",
+          -0.029006210598013782
+        ],
+        [
+          "ANNX",
+          -0.03892940350416918
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ],
+        [
+          "NGNE",
+          -0.06608574951596013
+        ],
+        [
+          "IRON",
+          -0.04710695681304322
+        ],
+        [
+          "STOK",
+          -0.04178843524735554
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 10,
+        "total_signed_return_sum": -0.437999,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-0.4380 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.5117,
+        "hhi_abs": 0.128
+      }
+    },
+    "current_top20": {
+      "cum_return": -0.044302,
+      "mean_daily_return": -0.006571,
+      "vol_daily": 0.025061,
+      "vol_annualized": 0.397826,
+      "sharpe_annualized": -4.1625,
+      "max_drawdown": -0.024292,
+      "excess_vs_xbi": -0.025094,
+      "n_observations": 3,
+      "hit_rate": 0.1,
+      "per_ticker_top5": [
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ],
+        [
+          "ABVX",
+          -0.0007875762714139034
+        ],
+        [
+          "INSM",
+          -0.0046745991712040524
+        ],
+        [
+          "SRRK",
+          -0.01351345490887812
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "ORKA",
+          -0.1838095528738839
+        ],
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ],
+        [
+          "SLN",
+          -0.06590620909074041
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 20,
+        "total_signed_return_sum": -0.886031,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-0.8860 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.426,
+        "hhi_abs": 0.0935
+      },
+      "artifact_member_count": 4,
+      "artifact_mean_return": -0.065522,
+      "non_artifact_mean_return": -0.038996
+    },
+    "counterfactual_top20": {
+      "cum_return": -0.049493,
+      "mean_daily_return": -0.009705,
+      "vol_daily": 0.031257,
+      "vol_annualized": 0.496188,
+      "sharpe_annualized": -4.9287,
+      "max_drawdown": -0.031806,
+      "excess_vs_xbi": -0.030286,
+      "n_observations": 3,
+      "hit_rate": 0.05,
+      "per_ticker_top5": [
+        [
+          "XENE",
+          0.009936226049299002
+        ],
+        [
+          "CTNM",
+          -0.005384591909555314
+        ],
+        [
+          "RCUS",
+          -0.023709875657890844
+        ],
+        [
+          "TECX",
+          -0.02431339424179646
+        ],
+        [
+          "TSHA",
+          -0.02796673457001042
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "BBOT",
+          -0.0876429252476153
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ],
+        [
+          "NGNE",
+          -0.06608574951596013
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 20,
+        "total_signed_return_sum": -0.989868,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-0.9899 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.3176,
+        "hhi_abs": 0.0702
+      }
+    },
+    "current_top30": {
+      "cum_return": -0.035516,
+      "mean_daily_return": -0.003755,
+      "vol_daily": 0.020722,
+      "vol_annualized": 0.328953,
+      "sharpe_annualized": -2.8767,
+      "max_drawdown": -0.018408,
+      "excess_vs_xbi": -0.016308,
+      "n_observations": 3,
+      "hit_rate": 0.1667,
+      "per_ticker_top5": [
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "MIRM",
+          0.02537355943265962
+        ],
+        [
+          "NBIX",
+          0.0225677265487505
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ],
+        [
+          "BCRX",
+          0.00933041068609386
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "ORKA",
+          -0.1838095528738839
+        ],
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ],
+        [
+          "SLN",
+          -0.06590620909074041
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 30,
+        "total_signed_return_sum": -1.065482,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-1.0655 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.3276,
+        "hhi_abs": 0.0619
+      },
+      "artifact_member_count": 6,
+      "artifact_mean_return": -0.046083,
+      "non_artifact_mean_return": -0.032874
+    },
+    "counterfactual_top30": {
+      "cum_return": -0.02941,
+      "mean_daily_return": 0.000605,
+      "vol_daily": 0.019613,
+      "vol_annualized": 0.311347,
+      "sharpe_annualized": 0.49,
+      "max_drawdown": -0.013263,
+      "excess_vs_xbi": -0.010202,
+      "n_observations": 3,
+      "hit_rate": 0.1667,
+      "per_ticker_top5": [
+        [
+          "KALV",
+          0.3592356299139132
+        ],
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "NBIX",
+          0.0225677265487505
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ],
+        [
+          "BCRX",
+          0.00933041068609386
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "BBOT",
+          -0.0876429252476153
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 30,
+        "total_signed_return_sum": -0.882291,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-0.8823 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.3508,
+        "hhi_abs": 0.0727
+      }
+    },
+    "current_top40": {
+      "cum_return": -0.034897,
+      "mean_daily_return": -0.003922,
+      "vol_daily": 0.02516,
+      "vol_annualized": 0.3994,
+      "sharpe_annualized": -2.4747,
+      "max_drawdown": -0.021713,
+      "excess_vs_xbi": -0.015689,
+      "n_observations": 3,
+      "hit_rate": 0.175,
+      "per_ticker_top5": [
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "MIRM",
+          0.02537355943265962
+        ],
+        [
+          "NBIX",
+          0.0225677265487505
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ],
+        [
+          "BCRX",
+          0.00933041068609386
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "ORKA",
+          -0.1838095528738839
+        ],
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 40,
+        "total_signed_return_sum": -1.39586,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-1.3959 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.2717,
+        "hhi_abs": 0.0472
+      },
+      "artifact_member_count": 6,
+      "artifact_mean_return": -0.046083,
+      "non_artifact_mean_return": -0.032922
+    },
+    "counterfactual_top40": {
+      "cum_return": -0.032359,
+      "mean_daily_return": -0.000578,
+      "vol_daily": 0.022688,
+      "vol_annualized": 0.360159,
+      "sharpe_annualized": -0.4045,
+      "max_drawdown": -0.016621,
+      "excess_vs_xbi": -0.013151,
+      "n_observations": 3,
+      "hit_rate": 0.15,
+      "per_ticker_top5": [
+        [
+          "KALV",
+          0.3592356299139132
+        ],
+        [
+          "ABSI",
+          0.043135888096006214
+        ],
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "NBIX",
+          0.0225677265487505
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "XNCR",
+          -0.0961611110092151
+        ],
+        [
+          "BBOT",
+          -0.0876429252476153
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 40,
+        "total_signed_return_sum": -1.294357,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-1.2944 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.2733,
+        "hhi_abs": 0.0505
+      }
+    },
+    "current_top50": {
+      "cum_return": -0.028731,
+      "mean_daily_return": -0.000318,
+      "vol_daily": 0.020195,
+      "vol_annualized": 0.320587,
+      "sharpe_annualized": -0.2502,
+      "max_drawdown": -0.014598,
+      "excess_vs_xbi": -0.009523,
+      "n_observations": 3,
+      "hit_rate": 0.16,
+      "per_ticker_top5": [
+        [
+          "KALV",
+          0.3592356299139132
+        ],
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "MIRM",
+          0.02537355943265962
+        ],
+        [
+          "NBIX",
+          0.0225677265487505
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "ORKA",
+          -0.1838095528738839
+        ],
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ],
+        [
+          "ORIC",
+          -0.07803472164608227
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 50,
+        "total_signed_return_sum": -1.436554,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-1.4366 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.2922,
+        "hhi_abs": 0.0481
+      },
+      "artifact_member_count": 6,
+      "artifact_mean_return": -0.046083,
+      "non_artifact_mean_return": -0.026365
+    },
+    "counterfactual_top50": {
+      "cum_return": -0.029086,
+      "mean_daily_return": -0.001136,
+      "vol_daily": 0.021376,
+      "vol_annualized": 0.339328,
+      "sharpe_annualized": -0.8436,
+      "max_drawdown": -0.016251,
+      "excess_vs_xbi": -0.009878,
+      "n_observations": 3,
+      "hit_rate": 0.2,
+      "per_ticker_top5": [
+        [
+          "KALV",
+          0.3592356299139132
+        ],
+        [
+          "BIIB",
+          0.044558445834924854
+        ],
+        [
+          "ABSI",
+          0.043135888096006214
+        ],
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "ABEO",
+          0.0251865202764765
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "XNCR",
+          -0.0961611110092151
+        ],
+        [
+          "BBOT",
+          -0.0876429252476153
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 50,
+        "total_signed_return_sum": -1.454304,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-1.4543 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.2394,
+        "hhi_abs": 0.0412
+      }
+    },
+    "current_top60": {
+      "cum_return": -0.033337,
+      "mean_daily_return": -0.002253,
+      "vol_daily": 0.022745,
+      "vol_annualized": 0.361062,
+      "sharpe_annualized": -1.5726,
+      "max_drawdown": -0.018336,
+      "excess_vs_xbi": -0.014129,
+      "n_observations": 3,
+      "hit_rate": 0.1333,
+      "per_ticker_top5": [
+        [
+          "KALV",
+          0.3592356299139132
+        ],
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "MIRM",
+          0.02537355943265962
+        ],
+        [
+          "NBIX",
+          0.0225677265487505
+        ],
+        [
+          "XENE",
+          0.009936226049299002
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "ORKA",
+          -0.1838095528738839
+        ],
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "BBOT",
+          -0.0876429252476153
+        ],
+        [
+          "KYMR",
+          -0.07998633255420184
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 60,
+        "total_signed_return_sum": -2.000202,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-2.0002 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.2363,
+        "hhi_abs": 0.0356
+      },
+      "artifact_member_count": 6,
+      "artifact_mean_return": -0.046083,
+      "non_artifact_mean_return": -0.03192
+    },
+    "counterfactual_top60": {
+      "cum_return": -0.032253,
+      "mean_daily_return": -0.002126,
+      "vol_daily": 0.022796,
+      "vol_annualized": 0.361874,
+      "sharpe_annualized": -1.4806,
+      "max_drawdown": -0.018245,
+      "excess_vs_xbi": -0.013045,
+      "n_observations": 3,
+      "hit_rate": 0.1833,
+      "per_ticker_top5": [
+        [
+          "KALV",
+          0.3592356299139132
+        ],
+        [
+          "BIIB",
+          0.044558445834924854
+        ],
+        [
+          "ABSI",
+          0.043135888096006214
+        ],
+        [
+          "PHVS",
+          0.03631378713767486
+        ],
+        [
+          "MIRM",
+          0.02537355943265962
+        ]
+      ],
+      "per_ticker_bottom5": [
+        [
+          "ORKA",
+          -0.1838095528738839
+        ],
+        [
+          "TNGX",
+          -0.15310073536424074
+        ],
+        [
+          "JBIO",
+          -0.10411261540466354
+        ],
+        [
+          "XNCR",
+          -0.0961611110092151
+        ],
+        [
+          "CATX",
+          -0.09112151537058877
+        ]
+      ],
+      "concentration": {
+        "n_contributors": 60,
+        "total_signed_return_sum": -1.935168,
+        "top3_signed_share": null,
+        "top3_signed_share_note": "total_signed_return_sum=-1.9352 \u2264 0; share undefined for negative/zero portfolio",
+        "top3_abs_share": 0.2241,
+        "hhi_abs": 0.0339
+      }
+    }
+  },
+  "current_vs_counterfactual": {
+    "top10": {
+      "current_cum": -0.04356,
+      "counterfactual_cum": -0.0438,
+      "current_minus_cf": 0.00024,
+      "current_sharpe": -4.1461,
+      "cf_sharpe": -3.8221,
+      "current_max_dd": -0.018768,
+      "cf_max_dd": -0.02395,
+      "current_hit_rate": 0.0,
+      "cf_hit_rate": 0.0,
+      "current_excess_vs_xbi": -0.024353,
+      "cf_excess_vs_xbi": -0.024592,
+      "current_artifact_mean": -0.038746,
+      "current_non_artifact_mean": -0.044764,
+      "current_top3_signed_share": null,
+      "cf_top3_signed_share": null,
+      "current_hhi_abs": 0.1263,
+      "cf_hhi_abs": 0.128,
+      "winners_jaccard_current_vs_cf": null,
+      "winners_intersection_count": 0,
+      "winners_intersection_tickers": []
+    },
+    "top20": {
+      "current_cum": -0.044302,
+      "counterfactual_cum": -0.049493,
+      "current_minus_cf": 0.005191,
+      "current_sharpe": -4.1625,
+      "cf_sharpe": -4.9287,
+      "current_max_dd": -0.024292,
+      "cf_max_dd": -0.031806,
+      "current_hit_rate": 0.1,
+      "cf_hit_rate": 0.05,
+      "current_excess_vs_xbi": -0.025094,
+      "cf_excess_vs_xbi": -0.030286,
+      "current_artifact_mean": -0.065522,
+      "current_non_artifact_mean": -0.038996,
+      "current_top3_signed_share": null,
+      "cf_top3_signed_share": null,
+      "current_hhi_abs": 0.0935,
+      "cf_hhi_abs": 0.0702,
+      "winners_jaccard_current_vs_cf": 0.5,
+      "winners_intersection_count": 1,
+      "winners_intersection_tickers": [
+        "XENE"
+      ]
+    },
+    "top30": {
+      "current_cum": -0.035516,
+      "counterfactual_cum": -0.02941,
+      "current_minus_cf": -0.006106,
+      "current_sharpe": -2.8767,
+      "cf_sharpe": 0.49,
+      "current_max_dd": -0.018408,
+      "cf_max_dd": -0.013263,
+      "current_hit_rate": 0.1667,
+      "cf_hit_rate": 0.1667,
+      "current_excess_vs_xbi": -0.016308,
+      "cf_excess_vs_xbi": -0.010202,
+      "current_artifact_mean": -0.046083,
+      "current_non_artifact_mean": -0.032874,
+      "current_top3_signed_share": null,
+      "cf_top3_signed_share": null,
+      "current_hhi_abs": 0.0619,
+      "cf_hhi_abs": 0.0727,
+      "winners_jaccard_current_vs_cf": 0.6667,
+      "winners_intersection_count": 4,
+      "winners_intersection_tickers": [
+        "BCRX",
+        "NBIX",
+        "PHVS",
+        "XENE"
+      ]
+    },
+    "top40": {
+      "current_cum": -0.034897,
+      "counterfactual_cum": -0.032359,
+      "current_minus_cf": -0.002538,
+      "current_sharpe": -2.4747,
+      "cf_sharpe": -0.4045,
+      "current_max_dd": -0.021713,
+      "cf_max_dd": -0.016621,
+      "current_hit_rate": 0.175,
+      "cf_hit_rate": 0.15,
+      "current_excess_vs_xbi": -0.015689,
+      "cf_excess_vs_xbi": -0.013151,
+      "current_artifact_mean": -0.046083,
+      "current_non_artifact_mean": -0.032922,
+      "current_top3_signed_share": null,
+      "cf_top3_signed_share": null,
+      "current_hhi_abs": 0.0472,
+      "cf_hhi_abs": 0.0505,
+      "winners_jaccard_current_vs_cf": 0.4444,
+      "winners_intersection_count": 4,
+      "winners_intersection_tickers": [
+        "BCRX",
+        "NBIX",
+        "PHVS",
+        "XENE"
+      ]
+    },
+    "top50": {
+      "current_cum": -0.028731,
+      "counterfactual_cum": -0.029086,
+      "current_minus_cf": 0.000355,
+      "current_sharpe": -0.2502,
+      "cf_sharpe": -0.8436,
+      "current_max_dd": -0.014598,
+      "cf_max_dd": -0.016251,
+      "current_hit_rate": 0.16,
+      "cf_hit_rate": 0.2,
+      "current_excess_vs_xbi": -0.009523,
+      "cf_excess_vs_xbi": -0.009878,
+      "current_artifact_mean": -0.046083,
+      "current_non_artifact_mean": -0.026365,
+      "current_top3_signed_share": null,
+      "cf_top3_signed_share": null,
+      "current_hhi_abs": 0.0481,
+      "cf_hhi_abs": 0.0412,
+      "winners_jaccard_current_vs_cf": 0.6364,
+      "winners_intersection_count": 7,
+      "winners_intersection_tickers": [
+        "ARGX",
+        "BCRX",
+        "JAZZ",
+        "KALV",
+        "NBIX",
+        "PHVS",
+        "XENE"
+      ]
+    },
+    "top60": {
+      "current_cum": -0.033337,
+      "counterfactual_cum": -0.032253,
+      "current_minus_cf": -0.001084,
+      "current_sharpe": -1.5726,
+      "cf_sharpe": -1.4806,
+      "current_max_dd": -0.018336,
+      "cf_max_dd": -0.018245,
+      "current_hit_rate": 0.1333,
+      "cf_hit_rate": 0.1833,
+      "current_excess_vs_xbi": -0.014129,
+      "cf_excess_vs_xbi": -0.013045,
+      "current_artifact_mean": -0.046083,
+      "current_non_artifact_mean": -0.03192,
+      "current_top3_signed_share": null,
+      "cf_top3_signed_share": null,
+      "current_hhi_abs": 0.0356,
+      "cf_hhi_abs": 0.0339,
+      "winners_jaccard_current_vs_cf": 0.7273,
+      "winners_intersection_count": 8,
+      "winners_intersection_tickers": [
+        "ARGX",
+        "BCRX",
+        "JAZZ",
+        "KALV",
+        "MIRM",
+        "NBIX",
+        "PHVS",
+        "XENE"
+      ]
+    }
+  }
+}

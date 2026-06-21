@@ -1,0 +1,1559 @@
+{
+  "as_of": "2026-04-28",
+  "n_universe_rankable": 221,
+  "user_pre_registered_expectation": "- DEM grades \"mixed/fragile,\" not fully broken.\n- Top-10 is least robust because overlap between CURRENT and CF is only 4/10.\n- Top-30 will show material contamination, but not all 13 artifact entrants are equally bad.\n- Structurally defensible cutoff is likely top-40 or top-60 for monitoring, not top-10.\n- Production action should remain: none; observe until h20d and post-13F refresh.",
+  "test1_perturbation": {
+    "method": "Compare baseline (B6: 0.65\u00d7coinvest + 0.35\u00d7inst_delta) against (B) reduced-inst 0.80/0.20 and (C) coinvest-only.",
+    "B_reduced_inst_0.80_0.20": {
+      "label": "B: 0.80\u00d7coinvest + 0.20\u00d7inst_delta",
+      "spearman_rho": 0.9655,
+      "top10_overlap": 8,
+      "top20_overlap": 16,
+      "top30_overlap": 28,
+      "top60_overlap": 50,
+      "top30_entrants": [
+        "DNTH",
+        "ORKA"
+      ],
+      "top30_exits": [
+        "ABVX",
+        "MIRM"
+      ],
+      "n_moves_ge_10": 109,
+      "n_moves_ge_20": 55
+    },
+    "C_coinvest_only": {
+      "label": "C: coinvest_score_z only",
+      "spearman_rho": 0.8934,
+      "top10_overlap": 6,
+      "top20_overlap": 11,
+      "top30_overlap": 18,
+      "top60_overlap": 47,
+      "top30_entrants": [
+        "ACAD",
+        "AMLX",
+        "AXSM",
+        "DNTH",
+        "MBX",
+        "OCUL",
+        "ORKA",
+        "PCVX",
+        "RYTM",
+        "SION",
+        "TARS",
+        "ZYME"
+      ],
+      "top30_exits": [
+        "ANNX",
+        "BCRX",
+        "CGEM",
+        "KALV",
+        "KYMR",
+        "MIRM",
+        "MLTX",
+        "ORIC",
+        "RCUS",
+        "SLDB",
+        "TECX",
+        "VERA"
+      ],
+      "n_moves_ge_10": 154,
+      "n_moves_ge_20": 105
+    },
+    "verdict": "robust (top-30 overlap \u226525/30 under reduced-inst)"
+  },
+  "test2_cutoff_curve": {
+    "method": "Locked proxy = selector_score. Per-cutoff stats + incremental bucket medians + drop curve.",
+    "cutoff_stats": {
+      "top10": {
+        "median": 0.8886,
+        "mean": 0.8905,
+        "min": 0.7364,
+        "n": 10
+      },
+      "top20": {
+        "median": 0.8886,
+        "mean": 0.8839,
+        "min": 0.7364,
+        "n": 20
+      },
+      "top30": {
+        "median": 0.8841,
+        "mean": 0.8782,
+        "min": 0.7318,
+        "n": 30
+      },
+      "top40": {
+        "median": 0.8795,
+        "mean": 0.8727,
+        "min": 0.7318,
+        "n": 40
+      },
+      "top50": {
+        "median": 0.8705,
+        "mean": 0.8665,
+        "min": 0.7318,
+        "n": 50
+      },
+      "top60": {
+        "median": 0.8659,
+        "mean": 0.8659,
+        "min": 0.7318,
+        "n": 60
+      }
+    },
+    "min_score_gaps_between_cutoffs": {
+      "min_top10_minus_min_top20": 0.0,
+      "min_top20_minus_min_top30": 0.0046,
+      "min_top30_minus_min_top40": 0.0,
+      "min_top40_minus_min_top50": 0.0,
+      "min_top50_minus_min_top60": 0.0
+    },
+    "incremental_bucket_medians": {
+      "ranks_1_10": 0.8886,
+      "ranks_11_20": 0.9068,
+      "ranks_21_30": 0.8682,
+      "ranks_31_40": 0.8205,
+      "ranks_41_50": 0.8386,
+      "ranks_51_60": 0.8409
+    },
+    "bucket_median_drops": [
+      [
+        "ranks_11_20",
+        -0.0182
+      ],
+      [
+        "ranks_21_30",
+        0.0386
+      ],
+      [
+        "ranks_31_40",
+        0.0477
+      ],
+      [
+        "ranks_41_50",
+        -0.0181
+      ],
+      [
+        "ranks_51_60",
+        -0.0023
+      ]
+    ],
+    "median_bucket_drop": -0.0023,
+    "largest_drop_bucket": "ranks_31_40",
+    "largest_drop_value": 0.0477,
+    "cliff_detected": false,
+    "verdict": "robust (smooth monotonic decay)"
+  },
+  "test3_feature_dominance": {
+    "method": "Per top-30 ticker: coinvest_component=0.65\u00d7coinvest_z; inst_component=0.35\u00d7inst_delta_z; inst_share=|inst|/(|inst|+|coinvest|).",
+    "counts": {
+      "inst_dominated": 9,
+      "coinvest_dominated": 15,
+      "mixed": 6,
+      "undefined": 0
+    },
+    "decomposition": [
+      {
+        "rank": 1,
+        "ticker": "COGT",
+        "coinvest_component": 0.9315,
+        "inst_component": 1.5413,
+        "inst_share_abs": 0.6233,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": true
+      },
+      {
+        "rank": 2,
+        "ticker": "INSM",
+        "coinvest_component": 1.0941,
+        "inst_component": -0.7392,
+        "inst_share_abs": 0.4032,
+        "dominant_feature": "mixed",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 3,
+        "ticker": "DNTH",
+        "coinvest_component": 0.6542,
+        "inst_component": -0.1173,
+        "inst_share_abs": 0.152,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 4,
+        "ticker": "SLDB",
+        "coinvest_component": 0.3651,
+        "inst_component": 0.712,
+        "inst_share_abs": 0.661,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 5,
+        "ticker": "ANNX",
+        "coinvest_component": 0.3477,
+        "inst_component": 0.712,
+        "inst_share_abs": 0.6719,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 6,
+        "ticker": "NRIX",
+        "coinvest_component": 0.2926,
+        "inst_component": 0.1937,
+        "inst_share_abs": 0.3983,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": true
+      },
+      {
+        "rank": 7,
+        "ticker": "STOK",
+        "coinvest_component": 0.5813,
+        "inst_component": 0.0901,
+        "inst_share_abs": 0.1341,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 8,
+        "ticker": "ORIC",
+        "coinvest_component": 0.3299,
+        "inst_component": 0.712,
+        "inst_share_abs": 0.6834,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 9,
+        "ticker": "PRAX",
+        "coinvest_component": 0.8928,
+        "inst_component": 0.2974,
+        "inst_share_abs": 0.2499,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 10,
+        "ticker": "KYMR",
+        "coinvest_component": 0.3171,
+        "inst_component": 0.401,
+        "inst_share_abs": 0.5585,
+        "dominant_feature": "mixed",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 11,
+        "ticker": "AXSM",
+        "coinvest_component": 0.4396,
+        "inst_component": -0.4283,
+        "inst_share_abs": 0.4935,
+        "dominant_feature": "mixed",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 12,
+        "ticker": "SRRK",
+        "coinvest_component": 0.0348,
+        "inst_component": 0.5047,
+        "inst_share_abs": 0.9355,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 13,
+        "ticker": "PHVS",
+        "coinvest_component": 1.0419,
+        "inst_component": -0.0136,
+        "inst_share_abs": 0.0129,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 14,
+        "ticker": "RCUS",
+        "coinvest_component": 0.3875,
+        "inst_component": 0.8157,
+        "inst_share_abs": 0.6779,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 15,
+        "ticker": "ORKA",
+        "coinvest_component": 0.5317,
+        "inst_component": 0.0901,
+        "inst_share_abs": 0.1448,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": true
+      },
+      {
+        "rank": 16,
+        "ticker": "ABVX",
+        "coinvest_component": 0.4438,
+        "inst_component": 0.0901,
+        "inst_share_abs": 0.1687,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": true
+      },
+      {
+        "rank": 17,
+        "ticker": "SLN",
+        "coinvest_component": 0.132,
+        "inst_component": 0.1937,
+        "inst_share_abs": 0.5948,
+        "dominant_feature": "mixed",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 18,
+        "ticker": "TNGX",
+        "coinvest_component": 0.8281,
+        "inst_component": 0.2974,
+        "inst_share_abs": 0.2642,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 19,
+        "ticker": "XENE",
+        "coinvest_component": 0.795,
+        "inst_component": 0.1937,
+        "inst_share_abs": 0.1959,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 20,
+        "ticker": "RVMD",
+        "coinvest_component": 0.6419,
+        "inst_component": 0.1937,
+        "inst_share_abs": 0.2318,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 21,
+        "ticker": "CELC",
+        "coinvest_component": 0.4839,
+        "inst_component": 0.0901,
+        "inst_share_abs": 0.1569,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 22,
+        "ticker": "BLTE",
+        "coinvest_component": 0.0211,
+        "inst_component": 0.5047,
+        "inst_share_abs": 0.9599,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 23,
+        "ticker": "MIRM",
+        "coinvest_component": 0.3369,
+        "inst_component": 0.0901,
+        "inst_share_abs": 0.2109,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": true
+      },
+      {
+        "rank": 24,
+        "ticker": "EWTX",
+        "coinvest_component": 0.8363,
+        "inst_component": 1.1266,
+        "inst_share_abs": 0.574,
+        "dominant_feature": "mixed",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 25,
+        "ticker": "NBIX",
+        "coinvest_component": 0.4122,
+        "inst_component": -0.1173,
+        "inst_share_abs": 0.2215,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 26,
+        "ticker": "ZYME",
+        "coinvest_component": 0.4266,
+        "inst_component": -0.1173,
+        "inst_share_abs": 0.2156,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": true
+      },
+      {
+        "rank": 27,
+        "ticker": "ALKS",
+        "coinvest_component": 0.3374,
+        "inst_component": -0.1173,
+        "inst_share_abs": 0.258,
+        "dominant_feature": "coinvest_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 28,
+        "ticker": "BCRX",
+        "coinvest_component": 0.4189,
+        "inst_component": 0.9193,
+        "inst_share_abs": 0.687,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 29,
+        "ticker": "KRYS",
+        "coinvest_component": -0.1503,
+        "inst_component": 0.5047,
+        "inst_share_abs": 0.7705,
+        "dominant_feature": "inst_dominated",
+        "is_known_artifact": false
+      },
+      {
+        "rank": 30,
+        "ticker": "TSHA",
+        "coinvest_component": 0.7409,
+        "inst_component": 0.6083,
+        "inst_share_abs": 0.4509,
+        "dominant_feature": "mixed",
+        "is_known_artifact": false
+      }
+    ],
+    "inst_dominated_artifact_overlap": [
+      "COGT"
+    ],
+    "verdict": "robust (majority mixed or coinvest-dominated)"
+  },
+  "test4_marginal_cutoff_sensitivity": {
+    "method": "Score gaps at boundary windows (25-35, 35-45, 55-65) + count of names within 0.05/0.10 of top-30 cutoff selector_score.",
+    "top30_cutoff_selector_score": 0.9864,
+    "names_within_0.05_of_cutoff": 14,
+    "names_within_0.10_of_cutoff": 26,
+    "windows": {
+      "25_35": {
+        "rows": [
+          [
+            25,
+            "NBIX",
+            0.8591
+          ],
+          [
+            26,
+            "ZYME",
+            0.7864
+          ],
+          [
+            27,
+            "ALKS",
+            0.7773
+          ],
+          [
+            28,
+            "BCRX",
+            0.9773
+          ],
+          [
+            29,
+            "KRYS",
+            0.7318
+          ],
+          [
+            30,
+            "TSHA",
+            0.9864
+          ],
+          [
+            31,
+            "ARGX",
+            0.7955
+          ],
+          [
+            32,
+            "NGNE",
+            0.9364
+          ],
+          [
+            33,
+            "JBIO",
+            0.9818
+          ],
+          [
+            34,
+            "JAZZ",
+            0.8045
+          ],
+          [
+            35,
+            "SNDX",
+            0.7409
+          ]
+        ],
+        "adjacent_gaps": [
+          0.0727,
+          0.0091,
+          -0.2,
+          0.2455,
+          -0.2545,
+          0.1909,
+          -0.1409,
+          -0.0455,
+          0.1773,
+          0.0636
+        ],
+        "cumulative_gap": 0.1182
+      },
+      "35_45": {
+        "rows": [
+          [
+            35,
+            "SNDX",
+            0.7409
+          ],
+          [
+            36,
+            "UTHR",
+            0.8136
+          ],
+          [
+            37,
+            "CTNM",
+            0.9045
+          ],
+          [
+            38,
+            "CGON",
+            0.8273
+          ],
+          [
+            39,
+            "IRON",
+            0.9909
+          ],
+          [
+            40,
+            "MBX",
+            0.7682
+          ],
+          [
+            41,
+            "NAMS",
+            0.8364
+          ],
+          [
+            42,
+            "GH",
+            0.7727
+          ],
+          [
+            43,
+            "FATE",
+            0.7455
+          ],
+          [
+            44,
+            "NUVL",
+            0.7818
+          ],
+          [
+            45,
+            "CLDX",
+            0.8
+          ]
+        ],
+        "adjacent_gaps": [
+          -0.0727,
+          -0.0909,
+          0.0773,
+          -0.1636,
+          0.2227,
+          -0.0682,
+          0.0636,
+          0.0273,
+          -0.0364,
+          -0.0182
+        ],
+        "cumulative_gap": -0.0591
+      },
+      "55_65": {
+        "rows": [
+          [
+            55,
+            "TECX",
+            0.9591
+          ],
+          [
+            56,
+            "PTCT",
+            0.85
+          ],
+          [
+            57,
+            "OCUL",
+            0.7909
+          ],
+          [
+            58,
+            "BBOT",
+            0.8227
+          ],
+          [
+            59,
+            "CCCC",
+            0.8318
+          ],
+          [
+            60,
+            "CGEM",
+            0.8955
+          ],
+          [
+            61,
+            "KURA",
+            0.7273
+          ],
+          [
+            62,
+            "XNCR",
+            0.7227
+          ],
+          [
+            63,
+            "PCVX",
+            0.7182
+          ],
+          [
+            64,
+            "ABSI",
+            0.7136
+          ],
+          [
+            65,
+            "BEAM",
+            0.7091
+          ]
+        ],
+        "adjacent_gaps": [
+          0.1091,
+          0.0591,
+          -0.0318,
+          -0.0091,
+          -0.0636,
+          0.1682,
+          0.0045,
+          0.0045,
+          0.0045,
+          0.0045
+        ],
+        "cumulative_gap": 0.25
+      }
+    },
+    "verdict": "fragile (26 names within 0.10 of cutoff)"
+  },
+  "test5_bootstrap": {
+    "method": "1000 trials \u00d7 random 5% universe drop (11/221); rerank remaining by existing selector_score; overlap with baseline top-30 (selector-score sort).",
+    "n_trials": 1000,
+    "drop_n": 11,
+    "mean_top30_overlap": 28.473,
+    "median_top30_overlap": 29.0,
+    "p10_top30_overlap": 27,
+    "p90_top30_overlap": 30,
+    "inclusion_frequency_per_baseline_top30": {
+      "SLDB": 0.961,
+      "TSHA": 0.954,
+      "XENE": 0.952,
+      "JBIO": 0.95,
+      "IMCR": 0.954,
+      "STOK": 0.955,
+      "CTNM": 0.959,
+      "EWTX": 0.943,
+      "CGEM": 0.947,
+      "MLTX": 0.944,
+      "RCUS": 0.945,
+      "IRON": 0.951,
+      "NGNE": 0.955,
+      "ANNX": 0.955,
+      "COGT": 0.949,
+      "ORIC": 0.943,
+      "KYMR": 0.961,
+      "MIRM": 0.951,
+      "ABVX": 0.939,
+      "KALV": 0.952,
+      "DYN": 0.942,
+      "PRAX": 0.945,
+      "RVMD": 0.937,
+      "BCRX": 0.932,
+      "TNGX": 0.955,
+      "PHVS": 0.953,
+      "CELC": 0.947,
+      "INSM": 0.953,
+      "TECX": 0.935,
+      "VERA": 0.954
+    },
+    "unstable_names_below_80pct_inclusion": [],
+    "verdict": "robust (median overlap 29.0/30, 0 names <80% inclusion)"
+  },
+  "test6_cross_signal_agreement": {
+    "method": "For each top-30 ticker, compute percentile rank within universe across available independent signals (excludes B6 components, institutional block). agreement_score = top-quintile signals / available signals.",
+    "available_independent_signals": [
+      "clinical_score_v2_z",
+      "financial_score",
+      "selector_clinical_block",
+      "selector_catalyst_block",
+      "selector_survivability_block",
+      "selector_market_block"
+    ],
+    "n_available_signals": 6,
+    "mean_agreement_top10": 0.05,
+    "mean_agreement_top20": 0.075,
+    "mean_agreement_top30": 0.1,
+    "tickers_agreement_ge_50pct": [
+      "AXSM",
+      "NBIX"
+    ],
+    "tickers_agreement_zero": [
+      "ABVX",
+      "ALKS",
+      "ANNX",
+      "BLTE",
+      "COGT",
+      "INSM",
+      "NRIX",
+      "ORKA",
+      "PHVS",
+      "PRAX",
+      "RCUS",
+      "SLDB",
+      "SRRK",
+      "STOK",
+      "TNGX",
+      "ZYME"
+    ],
+    "artifact_entrants_with_low_agreement": [
+      "ABVX",
+      "COGT",
+      "MIRM",
+      "NRIX",
+      "ORKA",
+      "ZYME"
+    ],
+    "per_ticker": [
+      {
+        "rank": 1,
+        "ticker": "COGT",
+        "is_known_artifact": true,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.353,
+          "financial_score": 0.081,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.665,
+          "selector_survivability_block": 0.095,
+          "selector_market_block": 0.086
+        }
+      },
+      {
+        "rank": 2,
+        "ticker": "INSM",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.475,
+          "financial_score": 0.145,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.493,
+          "selector_survivability_block": 0.154,
+          "selector_market_block": 0.602
+        }
+      },
+      {
+        "rank": 3,
+        "ticker": "DNTH",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.036,
+          "financial_score": 0.0,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.878,
+          "selector_survivability_block": 0.0,
+          "selector_market_block": 0.389
+        }
+      },
+      {
+        "rank": 4,
+        "ticker": "SLDB",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.149,
+          "financial_score": 0.0,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.71,
+          "selector_survivability_block": 0.0,
+          "selector_market_block": 0.235
+        }
+      },
+      {
+        "rank": 5,
+        "ticker": "ANNX",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.489,
+          "financial_score": 0.072,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.276,
+          "selector_survivability_block": 0.063,
+          "selector_market_block": 0.176
+        }
+      },
+      {
+        "rank": 6,
+        "ticker": "NRIX",
+        "is_known_artifact": true,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.172,
+          "financial_score": 0.0,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.76,
+          "selector_survivability_block": 0.0,
+          "selector_market_block": 0.271
+        }
+      },
+      {
+        "rank": 7,
+        "ticker": "STOK",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.154,
+          "financial_score": 0.163,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.317,
+          "selector_survivability_block": 0.172,
+          "selector_market_block": 0.434
+        }
+      },
+      {
+        "rank": 8,
+        "ticker": "ORIC",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.882,
+          "financial_score": 0.095,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.376,
+          "selector_survivability_block": 0.109,
+          "selector_market_block": 0.416
+        }
+      },
+      {
+        "rank": 9,
+        "ticker": "PRAX",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.624,
+          "financial_score": 0.312,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.729,
+          "selector_survivability_block": 0.312,
+          "selector_market_block": 0.303
+        }
+      },
+      {
+        "rank": 10,
+        "ticker": "KYMR",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.842,
+          "financial_score": 0.131,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.367,
+          "selector_survivability_block": 0.14,
+          "selector_market_block": 0.471
+        }
+      },
+      {
+        "rank": 11,
+        "ticker": "AXSM",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 3,
+        "agreement_score": 0.5,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.819,
+          "financial_score": 0.208,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.977,
+          "selector_survivability_block": 0.208,
+          "selector_market_block": 0.819
+        }
+      },
+      {
+        "rank": 12,
+        "ticker": "SRRK",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.258,
+          "financial_score": 0.086,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.276,
+          "selector_survivability_block": 0.1,
+          "selector_market_block": 0.579
+        }
+      },
+      {
+        "rank": 13,
+        "ticker": "PHVS",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.253,
+          "financial_score": 0.416,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.62,
+          "selector_survivability_block": 0.416,
+          "selector_market_block": 0.697
+        }
+      },
+      {
+        "rank": 14,
+        "ticker": "RCUS",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.335,
+          "financial_score": 0.258,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.62,
+          "selector_survivability_block": 0.258,
+          "selector_market_block": 0.498
+        }
+      },
+      {
+        "rank": 15,
+        "ticker": "ORKA",
+        "is_known_artifact": true,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.158,
+          "financial_score": 0.321,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.258,
+          "selector_survivability_block": 0.321,
+          "selector_market_block": 0.226
+        }
+      },
+      {
+        "rank": 16,
+        "ticker": "ABVX",
+        "is_known_artifact": true,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.425,
+          "financial_score": 0.294,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.593,
+          "selector_survivability_block": 0.294,
+          "selector_market_block": 0.439
+        }
+      },
+      {
+        "rank": 17,
+        "ticker": "SLN",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.873,
+          "financial_score": 0.226,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.715,
+          "selector_survivability_block": 0.226,
+          "selector_market_block": 0.534
+        }
+      },
+      {
+        "rank": 18,
+        "ticker": "TNGX",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.593,
+          "financial_score": 0.443,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.376,
+          "selector_survivability_block": 0.443,
+          "selector_market_block": 0.407
+        }
+      },
+      {
+        "rank": 19,
+        "ticker": "XENE",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.575,
+          "financial_score": 0.43,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.977,
+          "selector_survivability_block": 0.43,
+          "selector_market_block": 0.792
+        }
+      },
+      {
+        "rank": 20,
+        "ticker": "RVMD",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.231,
+          "financial_score": 0.412,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.851,
+          "selector_survivability_block": 0.412,
+          "selector_market_block": 0.679
+        }
+      },
+      {
+        "rank": 21,
+        "ticker": "CELC",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.086,
+          "financial_score": 0.367,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.932,
+          "selector_survivability_block": 0.367,
+          "selector_market_block": 0.643
+        }
+      },
+      {
+        "rank": 22,
+        "ticker": "BLTE",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.525,
+          "financial_score": 0.217,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.326,
+          "selector_survivability_block": 0.217,
+          "selector_market_block": 0.516
+        }
+      },
+      {
+        "rank": 23,
+        "ticker": "MIRM",
+        "is_known_artifact": true,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.643,
+          "financial_score": 0.326,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.878,
+          "selector_survivability_block": 0.326,
+          "selector_market_block": 0.774
+        }
+      },
+      {
+        "rank": 24,
+        "ticker": "EWTX",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.955,
+          "financial_score": 0.493,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.452,
+          "selector_survivability_block": 0.493,
+          "selector_market_block": 0.457
+        }
+      },
+      {
+        "rank": 25,
+        "ticker": "NBIX",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 3,
+        "agreement_score": 0.5,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.923,
+          "financial_score": 0.421,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.842,
+          "selector_survivability_block": 0.421,
+          "selector_market_block": 0.887
+        }
+      },
+      {
+        "rank": 26,
+        "ticker": "ZYME",
+        "is_known_artifact": true,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.136,
+          "financial_score": 0.439,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.475,
+          "selector_survivability_block": 0.439,
+          "selector_market_block": 0.538
+        }
+      },
+      {
+        "rank": 27,
+        "ticker": "ALKS",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 0,
+        "agreement_score": 0.0,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.751,
+          "financial_score": 0.425,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.652,
+          "selector_survivability_block": 0.425,
+          "selector_market_block": 0.747
+        }
+      },
+      {
+        "rank": 28,
+        "ticker": "BCRX",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.729,
+          "financial_score": 0.466,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.729,
+          "selector_survivability_block": 0.466,
+          "selector_market_block": 0.814
+        }
+      },
+      {
+        "rank": 29,
+        "ticker": "KRYS",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.181,
+          "financial_score": 0.299,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.489,
+          "selector_survivability_block": 0.299,
+          "selector_market_block": 0.882
+        }
+      },
+      {
+        "rank": 30,
+        "ticker": "TSHA",
+        "is_known_artifact": false,
+        "n_available_signals": 6,
+        "n_top_quintile_signals": 1,
+        "agreement_score": 0.1667,
+        "per_signal_percentiles": {
+          "clinical_score_v2_z": 0.018,
+          "financial_score": 0.593,
+          "selector_clinical_block": 0.0,
+          "selector_catalyst_block": 0.923,
+          "selector_survivability_block": 0.593,
+          "selector_market_block": 0.24
+        }
+      }
+    ],
+    "verdict": "fragile (leaders depend mostly on DEM/institutional layer; weak cross-signal corroboration)"
+  },
+  "test7_artifact_isolation_extension": {
+    "method": "Cross attribution counterfactual top-30 with cross-signal agreement + \u0394inst_delta_z magnitude. Classify each top-30 ticker as A/B/C/D.",
+    "classification_counts": {
+      "C_artifact_driven": 13,
+      "A_clean_durable": 10,
+      "D_underweighted": 5,
+      "B_durable_but_cohort_moved": 2
+    },
+    "stable_in_counterfactual": [
+      "ANNX",
+      "BCRX",
+      "CELC",
+      "EWTX",
+      "KYMR",
+      "NBIX",
+      "ORIC",
+      "PHVS",
+      "PRAX",
+      "RCUS",
+      "RVMD",
+      "SLDB",
+      "SLN",
+      "STOK",
+      "TNGX",
+      "TSHA",
+      "XENE"
+    ],
+    "artifact_entrants": [
+      "ABVX",
+      "ALKS",
+      "AXSM",
+      "BLTE",
+      "COGT",
+      "DNTH",
+      "INSM",
+      "KRYS",
+      "MIRM",
+      "NRIX",
+      "ORKA",
+      "SRRK",
+      "ZYME"
+    ],
+    "artifact_exits": [
+      "BBOT",
+      "CGEM",
+      "CTNM",
+      "GH",
+      "IDYA",
+      "IRON",
+      "JBIO",
+      "KALV",
+      "NAMS",
+      "NGNE",
+      "OCUL",
+      "PTCT",
+      "TECX"
+    ],
+    "high_confidence_artifact_tickers": [
+      "ABVX",
+      "COGT",
+      "MIRM",
+      "NRIX",
+      "ORKA",
+      "ZYME"
+    ],
+    "per_ticker_classification": [
+      {
+        "rank": 1,
+        "ticker": "COGT",
+        "is_known_artifact": true,
+        "inst_delta_z_delta": 0.5759,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 2,
+        "ticker": "INSM",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.2471,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 3,
+        "ticker": "DNTH",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.168,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 4,
+        "ticker": "SLDB",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.0626,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 5,
+        "ticker": "ANNX",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": -0.2468,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "D_underweighted"
+      },
+      {
+        "rank": 6,
+        "ticker": "NRIX",
+        "is_known_artifact": true,
+        "inst_delta_z_delta": 0.7472,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 7,
+        "ticker": "STOK",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": -0.1677,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "D_underweighted"
+      },
+      {
+        "rank": 8,
+        "ticker": "ORIC",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": -0.2468,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "D_underweighted"
+      },
+      {
+        "rank": 9,
+        "ticker": "PRAX",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.1153,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 10,
+        "ticker": "KYMR",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": -0.2072,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "D_underweighted"
+      },
+      {
+        "rank": 11,
+        "ticker": "AXSM",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.2075,
+        "cross_signal_agreement_score": 0.5,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 12,
+        "ticker": "SRRK",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.089,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 13,
+        "ticker": "PHVS",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.4642,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "B_durable_but_cohort_moved"
+      },
+      {
+        "rank": 14,
+        "ticker": "RCUS",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.0494,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 15,
+        "ticker": "ORKA",
+        "is_known_artifact": true,
+        "inst_delta_z_delta": 0.451,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 16,
+        "ticker": "ABVX",
+        "is_known_artifact": true,
+        "inst_delta_z_delta": 0.451,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 17,
+        "ticker": "SLN",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": -0.1808,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "D_underweighted"
+      },
+      {
+        "rank": 18,
+        "ticker": "TNGX",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.1153,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 19,
+        "ticker": "XENE",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.1285,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 20,
+        "ticker": "RVMD",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.1285,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 21,
+        "ticker": "CELC",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.1417,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 22,
+        "ticker": "BLTE",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.089,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 23,
+        "ticker": "MIRM",
+        "is_known_artifact": true,
+        "inst_delta_z_delta": 0.451,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 24,
+        "ticker": "EWTX",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.0099,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 25,
+        "ticker": "NBIX",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.168,
+        "cross_signal_agreement_score": 0.5,
+        "classification": "A_clean_durable"
+      },
+      {
+        "rank": 26,
+        "ticker": "ZYME",
+        "is_known_artifact": true,
+        "inst_delta_z_delta": 0.4773,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 27,
+        "ticker": "ALKS",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.168,
+        "cross_signal_agreement_score": 0.0,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 28,
+        "ticker": "BCRX",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.3455,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "B_durable_but_cohort_moved"
+      },
+      {
+        "rank": 29,
+        "ticker": "KRYS",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.089,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "C_artifact_driven"
+      },
+      {
+        "rank": 30,
+        "ticker": "TSHA",
+        "is_known_artifact": false,
+        "inst_delta_z_delta": 0.0757,
+        "cross_signal_agreement_score": 0.1667,
+        "classification": "A_clean_durable"
+      }
+    ]
+  },
+  "final_verdict": {
+    "dem_robustness_grade": "mixed",
+    "structurally_defensible_cutoff_today": "top-50",
+    "contaminated_names_to_treat_with_caution": [
+      "ABVX",
+      "COGT",
+      "MIRM",
+      "NRIX",
+      "ORKA",
+      "ZYME"
+    ],
+    "durable_despite_cohort_shock": [
+      "BCRX",
+      "PHVS"
+    ],
+    "production_action_recommended": "none \u2014 observe until h20d (2026-05-26) and post-13F refresh (~2026-05-15)",
+    "test_grade_distribution": {
+      "robust": 4,
+      "borderline": 0,
+      "fragile": 2
+    }
+  }
+}

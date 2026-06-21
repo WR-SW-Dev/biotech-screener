@@ -1,0 +1,6 @@
+[2026-05-25T09:16:14-04:00] Evening reliability check for prior trading day: 2026-05-24
+[2026-05-25T09:16:14-04:00] ⚠️  Missing inst_delta checkpoint for 2026-05-24; running backfill...
+[2026-05-25T09:16:14-04:00] ✅ inst_delta backfill completed for 2026-05-24
+[2026-05-25T09:16:14-04:00] ⚠️  Missing cross_signal buckets for 2026-05-24; running backfill...
+[2026-05-25T09:16:14-04:00] ✅ cross_signal backfill completed for 2026-05-24
+[2026-05-25T09:16:14-04:00] Evening reliability check complete

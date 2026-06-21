@@ -1,0 +1,70 @@
+{
+  "target_date": "2026-04-29",
+  "baseline_date": "2026-04-28",
+  "checks": [
+    {
+      "name": "snapshot_exists",
+      "status": "PASS",
+      "detail": "463 events at 8k_catalysts_2026-04-29_937b38db.json"
+    },
+    {
+      "name": "event_count_vs_baseline",
+      "status": "PASS",
+      "detail": "463 vs baseline 357 (+106, +29.7%)"
+    },
+    {
+      "name": "sec_6k_records_present",
+      "status": "PASS",
+      "detail": "SEC_6K_FILING=53, SEC_8K_FILING=410"
+    },
+    {
+      "name": "candidate_coverage",
+      "status": "PASS",
+      "detail": "16/21 candidates have records today"
+    },
+    {
+      "name": "no_8k_regression",
+      "status": "PASS",
+      "detail": "348/357 = 97.5% (\u226590%)"
+    }
+  ],
+  "snapshot_path": "cache/sec/8k_catalysts/8k_catalysts_2026-04-29_937b38db.json",
+  "snapshot_event_count": 463,
+  "baseline_event_count": 357,
+  "event_count_delta": 106,
+  "event_count_delta_pct": 29.69,
+  "source_distribution": {
+    "SEC_8K_FILING": 410,
+    "SEC_6K_FILING": 53
+  },
+  "candidates_total": 21,
+  "candidates_gained": [
+    "ABVX",
+    "ARGX",
+    "ASND",
+    "BLTE",
+    "BNTX",
+    "CLLS",
+    "DRUG",
+    "EPRX",
+    "GMAB",
+    "IMTX",
+    "MESO",
+    "NBP",
+    "OCS",
+    "PHVS",
+    "PRQR",
+    "SNY"
+  ],
+  "candidates_missed": [
+    "ACIU",
+    "AKTX",
+    "GHRS",
+    "GLPG",
+    "GRFS"
+  ],
+  "baseline_8k_count": 357,
+  "today_8k_count_for_baseline_tickers": 348,
+  "8k_retention_ratio": 0.9748,
+  "overall": "PASS"
+}

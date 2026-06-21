@@ -1,0 +1,62 @@
+name: agent-workflow
+
+on:
+  push:
+    paths:
+      - "tools/agent_preflight.py"
+      - "tools/check_agent_workflow.py"
+      - "tools/hermes_recursive_improvement_queue.py"
+      - "scripts/verify_agent_workflow.py"
+      - "docs/AGENT_WORKFLOW_HARDENING.md"
+      - "docs/REVIEW_ONLY_AGENT_POLICY.md"
+      - "docs/agent_artifact_schemas.json"
+      - "docs/templates/AGENT_CHANGE_MANIFEST.md"
+      - "tests/test_agent_workflow_hardening.py"
+      - "tests/test_hermes_recursive_improvement_queue.py"
+      - "tests/scientific_cartography/test_langgraph_review.py"
+      - "requirements.txt"
+      - "requirements.lock"
+      - "pyproject.toml"
+      - ".github/workflows/agent-workflow.yml"
+      - ".github/PULL_REQUEST_TEMPLATE/agent_change.md"
+  pull_request:
+    paths:
+      - "tools/agent_preflight.py"
+      - "tools/check_agent_workflow.py"
+      - "tools/hermes_recursive_improvement_queue.py"
+      - "scripts/verify_agent_workflow.py"
+      - "docs/AGENT_WORKFLOW_HARDENING.md"
+      - "docs/REVIEW_ONLY_AGENT_POLICY.md"
+      - "docs/agent_artifact_schemas.json"
+      - "docs/templates/AGENT_CHANGE_MANIFEST.md"
+      - "tests/test_agent_workflow_hardening.py"
+      - "tests/test_hermes_recursive_improvement_queue.py"
+      - "tests/scientific_cartography/test_langgraph_review.py"
+      - "requirements.txt"
+      - "requirements.lock"
+      - "pyproject.toml"
+      - ".github/workflows/agent-workflow.yml"
+      - ".github/PULL_REQUEST_TEMPLATE/agent_change.md"
+
+jobs:
+  verify-agent-workflow:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Verify agent workflow controls
+        run: |
+          python scripts/verify_agent_workflow.py

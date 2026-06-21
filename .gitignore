@@ -437,3 +437,7 @@ data/*_log.jsonl
 
 # --- Auto-extracted PDUFA dates (regenerated each run; committed only on structural change) ---
 production_data/pdufa_dates_extracted.json
+
+# Temp/debug scripts
+_*.py
+_*.json

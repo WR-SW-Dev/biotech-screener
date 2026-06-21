@@ -1,0 +1,240 @@
+{
+  "as_of": "2026-04-28",
+  "schema_window": {
+    "first": "2026-04-03",
+    "last": "2026-04-28",
+    "n_snapshots": 21
+  },
+  "definitions": {
+    "DEM_high": "top 20% by selector_score",
+    "DEM_low": "bottom 20% by selector_score",
+    "cross_signal_high": "agreement_score >= 0.5",
+    "cross_signal_low": "agreement_score <= 0.1",
+    "horizons_trading_days": [
+      5,
+      10
+    ],
+    "independent_signals_excluded": "coinvest_score_z, inst_delta_z, institutional block (B6 components)"
+  },
+  "bucket_aggregates": {
+    "HH": {
+      "5d": {
+        "n_obs": 64,
+        "n_unique_tickers": 14,
+        "n_snapshots": 12,
+        "mean_return": -0.016139,
+        "median_return": -0.015566,
+        "p10": -0.096934,
+        "p90": 0.04918,
+        "hit_rate": 0.3281,
+        "mean_xbi": 0.010415,
+        "mean_excess_vs_xbi": -0.026554,
+        "max_return_ticker": [
+          "IDYA",
+          0.11180327368564291
+        ],
+        "min_return_ticker": [
+          "CGEM",
+          -0.12217796157503169
+        ]
+      },
+      "10d": {
+        "n_obs": 33,
+        "n_unique_tickers": 9,
+        "n_snapshots": 7,
+        "mean_return": -0.020694,
+        "median_return": -0.009736,
+        "p10": -0.131199,
+        "p90": 0.056531,
+        "hit_rate": 0.3636,
+        "mean_xbi": 0.029521,
+        "mean_excess_vs_xbi": -0.050215,
+        "max_return_ticker": [
+          "RAPP",
+          0.10849121640507642
+        ],
+        "min_return_ticker": [
+          "VERA",
+          -0.16318832458736643
+        ]
+      }
+    },
+    "HL": {
+      "5d": {
+        "n_obs": 227,
+        "n_unique_tickers": 35,
+        "n_snapshots": 12,
+        "mean_return": 0.008079,
+        "median_return": 0.001749,
+        "p10": -0.082271,
+        "p90": 0.117949,
+        "hit_rate": 0.511,
+        "mean_xbi": 0.014779,
+        "mean_excess_vs_xbi": -0.0067,
+        "max_return_ticker": [
+          "NGNE",
+          0.43879661738459186
+        ],
+        "min_return_ticker": [
+          "CMPX",
+          -0.6666666740048809
+        ]
+      },
+      "10d": {
+        "n_obs": 136,
+        "n_unique_tickers": 33,
+        "n_snapshots": 7,
+        "mean_return": 0.03278,
+        "median_return": 0.012991,
+        "p10": -0.100655,
+        "p90": 0.261916,
+        "hit_rate": 0.5515,
+        "mean_xbi": 0.032364,
+        "mean_excess_vs_xbi": 0.000416,
+        "max_return_ticker": [
+          "TSHA",
+          0.4769229688991099
+        ],
+        "min_return_ticker": [
+          "CMPX",
+          -0.6528846127394388
+        ]
+      }
+    },
+    "LH": {
+      "5d": {
+        "n_obs": 86,
+        "n_unique_tickers": 13,
+        "n_snapshots": 12,
+        "mean_return": 0.010297,
+        "median_return": -0.001636,
+        "p10": -0.050979,
+        "p90": 0.093383,
+        "hit_rate": 0.4767,
+        "mean_xbi": 0.01644,
+        "mean_excess_vs_xbi": -0.006144,
+        "max_return_ticker": [
+          "LBRX",
+          0.2539030512092544
+        ],
+        "min_return_ticker": [
+          "IRWD",
+          -0.12471130978469869
+        ]
+      },
+      "10d": {
+        "n_obs": 53,
+        "n_unique_tickers": 13,
+        "n_snapshots": 7,
+        "mean_return": 0.019931,
+        "median_return": -0.001999,
+        "p10": -0.051068,
+        "p90": 0.112209,
+        "hit_rate": 0.4528,
+        "mean_xbi": 0.032411,
+        "mean_excess_vs_xbi": -0.01248,
+        "max_return_ticker": [
+          "LBRX",
+          0.2625307867538791
+        ],
+        "min_return_ticker": [
+          "GILD",
+          -0.08273403609591845
+        ]
+      }
+    },
+    "LL": {
+      "5d": {
+        "n_obs": 222,
+        "n_unique_tickers": 37,
+        "n_snapshots": 12,
+        "mean_return": 0.022596,
+        "median_return": 0.016478,
+        "p10": -0.084309,
+        "p90": 0.130682,
+        "hit_rate": 0.5766,
+        "mean_xbi": 0.012528,
+        "mean_excess_vs_xbi": 0.010068,
+        "max_return_ticker": [
+          "STRO",
+          0.32035132210427664
+        ],
+        "min_return_ticker": [
+          "EDIT",
+          -0.18207279246597274
+        ]
+      },
+      "10d": {
+        "n_obs": 123,
+        "n_unique_tickers": 32,
+        "n_snapshots": 7,
+        "mean_return": 0.064429,
+        "median_return": 0.044394,
+        "p10": -0.07027,
+        "p90": 0.246218,
+        "hit_rate": 0.6585,
+        "mean_xbi": 0.03114,
+        "mean_excess_vs_xbi": 0.033289,
+        "max_return_ticker": [
+          "STRO",
+          0.4360465922182868
+        ],
+        "min_return_ticker": [
+          "PRQR",
+          -0.22613067614430438
+        ]
+      }
+    },
+    "MIDDLE": {
+      "5d": {
+        "n_obs": 2094,
+        "n_unique_tickers": 218,
+        "n_snapshots": 12,
+        "mean_return": 0.022051,
+        "median_return": 0.007015,
+        "p10": -0.067647,
+        "p90": 0.118156,
+        "hit_rate": 0.5516,
+        "mean_xbi": 0.014047,
+        "mean_excess_vs_xbi": 0.008003,
+        "max_return_ticker": [
+          "ARTV",
+          0.8649025993669224
+        ],
+        "min_return_ticker": [
+          "ERAS",
+          -0.5336903221589314
+        ]
+      },
+      "10d": {
+        "n_obs": 1213,
+        "n_unique_tickers": 208,
+        "n_snapshots": 7,
+        "mean_return": 0.046837,
+        "median_return": 0.016509,
+        "p10": -0.070963,
+        "p90": 0.194972,
+        "hit_rate": 0.596,
+        "mean_xbi": 0.030935,
+        "mean_excess_vs_xbi": 0.015902,
+        "max_return_ticker": [
+          "ARTV",
+          0.8949918309861107
+        ],
+        "min_return_ticker": [
+          "ERAS",
+          -0.4145658495271859
+        ]
+      }
+    }
+  },
+  "labeling": "SCHEMA-ERA DESCRIPTIVE BEHAVIOR \u2014 NOT historical alpha evidence.",
+  "caveats": [
+    "Only 21 snapshots over ~26 days. Observations are heavily overlapping (same tickers reappear in adjacent snapshots).",
+    "Effective independent N is far smaller than face n_obs; do not interpret as a population mean.",
+    "Standing policy: 'Forward monitoring is the only valid evidence for alpha validation' (memory: historical_backtest_invalidated_2026_04_17).",
+    "20d/60d horizons not computable in this window.",
+    "Snapshots include the post-2026-04-25 cohort-rebuild contamination period (04-25 to 04-28). inst_delta_z is excluded from agreement_score so cohort effect on the bucket assignment is small, but DEM_high tickers in those snapshots may still be cohort-influenced.",
+    "Conclusion language: descriptive only. No alpha conclusion drawn."
+  ]
+}

@@ -1,0 +1,337 @@
+{
+  "analysis_date": "2026-06-02",
+  "snapshot_date": "2026-06-01",
+  "performance": {
+    "decision_ytd_pct": 40.46,
+    "xbi_ytd_pct": 5.13,
+    "decision_alpha_pp": 35.33,
+    "shadow_alpha_estimate_pp": 3.84,
+    "alpha_shortfall_pp": 31.49,
+    "shadow_excess_vs_xbi_pp": -1.29
+  },
+  "composition_analysis": {
+    "decision_count": 30,
+    "shadow_count": 30,
+    "overlap_count": 29,
+    "excluded_from_shadow": {
+      "count": 1,
+      "names": "{'ERAS'}",
+      "top_contributors": [
+        [
+          "ERAS",
+          275.4874614072368
+        ]
+      ]
+    }
+  },
+  "weight_analysis": {
+    "largest_underweights": [
+      [
+        "ABVX",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": -45.80249855391125
+        }
+      ],
+      [
+        "ALKS",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 46.21372738912794
+        }
+      ],
+      [
+        "ARWR",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 4.469683933287648
+        }
+      ],
+      [
+        "BCRX",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 11.200002034505209
+        }
+      ],
+      [
+        "CELC",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": -9.080064252323153
+        }
+      ],
+      [
+        "CMPS",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 103.51144329066841
+        }
+      ],
+      [
+        "DNTH",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 105.56955410150132
+        }
+      ],
+      [
+        "EWTX",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 56.84210526315789
+        }
+      ],
+      [
+        "MIRM",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 18.06071285927759
+        }
+      ],
+      [
+        "MLTX",
+        {
+          "decision_weight": 3.66,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.3267000000000002,
+          "return": 49.539758363664035
+        }
+      ]
+    ],
+    "largest_overweights": [
+      [
+        "RYTM",
+        {
+          "decision_weight": 2.01,
+          "shadow_weight": 3.3333,
+          "weight_diff": -1.3233000000000001,
+          "return": -19.674319818893974
+        }
+      ],
+      [
+        "ALMS",
+        {
+          "decision_weight": 2.19,
+          "shadow_weight": 3.3333,
+          "weight_diff": -1.1433,
+          "return": 123.78560677009729
+        }
+      ],
+      [
+        "COGT",
+        {
+          "decision_weight": 2.19,
+          "shadow_weight": 3.3333,
+          "weight_diff": -1.1433,
+          "return": -5.699491252934731
+        }
+      ],
+      [
+        "TRVI",
+        {
+          "decision_weight": 2.19,
+          "shadow_weight": 3.3333,
+          "weight_diff": -1.1433,
+          "return": 13.540787301838876
+        }
+      ],
+      [
+        "MBX",
+        {
+          "decision_weight": 3.05,
+          "shadow_weight": 3.3333,
+          "weight_diff": -0.2833000000000001,
+          "return": 0.4910033702944834
+        }
+      ],
+      [
+        "NBIX",
+        {
+          "decision_weight": 3.05,
+          "shadow_weight": 3.3333,
+          "weight_diff": -0.2833000000000001,
+          "return": 10.128015374260313
+        }
+      ],
+      [
+        "ORKA",
+        {
+          "decision_weight": 3.05,
+          "shadow_weight": 3.3333,
+          "weight_diff": -0.2833000000000001,
+          "return": 95.36610770400162
+        }
+      ],
+      [
+        "RVMD",
+        {
+          "decision_weight": 3.05,
+          "shadow_weight": 3.3333,
+          "weight_diff": -0.2833000000000001,
+          "return": 91.4831738630179
+        }
+      ],
+      [
+        "DRUG",
+        {
+          "decision_weight": 3.35,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.01670000000000016,
+          "return": -8.00383462551291
+        }
+      ],
+      [
+        "STOK",
+        {
+          "decision_weight": 3.35,
+          "shadow_weight": 3.3333,
+          "weight_diff": 0.01670000000000016,
+          "return": -7.184463885958081
+        }
+      ]
+    ]
+  },
+  "bucket_composition": {
+    "decision": {
+      "binary_0_30": {
+        "count": 12,
+        "avg_return": 38.845446643376725,
+        "top_performer": {
+          "ticker": "SYRE",
+          "return": 126.16090200999493
+        },
+        "worst_performer": {
+          "ticker": "ABVX",
+          "return": -45.80249855391125
+        }
+      },
+      "binary_31_90": {
+        "count": 3,
+        "avg_return": 8.752508033498628,
+        "top_performer": {
+          "ticker": "MIRM",
+          "return": 18.06071285927759
+        },
+        "worst_performer": {
+          "ticker": "NRIX",
+          "return": -9.357689239670192
+        }
+      },
+      "binary_91_180": {
+        "count": 10,
+        "avg_return": 24.84694085023029,
+        "top_performer": {
+          "ticker": "TNGX",
+          "return": 140.7614699356585
+        },
+        "worst_performer": {
+          "ticker": "RYTM",
+          "return": -19.674319818893974
+        }
+      },
+      "less_binary": {
+        "count": 5,
+        "avg_return": 94.59115234376222,
+        "top_performer": {
+          "ticker": "ERAS",
+          "return": 275.4874614072368
+        },
+        "worst_performer": {
+          "ticker": "MBX",
+          "return": 0.4910033702944834
+        }
+      }
+    },
+    "shadow": {
+      "binary_0_30": {
+        "count": 13,
+        "avg_return": 41.048410405709916,
+        "top_performer": {
+          "ticker": "TNGX",
+          "return": 140.7614699356585
+        },
+        "worst_performer": {
+          "ticker": "PRAX",
+          "return": -9.888270924494034
+        }
+      },
+      "binary_31_90": {
+        "count": 9,
+        "avg_return": 34.351414186176925,
+        "top_performer": {
+          "ticker": "ALMS",
+          "return": 123.78560677009729
+        },
+        "worst_performer": {
+          "ticker": "ABVX",
+          "return": -45.80249855391125
+        }
+      },
+      "binary_91_180": {
+        "count": 6,
+        "avg_return": 0.030403663511815893,
+        "top_performer": {
+          "ticker": "URGN",
+          "return": 16.864826003772706
+        },
+        "worst_performer": {
+          "ticker": "RYTM",
+          "return": -19.674319818893974
+        }
+      },
+      "less_binary": {
+        "count": 2,
+        "avg_return": 47.68305385200081,
+        "top_performer": {
+          "ticker": "ORKA",
+          "return": 95.36610770400162
+        },
+        "worst_performer": {
+          "ticker": "MLYS",
+          "return": 0
+        }
+      }
+    }
+  },
+  "classifications": {
+    "one_name_noise": {
+      "description": "Idiosyncratic outperformance/underperformance of specific holdings",
+      "signal": "High variance in excluded_from_shadow returns OR large weight differences with divergent performance",
+      "assessment": "HIGH \u2014 Top 3 excluded names contributed +275.5pp"
+    },
+    "bucket_exposure": {
+      "description": "Compositional difference in bucket allocation (0-30d vs 31-90d vs 91-180d)",
+      "signal": "Shadow has different bucket composition than decision portfolio",
+      "assessment": "MEDIUM \u2014 Some bucket drift (\u0394=20pp)"
+    },
+    "catalyst_window": {
+      "description": "Timing of catalyst realization (near-term vs medium-term)",
+      "signal": "Underperformance concentrated in specific catalyst-day buckets",
+      "assessment": "MEDIUM \u2014 155d window underperformed (-19.7pp avg)"
+    },
+    "broad_cohort": {
+      "description": "Macro/regime effect affecting entire portfolio",
+      "signal": "Broad underperformance across all buckets and holdings",
+      "assessment": "MEDIUM \u2014 31.5pp shortfall suggests broad regime effect"
+    }
+  }
+}

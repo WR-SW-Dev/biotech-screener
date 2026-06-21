@@ -1,0 +1,40 @@
+{
+  "cache_files_found": [
+    "8k_catalysts_2026-04-29_937b38db.json"
+  ],
+  "digest_date": "2026-04-28",
+  "external_catalysts_known": {
+    "ERAS": "Phase I ERAS-0015 patient death + RVMD IP threat (-46.84% intraday)",
+    "KNSA": "Q1 2026 earnings beat + Goldman PT raise to $60 (+22.18% intraday)",
+    "RVMD": "Adversarial benefit from ERAS reversal; named plaintiff in IP threat (+10.50% intraday)"
+  },
+  "generated_at": "2026-04-29T12:00:02.368220+00:00",
+  "summary": {
+    "recommendation": "No 8-K events for ['ERAS', 'KNSA', 'RVMD'] disclosed since 2026-04-28 are in today's cache. Catalysts confirmed by external lookup (Google Finance) on 2026-04-28 evening may still be in the press-release pipeline. Spec 070 (Google Finance fallback) would have surfaced them in the original digest.",
+    "status": "still_missing",
+    "total_hits": 0
+  },
+  "target_date": "2026-04-29",
+  "ticker_findings": {
+    "ERAS": {
+      "events": [],
+      "external_catalyst": "Phase I ERAS-0015 patient death + RVMD IP threat (-46.84% intraday)",
+      "hits_disclosed_since_digest_date": 0
+    },
+    "KNSA": {
+      "events": [],
+      "external_catalyst": "Q1 2026 earnings beat + Goldman PT raise to $60 (+22.18% intraday)",
+      "hits_disclosed_since_digest_date": 0
+    },
+    "RVMD": {
+      "events": [],
+      "external_catalyst": "Adversarial benefit from ERAS reversal; named plaintiff in IP threat (+10.50% intraday)",
+      "hits_disclosed_since_digest_date": 0
+    }
+  },
+  "tickers_checked": [
+    "ERAS",
+    "KNSA",
+    "RVMD"
+  ]
+}

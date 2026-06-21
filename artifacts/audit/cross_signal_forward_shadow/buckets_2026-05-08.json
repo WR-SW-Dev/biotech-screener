@@ -1,0 +1,2385 @@
+{
+  "as_of": "2026-05-08",
+  "schema_era_T0": "2026-04-28",
+  "n_universe_rankable": 222,
+  "definitions": {
+    "DEM_high": "top 20% by selector_score",
+    "DEM_low": "bottom 20% by selector_score",
+    "cross_signal_high": "agreement_score >= 0.5",
+    "cross_signal_low": "agreement_score <= 0.1",
+    "independent_signals_used": [
+      "clinical_score_v2_z",
+      "financial_score",
+      "selector_clinical_block",
+      "selector_catalyst_block",
+      "selector_survivability_block",
+      "selector_market_block"
+    ],
+    "n_available_independent_signals": 6
+  },
+  "summary": {
+    "HH": 7,
+    "HL": 16,
+    "LH": 8,
+    "LL": 21,
+    "MIDDLE": 170,
+    "UNDEF": 0
+  },
+  "bucket_membership": {
+    "HH": [
+      {
+        "ticker": "IRON",
+        "selector_score": 1.0,
+        "selector_percentile": 1.0,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 38,
+        "coinvest_score_z": 1.6605,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "DYN",
+        "selector_score": 0.954751,
+        "selector_percentile": 0.955,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 49,
+        "coinvest_score_z": 1.0023,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "VERA",
+        "selector_score": 0.895928,
+        "selector_percentile": 0.8964,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 55,
+        "coinvest_score_z": 0.5903,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "PTCT",
+        "selector_score": 0.886878,
+        "selector_percentile": 0.8874,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 60,
+        "coinvest_score_z": 0.4925,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "BIIB",
+        "selector_score": 0.809955,
+        "selector_percentile": 0.8108,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 39,
+        "coinvest_score_z": 0.2837,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "CTNM",
+        "selector_score": 0.950226,
+        "selector_percentile": 0.9505,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 40,
+        "coinvest_score_z": 1.2182,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "RARE",
+        "selector_score": 0.923077,
+        "selector_percentile": 0.9234,
+        "agreement_score": 0.6667,
+        "n_available_signals": 6,
+        "actionable_rank": 54,
+        "coinvest_score_z": 0.8081,
+        "inst_delta_z": -0.336
+      }
+    ],
+    "HL": [
+      {
+        "ticker": "PHVS",
+        "selector_score": 0.995475,
+        "selector_percentile": 0.9955,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 11,
+        "coinvest_score_z": 1.4795,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "RCUS",
+        "selector_score": 0.832579,
+        "selector_percentile": 0.8333,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 13,
+        "coinvest_score_z": 0.5558,
+        "inst_delta_z": 2.3393
+      },
+      {
+        "ticker": "RVMD",
+        "selector_score": 0.945701,
+        "selector_percentile": 0.9459,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 17,
+        "coinvest_score_z": 0.9129,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "PRAX",
+        "selector_score": 0.977376,
+        "selector_percentile": 0.9775,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 7,
+        "coinvest_score_z": 1.2844,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "ABVX",
+        "selector_score": 0.837104,
+        "selector_percentile": 0.8378,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 15,
+        "coinvest_score_z": 0.6329,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "TNGX",
+        "selector_score": 0.968326,
+        "selector_percentile": 0.9685,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 21,
+        "coinvest_score_z": 1.2003,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "JBIO",
+        "selector_score": 0.99095,
+        "selector_percentile": 0.991,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 25,
+        "coinvest_score_z": 1.5416,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "ORKA",
+        "selector_score": 0.828054,
+        "selector_percentile": 0.8288,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 10,
+        "coinvest_score_z": 0.7463,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "ACAD",
+        "selector_score": 0.882353,
+        "selector_percentile": 0.8829,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 9,
+        "coinvest_score_z": 0.7508,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "NGNE",
+        "selector_score": 0.986425,
+        "selector_percentile": 0.9865,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 28,
+        "coinvest_score_z": 1.457,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "COGT",
+        "selector_score": 0.972851,
+        "selector_percentile": 0.973,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 1,
+        "coinvest_score_z": 1.3348,
+        "inst_delta_z": 4.42
+      },
+      {
+        "ticker": "RYTM",
+        "selector_score": 0.932127,
+        "selector_percentile": 0.9324,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 12,
+        "coinvest_score_z": 0.9013,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "CGON",
+        "selector_score": 0.80543,
+        "selector_percentile": 0.8063,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 37,
+        "coinvest_score_z": 0.4785,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "RAPP",
+        "selector_score": 0.800905,
+        "selector_percentile": 0.8018,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 51,
+        "coinvest_score_z": 0.4251,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "AMLX",
+        "selector_score": 0.936652,
+        "selector_percentile": 0.9369,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 31,
+        "coinvest_score_z": 0.8446,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "MBX",
+        "selector_score": 0.841629,
+        "selector_percentile": 0.8423,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 45,
+        "coinvest_score_z": 0.6648,
+        "inst_delta_z": -0.336
+      }
+    ],
+    "LH": [
+      {
+        "ticker": "EBS",
+        "selector_score": 0.149321,
+        "selector_percentile": 0.1532,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 189,
+        "coinvest_score_z": -0.9025,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "OPK",
+        "selector_score": 0.144796,
+        "selector_percentile": 0.1486,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 190,
+        "coinvest_score_z": -1.0374,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "IRWD",
+        "selector_score": 0.122172,
+        "selector_percentile": 0.1261,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 195,
+        "coinvest_score_z": -1.0159,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "NVAX",
+        "selector_score": 0.140271,
+        "selector_percentile": 0.1441,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 191,
+        "coinvest_score_z": -1.1423,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "INVA",
+        "selector_score": 0.117647,
+        "selector_percentile": 0.1216,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 196,
+        "coinvest_score_z": -1.2025,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "IONS",
+        "selector_score": 0.054299,
+        "selector_percentile": 0.0586,
+        "agreement_score": 0.6667,
+        "n_available_signals": 6,
+        "actionable_rank": 210,
+        "coinvest_score_z": -1.672,
+        "inst_delta_z": -2.1195
+      },
+      {
+        "ticker": "TECH",
+        "selector_score": 0.045249,
+        "selector_percentile": 0.0495,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 212,
+        "coinvest_score_z": -1.5887,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "SNY",
+        "selector_score": 0.0,
+        "selector_percentile": 0.0045,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 222,
+        "coinvest_score_z": -2.1719,
+        "inst_delta_z": 0.2585
+      }
+    ],
+    "LL": [
+      {
+        "ticker": "IBRX",
+        "selector_score": 0.158371,
+        "selector_percentile": 0.1622,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 187,
+        "coinvest_score_z": -0.6322,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "CNTX",
+        "selector_score": 0.19457,
+        "selector_percentile": 0.1982,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 179,
+        "coinvest_score_z": -0.7228,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "CLLS",
+        "selector_score": 0.167421,
+        "selector_percentile": 0.1712,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 185,
+        "coinvest_score_z": -0.8438,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "ZVRA",
+        "selector_score": 0.135747,
+        "selector_percentile": 0.1396,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 192,
+        "coinvest_score_z": -0.9665,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "MESO",
+        "selector_score": 0.076923,
+        "selector_percentile": 0.0811,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 205,
+        "coinvest_score_z": -1.2449,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "ILMN",
+        "selector_score": 0.18552,
+        "selector_percentile": 0.1892,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 181,
+        "coinvest_score_z": -0.5382,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "ACIU",
+        "selector_score": 0.180995,
+        "selector_percentile": 0.1847,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 182,
+        "coinvest_score_z": -0.801,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "CRBU",
+        "selector_score": 0.176471,
+        "selector_percentile": 0.1802,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 183,
+        "coinvest_score_z": -0.6846,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "BRKR",
+        "selector_score": 0.162896,
+        "selector_percentile": 0.1667,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 186,
+        "coinvest_score_z": -0.5917,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "ABUS",
+        "selector_score": 0.108597,
+        "selector_percentile": 0.1126,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 198,
+        "coinvest_score_z": -1.0443,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "OABI",
+        "selector_score": 0.104072,
+        "selector_percentile": 0.1081,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 199,
+        "coinvest_score_z": -0.6974,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "IMTX",
+        "selector_score": 0.099548,
+        "selector_percentile": 0.1036,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 200,
+        "coinvest_score_z": -1.1707,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "OMER",
+        "selector_score": 0.085973,
+        "selector_percentile": 0.0901,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 203,
+        "coinvest_score_z": -1.0931,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "STRO",
+        "selector_score": 0.081448,
+        "selector_percentile": 0.0856,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 204,
+        "coinvest_score_z": -0.9637,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "VCEL",
+        "selector_score": 0.072398,
+        "selector_percentile": 0.0766,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 206,
+        "coinvest_score_z": -1.2265,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "EDIT",
+        "selector_score": 0.058824,
+        "selector_percentile": 0.0631,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 209,
+        "coinvest_score_z": -0.7864,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "CRL",
+        "selector_score": 0.036199,
+        "selector_percentile": 0.0405,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 214,
+        "coinvest_score_z": -1.589,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "PAHC",
+        "selector_score": 0.031674,
+        "selector_percentile": 0.036,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 215,
+        "coinvest_score_z": -1.2724,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "ADPT",
+        "selector_score": 0.022624,
+        "selector_percentile": 0.027,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 217,
+        "coinvest_score_z": -1.2641,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "TWST",
+        "selector_score": 0.0181,
+        "selector_percentile": 0.0225,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 218,
+        "coinvest_score_z": -1.3759,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "STVN",
+        "selector_score": 0.013575,
+        "selector_percentile": 0.018,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 219,
+        "coinvest_score_z": -1.4548,
+        "inst_delta_z": -0.0388
+      }
+    ],
+    "MIDDLE": [
+      {
+        "ticker": "DNTH",
+        "selector_score": 0.918552,
+        "selector_percentile": 0.9189,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 2,
+        "coinvest_score_z": 0.9346,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "SION",
+        "selector_score": 0.778281,
+        "selector_percentile": 0.7793,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 3,
+        "coinvest_score_z": 0.6264,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "CELC",
+        "selector_score": 0.914027,
+        "selector_percentile": 0.9144,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 18,
+        "coinvest_score_z": 0.6771,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "TSHA",
+        "selector_score": 0.959276,
+        "selector_percentile": 0.9595,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 23,
+        "coinvest_score_z": 1.054,
+        "inst_delta_z": 1.7447
+      },
+      {
+        "ticker": "ZYME",
+        "selector_score": 0.909502,
+        "selector_percentile": 0.9099,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 27,
+        "coinvest_score_z": 0.6177,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "XENE",
+        "selector_score": 0.9819,
+        "selector_percentile": 0.982,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 16,
+        "coinvest_score_z": 1.1334,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "MIRM",
+        "selector_score": 0.846154,
+        "selector_percentile": 0.8468,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 19,
+        "coinvest_score_z": 0.4669,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "APLS",
+        "selector_score": 0.769231,
+        "selector_percentile": 0.7703,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 29,
+        "coinvest_score_z": 0.4965,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "AXSM",
+        "selector_score": 0.864253,
+        "selector_percentile": 0.8649,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 14,
+        "coinvest_score_z": 0.6079,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "EWTX",
+        "selector_score": 0.963801,
+        "selector_percentile": 0.964,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 20,
+        "coinvest_score_z": 1.1732,
+        "inst_delta_z": 3.231
+      },
+      {
+        "ticker": "NBIX",
+        "selector_score": 0.855204,
+        "selector_percentile": 0.8559,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 22,
+        "coinvest_score_z": 0.5899,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "ALKS",
+        "selector_score": 0.81448,
+        "selector_percentile": 0.8153,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 24,
+        "coinvest_score_z": 0.4799,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "BCRX",
+        "selector_score": 0.891403,
+        "selector_percentile": 0.8919,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 26,
+        "coinvest_score_z": 0.6002,
+        "inst_delta_z": 2.6365
+      },
+      {
+        "ticker": "JAZZ",
+        "selector_score": 0.904977,
+        "selector_percentile": 0.9054,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 30,
+        "coinvest_score_z": 0.5938,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "STOK",
+        "selector_score": 0.927602,
+        "selector_percentile": 0.9279,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 4,
+        "coinvest_score_z": 0.8356,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "MLYS",
+        "selector_score": 0.751131,
+        "selector_percentile": 0.7523,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 5,
+        "coinvest_score_z": 0.5953,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "KYMR",
+        "selector_score": 0.746606,
+        "selector_percentile": 0.7477,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 8,
+        "coinvest_score_z": 0.4616,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "ORIC",
+        "selector_score": 0.78733,
+        "selector_percentile": 0.7883,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 6,
+        "coinvest_score_z": 0.4961,
+        "inst_delta_z": 2.042
+      },
+      {
+        "ticker": "DSGN",
+        "selector_score": 0.733032,
+        "selector_percentile": 0.7342,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 43,
+        "coinvest_score_z": 0.2994,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "MLTX",
+        "selector_score": 0.79638,
+        "selector_percentile": 0.7973,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 46,
+        "coinvest_score_z": 0.4615,
+        "inst_delta_z": 1.7447
+      },
+      {
+        "ticker": "NUVL",
+        "selector_score": 0.760181,
+        "selector_percentile": 0.7613,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 47,
+        "coinvest_score_z": 0.2269,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "CLDX",
+        "selector_score": 0.823529,
+        "selector_percentile": 0.8243,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 48,
+        "coinvest_score_z": 0.3709,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "IDYA",
+        "selector_score": 0.873303,
+        "selector_percentile": 0.8739,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 52,
+        "coinvest_score_z": 0.5899,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "IMCR",
+        "selector_score": 0.900452,
+        "selector_percentile": 0.9009,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 57,
+        "coinvest_score_z": 0.6603,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "TECX",
+        "selector_score": 0.850679,
+        "selector_percentile": 0.8514,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 58,
+        "coinvest_score_z": 0.5688,
+        "inst_delta_z": 2.042
+      },
+      {
+        "ticker": "APGE",
+        "selector_score": 0.728507,
+        "selector_percentile": 0.7297,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 61,
+        "coinvest_score_z": 0.2579,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "ALMS",
+        "selector_score": 0.723982,
+        "selector_percentile": 0.7252,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 62,
+        "coinvest_score_z": 0.5553,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "KALV",
+        "selector_score": 0.705882,
+        "selector_percentile": 0.7072,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 66,
+        "coinvest_score_z": 0.2331,
+        "inst_delta_z": 2.3393
+      },
+      {
+        "ticker": "URGN",
+        "selector_score": 0.696833,
+        "selector_percentile": 0.6982,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 68,
+        "coinvest_score_z": 0.4761,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "SLDB",
+        "selector_score": 0.692308,
+        "selector_percentile": 0.6937,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 69,
+        "coinvest_score_z": 0.5379,
+        "inst_delta_z": 2.042
+      },
+      {
+        "ticker": "NRIX",
+        "selector_score": 0.687783,
+        "selector_percentile": 0.6892,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 70,
+        "coinvest_score_z": 0.4222,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "FDMT",
+        "selector_score": 0.674208,
+        "selector_percentile": 0.6757,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 73,
+        "coinvest_score_z": 0.1486,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "SRRK",
+        "selector_score": 0.642534,
+        "selector_percentile": 0.6441,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 80,
+        "coinvest_score_z": 0.0593,
+        "inst_delta_z": 1.4475
+      },
+      {
+        "ticker": "CCCC",
+        "selector_score": 0.628959,
+        "selector_percentile": 0.6306,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 83,
+        "coinvest_score_z": 0.2059,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "PTGX",
+        "selector_score": 0.61991,
+        "selector_percentile": 0.6216,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 85,
+        "coinvest_score_z": 0.0421,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ACRV",
+        "selector_score": 0.615385,
+        "selector_percentile": 0.6171,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 86,
+        "coinvest_score_z": 0.1514,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "LEGN",
+        "selector_score": 0.58371,
+        "selector_percentile": 0.5856,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 93,
+        "coinvest_score_z": 0.0647,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "KOD",
+        "selector_score": 0.561086,
+        "selector_percentile": 0.5631,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 98,
+        "coinvest_score_z": -0.0653,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ADCT",
+        "selector_score": 0.556561,
+        "selector_percentile": 0.5586,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 99,
+        "coinvest_score_z": -0.0574,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "DRUG",
+        "selector_score": 0.538462,
+        "selector_percentile": 0.5405,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 103,
+        "coinvest_score_z": 0.0856,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "CLYM",
+        "selector_score": 0.533937,
+        "selector_percentile": 0.536,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 104,
+        "coinvest_score_z": -0.0606,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "TENX",
+        "selector_score": 0.511312,
+        "selector_percentile": 0.5135,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 109,
+        "coinvest_score_z": -0.0119,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "KURA",
+        "selector_score": 0.488688,
+        "selector_percentile": 0.491,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 114,
+        "coinvest_score_z": -0.1271,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "VIR",
+        "selector_score": 0.41629,
+        "selector_percentile": 0.4189,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 130,
+        "coinvest_score_z": -0.2156,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "RGNX",
+        "selector_score": 0.402715,
+        "selector_percentile": 0.4054,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 133,
+        "coinvest_score_z": -0.2735,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "ARWR",
+        "selector_score": 0.39819,
+        "selector_percentile": 0.4009,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 134,
+        "coinvest_score_z": -0.2385,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "SGMT",
+        "selector_score": 0.375566,
+        "selector_percentile": 0.3784,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 139,
+        "coinvest_score_z": -0.2712,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "CRSP",
+        "selector_score": 0.339367,
+        "selector_percentile": 0.3423,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 147,
+        "coinvest_score_z": -0.355,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "IOVA",
+        "selector_score": 0.298643,
+        "selector_percentile": 0.3018,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 156,
+        "coinvest_score_z": -0.2247,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "ELDN",
+        "selector_score": 0.190045,
+        "selector_percentile": 0.1937,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 180,
+        "coinvest_score_z": -0.7892,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "GRFS",
+        "selector_score": 0.063348,
+        "selector_percentile": 0.0676,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 208,
+        "coinvest_score_z": -1.4839,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "TARS",
+        "selector_score": 0.941176,
+        "selector_percentile": 0.9414,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 33,
+        "coinvest_score_z": 0.7895,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "ARGX",
+        "selector_score": 0.773756,
+        "selector_percentile": 0.7748,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 35,
+        "coinvest_score_z": 0.2104,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "UTHR",
+        "selector_score": 0.877828,
+        "selector_percentile": 0.8784,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 36,
+        "coinvest_score_z": 0.5144,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "NAMS",
+        "selector_score": 0.859729,
+        "selector_percentile": 0.8604,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 41,
+        "coinvest_score_z": 0.5516,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "SVRA",
+        "selector_score": 0.782805,
+        "selector_percentile": 0.7838,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 42,
+        "coinvest_score_z": 0.4835,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "PCVX",
+        "selector_score": 0.868778,
+        "selector_percentile": 0.8694,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 44,
+        "coinvest_score_z": 0.6553,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "BCAX",
+        "selector_score": 0.764706,
+        "selector_percentile": 0.7658,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 50,
+        "coinvest_score_z": 0.4429,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "ABEO",
+        "selector_score": 0.737557,
+        "selector_percentile": 0.7387,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 53,
+        "coinvest_score_z": 0.4176,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "SYRE",
+        "selector_score": 0.719457,
+        "selector_percentile": 0.7207,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 63,
+        "coinvest_score_z": 0.4751,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "CRNX",
+        "selector_score": 0.701357,
+        "selector_percentile": 0.7027,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 67,
+        "coinvest_score_z": 0.3046,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "ANNX",
+        "selector_score": 0.683258,
+        "selector_percentile": 0.6847,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 71,
+        "coinvest_score_z": 0.5008,
+        "inst_delta_z": 2.042
+      },
+      {
+        "ticker": "AVBP",
+        "selector_score": 0.656109,
+        "selector_percentile": 0.6577,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 77,
+        "coinvest_score_z": 0.2353,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "PVLA",
+        "selector_score": 0.651584,
+        "selector_percentile": 0.6532,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 78,
+        "coinvest_score_z": 0.2015,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "AVIR",
+        "selector_score": 0.61086,
+        "selector_percentile": 0.6126,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 87,
+        "coinvest_score_z": 0.1627,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ARVN",
+        "selector_score": 0.606335,
+        "selector_percentile": 0.6081,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 88,
+        "coinvest_score_z": -0.1041,
+        "inst_delta_z": -2.1195
+      },
+      {
+        "ticker": "ABSI",
+        "selector_score": 0.565611,
+        "selector_percentile": 0.5676,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 97,
+        "coinvest_score_z": 0.0793,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "CDNA",
+        "selector_score": 0.542986,
+        "selector_percentile": 0.545,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 102,
+        "coinvest_score_z": -0.1593,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "DNLI",
+        "selector_score": 0.529412,
+        "selector_percentile": 0.5315,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 105,
+        "coinvest_score_z": -0.076,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "TYRA",
+        "selector_score": 0.524887,
+        "selector_percentile": 0.527,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 106,
+        "coinvest_score_z": -0.0284,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "CATX",
+        "selector_score": 0.502262,
+        "selector_percentile": 0.5045,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 111,
+        "coinvest_score_z": -0.0447,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "ARTV",
+        "selector_score": 0.479638,
+        "selector_percentile": 0.482,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 116,
+        "coinvest_score_z": 0.0117,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "SNDX",
+        "selector_score": 0.475113,
+        "selector_percentile": 0.4775,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 117,
+        "coinvest_score_z": -0.2217,
+        "inst_delta_z": 1.4475
+      },
+      {
+        "ticker": "ANRO",
+        "selector_score": 0.461538,
+        "selector_percentile": 0.464,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 120,
+        "coinvest_score_z": -0.1422,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "KYTX",
+        "selector_score": 0.429864,
+        "selector_percentile": 0.4324,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 127,
+        "coinvest_score_z": -0.0797,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "KRYS",
+        "selector_score": 0.411765,
+        "selector_percentile": 0.4144,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 131,
+        "coinvest_score_z": -0.2121,
+        "inst_delta_z": 1.4475
+      },
+      {
+        "ticker": "BIOA",
+        "selector_score": 0.40724,
+        "selector_percentile": 0.4099,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 132,
+        "coinvest_score_z": 0.1018,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "INBX",
+        "selector_score": 0.38914,
+        "selector_percentile": 0.3919,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 136,
+        "coinvest_score_z": -0.0167,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ARQT",
+        "selector_score": 0.384615,
+        "selector_percentile": 0.3874,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 137,
+        "coinvest_score_z": -0.2891,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "IKT",
+        "selector_score": 0.38009,
+        "selector_percentile": 0.3829,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 138,
+        "coinvest_score_z": -0.1965,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "PRTA",
+        "selector_score": 0.366516,
+        "selector_percentile": 0.3694,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 141,
+        "coinvest_score_z": -0.3017,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "AURA",
+        "selector_score": 0.357466,
+        "selector_percentile": 0.3604,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 143,
+        "coinvest_score_z": -0.3005,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "TARA",
+        "selector_score": 0.352941,
+        "selector_percentile": 0.3559,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 144,
+        "coinvest_score_z": -0.2161,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "ABOS",
+        "selector_score": 0.348416,
+        "selector_percentile": 0.3514,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 145,
+        "coinvest_score_z": -0.1483,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "TXG",
+        "selector_score": 0.343891,
+        "selector_percentile": 0.3468,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 146,
+        "coinvest_score_z": -0.2863,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "SUPN",
+        "selector_score": 0.316742,
+        "selector_percentile": 0.3198,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 152,
+        "coinvest_score_z": -0.4849,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "ABCL",
+        "selector_score": 0.294118,
+        "selector_percentile": 0.2973,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 157,
+        "coinvest_score_z": -0.4124,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "ONC",
+        "selector_score": 0.285068,
+        "selector_percentile": 0.2883,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 159,
+        "coinvest_score_z": -0.5966,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "PGEN",
+        "selector_score": 0.276018,
+        "selector_percentile": 0.2793,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 161,
+        "coinvest_score_z": -0.4235,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "GMAB",
+        "selector_score": 0.257919,
+        "selector_percentile": 0.2613,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 165,
+        "coinvest_score_z": -0.7037,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "PBYI",
+        "selector_score": 0.208145,
+        "selector_percentile": 0.2117,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 176,
+        "coinvest_score_z": -0.8479,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "CADL",
+        "selector_score": 0.20362,
+        "selector_percentile": 0.2072,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 177,
+        "coinvest_score_z": -0.9444,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "AMGN",
+        "selector_score": 0.199095,
+        "selector_percentile": 0.2027,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 178,
+        "coinvest_score_z": -0.9632,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "ALLO",
+        "selector_score": 0.126697,
+        "selector_percentile": 0.1306,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 194,
+        "coinvest_score_z": -1.0146,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "CTKB",
+        "selector_score": 0.090498,
+        "selector_percentile": 0.0946,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 202,
+        "coinvest_score_z": -0.9716,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "COLL",
+        "selector_score": 0.067873,
+        "selector_percentile": 0.0721,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 207,
+        "coinvest_score_z": -1.1069,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "EXEL",
+        "selector_score": 0.040724,
+        "selector_percentile": 0.045,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 213,
+        "coinvest_score_z": -1.6511,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "ANAB",
+        "selector_score": 0.742081,
+        "selector_percentile": 0.7432,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 32,
+        "coinvest_score_z": 0.1873,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "ASND",
+        "selector_score": 0.755656,
+        "selector_percentile": 0.7568,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 34,
+        "coinvest_score_z": 0.3718,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "SEPN",
+        "selector_score": 0.791855,
+        "selector_percentile": 0.7928,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 56,
+        "coinvest_score_z": 0.4804,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "OCUL",
+        "selector_score": 0.819005,
+        "selector_percentile": 0.8198,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 59,
+        "coinvest_score_z": 0.614,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "EYPT",
+        "selector_score": 0.714932,
+        "selector_percentile": 0.7162,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 64,
+        "coinvest_score_z": 0.2602,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ELVN",
+        "selector_score": 0.710407,
+        "selector_percentile": 0.7117,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 65,
+        "coinvest_score_z": 0.3739,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "CGEM",
+        "selector_score": 0.678733,
+        "selector_percentile": 0.6802,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 72,
+        "coinvest_score_z": 0.2911,
+        "inst_delta_z": 1.7447
+      },
+      {
+        "ticker": "TRVI",
+        "selector_score": 0.669683,
+        "selector_percentile": 0.6712,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 74,
+        "coinvest_score_z": 0.1843,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "CMPS",
+        "selector_score": 0.665158,
+        "selector_percentile": 0.6667,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 75,
+        "coinvest_score_z": 0.2468,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "SLN",
+        "selector_score": 0.660633,
+        "selector_percentile": 0.6622,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 76,
+        "coinvest_score_z": 0.1999,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "BMRN",
+        "selector_score": 0.647059,
+        "selector_percentile": 0.6486,
+        "agreement_score": 0.6667,
+        "n_available_signals": 6,
+        "actionable_rank": 79,
+        "coinvest_score_z": -0.022,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ROIV",
+        "selector_score": 0.638009,
+        "selector_percentile": 0.6396,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 81,
+        "coinvest_score_z": 0.3239,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "ALNY",
+        "selector_score": 0.633484,
+        "selector_percentile": 0.6351,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 82,
+        "coinvest_score_z": 0.2376,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "NKTX",
+        "selector_score": 0.624434,
+        "selector_percentile": 0.6261,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 84,
+        "coinvest_score_z": 0.2571,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "NTRA",
+        "selector_score": 0.60181,
+        "selector_percentile": 0.6036,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 89,
+        "coinvest_score_z": 0.0603,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "TVTX",
+        "selector_score": 0.597285,
+        "selector_percentile": 0.5991,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 90,
+        "coinvest_score_z": 0.0986,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "BNTX",
+        "selector_score": 0.59276,
+        "selector_percentile": 0.5946,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 91,
+        "coinvest_score_z": -0.1308,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "KNSA",
+        "selector_score": 0.588235,
+        "selector_percentile": 0.5901,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 92,
+        "coinvest_score_z": 0.0886,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "GH",
+        "selector_score": 0.579186,
+        "selector_percentile": 0.5811,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 94,
+        "coinvest_score_z": -0.0359,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "MRNA",
+        "selector_score": 0.574661,
+        "selector_percentile": 0.5766,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 95,
+        "coinvest_score_z": -0.0937,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ENTA",
+        "selector_score": 0.570136,
+        "selector_percentile": 0.5721,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 96,
+        "coinvest_score_z": -0.0444,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "BEAM",
+        "selector_score": 0.552036,
+        "selector_percentile": 0.5541,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 100,
+        "coinvest_score_z": -0.0778,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "XNCR",
+        "selector_score": 0.547511,
+        "selector_percentile": 0.5495,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 101,
+        "coinvest_score_z": 0.0699,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "CABA",
+        "selector_score": 0.520362,
+        "selector_percentile": 0.5225,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 107,
+        "coinvest_score_z": 0.165,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "BLTE",
+        "selector_score": 0.515837,
+        "selector_percentile": 0.518,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 108,
+        "coinvest_score_z": 0.0441,
+        "inst_delta_z": 1.4475
+      },
+      {
+        "ticker": "HRMY",
+        "selector_score": 0.506787,
+        "selector_percentile": 0.509,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 110,
+        "coinvest_score_z": -0.2336,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "VYGR",
+        "selector_score": 0.497738,
+        "selector_percentile": 0.5,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 112,
+        "coinvest_score_z": 0.0301,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "SABS",
+        "selector_score": 0.493213,
+        "selector_percentile": 0.4955,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 113,
+        "coinvest_score_z": 0.0207,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "MDGL",
+        "selector_score": 0.484163,
+        "selector_percentile": 0.4865,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 115,
+        "coinvest_score_z": -0.0353,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "FATE",
+        "selector_score": 0.470588,
+        "selector_percentile": 0.473,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 118,
+        "coinvest_score_z": 0.0241,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "GHRS",
+        "selector_score": 0.466063,
+        "selector_percentile": 0.4685,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 119,
+        "coinvest_score_z": 0.0119,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "GERN",
+        "selector_score": 0.457014,
+        "selector_percentile": 0.4595,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 121,
+        "coinvest_score_z": -0.1555,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "LRMR",
+        "selector_score": 0.452489,
+        "selector_percentile": 0.455,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 122,
+        "coinvest_score_z": -0.046,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "INCY",
+        "selector_score": 0.447964,
+        "selector_percentile": 0.4505,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 123,
+        "coinvest_score_z": -0.3147,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "EPRX",
+        "selector_score": 0.443439,
+        "selector_percentile": 0.4459,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 124,
+        "coinvest_score_z": -0.0487,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "GLUE",
+        "selector_score": 0.438914,
+        "selector_percentile": 0.4414,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 125,
+        "coinvest_score_z": 0.0073,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ANIP",
+        "selector_score": 0.434389,
+        "selector_percentile": 0.4369,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 126,
+        "coinvest_score_z": -0.2335,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "TBPH",
+        "selector_score": 0.425339,
+        "selector_percentile": 0.4279,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 128,
+        "coinvest_score_z": -0.1337,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "PRLD",
+        "selector_score": 0.420814,
+        "selector_percentile": 0.4234,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 129,
+        "coinvest_score_z": -0.0346,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "AGIO",
+        "selector_score": 0.393665,
+        "selector_percentile": 0.3964,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 135,
+        "coinvest_score_z": -0.2145,
+        "inst_delta_z": 1.4475
+      },
+      {
+        "ticker": "RGEN",
+        "selector_score": 0.371041,
+        "selector_percentile": 0.3739,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 140,
+        "coinvest_score_z": 0.0271,
+        "inst_delta_z": 1.4475
+      },
+      {
+        "ticker": "DNA",
+        "selector_score": 0.361991,
+        "selector_percentile": 0.3649,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 142,
+        "coinvest_score_z": -0.3118,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "REGN",
+        "selector_score": 0.334842,
+        "selector_percentile": 0.3378,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 148,
+        "coinvest_score_z": -0.4853,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "CERS",
+        "selector_score": 0.330317,
+        "selector_percentile": 0.3333,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 149,
+        "coinvest_score_z": -0.289,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "FHTX",
+        "selector_score": 0.325792,
+        "selector_percentile": 0.3288,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 150,
+        "coinvest_score_z": -0.2054,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "VRTX",
+        "selector_score": 0.321267,
+        "selector_percentile": 0.3243,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 151,
+        "coinvest_score_z": -0.5328,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "HROW",
+        "selector_score": 0.312217,
+        "selector_percentile": 0.3153,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 153,
+        "coinvest_score_z": -0.2049,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ETON",
+        "selector_score": 0.307692,
+        "selector_percentile": 0.3108,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 154,
+        "coinvest_score_z": -0.1339,
+        "inst_delta_z": -0.6333
+      },
+      {
+        "ticker": "ESPR",
+        "selector_score": 0.303167,
+        "selector_percentile": 0.3063,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 155,
+        "coinvest_score_z": -0.3386,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "NVCR",
+        "selector_score": 0.289593,
+        "selector_percentile": 0.2928,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 158,
+        "coinvest_score_z": -0.4471,
+        "inst_delta_z": -0.336
+      },
+      {
+        "ticker": "ARDX",
+        "selector_score": 0.280543,
+        "selector_percentile": 0.2838,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 160,
+        "coinvest_score_z": -0.4412,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "ASMB",
+        "selector_score": 0.271493,
+        "selector_percentile": 0.2748,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 162,
+        "coinvest_score_z": -0.2675,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "AMPH",
+        "selector_score": 0.266968,
+        "selector_percentile": 0.2703,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 163,
+        "coinvest_score_z": -0.3702,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "VTRS",
+        "selector_score": 0.262443,
+        "selector_percentile": 0.2658,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 164,
+        "coinvest_score_z": -0.7358,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "INDV",
+        "selector_score": 0.253394,
+        "selector_percentile": 0.2568,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 166,
+        "coinvest_score_z": -0.3486,
+        "inst_delta_z": 1.1502
+      },
+      {
+        "ticker": "VCYT",
+        "selector_score": 0.248869,
+        "selector_percentile": 0.2523,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 167,
+        "coinvest_score_z": -0.2738,
+        "inst_delta_z": 0.853
+      },
+      {
+        "ticker": "AZN",
+        "selector_score": 0.244344,
+        "selector_percentile": 0.2477,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 168,
+        "coinvest_score_z": -0.8439,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "LQDA",
+        "selector_score": 0.239819,
+        "selector_percentile": 0.2432,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 169,
+        "coinvest_score_z": -0.5272,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "TGTX",
+        "selector_score": 0.235294,
+        "selector_percentile": 0.2387,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 170,
+        "coinvest_score_z": -0.5815,
+        "inst_delta_z": -1.525
+      },
+      {
+        "ticker": "VKTX",
+        "selector_score": 0.230769,
+        "selector_percentile": 0.2342,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 171,
+        "coinvest_score_z": -0.5293,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "PRVA",
+        "selector_score": 0.226244,
+        "selector_percentile": 0.2297,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 172,
+        "coinvest_score_z": -0.478,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "AUPH",
+        "selector_score": 0.221719,
+        "selector_percentile": 0.2252,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 173,
+        "coinvest_score_z": -0.4593,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "GILD",
+        "selector_score": 0.217195,
+        "selector_percentile": 0.2207,
+        "agreement_score": 0.5,
+        "n_available_signals": 6,
+        "actionable_rank": 174,
+        "coinvest_score_z": -0.9566,
+        "inst_delta_z": -1.2278
+      },
+      {
+        "ticker": "XERS",
+        "selector_score": 0.21267,
+        "selector_percentile": 0.2162,
+        "agreement_score": 0.0,
+        "n_available_signals": 6,
+        "actionable_rank": 175,
+        "coinvest_score_z": -0.3802,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "KMDA",
+        "selector_score": 0.171946,
+        "selector_percentile": 0.1757,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 184,
+        "coinvest_score_z": -0.9032,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "LCTX",
+        "selector_score": 0.153846,
+        "selector_percentile": 0.1577,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 188,
+        "coinvest_score_z": -0.8442,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "LBRX",
+        "selector_score": 0.131222,
+        "selector_percentile": 0.1351,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 193,
+        "coinvest_score_z": -1.0634,
+        "inst_delta_z": 0.2585
+      },
+      {
+        "ticker": "VNDA",
+        "selector_score": 0.113122,
+        "selector_percentile": 0.1171,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 197,
+        "coinvest_score_z": -0.8882,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "PCRX",
+        "selector_score": 0.095023,
+        "selector_percentile": 0.0991,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 201,
+        "coinvest_score_z": -1.0762,
+        "inst_delta_z": -0.0388
+      },
+      {
+        "ticker": "AMRX",
+        "selector_score": 0.049774,
+        "selector_percentile": 0.0541,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 211,
+        "coinvest_score_z": -1.4194,
+        "inst_delta_z": -1.8223
+      },
+      {
+        "ticker": "HALO",
+        "selector_score": 0.027149,
+        "selector_percentile": 0.0315,
+        "agreement_score": 0.3333,
+        "n_available_signals": 6,
+        "actionable_rank": 216,
+        "coinvest_score_z": -1.5641,
+        "inst_delta_z": -0.9305
+      },
+      {
+        "ticker": "TEVA",
+        "selector_score": 0.00905,
+        "selector_percentile": 0.0135,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 220,
+        "coinvest_score_z": -1.9543,
+        "inst_delta_z": 0.5557
+      },
+      {
+        "ticker": "MEDP",
+        "selector_score": 0.004525,
+        "selector_percentile": 0.009,
+        "agreement_score": 0.1667,
+        "n_available_signals": 6,
+        "actionable_rank": 221,
+        "coinvest_score_z": -1.6653,
+        "inst_delta_z": -0.0388
+      }
+    ],
+    "UNDEF": []
+  },
+  "persistence_vs_prior": {
+    "prior_date": "2026-05-07",
+    "by_bucket": {
+      "HH": {
+        "today_count": 7,
+        "prior_count": 6,
+        "intersection_count": 6,
+        "jaccard": 0.8571,
+        "entrants": [
+          "PTCT"
+        ],
+        "exits": [],
+        "top5_entrants_by_today_selector": [
+          [
+            "PTCT",
+            0.886878
+          ]
+        ],
+        "top5_exits_by_prior_selector": []
+      },
+      "HL": {
+        "today_count": 16,
+        "prior_count": 20,
+        "intersection_count": 15,
+        "jaccard": 0.7143,
+        "entrants": [
+          "ABVX"
+        ],
+        "exits": [
+          "INSM",
+          "STOK",
+          "TARS",
+          "TSHA",
+          "ZYME"
+        ],
+        "top5_entrants_by_today_selector": [
+          [
+            "ABVX",
+            0.837104
+          ]
+        ],
+        "top5_exits_by_prior_selector": [
+          [
+            "INSM",
+            0.986726
+          ],
+          [
+            "TSHA",
+            0.946903
+          ],
+          [
+            "TARS",
+            0.929204
+          ],
+          [
+            "STOK",
+            0.893805
+          ],
+          [
+            "ZYME",
+            0.849558
+          ]
+        ]
+      },
+      "LH": {
+        "today_count": 8,
+        "prior_count": 10,
+        "intersection_count": 8,
+        "jaccard": 0.8,
+        "entrants": [],
+        "exits": [
+          "GILD",
+          "GRFS"
+        ],
+        "top5_entrants_by_today_selector": [],
+        "top5_exits_by_prior_selector": [
+          [
+            "GILD",
+            0.190265
+          ],
+          [
+            "GRFS",
+            0.061947
+          ]
+        ]
+      },
+      "LL": {
+        "today_count": 21,
+        "prior_count": 20,
+        "intersection_count": 19,
+        "jaccard": 0.8636,
+        "entrants": [
+          "CNTX",
+          "PAHC"
+        ],
+        "exits": [
+          "BDTX"
+        ],
+        "top5_entrants_by_today_selector": [
+          [
+            "CNTX",
+            0.19457
+          ],
+          [
+            "PAHC",
+            0.031674
+          ]
+        ],
+        "top5_exits_by_prior_selector": [
+          [
+            "BDTX",
+            0.185841
+          ]
+        ]
+      }
+    }
+  },
+  "constraints": [
+    "Read-only forward logger \u2014 no historical alpha conclusion drawn.",
+    "Bucket memberships persisted for forward-return evaluation at h20d (2026-05-26) and h60d (2026-07-21).",
+    "Independent signals exclude B6 components (coinvest_score_z, inst_delta_z) and institutional block.",
+    "Methodology fixed at T0=2026-04-28; do not change cutoffs without a new T0.",
+    "persistence_vs_prior is membership-only; performance evaluation deferred to h20d/h60d."
+  ]
+}

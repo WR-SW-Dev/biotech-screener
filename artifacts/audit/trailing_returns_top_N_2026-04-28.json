@@ -1,0 +1,1204 @@
+{
+  "as_of": "2026-04-28",
+  "methods": {
+    "daily_rebalanced_ew": "Each day, equal-weight mean of single-day simple returns; compound. Implicit daily rebalancing to equal weight. Standard for EW-index comparisons.",
+    "buy_and_hold_ew": "Equal $ per ticker at window start; no rebalancing; portfolio value = mean of (price_t / price_0). Closer to investor experience."
+  },
+  "caveats": [
+    "TODAY-conditioned ticker selection: today's top-N is the basket, then back-cast over trailing window.",
+    "Heavy survivor + look-ahead bias; bias scales with window length. See per-window survivorship metric.",
+    "No transaction costs, no dividends, no position-size limits.",
+    "XBI = SPDR S&P Biotech ETF benchmark.",
+    "Per standing policy: descriptive only, NOT historical alpha evidence."
+  ],
+  "1m": {
+    "window": "1m",
+    "start": "2026-03-27",
+    "end": "2026-04-28",
+    "n_trading_days": 21,
+    "xbi": {
+      "daily_rebalanced": {
+        "n_trading_days": 21,
+        "total_return": 0.1188,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 2.8471,
+        "ann_vol": 0.336,
+        "sharpe": 8.472,
+        "max_drawdown": -0.0414,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": 0,
+        "daily_hit_vs_xbi": 0.0
+      },
+      "buy_and_hold": {
+        "n_trading_days": 21,
+        "total_return": 0.1188,
+        "excess_total_vs_xbi": -0.0,
+        "ann_return": 2.8471,
+        "ann_vol": 0.336,
+        "sharpe": 8.472,
+        "max_drawdown": -0.0414,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": -2.805,
+        "daily_hit_vs_xbi": 0.095
+      }
+    },
+    "cutoffs": {
+      "top10": {
+        "n_tickers": 10,
+        "survivorship": {
+          "n_tickers": 10,
+          "n_with_prices_on_both_boundaries": 10,
+          "n_with_full_window_coverage": 10,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 21,
+          "total_return": 0.0776,
+          "excess_total_vs_xbi": -0.0412,
+          "ann_return": 1.4527,
+          "ann_vol": 0.415,
+          "sharpe": 3.5,
+          "max_drawdown": -0.0601,
+          "beta_vs_xbi": 1.117,
+          "info_ratio_vs_xbi": -2.337,
+          "daily_hit_vs_xbi": 0.429
+        },
+        "buy_and_hold": {
+          "n_trading_days": 21,
+          "total_return": 0.0724,
+          "excess_total_vs_xbi": -0.0464,
+          "ann_return": 1.3133,
+          "ann_vol": 0.4115,
+          "sharpe": 3.192,
+          "max_drawdown": -0.0615,
+          "beta_vs_xbi": 1.111,
+          "info_ratio_vs_xbi": -2.741,
+          "daily_hit_vs_xbi": 0.429
+        },
+        "method_diff_pp_total": 0.52
+      },
+      "top20": {
+        "n_tickers": 20,
+        "survivorship": {
+          "n_tickers": 20,
+          "n_with_prices_on_both_boundaries": 20,
+          "n_with_full_window_coverage": 20,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 21,
+          "total_return": 0.1885,
+          "excess_total_vs_xbi": 0.0697,
+          "ann_return": 6.9426,
+          "ann_vol": 0.3674,
+          "sharpe": 18.896,
+          "max_drawdown": -0.0383,
+          "beta_vs_xbi": 1.046,
+          "info_ratio_vs_xbi": 6.819,
+          "daily_hit_vs_xbi": 0.762
+        },
+        "buy_and_hold": {
+          "n_trading_days": 21,
+          "total_return": 0.1934,
+          "excess_total_vs_xbi": 0.0746,
+          "ann_return": 7.3489,
+          "ann_vol": 0.3661,
+          "sharpe": 20.075,
+          "max_drawdown": -0.0386,
+          "beta_vs_xbi": 1.037,
+          "info_ratio_vs_xbi": 7.029,
+          "daily_hit_vs_xbi": 0.714
+        },
+        "method_diff_pp_total": -0.5
+      },
+      "top30": {
+        "n_tickers": 30,
+        "survivorship": {
+          "n_tickers": 30,
+          "n_with_prices_on_both_boundaries": 30,
+          "n_with_full_window_coverage": 30,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 21,
+          "total_return": 0.1721,
+          "excess_total_vs_xbi": 0.0533,
+          "ann_return": 5.7233,
+          "ann_vol": 0.3488,
+          "sharpe": 16.41,
+          "max_drawdown": -0.0359,
+          "beta_vs_xbi": 0.993,
+          "info_ratio_vs_xbi": 5.571,
+          "daily_hit_vs_xbi": 0.619
+        },
+        "buy_and_hold": {
+          "n_trading_days": 21,
+          "total_return": 0.1762,
+          "excess_total_vs_xbi": 0.0574,
+          "ann_return": 6.0093,
+          "ann_vol": 0.3496,
+          "sharpe": 17.191,
+          "max_drawdown": -0.036,
+          "beta_vs_xbi": 0.991,
+          "info_ratio_vs_xbi": 5.715,
+          "daily_hit_vs_xbi": 0.667
+        },
+        "method_diff_pp_total": -0.41
+      },
+      "top40": {
+        "n_tickers": 40,
+        "survivorship": {
+          "n_tickers": 40,
+          "n_with_prices_on_both_boundaries": 40,
+          "n_with_full_window_coverage": 40,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 21,
+          "total_return": 0.1727,
+          "excess_total_vs_xbi": 0.0538,
+          "ann_return": 5.7618,
+          "ann_vol": 0.3239,
+          "sharpe": 17.79,
+          "max_drawdown": -0.0381,
+          "beta_vs_xbi": 0.924,
+          "info_ratio_vs_xbi": 5.94,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "buy_and_hold": {
+          "n_trading_days": 21,
+          "total_return": 0.1801,
+          "excess_total_vs_xbi": 0.0613,
+          "ann_return": 6.2963,
+          "ann_vol": 0.3237,
+          "sharpe": 19.449,
+          "max_drawdown": -0.0363,
+          "beta_vs_xbi": 0.92,
+          "info_ratio_vs_xbi": 6.427,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "method_diff_pp_total": -0.75
+      },
+      "top50": {
+        "n_tickers": 50,
+        "survivorship": {
+          "n_tickers": 50,
+          "n_with_prices_on_both_boundaries": 50,
+          "n_with_full_window_coverage": 50,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 21,
+          "total_return": 0.1526,
+          "excess_total_vs_xbi": 0.0338,
+          "ann_return": 4.4983,
+          "ann_vol": 0.3342,
+          "sharpe": 13.46,
+          "max_drawdown": -0.0431,
+          "beta_vs_xbi": 0.96,
+          "info_ratio_vs_xbi": 4.083,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "buy_and_hold": {
+          "n_trading_days": 21,
+          "total_return": 0.1582,
+          "excess_total_vs_xbi": 0.0394,
+          "ann_return": 4.825,
+          "ann_vol": 0.333,
+          "sharpe": 14.489,
+          "max_drawdown": -0.0415,
+          "beta_vs_xbi": 0.954,
+          "info_ratio_vs_xbi": 4.568,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "method_diff_pp_total": -0.56
+      },
+      "top60": {
+        "n_tickers": 60,
+        "survivorship": {
+          "n_tickers": 60,
+          "n_with_prices_on_both_boundaries": 60,
+          "n_with_full_window_coverage": 60,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 21,
+          "total_return": 0.1421,
+          "excess_total_vs_xbi": 0.0233,
+          "ann_return": 3.9249,
+          "ann_vol": 0.3358,
+          "sharpe": 11.687,
+          "max_drawdown": -0.0463,
+          "beta_vs_xbi": 0.968,
+          "info_ratio_vs_xbi": 2.962,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "buy_and_hold": {
+          "n_trading_days": 21,
+          "total_return": 0.1464,
+          "excess_total_vs_xbi": 0.0276,
+          "ann_return": 4.1551,
+          "ann_vol": 0.3346,
+          "sharpe": 12.417,
+          "max_drawdown": -0.0451,
+          "beta_vs_xbi": 0.963,
+          "info_ratio_vs_xbi": 3.404,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "method_diff_pp_total": -0.44
+      }
+    }
+  },
+  "3m": {
+    "window": "3m",
+    "start": "2026-01-27",
+    "end": "2026-04-28",
+    "n_trading_days": 63,
+    "xbi": {
+      "daily_rebalanced": {
+        "n_trading_days": 63,
+        "total_return": 0.041,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 0.1744,
+        "ann_vol": 0.3061,
+        "sharpe": 0.57,
+        "max_drawdown": -0.0804,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": 0,
+        "daily_hit_vs_xbi": 0.0
+      },
+      "buy_and_hold": {
+        "n_trading_days": 63,
+        "total_return": 0.041,
+        "excess_total_vs_xbi": -0.0,
+        "ann_return": 0.1744,
+        "ann_vol": 0.3061,
+        "sharpe": 0.57,
+        "max_drawdown": -0.0804,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": -1.64,
+        "daily_hit_vs_xbi": 0.079
+      }
+    },
+    "cutoffs": {
+      "top10": {
+        "n_tickers": 10,
+        "survivorship": {
+          "n_tickers": 10,
+          "n_with_prices_on_both_boundaries": 10,
+          "n_with_full_window_coverage": 10,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 63,
+          "total_return": 0.0946,
+          "excess_total_vs_xbi": 0.0536,
+          "ann_return": 0.4357,
+          "ann_vol": 0.404,
+          "sharpe": 1.078,
+          "max_drawdown": -0.106,
+          "beta_vs_xbi": 1.201,
+          "info_ratio_vs_xbi": 1.316,
+          "daily_hit_vs_xbi": 0.556
+        },
+        "buy_and_hold": {
+          "n_trading_days": 63,
+          "total_return": 0.0852,
+          "excess_total_vs_xbi": 0.0442,
+          "ann_return": 0.3868,
+          "ann_vol": 0.4003,
+          "sharpe": 0.966,
+          "max_drawdown": -0.1101,
+          "beta_vs_xbi": 1.186,
+          "info_ratio_vs_xbi": 1.118,
+          "daily_hit_vs_xbi": 0.54
+        },
+        "method_diff_pp_total": 0.94
+      },
+      "top20": {
+        "n_tickers": 20,
+        "survivorship": {
+          "n_tickers": 20,
+          "n_with_prices_on_both_boundaries": 20,
+          "n_with_full_window_coverage": 20,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 63,
+          "total_return": 0.242,
+          "excess_total_vs_xbi": 0.201,
+          "ann_return": 1.3798,
+          "ann_vol": 0.3614,
+          "sharpe": 3.817,
+          "max_drawdown": -0.0704,
+          "beta_vs_xbi": 1.115,
+          "info_ratio_vs_xbi": 5.853,
+          "daily_hit_vs_xbi": 0.667
+        },
+        "buy_and_hold": {
+          "n_trading_days": 63,
+          "total_return": 0.2468,
+          "excess_total_vs_xbi": 0.2058,
+          "ann_return": 1.4164,
+          "ann_vol": 0.3608,
+          "sharpe": 3.926,
+          "max_drawdown": -0.072,
+          "beta_vs_xbi": 1.11,
+          "info_ratio_vs_xbi": 5.862,
+          "daily_hit_vs_xbi": 0.619
+        },
+        "method_diff_pp_total": -0.48
+      },
+      "top30": {
+        "n_tickers": 30,
+        "survivorship": {
+          "n_tickers": 30,
+          "n_with_prices_on_both_boundaries": 30,
+          "n_with_full_window_coverage": 30,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 63,
+          "total_return": 0.1984,
+          "excess_total_vs_xbi": 0.1574,
+          "ann_return": 1.0623,
+          "ann_vol": 0.3293,
+          "sharpe": 3.226,
+          "max_drawdown": -0.0613,
+          "beta_vs_xbi": 1.033,
+          "info_ratio_vs_xbi": 6.168,
+          "daily_hit_vs_xbi": 0.635
+        },
+        "buy_and_hold": {
+          "n_trading_days": 63,
+          "total_return": 0.1982,
+          "excess_total_vs_xbi": 0.1572,
+          "ann_return": 1.0613,
+          "ann_vol": 0.3286,
+          "sharpe": 3.23,
+          "max_drawdown": -0.0622,
+          "beta_vs_xbi": 1.028,
+          "info_ratio_vs_xbi": 5.983,
+          "daily_hit_vs_xbi": 0.651
+        },
+        "method_diff_pp_total": 0.01
+      },
+      "top40": {
+        "n_tickers": 40,
+        "survivorship": {
+          "n_tickers": 40,
+          "n_with_prices_on_both_boundaries": 40,
+          "n_with_full_window_coverage": 40,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 63,
+          "total_return": 0.1832,
+          "excess_total_vs_xbi": 0.1422,
+          "ann_return": 0.9599,
+          "ann_vol": 0.314,
+          "sharpe": 3.057,
+          "max_drawdown": -0.0588,
+          "beta_vs_xbi": 0.986,
+          "info_ratio_vs_xbi": 5.97,
+          "daily_hit_vs_xbi": 0.635
+        },
+        "buy_and_hold": {
+          "n_trading_days": 63,
+          "total_return": 0.1804,
+          "excess_total_vs_xbi": 0.1394,
+          "ann_return": 0.9414,
+          "ann_vol": 0.3133,
+          "sharpe": 3.004,
+          "max_drawdown": -0.0598,
+          "beta_vs_xbi": 0.981,
+          "info_ratio_vs_xbi": 5.653,
+          "daily_hit_vs_xbi": 0.651
+        },
+        "method_diff_pp_total": 0.28
+      },
+      "top50": {
+        "n_tickers": 50,
+        "survivorship": {
+          "n_tickers": 50,
+          "n_with_prices_on_both_boundaries": 50,
+          "n_with_full_window_coverage": 50,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 63,
+          "total_return": 0.16,
+          "excess_total_vs_xbi": 0.119,
+          "ann_return": 0.8106,
+          "ann_vol": 0.3221,
+          "sharpe": 2.517,
+          "max_drawdown": -0.0631,
+          "beta_vs_xbi": 1.017,
+          "info_ratio_vs_xbi": 5.292,
+          "daily_hit_vs_xbi": 0.635
+        },
+        "buy_and_hold": {
+          "n_trading_days": 63,
+          "total_return": 0.1566,
+          "excess_total_vs_xbi": 0.1156,
+          "ann_return": 0.7897,
+          "ann_vol": 0.3212,
+          "sharpe": 2.458,
+          "max_drawdown": -0.0634,
+          "beta_vs_xbi": 1.013,
+          "info_ratio_vs_xbi": 5.054,
+          "daily_hit_vs_xbi": 0.619
+        },
+        "method_diff_pp_total": 0.34
+      },
+      "top60": {
+        "n_tickers": 60,
+        "survivorship": {
+          "n_tickers": 60,
+          "n_with_prices_on_both_boundaries": 60,
+          "n_with_full_window_coverage": 60,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 63,
+          "total_return": 0.1394,
+          "excess_total_vs_xbi": 0.0984,
+          "ann_return": 0.6854,
+          "ann_vol": 0.3237,
+          "sharpe": 2.118,
+          "max_drawdown": -0.0734,
+          "beta_vs_xbi": 1.022,
+          "info_ratio_vs_xbi": 4.404,
+          "daily_hit_vs_xbi": 0.587
+        },
+        "buy_and_hold": {
+          "n_trading_days": 63,
+          "total_return": 0.1348,
+          "excess_total_vs_xbi": 0.0938,
+          "ann_return": 0.6582,
+          "ann_vol": 0.3231,
+          "sharpe": 2.037,
+          "max_drawdown": -0.0756,
+          "beta_vs_xbi": 1.019,
+          "info_ratio_vs_xbi": 4.136,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "method_diff_pp_total": 0.46
+      }
+    }
+  },
+  "6m": {
+    "window": "6m",
+    "start": "2025-10-24",
+    "end": "2026-04-28",
+    "n_trading_days": 126,
+    "xbi": {
+      "daily_rebalanced": {
+        "n_trading_days": 126,
+        "total_return": 0.2385,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 0.5339,
+        "ann_vol": 0.2782,
+        "sharpe": 1.919,
+        "max_drawdown": -0.0972,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": 0,
+        "daily_hit_vs_xbi": 0.0
+      },
+      "buy_and_hold": {
+        "n_trading_days": 126,
+        "total_return": 0.2385,
+        "excess_total_vs_xbi": -0.0,
+        "ann_return": 0.5339,
+        "ann_vol": 0.2782,
+        "sharpe": 1.919,
+        "max_drawdown": -0.0972,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": -1.211,
+        "daily_hit_vs_xbi": 0.119
+      }
+    },
+    "cutoffs": {
+      "top10": {
+        "n_tickers": 10,
+        "survivorship": {
+          "n_tickers": 10,
+          "n_with_prices_on_both_boundaries": 10,
+          "n_with_full_window_coverage": 10,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 126,
+          "total_return": 0.6724,
+          "excess_total_vs_xbi": 0.4338,
+          "ann_return": 1.7968,
+          "ann_vol": 0.4518,
+          "sharpe": 3.977,
+          "max_drawdown": -0.106,
+          "beta_vs_xbi": 1.275,
+          "info_ratio_vs_xbi": 2.288,
+          "daily_hit_vs_xbi": 0.532
+        },
+        "buy_and_hold": {
+          "n_trading_days": 126,
+          "total_return": 0.6121,
+          "excess_total_vs_xbi": 0.3736,
+          "ann_return": 1.5989,
+          "ann_vol": 0.4467,
+          "sharpe": 3.579,
+          "max_drawdown": -0.108,
+          "beta_vs_xbi": 1.257,
+          "info_ratio_vs_xbi": 2.047,
+          "daily_hit_vs_xbi": 0.508
+        },
+        "method_diff_pp_total": 6.02
+      },
+      "top20": {
+        "n_tickers": 20,
+        "survivorship": {
+          "n_tickers": 20,
+          "n_with_prices_on_both_boundaries": 20,
+          "n_with_full_window_coverage": 20,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 126,
+          "total_return": 0.7783,
+          "excess_total_vs_xbi": 0.5398,
+          "ann_return": 2.1625,
+          "ann_vol": 0.3764,
+          "sharpe": 5.745,
+          "max_drawdown": -0.0938,
+          "beta_vs_xbi": 1.203,
+          "info_ratio_vs_xbi": 4.172,
+          "daily_hit_vs_xbi": 0.603
+        },
+        "buy_and_hold": {
+          "n_trading_days": 126,
+          "total_return": 0.7388,
+          "excess_total_vs_xbi": 0.5003,
+          "ann_return": 2.0234,
+          "ann_vol": 0.3745,
+          "sharpe": 5.402,
+          "max_drawdown": -0.0983,
+          "beta_vs_xbi": 1.194,
+          "info_ratio_vs_xbi": 3.924,
+          "daily_hit_vs_xbi": 0.587
+        },
+        "method_diff_pp_total": 3.95
+      },
+      "top30": {
+        "n_tickers": 30,
+        "survivorship": {
+          "n_tickers": 30,
+          "n_with_prices_on_both_boundaries": 30,
+          "n_with_full_window_coverage": 30,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 126,
+          "total_return": 0.6908,
+          "excess_total_vs_xbi": 0.4523,
+          "ann_return": 1.8588,
+          "ann_vol": 0.3356,
+          "sharpe": 5.539,
+          "max_drawdown": -0.0752,
+          "beta_vs_xbi": 1.11,
+          "info_ratio_vs_xbi": 4.759,
+          "daily_hit_vs_xbi": 0.603
+        },
+        "buy_and_hold": {
+          "n_trading_days": 126,
+          "total_return": 0.6504,
+          "excess_total_vs_xbi": 0.4118,
+          "ann_return": 1.7237,
+          "ann_vol": 0.3352,
+          "sharpe": 5.142,
+          "max_drawdown": -0.0777,
+          "beta_vs_xbi": 1.105,
+          "info_ratio_vs_xbi": 4.325,
+          "daily_hit_vs_xbi": 0.627
+        },
+        "method_diff_pp_total": 4.04
+      },
+      "top40": {
+        "n_tickers": 40,
+        "survivorship": {
+          "n_tickers": 40,
+          "n_with_prices_on_both_boundaries": 40,
+          "n_with_full_window_coverage": 40,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 126,
+          "total_return": 0.6319,
+          "excess_total_vs_xbi": 0.3934,
+          "ann_return": 1.6632,
+          "ann_vol": 0.3179,
+          "sharpe": 5.232,
+          "max_drawdown": -0.0686,
+          "beta_vs_xbi": 1.059,
+          "info_ratio_vs_xbi": 4.678,
+          "daily_hit_vs_xbi": 0.611
+        },
+        "buy_and_hold": {
+          "n_trading_days": 126,
+          "total_return": 0.598,
+          "excess_total_vs_xbi": 0.3595,
+          "ann_return": 1.5536,
+          "ann_vol": 0.3198,
+          "sharpe": 4.859,
+          "max_drawdown": -0.0739,
+          "beta_vs_xbi": 1.064,
+          "info_ratio_vs_xbi": 4.289,
+          "daily_hit_vs_xbi": 0.595
+        },
+        "method_diff_pp_total": 3.39
+      },
+      "top50": {
+        "n_tickers": 50,
+        "survivorship": {
+          "n_tickers": 50,
+          "n_with_prices_on_both_boundaries": 50,
+          "n_with_full_window_coverage": 50,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 126,
+          "total_return": 0.5538,
+          "excess_total_vs_xbi": 0.3153,
+          "ann_return": 1.4144,
+          "ann_vol": 0.3228,
+          "sharpe": 4.382,
+          "max_drawdown": -0.0786,
+          "beta_vs_xbi": 1.087,
+          "info_ratio_vs_xbi": 4.055,
+          "daily_hit_vs_xbi": 0.611
+        },
+        "buy_and_hold": {
+          "n_trading_days": 126,
+          "total_return": 0.5238,
+          "excess_total_vs_xbi": 0.2852,
+          "ann_return": 1.3218,
+          "ann_vol": 0.3223,
+          "sharpe": 4.102,
+          "max_drawdown": -0.0816,
+          "beta_vs_xbi": 1.084,
+          "info_ratio_vs_xbi": 3.685,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "method_diff_pp_total": 3.01
+      },
+      "top60": {
+        "n_tickers": 60,
+        "survivorship": {
+          "n_tickers": 60,
+          "n_with_prices_on_both_boundaries": 60,
+          "n_with_full_window_coverage": 60,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 126,
+          "total_return": 0.5029,
+          "excess_total_vs_xbi": 0.2644,
+          "ann_return": 1.2588,
+          "ann_vol": 0.3236,
+          "sharpe": 3.89,
+          "max_drawdown": -0.0799,
+          "beta_vs_xbi": 1.091,
+          "info_ratio_vs_xbi": 3.496,
+          "daily_hit_vs_xbi": 0.579
+        },
+        "buy_and_hold": {
+          "n_trading_days": 126,
+          "total_return": 0.4701,
+          "excess_total_vs_xbi": 0.2316,
+          "ann_return": 1.1612,
+          "ann_vol": 0.3223,
+          "sharpe": 3.603,
+          "max_drawdown": -0.082,
+          "beta_vs_xbi": 1.087,
+          "info_ratio_vs_xbi": 3.128,
+          "daily_hit_vs_xbi": 0.563
+        },
+        "method_diff_pp_total": 3.28
+      }
+    }
+  },
+  "1y": {
+    "window": "1y",
+    "start": "2025-04-25",
+    "end": "2026-04-28",
+    "n_trading_days": 252,
+    "xbi": {
+      "daily_rebalanced": {
+        "n_trading_days": 252,
+        "total_return": 0.6734,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 0.6734,
+        "ann_vol": 0.2594,
+        "sharpe": 2.596,
+        "max_drawdown": -0.0972,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": 0,
+        "daily_hit_vs_xbi": 0.0
+      },
+      "buy_and_hold": {
+        "n_trading_days": 252,
+        "total_return": 0.6734,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 0.6734,
+        "ann_vol": 0.2594,
+        "sharpe": 2.596,
+        "max_drawdown": -0.0972,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": 0.347,
+        "daily_hit_vs_xbi": 0.135
+      }
+    },
+    "cutoffs": {
+      "top10": {
+        "n_tickers": 10,
+        "survivorship": {
+          "n_tickers": 10,
+          "n_with_prices_on_both_boundaries": 10,
+          "n_with_full_window_coverage": 10,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 252,
+          "total_return": 3.2072,
+          "excess_total_vs_xbi": 2.5338,
+          "ann_return": 3.2072,
+          "ann_vol": 0.467,
+          "sharpe": 6.868,
+          "max_drawdown": -0.1566,
+          "beta_vs_xbi": 1.334,
+          "info_ratio_vs_xbi": 3.069,
+          "daily_hit_vs_xbi": 0.556
+        },
+        "buy_and_hold": {
+          "n_trading_days": 252,
+          "total_return": 2.8764,
+          "excess_total_vs_xbi": 2.203,
+          "ann_return": 2.8764,
+          "ann_vol": 0.4624,
+          "sharpe": 6.22,
+          "max_drawdown": -0.1614,
+          "beta_vs_xbi": 1.302,
+          "info_ratio_vs_xbi": 2.808,
+          "daily_hit_vs_xbi": 0.556
+        },
+        "method_diff_pp_total": 33.08
+      },
+      "top20": {
+        "n_tickers": 20,
+        "survivorship": {
+          "n_tickers": 20,
+          "n_with_prices_on_both_boundaries": 20,
+          "n_with_full_window_coverage": 20,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 252,
+          "total_return": 4.0573,
+          "excess_total_vs_xbi": 3.3838,
+          "ann_return": 4.0573,
+          "ann_vol": 0.4878,
+          "sharpe": 8.317,
+          "max_drawdown": -0.1257,
+          "beta_vs_xbi": 1.312,
+          "info_ratio_vs_xbi": 3.309,
+          "daily_hit_vs_xbi": 0.603
+        },
+        "buy_and_hold": {
+          "n_trading_days": 252,
+          "total_return": 3.8508,
+          "excess_total_vs_xbi": 3.1774,
+          "ann_return": 3.8508,
+          "ann_vol": 0.4746,
+          "sharpe": 8.114,
+          "max_drawdown": -0.1277,
+          "beta_vs_xbi": 1.256,
+          "info_ratio_vs_xbi": 3.244,
+          "daily_hit_vs_xbi": 0.552
+        },
+        "method_diff_pp_total": 20.64
+      },
+      "top30": {
+        "n_tickers": 30,
+        "survivorship": {
+          "n_tickers": 30,
+          "n_with_prices_on_both_boundaries": 30,
+          "n_with_full_window_coverage": 30,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 252,
+          "total_return": 3.1632,
+          "excess_total_vs_xbi": 2.4898,
+          "ann_return": 3.1632,
+          "ann_vol": 0.3943,
+          "sharpe": 8.023,
+          "max_drawdown": -0.1066,
+          "beta_vs_xbi": 1.177,
+          "info_ratio_vs_xbi": 3.768,
+          "daily_hit_vs_xbi": 0.603
+        },
+        "buy_and_hold": {
+          "n_trading_days": 252,
+          "total_return": 3.2363,
+          "excess_total_vs_xbi": 2.5628,
+          "ann_return": 3.2363,
+          "ann_vol": 0.4047,
+          "sharpe": 7.997,
+          "max_drawdown": -0.1092,
+          "beta_vs_xbi": 1.173,
+          "info_ratio_vs_xbi": 3.612,
+          "daily_hit_vs_xbi": 0.587
+        },
+        "method_diff_pp_total": -7.3
+      },
+      "top40": {
+        "n_tickers": 40,
+        "survivorship": {
+          "n_tickers": 40,
+          "n_with_prices_on_both_boundaries": 40,
+          "n_with_full_window_coverage": 40,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 252,
+          "total_return": 2.6465,
+          "excess_total_vs_xbi": 1.9731,
+          "ann_return": 2.6465,
+          "ann_vol": 0.3598,
+          "sharpe": 7.355,
+          "max_drawdown": -0.1138,
+          "beta_vs_xbi": 1.141,
+          "info_ratio_vs_xbi": 3.904,
+          "daily_hit_vs_xbi": 0.607
+        },
+        "buy_and_hold": {
+          "n_trading_days": 252,
+          "total_return": 2.6709,
+          "excess_total_vs_xbi": 1.9975,
+          "ann_return": 2.6709,
+          "ann_vol": 0.3786,
+          "sharpe": 7.054,
+          "max_drawdown": -0.1132,
+          "beta_vs_xbi": 1.153,
+          "info_ratio_vs_xbi": 3.499,
+          "daily_hit_vs_xbi": 0.579
+        },
+        "method_diff_pp_total": -2.43
+      },
+      "top50": {
+        "n_tickers": 50,
+        "survivorship": {
+          "n_tickers": 50,
+          "n_with_prices_on_both_boundaries": 50,
+          "n_with_full_window_coverage": 50,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 252,
+          "total_return": 2.1863,
+          "excess_total_vs_xbi": 1.5129,
+          "ann_return": 2.1863,
+          "ann_vol": 0.3517,
+          "sharpe": 6.217,
+          "max_drawdown": -0.1193,
+          "beta_vs_xbi": 1.168,
+          "info_ratio_vs_xbi": 3.663,
+          "daily_hit_vs_xbi": 0.607
+        },
+        "buy_and_hold": {
+          "n_trading_days": 252,
+          "total_return": 2.2272,
+          "excess_total_vs_xbi": 1.5538,
+          "ann_return": 2.2272,
+          "ann_vol": 0.3662,
+          "sharpe": 6.082,
+          "max_drawdown": -0.1185,
+          "beta_vs_xbi": 1.168,
+          "info_ratio_vs_xbi": 3.285,
+          "daily_hit_vs_xbi": 0.56
+        },
+        "method_diff_pp_total": -4.09
+      },
+      "top60": {
+        "n_tickers": 60,
+        "survivorship": {
+          "n_tickers": 60,
+          "n_with_prices_on_both_boundaries": 60,
+          "n_with_full_window_coverage": 60,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 252,
+          "total_return": 1.975,
+          "excess_total_vs_xbi": 1.3016,
+          "ann_return": 1.975,
+          "ann_vol": 0.3445,
+          "sharpe": 5.733,
+          "max_drawdown": -0.1165,
+          "beta_vs_xbi": 1.16,
+          "info_ratio_vs_xbi": 3.488,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "buy_and_hold": {
+          "n_trading_days": 252,
+          "total_return": 1.9929,
+          "excess_total_vs_xbi": 1.3195,
+          "ann_return": 1.9929,
+          "ann_vol": 0.356,
+          "sharpe": 5.598,
+          "max_drawdown": -0.1165,
+          "beta_vs_xbi": 1.161,
+          "info_ratio_vs_xbi": 3.149,
+          "daily_hit_vs_xbi": 0.571
+        },
+        "method_diff_pp_total": -1.79
+      }
+    }
+  },
+  "YTD": {
+    "window": "YTD",
+    "start": "2026-01-02",
+    "end": "2026-04-28",
+    "n_trading_days": 79,
+    "xbi": {
+      "daily_rebalanced": {
+        "n_trading_days": 79,
+        "total_return": 0.1011,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 0.3595,
+        "ann_vol": 0.3015,
+        "sharpe": 1.192,
+        "max_drawdown": -0.0972,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": 0,
+        "daily_hit_vs_xbi": 0.0
+      },
+      "buy_and_hold": {
+        "n_trading_days": 79,
+        "total_return": 0.1011,
+        "excess_total_vs_xbi": 0.0,
+        "ann_return": 0.3595,
+        "ann_vol": 0.3015,
+        "sharpe": 1.192,
+        "max_drawdown": -0.0972,
+        "beta_vs_xbi": 1.0,
+        "info_ratio_vs_xbi": -0.418,
+        "daily_hit_vs_xbi": 0.127
+      }
+    },
+    "cutoffs": {
+      "top10": {
+        "n_tickers": 10,
+        "survivorship": {
+          "n_tickers": 10,
+          "n_with_prices_on_both_boundaries": 10,
+          "n_with_full_window_coverage": 10,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 79,
+          "total_return": 0.2574,
+          "excess_total_vs_xbi": 0.1564,
+          "ann_return": 1.0765,
+          "ann_vol": 0.4038,
+          "sharpe": 2.666,
+          "max_drawdown": -0.106,
+          "beta_vs_xbi": 1.198,
+          "info_ratio_vs_xbi": 2.418,
+          "daily_hit_vs_xbi": 0.57
+        },
+        "buy_and_hold": {
+          "n_trading_days": 79,
+          "total_return": 0.2494,
+          "excess_total_vs_xbi": 0.1484,
+          "ann_return": 1.0347,
+          "ann_vol": 0.4086,
+          "sharpe": 2.532,
+          "max_drawdown": -0.1096,
+          "beta_vs_xbi": 1.198,
+          "info_ratio_vs_xbi": 2.206,
+          "daily_hit_vs_xbi": 0.557
+        },
+        "method_diff_pp_total": 0.8
+      },
+      "top20": {
+        "n_tickers": 20,
+        "survivorship": {
+          "n_tickers": 20,
+          "n_with_prices_on_both_boundaries": 20,
+          "n_with_full_window_coverage": 20,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 79,
+          "total_return": 0.3734,
+          "excess_total_vs_xbi": 0.2723,
+          "ann_return": 1.7513,
+          "ann_vol": 0.372,
+          "sharpe": 4.708,
+          "max_drawdown": -0.0938,
+          "beta_vs_xbi": 1.149,
+          "info_ratio_vs_xbi": 5.101,
+          "daily_hit_vs_xbi": 0.646
+        },
+        "buy_and_hold": {
+          "n_trading_days": 79,
+          "total_return": 0.3955,
+          "excess_total_vs_xbi": 0.2944,
+          "ann_return": 1.895,
+          "ann_vol": 0.3759,
+          "sharpe": 5.041,
+          "max_drawdown": -0.0996,
+          "beta_vs_xbi": 1.153,
+          "info_ratio_vs_xbi": 5.2,
+          "daily_hit_vs_xbi": 0.633
+        },
+        "method_diff_pp_total": -2.21
+      },
+      "top30": {
+        "n_tickers": 30,
+        "survivorship": {
+          "n_tickers": 30,
+          "n_with_prices_on_both_boundaries": 30,
+          "n_with_full_window_coverage": 30,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 79,
+          "total_return": 0.3085,
+          "excess_total_vs_xbi": 0.2075,
+          "ann_return": 1.3579,
+          "ann_vol": 0.3359,
+          "sharpe": 4.043,
+          "max_drawdown": -0.0752,
+          "beta_vs_xbi": 1.057,
+          "info_ratio_vs_xbi": 5.244,
+          "daily_hit_vs_xbi": 0.62
+        },
+        "buy_and_hold": {
+          "n_trading_days": 79,
+          "total_return": 0.3168,
+          "excess_total_vs_xbi": 0.2157,
+          "ann_return": 1.4057,
+          "ann_vol": 0.3391,
+          "sharpe": 4.146,
+          "max_drawdown": -0.0792,
+          "beta_vs_xbi": 1.063,
+          "info_ratio_vs_xbi": 5.194,
+          "daily_hit_vs_xbi": 0.646
+        },
+        "method_diff_pp_total": -0.83
+      },
+      "top40": {
+        "n_tickers": 40,
+        "survivorship": {
+          "n_tickers": 40,
+          "n_with_prices_on_both_boundaries": 40,
+          "n_with_full_window_coverage": 40,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 79,
+          "total_return": 0.2926,
+          "excess_total_vs_xbi": 0.1915,
+          "ann_return": 1.2673,
+          "ann_vol": 0.3264,
+          "sharpe": 3.883,
+          "max_drawdown": -0.0686,
+          "beta_vs_xbi": 1.022,
+          "info_ratio_vs_xbi": 4.83,
+          "daily_hit_vs_xbi": 0.62
+        },
+        "buy_and_hold": {
+          "n_trading_days": 79,
+          "total_return": 0.2931,
+          "excess_total_vs_xbi": 0.1921,
+          "ann_return": 1.2704,
+          "ann_vol": 0.3293,
+          "sharpe": 3.858,
+          "max_drawdown": -0.0731,
+          "beta_vs_xbi": 1.029,
+          "info_ratio_vs_xbi": 4.719,
+          "daily_hit_vs_xbi": 0.646
+        },
+        "method_diff_pp_total": -0.06
+      },
+      "top50": {
+        "n_tickers": 50,
+        "survivorship": {
+          "n_tickers": 50,
+          "n_with_prices_on_both_boundaries": 50,
+          "n_with_full_window_coverage": 50,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 79,
+          "total_return": 0.2649,
+          "excess_total_vs_xbi": 0.1639,
+          "ann_return": 1.1164,
+          "ann_vol": 0.3302,
+          "sharpe": 3.381,
+          "max_drawdown": -0.0786,
+          "beta_vs_xbi": 1.046,
+          "info_ratio_vs_xbi": 4.581,
+          "daily_hit_vs_xbi": 0.62
+        },
+        "buy_and_hold": {
+          "n_trading_days": 79,
+          "total_return": 0.2614,
+          "excess_total_vs_xbi": 0.1604,
+          "ann_return": 1.0978,
+          "ann_vol": 0.3328,
+          "sharpe": 3.299,
+          "max_drawdown": -0.0822,
+          "beta_vs_xbi": 1.053,
+          "info_ratio_vs_xbi": 4.384,
+          "daily_hit_vs_xbi": 0.633
+        },
+        "method_diff_pp_total": 0.35
+      },
+      "top60": {
+        "n_tickers": 60,
+        "survivorship": {
+          "n_tickers": 60,
+          "n_with_prices_on_both_boundaries": 60,
+          "n_with_full_window_coverage": 60,
+          "pct_continuous_coverage": 100.0
+        },
+        "daily_rebalanced": {
+          "n_trading_days": 79,
+          "total_return": 0.2297,
+          "excess_total_vs_xbi": 0.1286,
+          "ann_return": 0.9338,
+          "ann_vol": 0.3275,
+          "sharpe": 2.851,
+          "max_drawdown": -0.0799,
+          "beta_vs_xbi": 1.039,
+          "info_ratio_vs_xbi": 3.737,
+          "daily_hit_vs_xbi": 0.582
+        },
+        "buy_and_hold": {
+          "n_trading_days": 79,
+          "total_return": 0.2256,
+          "excess_total_vs_xbi": 0.1246,
+          "ann_return": 0.9137,
+          "ann_vol": 0.3302,
+          "sharpe": 2.767,
+          "max_drawdown": -0.0833,
+          "beta_vs_xbi": 1.047,
+          "info_ratio_vs_xbi": 3.567,
+          "daily_hit_vs_xbi": 0.582
+        },
+        "method_diff_pp_total": 0.4
+      }
+    }
+  }
+}

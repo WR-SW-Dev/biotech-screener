@@ -1,0 +1,22 @@
+{
+  "snapshot_date": "2026-05-06",
+  "spec": "spec_071_lane1",
+  "ctgov_binary_window_rows_before": 74,
+  "ctgov_binary_window_rows_after": 74,
+  "net_suppressions": 0,
+  "net_suppression_breakdown": {
+    "APPROVED_FOR_MARKETING": 0,
+    "NO_LONGER_AVAILABLE": 0
+  },
+  "audit_confirmed_ncts": {
+    "NCT06217536": {"ticker": "JAZZ", "status": "WITHDRAWN"},
+    "NCT05934097": {"ticker": "FATE", "status": "WITHDRAWN"},
+    "NCT04711226": {"ticker": "ELDN", "status": "WITHDRAWN"},
+    "NCT06482359": {"ticker": "NVAX", "status": "WITHDRAWN"},
+    "NCT05007769": {"ticker": "IBRX", "status": "WITHDRAWN"}
+  },
+  "top30_overlap_pct": 100.0,
+  "spearman_rho": 1.0,
+  "material_change_check": "PASS",
+  "note": "WITHDRAWN/TERMINATED/SUSPENDED were already filtered by is_terminal_negative. Lane 1 adds APPROVED_FOR_MARKETING and NO_LONGER_AVAILABLE. Zero trials with those statuses have future PCDs in-window on this snapshot. Lane 1 is prophylactic for the new statuses and a naming/formalization fix for the existing ones."
+}

@@ -1,0 +1,3170 @@
+{
+  "schema": "false_clinical_catalyst_audit.v1",
+  "as_of_snapshot": "2026-04-29",
+  "generated_at": "2026-04-29T13:17:48Z",
+  "rankings_path": "data/snapshots/2026-04-29/rankings.csv",
+  "trial_records_path": "production_data/trial_records.json",
+  "n_in_window_total": 104,
+  "n_ctgov_candidates_audited": 85,
+  "n_high_confidence_false": 15,
+  "n_ambiguous": 1,
+  "n_likely_valid": 69,
+  "kalv_seed_check": {
+    "ticker": "KALV",
+    "actionable_rank": 46,
+    "tier_any": "A",
+    "tier_dev": "A",
+    "catalyst_date": "2026-06-30",
+    "catalyst_days": 62,
+    "catalyst_bucket": "build_window",
+    "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+    "catalyst_source": "CTGOV_CALENDAR",
+    "lead_phase": "3.0",
+    "development_stage": "phase_3",
+    "matched_trials": [
+      {
+        "nct_id": "NCT05505916",
+        "title": "An Open-label Extension Trial to Evaluate the Long-term Safety of KVD900 (Sebetralstat) for On-Demand Treatment of Angioedema Attacks in Adolescent and Adult Patients With Hereditary Angioedema (HAE)",
+        "phase": "PHASE3",
+        "status": "ACTIVE_NOT_RECRUITING",
+        "study_type": "INTERVENTIONAL",
+        "primary_completion_date": "2026-06-30",
+        "verdict": "false",
+        "flags": [
+          "title:ole_or_long_term_extension"
+        ]
+      },
+      {
+        "nct_id": "NCT05511922",
+        "title": "PK Subtrial in Adolescent Patients With HAE Type I or II Participating in the KVD900-302 Trial",
+        "phase": "PHASE3",
+        "status": "ACTIVE_NOT_RECRUITING",
+        "study_type": "INTERVENTIONAL",
+        "primary_completion_date": "2026-06-30",
+        "verdict": "false",
+        "flags": [
+          "title:pk_subtrial"
+        ]
+      }
+    ],
+    "verdict": "false",
+    "verdict_reasons": [
+      "title:ole_or_long_term_extension",
+      "title:pk_subtrial"
+    ]
+  },
+  "findings_high_confidence_false": [
+    {
+      "ticker": "JAZZ",
+      "actionable_rank": 33,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-31",
+      "catalyst_days": 32,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05850676",
+          "title": "Disentangling the Role of Depression in Hypersomnia",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-30",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT06217536",
+          "title": "Neoadjuvant Lurbinectedin and Preoperative Radiation for Treating Soft Tissue Sarcomas",
+          "phase": "PHASE1",
+          "status": "WITHDRAWN",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-31",
+          "verdict": "false",
+          "flags": [
+            "status=WITHDRAWN"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "status=WITHDRAWN",
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "FATE",
+      "actionable_rank": 42,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05934097",
+          "title": "FT596 in Combination With R-CHOP in Subjects With B-Cell Lymphoma",
+          "phase": "PHASE1",
+          "status": "WITHDRAWN",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "status=WITHDRAWN"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "status=WITHDRAWN"
+      ]
+    },
+    {
+      "ticker": "KALV",
+      "actionable_rank": 46,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-30",
+      "catalyst_days": 62,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05505916",
+          "title": "An Open-label Extension Trial to Evaluate the Long-term Safety of KVD900 (Sebetralstat) for On-Demand Treatment of Angioedema Attacks in Adolescent and Adult Patients With Hereditary Angioedema (HAE)",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-30",
+          "verdict": "false",
+          "flags": [
+            "title:ole_or_long_term_extension"
+          ]
+        },
+        {
+          "nct_id": "NCT05511922",
+          "title": "PK Subtrial in Adolescent Patients With HAE Type I or II Participating in the KVD900-302 Trial",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-30",
+          "verdict": "false",
+          "flags": [
+            "title:pk_subtrial"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "title:ole_or_long_term_extension",
+        "title:pk_subtrial"
+      ]
+    },
+    {
+      "ticker": "PTCT",
+      "actionable_rank": 55,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-30",
+      "catalyst_days": 62,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05166161",
+          "title": "A Long-Term Safety Study of PTC923 in Participants With Phenylketonuria",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-30",
+          "verdict": "false",
+          "flags": [
+            "title:ole_or_long_term_extension"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "title:ole_or_long_term_extension"
+      ]
+    },
+    {
+      "ticker": "BEAM",
+      "actionable_rank": 62,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-29",
+      "catalyst_days": 30,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07304791",
+          "title": "This is a Phase 1, Randomized, Single-blind, Placebo-controlled Study to Assess the Safety, Pharmacokinetics (PK), and Pharmacodynamics (PD) of BEAM-103 in Healthy Subjects",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-01-29",
+          "verdict": "false",
+          "flags": [
+            "title:healthy_volunteers_or_food_effect",
+            "phase1_pk_healthy"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "phase1_pk_healthy",
+        "title:healthy_volunteers_or_food_effect"
+      ]
+    },
+    {
+      "ticker": "APLS",
+      "actionable_rank": 83,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-07-01",
+      "catalyst_days": 63,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT03531255",
+          "title": "Pegcetacoplan Long Term Safety and Efficacy Extension Study",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-11-29",
+          "verdict": "false",
+          "flags": [
+            "title:ole_or_long_term_extension"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "title:ole_or_long_term_extension"
+      ]
+    },
+    {
+      "ticker": "SION",
+      "actionable_rank": 93,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07035990",
+          "title": "Safety, Tolerability, and Pharmacokinetics of Multiple Dose Combinations of SION-451 and Complementary Modulators SION-2222 and SION-109 in Healthy Participants.",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "false",
+          "flags": [
+            "phase1_pk_healthy"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "phase1_pk_healthy"
+      ]
+    },
+    {
+      "ticker": "PTGX",
+      "actionable_rank": 109,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-15",
+      "catalyst_days": 47,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07153146",
+          "title": "Safety, Tolerability, Pharmacokinetics, and Pharmacodynamics of PN-881 in Healthy Subjects.",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-15",
+          "verdict": "false",
+          "flags": [
+            "title:healthy_volunteers_or_food_effect",
+            "phase1_pk_healthy"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "phase1_pk_healthy",
+        "title:healthy_volunteers_or_food_effect"
+      ]
+    },
+    {
+      "ticker": "CLYM",
+      "actionable_rank": 117,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07090655",
+          "title": "A Phase 1 Study of Budoprutug (TNT119) Subcutaneous and Intravenous Injections in Normal Healthy Volunteers",
+          "phase": "EARLY_PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-01",
+          "verdict": "false",
+          "flags": [
+            "title:healthy_volunteers_or_food_effect"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "title:healthy_volunteers_or_food_effect"
+      ]
+    },
+    {
+      "ticker": "GHRS",
+      "actionable_rank": 121,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07540494",
+          "title": "Pharmacokinetics and Safety of GH001 Delivered Via a GH001 Aerosol Delivery System in Healthy Subjects",
+          "phase": "PHASE1",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "title:healthy_volunteers_or_food_effect",
+            "phase1_pk_healthy"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "phase1_pk_healthy",
+        "title:healthy_volunteers_or_food_effect"
+      ]
+    },
+    {
+      "ticker": "ELDN",
+      "actionable_rank": 166,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04711226",
+          "title": "Safety, Tolerability and Efficacy of Immunomodulation With AT-1501 in Islet Cell Transplantation",
+          "phase": "PHASE2",
+          "status": "WITHDRAWN",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2024-06-01",
+          "verdict": "false",
+          "flags": [
+            "status=WITHDRAWN"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "status=WITHDRAWN"
+      ]
+    },
+    {
+      "ticker": "NVAX",
+      "actionable_rank": 172,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-17",
+      "catalyst_days": 18,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06482359",
+          "title": "Lot Consistency Study of COVID-19 and Influenza Combination Vaccine",
+          "phase": "PHASE2",
+          "status": "WITHDRAWN",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-11-16",
+          "verdict": "false",
+          "flags": [
+            "status=WITHDRAWN"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "status=WITHDRAWN"
+      ]
+    },
+    {
+      "ticker": "IBRX",
+      "actionable_rank": 186,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05007769",
+          "title": "Ramucirumab, Atezolizumab and N-803 After Progression on Any Immune Checkpoint Blocker in NSCLC",
+          "phase": "PHASE2",
+          "status": "WITHDRAWN",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2024-04-30",
+          "verdict": "false",
+          "flags": [
+            "status=WITHDRAWN"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "status=WITHDRAWN"
+      ]
+    },
+    {
+      "ticker": "NUVB",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-07-01",
+      "catalyst_days": 63,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05191017",
+          "title": "Study of NUV-422 in Combination With Enzalutamide in Patients With mCRPC",
+          "phase": "PHASE1",
+          "status": "WITHDRAWN",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-01-01",
+          "verdict": "false",
+          "flags": [
+            "status=WITHDRAWN"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "status=WITHDRAWN"
+      ]
+    },
+    {
+      "ticker": "BMEA",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07223216",
+          "title": "Study of BMF-650 in Otherwise Healthy Overweight or Obese Adult Participants",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "phase1_pk_healthy"
+          ]
+        }
+      ],
+      "verdict": "false",
+      "verdict_reasons": [
+        "phase1_pk_healthy"
+      ]
+    }
+  ],
+  "findings_ambiguous": [
+    {
+      "ticker": "DNA",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT03729518",
+          "title": "TORS De-Intensification Protocol Version 2.0: Dose and Volume Reduction in the Neck",
+          "phase": "NA",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT06670807",
+          "title": "Effect of a Probiotic Formula in Mild Cognitive Impairement",
+          "phase": "NA",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT06899061",
+          "title": "Modular Clinical Pharmacology Study to Evaluate the Drug-drug Interaction Potential and Relative Bioavailability of Saruparib",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-02-03",
+          "verdict": "false",
+          "flags": [
+            "title:healthy_volunteers_or_food_effect"
+          ]
+        },
+        {
+          "nct_id": "NCT04904835",
+          "title": "Access HBV Assays - European Union (EU) Clinical Trial Protocol -",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2025-12-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT01084785",
+          "title": "Biobank Carcinoma: Storing Blood and Protein of Patients With Cancer",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT06624618",
+          "title": "Rapid Molecular Diagnosis of Sepsis in the Intensive Care Unit",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        }
+      ],
+      "verdict": "ambiguous",
+      "verdict_reasons": [
+        "phase=N/A interventional",
+        "study_type=OBSERVATIONAL",
+        "title:healthy_volunteers_or_food_effect"
+      ]
+    }
+  ],
+  "findings_likely_valid": [
+    {
+      "ticker": "COGT",
+      "actionable_rank": 1,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06208748",
+          "title": "SARC044: A Phase II Trial of Bezuclastinib in Combination With Sunitinib in Patients With GIST",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "NRIX",
+      "actionable_rank": 6,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04830137",
+          "title": "A Study of NX-2127 in Adults With Relapsed/Refractory B-cell Malignancies",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ORIC",
+      "actionable_rank": 8,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06816992",
+          "title": "ORIC-114 in Combination with Subcutaneous Amivantamab in Patients with EGFR Exon20 Insertion Mutant NSCLC",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "RCUS",
+      "actionable_rank": 14,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT03821246",
+          "title": "Neoadjuvant Atezolizumab-Based Combination Therapy in Men With Localized Prostate Cancer Prior to Radical Prostatectomy",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT04791839",
+          "title": "Safety and Efficacy of Zimberelimab (AB122) in Combination With Domvanalimab (AB154) and Etrumadenant (AB928) in Patients With Previously Treated Non-Small Cell Lung Cancer",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TNGX",
+      "actionable_rank": 18,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05732831",
+          "title": "Safety and Tolerability of TNG462 in Patients With MTAP-deleted Solid Tumors",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "RVMD",
+      "actionable_rank": 20,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06040541",
+          "title": "Study of RMC-9805 in Participants With KRAS G12D-Mutant Solid Tumors",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "EWTX",
+      "actionable_rank": 24,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07324616",
+          "title": "A Study to Evaluate EDG-7500 in Adults With Hepatic Impairment",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT07177066",
+          "title": "A Study of EDG-15400 in Healthy Adults",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "phase1_pk_healthy"
+          ]
+        },
+        {
+          "nct_id": "NCT05257473",
+          "title": "Defining Endpoints in Becker Muscular Dystrophy",
+          "phase": "N/A",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase1_pk_healthy",
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "NBIX",
+      "actionable_rank": 25,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05206513",
+          "title": "Study to Assess the Efficacy, Safety, and Tolerability of Valbenazine for the Treatment of Dyskinesia Due to Cerebral Palsy",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-12-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ALKS",
+      "actionable_rank": 27,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06843590",
+          "title": "A Study to Evaluate the Safety and Effectiveness of ALKS 2680 in Subjects With Idiopathic Hypersomnia",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05495984",
+          "title": "Neuroplasticity in Maternal Opioid Use Disorder (OUD)",
+          "phase": "NA",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase=N/A interventional"
+      ]
+    },
+    {
+      "ticker": "BCRX",
+      "actionable_rank": 28,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07228559",
+          "title": "A Study of Avoralstat In Participants With Diabetic Macular Edema",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "UTHR",
+      "actionable_rank": 35,
+      "tier_any": "B",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-31",
+      "catalyst_days": 32,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04905693",
+          "title": "Extension Study of Inhaled Treprostinil in Subjects With Fibrotic Lung Disease",
+          "phase": "PHASE3",
+          "status": "ENROLLING_BY_INVITATION",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "false",
+          "flags": [
+            "title:ole_or_long_term_extension"
+          ]
+        },
+        {
+          "nct_id": "NCT06335407",
+          "title": "Effect of Sublingual Formulation of Dexmedetomidine Hydrochloride (HCl) (BXCL501) - Outpatient Study",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-03-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "title:ole_or_long_term_extension"
+      ]
+    },
+    {
+      "ticker": "CGON",
+      "actionable_rank": 37,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06111235",
+          "title": "A Study of Adjuvant Cretostimogene Grenadenorepvec for Treatment of Intermediate Risk NMIBC Following TURBT",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "MBX",
+      "actionable_rank": 39,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-30",
+      "catalyst_days": 31,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07142707",
+          "title": "A Study to Evaluate the Safety, Tolerability, Pharmacokinetics, and Pharmacodynamics of MBX 4291 in Adult Participants With Obesity",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "GH",
+      "actionable_rank": 41,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07005648",
+          "title": "Brazilian Registry of Menopausal Health",
+          "phase": "N/A",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL",
+            "title:observational_or_registry"
+          ]
+        },
+        {
+          "nct_id": "NCT06102291",
+          "title": "Acupoint Application With Yanqing Zhitong Ointment for Chronic Non-specific Low Back Pain",
+          "phase": "NA",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT03274492",
+          "title": "A Study Comparing the Efficacy and Safety of Polatuzumab Vedotin With Rituximab-Cyclophosphamide, Doxorubicin, and Prednisone (R-CHP) Versus Rituximab-Cyclophosphamide, Doxorubicin, Vincristine, and Prednisone (R-CHOP) in Participants With Diffuse Large B-Cell Lymphoma",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06309966",
+          "title": "Study to Determine if BHV-7000 is Effective and Safe in Adults With Refractory Focal Onset Epilepsy",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05309551",
+          "title": "Inspiratory Muscle Training Immediately After Lung Transplantation",
+          "phase": "NA",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT06685978",
+          "title": "Efficacy and Safety of Xiangjurupining Capsule for Hyperplasia of Mammary Glands",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT00863460",
+          "title": "Cranial Radiotherapy or Intensive Chemotherapy With Hematopoietic Stem Cell Rescue for Primary Central Nervous System Lymphoma in Young Patients",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2016-05-17",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT07540494",
+          "title": "Pharmacokinetics and Safety of GH001 Delivered Via a GH001 Aerosol Delivery System in Healthy Subjects",
+          "phase": "PHASE1",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "title:healthy_volunteers_or_food_effect",
+            "phase1_pk_healthy"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase1_pk_healthy",
+        "phase=N/A interventional",
+        "study_type=OBSERVATIONAL",
+        "title:healthy_volunteers_or_food_effect",
+        "title:observational_or_registry"
+      ]
+    },
+    {
+      "ticker": "MLTX",
+      "actionable_rank": 45,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-17",
+      "catalyst_days": 49,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06411899",
+          "title": "A Study to Evaluate the Efficacy and Safety of Subcutaneous Sonelokimab Compared With Placebo in Adult Participants With Moderate to Severe Hidradenitis Suppurativa",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-06-17",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06411379",
+          "title": "Study to Evaluate the Efficacy and Safety of Subcutaneous Sonelokimab Compared With Placebo in Adult Participants With Moderate to Severe Hidradenitis Suppurativa",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-06-17",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "IDYA",
+      "actionable_rank": 48,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-06-22",
+      "catalyst_days": 54,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06710847",
+          "title": "A Study to Investigate the Safety, Pharmacokinetics, and Preliminary Effectiveness of GSK4418959 Alone or in Combination With Other Anti-cancer Agents in Participants With Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-22",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "CGEM",
+      "actionable_rank": 58,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05117476",
+          "title": "A Study of CLN-619 Alone and in Combination With Pembrolizumab in Advanced Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-03-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ANIP",
+      "actionable_rank": 71,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-07-01",
+      "catalyst_days": 63,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05486468",
+          "title": "The Use of Two YUTIQ Versus Sham for Treatment of Chronic Non Infectious Intraocular Inflammation Affecting the Posterior Segment",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-07-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ELVN",
+      "actionable_rank": 75,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-07-01",
+      "catalyst_days": 63,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05650879",
+          "title": "ELVN-002 in HER2 Mutant Non-Small Cell Lung Cancer",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-07-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "CATX",
+      "actionable_rank": 81,
+      "tier_any": "A",
+      "tier_dev": "",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05111509",
+          "title": "A First-in-human Clinical Trial to Evaluate an Alpha-radiation Imaging Agent",
+          "phase": "EARLY_PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "SYRE",
+      "actionable_rank": 91,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07012395",
+          "title": "A Study of Long-acting Antibodies Alone and in Combinations for Moderate to Severe Ulcerative Colitis",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "GERN",
+      "actionable_rank": 97,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05583552",
+          "title": "Study to Evaluate Imetelstat in Patients With High-Risk MDS or AML Failing HMA-based Therapy",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-09-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "BMRN",
+      "actionable_rank": 102,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06382155",
+          "title": "A Phase 2 Study of Vosoritide in Children With Idiopathic Short Stature",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ADCT",
+      "actionable_rank": 105,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05190705",
+          "title": "Loncastuximab Tesirine in WM",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TRVI",
+      "actionable_rank": 106,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-30",
+      "catalyst_days": 62,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07036029",
+          "title": "NAL ER IPF Respiratory Function and Safety Study",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TARA",
+      "actionable_rank": 110,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05871970",
+          "title": "Safety and Efficacy Study of Intracystic TARA-002 for the Treatment of Lymphatic Malformations in Participants 6 Months to Less Than 18 Years of Age",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-12-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ONC",
+      "actionable_rank": 123,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05828589",
+          "title": "A Study of BGB-21447, a Bcl-2 Inhibitor, in Mature B-Cell Malignancies",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06568614",
+          "title": "An Investigational Study of BG-89894 Tablets in Participants With Advanced Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ARWR",
+      "actionable_rank": 130,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06347133",
+          "title": "Phase 3 Study of Plozasiran in Adults With Hypertriglyceridemia",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06700538",
+          "title": "Study of ARO-INHBE in Adults With Obesity With and Without Diabetes Mellitus",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "GLUE",
+      "actionable_rank": 131,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05546268",
+          "title": "Study of Oral MRT-2359 in Selected Cancer Patients",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "INCY",
+      "actionable_rank": 135,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05723055",
+          "title": "Evaluating Combination of Nivolumab and Axatilimab in Patients With Relapsed/Refractory Classical Hodgkin Lymphoma",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06399029",
+          "title": "Topical Ruxolitinib Evaluation in Immune-related Lichenoid Skin-Toxicities",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-03-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06209606",
+          "title": "Pilot Study Using Changes in Serum BCMA to Determine Disease Progression in Multiple Myeloma",
+          "phase": "EARLY_PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT03952559",
+          "title": "A Study of Baricitinib (LY3009104) in Children and Adolescents With Atopic Dermatitis",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2022-04-24",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05453500",
+          "title": "Chemotherapy (DA-EPOCH+/-R) and Targeted Therapy (Tafasitamab) for the Treatment of Newly-Diagnosed Philadelphia Chromosome Negative B Acute Lymphoblastic Leukemia",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06551584",
+          "title": "Phase I Trial for Patients w/ Advanced Hematologic Malignancies Undergoing Allogeneic HCT",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "PGEN",
+      "actionable_rank": 137,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-06-05",
+      "catalyst_days": 37,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04724980",
+          "title": "Adjuvant PRGN-2012 in Adult Patients With Recurrent Respiratory Papillomatosis",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2024-06-05",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TVTX",
+      "actionable_rank": 138,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT03406611",
+          "title": "Pegtibatinase As an Enzyme Therapy for Patients with Homocystinuria Caused by Cystathionine Beta-Synthase Deficiency (COMPOSE)",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "HRMY",
+      "actionable_rank": 139,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-30",
+      "catalyst_days": 62,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06366464",
+          "title": "A Study of Pitolisant in Patients With Prader-Willi Syndrome",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-07-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "GMAB",
+      "actionable_rank": 141,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06510361",
+          "title": "Epcoritamab in Patients With Follicular Lymphoma Not Accomplishing a CR With Upfront Chemoimmunotherapy",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "CDNA",
+      "actionable_rank": 145,
+      "tier_any": "B",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-30",
+      "catalyst_days": 31,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07533994",
+          "title": "ACOD1 as a Prognostic Marker for Sepsis",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT04802408",
+          "title": "SARS-Cov-2 (COVID-19) Nasal Pharyngeal and Oral Pharyngeal Wash (SNOW) Trial",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT04957901",
+          "title": "The Value of Monitoring Circulating Cell DNA (ctDNA) in Pediatric Lymphoma: A Prospective, Multicenter Clinical Study",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT07162467",
+          "title": "Tryptophan-Kynurenine Pathway Metabolism in the Pathophysiology of Cognitive Impairment in Schizophrenia.",
+          "phase": "N/A",
+          "status": "ENROLLING_BY_INVITATION",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT05052957",
+          "title": "hSTAR GBM (Hematopoetic Stem Cell (HPC) Rescue for GBM)",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "REGN",
+      "actionable_rank": 154,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06352073",
+          "title": "Dupilumab for Eosinophilic Esophagitis With Severe Strictures",
+          "phase": "PHASE4",
+          "status": "ENROLLING_BY_INVITATION",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05961709",
+          "title": "The Phoenix Trial: Phase II Trial of Cemiplimab for the Non-operative Management of Localized dMMR Colon Cancer",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06608901",
+          "title": "A Study of REGN7544 for the Treatment in Adult Patients With Sepsis-Induced Hypotension",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-02-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06393946",
+          "title": "Study in Adults With Severe Chronic Rhinosinusitis With Nasal Polyposis Treated With Dupilumab in France",
+          "phase": "N/A",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-04-28",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "PBYI",
+      "actionable_rank": 155,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05274048",
+          "title": "Neratinib and Fam-Trastuzumab Deruxtecan in Advanced Gastro-esophageal Cancer Patients",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "CRSP",
+      "actionable_rank": 158,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-05-31",
+      "catalyst_days": 32,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05356195",
+          "title": "Evaluation of Safety and Efficacy of CTX001 in Pediatric Participants With Transfusion-Dependent \u03b2-Thalassemia (TDT)",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-31",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05329649",
+          "title": "Evaluation of Safety and Efficacy of CTX001 in Pediatric Participants With Severe Sickle Cell Disease (SCD)",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-31",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "VRTX",
+      "actionable_rank": 160,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06619860",
+          "title": "Evaluation of Efficacy and Safety of VX-993 for Pain Associated With Diabetic Peripheral Neuropathy",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ACIU",
+      "actionable_rank": 165,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05462106",
+          "title": "A Study to Assess the Effects of ACI-24.060 in Alzheimer's Disease and in Down Syndrome (ABATE Study)",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "VNDA",
+      "actionable_rank": 173,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04652882",
+          "title": "Evaluating the Effects of Tasimelteon vs. Placebo in Delayed Sleep-Wake Phase Disorder (DSWPD)",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "IOVA",
+      "actionable_rank": 183,
+      "tier_any": "A",
+      "tier_dev": "A",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05607095",
+          "title": "A Study of LN-144 or LN-145 in People With Advanced Uveal Melanoma, Undifferentiated Pleomorphic Sarcoma, or Dedifferentiated Liposarcoma",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "SMMT",
+      "actionable_rank": 185,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-05-15",
+      "catalyst_days": 16,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05382442",
+          "title": "A Study of AK112 With or Without AK117 in Metastatic Colorectal Cancer",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-15",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ARDX",
+      "actionable_rank": 188,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05643534",
+          "title": "Study to Assess Safety and Efficacy of Tenapanor for Treatment of IBS-C in Pediatric Patients 12 to Less Than 18 Years",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06553547",
+          "title": "4-Week, Multi-center Dose-Ranging Study for the IBS-C in Pts. 6 to <12 Yrs",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "AMGN",
+      "actionable_rank": 191,
+      "tier_any": "B",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT00863460",
+          "title": "Cranial Radiotherapy or Intensive Chemotherapy With Hematopoietic Stem Cell Rescue for Primary Central Nervous System Lymphoma in Young Patients",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2016-05-17",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "GRFS",
+      "actionable_rank": 194,
+      "tier_any": "A",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-22",
+      "catalyst_days": 23,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06534255",
+          "title": "A Clinical Trial to Evaluate the Safety, Efficacy, and Pharmacokinetics of MegaLT Injection for Treating Refractory Thrombocytopenia Following Radiotherapy, Chemotherapy, or Transplantation.",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-06-19",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "GILD",
+      "actionable_rank": 195,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05552001",
+          "title": "Safety and Efficacy Analysis of an Antibody Associated With a Chemotherapy for Patients With a Triple Negative Metastatic Breast Cancer",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06031415",
+          "title": "Study of GS-0272 in Participants With Rheumatoid Arthritis",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05101096",
+          "title": "Study of Sacituzumab Govitecan (SG) in Japanese Participants With Advanced Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05467930",
+          "title": "CU-COMMITS: COVID-19 Care in Black and Latino Communities and Households. Clinical and Molecular Outcomes of SARS-CoV-2",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT06513312",
+          "title": "Study of Lenacapavir Taken Twice a Year for HIV Pre-Exposure Prophylaxis (PrEP)",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "CRL",
+      "actionable_rank": 199,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06501196",
+          "title": "A Study of BH-30236 in Relapsed/ Refractory Acute Myelogenous Leukemia and Higher Risk Myelodysplastic Syndrome",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT07411833",
+          "title": "tDCS for Stress and Burnout in Higher Education",
+          "phase": "NA",
+          "status": "ENROLLING_BY_INVITATION",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT06384144",
+          "title": "Machine Learning Miscarriage Management Clinical Decision Support Tool Study",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2024-06-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase=N/A interventional",
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "TECH",
+      "actionable_rank": 203,
+      "tier_any": "C",
+      "tier_dev": "C",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06842199",
+          "title": "Efficacy, Safety, Pharmacokinetics of ICP-488 in Patients With Moderate to Severe Plaque Psoriasis",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05678270",
+          "title": "A Study of ICP-192 in Patients With FGFR2-Rearranged Unresectable or Metastatic Intrahepatic Cholangiocarcinoma",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06281223",
+          "title": "Study of Brain-spinal Cord Neural Connectivity in Spasticity",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT04369599",
+          "title": "Trans Thoracic Manipulation of Ventilation/Perfusion: the V/Q System",
+          "phase": "NA",
+          "status": "ENROLLING_BY_INVITATION",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase=N/A interventional",
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "TEVA",
+      "actionable_rank": 206,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-05-09",
+      "catalyst_days": 10,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06625177",
+          "title": "A Trial to Test the Safety and Efficacy of TEV-53408 in Treating Vitiligo",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-09",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "SNY",
+      "actionable_rank": 209,
+      "tier_any": "C",
+      "tier_dev": "",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06352073",
+          "title": "Dupilumab for Eosinophilic Esophagitis With Severe Strictures",
+          "phase": "PHASE4",
+          "status": "ENROLLING_BY_INVITATION",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT04763616",
+          "title": "Study of Isatuximab and Cemiplimab in Relapsed or Refractory Natural Killer/T-cell Lymphoid Malignancy",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2023-04-30",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "EXEL",
+      "actionable_rank": 212,
+      "tier_any": "B",
+      "tier_dev": "B",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05613894",
+          "title": "Dose-Escalation Study of Cabozantinib in Combination With Lutetium-177 (177Lu)-PSMA-617 in Patients With Metastatic Castration-Resistant Prostate Cancer",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05425940",
+          "title": "Study of XL092 + Atezolizumab vs Regorafenib in Participants With Metastatic Colorectal Cancer",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "IMRX",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05585320",
+          "title": "A Phase 1/2a Study of IMM-1-104 in Participants With Advanced or Metastatic Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "PYXS",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05718557",
+          "title": "Study of PYX-106 in Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "RIGL",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-07-01",
+      "catalyst_days": 63,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05848258",
+          "title": "An Adaptive Phase 2a/2b Study of LY3871801 in Adult Participants With Rheumatoid Arthritis",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-02-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "SPRY",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06927999",
+          "title": "An Outpatient Study of the Efficacy of ARS-2 in Patients With Chronic Spontaneous Urticaria",
+          "phase": "PHASE2",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TCRX",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05473910",
+          "title": "A Study of TSC-100 and TSC-101 in AML, ALL and MDS in Patients Undergoing Allogeneic Peripheral Blood Stem Transplantation",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TNYA",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "1.0",
+      "development_stage": "phase_1",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06228924",
+          "title": "Open-label, Dose Escalation Study of Safety and Preliminary Efficacy of TN-401 in Adults With PKP2 Mutation-associated ARVC",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "WVE",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-06-27",
+      "catalyst_days": 59,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04906460",
+          "title": "Open-label Study of WVE-N531 in Patients With Duchenne Muscular Dystrophy (FORWARD-53)",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-27",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "ERAS",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_STUDY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04670679",
+          "title": "A Dose Escalation/Expansion Study of ERAS-601 in Patients With Advanced or Metastatic Solid Tumors",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-02-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "FULC",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-31",
+      "catalyst_days": 32,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07431398",
+          "title": "Single-dose Pharmacokinetics of Pociredir in Participants With Sickle Cell Disease",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-31",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "NTLA",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-07-01",
+      "catalyst_days": 63,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "phase_3",
+      "matched_trials": [
+        {
+          "nct_id": "NCT05120830",
+          "title": "NTLA-2002 in Adults With Hereditary Angioedema (HAE)",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2024-04-04",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "QSI",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "",
+      "catalyst_date": "2026-06-01",
+      "catalyst_days": 33,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06058299",
+          "title": "Phase 2 Trial Assessing TBAJ876 or Bedaquiline, with Pretomanid and Linezolid in Adults with Drug-sensitive Pulmonary Tuberculosis",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2024-12-27",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "TEM",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "",
+      "catalyst_date": "2026-06-30",
+      "catalyst_days": 62,
+      "catalyst_bucket": "build_window",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06800586",
+          "title": "Tumors and Respiratory System Diseases Due to Air Pollution: New Biomarkers of Exposure and Effects",
+          "phase": "N/A",
+          "status": "RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-07-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT03866109",
+          "title": "A Study Evaluating Temferon in Patients With Glioblastoma & Unmethylated MGMT",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT03912194",
+          "title": "Early Withdrawal Exposure and Negative Affect Withdrawal (NAW) Regulation Training for Smoking Cessation",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-07-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06748911",
+          "title": "Navicam for Detection of Barrett's Esophagus",
+          "phase": "NA",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-06-30",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT06263244",
+          "title": "Specifying the Anti-inflammatory Effects of Ziltivekimab",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-07-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase=N/A interventional",
+        "study_type=OBSERVATIONAL"
+      ]
+    },
+    {
+      "ticker": "ALT",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06987513",
+          "title": "RECLAIM STUDY: A Phase 2 Evaluating the Efficacy and Safety of Pemvidutide in the Treatment of Alcohol Use Disorder (AUD) in Subjects With Obesity or Overweight",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "CAI",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "approved",
+      "matched_trials": [
+        {
+          "nct_id": "NCT07480889",
+          "title": "Effect of Adding a Low-Dose Epinephrine Bolus Prior to Infusion on Maternal Hemodynamic Stability During Cesarean Section",
+          "phase": "PHASE3",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06504108",
+          "title": "Full Pulpotomy Procedure of Permanent Molar Teeth of Adults Using Calcium Silicate-based Sealer Material",
+          "phase": "NA",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-11-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT07140861",
+          "title": "Effect of Core Stability Exercises in Individuals With Bilateral Flexible Flat Foot",
+          "phase": "NA",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT07162207",
+          "title": "Bi-layer Collagen Membrane Versus Subepithelial Connective Tissue Graft in the Treatment of Localized Gingival Recession",
+          "phase": "NA",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT03105102",
+          "title": "A Study of the Efficacy and Safety of Risankizumab in Participants With Crohn's Disease",
+          "phase": "PHASE3",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase=N/A interventional"
+      ]
+    },
+    {
+      "ticker": "LAB",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "",
+      "catalyst_date": "2026-04-30",
+      "catalyst_days": 1,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "DATA_READOUT",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "3.0",
+      "development_stage": "commercial",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06995794",
+          "title": "Osgood-Schlatter Disease in Athletic Children",
+          "phase": "NA",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-03-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT02626312",
+          "title": "Radiation Therapy in Treating Patients With Hepatocellular Carcinoma, Cholangiocarcinoma, or Liver Metastasis Who Have Impaired Liver Function",
+          "phase": "PHASE1",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-28",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT05959616",
+          "title": "Shigella Sonnei 53G Human Infection Study in Kenyan Adults",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-04-30",
+          "verdict": "valid",
+          "flags": []
+        },
+        {
+          "nct_id": "NCT06963047",
+          "title": "Evaluation of Blood Loss After Cesarean Delivery Via US Compared to Standard Care",
+          "phase": "NA",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT07125404",
+          "title": "Low-Level Laser Auriculotherapy in the Treatment of Myogenic Temporomandibular Disorders and Anxiety",
+          "phase": "NA",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2025-12-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT07005648",
+          "title": "Brazilian Registry of Menopausal Health",
+          "phase": "N/A",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL",
+            "title:observational_or_registry"
+          ]
+        },
+        {
+          "nct_id": "NCT06651216",
+          "title": "Impact of Breast Milk miRNAs on the Infant Gut Microbiota",
+          "phase": "N/A",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        },
+        {
+          "nct_id": "NCT07412483",
+          "title": "A Controlled Human Infection Model of Dengue",
+          "phase": "NA",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "ambiguous",
+          "flags": [
+            "phase=N/A interventional"
+          ]
+        },
+        {
+          "nct_id": "NCT06891768",
+          "title": "Bacteriological Profile and Antibiotic Sensitivity in Neonatal Intensive Care Unit at Assuit University Children Hospital",
+          "phase": "N/A",
+          "status": "NOT_YET_RECRUITING",
+          "study_type": "OBSERVATIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "false",
+          "flags": [
+            "study_type=OBSERVATIONAL"
+          ]
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": [
+        "phase=N/A interventional",
+        "study_type=OBSERVATIONAL",
+        "title:observational_or_registry"
+      ]
+    },
+    {
+      "ticker": "RCKT",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-05",
+      "catalyst_days": 6,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT04248439",
+          "title": "Gene Therapy for Fanconi Anemia, Complementation Group A",
+          "phase": "PHASE2",
+          "status": "ACTIVE_NOT_RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-05",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    },
+    {
+      "ticker": "LEGN",
+      "actionable_rank": null,
+      "tier_any": "D",
+      "tier_dev": "D",
+      "catalyst_date": "2026-05-01",
+      "catalyst_days": 2,
+      "catalyst_bucket": "binary_now",
+      "catalyst_event_type": "CT_PRIMARY_COMPLETION",
+      "catalyst_source": "CTGOV_CALENDAR",
+      "lead_phase": "2.0",
+      "development_stage": "phase_2",
+      "matched_trials": [
+        {
+          "nct_id": "NCT06494371",
+          "title": "A Study of LCAR-HL30 in Subjects With Relapsed/Refractory Hodgkin's Lymphoma and Anaplastic Large Cell Lymphoma",
+          "phase": "PHASE1",
+          "status": "RECRUITING",
+          "study_type": "INTERVENTIONAL",
+          "primary_completion_date": "2026-05-01",
+          "verdict": "valid",
+          "flags": []
+        }
+      ],
+      "verdict": "valid",
+      "verdict_reasons": []
+    }
+  ]
+}

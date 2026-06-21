@@ -1,0 +1,4 @@
+[2026-05-19T09:15:01-04:00] Evening reliability check for prior trading day: 2026-05-18
+[2026-05-19T09:15:01-04:00] ✅ inst_delta checkpoint exists: 2026-05-18
+[2026-05-19T09:15:01-04:00] ✅ cross_signal buckets exist: 2026-05-18
+[2026-05-19T09:15:01-04:00] Evening reliability check complete

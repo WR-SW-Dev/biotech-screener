@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-05-04T21:00:01+00:00",
+  "window": {
+    "start": "2026-04-28",
+    "end": "2026-05-04"
+  },
+  "coverage": {
+    "expected": [
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-04"
+    ],
+    "present_dates": [],
+    "fully_missing": [
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-04"
+    ],
+    "partial_missing": {
+      "2026-04-28": [
+        "snapshot_integrity_report.json",
+        "feature_coverage_report.json",
+        "distribution_drift_report.json",
+        "sentinel_ticker_report.json"
+      ],
+      "2026-04-29": [
+        "snapshot_integrity_report.json",
+        "feature_coverage_report.json",
+        "distribution_drift_report.json",
+        "sentinel_ticker_report.json"
+      ],
+      "2026-04-30": [
+        "snapshot_integrity_report.json",
+        "feature_coverage_report.json",
+        "distribution_drift_report.json",
+        "sentinel_ticker_report.json"
+      ],
+      "2026-05-01": [
+        "snapshot_integrity_report.json",
+        "feature_coverage_report.json",
+        "distribution_drift_report.json",
+        "sentinel_ticker_report.json"
+      ],
+      "2026-05-04": [
+        "snapshot_integrity_report.json",
+        "feature_coverage_report.json",
+        "distribution_drift_report.json",
+        "sentinel_ticker_report.json"
+      ]
+    }
+  },
+  "aggregate": {
+    "integrity": {
+      "n_days": 0,
+      "severity_counts": {},
+      "fail_days": [],
+      "top_failing_checks": []
+    },
+    "feature_coverage": {
+      "n_features": 0,
+      "features": []
+    },
+    "drift": {
+      "top30": {
+        "n": 0
+      },
+      "top60": {
+        "n": 0
+      },
+      "v2_cohort": {
+        "n": 0
+      },
+      "high_churn_days": []
+    },
+    "sentinel": {
+      "n_days_with_report": 0,
+      "per_ticker": []
+    }
+  },
+  "observations": [
+    "COVERAGE: 0/5 weekday snapshots have at least one diagnostic artifact; 5 fully missing, 5 partial \u2014 missing days bias structural conclusions; treat with caution"
+  ]
+}

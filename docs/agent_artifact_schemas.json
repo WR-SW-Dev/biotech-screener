@@ -1,0 +1,68 @@
+{
+  "artifacts": {
+    "scientific_cartography_langgraph_human_decision": {
+      "description": "Human decision audit trail for Scientific Cartography review continuation.",
+      "required_fields": [
+        "artifact_type",
+        "schema_version",
+        "created_at_utc",
+        "as_of_date",
+        "decision_state",
+        "decision_actor",
+        "decision_reason",
+        "review_continuation_approved",
+        "automation_approval",
+        "review_summary_path",
+        "review_state_path",
+        "governance"
+      ]
+    },
+    "scientific_cartography_langgraph_review_summary": {
+      "description": "Deterministic review summary for Scientific Cartography artifacts.",
+      "required_fields": [
+        "artifact_type",
+        "schema_version",
+        "generated_at",
+        "governance",
+        "as_of_date",
+        "artifact_summary",
+        "selected_disease_count",
+        "selected_diseases_for_review",
+        "governance_scan_passed",
+        "decision",
+        "next_steps"
+      ]
+    },
+    "scientific_cartography_lg3_scheduled_review_cron_execution": {
+      "description": "Scheduled review cron execution record.",
+      "required_fields": [
+        "artifact_type",
+        "schema_version",
+        "executed_at_utc",
+        "as_of_date",
+        "outcome",
+        "duration_seconds",
+        "error_message",
+        "governance"
+      ]
+    },
+    "hermes_recursive_self_improvement_queue": {
+      "description": "Advisory queue for human-reviewed Hermes recursive self-improvement.",
+      "required_fields": [
+        "artifact_type",
+        "schema_version",
+        "as_of_date",
+        "generated_at",
+        "environment",
+        "month",
+        "source_logs",
+        "summary",
+        "skills",
+        "queue",
+        "governance",
+        "next_steps"
+      ]
+    }
+  },
+  "schema_version": "1.0"
+}
