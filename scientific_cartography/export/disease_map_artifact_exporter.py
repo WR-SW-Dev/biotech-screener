@@ -1,12 +1,11 @@
 """Export detailed per-disease artifacts from Phase 8-11 diagnostic layers."""
 
-import csv
 import json
 import re
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
 
+from scientific_cartography.io import atomic_write_text, deterministic_timestamp, write_csv, write_json
 from scientific_cartography.schemas.asset_indication_map_schema import AssetIndicationMapRecord
 from scientific_cartography.schemas.disease_ontology_schema import DiseaseOntologyRecord
 from scientific_cartography.schemas.enhanced_cluster_schema import EnhancedCompetitiveClusterRecord
@@ -24,7 +23,7 @@ class DiseaseMapArtifactExporter:
             created_at_utc: Creation timestamp (ISO 8601).
         """
         self.as_of_date = as_of_date
-        self.created_at_utc = created_at_utc or datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.created_at_utc = created_at_utc or deterministic_timestamp(as_of_date)
 
     def _make_safe_slug(self, disease_name: str) -> str:
         """Create safe filesystem slug from disease name.
@@ -472,20 +471,15 @@ Not intended as medical advice or investment recommendation.
             disease_artifact_dir.mkdir(parents=True, exist_ok=True)
 
             # JSON
-            with open(disease_artifact_dir / "disease_map.json", "w") as f:
-                json.dump(artifact, f, indent=2)
+            write_json(disease_artifact_dir / "disease_map.json", artifact)
 
             # CSV
             csv_rows = self._build_disease_csv_rows(artifact)
             if csv_rows:
-                with open(disease_artifact_dir / "disease_map.csv", "w", newline="") as f:
-                    writer = csv.DictWriter(f, fieldnames=csv_rows[0].keys())
-                    writer.writeheader()
-                    writer.writerows(csv_rows)
+                write_csv(disease_artifact_dir / "disease_map.csv", csv_rows, list(csv_rows[0].keys()))
 
             # Markdown
-            with open(disease_artifact_dir / "disease_map.md", "w") as f:
-                f.write(self._build_disease_markdown(artifact))
+            atomic_write_text(disease_artifact_dir / "disease_map.md", self._build_disease_markdown(artifact))
 
         # Write index
         self._write_index(artifacts, output_dir)
@@ -551,8 +545,7 @@ Not intended as medical advice or investment recommendation.
             },
         }
 
-        with open(output_dir / "disease_map_index.json", "w") as f:
-            json.dump(index_data, f, indent=2)
+        write_json(output_dir / "disease_map_index.json", index_data)
 
         # Index Markdown
         md = """# Scientific Cartography Disease Map Index
@@ -599,5 +592,4 @@ Descriptive summary only. No scoring, ranking, or portfolio implications.
             created_at_utc=self.created_at_utc,
         )
 
-        with open(output_dir / "disease_map_index.md", "w") as f:
-            f.write(md)
+        atomic_write_text(output_dir / "disease_map_index.md", md)

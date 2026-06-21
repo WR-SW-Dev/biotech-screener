@@ -9,7 +9,6 @@ Cache-only, read-only, non-blocking by default.
 """
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -22,6 +21,7 @@ from scientific_cartography.build.asset_indication_builder import AssetIndicatio
 from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder  # noqa: E402
 from scientific_cartography.build.landscape_feature_builder import LandscapeFeatureBuilder  # noqa: E402
 from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter  # noqa: E402
+from scientific_cartography.io import write_json, write_jsonl  # noqa: E402
 from scientific_cartography.ingest.ctgov_ingest import CTGovIngest  # noqa: E402
 from scientific_cartography.ingest.existing_universe_ingest import ExistingUniverseIngest  # noqa: E402
 from scientific_cartography.normalize.asset_alias_resolver import AssetAliasResolver  # noqa: E402
@@ -197,32 +197,24 @@ def run_diagnostics(args: argparse.Namespace) -> int:
             print("Writing JSONL artifacts...", file=sys.stderr)
 
         programs_path = output_dir / "program_records.jsonl"
-        with open(programs_path, "w") as f:
-            for program in programs:
-                f.write(json.dumps(program.to_dict()) + "\n")
+        write_jsonl(programs_path, (program.to_dict() for program in programs))
         status["artifacts_written"].append("program_records.jsonl")
 
         clusters_path = output_dir / "competitive_clusters.jsonl"
-        with open(clusters_path, "w") as f:
-            for cluster in clusters:
-                f.write(json.dumps(cluster.to_dict()) + "\n")
+        write_jsonl(clusters_path, (cluster.to_dict() for cluster in clusters))
         status["artifacts_written"].append("competitive_clusters.jsonl")
 
         features_path = output_dir / "landscape_features.jsonl"
-        with open(features_path, "w") as f:
-            for feature in features:
-                f.write(json.dumps(feature.to_dict()) + "\n")
+        write_jsonl(features_path, (feature.to_dict() for feature in features))
         status["artifacts_written"].append("landscape_features.jsonl")
 
         # Step 9: Write coverage reports
         cluster_coverage_path = output_dir / "cluster_coverage_report.json"
-        with open(cluster_coverage_path, "w") as f:
-            json.dump(cluster_coverage, f, indent=2)
+        write_json(cluster_coverage_path, cluster_coverage)
         status["artifacts_written"].append("cluster_coverage_report.json")
 
         feature_coverage_path = output_dir / "landscape_feature_coverage_report.json"
-        with open(feature_coverage_path, "w") as f:
-            json.dump(feature_coverage, f, indent=2)
+        write_json(feature_coverage_path, feature_coverage)
         status["artifacts_written"].append("landscape_feature_coverage_report.json")
 
         if not quiet:
@@ -275,8 +267,7 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         # Step 11: Write status file
         status["status"] = "success"
         status_path = output_dir / "scientific_cartography_status.json"
-        with open(status_path, "w") as f:
-            json.dump(status, f, indent=2)
+        write_json(status_path, status)
 
         if not quiet:
             print("", file=sys.stderr)
@@ -294,8 +285,7 @@ def run_diagnostics(args: argparse.Namespace) -> int:
 
         status_path = output_dir / "scientific_cartography_status.json"
         status_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(status_path, "w") as f:
-            json.dump(status, f, indent=2)
+        write_json(status_path, status)
 
         if not quiet:
             print(f"✗ Scientific cartography diagnostics failed: {e}", file=sys.stderr)

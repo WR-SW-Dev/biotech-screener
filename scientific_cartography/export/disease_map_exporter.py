@@ -1,9 +1,9 @@
 """Export disease-level diagnostic maps."""
 
-import json
 from collections import defaultdict
 from pathlib import Path
 
+from scientific_cartography.io import atomic_write_text, write_json
 from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
 from scientific_cartography.schemas.landscape_feature_schema import LandscapeFeatureRecord
 from scientific_cartography.schemas.program_schema import ProgramRecord
@@ -194,9 +194,7 @@ class DiseaseMapExporter:
             summary: Summary dict.
             output_path: Output path.
         """
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w") as f:
-            json.dump(summary, f, indent=2)
+        write_json(output_path, summary)
 
     def write_disease_summary_markdown(self, summary: dict, output_path: Path) -> None:
         """Write disease summary to Markdown.
@@ -303,5 +301,4 @@ class DiseaseMapExporter:
                     lines.append(f"- {ticker}")
                 lines.append("")
 
-        with open(output_path, "w") as f:
-            f.write("\n".join(lines))
+        atomic_write_text(output_path, "\n".join(lines))

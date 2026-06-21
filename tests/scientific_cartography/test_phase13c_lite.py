@@ -171,6 +171,54 @@ def test_manifest_file_written():
     pass
 
 
+def test_phase13c_rebuilds_schema_objects_from_phase7a_artifacts(tmp_path, monkeypatch):
+    """Phase 13C should rebuild Phase 9-11 objects from Phase 7A JSONL artifacts."""
+    import tools.run_scientific_cartography_phase13c_export as phase13c
+    from scientific_cartography.schemas.program_schema import ProgramRecord
+
+    as_of_date = "2026-06-18"
+    repo_root = tmp_path
+    diagnostics_dir = repo_root / "artifacts" / "scientific_cartography" / as_of_date
+    diagnostics_dir.mkdir(parents=True)
+
+    program = ProgramRecord(
+        program_id="PROGRAM_1",
+        asset_id="ASSET_1",
+        asset_name="Asset A",
+        company_id="COMPANY_TICKER_TEST",
+        ticker="TEST",
+        company_name="Test Therapeutics",
+        disease_id="DISEASE_1",
+        disease_name="Acute Pain",
+        clinical_stage="phase2",
+        source_priority="ctgov",
+        source_refs=["NCT00000001"],
+        confidence=0.9,
+        as_of_date=as_of_date,
+    )
+    (diagnostics_dir / "program_records.jsonl").write_text(json.dumps(program.to_dict()) + "\n")
+    (diagnostics_dir / "competitive_clusters.jsonl").write_text("")
+    (diagnostics_dir / "landscape_features.jsonl").write_text("")
+    (diagnostics_dir / "map_index.json").write_text(json.dumps({"diseases": []}))
+
+    monkeypatch.setattr(phase13c, "REPO_ROOT", repo_root)
+    output_dir = tmp_path / "phase13c_output"
+
+    exit_code = phase13c.main(
+        as_of_date=as_of_date,
+        snapshot_dir=tmp_path / "snapshot",
+        ctgov_cache_dir=tmp_path / "ctgov",
+        output_dir=output_dir,
+    )
+
+    assert exit_code == 0
+    assert (output_dir / "disease_map_index.json").exists()
+    assert (output_dir / "diseases").exists()
+    manifest = json.loads((output_dir / "scientific_cartography_manifest.json").read_text())
+    assert manifest["rebuilt_phase_9_11_counts"]["asset_indication_records"] == 1
+    assert manifest["governance"]["read_only_diagnostic"] is True
+
+
 class TestPhase13CLiteIntegration:
     """Integration tests for Phase 13C-lite with run_daily_production."""
 

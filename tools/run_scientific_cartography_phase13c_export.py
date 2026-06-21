@@ -26,7 +26,6 @@ import logging
 import re
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -40,6 +39,8 @@ _logger = logging.getLogger(__name__)
 # Repo root — all paths relative
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
+
+from scientific_cartography.io import deterministic_timestamp, write_json  # noqa: E402
 
 # Safety thresholds
 MAX_OUTPUT_SIZE_MB = 2048  # 2GB hard limit
@@ -71,7 +72,7 @@ def scan_for_forbidden_fields(directory: Path) -> Optional[list[str]]:
             continue
 
         try:
-            with open(file_path) as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Check for forbidden patterns
@@ -125,6 +126,7 @@ def generate_manifest(
     as_of_date: str,
     snapshot_dir: Path,
     runtime_seconds: float,
+    created_at_utc: str = "",
 ) -> dict:
     """Generate manifest.json for Phase 13C-lite export."""
     size_mb = calculate_directory_size(output_dir)
@@ -139,10 +141,10 @@ def generate_manifest(
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
             if file_path.suffix == ".jsonl":
                 # Count lines in JSONL
-                with open(file_path) as f:
+                with open(file_path, encoding="utf-8") as f:
                     record_count = sum(1 for line in f if line.strip())
             else:
-                with open(file_path) as f:
+                with open(file_path, encoding="utf-8") as f:
                     data = json.load(f)
                 record_count = len(data) if isinstance(data, (list, dict)) else "unknown"
 
@@ -157,7 +159,7 @@ def generate_manifest(
         "artifact_type": "scientific_cartography_diagnostic",
         "as_of_date": as_of_date,
         "snapshot_dir": str(snapshot_dir),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": created_at_utc or deterministic_timestamp(as_of_date),
         "runtime_seconds": round(runtime_seconds, 1),
         "file_count": file_count,
         "total_size_mb": round(size_mb, 2),
@@ -205,7 +207,11 @@ def main(
     start_time = time.time()
 
     try:
+        from scientific_cartography.build.asset_indication_map_builder import AssetIndicationMapBuilder
+        from scientific_cartography.build.enhanced_cluster_builder import EnhancedCompetitiveClusterBuilder
+        from scientific_cartography.build.landscape_context_builder import LandscapeContextFeatureBuilder
         from scientific_cartography.export.disease_map_artifact_exporter import DiseaseMapArtifactExporter
+        from scientific_cartography.schemas.program_schema import ProgramRecord
 
         _logger.info("Phase 13C-lite Export: Starting for %s", as_of_date)
         _logger.info("  Snapshot: %s", snapshot_dir)
@@ -247,49 +253,60 @@ def main(
 
         _logger.info("Loading Phase 7A diagnostic artifacts...")
 
-        # Load program records
+        # Load Phase 7A program records and rebuild Phase 9-11 objects expected
+        # by the per-disease artifact exporter.
         programs = []
-        with open(program_records_file) as f:
+        with open(program_records_file, encoding="utf-8") as f:
             for line in f:
                 if line.strip():
-                    programs.append(json.loads(line))
+                    programs.append(ProgramRecord.from_dict(json.loads(line)))
         _logger.info("  → %d program records", len(programs))
 
-        # Load clusters
-        clusters = []
-        with open(clusters_file) as f:
-            for line in f:
-                if line.strip():
-                    clusters.append(json.loads(line))
-        _logger.info("  → %d cluster records", len(clusters))
+        # Validate upstream files are parseable even though Phase 13C rebuilds
+        # later-stage schema objects from program records for type safety.
+        upstream_clusters = []
+        with open(clusters_file, encoding="utf-8") as f:
+            upstream_clusters = [json.loads(line) for line in f if line.strip()]
+        _logger.info("  → %d upstream cluster records", len(upstream_clusters))
 
-        # Load features
-        features = []
-        with open(features_file) as f:
-            for line in f:
-                if line.strip():
-                    features.append(json.loads(line))
-        _logger.info("  → %d landscape feature records", len(features))
+        upstream_features = []
+        with open(features_file, encoding="utf-8") as f:
+            upstream_features = [json.loads(line) for line in f if line.strip()]
+        _logger.info("  → %d upstream landscape feature records", len(upstream_features))
 
-        # Load disease ontology (map index)
-        map_index = json.load(open(map_index_file))
-        disease_ontology = map_index.get("disease_index", {})
-        _logger.info("  → %d disease ontology records", len(disease_ontology))
+        with open(map_index_file, encoding="utf-8") as f:
+            map_index = json.load(f)
+        _logger.info("  → %d map-index disease entries", len(map_index.get("diseases", [])))
+
+        asset_map_builder = AssetIndicationMapBuilder(as_of_date=as_of_date)
+        asset_indication_records, asset_map_coverage = asset_map_builder.build_from_programs(programs)
+        _logger.info("  → %d rebuilt asset-indication records", len(asset_indication_records))
+
+        enhanced_cluster_builder = EnhancedCompetitiveClusterBuilder(as_of_date=as_of_date)
+        enhanced_clusters, enhanced_cluster_coverage = enhanced_cluster_builder.build_from_asset_indication_records(
+            asset_indication_records
+        )
+        _logger.info("  → %d rebuilt enhanced clusters", len(enhanced_clusters))
+
+        context_builder = LandscapeContextFeatureBuilder(as_of_date=as_of_date)
+        landscape_context_features, context_coverage = context_builder.build_from_records(
+            asset_indication_records,
+            enhanced_clusters,
+        )
+        _logger.info("  → %d rebuilt landscape context features", len(landscape_context_features))
 
         # Export per-disease artifacts
         _logger.info("Exporting per-disease artifacts...")
-        exporter = DiseaseMapArtifactExporter()
-
-        # Reconstruct disease records from map_index for exporter
-        disease_ontology_records = []
-        for disease_key, disease_data in disease_ontology.items():
-            disease_ontology_records.append(disease_data)
+        exporter = DiseaseMapArtifactExporter(
+            as_of_date=as_of_date,
+            created_at_utc=deterministic_timestamp(as_of_date),
+        )
 
         exporter.export_all(
-            disease_ontology_records=disease_ontology_records,
-            asset_indication_records=programs,
-            enhanced_clusters=clusters,
-            landscape_context_features=features,
+            disease_ontology_records=[],
+            asset_indication_records=asset_indication_records,
+            enhanced_clusters=enhanced_clusters,
+            landscape_context_features=landscape_context_features,
             output_dir=output_dir,
         )
 
@@ -330,13 +347,23 @@ def main(
         _logger.info("  ✓ Forbidden field scan: PASS")
 
         # === MANIFEST GENERATION ===
-        manifest = generate_manifest(output_dir, as_of_date, snapshot_dir, runtime)
+        manifest = generate_manifest(
+            output_dir,
+            as_of_date,
+            snapshot_dir,
+            runtime,
+            created_at_utc=deterministic_timestamp(as_of_date),
+        )
+        manifest["rebuilt_phase_9_11_counts"] = {
+            "asset_indication_records": asset_map_coverage.total_records,
+            "enhanced_clusters": enhanced_cluster_coverage.total_clusters,
+            "landscape_context_features": context_coverage.total_features,
+        }
         manifest["safety_checks"]["forbidden_fields_scan"] = "PASS"
         manifest["safety_checks"]["governance_flags_valid"] = True
 
         manifest_file = output_dir / "scientific_cartography_manifest.json"
-        with open(manifest_file, "w") as f:
-            json.dump(manifest, f, indent=2)
+        write_json(manifest_file, manifest)
 
         _logger.info("Phase 13C-lite Export: SUCCESS")
         _logger.info("  Runtime: %.1f seconds", runtime)

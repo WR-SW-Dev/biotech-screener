@@ -291,6 +291,8 @@ class TestAssetIndicationBuilderTickerMapping:
         programs, _ = builder.build_from_trials([trial], companies)
         assert len(programs) > 0
         assert programs[0].ticker == "VRTX"
+        assert programs[0].ticker_resolution_source == "sponsor_resolver"
+        assert programs[0].ticker_resolution_confidence == 0.85
 
     def test_program_record_uses_trial_ticker_when_sponsor_unmatched(self):
         """Ticker-bearing local trial records should map even with institution sponsor text."""
@@ -334,6 +336,8 @@ class TestAssetIndicationBuilderTickerMapping:
         assert programs[0].ticker == "ABSI"
         assert programs[0].company_id == "COMPANY_TICKER_ABSI"
         assert programs[0].company_name == "Peking University People's Hospital"
+        assert programs[0].ticker_resolution_source == "trial_ticker"
+        assert programs[0].ticker_resolution_confidence == 0.95
         assert diagnostics["programs_with_unknown_sponsor"] == 0
 
     def test_program_record_prefers_trial_ticker_over_different_public_sponsor(self):
@@ -386,6 +390,7 @@ class TestAssetIndicationBuilderTickerMapping:
         assert programs[0].ticker == "AZN"
         assert programs[0].company_id == "COMPANY_TICKER_AZN"
         assert programs[0].company_name == "Amgen"
+        assert programs[0].ticker_resolution_source == "trial_ticker"
 
 
 class TestCompetitiveClusterTickerAggregation:

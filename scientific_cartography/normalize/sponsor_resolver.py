@@ -3,52 +3,17 @@
 import re
 from typing import Optional
 
+from scientific_cartography.normalize.constants import CORPORATE_SUFFIX_PATTERNS, GENERIC_NORMALIZED_NAMES
 from scientific_cartography.schemas.company_schema import CompanyRecord
 
 
 class SponsorResolver:
     """Resolve raw sponsor names to company records."""
 
-    GENERIC_NORMALIZED_NAMES = {
-        "therapeutics",
-        "pharmaceuticals",
-        "biosciences",
-        "biotech",
-        "biopharm",
-        "company",
-        "corporation",
-    }
+    GENERIC_NORMALIZED_NAMES = GENERIC_NORMALIZED_NAMES
 
     # Common corporate suffixes for conservative stripping
-    CORPORATE_SUFFIXES = [
-        # Comma-prefixed variants (highest priority)
-        r",\s*incorporated\s*$",
-        r",\s*inc\.?\s*$",
-        r",\s*corporation\s*$",
-        r",\s*corp\.?\s*$",
-        r",\s*limited\s*$",
-        r",\s*ltd\.?\s*$",
-        # Space-prefixed variants
-        r"\s+incorporated\s*$",
-        r"\s+inc\.?\s*$",
-        r"\s+corporation\s*$",
-        r"\s+corp\.?\s*$",
-        r"\s+limited\s*$",
-        r"\s+ltd\.?\s*$",
-        r"\s+limited\s+liability\s+company\s*$",
-        r"\s+llc\s*$",
-        r"\s+therapeutics\s*$",
-        r"\s+pharmaceuticals\s*$",
-        r"\s+biosciences\s*$",
-        r"\s+biotech\s*$",
-        r"\s+biopharm\s*$",
-        r"\s+plc\s*$",
-        r"\s+s\.?a\.?\s*$",
-        r"\s+se\s*$",
-        r"\s+ag\s*$",
-        r"\s+n\.?v\.?\s*$",
-        r"\s+gmbh\s*$",
-    ]
+    CORPORATE_SUFFIXES = CORPORATE_SUFFIX_PATTERNS
 
     def __init__(
         self,

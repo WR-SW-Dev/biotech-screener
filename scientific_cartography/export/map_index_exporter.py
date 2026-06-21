@@ -1,9 +1,9 @@
 """Export map index from programs, clusters, and features."""
 
-import json
 from collections import defaultdict
 from pathlib import Path
 
+from scientific_cartography.io import write_json
 from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
 from scientific_cartography.schemas.landscape_feature_schema import LandscapeFeatureRecord
 from scientific_cartography.schemas.program_schema import ProgramRecord
@@ -216,6 +216,4 @@ class MapIndexExporter:
             index: Index dict.
             output_path: Path to output file.
         """
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w") as f:
-            json.dump(index, f, indent=2)
+        write_json(output_path, index)
