@@ -1124,13 +1124,15 @@ async function loadAll(snapshot) {
       api(`/api/atlas/stats${qs}`),
       api(`/api/atlas/cells${qs}`),
       api(`/api/network${qs}`),
+      api('/api/backtest'),
+      api('/api/backtest/stability'),
     ]);
 
-    const [health, meta, stats, cells, network] = results.map(r => r.status === 'fulfilled' ? r.value : null);
+    const [health, meta, stats, cells, network, backtest, stability] = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
     results.forEach((r, i) => {
       if (r.status === 'rejected') {
-        const names = ['health', 'meta', 'stats', 'cells', 'network'];
+        const names = ['health', 'meta', 'stats', 'cells', 'network', 'backtest', 'stability'];
         console.warn(`API ${names[i]} failed:`, r.reason);
       }
     });
@@ -1154,9 +1156,9 @@ async function loadAll(snapshot) {
       showLoading(false);
       return;
     }
-    if (network) {
-      state.network = network;
-    }
+    if (network) state.network = network;
+    if (backtest) state.backtest = backtest;
+    if (stability) state.stability = stability;
 
     renderChart();
   } catch (e) {
