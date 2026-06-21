@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biotech Cell Atlas — Wake Robin</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-dim: #8b949e;
+  --accent: #58a6ff;
+  --accent-dim: #1f6feb;
+  --green: #3fb950;
+  --orange: #d29922;
+  --red: #f85149;
+  --purple: #bc8cff;
+  --teal: #39c5cf;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ─── Header ─── */
+.header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.header h1 span { color: var(--accent); }
+.header .subtitle {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.header-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.snapshot-select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.snapshot-select:hover { border-color: var(--accent); }
+.health-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--green);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+/* ─── Layout ─── */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1px;
+  background: var(--border);
+  min-height: calc(100vh - 53px);
+}
+.chart-area {
+  background: var(--bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+.sidebar {
+  background: var(--panel);
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 53px);
+}
+
+/* ─── Tabs ─── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.tab {
+  padding: 7px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+  user-select: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  background: var(--accent-dim);
+  color: #fff;
+}
+
+/* ─── Chart container ─── */
+.chart-container {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.chart-container .chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#mainChart { width: 100%; height: calc(100% - 28px); }
+
+/* ─── Filters ─── */
+.filters {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.filter-select, .filter-input {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.filter-select:hover, .filter-input:hover { border-color: var(--accent); }
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-dim);
+}
+.filter-checkbox input { cursor: pointer; }
+
+/* ─── Stats bar ─── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Sidebar ─── */
+.sidebar h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-empty {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 13px;
+}
+.detail-empty .icon { font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.3; }
+
+.detail-header {
+  margin-bottom: 16px;
+}
+.detail-ticker {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.detail-name {
+  font-size: 15px;
+  color: var(--text);
+  margin-top: 2px;
+}
+.detail-tissue {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 6px;
+  background: var(--accent-dim);
+  color: #fff;
+}
+
+.detail-section {
+  margin-bottom: 16px;
+}
+.detail-section h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.detail-section h3 .emoji { font-size: 14px; }
+
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.score-row .label { color: var(--text-dim); }
+.score-row .value { font-weight: 600; }
+.score-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.trial-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.trial-item .nct { font-weight: 600; color: var(--purple); }
+.trial-item .phase { float: right; font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--border); }
+.trial-item .status { color: var(--text-dim); font-size: 11px; }
+.trial-item .pcd { color: var(--orange); font-size: 11px; }
+
+.flag-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 2px;
+  background: var(--border);
+  color: var(--text-dim);
+}
+
+/* ─── Loading ─── */
+.loading-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(13, 17, 23, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: 10px;
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Responsive ─── */
+@media (max-width: 1100px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { max-height: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧬 <span>Cell Atlas</span> — Biotech Screener</h1>
+  <div class="subtitle">Wake Robin / Brooks Capital</div>
+  <div class="header-controls">
+    <select class="snapshot-select" id="snapshotSelect" title="Point-in-time snapshot">
+      <option value="">Latest</option>
+    </select>
+    <span class="health-badge" id="healthBadge">●</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="chart-area">
+    <!-- Stats bar -->
+    <div class="stats-bar" id="statsBar"></div>
+
+    <!-- Filters -->
+    <div class="filters" id="filters">
+      <div class="filter-group">
+        <span class="filter-label">Tissue:</span>
+        <select class="filter-select" id="tissueFilter"><option value="">All</option></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Min Score:</span>
+        <input type="number" class="filter-input" id="minScoreFilter" min="0" max="100" step="1" placeholder="0" style="width:55px">
+      </div>
+      <label class="filter-checkbox">
+        <input type="checkbox" id="catalystOnly"> Catalysts only
+      </label>
+      <div class="tabs" style="margin-left:auto">
+        <div class="tab active" data-view="scatter">🔬 Cell Atlas</div>
+        <div class="tab" data-view="treemap">🧫 Tissue Map</div>
+        <div class="tab" data-view="network">🕸️ Network</div>
+        <div class="tab" data-view="backtest">📈 Backtest</div>
+        <div class="tab" data-view="table">📋 Table</div>
+      </div>
+    </div>
+
+    <!-- Main chart -->
+    <div class="chart-container">
+      <div class="chart-title" id="chartTitle">Cell Atlas — Companies as Cells</div>
+      <div id="mainChart"></div>
+      <div class="loading-overlay" id="loading" style="display:none"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- Detail sidebar -->
+  <div class="sidebar" id="sidebar">
+    <h2>Company Detail</h2>
+    <div id="detailContent">
+      <div class="detail-empty">
+        <span class="icon">🧬</span>
+        Click a cell to inspect a company's pipeline, financials, and catalysts.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════════════
+const API = '';
+let state = {
+  cells: [],
+  network: null,
+  meta: null,
+  stats: null,
+  snapshots: [],
+  backtest: null,
+  stability: null,
+  selectedTicker: null,
+  view: 'scatter',
+  filters: { tissue: '', minScore: 0, catalystOnly: false },
+};
+
+const TISSUE_COLORS = {
+  'Oncology': '#f85149',
+  'Rare Disease': '#bc8cff',
+  'Neurology': '#58a6ff',
+  'Immunology': '#3fb950',
+  'Infectious Disease': '#d29922',
+  'Virology': '#39c5cf',
+  'Enabling Tech': '#ff7b72',
+  'Diversified': '#8b949e',
+};
+
+function colorFor(tissue) { return TISSUE_COLORS[tissue] || '#8b949e'; }
+
+// ═══════════════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════════════
+async function api(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Loading
+// ═══════════════════════════════════════════════════════════════════
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Snapshot selector
+// ═══════════════════════════════════════════════════════════════════
+function populateSnapshots(dates) {
+  const sel = document.getElementById('snapshotSelect');
+  sel.innerHTML = '<option value="">Latest</option>';
+  dates.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    sel.appendChild(opt);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Tissue filter
+// ═══════════════════════════════════════════════════════════════════
+function populateTissueFilter(tissues) {
+  const sel = document.getElementById('tissueFilter');
+  sel.innerHTML = '<option value="">All</option>';
+  tissues.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    sel.appendChild(opt);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Filtered cells
+// ═══════════════════════════════════════════════════════════════════
+function filteredCells() {
+  return state.cells.filter(c => {
+    if (state.filters.tissue && c.tissue !== state.filters.tissue) return false;
+    if (state.filters.minScore > 0 && (c.composite_score ?? 0) < state.filters.minScore) return false;
+    if (state.filters.catalystOnly && c.receptors.catalyst_count < 1) return false;
+    return true;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Stats bar
+// ═══════════════════════════════════════════════════════════════════
+function renderStats() {
+  const s = state.stats;
+  if (!s) return;
+  const cards = [
+    { label: 'Companies', value: s.total_cells },
+    { label: 'Avg Score', value: (s.avg_composite_score ?? 0).toFixed(1) },
+    { label: 'Catalysts', value: s.total_catalysts },
+    { label: 'Trials', value: s.total_trials },
+    { label: 'Tissues', value: Object.keys(s.tissue_distribution || {}).length },
+    { label: 'Avg Price', value: '$' + (s.avg_price ?? 0).toFixed(1) },
+  ];
+  document.getElementById('statsBar').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="stat-value">${c.value}</div>
+      <div class="stat-label">${c.label}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Chart rendering
+// ═══════════════════════════════════════════════════════════════════
+const CHART_LAYOUT = {
+  paper_bgcolor: 'transparent',
+  plot_bgcolor: 'transparent',
+  font: { color: '#c9d1d9', size: 12, family: 'Segoe UI, sans-serif' },
+  margin: { l: 50, r: 20, t: 10, b: 45 },
+  xaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' },
+  yaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' },
+  hovermode: 'closest',
+  legend: { bgcolor: 'rgba(22,27,34,0.9)', bordercolor: '#30363d', borderwidth: 1, font: { size: 11 } },
+  colorway: ['#58a6ff','#f85149','#3fb950','#bc8cff','#d29922','#39c5cf','#ff7b72','#8b949e'],
+};
+
+const CHART_CONFIG = { responsive: true, displayModeBar: false };
+
+function renderChart() {
+  const cells = filteredCells();
+  const titleEl = document.getElementById('chartTitle');
+
+  if (state.view === 'scatter') {
+    titleEl.textContent = 'Cell Atlas — Companies as Cells (size = price, color = tissue)';
+    renderScatter(cells);
+  } else if (state.view === 'treemap') {
+    titleEl.textContent = 'Tissue Map — Hierarchical View by Therapeutic Area';
+    renderTreemap(cells);
+  } else if (state.view === 'network') {
+    titleEl.textContent = 'Network Graph — Trial Connections & Sponsor Links';
+    renderNetwork();
+  } else if (state.view === 'backtest') {
+    titleEl.textContent = 'Backtest Dashboard — Signal Performance & Attribution';
+    renderBacktest();
+  } else if (state.view === 'table') {
+    titleEl.textContent = 'Company Table — Sorted by Composite Score';
+    renderTable(cells);
+  }
+}
+
+function renderScatter(cells) {
+  // Group by tissue for multi-trace
+  const tissues = [...new Set(cells.map(c => c.tissue))];
+  const traces = tissues.map(tissue => {
+    const tc = cells.filter(c => c.tissue === tissue);
+    return {
+      type: 'scatter',
+      mode: 'markers+text',
+      x: tc.map(c => c.trial_count),
+      y: tc.map(c => c.composite_score ?? 0),
+      text: tc.map(c => c.ticker),
+      textposition: 'top center',
+      textfont: { size: 10, color: '#8b949e' },
+      marker: {
+        size: tc.map(c => Math.max(8, Math.min(45, Math.sqrt(c.latest_price ?? 1) * 4))),
+        color: colorFor(tissue),
+        opacity: 0.75,
+        line: { color: colorFor(tissue), width: 1.5 },
+      },
+      name: tissue,
+      customdata: tc.map(c => c.ticker),
+      hovertemplate: '<b>%{customdata}</b><br>Trials: %{x}<br>Score: %{y}<extra></extra>',
+      hoverlabel: { bgcolor: '#161b22', bordercolor: '#30363d', font: { color: '#c9d1d9' } },
+    };
+  });
+
+  const layout = {
+    ...CHART_LAYOUT,
+    xaxis: { ...CHART_LAYOUT.xaxis, title: { text: 'Trial Count', font: { size: 11 } } },
+    yaxis: { ...CHART_LAYOUT.yaxis, title: { text: 'Composite Score', font: { size: 11 } } },
+  };
+
+  Plotly.react('mainChart', traces, layout, CHART_CONFIG);
+
+  document.getElementById('mainChart').removeAllListeners?.('plotly_click');
+  document.getElementById('mainChart').on('plotly_click', (e) => {
+    if (e.points?.[0]?.customdata) selectCompany(e.points[0].customdata);
+  });
+}
+
+function renderTreemap(cells) {
+  const traces = [{
+    type: 'treemap',
+    labels: cells.map(c => c.ticker),
+    parents: cells.map(c => c.tissue),
+    values: cells.map(c => Math.max(1, c.composite_score ?? 1)),
+    customdata: cells.map(c => c.ticker),
+    text: cells.map(c => `${c.ticker}<br>${(c.composite_score ?? 0).toFixed(1)}`),
+    marker: {
+      colors: cells.map(c => colorFor(c.tissue)),
+      line: { color: '#0d1117', width: 2 },
+    },
+    textfont: { color: '#fff', size: 12 },
+    hovertemplate: '<b>%{customdata}</b><br>Score: %{value:.1f}<br>Tissue: %{parent}<extra></extra>',
+    hoverlabel: { bgcolor: '#161b22', bordercolor: '#30363d' },
+    branchvalues: 'total',
+  }];
+
+  const layout = {
+    ...CHART_LAYOUT,
+    margin: { l: 0, r: 0, t: 0, b: 0 },
+  };
+
+  Plotly.react('mainChart', traces, layout, CHART_CONFIG);
+
+  document.getElementById('mainChart').removeAllListeners?.('plotly_click');
+  document.getElementById('mainChart').on('plotly_click', (e) => {
+    if (e.points?.[0]?.customdata) selectCompany(e.points[0].customdata);
+  });
+}
+
+function renderNetwork() {
+  if (!state.network) {
+    Plotly.react('mainChart', [], CHART_LAYOUT, CHART_CONFIG);
+    return;
+  }
+  const net = state.network;
+  const companies = net.nodes.companies || [];
+  const trials = net.nodes.trials || [];
+  const edges = net.edges.list || [];
+
+  // Layout: circular for companies, use simple force-directed-ish by angle
+  const nComp = companies.length;
+  const companyPos = {};
+  companies.forEach((node, i) => {
+    const angle = (i / nComp) * 2 * Math.PI;
+    companyPos[node.id] = { x: Math.cos(angle) * 3, y: Math.sin(angle) * 3 };
+  });
+
+  // Trial nodes positioned near their company
+  const trialPos = {};
+  trials.forEach((node) => {
+    // Find connected company
+    const edge = edges.find(e => e.target === node.id && e.type === 'trial');
+    const compId = edge ? edge.source : null;
+    if (compId && companyPos[compId]) {
+      const cp = companyPos[compId];
+      trialPos[node.id] = { x: cp.x + (Math.random() - 0.5) * 2, y: cp.y + (Math.random() - 0.5) * 2 };
+    } else {
+      trialPos[node.id] = { x: 0, y: 0 };
+    }
+  });
+
+  // Edge traces (by type)
+  const edgeTypes = ['trial', 'sponsor', 'target'];
+  const edgeColors = { trial: '#30363d', sponsor: '#d29922', target: '#58a6ff' };
+  const edgeTraces = edgeTypes.map(et => {
+    const etEdges = edges.filter(e => e.type === et);
+    const xs = [], ys = [];
+    etEdges.forEach(e => {
+      const sp = companyPos[e.source] || trialPos[e.source];
+      const dp = companyPos[e.target] || trialPos[e.target];
+      if (sp && dp) { xs.push(sp.x, dp.x, null); ys.push(sp.y, dp.y, null); }
+    });
+    return {
+      type: 'scatter',
+      mode: 'lines',
+      x: xs, y: ys,
+      line: { color: edgeColors[et], width: et === 'trial' ? 0.5 : 1.5 },
+      opacity: 0.4,
+      name: et,
+      hoverinfo: 'skip',
+    };
+  });
+
+  // Company node trace
+  const compTrace = {
+    type: 'scatter',
+    mode: 'markers+text',
+    x: companies.map(n => companyPos[n.id]?.x),
+    y: companies.map(n => companyPos[n.id]?.y),
+    text: companies.map(n => n.id),
+    textposition: 'top center',
+    textfont: { size: 10, color: '#c9d1d9' },
+    marker: {
+      size: companies.map(n => Math.max(10, Math.min(35, (n.trial_count + 1) * 3))),
+      color: companies.map(n => colorFor(n.tissue)),
+      line: { color: '#c9d1d9', width: 1 },
+      opacity: 0.85,
+    },
+    name: 'Companies',
+    customdata: companies.map(n => n.id),
+    hovertemplate: '<b>%{customdata}</b><br>Trials: %{marker.size}<extra></extra>',
+    hoverlabel: { bgcolor: '#161b22', bordercolor: '#30363d' },
+  };
+
+  // Trial node trace
+  const trialTrace = {
+    type: 'scatter',
+    mode: 'markers',
+    x: trials.map(n => trialPos[n.id]?.x),
+    y: trials.map(n => trialPos[n.id]?.y),
+    text: trials.map(n => n.id),
+    marker: {
+      size: 6,
+      color: '#bc8cff',
+      symbol: 'diamond',
+      opacity: 0.5,
+    },
+    name: 'Trials',
+    customdata: trials.map(n => `${n.id} [${n.phase}]`),
+    hovertemplate: '%{customdata}<extra></extra>',
+    hoverlabel: { bgcolor: '#161b22', bordercolor: '#bc8cff' },
+  };
+
+  const layout = {
+    ...CHART_LAYOUT,
+    xaxis: { ...CHART_LAYOUT.xaxis, showgrid: false, zeroline: false, showticklabels: false },
+    yaxis: { ...CHART_LAYOUT.yaxis, showgrid: false, zeroline: false, showticklabels: false, scaleanchor: 'x' },
+    showlegend: true,
+  };
+
+  Plotly.react('mainChart', [...edgeTraces, trialTrace, compTrace], layout, CHART_CONFIG);
+
+  document.getElementById('mainChart').removeAllListeners?.('plotly_click');
+  document.getElementById('mainChart').on('plotly_click', (e) => {
+    const p = e.points?.[0];
+    if (p?.customdata && p.data.name === 'Companies') selectCompany(p.customdata);
+  });
+}
+
+function renderBacktest() {
+  const bt = state.backtest;
+  if (!bt || bt.error) {
+    Plotly.react('mainChart', [], { ...CHART_LAYOUT, title: { text: 'No backtest data available', font: { color: '#8b949e' } } }, CHART_CONFIG);
+    return;
+  }
+
+  const summary = bt.summary;
+  const periods = summary.periods;
+  const horizons = summary.horizons;
+  const dates = periods.map(p => p.date);
+  const colors = { '3m': '#58a6ff', '6m': '#3fb950', '12m': '#bc8cff' };
+
+  // ─── Chart 1: IC Spearman over time (grouped bars) ───
+  const icTraces = horizons.map(hd => ({
+    type: 'bar',
+    x: dates,
+    y: periods.map(p => p.horizons[hd]?.ic_spearman ?? 0),
+    name: hd,
+    marker: { color: colors[hd] },
+    hovertemplate: `<b>${hd}</b><br>IC: %{y:.4f}<br>Date: %{x}<extra></extra>`,
+  }));
+
+  // ─── Chart 2: Q5-Q1 spread (top-minus-bottom) ───
+  const spreadTraces = horizons.map(hd => ({
+    type: 'bar',
+    x: dates,
+    y: periods.map(p => p.horizons[hd]?.top_minus_bottom ?? 0),
+    name: hd,
+    marker: { color: colors[hd] },
+    hovertemplate: `<b>${hd}</b><br>Q1-Q5 Spread: %{y:.4f}<br>Date: %{x}<extra></extra>`,
+  }));
+
+  // ─── Chart 3: Quintile bucket returns (latest period, grouped) ───
+  const latestPeriod = periods[periods.length - 1];
+  const bucketTraces = horizons.map(hd => {
+    const h = latestPeriod.horizons[hd] || {};
+    const returns = h.bucket_returns || {};
+    return {
+      type: 'bar',
+      x: ['Q1 (top)', 'Q2', 'Q3', 'Q4', 'Q5 (bottom)'],
+      y: [1, 2, 3, 4, 5].map(q => returns[q] ?? 0),
+      name: hd,
+      marker: { color: colors[hd] },
+      hovertemplate: `<b>${hd} %{x}</b><br>Return: %{y:.2%}<extra></extra>`,
+    };
+  });
+
+  // ─── Chart 4: Stability attribution pie ───
+  const stab = state.stability;
+  let stabTrace = null;
+  if (stab && stab.summary) {
+    const attr = stab.summary.mean_attribution || {};
+    stabTrace = {
+      type: 'pie',
+      labels: ['Clinical', 'Financial', 'Catalyst', 'Uncertainty', 'Severity'],
+      values: [attr.clinical_pct || 0, attr.financial_pct || 0, attr.catalyst_pct || 0, attr.uncertainty_pct || 0, attr.severity_pct || 0],
+      marker: { colors: ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#bc8cff'] },
+      textinfo: 'label+percent',
+      textfont: { color: '#fff', size: 11 },
+      hole: 0.4,
+      hovertemplate: '<b>%{label}</b><br>%{value:.1f}%<extra></extra>',
+    };
+  }
+
+  // ─── Aggregate stats text ───
+  const agg = summary.aggregate || {};
+  const aggText = horizons.map(hd => {
+    const a = agg[hd] || {};
+    return `${hd}: avg IC=${(a.avg_ic || 0).toFixed(4)}, avg spread=${(a.avg_spread || 0).toFixed(4)}`;
+  }).join(' | ');
+
+  // ─── Subplot layout: 2×2 grid ───
+  const traces = [];
+  const layout = {
+    ...CHART_LAYOUT,
+    grid: { rows: 2, columns: 2, pattern: 'independent' },
+    annotations: [
+      { text: 'IC Spearman by Period', x: 0.225, y: 1.0, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 13, color: '#8b949e' } },
+      { text: 'Q5−Q1 Spread by Period', x: 0.825, y: 1.0, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 13, color: '#8b949e' } },
+      { text: `Quintile Returns (${latestPeriod.date})`, x: 0.225, y: 0.5, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 13, color: '#8b949e' } },
+      { text: 'Stability Attribution', x: 0.825, y: 0.5, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 13, color: '#8b949e' } },
+    ],
+    margin: { l: 50, r: 20, t: 30, b: 40 },
+    showlegend: true,
+    legend: { x: 0, y: -0.15, orientation: 'h', bgcolor: 'rgba(22,27,34,0.9)', bordercolor: '#30363d', borderwidth: 1 },
+    barmode: 'group',
+    yaxis: { domain: [0.55, 0.95], gridcolor: '#30363d', zerolinecolor: '#30363d', zerolinewidth: 1 },
+    yaxis2: { domain: [0.55, 0.95], gridcolor: '#30363d', zerolinecolor: '#30363d', zerolinewidth: 1 },
+    xaxis3: { domain: [0, 0.48], gridcolor: '#30363d' },
+    yaxis3: { domain: [0, 0.42], gridcolor: '#30363d', zerolinecolor: '#30363d', zerolinewidth: 1, tickformat: '.0%' },
+    xaxis4: { domain: [0.52, 1], showgrid: false, showticklabels: false },
+    yaxis4: { domain: [0, 0.42], showgrid: false, showticklabels: false },
+  };
+
+  // IC traces → xaxis1/yaxis1
+  icTraces.forEach(t => { t.xaxis = 'x'; t.yaxis = 'y'; traces.push(t); });
+  // Spread traces → xaxis2/yaxis2
+  spreadTraces.forEach(t => { t.xaxis = 'x2'; t.yaxis = 'y2'; traces.push(t); });
+  // Bucket traces → xaxis3/yaxis3
+  bucketTraces.forEach(t => { t.xaxis = 'x3'; t.yaxis = 'y3'; traces.push(t); });
+  // Stability pie → xaxis4/yaxis4
+  if (stabTrace) { stabTrace.domain = { x: [0.52, 1], y: [0, 0.42] }; traces.push(stabTrace); }
+
+  Plotly.react('mainChart', traces, layout, CHART_CONFIG);
+
+  // Update sidebar with backtest summary
+  renderBacktestSidebar(bt, stab);
+}
+
+function renderBacktestSidebar(bt, stab) {
+  const summary = bt.summary;
+  const agg = summary.aggregate || {};
+  const horizons = summary.horizons || [];
+  const stabSummary = stab?.summary;
+
+  let html = `
+    <div class="detail-header">
+      <div class="detail-ticker" style="font-size:20px">📈 Backtest</div>
+      <div class="detail-name">${bt.run_id || 'production_v1'}</div>
+    </div>
+    <div class="detail-section">
+      <h3>📊 Aggregate Performance</h3>
+      ${horizons.map(hd => {
+        const a = agg[hd] || {};
+        const icColor = (a.avg_ic || 0) > 0.02 ? '#3fb950' : (a.avg_ic || 0) < -0.02 ? '#f85149' : '#d29922';
+        const spColor = (a.avg_spread || 0) > 0 ? '#3fb950' : '#f85149';
+        return `
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${hd}</div>
+            <div class="score-row"><span class="label">Avg IC</span><span class="value" style="color:${icColor}">${(a.avg_ic || 0).toFixed(4)}</span></div>
+            <div class="score-row"><span class="label">Avg Spread</span><span class="value" style="color:${spColor}">${(a.avg_spread || 0).toFixed(4)}</span></div>
+            <div class="score-row"><span class="label">Periods</span><span class="value">${a.n_periods || 0}</span></div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  if (stabSummary) {
+    const attr = stabSummary.mean_attribution || {};
+    html += `
+      <div class="detail-section">
+        <h3>🔗 Stability Attribution</h3>
+        <div class="score-row"><span class="label">Dominant Driver</span><span class="value">${stabSummary.dominant_driver || '—'}</span></div>
+        <div class="score-row"><span class="label">Periods Analyzed</span><span class="value">${stabSummary.n_periods || 0}</span></div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-dim)">Mean attribution:</div>
+        ${Object.entries(attr).map(([k, v]) => `
+          <div class="score-row"><span class="label">${k.replace('_pct','').replace('_',' ')}</span><span class="value">${(v || 0).toFixed(1)}%</span></div>
+          <div class="score-bar"><div class="score-bar-fill" style="width:${v}%;background:${v > 50 ? '#58a6ff' : v > 20 ? '#3fb950' : '#8b949e'}"></div></div>
+        `).join('')}
+        <div style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.4">${stabSummary.interpretation || ''}</div>
+      </div>
+    `;
+
+    // Top movers
+    const movers = stab.global_top_movers || [];
+    if (movers.length) {
+      html += `
+        <div class="detail-section">
+          <h3>🔀 Top Rank Movers</h3>
+          ${movers.slice(0, 8).map(m => `
+            <div class="trial-item">
+              <span class="nct">${m.ticker}</span>
+              <span class="phase" style="color:${m['Δrank'] > 0 ? '#3fb950' : '#f85149'}">Δ${m['Δrank']}</span>
+              <br><span class="status">Rank ${m.rank_prev} → ${m.rank_curr}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  }
+
+  // Period details
+  html += `
+    <div class="detail-section">
+      <h3>📅 Period Details</h3>
+      ${summary.periods.map(p => `
+        <div class="trial-item">
+          <span class="nct">${p.date}</span>
+          <span class="phase">${p.n_ranked} ranked</span>
+          ${horizons.map(hd => {
+            const h = p.horizons[hd] || {};
+            const ic = h.ic_spearman ?? 0;
+            const sp = h.top_minus_bottom ?? 0;
+            return `<br><span class="status">${hd}: IC=${ic.toFixed(3)} Spread=${sp.toFixed(3)}</span>`;
+          }).join('')}
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.getElementById('detailContent').innerHTML = html;
+}
+
+function renderTable(cells) {
+  const sorted = [...cells].sort((a, b) => (b.composite_score ?? 0) - (a.composite_score ?? 0));
+  const tissueColors = [...new Set(sorted.map(c => c.tissue))].map(t => colorFor(t));
+
+  const traces = [{
+    type: 'table',
+    header: {
+      values: ['Rank', 'Ticker', 'Name', 'Tissue', 'Score', 'Trials', 'Catalysts', 'Price'],
+      align: 'center',
+      fill: { color: '#161b22' },
+      font: { color: '#8b949e', size: 11 },
+      line: { color: '#30363d' },
+    },
+    cells: {
+      values: [
+        sorted.map((c, i) => i + 1),
+        sorted.map(c => `<b>${c.ticker}</b>`),
+        sorted.map(c => c.name),
+        sorted.map(c => c.tissue),
+        sorted.map(c => (c.composite_score ?? 0).toFixed(1)),
+        sorted.map(c => c.trial_count),
+        sorted.map(c => c.receptors.catalyst_count),
+        sorted.map(c => c.latest_price ? '$' + c.latest_price.toFixed(2) : '—'),
+      ],
+      align: ['center', 'center', 'left', 'left', 'center', 'center', 'center', 'right'],
+      fill: { color: '#0d1117' },
+      font: { color: '#c9d1d9', size: 12 },
+      line: { color: '#30363d' },
+      height: 28,
+    },
+    columnwidth: [40, 60, 120, 90, 50, 50, 60, 60],
+  }];
+
+  const layout = { ...CHART_LAYOUT, margin: { l: 0, r: 0, t: 0, b: 0 } };
+  Plotly.react('mainChart', traces, layout, CHART_CONFIG);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Company detail sidebar
+// ═══════════════════════════════════════════════════════════════════
+async function selectCompany(ticker) {
+  state.selectedTicker = ticker;
+  showLoading(true);
+  try {
+    const cell = await api(`/api/atlas/cell/${ticker}`);
+    renderDetail(cell);
+  } catch (e) {
+    renderDetailError(ticker, e.message);
+  }
+  showLoading(false);
+}
+
+function scoreColor(score, max = 100) {
+  if (score == null) return '#8b949e';
+  const r = score / max;
+  if (r >= 0.7) return '#3fb950';
+  if (r >= 0.4) return '#d29922';
+  return '#f85149';
+}
+
+function renderDetail(cell) {
+  const membrane = cell.membrane || {};
+  const nucleus = cell.nucleus || {};
+  const organelles = cell.organelles || {};
+  const receptors = cell.receptors || {};
+  const signaling = cell.signaling || {};
+  const trials = cell.trials || [];
+  const flags = cell.flags || [];
+
+  const scoreRow = (label, val, max = 100) => `
+    <div class="score-row">
+      <span class="label">${label}</span>
+      <span class="value" style="color:${scoreColor(val, max)}">${val != null ? val.toFixed(1) : '—'}</span>
+    </div>
+    <div class="score-bar"><div class="score-bar-fill" style="width:${val != null ? (val / max * 100) : 0}%;background:${scoreColor(val, max)}"></div></div>
+  `;
+
+  let html = `
+    <div class="detail-header">
+      <div class="detail-ticker">${cell.ticker}</div>
+      <div class="detail-name">${cell.name}</div>
+      <span class="detail-tissue" style="background:${colorFor(cell.tissue)}">${cell.tissue}</span>
+    </div>
+  `;
+
+  // Scores
+  html += `
+    <div class="detail-section">
+      <h3>📊 Scores</h3>
+      ${scoreRow('Composite', cell.composite_score)}
+      ${scoreRow('Clinical Dev', cell.clinical_dev_score)}
+      ${scoreRow('Financial', cell.financial_score)}
+      ${scoreRow('Catalyst', cell.catalyst_score)}
+      ${cell.composite_rank ? `<div class="score-row"><span class="label">Rank</span><span class="value">#${cell.composite_rank}</span></div>` : ''}
+    </div>
+  `;
+
+  // Membrane
+  html += `
+    <div class="detail-section">
+      <h3>🛡️ Membrane</h3>
+      <div class="score-row"><span class="label">Cap Tier</span><span class="value">${membrane.cap_tier || '—'}</span></div>
+      <div class="score-row"><span class="label">Stage</span><span class="value">${membrane.stage || '—'}</span></div>
+      <div class="score-row"><span class="label">Severity</span><span class="value">${membrane.severity || '—'}</span></div>
+      <div class="score-row"><span class="label">Price</span><span class="value">${cell.latest_price ? '$' + cell.latest_price.toFixed(2) : '—'}</span></div>
+    </div>
+  `;
+
+  // Nucleus
+  html += `
+    <div class="detail-section">
+      <h3>🧬 Nucleus (Pipeline)</h3>
+      <div class="score-row"><span class="label">Lead Phase</span><span class="value">${nucleus.lead_phase || '—'}</span></div>
+      <div class="score-row"><span class="label">Lead NCT</span><span class="value" style="color:${nucleus.lead_nct ? 'var(--purple)' : 'inherit'}">${nucleus.lead_nct || '—'}</span></div>
+      <div class="score-row"><span class="label">Status</span><span class="value">${nucleus.lead_status || '—'}</span></div>
+      ${nucleus.lead_pcd ? `<div class="score-row"><span class="label">Primary Completion</span><span class="value" style="color:var(--orange)">${nucleus.lead_pcd}</span></div>` : ''}
+    </div>
+  `;
+
+  // Organelles
+  html += `
+    <div class="detail-section">
+      <h3>⚡ Organelles (Financial)</h3>
+      <div class="score-row"><span class="label">Health</span><span class="value" style="color:${scoreColor(organelles.financial_health)}">${organelles.financial_health != null ? organelles.financial_health.toFixed(1) : '—'}</span></div>
+      <div class="score-row"><span class="label">Cash Runway</span><span class="value">${organelles.cash_runway || '—'}</span></div>
+      <div class="score-row"><span class="label">Uncertainty</span><span class="value">${organelles.uncertainty_penalty != null ? organelles.uncertainty_penalty.toFixed(2) : '—'}</span></div>
+    </div>
+  `;
+
+  // Receptors (catalysts)
+  html += `
+    <div class="detail-section">
+      <h3>📡 Receptors (${receptors.catalyst_count || 0} catalysts)</h3>
+      ${(receptors.catalysts || []).map(cat => `
+        <div class="trial-item">
+          <span class="nct">${cat.nct_id}</span>
+          <span class="phase">${cat.phase}</span>
+          <br><span class="status">${cat.status}</span>
+          ${cat.primary_completion_date ? `<br><span class="pcd">PCD: ${cat.primary_completion_date}</span>` : ''}
+        </div>
+      `).join('') || '<div style="color:var(--text-dim);font-size:12px">No upcoming catalysts</div>'}
+    </div>
+  `;
+
+  // Signaling
+  html += `
+    <div class="detail-section">
+      <h3>🔗 Signaling (${signaling.trial_connections || 0} connections)</h3>
+      ${(signaling.shared_sponsors || []).slice(0, 8).map(s => `<span class="flag-tag">${s}</span>`).join('') || '<div style="color:var(--text-dim);font-size:12px">No shared sponsors</div>'}
+    </div>
+  `;
+
+  // Trials
+  if (trials.length) {
+    html += `
+      <div class="detail-section">
+        <h3>📋 Trials (${trials.length})</h3>
+        ${trials.slice(0, 10).map(t => `
+          <div class="trial-item">
+            <span class="nct">${t.nct_id}</span>
+            <span class="phase">${t.phase || 'Unknown'}</span>
+            <br><span class="status">${t.overall_status || t.status || 'Unknown'}</span>
+            ${t.primary_completion_date ? `<br><span class="pcd">PCD: ${t.primary_completion_date}</span>` : ''}
+          </div>
+        `).join('')}
+        ${trials.length > 10 ? `<div style="text-align:center;color:var(--text-dim);font-size:11px;padding:4px">+${trials.length - 10} more</div>` : ''}
+      </div>
+    `;
+  }
+
+  // Flags
+  if (flags.length) {
+    html += `<div class="detail-section"><h3>🚩 Flags</h3>${flags.map(f => `<span class="flag-tag">${f}</span>`).join('')}</div>`;
+  }
+
+  document.getElementById('detailContent').innerHTML = html;
+}
+
+function renderDetailError(ticker, msg) {
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-empty">
+      <span class="icon">⚠️</span>
+      Error loading ${ticker}: ${msg}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Data loading
+// ═══════════════════════════════════════════════════════════════════
+async function loadAll(snapshot) {
+  showLoading(true);
+  const qs = snapshot ? `?snapshot=${snapshot}` : '';
+
+  try {
+    const results = await Promise.allSettled([
+      api('/api/health'),
+      api('/api/atlas/meta'),
+      api(`/api/atlas/stats${qs}`),
+      api(`/api/atlas/cells${qs}`),
+      api(`/api/network${qs}`),
+    ]);
+
+    const [health, meta, stats, cells, network] = results.map(r => r.status === 'fulfilled' ? r.value : null);
+
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        const names = ['health', 'meta', 'stats', 'cells', 'network'];
+        console.warn(`API ${names[i]} failed:`, r.reason);
+      }
+    });
+
+    if (health) {
+      state.snapshots = health.snapshots || [];
+      populateSnapshots(state.snapshots);
+    }
+    if (meta) {
+      state.meta = meta;
+      populateTissueFilter(meta.tissues || []);
+    }
+    if (stats) {
+      state.stats = stats;
+      renderStats();
+    }
+    if (cells) {
+      state.cells = cells.cells || [];
+    } else {
+      document.getElementById('chartTitle').textContent = '⚠️ Failed to load cells — check API';
+      showLoading(false);
+      return;
+    }
+    if (network) {
+      state.network = network;
+    }
+
+    renderChart();
+  } catch (e) {
+    console.error('Load error:', e);
+    document.getElementById('chartTitle').textContent = '⚠️ Error: ' + e.message;
+  }
+  showLoading(false);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Event handlers
+// ═══════════════════════════════════════════════════════════════════
+document.getElementById('snapshotSelect').addEventListener('change', (e) => {
+  loadAll(e.target.value);
+});
+
+document.getElementById('tissueFilter').addEventListener('change', (e) => {
+  state.filters.tissue = e.target.value;
+  renderChart();
+});
+
+document.getElementById('minScoreFilter').addEventListener('input', (e) => {
+  state.filters.minScore = parseFloat(e.target.value) || 0;
+  renderChart();
+});
+
+document.getElementById('catalystOnly').addEventListener('change', (e) => {
+  state.filters.catalystOnly = e.target.checked;
+  renderChart();
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.view = tab.dataset.view;
+    renderChart();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════════════
+loadAll();
+</script>
+</body>
+</html>
