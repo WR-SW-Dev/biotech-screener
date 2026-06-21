@@ -8,14 +8,31 @@
 
 ## Purpose
 
-On 2026-07-08, measure final_score IC on the 2026-06-18 base date at T+20 horizon.
+On 2026-07-08, measure IC on the 2026-06-18 base date at T+20 horizon for the DEM
+ranker output AND a set of candidate/baseline signals.
 
-This IC measurement is the **final confirmation gate** for DEM changes.
+**Scope expanded 2026-06-20 (Catalyst Validation Addendum).** Originally this gate
+measured `final_score` only. It now also serves as the **forward out-of-sample test**
+for `catalyst_decay_w` — the in-sample-only Phase 3 candidate that failed look-back OOS
+(see Phase C memo addendum). Measure all of:
 
-Decision:
+```
+final_score        (the DEM ranker output — primary gate, unchanged)
+catalyst_decay_w   (Phase 3 candidate — forward OOS confirmation)
+catalyst_score     (raw catalyst, secondary)
+coinvest_score_z   (institutional baseline — expected weak within cohort)
+financial_score    (financial baseline — expected negative)
+```
+
+This is the **final confirmation gate** for DEM changes AND the decisive forward test
+for the catalyst Phase 3 lane.
+
+Decision (final_score):
 - **IC >= 0.0200:** Unblock DEM (proceed with tuning or Phase 3)
 - **IC < 0.0200:** Confirm blocker (await operator Phase 3 override or maintain freeze)
 - **IC unobservable:** Extend measurement window; retry on 2026-07-15
+
+Joint outcome logic (final_score × catalyst_decay_w) is in Step 4 below.
 
 ---
 
@@ -75,31 +92,34 @@ ls data/snapshots/ | grep -E "2026-07-0[8-9]|2026-07-1[0-9]|2026-07-2[0-9]|2026-
 
 **Stop if:** Base or forward snapshot missing. Notify operator.
 
-### Step 2: Run IC Measurement
+### Step 2: Run IC Measurement (all five fields)
+
+The tool now supports `--score-field` (added 2026-06-20, default `final_score`).
+Run once per field. The measurement window MUST span base + horizon, or forward
+returns silently drop to NaN (methodological catch found 2026-06-20) — set
+`--end-date` to at least 2026-07-15 so the T+20 forward snapshot loads.
 
 ```bash
-python3 tools/measure_final_score_ic_spec100.py
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+
+for FLD in final_score catalyst_decay_w catalyst_score coinvest_score_z financial_score; do
+  echo "=== $FLD ==="
+  python3 tools/measure_final_score_ic_spec100.py \
+    --score-field "$FLD" \
+    --start-date 2026-06-18 --end-date 2026-07-15 \
+    --horizons 20
+done
 ```
 
-Expected output:
+- Default field (`final_score`) writes the original DEM-gate artifacts; non-default
+  fields write `signal_ic_<field>_*` files (no clobbering).
+- Primary universe: actionable_rank <= 60. Also run `--start-date`/`--end-date` on the
+  full eligible set if a `--segment` option is later added (currently cohort-scoped).
+- Forward snapshot: 2026-07-08 or nearest valid later snapshot within tolerance.
 
-```
-Spec 100 Final Score IC Measurement
-Base date: 2026-06-18
-Forward date(s): [listed]
-Eligible universe: 60 tickers
-Horizon: T+20
-
-final_score IC = [value]
-t-stat = [value]
-Observations: [count]
-Status: [PASS|FAIL|UNOBSERVABLE]
-```
-
-**Record:**
-- final_score mean_ic
-- t-stat
-- observation count
+**Record for EACH field:**
+- mean_ic, t-stat, observation count
+- pass/fail vs 0.0200
 - date of execution
 
 ### Step 3: Compare to Threshold
@@ -155,28 +175,78 @@ Actions:
 
 ---
 
+## Step 5: Joint Outcome Logic (final_score × catalyst_decay_w)
+
+Added 2026-06-20. After recording all five fields, apply the joint outcome.
+This is the **forward out-of-sample test** for the catalyst Phase 3 candidate.
+
+```
+If final_score PASSES (>= 0.0200) and catalyst_decay_w PASSES:
+  DEM_IC_GATE_PASSED_WITH_CATALYST_SUPPORT
+  → Operator review may consider Phase 3 design (current ranker viable AND
+     catalyst confirmed forward — strongest case for a Phase 3 lane).
+
+If final_score FAILS and catalyst_decay_w PASSES:
+  DEM_CURRENT_RANKER_BLOCKED_BUT_CATALYST_PHASE3_CANDIDATE_REOPENED
+  → Current ranker stays blocked. catalyst_decay_w cleared its forward OOS test;
+     operator may approve a DESIGN-ONLY Phase 3 catalyst lane. Still no implementation
+     without a separate operator-approved Phase 3 memo.
+
+If final_score FAILS and catalyst_decay_w FAILS:
+  DEM_BLOCKER_CONFIRMED_AND_CATALYST_LANE_CLOSED_PENDING_MORE_DATA
+  → Maintain freeze. catalyst_decay_w is then 0/2 out-of-sample (look-back failed,
+     forward failed) — treat as a Feb–May artifact, not a candidate. Revisit only
+     with materially more data.
+
+If catalyst_decay_w is UNOBSERVABLE (forward snapshot gap):
+  CATALYST_FORWARD_OOS_UNOBSERVABLE
+  → Do NOT infer predictive value either way. Retry when forward data exists.
+```
+
+**Reference expectations (from validation, so results are interpretable):**
+- coinvest_score_z: expected WEAK within cohort (circularity) — not a candidate regardless.
+- financial_score: expected NEGATIVE — confirms baseline behavior; negative weight is coherent.
+- catalyst_score (raw): secondary; decayed variant is the lead.
+
+### Hard rule
+
+```
+No July 8 result automatically changes ranker behavior.
+All implementation still requires a separate operator-approved Phase 3 memo.
+A passing forward OOS REOPENS the design conversation; it does not authorize code.
+```
+
+---
+
 ## Metrics to Record
 
-Archive the following in a new audit artifact:
+Archive the following in a new audit artifact (one row per field):
 
 ```
 Execution Date: [YYYY-MM-DD]
 Base Snapshot: 2026-06-18
 Forward Snapshot: [YYYY-MM-DD]
 Horizon: T+20 days
-Eligible Universe: [count] tickers
-Eligible Universe Range: [min–max actionable_rank]
+Cohort Universe: [count] tickers (actionable_rank <= 60)
 
-final_score IC: [value, +/-0.xxxx]
-t-stat: [value, +/-x.xx]
-p-value: [if available]
-Observations: [count]
+field               mean_IC      t-stat   obs   threshold   status
+final_score         [+/-0.xxxx]  [+/-x.x] [n]   >=0.0200    PASS|FAIL|UNOBS
+catalyst_decay_w    [+/-0.xxxx]  [+/-x.x] [n]   >=0.0200    PASS|FAIL|UNOBS
+catalyst_score      [+/-0.xxxx]  [+/-x.x] [n]   >=0.0200    PASS|FAIL|UNOBS
+coinvest_score_z    [+/-0.xxxx]  [+/-x.x] [n]   >=0.0200    PASS|FAIL|UNOBS
+financial_score     [+/-0.xxxx]  [+/-x.x] [n]   >=0.0200    PASS|FAIL|UNOBS
 
-Threshold: >= 0.0200
-Status: PASS | FAIL | UNOBSERVABLE
+Joint outcome (Step 5): [DEM_IC_GATE_PASSED_WITH_CATALYST_SUPPORT |
+  DEM_CURRENT_RANKER_BLOCKED_BUT_CATALYST_PHASE3_CANDIDATE_REOPENED |
+  DEM_BLOCKER_CONFIRMED_AND_CATALYST_LANE_CLOSED_PENDING_MORE_DATA |
+  CATALYST_FORWARD_OOS_UNOBSERVABLE]
 
 Result: [narrative summary]
 ```
+
+**Caveat to record:** a single forward date is one observation. Note the limited
+sample; meaningful significance still requires accumulating June+ snapshots
+(block-bootstrap as in the validation artifact), not just the 2026-07-08 point.
 
 ---
 
