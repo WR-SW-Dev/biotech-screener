@@ -441,3 +441,6 @@ production_data/pdufa_dates_extracted.json
 # Temp/debug scripts
 _*.py
 _*.json
+
+# Scraped web page cache (contains third-party embedded API keys)
+data/herald_cache/
