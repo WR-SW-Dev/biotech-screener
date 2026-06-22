@@ -373,7 +373,8 @@ def main() -> None:
 
     # Required arguments
     parser.add_argument(
-        "--as-o",
+        "--as-of",
+        dest="as_of",
         type=lambda s: date.fromisoformat(s),
         required=True,
         help="Snapshot date (YYYY-MM-DD)",
