@@ -39,10 +39,30 @@ def _write_health_json(snap_dir: Path, date: str, status: str, reasons: list[str
     }
     p = d / "phase2_health.json"
     p.write_text(json.dumps(health))
-    # Sibling files expected by assert_outputs_exist (rankings.csv must be >= 100 bytes)
+    # Sibling files expected by assert_outputs_exist. Each must clear its
+    # min_bytes threshold: rankings.csv >= 100, decision_portfolio.csv >= 100,
+    # screen_output.json >= 1000.
     csv_header = "ticker,composite_score,rank,tier\n"
     csv_rows = "".join(f"TICK{i:02d},0.{i:02d},{i},B\n" for i in range(10))
     (d / "rankings.csv").write_text(csv_header + csv_rows)
+    (d / "decision_portfolio.csv").write_text(csv_header + csv_rows)
+    # screen_output.json must exceed the 1000-byte threshold; build enough
+    # representative rows that the serialized payload is comfortably over 1 KB.
+    screen_output = {
+        "as_of_date": date,
+        "results": [
+            {
+                "ticker": f"TICK{i:02d}",
+                "composite_score": round(0.01 * i, 4),
+                "rank": i,
+                "tier": "B",
+                "final_score": round(0.02 * i, 4),
+                "eligible": True,
+            }
+            for i in range(20)
+        ],
+    }
+    (d / "screen_output.json").write_text(json.dumps(screen_output, indent=2))
     (d / "metadata.json").write_text(json.dumps({"as_of_date": date}))
     return p
 
