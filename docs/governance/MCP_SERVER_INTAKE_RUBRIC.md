@@ -103,7 +103,7 @@ $ hermes mcp test <name>
 
 | Server | Status | Notes |
 |---|---|---|
-| `semgrep mcp` (canonical) | E1 PASS — awaiting E2 admission decision | `semgrep==1.167.0`; effective 2-tool allowlist (see E1); LGPL sign-off pending; E0: `SEMGREP_MCP_INTAKE_E0_2026_06_22.md`; E1: `SEMGREP_MCP_E1_SANDBOX_TRIAL_2026_06_22.md` |
+| `semgrep mcp` (canonical) | **E2 COMPLETE — ADMIT\_WITH\_CONSTRAINTS\_FOR\_MANUAL\_USE\_ONLY; NOT REGISTERED** | `semgrep==1.167.0`; 2-tool allowlist; 4 blockers for Hermes reg (B1–B4); workstream paused; E2: `SEMGREP_MCP_E2_ADMISSION_DECISION_2026_06_22.md` |
 
 ---
 
@@ -126,3 +126,4 @@ evaluated package is the `semgrep mcp` subcommand built into `semgrep==1.167.0`.
 | 2026-06-22 | v1.0 created; `biotech` admitted as Package C2 local exemption; `semgrep-mcp` queued as Package E |
 | 2026-06-22 | E0 complete: `semgrep mcp` (1.167.0) evaluated — ADMIT\_FOR\_E1\_TRIAL; LGPL sign-off pending |
 | 2026-06-22 | E1 PASS: sandbox trial confirmed 0 findings on biotech-mcp, clean temp writes; effective allowlist = 2 tools; awaiting E2 |
+| 2026-06-22 | E2 COMPLETE: `ADMIT_WITH_CONSTRAINTS_FOR_MANUAL_USE_ONLY`; NOT REGISTERED; 4 blockers for Hermes reg (roots/list, LGPL, startup fetch, semgrep_scan broken); workstream paused |
