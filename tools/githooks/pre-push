@@ -1,0 +1,47 @@
+#!/bin/sh
+# pre-push guard — INC-2026-06-20-AUTOPUSH defense-in-depth (Package B step 3)
+#
+# Blocks pushes to `main` from a NON-INTERACTIVE context (agent / cron / CI),
+# where there is no human at a terminal to authorize the push. Interactive
+# pushes from a real terminal pass through untouched.
+#
+# Rationale: Hermes `approvals.cron_mode: deny` is bypassed by the
+# `command_allowlist` shell-via-`-c` entry (proven: weekly-skill-harvester
+# pushed 3x autonomously). Branch protection on `main` is impossible on the
+# free GitHub plan. This local hook is the only durable backstop.
+#
+# Override (deliberate non-interactive push): ALLOW_AGENT_PUSH=1 git push ...
+# This hook is bypassable with `git push --no-verify`; it is a guard, not a
+# hard control. Canonical source: tools/githooks/pre-push (install via
+# tools/githooks/install-hooks.sh). After the guard it runs the preserved
+# git-lfs pre-push hook.
+
+remote="$1"
+url="$2"
+
+# Capture stdin (the ref list git feeds the hook) so we can both inspect it
+# AND forward it to the chained git-lfs hook.
+refs="$(cat)"
+
+# Does this push update refs/heads/main on the remote? (3rd field per line)
+pushes_main=$(printf '%s\n' "$refs" | awk '$3 == "refs/heads/main" {print "yes"}' | head -1)
+
+if [ "$pushes_main" = "yes" ]; then
+  # Non-interactive == stderr is not a TTY. (stdin is always a pipe here.)
+  if [ "${ALLOW_AGENT_PUSH:-}" != "1" ] && [ ! -t 2 ]; then
+    echo "" >&2
+    echo "pre-push: BLOCKED — non-interactive push to 'main'." >&2
+    echo "  INC-2026-06-20-AUTOPUSH guard: this clone refuses automated/agent" >&2
+    echo "  pushes to main. No TTY detected (cron/agent/CI context)." >&2
+    echo "  To push deliberately and non-interactively: ALLOW_AGENT_PUSH=1 git push ..." >&2
+    echo "" >&2
+    exit 1
+  fi
+fi
+
+# Chain to the preserved git-lfs pre-push hook (or git-lfs directly).
+if [ -x "$(dirname "$0")/pre-push.lfs-orig" ]; then
+  printf '%s\n' "$refs" | "$(dirname "$0")/pre-push.lfs-orig" "$@"
+elif command -v git-lfs >/dev/null 2>&1; then
+  printf '%s\n' "$refs" | git lfs pre-push "$@"
+fi
