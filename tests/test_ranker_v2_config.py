@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ranker_v2_pairwise import FEATURES_MINIMAL_V2, RankerV2Config, get_feature_specs
@@ -113,3 +115,34 @@ class TestDeployedProvenance:
         deployed = art["model"]["weights"][coinvest_idx]
         assert deployed == prov["capped_weight_value"]
         assert prov["capped_weight_value"] < prov["trained_weight_value"]
+
+
+class TestDeployedLiveWeights:
+    """Pin the EXACT deployed live-pilot weight vector and bias.
+
+    The deployed artifact is the capped live-pilot vector (provenance:
+    model_variant=deployed_live_pilot). Locking the exact numbers catches an
+    accidental retrain / overwrite of the deployed model.
+    """
+
+    def _artifact(self):
+        return json.loads(Path("production_data/ranker_v2_model.json").read_text(encoding="utf-8"))
+
+    def test_coinvest_weight_exact(self):
+        art = self._artifact()
+        idx = art["model"]["feature_names"].index("coinvest_score_z")
+        assert art["model"]["weights"][idx] == pytest.approx(0.02)
+
+    def test_financial_weight_exact(self):
+        art = self._artifact()
+        idx = art["model"]["feature_names"].index("financial_score")
+        assert art["model"]["weights"][idx] == pytest.approx(-0.05332037006884376)
+
+    def test_bias_exact(self):
+        art = self._artifact()
+        assert art["model"]["bias"] == pytest.approx(0.5019276351788997)
+
+    def test_capped_weight_value_matches_deployed_coinvest(self):
+        art = self._artifact()
+        idx = art["model"]["feature_names"].index("coinvest_score_z")
+        assert art["provenance"]["capped_weight_value"] == pytest.approx(art["model"]["weights"][idx])

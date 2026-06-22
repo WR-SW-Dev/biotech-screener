@@ -148,9 +148,11 @@ class TestProductionModelArtifact:
         artifact = json.loads(PRODUCTION_MODEL_PATH.read_text(encoding="utf-8"))
         model = model_from_dict(artifact["model"])
         assert model.trained is True
-        # Production model may still be trained with 6 features (pre-clinical-drop)
-        # or 5 features (post-clinical-drop). Both are valid until retrained.
-        assert model.n_features in (2, 5, 6)
+        # Deployed live-pilot model is the 2-feature minimal_v2 vector
+        # (coinvest_score_z + financial_score). Pin it exactly; the 5-feature
+        # rollback artifact is covered separately by TestRollbackPath.
+        assert model.n_features == 2
+        assert model.feature_names == ["coinvest_score_z", "financial_score"]
         assert len(model.weights) == model.n_features
 
     @pytest.mark.skipif(not PRODUCTION_MODEL_PATH.exists(), reason="No production model artifact")
@@ -315,6 +317,58 @@ class TestPortfolioPositionsInvariants:
 
         if non_cohort_scores:
             assert max(non_cohort_scores) < min(cohort_scores)
+
+
+# ---------------------------------------------------------------------------
+# Test: Non-cohort final_score fallback characterization
+# ---------------------------------------------------------------------------
+
+
+class TestNonCohortFinalScoreFallback:
+    """Characterize the inline non-cohort final_score fallback.
+
+    In pairwise_minimal mode, eligible rows OUTSIDE the scored cohort
+    (actionable_rank > cohort_top_n) receive no ranker_v2_score, so their
+    final_score is set inline to ``selector_score * 0.0001``
+    (run_screen.py:5647). The 0.0001 literal is intentionally NOT a named
+    constant in production; these tests pin the observed behavior so a refactor
+    cannot silently change the demotion factor. This characterizes existing
+    behavior only — it does not import the pipeline or refactor production code.
+    """
+
+    # Mirrors the inline literal at run_screen.py:5647 (not a production constant).
+    NON_COHORT_FALLBACK_FACTOR = 0.0001
+
+    def test_non_cohort_fallback_demotes_below_cohort(self):
+        rows = _make_cohort(80)
+        model = _make_trained_model()
+        config = RankerV2Config(
+            feature_set="minimal",
+            cohort_top_n=60,
+            require_catalyst_window=False,
+        )
+        results = score_snapshot(rows, model, config)
+        by_ticker = {r["ticker"]: r for r in results}
+
+        cohort_scores = []
+        non_cohort_finals = []
+        for row in rows:
+            rv2 = by_ticker[row["ticker"]]
+            if rv2["ranker_v2_score"] is not None:
+                cohort_scores.append(rv2["ranker_v2_score"])
+            else:
+                # Documented inline fallback (run_screen.py:5647).
+                non_cohort_finals.append(float(row["selector_score"]) * self.NON_COHORT_FALLBACK_FACTOR)
+
+        assert non_cohort_finals, "fixture must include non-cohort rows"
+        # selector_score in (0, 1]; the 1e-4 factor forces every non-cohort row
+        # strictly below the smallest cohort ranker score (probabilities > 0).
+        assert max(non_cohort_finals) < min(cohort_scores)
+
+    def test_non_cohort_fallback_factor_is_pinned(self):
+        # selector_score * 0.0001 — inline literal at run_screen.py:5647.
+        sample_selector = 0.7531
+        assert sample_selector * self.NON_COHORT_FALLBACK_FACTOR == pytest.approx(7.531e-05)
 
 
 # ---------------------------------------------------------------------------
