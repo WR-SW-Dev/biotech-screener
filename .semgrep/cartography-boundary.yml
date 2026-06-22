@@ -1,0 +1,52 @@
+# Semgrep governance — scientific_cartography READ_ONLY_DIAGNOSTIC boundary.
+#
+# Locked boundary (per governance memos): scientific_cartography/ is a
+# count-structure diagnostic layer. It must never write scoring / ranking /
+# sizing / selector output fields, and its exporters must not emit
+# buy/sell/hold recommendation language.
+#
+# NOTE: the exporters legitimately contain the attestation key
+# "final_score_change": False. The C1 rule matches WRITES to the exact field
+# names (anchored regex), so it does NOT flag that attestation marker.
+#
+# Loaded by .github/workflows/semgrep-governance-audit.yml (--config .semgrep/)
+# and by the local pre-commit hook (ERROR severity = blocking).
+rules:
+  # C1 (blocking) — no scoring/ranking/sizing/selector field writes.
+  - id: cartography-no-scoring-field-write
+    languages: [python]
+    severity: ERROR
+    message: >
+      scientific_cartography is READ_ONLY_DIAGNOSTIC: it must not write a
+      scoring/ranking/sizing/selector output field (final_score,
+      ranker_v2_score, position_size, target_weight, portfolio_weight,
+      selected, action). Remove this write — diagnostics produce count
+      structures only.
+    paths:
+      include:
+        - "scientific_cartography/"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: $D[$K] = $V
+              - metavariable-regex:
+                  metavariable: $K
+                  regex: "^[\"'](final_score|ranker_v2_score|position_size|target_weight|portfolio_weight|selected|signal_action)[\"']$"
+          - patterns:
+              - pattern: $OBJ.$ATTR = $V
+              - metavariable-regex:
+                  metavariable: $ATTR
+                  regex: "^(final_score|ranker_v2_score|position_size|target_weight|portfolio_weight)$"
+
+  # C2 (warn-first) — no buy/sell/hold recommendation language in exporters.
+  - id: cartography-no-recommendation-language
+    languages: [python]
+    severity: WARNING
+    message: >
+      Recommendation/position language in a cartography exporter. Cartography
+      artifacts are count-structure diagnostics only — no buy/sell/overweight/
+      price-target guidance. Rephrase as a neutral count/structure description.
+    paths:
+      include:
+        - "scientific_cartography/export/"
+    pattern-regex: '"[^"]*\b(strong buy|buy rating|sell rating|overweight|underweight|price target|outperform|underperform)\b[^"]*"'

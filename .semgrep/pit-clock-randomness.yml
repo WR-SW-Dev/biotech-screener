@@ -1,0 +1,77 @@
+# Semgrep governance — point-in-time (PIT) determinism guardrails.
+#
+# Extends existing R1 (no-live-source-in-pit-replay, which covers NETWORK
+# sources) with the two remaining nondeterminism classes hardened by hand:
+#   P1 — live wall-clock access in scoring/ranking/replay paths
+#   P2 — unseeded global-state randomness in scoring/ranking/replay paths
+#
+# Both are WARNING (warn-first tier): they surface in the manual scan and the
+# CI audit, and are NOT in the local blocking commit gate (ERROR-only) until a
+# baseline-triage cycle confirms they are clean. Scoring/replay code must take
+# time via an explicit as_of_date and randomness via a seeded RNG.
+rules:
+  # P1 — live clock in scoring/ranking/replay code.
+  - id: pit-no-live-clock-in-scoring
+    languages: [python]
+    severity: WARNING
+    message: >
+      Live wall-clock access in a scoring/ranking/replay path. PIT-correct code
+      must derive time from an explicit as_of_date, not the live clock.
+    paths:
+      include:
+        - "module_5_*.py"
+        - "ranker_engine.py"
+        - "ranker_v2_pairwise.py"
+        - "selector_engine.py"
+        - "decision_engine.py"
+        - "pit_*.py"
+        - "**/*replay*.py"
+      exclude:
+        - "**/tests/**"
+    pattern-either:
+      - pattern: datetime.now(...)
+      - pattern: datetime.datetime.now(...)
+      - pattern: datetime.utcnow(...)
+      - pattern: datetime.datetime.utcnow(...)
+      - pattern: date.today(...)
+      - pattern: datetime.date.today(...)
+      - pattern: pd.Timestamp.now(...)
+      - pattern: pandas.Timestamp.now(...)
+      - pattern: time.time(...)
+
+  # P2 — unseeded global-state randomness in scoring/ranking/replay code.
+  - id: pit-no-unseeded-random-in-scoring
+    languages: [python]
+    severity: WARNING
+    message: >
+      Global-state randomness in a scoring/ranking/replay path. Use a seeded
+      generator (np.random.default_rng(seed=...)) so results are reproducible.
+    paths:
+      include:
+        - "module_5_*.py"
+        - "ranker_engine.py"
+        - "ranker_v2_pairwise.py"
+        - "selector_engine.py"
+        - "decision_engine.py"
+        - "pit_*.py"
+        - "**/*replay*.py"
+      exclude:
+        - "**/tests/**"
+    patterns:
+      - pattern-either:
+          - pattern: random.random(...)
+          - pattern: random.randint(...)
+          - pattern: random.choice(...)
+          - pattern: random.uniform(...)
+          - pattern: random.sample(...)
+          - pattern: random.shuffle(...)
+          - patterns:
+              - pattern: np.random.$F(...)
+              - metavariable-regex:
+                  metavariable: $F
+                  regex: "^(rand|randn|randint|random|random_sample|normal|uniform|choice|shuffle|permutation)$"
+          - patterns:
+              - pattern: numpy.random.$F(...)
+              - metavariable-regex:
+                  metavariable: $F
+                  regex: "^(rand|randn|randint|random|random_sample|normal|uniform|choice|shuffle|permutation)$"

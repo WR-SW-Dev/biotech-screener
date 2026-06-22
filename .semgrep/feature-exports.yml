@@ -1,0 +1,54 @@
+# Semgrep governance — rankings.csv feature-export regression guard.
+#
+# The Event-EV expectation layer reached ~95% weighted feature coverage by
+# exporting these four market-data pass-through fields in SNAPSHOT_COLUMNS
+# (run_screen_columns.py). Silently dropping or renaming any of them would
+# regress coverage without a test failure.
+#
+# Idiom: match the SNAPSHOT_COLUMNS = (...) tuple, then fire (pattern-not-regex)
+# if a required field name is absent from it. ERROR = blocking; this is a
+# high-confidence, constant-pinned check, safe to gate commits on.
+#
+# Caveat (acknowledged): this proves the column NAME is present in the source
+# tuple. It does not prove the field is populated at runtime — snapshot
+# monitors still own runtime coverage.
+rules:
+  - id: rankings-required-field-short_interest_pct
+    languages: [python]
+    severity: ERROR
+    message: "SNAPSHOT_COLUMNS must include 'short_interest_pct' (Event-EV expectation feature). Do not drop/rename it."
+    paths:
+      include: ["run_screen_columns.py"]
+    patterns:
+      - pattern: SNAPSHOT_COLUMNS = (...)
+      - pattern-not-regex: '"short_interest_pct"'
+
+  - id: rankings-required-field-close_price
+    languages: [python]
+    severity: ERROR
+    message: "SNAPSHOT_COLUMNS must include 'close_price' (Event-EV expectation feature). Do not drop/rename it."
+    paths:
+      include: ["run_screen_columns.py"]
+    patterns:
+      - pattern: SNAPSHOT_COLUMNS = (...)
+      - pattern-not-regex: '"close_price"'
+
+  - id: rankings-required-field-market_cap_mm
+    languages: [python]
+    severity: ERROR
+    message: "SNAPSHOT_COLUMNS must include 'market_cap_mm' (Event-EV expectation feature). Do not drop/rename it."
+    paths:
+      include: ["run_screen_columns.py"]
+    patterns:
+      - pattern: SNAPSHOT_COLUMNS = (...)
+      - pattern-not-regex: '"market_cap_mm"'
+
+  - id: rankings-required-field-priced_move_pct
+    languages: [python]
+    severity: ERROR
+    message: "SNAPSHOT_COLUMNS must include 'priced_move_pct' (Event-EV expectation feature). Do not drop/rename it."
+    paths:
+      include: ["run_screen_columns.py"]
+    patterns:
+      - pattern: SNAPSHOT_COLUMNS = (...)
+      - pattern-not-regex: '"priced_move_pct"'

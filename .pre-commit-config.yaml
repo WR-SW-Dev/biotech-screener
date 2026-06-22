@@ -63,3 +63,21 @@ repos:
             .*\.csv|
             .*\.tar\.gz
           )$
+
+  # Deterministic governance/regression guardrail (.semgrep/). Blocks commits on
+  # ERROR-severity rules ONLY — cartography read-only boundary (C1), live source
+  # in PIT/replay (R1), and rankings feature-export drops. WARNING-tier rules
+  # (recommendation language, live clock, unseeded RNG, snapshot/model write
+  # warnings) are NOT gated here; surface them on demand with:
+  #   semgrep scan --config .semgrep/
+  # Requires `semgrep` on PATH (pip install semgrep / uv tool install semgrep).
+  # Scans only staged *.py; rule `paths:` keep it scoped, so commits to
+  # unrelated files are unaffected.
+  - repo: local
+    hooks:
+      - id: semgrep-governance
+        name: semgrep governance guardrail (ERROR = blocking)
+        entry: semgrep scan --config .semgrep/ --severity ERROR --error --quiet --metrics off --disable-version-check
+        language: system
+        types: [python]
+        require_serial: true
