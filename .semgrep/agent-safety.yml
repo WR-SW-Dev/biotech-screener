@@ -1,0 +1,70 @@
+# Semgrep governance — agent / MCP / deserialization safety.
+#
+# Plan §4. Complements what already exists:
+#   - committed-secret detection -> detect-secrets (pre-commit)
+#   - subprocess(..., shell=True) / os.system -> R3 (governance.yml, WARNING)
+# This file adds the unsafe-deserialization / code-exec sinks, which had ZERO
+# baseline occurrences repo-wide (measured 2026-06-22), so they are ERROR
+# (blocking) per the "block immediately" rollout tier — no current code breaks.
+#
+# Scoped repo-wide (tests excluded): these shapes are dangerous in any module,
+# not only agent wrappers. Loaded by --config .semgrep/ (CI audit + pre-commit).
+rules:
+  # A1 (blocking) — unsafe YAML load (arbitrary object construction = RCE).
+  - id: unsafe-yaml-load
+    languages: [python]
+    severity: ERROR
+    message: >
+      Unsafe YAML deserialization. yaml.load without a safe Loader (and
+      yaml.unsafe_load) can construct arbitrary Python objects. Use
+      yaml.safe_load(...) or yaml.load(..., Loader=yaml.SafeLoader).
+    paths:
+      exclude: ["**/tests/**", "**/test_*.py"]
+    patterns:
+      - pattern-either:
+          - pattern: yaml.unsafe_load(...)
+          - patterns:
+              - pattern: yaml.load(...)
+              - pattern-not: yaml.load(..., Loader=yaml.SafeLoader)
+              - pattern-not: yaml.load(..., Loader=yaml.CSafeLoader)
+              - pattern-not: yaml.load(..., Loader=SafeLoader)
+              - pattern-not: yaml.load(..., Loader=CSafeLoader)
+
+  # A2 (blocking) — pickle deserialization (arbitrary code execution sink).
+  # NOTE: 0 baseline. If pickle-based caches are ever adopted deliberately,
+  # downgrade to WARNING rather than scatter nosem comments.
+  - id: unsafe-pickle-load
+    languages: [python]
+    severity: ERROR
+    message: >
+      pickle deserialization executes arbitrary code on untrusted input. Prefer
+      JSON / parquet for cached or external data.
+    paths:
+      exclude: ["**/tests/**", "**/test_*.py"]
+    pattern-either:
+      - pattern: pickle.load(...)
+      - pattern: pickle.loads(...)
+
+  # A3 (blocking) — dynamic code execution via eval/exec builtins.
+  - id: no-eval-exec
+    languages: [python]
+    severity: ERROR
+    message: >
+      eval()/exec() execute arbitrary code. Remove it — parse data explicitly
+      (json/ast.literal_eval) instead of evaluating it.
+    paths:
+      exclude: ["**/tests/**", "**/test_*.py"]
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+
+  # A4 (warn-first) — os.popen runs a shell command string (1 baseline hit).
+  - id: no-os-popen
+    languages: [python]
+    severity: WARNING
+    message: >
+      os.popen runs a command through the shell (injection-prone). Prefer an
+      arg-list subprocess call (subprocess.run([...], shell=False)).
+    paths:
+      exclude: ["**/tests/**", "**/test_*.py"]
+    pattern: os.popen(...)

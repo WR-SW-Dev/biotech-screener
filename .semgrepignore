@@ -1,0 +1,5 @@
+# Keep real scans (CI audit + local pre-commit) off the rule fixtures.
+# These .py files contain INTENTIONAL governance violations used only by
+# `semgrep --test` to validate the rules — they must never be flagged as
+# findings in the actual repo.
+.semgrep/*.py
