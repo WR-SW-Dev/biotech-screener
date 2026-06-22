@@ -46957,5 +46957,81 @@
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
     }
+  },
+  {
+    "ticker": "KLRA",
+    "name": null,
+    "company_name": "Kailera Therapeutics, Inc.",
+    "exchange": "NASDAQ",
+    "sector": "Biotechnology",
+    "status": "pending_data_collection",
+    "added_from_etf": false,
+    "added_date": "2026-06-22",
+    "etf_sources": [],
+    "market_cap": null,
+    "description": "H1 2026 biotech IPO add (Kailera Therapeutics, ~Apr 2026); manual universe maintenance 2026-06-22",
+    "coverage_status": {
+      "market_data": "pending",
+      "financials": "pending",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    }
+  },
+  {
+    "ticker": "PBLS",
+    "name": null,
+    "company_name": "Parabilis Medicines, Inc.",
+    "exchange": "NASDAQ",
+    "sector": "Biotechnology",
+    "status": "pending_data_collection",
+    "added_from_etf": false,
+    "added_date": "2026-06-22",
+    "etf_sources": [],
+    "market_cap": null,
+    "description": "Parabilis Medicines (fka Fog Pharma), Nasdaq IPO 2026-06-10; manual universe maintenance 2026-06-22",
+    "coverage_status": {
+      "market_data": "pending",
+      "financials": "pending",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    }
+  },
+  {
+    "ticker": "GENB",
+    "name": null,
+    "company_name": "Generate Biomedicines, Inc.",
+    "exchange": "NASDAQ",
+    "sector": "Biotechnology",
+    "status": "pending_data_collection",
+    "added_from_etf": false,
+    "added_date": "2026-06-22",
+    "etf_sources": [],
+    "market_cap": null,
+    "description": "Generate Biomedicines, ~Mar 2026 IPO; manual universe maintenance 2026-06-22",
+    "coverage_status": {
+      "market_data": "pending",
+      "financials": "pending",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    }
+  },
+  {
+    "ticker": "KARD",
+    "name": null,
+    "company_name": "Kardigan, Inc.",
+    "exchange": "NASDAQ",
+    "sector": "Biotechnology",
+    "status": "pending_data_collection",
+    "added_from_etf": false,
+    "added_date": "2026-06-22",
+    "etf_sources": [],
+    "market_cap": null,
+    "description": "Kardigan, ~Jun 2026 IPO; manual universe maintenance 2026-06-22",
+    "coverage_status": {
+      "market_data": "pending",
+      "financials": "pending",
+      "clinical_trials": "pending",
+      "scientific_cartography": "pending"
+    }
   }
 ]
