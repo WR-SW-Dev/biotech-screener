@@ -24,6 +24,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 try:
     sys.path.insert(0, str(SCRIPT_DIR / "tools"))
     from skills_logger_v2 import SkillExecutionLoggerV2
+
     SKILLS_LOGGER = SkillExecutionLoggerV2()
 except Exception:
     SKILLS_LOGGER = None
@@ -31,9 +32,12 @@ except Exception:
 
 def build_command(args: argparse.Namespace, extra: list[str]) -> list[str]:
     """Assemble the run_screen.py command."""
-    # --output is required by run_screen.py; put it next to the snapshot
+    # --output is required by run_screen.py; put it next to the snapshot.
+    # NOTE: do NOT pre-create the snapshot dir here. run_screen.py creates it
+    # after its overwrite policy passes; pre-creating it would trip run_screen's
+    # anti-clobber guard (which refuses when the managed dir already exists) and
+    # leave an empty snapshot dir (see _clear_empty_snapshot_dir).
     output_path = args.snapshot_dir / args.as_of_date / "screen_output.json"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         sys.executable,
         str(SCRIPT_DIR / "run_screen.py"),
@@ -56,6 +60,26 @@ def build_command(args: argparse.Namespace, extra: list[str]) -> list[str]:
     if extra:
         cmd.extend(extra)
     return cmd
+
+
+def _clear_empty_snapshot_dir(snap_dir: Path) -> bool:
+    """Remove a truly-empty managed snapshot dir so run_screen.py's anti-clobber
+    guard (which refuses to write when the managed dir already EXISTS) does not
+    deadlock on a leftover empty directory.
+
+    Returns True iff an empty directory was removed. NEVER removes a non-empty
+    dir — a non-empty managed dir is a real (or partial) snapshot and must be
+    left for run_screen.py's guard to refuse without --force-overwrite.
+    """
+    try:
+        if snap_dir.exists() and snap_dir.is_dir() and not any(snap_dir.iterdir()):
+            snap_dir.rmdir()
+            return True
+    except OSError:
+        # Defensive: never let cleanup failure abort the run — run_screen's
+        # guard remains the backstop.
+        return False
+    return False
 
 
 def assert_outputs_exist(snapshot_dir: Path, as_of_date: str) -> list[str]:
@@ -146,6 +170,13 @@ def main(argv: list[str] | None = None) -> int:
     args.log_file.parent.mkdir(parents=True, exist_ok=True)
 
     cmd = build_command(args, extra)
+
+    # Anti-deadlock: clear a truly-empty leftover snapshot dir so run_screen.py's
+    # anti-clobber guard does not refuse to write. Never removes a non-empty dir.
+    snap_dir = args.snapshot_dir / args.as_of_date
+    if _clear_empty_snapshot_dir(snap_dir):
+        print(f"[PHASE2] Removed empty leftover snapshot dir before run: {snap_dir}", file=sys.stderr)
+
     print(f"[PHASE2] Running: {' '.join(cmd)}", file=sys.stderr)
 
     # Run pipeline — all output captured to log, with timing instrumentation
