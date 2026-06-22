@@ -1,0 +1,101 @@
+# Semgrep governance rules — Phase 0 (audit / signal-collection only).
+#
+# These run NON-BLOCKING in CI (.github/workflows/semgrep-governance-audit.yml).
+# Severities below are rule metadata; Phase 0 CI never fails a PR on them.
+# Promote selected rules to blocking only after a baseline-triage cycle.
+#
+# NOT wired into local (/mnt/c) pre-commit. NOT a runtime dependency.
+rules:
+  # R1 — PIT/replay code must be cache-only / point-in-time: no live sources.
+  - id: no-live-source-in-pit-replay
+    languages: [python]
+    severity: ERROR
+    message: >
+      Live data source in a PIT/replay code path. PIT/replay must be
+      cache-only / point-in-time — remove the live network call or gate it
+      out of this path.
+    paths:
+      include:
+        - "/pit_financials.py"
+        - "**/*replay*.py"
+    patterns:
+      - pattern-either:
+          - pattern: yfinance.$F(...)
+          - pattern: requests.$M(...)
+          - pattern: urllib.request.urlopen(...)
+          - pattern: $X(..., live=True, ...)
+
+  # R2 — snapshot/artifact writes should go through approved writers only.
+  - id: snapshot-artifact-write-outside-approved-tool
+    languages: [python]
+    severity: WARNING
+    message: >
+      Write into data/snapshots or artifacts from a non-approved module.
+      Route snapshot/artifact writes through approved writers
+      (run_screen.py, tools/run_daily_production.py).
+    paths:
+      exclude:
+        - "/run_screen.py"
+        - "/tools/run_daily_production.py"
+        - "**/tests/**"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: open($PATH, $MODE, ...)
+              - metavariable-regex:
+                  metavariable: $PATH
+                  regex: ".*(data/snapshots|artifacts)/.*"
+              - metavariable-regex:
+                  metavariable: $MODE
+                  regex: "^[\"'][wax]"
+          - patterns:
+              - pattern: $DF.to_csv($PATH, ...)
+              - metavariable-regex:
+                  metavariable: $PATH
+                  regex: ".*(data/snapshots|artifacts)/.*"
+          - patterns:
+              - pattern: $DF.to_json($PATH, ...)
+              - metavariable-regex:
+                  metavariable: $PATH
+                  regex: ".*(data/snapshots|artifacts)/.*"
+
+  # R3 — no shell=True / os.system (known baseline hits; stays non-blocking).
+  - id: no-shell-true-or-os-system
+    languages: [python]
+    severity: WARNING
+    message: >
+      subprocess(..., shell=True) or os.system(...) detected. Prefer arg-list
+      subprocess calls to avoid shell-injection / quoting issues.
+    pattern-either:
+      - pattern: subprocess.run(..., shell=True, ...)
+      - pattern: subprocess.Popen(..., shell=True, ...)
+      - pattern: subprocess.call(..., shell=True, ...)
+      - pattern: subprocess.check_output(..., shell=True, ...)
+      - pattern: subprocess.check_call(..., shell=True, ...)
+      - pattern: os.system(...)
+
+  # R4 — ranker/model artifact writes only from approved promotion paths.
+  - id: model-artifact-write-guard
+    languages: [python]
+    severity: WARNING
+    message: >
+      Write to a ranker/model artifact (production_data/ranker_v2_model*.json)
+      outside an approved promotion/update path.
+    paths:
+      exclude:
+        - "**/tests/**"
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: open($PATH, $MODE, ...)
+              - metavariable-regex:
+                  metavariable: $PATH
+                  regex: ".*ranker_v2_model.*\\.json"
+              - metavariable-regex:
+                  metavariable: $MODE
+                  regex: "^[\"'][wax]"
+          - patterns:
+              - pattern: $DF.to_json($PATH, ...)
+              - metavariable-regex:
+                  metavariable: $PATH
+                  regex: ".*ranker_v2_model.*\\.json"
