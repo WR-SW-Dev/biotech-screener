@@ -10,8 +10,18 @@ Usage:
 """
 
 import csv
+import io
 import json
+import re
 from pathlib import Path
+
+_VALID_TICKER_RE = re.compile(r"^[A-Z]{1,5}(-[A-Z])?$")
+
+
+# Non-biotech tickers and parsing artifacts to exclude at import time.
+# PURR = Hyperliquid Strategies (crypto-adjacent fund, not a biotech).
+# LLC = State Street legal disclaimer text parsed as a row by some CSV readers.
+_EXCLUDE_TICKERS = {"PURR", "LLC"}
 
 
 def load_csv_tickers(csv_path, ticker_columns=["Ticker", "Symbol", "Ticker Symbol"]):
@@ -33,43 +43,63 @@ def load_csv_tickers(csv_path, ticker_columns=["Ticker", "Symbol", "Ticker Symbo
     try:
         # Try UTF-8 with BOM first (common in Excel exports)
         with open(csv_path, encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f)
+            # Some ETF CSVs (e.g. SSGA/XBI) prepend fund-metadata rows before the
+            # real header.  Scan forward until we find a line whose first field
+            # contains one of our expected ticker column names, then reposition.
+            lines = f.readlines()
 
-            # Find ticker column (case-insensitive)
-            columns = [c.strip() for c in reader.fieldnames]
-            ticker_col = None
+        # Find the real data header: a line where one field *exactly* matches a
+        # known ticker column name (case-insensitive). This avoids matching
+        # metadata rows like "Ticker Symbol:,XBI" where the key is only a
+        # partial match.
+        header_line = 0
+        for i, line in enumerate(lines):
+            fields = [c.strip() for c in line.split(",")]
+            if any(f.lower() == possible.lower() for f in fields for possible in ticker_columns):
+                header_line = i
+                break
 
-            for col in columns:
-                col_lower = col.lower()
-                for possible in ticker_columns:
-                    if possible.lower() in col_lower:
-                        ticker_col = col
-                        break
-                if ticker_col:
+        csv_text = "".join(lines[header_line:])
+        reader = csv.DictReader(io.StringIO(csv_text))
+
+        # Find ticker column (case-insensitive)
+        columns = [c.strip() for c in reader.fieldnames]
+        ticker_col = None
+
+        for col in columns:
+            col_lower = col.lower()
+            for possible in ticker_columns:
+                if possible.lower() in col_lower:
+                    ticker_col = col
                     break
+            if ticker_col:
+                break
 
-            if not ticker_col:
-                print(f"  ❌ Warning: No ticker column found in {csv_path.name}")
-                print(f"     Available columns: {columns}")
-                return []
+        if not ticker_col:
+            print(f"  ❌ Warning: No ticker column found in {csv_path.name}")
+            print(f"     Available columns: {columns}")
+            return []
 
-            print(f"  → Using column: '{ticker_col}'")
+        print(f"  → Using column: '{ticker_col}'")
 
-            # Extract tickers
-            for row in reader:
-                ticker = row.get(ticker_col, "").strip()
+        # Extract tickers
+        for row in reader:
+            ticker = row.get(ticker_col, "").strip()
 
-                # Clean and validate ticker
-                if ticker and ticker not in ["", "Cash", "CASH", "Total", "cash"]:
-                    # Handle special cases
-                    ticker = ticker.replace(".", "-")  # Class A/B shares: BRK.A → BRK-A
-                    ticker = ticker.upper()
+            # Clean and validate ticker
+            if ticker and ticker not in ["", "Cash", "CASH", "Total", "cash"]:
+                # Handle special cases
+                ticker = ticker.replace(".", "-")  # Class A/B shares: BRK.A → BRK-A
+                ticker = ticker.upper()
 
-                    # Skip obvious non-tickers
-                    if not any(c.isalpha() for c in ticker):
-                        continue
+                # Skip non-standard identifiers (SEDOLs, Bloomberg IDs, etc.)
+                if not _VALID_TICKER_RE.match(ticker):
+                    continue
 
-                    tickers.append(ticker)
+                if ticker in _EXCLUDE_TICKERS:
+                    continue
+
+                tickers.append(ticker)
 
     except Exception as e:
         print(f"  ❌ Error reading {csv_path.name}: {e}")

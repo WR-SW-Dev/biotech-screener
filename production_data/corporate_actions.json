@@ -33,7 +33,7 @@
     {"ticker": "PRAX",  "action": "forward_split",  "effective_date": "2022-06-06", "ratio": "5:1",  "factor": 0.219, "notes": "Praxis Precision Medicine"},
     {"ticker": "PRQR",  "action": "forward_split",  "effective_date": "2022-02-11", "ratio": "4:1",  "factor": 0.246, "notes": "ProQR Therapeutics"},
     {"ticker": "REPL",  "action": "forward_split",  "effective_date": "2025-07-22", "ratio": "4:1",  "factor": 0.228, "notes": "Replimune"},
-    {"ticker": "RNA",   "action": "forward_split",  "effective_date": "2026-02-27", "ratio": "5:1",  "factor": 0.203, "notes": "Avidity Biosciences"},
+    {"ticker": "RNA",   "action": "acquisition", "effective_date": "2026-02-27", "acquirer": "Novartis", "deal_price": null, "notes": "Avidity Biosciences acquired by Novartis. Price series ends 2026-02-27. Removed from universe."},
     {"ticker": "SRRK",  "action": "reverse_split", "effective_date": "2024-10-07", "ratio": "1:5",  "factor": 4.62,  "notes": "Scholar Rock"},
     {"ticker": "SYRE",  "action": "reverse_split", "effective_date": "2023-06-22", "ratio": "1:4",  "factor": 4.30,  "notes": "Spyre Therapeutics"},
     {"ticker": "TECX",  "action": "forward_split",  "effective_date": "2024-06-21", "ratio": "12:1", "factor": 0.083, "notes": "First of two (forward then reverse)"},
@@ -65,6 +65,12 @@
     {"ticker": "CAI",   "action": "ticker_change", "effective_date": "2025-09-15", "old_ticker": "CRIS",  "new_ticker": "CAI",   "notes": "Curis renamed to Context AI Therapeutics. CUSIP 142152107 unchanged."},
 
     {"ticker": "DAWN",  "action": "acquisition", "effective_date": "2026-03-15", "acquirer": "Unknown",  "deal_price": 21.35, "notes": "Day One Biopharmaceuticals. Flat price suggests acquisition. Needs confirmation."},
-    {"ticker": "FOLD",  "action": "acquisition", "effective_date": "2026-03-01", "acquirer": "Unknown",  "deal_price": 14.40, "notes": "Amicus Therapeutics. Flat price suggests acquisition. Needs confirmation."}
+    {"ticker": "FOLD",  "action": "acquisition", "effective_date": "2026-03-01", "acquirer": "Unknown",  "deal_price": 14.40, "notes": "Amicus Therapeutics. Flat price suggests acquisition. Needs confirmation."},
+
+    {"ticker": "APLS",  "action": "acquisition", "effective_date": "2026-05-14", "acquirer": "Biogen",   "deal_price": null, "notes": "Apellis Pharmaceuticals acquired by Biogen. Price series ends 2026-05-14. Removed from universe."},
+    {"ticker": "KALV",  "action": "acquisition", "effective_date": "2026-06-11", "acquirer": "Chiesi",   "deal_price": null, "notes": "KalVista Pharmaceuticals acquired by Chiesi. Price series ends 2026-06-11. Removed from universe."},
+    {"ticker": "TERN",  "action": "acquisition", "effective_date": "2026-05-05", "acquirer": "Merck",    "deal_price": null, "notes": "Terns Pharmaceuticals acquired by Merck. Announced Mar 25, 2026; completed May 5, 2026. Removed from universe."},
+
+    {"ticker": "THRD",  "action": "delisted",    "effective_date": "2025-07-31", "notes": "Third Harmonic Bio liquidation/dissolution. Nasdaq trading suspended before open Jul 31, 2025. Price series ends 2025-07-30. Removed from universe."}
   ]
 }
