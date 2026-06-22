@@ -1,0 +1,157 @@
+# Semgrep MCP supply-chain rules (Package D — 2026-06-22).
+#
+# PURPOSE: Scan an external MCP server's source code before admitting it.
+# Run manually against a candidate server's checkout:
+#
+#   semgrep --config .semgrep/mcp-supply-chain.yml /path/to/mcp-server-src/
+#
+# These rules are NOT wired into CI for this repo's own source —
+# they are a scanning tool to run against EXTERNAL candidates.
+# Severity = ERROR → must triage before admitting.
+# Severity = WARNING → flag for review, not a hard blocker.
+#
+# Criteria mapping (from docs/governance/MCP_SERVER_INTAKE_RUBRIC.md):
+#   Criteria 4 (write tools) → SC-W1, SC-W2, SC-W3
+#   Criteria 5 (network/creds) → SC-N1, SC-N2, SC-N3, SC-N4
+#   Criteria 6 (Semgrep scan clean) → run this file against the candidate
+#
+rules:
+
+  # ── Write-path checks (Criterion 4) ─────────────────────────────────────────
+
+  # SC-W1: Tool handler writes to filesystem
+  - id: sc-mcp-tool-writes-filesystem
+    languages: [python]
+    severity: ERROR
+    message: >
+      MCP tool handler writes to the filesystem (open/write, Path.write_*,
+      shutil.copy, etc.). MCP tools admitted to this repo must be read-only.
+      Disable this tool via tools.exclude or use a tools.include allowlist that
+      omits it.
+    pattern-either:
+      - patterns:
+          - pattern: open($PATH, $MODE, ...)
+          - metavariable-regex:
+              metavariable: $MODE
+              regex: "^[\"'][wax]"
+      - pattern: $P.write_text(...)
+      - pattern: $P.write_bytes(...)
+      - patterns:
+          - pattern: $P.open($MODE, ...)
+          - metavariable-regex:
+              metavariable: $MODE
+              regex: "^[\"'][wax]"
+      - pattern: shutil.copy(...)
+      - pattern: shutil.move(...)
+      - pattern: shutil.copytree(...)
+      - pattern: os.rename(...)
+      - pattern: os.replace(...)
+      - pattern: os.remove(...)
+      - pattern: os.unlink(...)
+
+  # SC-W2: Tool handler spawns a subprocess (shell escalation vector)
+  - id: sc-mcp-tool-spawns-subprocess
+    languages: [python]
+    severity: ERROR
+    message: >
+      MCP tool handler spawns a subprocess. Subprocess execution is a shell
+      escalation vector — an admitted tool that can spawn processes can do
+      anything the hosting process can do. Triage before admitting.
+    pattern-either:
+      - pattern: subprocess.run(...)
+      - pattern: subprocess.Popen(...)
+      - pattern: subprocess.call(...)
+      - pattern: subprocess.check_output(...)
+      - pattern: subprocess.check_call(...)
+      - pattern: os.system(...)
+      - pattern: os.popen(...)
+      - pattern: os.execv(...)
+      - pattern: os.execve(...)
+
+  # SC-W3: Tool handler modifies git state
+  - id: sc-mcp-tool-mutates-git
+    languages: [python]
+    severity: ERROR
+    message: >
+      MCP tool handler calls git (commit, push, checkout, reset, etc.).
+      Git mutations by an MCP tool can push to remote without a human in
+      the loop — the exact vector in INC-2026-06-20-AUTOPUSH.
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.$F(["git", ...], ...)
+          - pattern: subprocess.$F(["gh", ...], ...)
+          - pattern: os.system("git ...")
+          - pattern: os.system("gh ...")
+
+  # ── Network/credential checks (Criterion 5) ──────────────────────────────────
+
+  # SC-N1: Outbound HTTP/HTTPS calls
+  - id: sc-mcp-outbound-http
+    languages: [python]
+    severity: WARNING
+    message: >
+      MCP server makes outbound HTTP calls. Document what it contacts,
+      when, and whether the call is user-triggered or background.
+      Read-only APIs (GET-only) are lower risk than write APIs.
+    pattern-either:
+      - pattern: requests.get(...)
+      - pattern: requests.post(...)
+      - pattern: requests.put(...)
+      - pattern: requests.delete(...)
+      - pattern: requests.patch(...)
+      - pattern: requests.request(...)
+      - pattern: requests.Session().request(...)
+      - pattern: urllib.request.urlopen(...)
+      - pattern: httpx.get(...)
+      - pattern: httpx.post(...)
+      - pattern: httpx.AsyncClient().get(...)
+      - pattern: httpx.AsyncClient().post(...)
+      - pattern: aiohttp.ClientSession().get(...)
+      - pattern: aiohttp.ClientSession().post(...)
+
+  # SC-N2: Reads credentials from environment or files
+  - id: sc-mcp-reads-credentials
+    languages: [python]
+    severity: WARNING
+    message: >
+      MCP server reads API keys, tokens, or passwords from the environment or
+      config files. Document which vars/files are read and whether they grant
+      write access to external services.
+    pattern-either:
+      - pattern: os.getenv("..._KEY", ...)
+      - pattern: os.getenv("..._TOKEN", ...)
+      - pattern: os.getenv("..._SECRET", ...)
+      - pattern: os.getenv("..._PASSWORD", ...)
+      - pattern: os.environ["..._KEY"]
+      - pattern: os.environ["..._TOKEN"]
+      - pattern: os.environ["..._SECRET"]
+      - pattern: os.environ.get("..._KEY", ...)
+      - pattern: os.environ.get("..._TOKEN", ...)
+      - pattern: os.environ.get("..._SECRET", ...)
+
+  # SC-N3: Opens a listening socket (server-in-server risk)
+  - id: sc-mcp-opens-socket
+    languages: [python]
+    severity: ERROR
+    message: >
+      MCP server opens a listening socket. An MCP tool that binds a port can
+      expose services beyond the stdio transport boundary. Requires explicit
+      operator review.
+    pattern-either:
+      - pattern: socket.socket(...).bind(...)
+      - pattern: $S.bind(...)
+      - pattern: asyncio.start_server(...)
+      - pattern: uvicorn.run(...)
+      - pattern: fastapi.FastAPI().run(...)
+
+  # SC-N4: DNS lookup / raw socket (exfiltration channel)
+  - id: sc-mcp-dns-or-raw-socket
+    languages: [python]
+    severity: WARNING
+    message: >
+      MCP server performs DNS lookups or opens raw sockets. Could be a data
+      exfiltration side-channel. Document the purpose.
+    pattern-either:
+      - pattern: socket.getaddrinfo(...)
+      - pattern: socket.gethostbyname(...)
+      - pattern: socket.socket(socket.AF_INET, socket.SOCK_RAW, ...)

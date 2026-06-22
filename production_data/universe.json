@@ -46899,26 +46899,6 @@
     }
   },
   {
-    "ticker": "THRD",
-    "name": null,
-    "exchange": "",
-    "sector": "Biotechnology",
-    "status": "pending_data_collection",
-    "added_from_etf": true,
-    "added_date": "2026-06-21",
-    "etf_sources": [
-      "IBB"
-    ],
-    "market_cap": null,
-    "description": "Added from ETF holdings (IBB)",
-    "coverage_status": {
-      "market_data": "pending",
-      "financials": "pending",
-      "clinical_trials": "pending",
-      "scientific_cartography": "pending"
-    }
-  },
-  {
     "ticker": "TRAX",
     "name": null,
     "exchange": "",

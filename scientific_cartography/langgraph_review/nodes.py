@@ -185,7 +185,7 @@ def run_governance_scan(state: CartographyReviewState) -> CartographyReviewState
 
 def select_review_diseases(state: CartographyReviewState) -> CartographyReviewState:
     """Select representative disease maps for human review."""
-    artifact_dir = Path(state.get("artifact_dir", ""))
+    artifact_dir = Path(state.get("artifact_dir") or "")
     index_path = Path(state.get("disease_map_index_path") or "")
     max_diseases = state.get("max_diseases", 5)
 
