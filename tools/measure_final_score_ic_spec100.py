@@ -24,11 +24,11 @@ files so they never overwrite the production DEM IC artifacts.
 import argparse
 import csv
 import json
+import math
+import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import statistics
-import math
 
 
 def _sf(v, default=float("nan")):
@@ -49,12 +49,12 @@ def _rank(vals: List[float]) -> List[float]:
     def sort_key(i):
         v = vals[i]
         try:
-            f = float(v) if v is not None else float('nan')
+            f = float(v) if v is not None else float("nan")
             if f != f:  # NaN check
-                return (float('inf'), i)
+                return (float("inf"), i)
             return (f, i)
         except (TypeError, ValueError):
-            return (float('inf'), i)
+            return (float("inf"), i)
 
     indexed = sorted(range(n), key=sort_key)
     ranks = [0.0] * n
@@ -129,12 +129,7 @@ def load_snapshot(snapshot_dir: Path) -> Optional[Dict]:
     return {"date": snapshot_dir.name, "rows": rows}
 
 
-def compute_forward_return(
-    ticker: str,
-    start_date: str,
-    end_date: str,
-    snapshots: Dict[str, Dict]
-) -> Optional[float]:
+def compute_forward_return(ticker: str, start_date: str, end_date: str, snapshots: Dict[str, Dict]) -> Optional[float]:
     """
     Compute forward return for a ticker between start_date and end_date.
 
@@ -171,11 +166,60 @@ def compute_forward_return(
     return (end_price - start_price) / start_price
 
 
+def resolve_forward_date(
+    requested_date: str,
+    available_dates,
+    mode: str = "exact",
+    tolerance_days: int = 0,
+    explicit_forward_date: Optional[str] = None,
+) -> Tuple[Optional[str], Optional[int], bool, str]:
+    """Resolve which forward snapshot date to use for forward-return computation.
+
+    Returns (observed_date | None, delta_days | None, used_fallback, reason).
+
+    Behavior:
+      - explicit_forward_date (if given) overrides mode/tolerance; it must exist
+        in available_dates or the result is unobservable.
+      - mode == "exact" (DEFAULT): only the requested_date qualifies. This is the
+        original tool behavior, preserved byte-for-byte when no new flags are passed.
+      - mode == "nearest_later": prefer requested_date; otherwise the earliest
+        available date strictly AFTER requested_date and within tolerance_days.
+
+    Never substitutes an EARLIER date than requested. When nothing qualifies,
+    returns (None, None, False, <reason>) so the caller can mark UNOBSERVABLE.
+    """
+    avail = set(available_dates)
+    req_dt = datetime.strptime(requested_date, "%Y-%m-%d")
+    if explicit_forward_date is not None:
+        if explicit_forward_date in avail:
+            delta = (datetime.strptime(explicit_forward_date, "%Y-%m-%d") - req_dt).days
+            return (
+                explicit_forward_date,
+                delta,
+                explicit_forward_date != requested_date,
+                "explicit_forward_date",
+            )
+        return (None, None, False, f"explicit forward-date {explicit_forward_date} has no snapshot")
+    if requested_date in avail:
+        return (requested_date, 0, False, "exact")
+    if mode == "exact":
+        return (None, None, False, f"exact forward snapshot {requested_date} missing (mode=exact)")
+    # nearest_later: search strictly-later dates within tolerance, soonest first.
+    for k in range(1, tolerance_days + 1):
+        cand = (req_dt + timedelta(days=k)).strftime("%Y-%m-%d")
+        if cand in avail:
+            return (cand, k, True, f"nearest_later within {tolerance_days}d")
+    return (None, None, False, f"no forward snapshot in ({requested_date}, +{tolerance_days}d]")
+
+
 def measure_final_score_ic(
     snapshot: Dict,
     forward_snapshots: Dict[str, Dict],
     horizon_days: int,
-    score_field: str = "final_score"
+    score_field: str = "final_score",
+    forward_date_mode: str = "exact",
+    forward_tolerance_days: int = 0,
+    explicit_forward_date: Optional[str] = None,
 ) -> Optional[Dict]:
     """
     Measure score_field IC on ranker cohort only (actionable_rank <= 60).
@@ -207,10 +251,20 @@ def measure_final_score_ic(
     rows = snapshot["rows"]
     snap_date = snapshot["date"]
 
-    # Compute future date
+    # Compute requested future date, then resolve to an available snapshot.
     snap_dt = datetime.strptime(snap_date, "%Y-%m-%d")
     future_dt = snap_dt + timedelta(days=horizon_days)
-    future_date = future_dt.strftime("%Y-%m-%d")
+    requested_forward_date = future_dt.strftime("%Y-%m-%d")
+    observed_forward_date, forward_delta_days, forward_fallback_used, forward_reason = resolve_forward_date(
+        requested_forward_date,
+        forward_snapshots.keys(),
+        forward_date_mode,
+        forward_tolerance_days,
+        explicit_forward_date,
+    )
+    # `future_date` retained for backward-compat; may be None (then forward
+    # returns are NaN and the field IC is unobservable).
+    future_date = observed_forward_date
 
     # Filter to ranker cohort: actionable_rank <= 60 (the top-K that ranker ranks)
     eligible_rows = []
@@ -219,27 +273,34 @@ def measure_final_score_ic(
             rank = _sf(r.get("actionable_rank"))
             if rank == rank and rank <= 60:  # not NaN and <= 60
                 eligible_rows.append(r)
-        except:
+        except Exception:
             pass
 
     if len(eligible_rows) < 10:
         return {
             "date": snap_date,
             "eligible_count": len(eligible_rows),
-            "error": f"Insufficient cohort rows: {len(eligible_rows)} < 10"
+            "error": f"Insufficient cohort rows: {len(eligible_rows)} < 10",
         }
 
-    # Measure score_field IC on eligible universe (default: final_score)
+    # Measure score_field IC on eligible universe (default: final_score).
+    # If the forward snapshot was unresolved (observed_forward_date is None),
+    # skip forward-return computation entirely so the result is genuinely
+    # UNOBSERVABLE (obs=0, IC=NaN) rather than a misleading measured 0.0000.
     final_scores = []
     fwd_returns = []
-    for row in eligible_rows:
-        ticker = row.get("ticker", "").strip()
-        fs = _sf(row.get(score_field))
-        fret = compute_forward_return(ticker, snap_date, future_date, forward_snapshots)
+    if future_date is not None:
+        for row in eligible_rows:
+            ticker = row.get("ticker", "").strip()
+            fs = _sf(row.get(score_field))
+            fret = compute_forward_return(ticker, snap_date, future_date, forward_snapshots)
 
-        if fs == fs and fret == fret:  # valid (not NaN)
-            final_scores.append(fs)
-            fwd_returns.append(fret)
+            # `fret is not None` is required: compute_forward_return returns None
+            # (not NaN) for missing data, and `None == None` would otherwise pass
+            # the NaN guard and inject a None "return".
+            if fret is not None and fs == fs and fret == fret:
+                final_scores.append(fs)
+                fwd_returns.append(fret)
 
     final_score_ic = float("nan")
     final_score_t_stat = float("nan")
@@ -249,14 +310,15 @@ def measure_final_score_ic(
     # Diagnostic: measure composite_score IC on full universe (INVALIDATED for ranker)
     composite_scores = []
     fwd_returns_full = []
-    for row in rows:
-        ticker = row.get("ticker", "").strip()
-        cs = _sf(row.get("composite_score"))
-        fret = compute_forward_return(ticker, snap_date, future_date, forward_snapshots)
+    if future_date is not None:
+        for row in rows:
+            ticker = row.get("ticker", "").strip()
+            cs = _sf(row.get("composite_score"))
+            fret = compute_forward_return(ticker, snap_date, future_date, forward_snapshots)
 
-        if cs == cs and fret == fret:
-            composite_scores.append(cs)
-            fwd_returns_full.append(fret)
+            if fret is not None and cs == cs and fret == fret:
+                composite_scores.append(cs)
+                fwd_returns_full.append(fret)
 
     composite_ic = float("nan")
     composite_t_stat = float("nan")
@@ -268,6 +330,12 @@ def measure_final_score_ic(
         "score_field": score_field,
         "horizon_days": horizon_days,
         "future_date": future_date,
+        "requested_forward_date": requested_forward_date,
+        "observed_forward_date": observed_forward_date,
+        "forward_date_delta_days": forward_delta_days,
+        "forward_date_mode": forward_date_mode,
+        "forward_fallback_used": forward_fallback_used,
+        "forward_unobservable_reason": None if observed_forward_date else forward_reason,
         "eligible_count": len(eligible_rows),
         "final_score_observations": len(final_scores),
         "final_score_ic": final_score_ic,
@@ -275,7 +343,7 @@ def measure_final_score_ic(
         "composite_score_observations": len(composite_scores),
         "composite_score_ic": composite_ic,
         "composite_score_t_stat": composite_t_stat,
-        "composite_score_caveat": "INVALIDATED_DIAGNOSTIC_REFERENCE_ONLY"
+        "composite_score_caveat": "INVALIDATED_DIAGNOSTIC_REFERENCE_ONLY",
     }
 
 
@@ -296,9 +364,7 @@ def discover_snapshots(root: Path, start_date: str, end_date: str) -> List[str]:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Spec 100: Measure final_score IC on eligible universe only"
-    )
+    parser = argparse.ArgumentParser(description="Spec 100: Measure final_score IC on eligible universe only")
     parser.add_argument("--start-date", default="2026-06-01", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end-date", default="2026-06-18", help="End date (YYYY-MM-DD)")
     parser.add_argument("--snapshot-dir", default="data/snapshots", help="Snapshots root directory")
@@ -308,18 +374,39 @@ def main():
         "--score-field",
         default="final_score",
         help="Column to correlate against forward returns (default: final_score). "
-             "Use e.g. catalyst_score / catalyst_decay_w / coinvest_score_z for "
-             "read-only standalone signal IC diagnostics. Non-default values do NOT "
-             "change the production ranker.",
+        "Use e.g. catalyst_score / catalyst_decay_w / coinvest_score_z for "
+        "read-only standalone signal IC diagnostics. Non-default values do NOT "
+        "change the production ranker.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Audit only; no writes")
+    parser.add_argument(
+        "--forward-date-mode",
+        choices=["exact", "nearest_later"],
+        default="exact",
+        help="Forward snapshot resolution. 'exact' (default) = original behavior: "
+        "the base+horizon date must have a snapshot. 'nearest_later' = allow "
+        "the soonest later snapshot within --forward-tolerance-days.",
+    )
+    parser.add_argument(
+        "--forward-tolerance-days",
+        type=int,
+        default=0,
+        help="Max calendar days AFTER the requested forward date to search "
+        "(only used when --forward-date-mode=nearest_later).",
+    )
+    parser.add_argument(
+        "--forward-date",
+        default=None,
+        help="Explicit forward snapshot date (YYYY-MM-DD) override; must exist. "
+        "Bypasses --forward-date-mode/--forward-tolerance-days.",
+    )
 
     args = parser.parse_args()
 
     snap_root = Path(args.snapshot_dir)
     out_dir = Path(args.output_dir)
     score_field = args.score_field
-    is_default_field = (score_field == "final_score")
+    is_default_field = score_field == "final_score"
 
     print(f"Spec 100 {score_field} IC: {args.start_date} to {args.end_date}")
     print(f"Horizons: {args.horizons}")
@@ -327,7 +414,9 @@ def main():
 
     # Discover snapshots
     snap_dates = discover_snapshots(snap_root, args.start_date, args.end_date)
-    print(f"Found {len(snap_dates)} snapshots: {snap_dates[0] if snap_dates else 'none'} through {snap_dates[-1] if snap_dates else 'none'}")
+    print(
+        f"Found {len(snap_dates)} snapshots: {snap_dates[0] if snap_dates else 'none'} through {snap_dates[-1] if snap_dates else 'none'}"
+    )
 
     if not snap_dates:
         print("No snapshots found. Exiting.")
@@ -352,7 +441,15 @@ def main():
             continue
 
         for horizon in args.horizons:
-            result = measure_final_score_ic(snap, all_snapshots, horizon, score_field)
+            result = measure_final_score_ic(
+                snap,
+                all_snapshots,
+                horizon,
+                score_field,
+                forward_date_mode=args.forward_date_mode,
+                forward_tolerance_days=args.forward_tolerance_days,
+                explicit_forward_date=args.forward_date,
+            )
             if result and "error" not in result:
                 results_by_horizon[horizon].append(result)
                 print(
@@ -360,13 +457,20 @@ def main():
                     f"obs={result['final_score_observations']}, IC={result['final_score_ic']:.4f}, "
                     f"t={result['final_score_t_stat']:.2f}"
                 )
+                if result.get("forward_fallback_used"):
+                    print(
+                        f"    [forward-fallback] requested {result['requested_forward_date']} -> "
+                        f"observed {result['observed_forward_date']} (+{result['forward_date_delta_days']}d)"
+                    )
+                elif result.get("observed_forward_date") is None:
+                    print(f"    [forward-unobservable] {result.get('forward_unobservable_reason')}")
             elif result:
                 print(f"  {snap_date} T+{horizon}: {result.get('error', 'unknown error')}")
 
     # Summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SUMMARY")
-    print("="*80)
+    print("=" * 80)
 
     for horizon in args.horizons:
         results = results_by_horizon[horizon]
@@ -385,7 +489,9 @@ def main():
 
             print(f"\nT+{horizon}:")
             print(f"  Observations: {len(results)} dates")
-            print(f"  {score_field} IC: mean={mean_ic:.4f}, std={std_ic:.4f}, min={min(ic_values):.4f}, max={max(ic_values):.4f}")
+            print(
+                f"  {score_field} IC: mean={mean_ic:.4f}, std={std_ic:.4f}, min={min(ic_values):.4f}, max={max(ic_values):.4f}"
+            )
             print(f"  t-statistic: mean={mean_t:.2f}")
             print(f"  Pct positive: {pct_positive:.1%}")
             print(f"  >= 0.0200 threshold: {'YES' if mean_ic >= 0.0200 else 'NO'}")
@@ -408,7 +514,12 @@ def main():
             csv_prefix = f"signal_ic_{safe_field}"
 
         # Write JSON summary
-        summary = {"score_field": score_field}
+        summary = {
+            "score_field": score_field,
+            "forward_date_mode": args.forward_date_mode,
+            "forward_tolerance_days": args.forward_tolerance_days,
+            "explicit_forward_date": args.forward_date,
+        }
         for horizon in args.horizons:
             results = results_by_horizon[horizon]
             ic_values = [r["final_score_ic"] for r in results if r["final_score_ic"] == r["final_score_ic"]]
@@ -420,7 +531,7 @@ def main():
                 "mean_ic": statistics.mean(ic_values) if ic_values else None,
                 "std_ic": statistics.stdev(ic_values) if len(ic_values) > 1 else None,
                 "mean_t_stat": statistics.mean(t_values) if t_values else None,
-                "passes_threshold_0_0200": statistics.mean(ic_values) >= 0.0200 if ic_values else False
+                "passes_threshold_0_0200": statistics.mean(ic_values) >= 0.0200 if ic_values else False,
             }
 
         summary_file = out_dir / summary_basename
@@ -435,9 +546,15 @@ def main():
                 csv_file = out_dir / f"{csv_prefix}_T+{horizon}.csv"
                 with open(csv_file, "w", newline="") as f:
                     fieldnames = [
-                        "date", "horizon_days", "eligible_count", "final_score_observations",
-                        "final_score_ic", "final_score_t_stat",
-                        "composite_score_observations", "composite_score_ic", "composite_score_t_stat"
+                        "date",
+                        "horizon_days",
+                        "eligible_count",
+                        "final_score_observations",
+                        "final_score_ic",
+                        "final_score_t_stat",
+                        "composite_score_observations",
+                        "composite_score_ic",
+                        "composite_score_t_stat",
                     ]
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
