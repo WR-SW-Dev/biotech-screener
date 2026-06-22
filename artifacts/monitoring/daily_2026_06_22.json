@@ -1,0 +1,78 @@
+{
+  "date": "2026-06-22",
+  "monitoring_day": 10,
+  "timestamp": "2026-06-22T09:00:00.000000Z",
+  "phase": "Phase 2 Monitoring (Path C active)",
+  "data_as_of": "2026-06-18 close (yfinance). June 19 and June 20 closes NOT available in yfinance feed. June 21-22 weekend/pre-market. P&L figures are based on last confirmed June 18 close prices.",
+  "data_gap_warning": "CRITICAL DATA GAP: yfinance feed in this environment caps at 2026-06-18. June 19 (Thu) and June 20 (Fri) close prices are unavailable. All price-based metrics are stale by 4 calendar days / 2 trading days. Robinhood MCP is also unavailable — broker account state unverifiable. Day 10 P&L is carried forward from Day 9 until prices refresh.",
+  "missed_run": {
+    "date": "2026-06-20",
+    "note": "Friday June 20 monitoring run was not executed. No snapshot on file. Day 9 = June 19; Day 10 = June 22 (Monday)."
+  },
+  "account": {
+    "account_id": "Robinhood 802349084",
+    "equity_fetchable": false,
+    "equity_note": "Robinhood MCP unavailable. Baseline equity: start=$100.19 (2026-06-01). Current equity unverifiable.",
+    "cash": 99.87,
+    "buying_power": 200.06,
+    "data_source": "baseline_2026-06-10 (not refreshed — Robinhood MCP unavailable)"
+  },
+  "portfolio_overview": {
+    "total_positions": 15,
+    "positions_critical": 1,
+    "positions_flagged": 2,
+    "positions_at_risk": 1,
+    "positions_positive": 8,
+    "positions_negative": 7,
+    "avg_current_price_june18": 61.43,
+    "avg_entry_price": 65.43,
+    "avg_pnl_vs_entry_pct_june18": 1.88,
+    "pnl_currency_note": "June 18 close prices only. June 19-20 prices unavailable. True Day 10 P&L cannot be computed.",
+    "vs_day9_change": "No price update available. P&L carried from Day 9.",
+    "drawdown_vs_xbi_pp": -3.43,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "TRIPPED — -3.43pp vs -2.0pp threshold (last measured June 18). Improving trend from Day 8 (-5.34pp). Cannot confirm current drawdown without June 19-20 prices."
+  },
+  "positions": [
+    {"ticker": "COGT", "entry_price": 35.24, "last_confirmed_price": 34.54, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -1.99, "catalyst_days_remaining_as_of_june22": 9, "catalyst_date_approx": "~2026-07-01", "tier": "A", "status": "OK"},
+    {"ticker": "DNTH", "entry_price": 90.94, "last_confirmed_price": 82.49, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -9.29, "catalyst_days_remaining_as_of_june22": 8, "catalyst_date_approx": "~2026-06-30", "tier": "A", "status": "FLAG_APPROACHING_CATALYST", "note": "T-8. Vol spike 2.85x Jun18. Binary risk."},
+    {"ticker": "NRIX", "entry_price": 17.51, "last_confirmed_price": 17.55, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 0.23, "catalyst_days_remaining_as_of_june22": 39, "tier": "A", "status": "OK"},
+    {"ticker": "URGN", "entry_price": 26.43, "last_confirmed_price": 33.57, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 27.01, "catalyst_days_remaining_as_of_june22": 70, "tier": "A", "status": "OK"},
+    {"ticker": "ALMS", "entry_price": 20.30, "last_confirmed_price": 23.41, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 15.32, "catalyst_days_remaining_as_of_june22": 9, "catalyst_date_approx": "~2026-07-01", "tier": "A", "status": "OK"},
+    {"ticker": "SYRE", "entry_price": 70.48, "last_confirmed_price": 88.34, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 25.34, "catalyst_days_remaining_as_of_june22": 0, "catalyst_date_approx": "FIRED 2026-06-15", "tier": "B", "status": "CATALYST_RESOLVED_POSITIVE", "note": "SKYLINE Phase 2 SPY002 UC — primary endpoint p<0.0001. $463.5M raise. June 19 range $86.22-$90.99. Lock-up expiry risk."},
+    {"ticker": "RVMD", "entry_price": 161.26, "last_confirmed_price": 162.99, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 1.07, "catalyst_days_remaining_as_of_june22": 281, "tier": "B", "status": "OK"},
+    {"ticker": "CMPS", "entry_price": 14.62, "last_confirmed_price": 12.53, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -14.30, "catalyst_days_remaining_as_of_june22": 8, "catalyst_date_approx": "~2026-06-30", "tier": "C", "status": "FLAG_LOSS_APPROACHING_CATALYST", "note": "T-8. -14.30%. Recovering. Binary risk — negative catalyst likely trips -20%."},
+    {"ticker": "SLDB", "entry_price": 7.26, "last_confirmed_price": 8.33, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 14.74, "tier": "A", "status": "EVENT_RESOLVED", "note": "S&P Biotech Index addition effective June 21. HC Wainwright PT $25. Share dilution risk (authorized shares doubled)."},
+    {"ticker": "DRUG", "entry_price": 86.48, "last_confirmed_price": 60.66, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -29.86, "catalyst_days_remaining_as_of_june22": 131, "tier": "A", "status": "CRITICAL", "note": "CRITICAL -29.86%. Exceeds -20% threshold. Manual review required."},
+    {"ticker": "STOK", "entry_price": 30.51, "last_confirmed_price": 31.00, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 1.61, "tier": "A", "status": "OK"},
+    {"ticker": "PRAX", "entry_price": 338.06, "last_confirmed_price": 282.31, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -16.49, "catalyst_days_remaining_as_of_june22": 9, "catalyst_date_approx": "~2026-07-01", "tier": "B", "status": "FLAG_LOSS", "note": "T-9. -16.49%. Recovering from -20.13% Day 8. Binary risk at catalyst."},
+    {"ticker": "TRVI", "entry_price": 13.99, "last_confirmed_price": 17.21, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": 23.02, "catalyst_days_remaining_as_of_june22": 8, "catalyst_date_approx": "~2026-06-30", "tier": "C", "status": "FLAG_GAP_EXPLAINED", "note": "ATS 2026 conference + $162M offering drove 3 consecutive >5% gaps. T-8."},
+    {"ticker": "ERAS", "entry_price": 14.68, "last_confirmed_price": 13.67, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -6.88, "catalyst_days_remaining_as_of_june22": 161, "tier": "A", "status": "FLAG_LITIGATION", "note": "Federal securities lawsuit mid-June. Explains abnormal 3-day volume. ERAS-0015 Phase 1 data positive offset."},
+    {"ticker": "XENE", "entry_price": 53.66, "last_confirmed_price": 52.91, "last_confirmed_date": "2026-06-18", "pnl_vs_entry_pct": -1.40, "catalyst_days_remaining_as_of_june22": 39, "tier": "B", "status": "OK"}
+  ],
+  "governance_gates": {
+    "drawdown_vs_xbi_pp": -3.43,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "TRIPPED — improving from -5.34pp (Day 8). June 22 unconfirmed.",
+    "ic_observable": "OVERDUE — checkpoint due June 17. No decision on file. EXTEND or REVERT required.",
+    "jaccard_13f": 0.875,
+    "jaccard_status": "PASS",
+    "emergency_exit_armed": true,
+    "positions_gt20pct_loss": ["DRUG (-29.86%)"],
+    "all_gates_clear": false
+  },
+  "alerts_summary": {
+    "P1_governance_overdue": "IC checkpoint 5 days overdue. EXTEND or REVERT required.",
+    "P2_data_gap": "June 19-20 prices missing. Drawdown gate unconfirmable.",
+    "P3_catalyst_cluster": "6 catalysts T-8 to T-9 (June 30 - July 1). CMPS/PRAX/DNTH binary risk.",
+    "P4_drug_critical": "DRUG -29.86% exceeds -20% threshold. Manual review required.",
+    "P5_drawdown": "Drawdown -3.43pp TRIPPED, improving.",
+    "resolved": ["SYRE catalyst positive (June 15)", "SLDB S&P index add (June 21)", "ERAS lawsuit (volume explained)", "TRVI ATS conference gaps (explained)"]
+  },
+  "operational_status": {
+    "no_unauthorized_trades": true,
+    "read_only": true,
+    "robinhood_mcp_status": "UNAVAILABLE",
+    "missed_run_june20": true
+  }
+}
