@@ -103,13 +103,19 @@ $ hermes mcp test <name>
 
 | Server | Status | Notes |
 |---|---|---|
-| `semgrep-mcp` | PENDING — Package E | First external candidate; evaluation below when ready |
+| `semgrep mcp` (canonical) | E0 COMPLETE — `ADMIT_FOR_E1_TRIAL` | `semgrep==1.167.0`; 3-tool allowlist; LGPL sign-off pending; full eval at `docs/governance/SEMGREP_MCP_INTAKE_E0_2026_06_22.md` |
 
 ---
 
-## Evaluation: semgrep-mcp (Package E — PENDING)
+## Evaluation: semgrep mcp (Package E0 — COMPLETE)
 
-*To be filled in during Package E. Placeholder entry to reserve the slot.*
+See `docs/governance/SEMGREP_MCP_INTAKE_E0_2026_06_22.md` for the full evidence dossier.
+
+**Summary:** 16 supply-chain findings (all triaged), 7 tools (3 safe for E1), LGPL-2.1-or-later (operator
+sign-off pending). Rubric verdict: **ADMIT\_FOR\_E1\_TRIAL** with env-var constraints.
+
+**Note:** `semgrep-mcp` PyPI 0.9.0 is deprecated (only exposes `deprecation_notice` tool). The
+evaluated package is the `semgrep mcp` subcommand built into `semgrep==1.167.0`.
 
 ---
 
@@ -118,3 +124,4 @@ $ hermes mcp test <name>
 | Date | Change |
 |---|---|
 | 2026-06-22 | v1.0 created; `biotech` admitted as Package C2 local exemption; `semgrep-mcp` queued as Package E |
+| 2026-06-22 | E0 complete: `semgrep mcp` (1.167.0) evaluated — ADMIT\_FOR\_E1\_TRIAL; LGPL sign-off pending |
