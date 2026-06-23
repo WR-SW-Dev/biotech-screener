@@ -1,0 +1,150 @@
+{
+  "date": "2026-06-23",
+  "monitoring_day": 11,
+  "timestamp": "2026-06-23T09:00:00.000000Z",
+  "phase": "Phase 2 Monitoring (Path C active)",
+  "data_as_of": "2026-06-22 close (yfinance, all 15 tickers + XBI confirmed). June 23 is pre-market — no intraday data. DATA GAP RESOLVED: June 22 close is now available. June 20 (Friday) remains unavailable from yfinance; 2-day changes below span Jun 18->22 (representing Jun 20 + Jun 22 sessions).",
+  "data_gap_note": "June 19 = Juneteenth holiday (market closed). June 20 = trading day with no data in yfinance feed. June 22 close confirmed. All 2-day change figures (Jun 18->22) reflect 2 net trading sessions.",
+  "account": {
+    "account_id": "Robinhood 802349084",
+    "equity_fetchable": false,
+    "equity_note": "Robinhood MCP unavailable. Baseline equity: start=$100.19 (2026-06-01). Carry-forward basis.",
+    "cash": 99.87,
+    "buying_power": 200.06,
+    "data_source": "baseline_2026-06-10 (Robinhood MCP unavailable — not refreshed)"
+  },
+  "portfolio_overview": {
+    "total_positions": 15,
+    "positions_critical": 1,
+    "positions_flagged": 2,
+    "positions_at_risk": 0,
+    "positions_positive": 11,
+    "positions_negative": 4,
+    "avg_current_price_jun22": 62.81,
+    "avg_entry_price": 65.43,
+    "avg_pnl_vs_entry_pct": 6.65,
+    "avg_pnl_note": "Portfolio avg +6.65% vs entry as of Jun 22 close. Significant improvement from Day 10 (+1.88% on Jun 18). Driven by SYRE (+42.34%), URGN (+32.39%), TRVI (+26.59%), ALMS (+21.18%).",
+    "vs_day10_change_note": "Day 10 avg P&L was +1.88% (based on Jun 18 close). Day 11 = +6.65% (Jun 22 close). Net improvement: +4.77pp over 2 trading sessions.",
+    "xbi_return_since_entry_pct": 9.16,
+    "drawdown_vs_xbi_pp": -2.51,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "TRIPPED — -2.51pp vs -2.0pp threshold. Improving trend: -3.43pp (Day10) -> -2.51pp (Day11). Narrowing on strong portfolio performance Jun 22."
+  },
+  "positions": [
+    {"ticker": "COGT", "company_name": "Cogent Biosciences, Inc.", "entry_price": 35.24, "current_price_jun22": 35.84, "prev_close_jun18": 34.54, "pnl_vs_entry_pct": 1.70, "day_change_pct_2d": 3.76, "volume_jun22": 3174900, "volume_jun18": 4898300, "vol_ratio_22_vs_18": 0.65, "catalyst_days_remaining": 8, "catalyst_date_approx": "~2026-07-01", "tier": "A", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "note": "T-8 catalyst approaching. Price recovering (+3.76% Jun18->22). Volume calmed (0.65x). Position turned positive for first time."},
+    {"ticker": "DNTH", "company_name": "Dianthus Therapeutics, Inc.", "entry_price": 90.94, "current_price_jun22": 87.37, "prev_close_jun18": 82.49, "pnl_vs_entry_pct": -3.93, "day_change_pct_2d": 5.92, "volume_jun22": 1021000, "volume_jun18": 2478000, "vol_ratio_22_vs_18": 0.41, "catalyst_days_remaining": 7, "catalyst_date_approx": "~2026-06-30", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_GAP_CATALYST_IMMINENT", "gap_flag": true, "note": "GAP: +5.92% Jun18->22 (2-session). T-7 catalyst ~June 30. Binary risk — catalyst readout imminent."},
+    {"ticker": "NRIX", "company_name": "Nurix Therapeutics, Inc.", "entry_price": 17.51, "current_price_jun22": 18.65, "prev_close_jun18": 17.55, "pnl_vs_entry_pct": 6.51, "day_change_pct_2d": 6.27, "volume_jun22": 2213500, "volume_jun18": 4250800, "vol_ratio_22_vs_18": 0.52, "catalyst_days_remaining": 38, "catalyst_date_approx": "~2026-07-31", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_GAP", "gap_flag": true, "note": "GAP: +6.27% Jun18->22 (2-session). Volume calmed (0.52x). T-38 — investigate for news."},
+    {"ticker": "URGN", "company_name": "UroGen Pharma Ltd.", "entry_price": 26.43, "current_price_jun22": 34.99, "prev_close_jun18": 33.57, "pnl_vs_entry_pct": 32.39, "day_change_pct_2d": 4.23, "volume_jun22": 643400, "volume_jun18": 847100, "vol_ratio_22_vs_18": 0.76, "catalyst_days_remaining": 70, "catalyst_date_approx": "~2026-09-01", "tier": "A", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false, "note": "Portfolio second-best at +32.39%. Steady appreciation."},
+    {"ticker": "ALMS", "company_name": "Alumis Inc.", "entry_price": 20.30, "current_price_jun22": 24.60, "prev_close_jun18": 23.41, "pnl_vs_entry_pct": 21.18, "day_change_pct_2d": 5.08, "volume_jun22": 1435600, "volume_jun18": 1883300, "vol_ratio_22_vs_18": 0.76, "catalyst_days_remaining": 8, "catalyst_date_approx": "~2026-07-01", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_GAP_CATALYST_IMMINENT", "gap_flag": true, "note": "GAP: +5.08% Jun18->22 (2-session). T-8 catalyst ~July 1. Position +21.18%."},
+    {"ticker": "SYRE", "company_name": "Spyre Therapeutics, Inc.", "entry_price": 70.48, "current_price_jun22": 100.32, "prev_close_jun18": 88.34, "pnl_vs_entry_pct": 42.34, "day_change_pct_2d": 13.56, "volume_jun22": 2804600, "volume_jun18": 2420400, "vol_ratio_22_vs_18": 1.16, "catalyst_days_remaining": 0, "catalyst_date_approx": "FIRED 2026-06-15 (POSITIVE)", "tier": "B", "target_weight_pct": 3.33, "status": "CATALYST_RESOLVED_POSITIVE", "gap_flag": true, "note": "CATALYST RESOLVED POSITIVE: SKYLINE Phase 2 SPY002 UC p<0.0001. $463.5M raise. +42.34% vs entry. Top performer."},
+    {"ticker": "RVMD", "company_name": "Revolution Medicines, Inc.", "entry_price": 161.26, "current_price_jun22": 165.81, "prev_close_jun18": 162.99, "pnl_vs_entry_pct": 2.82, "day_change_pct_2d": 1.73, "volume_jun22": 3128100, "volume_jun18": 4702500, "vol_ratio_22_vs_18": 0.67, "catalyst_days_remaining": 280, "catalyst_date_approx": "~2027-03-31", "tier": "B", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false},
+    {"ticker": "CMPS", "company_name": "COMPASS Pathways Plc", "entry_price": 14.62, "current_price_jun22": 12.63, "prev_close_jun18": 12.53, "pnl_vs_entry_pct": -13.61, "day_change_pct_2d": 0.80, "volume_jun22": 3288700, "volume_jun18": 3625300, "vol_ratio_22_vs_18": 0.91, "catalyst_days_remaining": 7, "catalyst_date_approx": "~2026-06-30", "tier": "C", "target_weight_pct": 3.33, "status": "FLAG_LOSS_CATALYST_IMMINENT", "gap_flag": false, "note": "T-7 catalyst ~June 30. -13.61%. Binary risk: negative catalyst likely trips -20% threshold."},
+    {"ticker": "SLDB", "company_name": "Solid Biosciences Inc.", "entry_price": 7.26, "current_price_jun22": 8.30, "prev_close_jun18": 8.33, "pnl_vs_entry_pct": 14.33, "day_change_pct_2d": -0.36, "volume_jun22": 1964400, "volume_jun18": 14768100, "vol_ratio_22_vs_18": 0.13, "catalyst_days_remaining": 113, "catalyst_date_approx": "~2026-10-14", "tier": "A", "target_weight_pct": 3.33, "status": "EVENT_RESOLVED_CONSOLIDATING", "gap_flag": false, "note": "S&P Biotech Index add June 21 fully absorbed. Volume collapsed 0.13x. Consolidating at +14.33%."},
+    {"ticker": "DRUG", "company_name": "Bright Minds Biosciences Inc.", "entry_price": 86.48, "current_price_jun22": 63.49, "prev_close_jun18": 60.66, "pnl_vs_entry_pct": -26.58, "day_change_pct_2d": 4.67, "volume_jun22": 348100, "volume_jun18": 239400, "vol_ratio_22_vs_18": 1.45, "catalyst_days_remaining": 130, "catalyst_date_approx": "~2026-10-31", "tier": "A", "target_weight_pct": 3.33, "status": "CRITICAL", "gap_flag": false, "note": "CRITICAL -26.58%. Exceeds -20% threshold. Thin volume 348K. T-130. Manual review required."},
+    {"ticker": "STOK", "company_name": "Stoke Therapeutics, Inc.", "entry_price": 30.51, "current_price_jun22": 30.97, "prev_close_jun18": 31.00, "pnl_vs_entry_pct": 1.51, "day_change_pct_2d": -0.10, "volume_jun22": 617100, "volume_jun18": 1971100, "vol_ratio_22_vs_18": 0.31, "catalyst_days_remaining": 98, "catalyst_date_approx": "~2026-09-29", "tier": "A", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false},
+    {"ticker": "PRAX", "company_name": "Praxis Precision Medicines, Inc.", "entry_price": 338.06, "current_price_jun22": 303.39, "prev_close_jun18": 282.31, "pnl_vs_entry_pct": -10.26, "day_change_pct_2d": 7.47, "volume_jun22": 657100, "volume_jun18": 698600, "vol_ratio_22_vs_18": 0.94, "catalyst_days_remaining": 8, "catalyst_date_approx": "~2026-07-01", "tier": "B", "target_weight_pct": 3.33, "status": "FLAG_GAP_RECOVERY", "gap_flag": true, "note": "GAP +7.47% Jun18->22. Recovery: -20.13% -> -10.26%. T-8 catalyst ~July 1."},
+    {"ticker": "TRVI", "company_name": "Trevi Therapeutics, Inc.", "entry_price": 13.99, "current_price_jun22": 17.71, "prev_close_jun18": 17.21, "pnl_vs_entry_pct": 26.59, "day_change_pct_2d": 2.91, "volume_jun22": 2460700, "volume_jun18": 2960000, "vol_ratio_22_vs_18": 0.83, "catalyst_days_remaining": 7, "catalyst_date_approx": "~2026-06-30", "tier": "C", "target_weight_pct": 3.33, "status": "FLAG_CATALYST_IMMINENT", "gap_flag": false, "note": "T-7 catalyst ~June 30. +26.59%. ATS conference run-up moderating. Strong gains heading into binary event."},
+    {"ticker": "ERAS", "company_name": "Erasca, Inc.", "entry_price": 14.68, "current_price_jun22": 15.08, "prev_close_jun18": 13.67, "pnl_vs_entry_pct": 2.72, "day_change_pct_2d": 10.31, "volume_jun22": 8994800, "volume_jun18": 9642000, "vol_ratio_22_vs_18": 0.93, "catalyst_days_remaining": 161, "catalyst_date_approx": "~2026-12-01", "tier": "A", "target_weight_pct": 3.33, "status": "FLAG_MAJOR_GAP_INVESTIGATE", "gap_flag": true, "note": "INVESTIGATE: +10.31% Jun18->22 on 9.0M volume (3rd consecutive elevated session, 5-9x ADV). Prior flag: federal securities lawsuit. Possible: lawsuit dismissal, M&A, clinical data."},
+    {"ticker": "XENE", "company_name": "Xenon Pharmaceuticals Inc.", "entry_price": 53.66, "current_price_jun22": 54.79, "prev_close_jun18": 52.91, "pnl_vs_entry_pct": 2.11, "day_change_pct_2d": 3.55, "volume_jun22": 1856200, "volume_jun18": 1927700, "vol_ratio_22_vs_18": 0.96, "catalyst_days_remaining": 38, "catalyst_date_approx": "~2026-07-31", "tier": "B", "target_weight_pct": 3.33, "status": "OK", "gap_flag": false}
+  ],
+  "performance_summary": {
+    "top_3_gainers_vs_entry": [
+      {"ticker": "SYRE", "pnl_vs_entry_pct": 42.34, "note": "Catalyst resolved positive June 15"},
+      {"ticker": "URGN", "pnl_vs_entry_pct": 32.39, "note": "Steady appreciation"},
+      {"ticker": "TRVI", "pnl_vs_entry_pct": 26.59, "note": "ATS conference run-up"}
+    ],
+    "top_3_losers_vs_entry": [
+      {"ticker": "DRUG", "pnl_vs_entry_pct": -26.58, "note": "CRITICAL — exceeds -20% threshold"},
+      {"ticker": "CMPS", "pnl_vs_entry_pct": -13.61, "note": "T-7 binary risk"},
+      {"ticker": "DNTH", "pnl_vs_entry_pct": -3.93, "note": "T-7 catalyst imminent"}
+    ]
+  },
+  "gap_analysis": {
+    "gap_events_gt5pct": [
+      {"ticker": "SYRE", "day_change_2d_pct": 13.56, "explanation": "EXPLAINED: Catalyst resolved positive June 15."},
+      {"ticker": "ERAS", "day_change_2d_pct": 10.31, "vol_jun22": 8994800, "explanation": "UNEXPLAINED: Sustained 9M volume 3rd consecutive session. Manual investigation required."},
+      {"ticker": "PRAX", "day_change_2d_pct": 7.47, "explanation": "LIKELY EXPLAINED: Recovery from oversold position."},
+      {"ticker": "NRIX", "day_change_2d_pct": 6.27, "explanation": "UNEXPLAINED: +6.27% on reduced volume. T-38. Check for news."},
+      {"ticker": "DNTH", "day_change_2d_pct": 5.92, "explanation": "LIKELY EXPLAINED: Pre-catalyst drift T-7."},
+      {"ticker": "ALMS", "day_change_2d_pct": 5.08, "explanation": "LIKELY EXPLAINED: Pre-catalyst drift T-8."}
+    ],
+    "gap_count": 6,
+    "unexplained_gap_count": 2,
+    "manual_review_required": ["ERAS", "NRIX"]
+  },
+  "governance_gates": {
+    "portfolio_return_pct": 6.65,
+    "xbi_entry_price": 133.62,
+    "xbi_current_price_jun22": 145.86,
+    "xbi_return_since_entry_pct": 9.16,
+    "drawdown_vs_xbi_pp": -2.51,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "TRIPPED — -2.51pp vs -2.0pp threshold. Improving: -3.43pp (Day10) -> -2.51pp (Day11). Closest to clear since Jun16 (-2.56pp).",
+    "drawdown_trend_pp": [-6.70, -5.84, -3.80, -2.56, -4.32, -5.34, -3.43, -3.43, -2.51],
+    "drawdown_trend_dates": ["2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-22_carried", "2026-06-23_Jun22close"],
+    "ic_observable": "OVERDUE — IC checkpoint due June 17. Now Day 11 — 4 days overdue. EXTEND or REVERT required. OPERATOR ACTION REQUIRED.",
+    "jaccard_13f": 0.875,
+    "jaccard_threshold": 0.7,
+    "jaccard_status": "PASS",
+    "emergency_exit_armed": true,
+    "positions_gt20pct_loss": ["DRUG (-26.58%)"],
+    "all_gates_clear": false,
+    "gate_summary": "2 gates open: (1) Drawdown -2.51pp TRIPPED, improving; (2) IC checkpoint 4 days overdue."
+  },
+  "catalyst_watch": {
+    "imminent_7d": [
+      {"ticker": "DNTH", "catalyst_days_remaining": 7, "catalyst_date_approx": "~2026-06-30", "tier": "A", "pnl_vs_entry_pct": -3.93},
+      {"ticker": "CMPS", "catalyst_days_remaining": 7, "catalyst_date_approx": "~2026-06-30", "tier": "C", "pnl_vs_entry_pct": -13.61},
+      {"ticker": "TRVI", "catalyst_days_remaining": 7, "catalyst_date_approx": "~2026-06-30", "tier": "C", "pnl_vs_entry_pct": 26.59}
+    ],
+    "near_term_8d": [
+      {"ticker": "COGT", "catalyst_days_remaining": 8, "catalyst_date_approx": "~2026-07-01", "tier": "A", "pnl_vs_entry_pct": 1.70},
+      {"ticker": "ALMS", "catalyst_days_remaining": 8, "catalyst_date_approx": "~2026-07-01", "tier": "A", "pnl_vs_entry_pct": 21.18},
+      {"ticker": "PRAX", "catalyst_days_remaining": 8, "catalyst_date_approx": "~2026-07-01", "tier": "B", "pnl_vs_entry_pct": -10.26}
+    ],
+    "resolved_catalysts": [
+      {"ticker": "SYRE", "resolution_date": "2026-06-15", "outcome": "POSITIVE", "result": "SKYLINE Phase 2 SPY002 UC p<0.0001. $463.5M raise. +42.34% vs entry."},
+      {"ticker": "SLDB", "resolution_date": "2026-06-21", "outcome": "POSITIVE", "result": "S&P Biotech Index addition effective June 21. +14.33% vs entry."}
+    ],
+    "catalyst_cluster_alert": "CRITICAL WINDOW: 6 catalysts in 7-8 days (June 30 - July 1). DNTH/CMPS/TRVI June 30, COGT/ALMS/PRAX July 1. CMPS at -13.61% faces -20% breach on negative readout."
+  },
+  "alerts_summary": {
+    "P1_critical_position": "DRUG -26.58% exceeds -20% threshold. Thin volume. T-130. Manual review required.",
+    "P2_governance_ic_overdue": "IC First Print 4 days overdue. EXTEND or REVERT required from operator.",
+    "P3_eras_investigation": "ERAS +10.31% on 9.0M volume (3rd consecutive elevated session). Investigate: lawsuit dismissal / M&A / clinical data.",
+    "P4_catalyst_cluster": "6 catalysts within 7-8 days: DNTH/CMPS/TRVI Jun30, COGT/ALMS/PRAX Jul1. CMPS at risk of -20% breach.",
+    "P5_drawdown_tripped": "Drawdown -2.51pp TRIPPED but improving (-3.43pp Day10 -> -2.51pp Day11).",
+    "P6_nrix_gap": "NRIX +6.27% gap on reduced volume. T-38. Investigate for news."
+  },
+  "benchmark": {
+    "xbi_current_price_jun22": 145.86,
+    "xbi_prev_close_jun18": 140.58,
+    "xbi_2d_change_pct": 3.75,
+    "xbi_entry_price": 133.62,
+    "xbi_since_entry_pct": 9.16,
+    "portfolio_avg_vs_xbi_pp": -2.51
+  },
+  "data_quality": {
+    "all_tickers_fresh_jun22": true,
+    "yfinance_data_available_for_all_15": true,
+    "jun20_data_status": "UNAVAILABLE — Friday June 20 close not in yfinance feed. All 2-day changes span Jun 18->22.",
+    "robinhood_mcp_status": "UNAVAILABLE",
+    "data_source": "yfinance"
+  },
+  "operational_status": {
+    "price_data_currency": "2026-06-22 close (all 15 tickers + XBI confirmed via yfinance)",
+    "snapshot_generation": "2026-06-23 pre-market (09:00 ET)",
+    "no_unauthorized_trades": true,
+    "robinhood_mcp_status": "UNAVAILABLE",
+    "missed_run_flag": false,
+    "governance_action_required": true
+  },
+  "next_monitoring_actions": [
+    "1. [GOVERNANCE — OVERDUE] IC First Print decision 4 days overdue. EXTEND or REVERT required.",
+    "2. [CRITICAL INVESTIGATE] ERAS: +10.31% on 9.0M volume (3rd session). Check SEC EDGAR, news.",
+    "3. [INVESTIGATE] NRIX: +6.27% unexplained gap. T-38.",
+    "4. [CRITICAL] DRUG: -26.58%. Manual review required.",
+    "5. [CATALYST CLUSTER] 6 binary events Jun30-Jul1. CMPS risks -20% breach.",
+    "6. [DRAWDOWN] -2.51pp TRIPPED, improving."
+  ]
+}
