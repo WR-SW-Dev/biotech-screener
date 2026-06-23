@@ -166,6 +166,31 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         if not quiet:
             print(f"✓ Built {len(programs)} program records", file=sys.stderr)
 
+        # Therapeutic area coverage report (R5)
+        if programs:
+            ta_counts: dict = {}
+            ta_null = 0
+            for p in programs:
+                if p.therapeutic_area:
+                    ta_counts[p.therapeutic_area] = ta_counts.get(p.therapeutic_area, 0) + 1
+                else:
+                    ta_null += 1
+            ta_total = len(programs)
+            ta_filled = ta_total - ta_null
+            status["therapeutic_area_coverage"] = {
+                "total_programs": ta_total,
+                "with_therapeutic_area": ta_filled,
+                "without_therapeutic_area": ta_null,
+                "coverage_pct": round(100.0 * ta_filled / ta_total, 1) if ta_total else 0.0,
+                "top_areas": sorted(ta_counts.items(), key=lambda x: x[1], reverse=True)[:10],
+            }
+            if not quiet:
+                print(
+                    f"✓ therapeutic_area coverage: {ta_filled}/{ta_total}"
+                    f" ({status['therapeutic_area_coverage']['coverage_pct']}%)",
+                    file=sys.stderr,
+                )
+
         # Step 5: Enrich programs with mechanism (in-place)
         if not quiet:
             print("Enriching programs with mechanism/modality/target...", file=sys.stderr)

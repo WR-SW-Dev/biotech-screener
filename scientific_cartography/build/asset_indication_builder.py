@@ -229,7 +229,7 @@ class AssetIndicationBuilder:
             disease_id=disease_id,
             disease_name=disease_name,
             mondo_id=mondo_id,
-            therapeutic_area=None,  # Will be computed later if needed
+            therapeutic_area=disease_record.therapeutic_area,
             indication_detail=condition,
             clinical_stage=trial_stage,
             trial_ids=[trial.nct_id] if trial.nct_id else [],

@@ -364,3 +364,101 @@ class TestConfidenceRedesignR3:
         programs, _ = builder.build_from_trials(trials, [])
         for p in programs:
             assert "asset_alias_unresolved_confidence_capped" in p.confidence_warnings
+
+
+# ---------------------------------------------------------------------------
+# Phase 13.4 R5 — therapeutic_area wiring tests
+# ---------------------------------------------------------------------------
+
+
+class TestTherapeuticAreaWiringR5:
+    """Phase 13.4 R5: therapeutic_area must be populated from MONDO disease mapping."""
+
+    @pytest.fixture
+    def builder(self):
+        disease_norm = DiseaseNormalizer(as_of_date="2026-06-23")
+        stage_norm = StageNormalizer()
+        asset_resolver = AssetAliasResolver(as_of_date="2026-06-23")
+        company_records = [
+            CompanyRecord(
+                company_id="COMP_333",
+                ticker="COGT",
+                company_name="Cognito Therapeutics",
+                is_public=True,
+                as_of_date="2026-06-23",
+            )
+        ]
+        sponsor_resolver = SponsorResolver(company_records=company_records)
+        return AssetIndicationBuilder(
+            disease_normalizer=disease_norm,
+            stage_normalizer=stage_norm,
+            asset_alias_resolver=asset_resolver,
+            sponsor_resolver=sponsor_resolver,
+            as_of_date="2026-06-23",
+        )
+
+    def _trial(self, intervention, condition, phase="Phase 2", sponsor="Cognito Therapeutics"):
+        return TrialRecord(
+            nct_id="NCT88880000",
+            brief_title="Test trial",
+            sponsor=sponsor,
+            conditions=[condition],
+            interventions=[intervention],
+            phases=[phase],
+            as_of_date="2026-06-23",
+        )
+
+    def test_mondo_mapped_disease_populates_therapeutic_area(self, builder):
+        """NSCLC (MONDO:0005233) must produce therapeutic_area='Oncology'."""
+        trials = [self._trial("DrugX", "Non-Small Cell Lung Cancer")]
+        programs, _ = builder.build_from_trials(trials, [])
+        assert programs
+        assert programs[0].therapeutic_area == "Oncology", f"Expected 'Oncology'; got {programs[0].therapeutic_area!r}"
+
+    def test_mondo_dermatology_disease_populates_therapeutic_area(self, builder):
+        """Atopic dermatitis (MONDO:0004980) must produce therapeutic_area='Dermatology'."""
+        trials = [self._trial("DrugX", "Atopic Dermatitis")]
+        programs, _ = builder.build_from_trials(trials, [])
+        assert programs
+        assert (
+            programs[0].therapeutic_area == "Dermatology"
+        ), f"Expected 'Dermatology'; got {programs[0].therapeutic_area!r}"
+
+    def test_mondo_neurology_disease_populates_therapeutic_area(self, builder):
+        """Parkinson's disease (MONDO:0005180) must produce therapeutic_area='Neurology'."""
+        trials = [self._trial("DrugX", "Parkinson's Disease")]
+        programs, _ = builder.build_from_trials(trials, [])
+        assert programs
+        assert (
+            programs[0].therapeutic_area == "Neurology"
+        ), f"Expected 'Neurology'; got {programs[0].therapeutic_area!r}"
+
+    def test_unknown_disease_leaves_therapeutic_area_none(self, builder):
+        """Unmapped disease must leave therapeutic_area as None."""
+        trials = [self._trial("DrugX", "CompletelyFictionalRareSyndrome999")]
+        programs, _ = builder.build_from_trials(trials, [])
+        assert programs
+        assert programs[0].therapeutic_area is None, f"Expected None; got {programs[0].therapeutic_area!r}"
+
+    def test_therapeutic_area_survives_to_dict_roundtrip(self, builder):
+        """therapeutic_area must survive to_dict() -> from_dict() roundtrip."""
+        from scientific_cartography.schemas.program_schema import ProgramRecord
+
+        trials = [self._trial("DrugX", "Non-Small Cell Lung Cancer")]
+        programs, _ = builder.build_from_trials(trials, [])
+        p = programs[0]
+        p2 = ProgramRecord.from_dict(p.to_dict())
+        assert p2.therapeutic_area == p.therapeutic_area
+
+    def test_therapeutic_area_propagates_to_cluster(self, builder):
+        """CompetitiveClusterBuilder must inherit therapeutic_area from programs."""
+        from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder
+
+        trials = [self._trial("DrugX", "Non-Small Cell Lung Cancer")]
+        programs, _ = builder.build_from_trials(trials, [])
+        cluster_builder = CompetitiveClusterBuilder(as_of_date="2026-06-23")
+        clusters, _ = cluster_builder.build_from_programs(programs)
+        assert clusters
+        assert (
+            clusters[0].therapeutic_area == "Oncology"
+        ), f"Expected 'Oncology' in cluster; got {clusters[0].therapeutic_area!r}"
