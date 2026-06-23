@@ -1,0 +1,438 @@
+"""Tests for Scientific Cartography Map UX v0.2b static generator."""
+
+import json
+import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+
+# Ensure repo root is in path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from tools.generate_scientific_cartography_map import (
+    ForbiddenSourceError,
+    _check_forbidden,
+    build_map_data,
+    generate_map,
+    render_html,
+    render_svg,
+)
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+_KNOWN_DISEASE = "type 2 diabetes mellitus"
+_MONDO = "MONDO:0005148"
+
+
+def _make_program(
+    asset_name="DrugA",
+    disease_name=_KNOWN_DISEASE,
+    clinical_stage="phase2",
+    mechanism_class=None,
+    modality=None,
+    ticker=None,
+    confidence=0.75,
+    mondo_id=_MONDO,
+    therapeutic_area="Metabolic",
+    program_id=None,
+):
+    return {
+        "program_id": program_id or f"PROG_{asset_name}",
+        "asset_name": asset_name,
+        "company_name": "ACME Bio",
+        "ticker": ticker,
+        "disease_name": disease_name,
+        "disease_id": mondo_id,
+        "mondo_id": mondo_id,
+        "therapeutic_area": therapeutic_area,
+        "mechanism_class": mechanism_class,
+        "target": None,
+        "modality": modality,
+        "clinical_stage": clinical_stage,
+        "confidence": confidence,
+        "source_refs": ["NCT12345678"],
+    }
+
+
+def _fixture_dir_with_programs(programs: list[dict]) -> Path:
+    """Write a minimal artifact dir with program_records.jsonl + manifest."""
+    tmp = Path(tempfile.mkdtemp())
+    with open(tmp / "program_records.jsonl", "w") as f:
+        for p in programs:
+            f.write(json.dumps(p) + "\n")
+    manifest = {
+        "artifact_type": "scientific_cartography_export_manifest",
+        "as_of_date": "2026-06-23",
+        "governance": {"read_only_diagnostic": True},
+    }
+    (tmp / "artifact_manifest.json").write_text(json.dumps(manifest))
+    return tmp
+
+
+# ---------------------------------------------------------------------------
+# 1. Forbidden-source guard
+# ---------------------------------------------------------------------------
+
+
+class TestForbiddenSourceGuard:
+    def test_rankings_csv_blocked(self):
+        with pytest.raises(ForbiddenSourceError, match="rankings.csv"):
+            _check_forbidden(Path("/data/rankings.csv"))
+
+    def test_portfolio_positions_blocked(self):
+        with pytest.raises(ForbiddenSourceError, match="portfolio_positions"):
+            _check_forbidden(Path("/data/portfolio_positions.csv"))
+
+    def test_screen_output_blocked(self):
+        with pytest.raises(ForbiddenSourceError, match="screen_output"):
+            _check_forbidden(Path("/data/screen_output.json"))
+
+    def test_selector_blocked(self):
+        with pytest.raises(ForbiddenSourceError, match="selector"):
+            _check_forbidden(Path("/data/selector_output.json"))
+
+    def test_sizing_blocked(self):
+        with pytest.raises(ForbiddenSourceError, match="sizing"):
+            _check_forbidden(Path("/data/sizing_result.json"))
+
+    def test_final_score_blocked(self):
+        with pytest.raises(ForbiddenSourceError, match="final_score"):
+            _check_forbidden(Path("/data/final_score.json"))
+
+    def test_allowed_path_passes(self):
+        _check_forbidden(Path("/data/program_records.jsonl"))
+        _check_forbidden(Path("/data/competitive_clusters.jsonl"))
+        _check_forbidden(Path("/data/map_index.json"))
+
+    def test_generate_map_aborts_on_forbidden_input_dir(self, tmp_path):
+        forbidden_dir = tmp_path / "rankings.csv_dir"
+        forbidden_dir.mkdir()
+        with pytest.raises(ForbiddenSourceError):
+            generate_map(
+                input_dir=forbidden_dir,
+                disease="test disease",
+                output_dir=tmp_path / "out",
+            )
+
+
+# ---------------------------------------------------------------------------
+# 2. Disease filtering
+# ---------------------------------------------------------------------------
+
+
+class TestDiseaseFilter:
+    def test_exact_match_found(self, tmp_path):
+        programs = [
+            _make_program("DrugA", disease_name="type 2 diabetes mellitus"),
+            _make_program("DrugB", disease_name="non-small cell lung cancer"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out",
+            quiet=True,
+        )
+        assert result["programs"] == 1
+
+    def test_substring_match(self, tmp_path):
+        programs = [
+            _make_program("DrugA", disease_name="type 2 diabetes mellitus"),
+            _make_program("DrugB", disease_name="Type 2 Diabetes Mellitus, severe"),
+            _make_program("DrugC", disease_name="other disease"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes",
+            output_dir=tmp_path / "out",
+            quiet=True,
+        )
+        assert result["programs"] == 2
+
+    def test_no_match_raises(self, tmp_path):
+        programs = [_make_program("DrugA", disease_name="pancreatic cancer")]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        with pytest.raises(ValueError, match="No programs found"):
+            generate_map(
+                input_dir=artifact_dir,
+                disease="type 2 diabetes mellitus",
+                output_dir=tmp_path / "out",
+                quiet=True,
+            )
+
+
+# ---------------------------------------------------------------------------
+# 3. Map data structure
+# ---------------------------------------------------------------------------
+
+
+class TestBuildMapData:
+    def test_lanes_sorted_by_count_descending(self):
+        programs = (
+            [_make_program(f"A{i}", mechanism_class="KRAS inhibitor") for i in range(3)]
+            + [_make_program(f"B{i}", mechanism_class="PARP inhibitor") for i in range(5)]
+            + [_make_program(f"C{i}", mechanism_class=None) for i in range(10)]
+        )
+        md = build_map_data(programs, "test disease", {})
+        assert md["lanes"][0] == "PARP inhibitor"
+        assert md["lanes"][1] == "KRAS inhibitor"
+        assert md["lanes"][-1] == "Unknown Mechanism"
+
+    def test_unknown_mechanism_lane_always_last(self):
+        programs = [_make_program("A", mechanism_class="JAK inhibitor")] + [
+            _make_program(f"U{i}", mechanism_class=None) for i in range(5)
+        ]
+        md = build_map_data(programs, "test disease", {})
+        assert md["lanes"][-1] == "Unknown Mechanism"
+
+    def test_unknown_mechanism_lane_present_when_all_unknown(self):
+        programs = [_make_program(f"X{i}", mechanism_class=None) for i in range(4)]
+        md = build_map_data(programs, "test disease", {})
+        assert "Unknown Mechanism" in md["lanes"]
+
+    def test_columns_include_active_stages_only(self):
+        programs = [
+            _make_program("A", clinical_stage="phase2"),
+            _make_program("B", clinical_stage="phase3"),
+        ]
+        md = build_map_data(programs, "test disease", {})
+        assert "phase2" in md["columns"]
+        assert "phase3" in md["columns"]
+        assert "phase1" not in md["columns"]
+
+    def test_unknown_stage_column_included(self):
+        programs = [
+            _make_program("A", clinical_stage="phase2"),
+            _make_program("B", clinical_stage=None),
+        ]
+        md = build_map_data(programs, "test disease", {})
+        assert "unknown" in md["columns"]
+
+    def test_cells_sorted_by_confidence(self):
+        programs = [
+            _make_program("LowConf", clinical_stage="phase2", confidence=0.1),
+            _make_program("HighConf", clinical_stage="phase2", confidence=0.9),
+        ]
+        md = build_map_data(programs, "test disease", {})
+        unknown_cell = md["cells"]["Unknown Mechanism"]["phase2"]
+        assert unknown_cell[0]["asset_name"] == "HighConf"
+
+    def test_stage_order_preserved_in_columns(self):
+        programs = [
+            _make_program("A", clinical_stage="phase3"),
+            _make_program("B", clinical_stage="phase1"),
+            _make_program("C", clinical_stage="phase2"),
+        ]
+        md = build_map_data(programs, "test disease", {})
+        cols = md["columns"]
+        assert cols.index("phase1") < cols.index("phase2") < cols.index("phase3")
+
+    def test_metadata_fields_present(self):
+        programs = [_make_program("A")]
+        md = build_map_data(programs, "type 2 diabetes mellitus", {"as_of_date": "2026-06-23"})
+        meta = md["metadata"]
+        assert meta["disease_name"] == "type 2 diabetes mellitus"
+        assert meta["disease_slug"] == "type-2-diabetes-mellitus"
+        assert "governance" in meta
+        assert meta["governance"]["read_only_diagnostic"] is True
+        assert "NOT AN INVESTMENT RECOMMENDATION" in meta["governance"]["disclaimer"]
+
+    def test_summary_coverage_stats(self):
+        programs = [
+            _make_program("A", clinical_stage="phase2", mechanism_class="JAK inhibitor"),
+            _make_program("B", clinical_stage=None, mechanism_class=None),
+            _make_program("C", clinical_stage="phase3", mechanism_class=None, ticker="BIOX"),
+        ]
+        md = build_map_data(programs, "test disease", {})
+        summ = md["summary"]
+        assert summ["total_programs"] == 3
+        assert summ["mechanism_coverage_pct"] == pytest.approx(33.3, 0.1)
+        assert summ["ticker_coverage_pct"] == pytest.approx(33.3, 0.1)
+
+    def test_sparse_mechanism_warning_emitted(self):
+        programs = [_make_program(f"X{i}", mechanism_class=None) for i in range(20)]
+        md = build_map_data(programs, "test disease", {})
+        assert any("Mechanism coverage is sparse" in w for w in md["warnings"])
+
+    def test_deterministic_output_same_inputs(self):
+        programs = [
+            _make_program("C", clinical_stage="phase2"),
+            _make_program("A", clinical_stage="phase3"),
+            _make_program("B", clinical_stage="phase1"),
+        ]
+        md1 = build_map_data(programs, "test disease", {})
+        md2 = build_map_data(programs, "test disease", {})
+        assert md1["columns"] == md2["columns"]
+        assert md1["lanes"] == md2["lanes"]
+
+    def test_therapeutic_area_in_metadata(self):
+        programs = [_make_program("A", therapeutic_area="Oncology")]
+        md = build_map_data(programs, "test disease", {})
+        assert md["metadata"]["therapeutic_area"] == "Oncology"
+
+    def test_therapeutic_area_none_when_absent(self):
+        programs = [_make_program("A", therapeutic_area=None)]
+        md = build_map_data(programs, "test disease", {})
+        assert md["metadata"]["therapeutic_area"] is None
+
+
+# ---------------------------------------------------------------------------
+# 4. SVG output
+# ---------------------------------------------------------------------------
+
+
+class TestRenderSVG:
+    def test_svg_produced(self):
+        programs = [_make_program("DrugA"), _make_program("DrugB", clinical_stage="phase3")]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        assert svg.startswith("<svg")
+        assert svg.strip().endswith("</svg>")
+
+    def test_unknown_mechanism_lane_in_svg(self):
+        programs = [_make_program("DrugA", mechanism_class=None)]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        assert "Unknown Mechanism" in svg
+
+    def test_unknown_stage_column_in_svg_when_present(self):
+        programs = [_make_program("DrugA", clinical_stage=None)]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        assert "UNKNOWN STAGE" in svg
+
+    def test_overflow_label_present(self):
+        programs = [_make_program(f"Drug{i}", clinical_stage="phase2") for i in range(8)]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        assert "more" in svg
+
+    def test_no_recommendation_language_in_svg(self):
+        programs = [_make_program("DrugA")]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        for bad_word in ["ranking", "score", "buy", "sell", "recommendation"]:
+            assert bad_word.lower() not in svg.lower()
+
+
+# ---------------------------------------------------------------------------
+# 5. HTML output
+# ---------------------------------------------------------------------------
+
+
+class TestRenderHTML:
+    def test_governance_header_present(self):
+        programs = [_make_program("DrugA")]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        html = render_html(md, svg)
+        assert "DIAGNOSTIC ONLY" in html
+        assert "NOT AN INVESTMENT RECOMMENDATION" in html
+
+    def test_no_action_language_in_html(self):
+        """HTML must not contain trade-action or production-model language."""
+        programs = [_make_program("DrugA")]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        html = render_html(md, svg)
+        for bad_phrase in ["buy ", "sell ", "final_score", " sizing", "trade now"]:
+            assert bad_phrase.lower() not in html.lower(), f"Forbidden phrase {bad_phrase!r} found in HTML"
+
+    def test_therapeutic_area_appears_if_present(self):
+        programs = [_make_program("DrugA", therapeutic_area="Oncology")]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        html = render_html(md, svg)
+        assert "Oncology" in html
+
+    def test_warning_banner_appears_for_sparse_mechanism(self):
+        programs = [_make_program(f"X{i}", mechanism_class=None) for i in range(20)]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        html = render_html(md, svg)
+        assert "warning" in html.lower()
+
+    def test_html_self_contained_no_external_cdn(self):
+        programs = [_make_program("DrugA")]
+        md = build_map_data(programs, "test disease", {})
+        svg = render_svg(md)
+        html = render_html(md, svg)
+        # No external URLs
+        for external in ["cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com"]:
+            assert external not in html
+
+
+# ---------------------------------------------------------------------------
+# 6. Full generation
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateMap:
+    def test_all_four_files_created(self, tmp_path):
+        programs = [
+            _make_program("DrugA", clinical_stage="phase2"),
+            _make_program("DrugB", clinical_stage="phase3"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        assert (out_dir / "index.html").exists()
+        assert (out_dir / "map.svg").exists()
+        assert (out_dir / "map.json").exists()
+        assert (out_dir / "README.md").exists()
+
+    def test_map_json_valid_schema(self, tmp_path):
+        programs = [_make_program("DrugA"), _make_program("DrugB")]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        with open(out_dir / "map.json") as f:
+            md = json.load(f)
+        assert "metadata" in md
+        assert "summary" in md
+        assert "lanes" in md
+        assert "columns" in md
+        assert "cells" in md
+        assert "warnings" in md
+
+    def test_svg_not_empty(self, tmp_path):
+        programs = [_make_program("DrugA", clinical_stage="phase2")]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        svg_content = (out_dir / "map.svg").read_text()
+        assert "<svg" in svg_content
+        assert len(svg_content) > 200
+
+    def test_result_dict_shape(self, tmp_path):
+        programs = [_make_program("DrugA"), _make_program("DrugB")]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out",
+            quiet=True,
+        )
+        assert result["programs"] == 2
+        assert "lanes" in result
+        assert "columns" in result
+        assert "warnings" in result
