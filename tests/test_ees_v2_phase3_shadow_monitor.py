@@ -26,6 +26,7 @@ sys.path.insert(0, str(REPO))
 from scripts.research.ees_v2_phase3_shadow_monitor import (  # noqa: E402
     OBS_GATE_5D,
     OBS_GATE_20D,
+    _is_settled,
     backfill_open_rows,
     compute_summary,
     filter_phase3_ees,
@@ -453,3 +454,136 @@ class TestLedgerRoundTrip:
         lpath.write_text('{"snap_date":"2026-06-24","ticker":"RVMD","forward_complete_20d":false}\n{bad json\n')
         loaded, _, _ = load_ledger(lpath)
         assert len(loaded) == 1  # only the valid line
+
+
+# ---------------------------------------------------------------------------
+# 6. Settled-row hardening: _is_settled() and boolish forms
+# ---------------------------------------------------------------------------
+
+
+class TestIsSettled:
+    """Pins the _is_settled() helper added in the post-merge hardening patch."""
+
+    def test_json_true_is_settled(self):
+        assert _is_settled(True) is True
+
+    def test_numeric_1_is_settled(self):
+        assert _is_settled(1) is True
+
+    def test_string_true_lowercase_is_settled(self):
+        assert _is_settled("true") is True
+
+    def test_string_true_titlecase_is_settled(self):
+        assert _is_settled("True") is True
+
+    def test_string_true_uppercase_is_settled(self):
+        assert _is_settled("TRUE") is True
+
+    def test_json_false_is_not_settled(self):
+        assert _is_settled(False) is False
+
+    def test_numeric_0_is_not_settled(self):
+        assert _is_settled(0) is False
+
+    def test_string_false_is_not_settled(self):
+        assert _is_settled("false") is False
+
+    def test_none_is_not_settled(self):
+        assert _is_settled(None) is False
+
+    def test_missing_field_is_not_settled(self):
+        row: dict = {}
+        assert _is_settled(row.get("forward_complete_20d")) is False
+
+    def test_string_1_is_not_settled(self):
+        # "1" as a string is truthy but not in our explicit accept list
+        assert _is_settled("1") is False
+
+
+class TestBoolishSettledRowImmutability:
+    """
+    Settled rows with truthy non-boolean forward_complete_20d must be protected
+    by backfill_open_rows() regardless of how the value was written to the ledger.
+    """
+
+    def _row_with_complete(self, complete_20d_value, ticker="RVMD"):
+        return {
+            "snap_date": "2026-06-01",
+            "ticker": ticker,
+            "ees_v2_score": 0.3,
+            "anchor_date": "2026-06-01",
+            "anchor_close": 40.0,
+            "xbi_anchor_date": "2026-06-01",
+            "xbi_anchor_close": 90.0,
+            "actual_return_5d": 0.05,
+            "xbi_return_5d": 0.02,
+            "excess_return_5d": 0.03,
+            "forward_complete_5d": True,
+            "actual_return_20d": 0.10,
+            "xbi_return_20d": 0.04,
+            "excess_return_20d": 0.06,
+            "forward_complete_20d": complete_20d_value,
+            "ledger_version": "1.0",
+            "run_ts": "2026-06-24T17:00:00Z",
+        }
+
+    def _prices_with_different_return(self):
+        """Price data that would compute a very different return if applied."""
+        dates = [f"2026-06-{i:02d}" for i in range(1, 30)]
+        return (
+            {
+                "RVMD": {d: 40.0 + i * 10 for i, d in enumerate(dates)},
+                "XBI": {d: 90.0 + i for i, d in enumerate(dates)},
+            },
+            sorted(dates),
+        )
+
+    def test_json_true_settled_row_protected(self):
+        row = self._row_with_complete(True)
+        original = dict(row)
+        prices, sorted_dates = self._prices_with_different_return()
+        result, _, _ = backfill_open_rows([row], prices, sorted_dates)
+        assert result[0] == original
+
+    def test_numeric_1_settled_row_protected(self):
+        row = self._row_with_complete(1)
+        original = dict(row)
+        prices, sorted_dates = self._prices_with_different_return()
+        result, _, _ = backfill_open_rows([row], prices, sorted_dates)
+        assert result[0] == original
+
+    def test_string_true_settled_row_protected(self):
+        row = self._row_with_complete("true")
+        original = dict(row)
+        prices, sorted_dates = self._prices_with_different_return()
+        result, _, _ = backfill_open_rows([row], prices, sorted_dates)
+        assert result[0] == original
+
+    def test_false_row_is_open_and_backfilled(self):
+        """A row with forward_complete_20d=False must NOT be treated as settled."""
+        row = self._row_with_complete(False)
+        row["actual_return_20d"] = None
+        row["excess_return_20d"] = None
+        row["forward_complete_20d"] = False
+        prices, sorted_dates = self._prices_with_different_return()
+        result, _, new_20d = backfill_open_rows([row], prices, sorted_dates)
+        assert new_20d == 1
+        assert result[0]["forward_complete_20d"] is True
+
+    def test_zero_row_is_open_and_backfilled(self):
+        """A row with forward_complete_20d=0 must NOT be treated as settled."""
+        row = self._row_with_complete(0)
+        row["actual_return_20d"] = None
+        row["excess_return_20d"] = None
+        prices, sorted_dates = self._prices_with_different_return()
+        result, _, new_20d = backfill_open_rows([row], prices, sorted_dates)
+        assert new_20d == 1
+
+    def test_string_false_row_is_open_and_backfilled(self):
+        """A row with forward_complete_20d='false' must NOT be treated as settled."""
+        row = self._row_with_complete("false")
+        row["actual_return_20d"] = None
+        row["excess_return_20d"] = None
+        prices, sorted_dates = self._prices_with_different_return()
+        result, _, new_20d = backfill_open_rows([row], prices, sorted_dates)
+        assert new_20d == 1

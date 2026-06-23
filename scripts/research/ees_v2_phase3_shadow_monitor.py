@@ -255,7 +255,7 @@ def load_ledger(path: Path) -> tuple[list[dict], set[tuple[str, str]], set[tuple
                 except json.JSONDecodeError as exc:
                     log.warning("Ledger parse error at line %d: %s", lineno, exc)
     existing_keys = {(r["snap_date"], r["ticker"]) for r in rows}
-    settled_keys = {(r["snap_date"], r["ticker"]) for r in rows if r.get("forward_complete_20d") is True}
+    settled_keys = {(r["snap_date"], r["ticker"]) for r in rows if _is_settled(r.get("forward_complete_20d"))}
     log.info(
         "Loaded ledger: %d rows (%d existing keys, %d settled)",
         len(rows),
@@ -297,6 +297,21 @@ def _safe_bool(v: object) -> bool:
     if isinstance(v, bool):
         return v
     return str(v).strip().lower() in ("true", "1", "yes")
+
+
+def _is_settled(v: object) -> bool:
+    """
+    Return True if a forward_complete_Nd field indicates a settled (immutable) row.
+
+    Accepts JSON boolean True, numeric 1, and common truthy string forms so that
+    manually edited ledger rows are protected identically to script-generated ones.
+    Rejects everything else, including None and missing fields.
+    """
+    if v is True or v == 1:
+        return True
+    if isinstance(v, str) and v.strip().lower() in ("true",):
+        return True
+    return False
 
 
 def make_new_row(
@@ -362,7 +377,7 @@ def backfill_open_rows(
     newly_20d = 0
 
     for raw_row in rows:
-        if raw_row.get("forward_complete_20d") is True:
+        if _is_settled(raw_row.get("forward_complete_20d")):
             result.append(raw_row)
             continue
 
@@ -375,7 +390,7 @@ def backfill_open_rows(
 
         for hz in HORIZONS:
             cmp_col = f"forward_complete_{hz}d"
-            if row.get(cmp_col) is True:
+            if _is_settled(row.get(cmp_col)):
                 continue  # already filled
 
             ticker_ret = compute_return(ticker, anchor_date, hz, prices, anchor_close, sorted_dates)
@@ -502,8 +517,8 @@ def _quintile_spread(settled_rows: list[dict], hz: int) -> Optional[float]:
 
 def compute_summary(all_rows: list[dict], as_of_date: str) -> dict:
     """Compute summary stats. Enforces gate: no interpretation before thresholds met."""
-    settled_5d = [r for r in all_rows if r.get("forward_complete_5d") is True]
-    settled_20d = [r for r in all_rows if r.get("forward_complete_20d") is True]
+    settled_5d = [r for r in all_rows if _is_settled(r.get("forward_complete_5d"))]
+    settled_20d = [r for r in all_rows if _is_settled(r.get("forward_complete_20d"))]
 
     gate_5d_met = len(settled_5d) >= OBS_GATE_5D
     gate_20d_met = len(settled_20d) >= OBS_GATE_20D
@@ -658,7 +673,7 @@ def main() -> int:
 
     # 7. Verify settled-row integrity (safety check — should always pass)
     for old, new in zip(existing_rows, updated_existing):
-        if old.get("forward_complete_20d") is True:
+        if _is_settled(old.get("forward_complete_20d")):
             assert old == new, (
                 f"INTEGRITY VIOLATION: settled row modified for " f"({old['snap_date']}, {old['ticker']})"
             )
