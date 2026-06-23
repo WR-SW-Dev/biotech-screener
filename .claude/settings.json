@@ -6,10 +6,29 @@
       "Bash(python3 scripts/build_news_digest.py*)",
       "Bash(python3 -m tools*)",
       "Bash(PYTHONPATH* python3 tools*)",
-      "Bash(PYTHONPATH* python3 scripts*)"
+      "Bash(PYTHONPATH* python3 scripts*)",
+      "Bash(crontab -l *)",
+      "Bash(git -C * status *)",
+      "mcp__robinhood-trading__get_portfolio",
+      "mcp__robinhood-trading__get_equity_positions",
+      "mcp__robinhood-trading__get_equity_quotes",
+      "mcp__robinhood-trading__get_accounts"
     ]
   },
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -E 'scientific_cartography|ctgov_ingest|ingest/.*\\.py' | { read -r f; [ -n \"$f\" ] && cd /mnt/c/Projects/biotech_screener/biotech-screener && python3 -m pytest tests/scientific_cartography/ -q --tb=short 2>&1 | tail -12; } || true",
+            "async": true,
+            "statusMessage": "Running Sci-Cart tests..."
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
