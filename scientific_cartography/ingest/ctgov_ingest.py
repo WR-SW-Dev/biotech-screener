@@ -117,8 +117,12 @@ class CTGovIngest:
     def _parse_simplified_format(self, data: dict) -> Optional[TrialRecord]:
         """Parse simplified test fixture format.
 
+        Supports both "phases" (plural list, fixture format) and "phase"
+        (singular string, production trial_records.json format).
+
         Args:
-            data: Data with nct_id, brief_title, sponsor, conditions, interventions, phases.
+            data: Data with nct_id, brief_title, sponsor, conditions,
+                  interventions, and either phases (list) or phase (string).
 
         Returns:
             TrialRecord or None.
@@ -129,6 +133,16 @@ class CTGovIngest:
 
         brief_title = data.get("brief_title", "").strip() or "Unknown"
 
+        # PHASE13_5_R2B_STAGE_PARSER_COMPATIBILITY_FIX
+        # Production trial_records.json uses singular "phase" string (e.g. "PHASE2").
+        # Test fixtures use plural "phases" list. Support both: prefer "phases" if
+        # present and non-empty, otherwise fall back to "phase" singular string.
+        phases_raw = data.get("phases")
+        if phases_raw:
+            phases = self._ensure_list(phases_raw)
+        else:
+            phases = self._ensure_list(data.get("phase", []))
+
         return TrialRecord(
             nct_id=nct_id,
             brief_title=brief_title,
@@ -138,7 +152,7 @@ class CTGovIngest:
             collaborators=data.get("collaborators", []),
             conditions=self._ensure_list(data.get("conditions", [])),
             interventions=self._ensure_list(data.get("interventions", [])),
-            phases=self._ensure_list(data.get("phases", [])),
+            phases=phases,
             overall_status=data.get("overall_status"),
             enrollment=data.get("enrollment"),
             study_type=data.get("study_type"),
