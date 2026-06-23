@@ -1461,6 +1461,32 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 - Weekly: `build_event_feedback_metrics.py` computes source precision, confidence ECE, outcome confusion, regulatory calibration
 - Read-only: metrics inform governance decisions but never auto-update model priors
 
+### Developer Tooling
+
+#### Semgrep (Static Analysis / Governance Gate)
+
+- **Supply-chain rules** deployed PR #370 — blocks unauthorized imports and module substitution
+- **CI ERROR gate** active PR #376 — `semgrep --error` blocks on governance rule violations pre-merge
+- **Rule coverage:** ranker/selector/final_score mutation guard, PIT annotation enforcement, model-output-as-signal guard, supply-chain checks
+- **Pre-commit hook:** ERROR-level findings block local commits; WARN-level findings are advisory
+- **Scope note:** Semgrep is slow on `/mnt/c` (WSL2 network FS); scan on a fast-FS copy for interactive use
+- Config: `.semgrep/` rules in repo root; `.semgrepignore` for test fixtures
+
+#### LangGraph (Orchestration Framework)
+
+- **LG1** — Orchestrator (commit `1b2c8095`): drives the daily scientific cartography pipeline
+- **LG2** — Approval workflow (commit `bdb97db7`): review-workflow approval only; `automation_approval` immutably `False`; append-only JSONL artifacts
+- **LG3** — Scientific Cartography scheduled review: design documentation approved (`LANGGRAPH_PHASE_LG3_DESIGN_ONLY_APPROVED`); runtime wrapper locked at commit `0afa9e25` (Mode B: cron-compatible, disabled by default, non-blocking)
+- **LG3 governance constraints:** No cron installation, no production hook, no dashboard wiring, no agent summarization without separate operator approval per phase
+- **Forbidden across all phases:** `mutate_config` authority; Lane A agents importing LLM modules; automated scheduling without explicit operator instruction
+
+#### CodeGraph (Code Intelligence MCP)
+
+- SQLite knowledge graph of every symbol, edge, and file in the workspace; index lags writes by ~1 second via file watcher
+- **MCP tools:** `codegraph_context`, `codegraph_search`, `codegraph_trace`, `codegraph_explore`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`, `codegraph_node`, `codegraph_files`
+- **Usage in this repo:** development-time code navigation and architecture validation; not registered in `.mcp.json` for production agents
+- Agent fleet architecture index validated against codegraph (2026-05-26)
+
 ---
 
 ## 10. OpenClaw Agent Fleet
