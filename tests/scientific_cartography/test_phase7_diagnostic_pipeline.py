@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-
 # Import the wrapper function
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "tools"))
 from run_scientific_cartography_diagnostics import run_diagnostics
@@ -340,3 +339,160 @@ class TestPhase7DiagnosticPipeline:
                 assert "warnings" in status
                 assert isinstance(status["errors"], list)
                 assert isinstance(status["warnings"], list)
+
+
+# ---------------------------------------------------------------------------
+# Phase 13.1 R2 — trial input discovery tests
+# ---------------------------------------------------------------------------
+
+_MINIMAL_TRIAL_JSONL = '{"nct_id": "NCT00000001", "brief_title": "Test Trial"}\n'
+_MINIMAL_TRIAL_JSON_LIST = '[{"nct_id": "NCT00000001", "brief_title": "Test Trial"}]'
+
+
+def _make_args(tmpdir, ctgov_cache):
+    snapshot_dir = Path(tmpdir) / "snapshot"
+    snapshot_dir.mkdir(exist_ok=True)
+    return Args(
+        as_of_date="2026-06-23",
+        snapshot_dir=str(snapshot_dir),
+        ctgov_cache=str(ctgov_cache),
+        output_dir=str(Path(tmpdir) / "output"),
+        quiet=True,
+    )
+
+
+def _patch_universe(mock_universe):
+    inst = MagicMock()
+    inst.load_from_snapshot.return_value = ([], [])
+    mock_universe.return_value = inst
+
+
+class TestTrialInputDiscovery:
+    """Phase 13.1 R2: trial input-path correction tests."""
+
+    def test_discovers_trials_jsonl(self):
+        """trials.jsonl in ctgov_cache should be loaded."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctgov_cache = Path(tmpdir) / "cache"
+            ctgov_cache.mkdir()
+            (ctgov_cache / "trials.jsonl").write_text(_MINIMAL_TRIAL_JSONL)
+
+            args = _make_args(tmpdir, ctgov_cache)
+            with patch("run_scientific_cartography_diagnostics.ExistingUniverseIngest") as mock_u:
+                _patch_universe(mock_u)
+                run_diagnostics(args)
+
+            status_path = Path(tmpdir) / "output" / "scientific_cartography_status.json"
+            assert status_path.exists()
+            status = json.loads(status_path.read_text())
+            # No warning about missing trial files
+            missing_warnings = [w for w in status.get("warnings", []) if "No trial data files" in w]
+            assert missing_warnings == [], f"Unexpected missing-file warnings: {missing_warnings}"
+
+    def test_discovers_trials_json(self):
+        """trials.json in ctgov_cache should be loaded when no jsonl present."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctgov_cache = Path(tmpdir) / "cache"
+            ctgov_cache.mkdir()
+            (ctgov_cache / "trials.json").write_text(_MINIMAL_TRIAL_JSON_LIST)
+
+            args = _make_args(tmpdir, ctgov_cache)
+            with patch("run_scientific_cartography_diagnostics.ExistingUniverseIngest") as mock_u:
+                _patch_universe(mock_u)
+                run_diagnostics(args)
+
+            status_path = Path(tmpdir) / "output" / "scientific_cartography_status.json"
+            assert status_path.exists()
+            status = json.loads(status_path.read_text())
+            missing_warnings = [w for w in status.get("warnings", []) if "No trial data files" in w]
+            assert missing_warnings == [], f"Unexpected missing-file warnings: {missing_warnings}"
+
+    def test_discovers_trial_records_json(self):
+        """trial_records.json in ctgov_cache should be loaded when no other files present."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctgov_cache = Path(tmpdir) / "cache"
+            ctgov_cache.mkdir()
+            (ctgov_cache / "trial_records.json").write_text(_MINIMAL_TRIAL_JSON_LIST)
+
+            args = _make_args(tmpdir, ctgov_cache)
+            with patch("run_scientific_cartography_diagnostics.ExistingUniverseIngest") as mock_u:
+                _patch_universe(mock_u)
+                run_diagnostics(args)
+
+            status_path = Path(tmpdir) / "output" / "scientific_cartography_status.json"
+            assert status_path.exists()
+            status = json.loads(status_path.read_text())
+            missing_warnings = [w for w in status.get("warnings", []) if "No trial data files" in w]
+            assert missing_warnings == [], f"Unexpected missing-file warnings: {missing_warnings}"
+
+    def test_priority_jsonl_over_trial_records(self):
+        """trials.jsonl should take priority over trial_records.json when both exist."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctgov_cache = Path(tmpdir) / "cache"
+            ctgov_cache.mkdir()
+            # Write both — jsonl has 1 trial, trial_records has 1 trial (same minimal data)
+            # We verify no crash and no missing-file warning (can't inspect which was loaded
+            # without hooking ingest, but no error = correct path taken)
+            (ctgov_cache / "trials.jsonl").write_text(_MINIMAL_TRIAL_JSONL)
+            (ctgov_cache / "trial_records.json").write_text(_MINIMAL_TRIAL_JSON_LIST)
+
+            args = _make_args(tmpdir, ctgov_cache)
+            loaded_from = {}
+            _orig_jsonl = None
+            _orig_json = None
+
+            # Patch CTGovIngest to record which method is called first
+            import scientific_cartography.ingest.ctgov_ingest as _ingest_mod
+
+            orig_jsonl = _ingest_mod.CTGovIngest.ingest_from_jsonl_file
+            orig_json = _ingest_mod.CTGovIngest.ingest_from_json_file
+            call_order = []
+
+            def _track_jsonl(self, path):
+                call_order.append(("jsonl", path.name))
+                return orig_jsonl(self, path)
+
+            def _track_json(self, path):
+                call_order.append(("json", path.name))
+                return orig_json(self, path)
+
+            with (
+                patch("run_scientific_cartography_diagnostics.ExistingUniverseIngest") as mock_u,
+                patch.object(_ingest_mod.CTGovIngest, "ingest_from_jsonl_file", _track_jsonl),
+                patch.object(_ingest_mod.CTGovIngest, "ingest_from_json_file", _track_json),
+            ):
+                _patch_universe(mock_u)
+                run_diagnostics(args)
+
+            # jsonl should be called first, trial_records.json should not be called
+            assert call_order, "No ingest method was called"
+            assert call_order[0] == ("jsonl", "trials.jsonl"), f"Expected jsonl first, got: {call_order}"
+            jsonl_calls = [c for c in call_order if c[0] == "jsonl"]
+            trec_calls = [c for c in call_order if c[1] == "trial_records.json"]
+            assert len(jsonl_calls) >= 1
+            assert (
+                len(trec_calls) == 0
+            ), f"trial_records.json should not be loaded when trials.jsonl exists: {call_order}"
+
+    def test_no_trial_files_emits_warning(self):
+        """Empty ctgov_cache should emit a warning about missing trial data files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctgov_cache = Path(tmpdir) / "cache"
+            ctgov_cache.mkdir()
+            # No trial files written
+
+            args = _make_args(tmpdir, ctgov_cache)
+            with patch("run_scientific_cartography_diagnostics.ExistingUniverseIngest") as mock_u:
+                _patch_universe(mock_u)
+                run_diagnostics(args)
+
+            status_path = Path(tmpdir) / "output" / "scientific_cartography_status.json"
+            assert status_path.exists()
+            status = json.loads(status_path.read_text())
+            missing_warnings = [w for w in status.get("warnings", []) if "No trial data files" in w]
+            assert (
+                len(missing_warnings) == 1
+            ), f"Expected exactly one missing-file warning, got: {status.get('warnings', [])}"
+            assert (
+                "trial_records.json" in missing_warnings[0]
+            ), f"Warning should mention trial_records.json: {missing_warnings[0]}"

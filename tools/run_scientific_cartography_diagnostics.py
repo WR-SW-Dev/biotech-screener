@@ -21,9 +21,9 @@ from scientific_cartography.build.asset_indication_builder import AssetIndicatio
 from scientific_cartography.build.competitive_cluster_builder import CompetitiveClusterBuilder  # noqa: E402
 from scientific_cartography.build.landscape_feature_builder import LandscapeFeatureBuilder  # noqa: E402
 from scientific_cartography.export import ArtifactManifestExporter, DiseaseMapExporter, MapIndexExporter  # noqa: E402
-from scientific_cartography.io import write_json, write_jsonl  # noqa: E402
 from scientific_cartography.ingest.ctgov_ingest import CTGovIngest  # noqa: E402
 from scientific_cartography.ingest.existing_universe_ingest import ExistingUniverseIngest  # noqa: E402
+from scientific_cartography.io import write_json, write_jsonl  # noqa: E402
 from scientific_cartography.normalize.asset_alias_resolver import AssetAliasResolver  # noqa: E402
 from scientific_cartography.normalize.disease_normalizer import DiseaseNormalizer  # noqa: E402
 from scientific_cartography.normalize.mechanism_normalizer import MechanismNormalizer  # noqa: E402
@@ -107,26 +107,37 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         ctgov_ingest = CTGovIngest(as_of_date=as_of_date)
         trials = []
 
-        # Try loading from standard locations in ctgov_cache directory
-        # Try JSONL first, then JSON
-        jsonl_path = ctgov_cache / "trials.jsonl"
-        json_path = ctgov_cache / "trials.json"
+        # Try loading from standard locations in ctgov_cache directory.
+        # Priority order: trials.jsonl → trials.json → trial_records.json
+        _trial_candidates = [
+            (ctgov_cache / "trials.jsonl", "jsonl"),
+            (ctgov_cache / "trials.json", "json"),
+            (ctgov_cache / "trial_records.json", "json"),
+        ]
+        _trial_source = None
+        for _candidate_path, _fmt in _trial_candidates:
+            if _candidate_path.exists():
+                try:
+                    if _fmt == "jsonl":
+                        trials = ctgov_ingest.ingest_from_jsonl_file(_candidate_path)
+                    else:
+                        trials = ctgov_ingest.ingest_from_json_file(_candidate_path)
+                    _trial_source = _candidate_path.name
+                except Exception as e:
+                    status["warnings"].append(f"Failed to load from {_candidate_path.name}: {e}")
+                break
 
-        if jsonl_path.exists():
-            try:
-                trials = ctgov_ingest.ingest_from_jsonl_file(jsonl_path)
-            except Exception as e:
-                status["warnings"].append(f"Failed to load from trials.jsonl: {e}")
-        elif json_path.exists():
-            try:
-                trials = ctgov_ingest.ingest_from_json_file(json_path)
-            except Exception as e:
-                status["warnings"].append(f"Failed to load from trials.json: {e}")
-        else:
-            status["warnings"].append("No trial data files (trials.jsonl or trials.json) found in ctgov_cache")
+        if _trial_source is None and not trials:
+            status["warnings"].append(
+                "No trial data files (trials.jsonl, trials.json, or trial_records.json)" " found in ctgov_cache"
+            )
 
         if not quiet:
-            print(f"✓ Loaded {len(trials)} trials from cache", file=sys.stderr)
+            _source_label = _trial_source or "none"
+            print(
+                f"✓ Loaded {len(trials)} trials from cache (source: {_source_label})",
+                file=sys.stderr,
+            )
 
         # Step 3: Initialize normalizers
         disease_normalizer = DiseaseNormalizer(as_of_date=as_of_date)
