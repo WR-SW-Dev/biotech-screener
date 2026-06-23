@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from tools.generate_scientific_cartography_map import (
     ForbiddenSourceError,
+    _canonical_asset_name,
     _check_forbidden,
     _deduplicate_programs,
     _filter_non_drug_programs,
@@ -685,3 +686,203 @@ class TestGenerateMapV02c:
         assert summ["non_drug_filtered_count"] == 1
         assert summ["deduped_program_count"] == 1
         assert summ["total_programs"] == 1
+
+
+# ---------------------------------------------------------------------------
+# 10. v0.2d: Expanded D3 filter (devices, instruments, diagnostics)
+# ---------------------------------------------------------------------------
+
+
+class TestNonDrugFilterV02d:
+    def test_questionnaire_filtered(self):
+        programs = [_make_program("Questionnaire: patient outcomes")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_withings_device_filtered(self):
+        programs = [_make_program("Withings BPM Connect")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_withings_body_filtered(self):
+        programs = [_make_program("Withings Body+")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_mems_cap_filtered(self):
+        programs = [_make_program("MEMS (Medication Electronic Monitoring System) Cap")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_ogtt_exact_filtered(self):
+        programs = [_make_program("OGTT")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_oral_glucose_tolerance_filtered(self):
+        programs = [_make_program("Oral Glucose Tolerance Test")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_blood_glucose_meter_filtered(self):
+        programs = [_make_program("Comparison of different Blood Glucose Meters")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_dose_regimen_filtered(self):
+        programs = [_make_program("0.5 units/kg daily insulin")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_dose_regimen_integer_filtered(self):
+        programs = [_make_program("1 unit/kg basal insulin")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_saxagliptin_not_filtered(self):
+        programs = [_make_program("Saxagliptin")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 1
+
+    def test_hem_col_device_filtered(self):
+        programs = [_make_program("Hem-Col Capillary Blood Collection Device")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_basal_bolus_filtered(self):
+        programs = [_make_program("Basal Bolus")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+
+# ---------------------------------------------------------------------------
+# 11. v0.2d: Asset-name canonicalization
+# ---------------------------------------------------------------------------
+
+
+class TestAssetCanonicalization:
+    def test_insulin_prefix_stripped(self):
+        assert _canonical_asset_name("insulin glargine") == "glargine"
+
+    def test_insulin_prefix_case_insensitive(self):
+        assert _canonical_asset_name("Insulin Glargine") == "glargine"
+
+    def test_glargine_without_prefix_unchanged(self):
+        assert _canonical_asset_name("Glargine") == "glargine"
+
+    def test_insulin_alone_unchanged(self):
+        assert _canonical_asset_name("insulin") == "insulin"
+
+    def test_via_pen_suffix_stripped(self):
+        assert _canonical_asset_name("glargine via insulin pen") == "glargine"
+
+    def test_dose_suffix_stripped(self):
+        assert _canonical_asset_name("Glargine 300 U/mL") == "glargine"
+
+    def test_insulin_glargine_dose_collapses(self):
+        assert _canonical_asset_name("insulin glargine 300 U/mL") == _canonical_asset_name("insulin glargine")
+
+    def test_metformin_unchanged(self):
+        assert _canonical_asset_name("Metformin") == "metformin"
+
+    def test_dapagliflozin_10mg_tab_collapses(self):
+        assert _canonical_asset_name("Dapagliflozin 10mg Tab") == "dapagliflozin"
+
+    def test_dapagliflozin_10mg_collapses(self):
+        assert _canonical_asset_name("dapagliflozin 10 mg") == "dapagliflozin"
+
+    def test_canonical_dedup_merges_insulin_variants(self):
+        programs = [
+            _make_program("insulin glargine", clinical_stage="phase1"),
+            _make_program("Insulin Glargine", clinical_stage="phase3"),
+            _make_program("glargine", clinical_stage="phase2"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert len(result) == 1
+        assert result[0]["clinical_stage"] == "phase3"
+        assert result[0]["trial_count"] == 3
+
+    def test_display_name_preserved_from_best_record(self):
+        """Canonical key collapses but the original asset_name from best record is kept."""
+        programs = [
+            _make_program("insulin glargine", clinical_stage="phase1"),
+            _make_program("Insulin Glargine", clinical_stage="phase3"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert len(result) == 1
+        assert result[0]["asset_name"] in ("Insulin Glargine", "insulin glargine")
+
+    def test_combination_product_stays_distinct(self):
+        """Glargine/lixisenatide is a different drug from glargine alone."""
+        programs = [
+            _make_program("insulin glargine/lixisenatide", clinical_stage="phase3"),
+            _make_program("insulin glargine", clinical_stage="phase3"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert len(result) == 2
+
+
+# ---------------------------------------------------------------------------
+# 12. v0.2d integration: full pipeline in generate_map
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateMapV02d:
+    def test_canonicalization_merge_count_in_summary(self, tmp_path):
+        # "insulin glargine" and "glargine" have different raw-lowercase keys
+        # but the same canonical key → canonicalization merge detected.
+        programs = [
+            _make_program("insulin glargine", clinical_stage="phase1"),
+            _make_program("glargine", clinical_stage="phase3"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        with open(out_dir / "map.json") as f:
+            md = json.load(f)
+        assert md["summary"]["canonicalization_merge_count"] >= 1
+        assert md["summary"]["total_programs"] == 1
+
+    def test_device_and_behavioral_removed(self, tmp_path):
+        programs = [
+            _make_program("Metformin", clinical_stage="phase3"),
+            _make_program("Withings BPM Connect"),
+            _make_program("Exercise"),
+            _make_program("Questionnaire: patient outcomes"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out",
+            quiet=True,
+        )
+        assert result["programs"] == 1
+
+    def test_deterministic_output(self, tmp_path):
+        programs = [
+            _make_program("insulin glargine", clinical_stage="phase1"),
+            _make_program("Insulin Glargine", clinical_stage="phase3"),
+            _make_program("Metformin", clinical_stage="phase2"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result1 = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out1",
+            quiet=True,
+        )
+        result2 = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out2",
+            quiet=True,
+        )
+        assert result1["programs"] == result2["programs"]
+        assert result1["lanes"] == result2["lanes"]
+        assert result1["columns"] == result2["columns"]

@@ -8,6 +8,7 @@ production scoring sources.
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -17,7 +18,7 @@ from pathlib import Path
 # Constants
 # ---------------------------------------------------------------------------
 
-_VERSION = "v0.2c"
+_VERSION = "v0.2d"
 
 _FORBIDDEN_SOURCES = [
     "rankings.csv",
@@ -78,6 +79,13 @@ _NON_DRUG_EXACT = frozenset(
         "dietary advice",
         "physical activity",
         "standard diet",
+        # Diagnostics / instruments (v0.2d)
+        "ogtt",
+        "oral glucose tolerance test",
+        "mems cap",
+        # Dosing-regimen-only names (v0.2d)
+        "basal bolus",
+        "basal plus",
     }
 )
 # Startswith prefixes (lowercase) for patterns too long for exact matching.
@@ -97,7 +105,20 @@ _NON_DRUG_STARTSWITH = (
     "resistance training",
     "cognitive behavioral",
     "no treatment",
+    # Devices / wearables (v0.2d)
+    "withings",
+    "hem-col",
+    "mems (",
+    # Diagnostics / instruments (v0.2d)
+    "questionnaire",
+    "blood glucose meter",
+    "comparison of different blood glucose",
+    "glucose meter",
+    "oral glucose tolerance",
 )
+# Regex for dosing-regimen names that start with a dose quantity (v0.2d).
+# Matches: "0.5 units/kg ...", "1 unit ...", "2 units ..."
+_DOSE_ONLY_RE = re.compile(r"^\d+(\.\d+)?\s+units?", re.IGNORECASE)
 
 # D1: Stage ranks for deduplication (higher = later stage = preferred).
 _DEDUP_STAGE_RANK = {
@@ -110,6 +131,22 @@ _DEDUP_STAGE_RANK = {
     "filed": 6,
     "approved": 7,
 }
+
+# D1 canonicalization: strip common drug-class prefix and route/form/dose
+# suffixes from asset names before dedup key comparison.
+_ASSET_CANON_PREFIXES = ("insulin ",)
+_ASSET_CANON_SUFFIXES = (
+    " via insulin pen",
+    " via pen",
+    " injection",
+    " oral tablet",
+    " oral tablets",
+)
+# Strip trailing dose specs: " 10mg Tab", " 300 U/mL", " 100 units", etc.
+_ASSET_DOSE_SUFFIX_RE = re.compile(
+    r"\s+\d+(\.\d+)?\s*(mg|mcg|ug|u/ml|u/kg|units?|iu|tablet|tab)\b.*$",
+    re.IGNORECASE,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -182,7 +219,11 @@ def _filter_non_drug_programs(programs: list[dict]) -> tuple[list[dict], dict]:
     filtered_names = []
     for prog in programs:
         name = (prog.get("asset_name") or "").lower().strip()
-        is_non_drug = name in _NON_DRUG_EXACT or any(name.startswith(pat) for pat in _NON_DRUG_STARTSWITH)
+        is_non_drug = (
+            name in _NON_DRUG_EXACT
+            or any(name.startswith(pat) for pat in _NON_DRUG_STARTSWITH)
+            or bool(_DOSE_ONLY_RE.match(name))
+        )
         if is_non_drug:
             filtered_names.append(prog.get("asset_name", ""))
         else:
@@ -191,20 +232,39 @@ def _filter_non_drug_programs(programs: list[dict]) -> tuple[list[dict], dict]:
 
 
 # ---------------------------------------------------------------------------
-# D1: Asset deduplication
+# D1: Asset deduplication + name canonicalization
 # ---------------------------------------------------------------------------
 
 
-def _deduplicate_programs(programs: list[dict]) -> list[dict]:
-    """Collapse to one record per (asset_name, company_name) at the highest clinical stage.
+def _canonical_asset_name(name: str) -> str:
+    """Return a canonical lowercase key for dedup: strip insulin prefix, route suffix, dose."""
+    key = name.lower().strip()
+    # Strip "insulin " prefix (insulin glargine → glargine, insulin alone stays)
+    for prefix in _ASSET_CANON_PREFIXES:
+        if key.startswith(prefix) and len(key) > len(prefix):
+            key = key[len(prefix) :]
+            break
+    # Strip route/form suffix (glargine via insulin pen → glargine)
+    for suffix in _ASSET_CANON_SUFFIXES:
+        if key.endswith(suffix):
+            key = key[: -len(suffix)].strip()
+            break
+    # Strip trailing dose spec (glargine 300 u/ml → glargine, drug 10mg tab → drug)
+    key = _ASSET_DOSE_SUFFIX_RE.sub("", key).strip()
+    return key
 
-    Merges source_refs from all trial records for the same asset/company pair and
-    records trial_count so the map can communicate underlying trial depth.
+
+def _deduplicate_programs(programs: list[dict]) -> list[dict]:
+    """Collapse to one record per canonical (asset_name, company_name) at highest stage.
+
+    Uses _canonical_asset_name for the grouping key so name variants like
+    "insulin glargine" / "Glargine" / "glargine via insulin pen" collapse together.
+    Merges source_refs and records trial_count.
     """
     groups: dict[tuple, list[dict]] = defaultdict(list)
     for prog in programs:
         key = (
-            (prog.get("asset_name") or "").lower().strip(),
+            _canonical_asset_name(prog.get("asset_name") or ""),
             (prog.get("company_name") or "").lower().strip(),
         )
         groups[key].append(prog)
@@ -307,7 +367,13 @@ def build_map_data(programs: list[dict], disease_query: str, manifest: dict) -> 
     if non_drug_filtered > 0:
         examples = preprocessing.get("non_drug_filtered_examples", [])[:3]
         examples_str = ", ".join(f'"{e}"' for e in examples)
-        warnings.append(f"{non_drug_filtered} non-pharmaceutical programs filtered " f"(e.g. {examples_str}).")
+        warnings.append(f"{non_drug_filtered} non-pharmaceutical programs filtered (e.g. {examples_str}).")
+    canon_merges = preprocessing.get("canonicalization_merge_count", 0)
+    if canon_merges > 0:
+        canon_ex = preprocessing.get("canonicalization_examples", [])[:2]
+        warnings.append(
+            f"{canon_merges} asset-name variant groups merged by canonicalization " f"(e.g. {'; '.join(canon_ex)})."
+        )
 
     return {
         "metadata": {
@@ -334,6 +400,7 @@ def build_map_data(programs: list[dict], disease_query: str, manifest: dict) -> 
             "total_programs": len(programs),
             "raw_program_count": preprocessing.get("raw_program_count", len(programs)),
             "non_drug_filtered_count": preprocessing.get("non_drug_filtered_count", 0),
+            "canonicalization_merge_count": preprocessing.get("canonicalization_merge_count", 0),
             "deduped_program_count": preprocessing.get("deduped_program_count", len(programs)),
             "stage_coverage_pct": round(100 * stage_known / len(programs), 1) if programs else 0,
             "mechanism_coverage_pct": round(mech_pct, 1),
@@ -696,16 +763,32 @@ def generate_map(
             file=sys.stderr,
         )
 
-    # D1: deduplicate by (asset_name, company_name) → keep highest clinical stage
+    # Track canonicalization merges: groups where multiple DISTINCT raw-lowercase
+    # names map to the same canonical key (i.e., prefix/suffix stripping collapsed them).
+    _canon_to_raw: dict[tuple, set] = defaultdict(set)
+    for prog in programs:
+        raw_lower = (prog.get("asset_name") or "").lower().strip()
+        canon_key = _canonical_asset_name(prog.get("asset_name") or "")
+        company_lower = (prog.get("company_name") or "").lower().strip()
+        _canon_to_raw[(canon_key, company_lower)].add(raw_lower)
+    canon_merge_count = sum(1 for raws in _canon_to_raw.values() if len(raws) > 1)
+    canon_examples = [" / ".join(sorted(raws)[:3]) for raws in _canon_to_raw.values() if len(raws) > 1][:5]
+
+    # D1: deduplicate by canonical (asset_name, company_name) → keep highest stage
     programs = _deduplicate_programs(programs)
     deduped_count = len(programs)
 
     if not quiet:
         pre_dedup = raw_count - non_drug_meta["filtered_count"]
         print(
-            f"  D1 dedup: {pre_dedup} → {deduped_count} unique (asset, company) programs",
+            f"  D1 dedup: {pre_dedup} → {deduped_count} unique (canonical asset, company) programs",
             file=sys.stderr,
         )
+        if canon_merge_count:
+            print(
+                f"  Canonicalization merged {canon_merge_count} asset-name variant groups",
+                file=sys.stderr,
+            )
 
     if not programs:
         raise ValueError(f"No programs remain after D3/D1 filtering for disease query: {disease!r}")
@@ -716,6 +799,8 @@ def generate_map(
         "non_drug_filtered_count": non_drug_meta["filtered_count"],
         "non_drug_filtered_examples": non_drug_meta["examples"],
         "deduped_program_count": deduped_count,
+        "canonicalization_merge_count": canon_merge_count,
+        "canonicalization_examples": canon_examples,
     }
     map_data = build_map_data(programs, disease, manifest)
 
