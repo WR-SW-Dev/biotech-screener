@@ -76,6 +76,10 @@ artifacts/monitoring/*
 !artifacts/monitoring/README.md
 !artifacts/monitoring/PHASE2_*.md
 !artifacts/monitoring/daily_*.json
+# EES v2 Phase 3 shadow monitor — ledger and summaries are diagnostic-only, not committed
+!artifacts/shadow/
+artifacts/shadow/*
+!artifacts/shadow/.gitkeep
 # Allow quality audit reports (data accuracy findings, system diagnostics)
 !artifacts/quality_audits/
 artifacts/quality_audits/*
