@@ -116,13 +116,15 @@ class TestPhaseSingularFormat:
         assert normalizer.normalize(record.phases[0]) == "phase1"
 
     def test_phase_singular_phase4(self, ingest, normalizer):
-        """{'phase': 'PHASE4'} -> phases wrapped -> normalizer returns None (no mapping)."""
+        """{'phase': 'PHASE4'} -> phases wrapped -> normalizer maps to 'approved'.
+
+        Phase 4 = post-marketing surveillance = drug already has market authorization.
+        """
         data = _make_trial({"phase": "PHASE4"})
         record = ingest._parse_simplified_format(data)
         assert record is not None
         assert record.phases == ["PHASE4"]
-        # PHASE4 has no mapping in StageNormalizer — returns None (unknown)
-        assert normalizer.normalize(record.phases[0]) is None
+        assert normalizer.normalize(record.phases[0]) == "approved"
 
 
 # ---------------------------------------------------------------------------
@@ -134,14 +136,12 @@ class TestDualPhaseString:
     """PHASE1_PHASE2 compound string — no alias in StageNormalizer, should be preserved."""
 
     def test_phase1_phase2_wrapped(self, ingest, normalizer):
-        """{'phase': 'PHASE1_PHASE2'} -> wrapped in list -> normalizer returns None (not mapped)."""
+        """{'phase': 'PHASE1_PHASE2'} -> wrapped in list -> normalizer maps to 'phase1/2'."""
         data = _make_trial({"phase": "PHASE1_PHASE2"})
         record = ingest._parse_simplified_format(data)
         assert record is not None
-        # The value is preserved as-is; it's the normalizer's job to handle it
         assert record.phases == ["PHASE1_PHASE2"]
-        # No alias for PHASE1_PHASE2 in StageNormalizer — returns None (unknown/unmapped)
-        assert normalizer.normalize(record.phases[0]) is None
+        assert normalizer.normalize(record.phases[0]) == "phase1/2"
 
     def test_phases_list_phase1_2_slash(self, ingest, normalizer):
         """{'phases': ['Phase 1/2']} -> normalizes to phase1/2 (alias exists)."""
@@ -161,13 +161,12 @@ class TestEarlyPhase:
     """EARLY_PHASE1 — no alias in StageNormalizer, should be preserved without crash."""
 
     def test_early_phase1_wrapped(self, ingest, normalizer):
-        """{'phase': 'EARLY_PHASE1'} -> wrapped -> normalizer returns None (not mapped)."""
+        """{'phase': 'EARLY_PHASE1'} -> wrapped -> normalizer maps to 'phase1'."""
         data = _make_trial({"phase": "EARLY_PHASE1"})
         record = ingest._parse_simplified_format(data)
         assert record is not None
         assert record.phases == ["EARLY_PHASE1"]
-        # No alias in StageNormalizer for this CT.gov constant
-        assert normalizer.normalize(record.phases[0]) is None
+        assert normalizer.normalize(record.phases[0]) == "phase1"
 
     def test_phases_list_early_phase1(self, ingest, normalizer):
         """{'phases': ['early phase 1']} -> 'early phase 1' alias maps to phase1."""

@@ -229,3 +229,74 @@ class TestStageNormalizerEdgeCases:
         assert normalizer.normalize("  PHASE 3  ") == "phase3"
         assert normalizer.normalize("Phase 2B") == "phase2b"
         assert normalizer.normalize(" FDA APPROVED ") == "approved"
+
+
+class TestStageNormalizerCTGovFormat:
+    """Phase 13.7: CT.gov uppercase/underscore format from trial_records.json.
+
+    trial_records.json uses 'phase' (singular string) with values like
+    'PHASE2', 'EARLY_PHASE1', 'PHASE1_PHASE2', 'PHASE2_PHASE3', 'PHASE4'.
+    The StageNormalizer must map all of these to canonical stages.
+    """
+
+    @pytest.fixture
+    def normalizer(self):
+        return StageNormalizer()
+
+    def test_phase1_uppercase(self, normalizer):
+        """'PHASE1' maps to 'phase1'."""
+        assert normalizer.normalize("PHASE1") == "phase1"
+
+    def test_phase2_uppercase(self, normalizer):
+        """'PHASE2' maps to 'phase2'."""
+        assert normalizer.normalize("PHASE2") == "phase2"
+
+    def test_phase3_uppercase(self, normalizer):
+        """'PHASE3' maps to 'phase3'."""
+        assert normalizer.normalize("PHASE3") == "phase3"
+
+    def test_phase4_maps_to_approved(self, normalizer):
+        """'PHASE4' (post-marketing) maps to 'approved'."""
+        assert normalizer.normalize("PHASE4") == "approved"
+
+    def test_early_phase1_underscore(self, normalizer):
+        """'EARLY_PHASE1' maps to 'phase1'."""
+        assert normalizer.normalize("EARLY_PHASE1") == "phase1"
+
+    def test_phase1_phase2_underscore(self, normalizer):
+        """'PHASE1_PHASE2' maps to 'phase1/2'."""
+        assert normalizer.normalize("PHASE1_PHASE2") == "phase1/2"
+
+    def test_phase2_phase3_underscore(self, normalizer):
+        """'PHASE2_PHASE3' maps to 'phase3' (higher bound of adaptive trial)."""
+        assert normalizer.normalize("PHASE2_PHASE3") == "phase3"
+
+    def test_not_applicable_returns_none(self, normalizer):
+        """'NOT_APPLICABLE' is a non-clinical phase; returns None (unknown)."""
+        assert normalizer.normalize("NOT_APPLICABLE") is None
+
+    def test_na_returns_none(self, normalizer):
+        """'N/A' returns None (not a clinical phase)."""
+        assert normalizer.normalize("N/A") is None
+
+    def test_na_bare_returns_none(self, normalizer):
+        """'NA' returns None (not a clinical phase)."""
+        assert normalizer.normalize("NA") is None
+
+    def test_phase4_is_active(self, normalizer):
+        """PHASE4 -> 'approved' -> is_active_stage True."""
+        assert normalizer.is_active_stage(normalizer.normalize("PHASE4")) is True
+
+    def test_early_phase1_is_active(self, normalizer):
+        """EARLY_PHASE1 -> 'phase1' -> is_active_stage True."""
+        assert normalizer.is_active_stage(normalizer.normalize("EARLY_PHASE1")) is True
+
+    def test_phase2_phase3_rank_above_phase2(self, normalizer):
+        """PHASE2_PHASE3 -> 'phase3' ranks above 'phase2'."""
+        rank_p2 = normalizer.get_hierarchy_rank("phase2")
+        rank_p3 = normalizer.get_hierarchy_rank(normalizer.normalize("PHASE2_PHASE3"))
+        assert rank_p3 > rank_p2
+
+    def test_not_applicable_not_active(self, normalizer):
+        """NOT_APPLICABLE -> None -> is_active_stage False."""
+        assert normalizer.is_active_stage(normalizer.normalize("NOT_APPLICABLE")) is False

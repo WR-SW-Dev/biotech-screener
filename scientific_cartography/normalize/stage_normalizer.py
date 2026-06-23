@@ -35,11 +35,32 @@ class StageNormalizer:
     # Normalization mappings
     STAGE_ALIASES = {
         "preclinical": ["preclinical", "in vitro", "nonclinical", "animal"],
-        "phase1": ["phase1", "phase 1", "i", "early phase 1"],
-        "phase1/2": ["phase1/2", "phase 1/2", "i/ii", "phase1b"],
+        "phase1": [
+            "phase1",
+            "phase 1",
+            "i",
+            "early phase 1",
+            # CT.gov uppercase/underscore format (trial_records.json)
+            "phase1",
+            "early_phase1",
+        ],
+        "phase1/2": [
+            "phase1/2",
+            "phase 1/2",
+            "i/ii",
+            "phase1b",
+            # CT.gov compound format
+            "phase1_phase2",
+        ],
         "phase2": ["phase2", "phase 2", "ii", "phase2a"],
         "phase2b": ["phase2b", "phase 2b", "iib"],
-        "phase3": ["phase3", "phase 3", "iii"],
+        "phase3": [
+            "phase3",
+            "phase 3",
+            "iii",
+            # CT.gov Phase 2/3 adaptive trial format — map to phase3 (higher bound)
+            "phase2_phase3",
+        ],
         "filed": [
             "filed",
             "bla",
@@ -54,6 +75,8 @@ class StageNormalizer:
             "marketed",
             "commercial",
             "active",
+            # CT.gov Phase 4 = post-marketing surveillance = approved drug
+            "phase4",
         ],
     }
 
