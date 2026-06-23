@@ -71,6 +71,8 @@
     {"ticker": "KALV",  "action": "acquisition", "effective_date": "2026-06-11", "acquirer": "Chiesi",   "deal_price": null, "notes": "KalVista Pharmaceuticals acquired by Chiesi. Price series ends 2026-06-11. Removed from universe."},
     {"ticker": "TERN",  "action": "acquisition", "effective_date": "2026-05-05", "acquirer": "Merck",    "deal_price": null, "notes": "Terns Pharmaceuticals acquired by Merck. Announced Mar 25, 2026; completed May 5, 2026. Removed from universe."},
 
-    {"ticker": "THRD",  "action": "delisted",    "effective_date": "2025-07-31", "notes": "Third Harmonic Bio liquidation/dissolution. Nasdaq trading suspended before open Jul 31, 2025. Price series ends 2025-07-30. Removed from universe."}
+    {"ticker": "THRD",  "action": "delisted",    "effective_date": "2025-07-31", "notes": "Third Harmonic Bio liquidation/dissolution. Nasdaq trading suspended before open Jul 31, 2025. Price series ends 2025-07-30. Removed from universe."},
+
+    {"ticker": "APGE",  "action": "pending_acquisition", "announced_date": "2026-06-22", "effective_date": null, "acquirer": "AbbVie", "deal_price": 135.11, "notes": "Apogee Therapeutics acquisition by AbbVie at $135.11/share cash (~$10.9B deal value). Announced 2026-06-22. APGE trading at ~$132.55 (1.9% arb discount to deal price). Gate from ranker/selector until acquisition closes; price series freezes at deal value at close."}
   ]
 }
