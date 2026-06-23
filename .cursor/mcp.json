@@ -21,6 +21,13 @@
         "HERMES_AGENTS_DIR": "${workspaceFolder}/agents",
         "PYTHONPATH": "${workspaceFolder}"
       }
+    },
+    "semgrep": {
+      "command": "semgrep",
+      "args": ["mcp", "--transport", "stdio", "--agent", "cursor"],
+      "env": {
+        "SEMGREP_MCP_DISABLE_TRACING": "true"
+      }
     }
   }
 }
