@@ -1,4 +1,4 @@
-"""Tests for Scientific Cartography Map UX v0.2b static generator."""
+"""Tests for Scientific Cartography Map UX v0.2c static generator."""
 
 import json
 import sys
@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from tools.generate_scientific_cartography_map import (
     ForbiddenSourceError,
     _check_forbidden,
+    _deduplicate_programs,
+    _filter_non_drug_programs,
     build_map_data,
     generate_map,
     render_html,
@@ -436,3 +438,250 @@ class TestGenerateMap:
         assert "lanes" in result
         assert "columns" in result
         assert "warnings" in result
+
+
+# ---------------------------------------------------------------------------
+# 7. D3: Non-drug filter
+# ---------------------------------------------------------------------------
+
+
+class TestNonDrugFilter:
+    def test_exercise_filtered(self):
+        programs = [_make_program("Exercise")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+        assert meta["filtered_count"] == 1
+
+    def test_diet_filtered(self):
+        programs = [_make_program("Diet")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_aerobic_training_filtered(self):
+        programs = [_make_program("aerobic training, tobacco cessation")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_tobacco_cessation_filtered(self):
+        programs = [_make_program("tobacco cessation and nutritional advice")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_no_treatment_filtered(self):
+        programs = [_make_program("No treatment given")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_comparison_of_eating_filtered(self):
+        programs = [_make_program("Comparison of eating windows intervention")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_watchful_waiting_filtered(self):
+        programs = [_make_program("Watchful waiting")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+
+    def test_metformin_not_filtered(self):
+        programs = [_make_program("Metformin")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 1
+        assert meta["filtered_count"] == 0
+
+    def test_dapagliflozin_not_filtered(self):
+        programs = [_make_program("Dapagliflozin")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 1
+
+    def test_mixed_input_correct_counts(self):
+        programs = [
+            _make_program("Exercise"),
+            _make_program("Metformin"),
+            _make_program("Diet"),
+            _make_program("Saxagliptin"),
+        ]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 2
+        assert meta["filtered_count"] == 2
+
+    def test_examples_in_meta(self):
+        programs = [_make_program("aerobic training"), _make_program("Metformin")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert "aerobic training" in meta["examples"]
+
+    def test_case_insensitive(self):
+        programs = [_make_program("EXERCISE"), _make_program("Aerobic Training")]
+        kept, meta = _filter_non_drug_programs(programs)
+        assert len(kept) == 0
+        assert meta["filtered_count"] == 2
+
+
+# ---------------------------------------------------------------------------
+# 8. D1: Asset deduplication
+# ---------------------------------------------------------------------------
+
+
+class TestDeduplication:
+    def test_same_asset_company_keeps_highest_stage(self):
+        programs = [
+            _make_program("DrugA", clinical_stage="phase1"),
+            _make_program("DrugA", clinical_stage="phase3"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert len(result) == 1
+        assert result[0]["clinical_stage"] == "phase3"
+
+    def test_different_assets_not_merged(self):
+        programs = [
+            _make_program("DrugA", clinical_stage="phase2"),
+            _make_program("DrugB", clinical_stage="phase2"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert len(result) == 2
+
+    def test_approved_beats_phase3(self):
+        programs = [
+            _make_program("DrugA", clinical_stage="phase3"),
+            _make_program("DrugA", clinical_stage="approved"),
+            _make_program("DrugA", clinical_stage="phase1"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert len(result) == 1
+        assert result[0]["clinical_stage"] == "approved"
+
+    def test_trial_count_recorded(self):
+        programs = [
+            _make_program("DrugA", clinical_stage="phase1"),
+            _make_program("DrugA", clinical_stage="phase2"),
+            _make_program("DrugA", clinical_stage="phase3"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert result[0]["trial_count"] == 3
+
+    def test_source_refs_merged(self):
+        p1 = _make_program("DrugA", clinical_stage="phase1")
+        p2 = _make_program("DrugA", clinical_stage="phase2")
+        p1["source_refs"] = ["NCT001"]
+        p2["source_refs"] = ["NCT002", "NCT003"]
+        result = _deduplicate_programs([p1, p2])
+        assert len(result) == 1
+        refs = result[0]["source_refs"]
+        assert "NCT001" in refs
+        assert "NCT002" in refs
+        assert "NCT003" in refs
+
+    def test_unknown_stage_loses_to_phase1(self):
+        programs = [
+            _make_program("DrugA", clinical_stage=None),
+            _make_program("DrugA", clinical_stage="phase1"),
+        ]
+        result = _deduplicate_programs(programs)
+        assert result[0]["clinical_stage"] == "phase1"
+
+    def test_different_companies_not_merged(self):
+        p1 = _make_program("DrugA", clinical_stage="phase2")
+        p2 = dict(_make_program("DrugA", clinical_stage="phase3"))
+        p2["company_name"] = "Different Bio"
+        result = _deduplicate_programs([p1, p2])
+        assert len(result) == 2
+
+    def test_ticker_preserved_from_best_record(self):
+        p1 = _make_program("DrugA", clinical_stage="phase2", ticker="ACME")
+        p2 = _make_program("DrugA", clinical_stage="phase1")
+        result = _deduplicate_programs([p1, p2])
+        assert len(result) == 1
+        assert result[0]["ticker"] == "ACME"
+
+
+# ---------------------------------------------------------------------------
+# 9. v0.2c integration: D1+D3 in generate_map
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateMapV02c:
+    def test_non_drug_filtered_out(self, tmp_path):
+        programs = [
+            _make_program("Metformin", clinical_stage="phase3"),
+            _make_program("Exercise"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out",
+            quiet=True,
+        )
+        assert result["programs"] == 1
+
+    def test_duplicates_deduped(self, tmp_path):
+        programs = [
+            _make_program("Metformin", clinical_stage="phase1"),
+            _make_program("Metformin", clinical_stage="phase3"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        result = generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=tmp_path / "out",
+            quiet=True,
+        )
+        assert result["programs"] == 1
+
+    def test_dedup_keeps_highest_stage_in_map_json(self, tmp_path):
+        programs = [
+            _make_program("Metformin", clinical_stage="phase1"),
+            _make_program("Metformin", clinical_stage="phase3"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        with open(out_dir / "map.json") as f:
+            md = json.load(f)
+        assert "phase3" in md["columns"]
+        assert "phase1" not in md["columns"]
+
+    def test_non_drug_warning_in_map_json(self, tmp_path):
+        programs = [
+            _make_program("Metformin", clinical_stage="phase3"),
+            _make_program("Exercise"),
+            _make_program("Diet"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        with open(out_dir / "map.json") as f:
+            md = json.load(f)
+        warnings_text = " ".join(md["warnings"]).lower()
+        assert "non-pharmaceutical" in warnings_text or "filtered" in warnings_text
+
+    def test_preprocessing_counts_in_summary(self, tmp_path):
+        programs = [
+            _make_program("Metformin", clinical_stage="phase1"),
+            _make_program("Metformin", clinical_stage="phase3"),
+            _make_program("Exercise"),
+        ]
+        artifact_dir = _fixture_dir_with_programs(programs)
+        out_dir = tmp_path / "out"
+        generate_map(
+            input_dir=artifact_dir,
+            disease="type 2 diabetes mellitus",
+            output_dir=out_dir,
+            quiet=True,
+        )
+        with open(out_dir / "map.json") as f:
+            md = json.load(f)
+        summ = md["summary"]
+        assert summ["raw_program_count"] == 3
+        assert summ["non_drug_filtered_count"] == 1
+        assert summ["deduped_program_count"] == 1
+        assert summ["total_programs"] == 1

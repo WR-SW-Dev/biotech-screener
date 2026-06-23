@@ -17,7 +17,7 @@ from pathlib import Path
 # Constants
 # ---------------------------------------------------------------------------
 
-_VERSION = "v0.2b"
+_VERSION = "v0.2c"
 
 _FORBIDDEN_SOURCES = [
     "rankings.csv",
@@ -56,6 +56,60 @@ _CELL_H_PER_NODE = 22
 _CELL_PADDING = 8
 _LANE_LABEL_W = 210
 _COL_HEADER_H = 54
+
+# D3: Non-drug/behavioral intervention filter
+# Exact lowercase asset names that are clearly not pharmaceutical programs.
+_NON_DRUG_EXACT = frozenset(
+    {
+        "no treatment",
+        "no treatment given",
+        "no treatment (control)",
+        "no intervention",
+        "placebo",
+        "exercise",
+        "diet",
+        "aerobic exercise",
+        "aerobic training",
+        "usual care",
+        "observation",
+        "watchful waiting",
+        "lifestyle therapy",
+        "lifestyle intervention",
+        "dietary advice",
+        "physical activity",
+        "standard diet",
+    }
+)
+# Startswith prefixes (lowercase) for patterns too long for exact matching.
+_NON_DRUG_STARTSWITH = (
+    "aerobic ",
+    "tobacco cessation",
+    "nutritional ",
+    "comparison of eating",
+    "behavioral intervention",
+    "low-level laser",
+    "exercise program",
+    "exercise training",
+    "diet program",
+    "lifestyle modification",
+    "dietary supplement",
+    "physical exercise",
+    "resistance training",
+    "cognitive behavioral",
+    "no treatment",
+)
+
+# D1: Stage ranks for deduplication (higher = later stage = preferred).
+_DEDUP_STAGE_RANK = {
+    "preclinical": 0,
+    "phase1": 1,
+    "phase1/2": 2,
+    "phase2": 3,
+    "phase2b": 4,
+    "phase3": 5,
+    "filed": 6,
+    "approved": 7,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +169,68 @@ def _load_manifest(artifact_dir: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# D3: Non-drug filter
+# ---------------------------------------------------------------------------
+
+
+def _filter_non_drug_programs(programs: list[dict]) -> tuple[list[dict], dict]:
+    """Remove behavioral/lifestyle/device interventions that are not pharmaceutical assets.
+
+    Returns (kept_programs, meta) where meta has filtered_count and examples.
+    """
+    kept = []
+    filtered_names = []
+    for prog in programs:
+        name = (prog.get("asset_name") or "").lower().strip()
+        is_non_drug = name in _NON_DRUG_EXACT or any(name.startswith(pat) for pat in _NON_DRUG_STARTSWITH)
+        if is_non_drug:
+            filtered_names.append(prog.get("asset_name", ""))
+        else:
+            kept.append(prog)
+    return kept, {"filtered_count": len(filtered_names), "examples": filtered_names[:5]}
+
+
+# ---------------------------------------------------------------------------
+# D1: Asset deduplication
+# ---------------------------------------------------------------------------
+
+
+def _deduplicate_programs(programs: list[dict]) -> list[dict]:
+    """Collapse to one record per (asset_name, company_name) at the highest clinical stage.
+
+    Merges source_refs from all trial records for the same asset/company pair and
+    records trial_count so the map can communicate underlying trial depth.
+    """
+    groups: dict[tuple, list[dict]] = defaultdict(list)
+    for prog in programs:
+        key = (
+            (prog.get("asset_name") or "").lower().strip(),
+            (prog.get("company_name") or "").lower().strip(),
+        )
+        groups[key].append(prog)
+
+    result = []
+    for _key, group in groups.items():
+        best = max(
+            group,
+            key=lambda p: _DEDUP_STAGE_RANK.get(p.get("clinical_stage"), -1),
+        )
+        seen_refs: set = set()
+        merged_refs: list = []
+        for p in group:
+            for ref in p.get("source_refs") or []:
+                if ref not in seen_refs:
+                    seen_refs.add(ref)
+                    merged_refs.append(ref)
+        best = dict(best)
+        best["source_refs"] = merged_refs[:10]
+        best["trial_count"] = len(group)
+        result.append(best)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Layout engine
 # ---------------------------------------------------------------------------
 
@@ -143,6 +259,8 @@ def _mech_key(program: dict) -> str:
 
 def build_map_data(programs: list[dict], disease_query: str, manifest: dict) -> dict:
     """Build structured lane/column/node data from filtered programs."""
+    preprocessing = manifest.get("_preprocessing", {})
+
     # Identify active stages (only show columns with at least 1 program)
     stage_counts: Counter = Counter(_stage_key(p) for p in programs)
     active_stages = [s for s in _STAGE_ORDER if stage_counts.get(s, 0) > 0]
@@ -184,7 +302,12 @@ def build_map_data(programs: list[dict], disease_query: str, manifest: dict) -> 
             f"Mechanism coverage is sparse ({mech_pct:.1f}%). " "Unknown mechanism lane is dominant and expected."
         )
     if len(mondo_ids) > 1:
-        warnings.append(f"Disease view spans {len(mondo_ids)} MONDO IDs — " "includes disease label variants.")
+        warnings.append(f"Disease view spans {len(mondo_ids)} MONDO IDs — includes disease label variants.")
+    non_drug_filtered = preprocessing.get("non_drug_filtered_count", 0)
+    if non_drug_filtered > 0:
+        examples = preprocessing.get("non_drug_filtered_examples", [])[:3]
+        examples_str = ", ".join(f'"{e}"' for e in examples)
+        warnings.append(f"{non_drug_filtered} non-pharmaceutical programs filtered " f"(e.g. {examples_str}).")
 
     return {
         "metadata": {
@@ -209,6 +332,9 @@ def build_map_data(programs: list[dict], disease_query: str, manifest: dict) -> 
         },
         "summary": {
             "total_programs": len(programs),
+            "raw_program_count": preprocessing.get("raw_program_count", len(programs)),
+            "non_drug_filtered_count": preprocessing.get("non_drug_filtered_count", 0),
+            "deduped_program_count": preprocessing.get("deduped_program_count", len(programs)),
             "stage_coverage_pct": round(100 * stage_known / len(programs), 1) if programs else 0,
             "mechanism_coverage_pct": round(mech_pct, 1),
             "ticker_coverage_pct": round(100 * ticker_known / len(programs), 1) if programs else 0,
@@ -553,15 +679,44 @@ def generate_map(
     if not quiet:
         print(f"Loading programs for disease: {disease!r}", file=sys.stderr)
 
-    programs = _load_programs(input_dir, disease)
+    raw_programs = _load_programs(input_dir, disease)
+    raw_count = len(raw_programs)
 
     if not quiet:
-        print(f"  Found {len(programs)} matching programs", file=sys.stderr)
+        print(f"  Found {raw_count} raw matching programs", file=sys.stderr)
 
-    if not programs:
+    if not raw_programs:
         raise ValueError(f"No programs found for disease query: {disease!r}")
 
+    # D3: remove behavioral/lifestyle/device non-drug programs
+    programs, non_drug_meta = _filter_non_drug_programs(raw_programs)
+    if not quiet and non_drug_meta["filtered_count"]:
+        print(
+            f"  D3 filter: removed {non_drug_meta['filtered_count']} non-drug programs",
+            file=sys.stderr,
+        )
+
+    # D1: deduplicate by (asset_name, company_name) → keep highest clinical stage
+    programs = _deduplicate_programs(programs)
+    deduped_count = len(programs)
+
+    if not quiet:
+        pre_dedup = raw_count - non_drug_meta["filtered_count"]
+        print(
+            f"  D1 dedup: {pre_dedup} → {deduped_count} unique (asset, company) programs",
+            file=sys.stderr,
+        )
+
+    if not programs:
+        raise ValueError(f"No programs remain after D3/D1 filtering for disease query: {disease!r}")
+
     manifest = _load_manifest(input_dir)
+    manifest["_preprocessing"] = {
+        "raw_program_count": raw_count,
+        "non_drug_filtered_count": non_drug_meta["filtered_count"],
+        "non_drug_filtered_examples": non_drug_meta["examples"],
+        "deduped_program_count": deduped_count,
+    }
     map_data = build_map_data(programs, disease, manifest)
 
     output_dir.mkdir(parents=True, exist_ok=True)
