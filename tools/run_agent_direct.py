@@ -510,8 +510,9 @@ def main():
     latency_ms = (time.time() - start_time) * 1000
 
     # Record execution
+    skill_exec_id = None
     try:
-        log_skill(
+        skill_exec_id = log_skill(
             skill_name=args.agent,
             task_context=args.message[:200],
             inputs={
@@ -550,6 +551,9 @@ def main():
     # Include preflight in log for audit trail
     if preflight:
         result["preflight"] = preflight
+
+    if skill_exec_id:
+        result["skill_exec_id"] = skill_exec_id
 
     # Log
     args.log_dir.mkdir(parents=True, exist_ok=True)
