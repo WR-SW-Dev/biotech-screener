@@ -144,7 +144,18 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         stage_normalizer = StageNormalizer()
         asset_alias_resolver = AssetAliasResolver(as_of_date=as_of_date)
         sponsor_resolver = SponsorResolver(company_records=companies)
-        mechanism_normalizer = MechanismNormalizer(as_of_date=as_of_date)
+        # Load mechanism aliases: explicit override → well-known path → built-in only
+        _mech_alias_override = getattr(args, "mechanism_aliases", None)
+        _mech_alias_default = repo_root / "scientific_cartography" / "data" / "mechanism_aliases_v0_1.csv"
+        _mech_alias_path = (
+            Path(_mech_alias_override)
+            if _mech_alias_override
+            else (_mech_alias_default if _mech_alias_default.exists() else None)
+        )
+        if _mech_alias_path is not None:
+            mechanism_normalizer = MechanismNormalizer.from_csv(_mech_alias_path, as_of_date=as_of_date)
+        else:
+            mechanism_normalizer = MechanismNormalizer(as_of_date=as_of_date)
 
         # Step 4: Build programs from trials
         if not quiet:

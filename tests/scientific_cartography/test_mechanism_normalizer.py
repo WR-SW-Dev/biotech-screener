@@ -205,3 +205,142 @@ class TestMechanismNormalizer:
         assert result.modality == "gene therapy"
         assert result.mechanism_class == "AAV gene therapy"
         assert result.target is None  # No target specified
+
+
+class TestT2DAliasPackV01:
+    """Tests for T2D mechanism alias pack v0.1."""
+
+    @pytest.fixture
+    def t2d_csv(self):
+        return Path(__file__).parent.parent.parent / "scientific_cartography" / "data" / "mechanism_aliases_v0_1.csv"
+
+    @pytest.fixture
+    def normalizer(self, t2d_csv):
+        return MechanismNormalizer.from_csv(t2d_csv)
+
+    # --- Case-insensitive resolution ---
+
+    def test_metformin_resolves(self, normalizer):
+        result = normalizer.normalize("metformin")
+        assert result.mechanism_class == "Biguanide"
+        assert result.modality == "small molecule"
+        assert result.resolution_status == "resolved"
+
+    def test_metformin_uppercase(self, normalizer):
+        result = normalizer.normalize("Metformin")
+        assert result.mechanism_class == "Biguanide"
+
+    def test_dapagliflozin_resolves(self, normalizer):
+        result = normalizer.normalize("dapagliflozin")
+        assert result.mechanism_class == "SGLT2 inhibitor"
+        assert result.target == "SLC5A2"
+
+    def test_saxagliptin_resolves(self, normalizer):
+        result = normalizer.normalize("saxagliptin")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+        assert result.target == "DPP4"
+
+    def test_liraglutide_resolves(self, normalizer):
+        result = normalizer.normalize("liraglutide")
+        assert result.mechanism_class == "GLP-1 receptor agonist"
+        assert result.modality == "protein/enzyme therapy"
+
+    def test_semaglutide_resolves(self, normalizer):
+        result = normalizer.normalize("semaglutide")
+        assert result.mechanism_class == "GLP-1 receptor agonist"
+
+    def test_insulin_glargine_resolves(self, normalizer):
+        result = normalizer.normalize("insulin glargine")
+        assert result.mechanism_class == "Insulin"
+        assert result.modality == "protein/enzyme therapy"
+
+    def test_pioglitazone_resolves(self, normalizer):
+        result = normalizer.normalize("pioglitazone")
+        assert result.mechanism_class == "PPAR agonist"
+        assert result.target == "PPARG"
+
+    def test_glimepiride_resolves(self, normalizer):
+        result = normalizer.normalize("glimepiride")
+        assert result.mechanism_class == "Sulfonylurea"
+
+    def test_acarbose_resolves(self, normalizer):
+        result = normalizer.normalize("acarbose")
+        assert result.mechanism_class == "Alpha-glucosidase inhibitor"
+
+    def test_tirzepatide_resolves(self, normalizer):
+        result = normalizer.normalize("tirzepatide")
+        assert result.mechanism_class == "GIP/GLP-1 receptor agonist"
+
+    # --- Dose-suffixed variants resolve ---
+
+    def test_saxagliptin_dose_suffix(self, normalizer):
+        result = normalizer.normalize("saxagliptin 5 mg")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+
+    def test_dapagliflozin_dose_tab(self, normalizer):
+        result = normalizer.normalize("dapagliflozin 10mg tab")
+        assert result.mechanism_class == "SGLT2 inhibitor"
+
+    def test_dapagliflozin_dose_space(self, normalizer):
+        result = normalizer.normalize("dapagliflozin 10 mg")
+        assert result.mechanism_class == "SGLT2 inhibitor"
+
+    # --- Brand names resolve ---
+
+    def test_afrezza_brand(self, normalizer):
+        result = normalizer.normalize("Afrezza")
+        assert result.mechanism_class == "Insulin"
+
+    def test_lantus_brand(self, normalizer):
+        result = normalizer.normalize("Lantus")
+        assert result.mechanism_class == "Insulin"
+
+    def test_actos_brand(self, normalizer):
+        result = normalizer.normalize("Actos")
+        assert result.mechanism_class == "PPAR agonist"
+
+    # --- Code names resolve ---
+
+    def test_ac2993_exenatide_code(self, normalizer):
+        result = normalizer.normalize("AC2993")
+        assert result.mechanism_class == "GLP-1 receptor agonist"
+
+    def test_sotagliflozin_sar_code(self, normalizer):
+        result = normalizer.normalize("sotagliflozin (sar439954)")
+        assert result.mechanism_class == "SGLT2/SGLT1 inhibitor"
+
+    # --- Unknown drugs remain unknown ---
+
+    def test_novel_asset_unknown(self, normalizer):
+        result = normalizer.normalize("sb-509")
+        assert result.resolution_status == "unknown"
+        assert result.mechanism_class is None
+
+    def test_behavioral_unknown(self, normalizer):
+        result = normalizer.normalize("aerobic exercise program")
+        assert result.resolution_status == "unknown"
+
+    def test_device_unknown(self, normalizer):
+        result = normalizer.normalize("Withings BPM Connect")
+        assert result.resolution_status == "unknown"
+
+    # --- Combination products handled conservatively ---
+
+    def test_combination_not_resolved(self, normalizer):
+        # Combo products should not match either component's entry
+        result = normalizer.normalize("insulin glargine/lixisenatide")
+        assert result.resolution_status == "unknown"
+
+    def test_metformin_sitagliptin_combo(self, normalizer):
+        result = normalizer.normalize("metformin + sitagliptin")
+        assert result.resolution_status == "unknown"
+
+    # --- Existing built-in dict still works alongside alias pack ---
+
+    def test_jak_inhibitor_still_resolves(self, normalizer):
+        result = normalizer.normalize("JAK inhibitor")
+        assert result.mechanism_class == "JAK inhibitor"
+
+    def test_pd1_inhibitor_still_resolves(self, normalizer):
+        result = normalizer.normalize("PD-1 inhibitor")
+        assert result.mechanism_class == "PD-1 inhibitor"

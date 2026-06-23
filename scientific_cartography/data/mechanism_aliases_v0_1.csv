@@ -1,0 +1,70 @@
+raw_text,mechanism_class,target,modality,confidence,notes
+metformin,Biguanide,AMPK,small molecule,0.99,INN; first-line T2D
+metformin xr,Biguanide,AMPK,small molecule,0.99,extended-release formulation
+dapagliflozin,SGLT2 inhibitor,SLC5A2,small molecule,0.99,INN; AstraZeneca
+dapagliflozin 10mg tab,SGLT2 inhibitor,SLC5A2,small molecule,0.99,dose-suffixed tablet name
+dapagliflozin 10 mg,SGLT2 inhibitor,SLC5A2,small molecule,0.99,dose-suffixed variant
+dapagliflozin 5 mg,SGLT2 inhibitor,SLC5A2,small molecule,0.99,dose-suffixed variant
+empagliflozin,SGLT2 inhibitor,SLC5A2,small molecule,0.99,INN; Boehringer Ingelheim/Lilly
+canagliflozin,SGLT2 inhibitor,SLC5A2,small molecule,0.99,INN; Johnson & Johnson
+ertugliflozin,SGLT2 inhibitor,SLC5A2,small molecule,0.99,INN; Merck/Pfizer
+sotagliflozin,SGLT2/SGLT1 inhibitor,SLC5A2,small molecule,0.95,dual SGLT2/SGLT1 inhibitor
+sotagliflozin (sar439954),SGLT2/SGLT1 inhibitor,SLC5A2,small molecule,0.95,SAR439954 is sotagliflozin
+saxagliptin,DPP-4 inhibitor,DPP4,small molecule,0.99,INN; AstraZeneca
+saxagliptin 5 mg,DPP-4 inhibitor,DPP4,small molecule,0.99,dose variant
+sitagliptin,DPP-4 inhibitor,DPP4,small molecule,0.99,INN; Merck
+alogliptin,DPP-4 inhibitor,DPP4,small molecule,0.99,INN; Takeda
+linagliptin,DPP-4 inhibitor,DPP4,small molecule,0.99,INN; Boehringer Ingelheim
+vildagliptin,DPP-4 inhibitor,DPP4,small molecule,0.99,INN; Novartis
+lixisenatide (ave0010),GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,AVE0010 is lixisenatide
+liraglutide,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,INN; Novo Nordisk
+exenatide,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,INN; Eli Lilly/AZ
+exenatide once weekly,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,once-weekly exenatide formulation
+ac2993,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.95,early development code for exenatide
+semaglutide,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,INN; Novo Nordisk (Ozempic/Rybelsus)
+dulaglutide,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,INN; Eli Lilly (Trulicity)
+albiglutide,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,INN; GSK
+tirzepatide,GIP/GLP-1 receptor agonist,GIPR,protein/enzyme therapy,0.99,dual GIP/GLP-1 agonist; Eli Lilly
+insulin glargine,Insulin,INSR,protein/enzyme therapy,0.99,long-acting basal insulin analogue
+insulin glargine (hoe901),Insulin,INSR,protein/enzyme therapy,0.99,HOE901 development code for glargine
+insulin glargine hoe901,Insulin,INSR,protein/enzyme therapy,0.99,HOE901 code variant
+insulin glargine (u300),Insulin,INSR,protein/enzyme therapy,0.99,Toujeo (300 U/mL glargine)
+mylan's insulin glargine,Insulin,INSR,protein/enzyme therapy,0.99,Mylan biosimilar glargine
+ly2963016,Insulin,INSR,protein/enzyme therapy,0.95,insulin glargine biosimilar (Basaglar)
+glargine,Insulin,INSR,protein/enzyme therapy,0.99,shortened INN for insulin glargine
+insulin glulisine,Insulin,INSR,protein/enzyme therapy,0.99,rapid-acting insulin analogue (Apidra)
+insulin aspart,Insulin,INSR,protein/enzyme therapy,0.99,rapid-acting insulin analogue (NovoLog)
+insulin lispro,Insulin,INSR,protein/enzyme therapy,0.99,rapid-acting insulin analogue (Humalog)
+insulin,Insulin,INSR,protein/enzyme therapy,0.90,generic class name
+basal insulin,Insulin,INSR,protein/enzyme therapy,0.85,class-level name; long-acting type
+injectable insulin,Insulin,INSR,protein/enzyme therapy,0.85,route-level name
+detemir,Insulin,INSR,protein/enzyme therapy,0.99,long-acting insulin analogue (Levemir)
+insulin detemir,Insulin,INSR,protein/enzyme therapy,0.99,full INN for detemir
+degludec,Insulin,INSR,protein/enzyme therapy,0.99,ultra-long-acting insulin analogue (Tresiba)
+insulin degludec,Insulin,INSR,protein/enzyme therapy,0.99,full INN for degludec
+insulin icodec,Insulin,INSR,protein/enzyme therapy,0.99,once-weekly insulin analogue
+nph insulin,Insulin,INSR,protein/enzyme therapy,0.99,intermediate-acting insulin (isophane)
+regular insulin,Insulin,INSR,protein/enzyme therapy,0.99,short-acting human insulin
+regular human insulin,Insulin,INSR,protein/enzyme therapy,0.99,short-acting human insulin
+humulin-r,Insulin,INSR,protein/enzyme therapy,0.99,Lilly brand regular insulin
+technosphere insulin,Insulin,INSR,protein/enzyme therapy,0.99,inhaled insulin; MannKind
+technosphere insulin inhalation powder,Insulin,INSR,protein/enzyme therapy,0.99,inhaled insulin powder; MannKind
+technosphere inhalation powder,Insulin,INSR,protein/enzyme therapy,0.95,likely Technosphere Insulin powder
+human insulin inhalation powder,Insulin,INSR,protein/enzyme therapy,0.99,inhaled human insulin
+afrezza,Insulin,INSR,protein/enzyme therapy,0.99,inhaled insulin brand; MannKind (Afrezza)
+afrezza dose 1,Insulin,INSR,protein/enzyme therapy,0.99,Afrezza low-dose arm
+afrezza dose 2,Insulin,INSR,protein/enzyme therapy,0.99,Afrezza higher-dose arm
+humalog,Insulin,INSR,protein/enzyme therapy,0.99,Lilly brand insulin lispro
+lantus,Insulin,INSR,protein/enzyme therapy,0.99,Sanofi brand insulin glargine U-100
+lantus®,Insulin,INSR,protein/enzyme therapy,0.99,Sanofi brand insulin glargine (with trademark)
+glimepiride,Sulfonylurea,KCNJ11,small molecule,0.99,INN; second-generation sulfonylurea
+glipizide,Sulfonylurea,KCNJ11,small molecule,0.99,INN; second-generation sulfonylurea
+glyburide,Sulfonylurea,KCNJ11,small molecule,0.99,INN (glibenclamide in Europe)
+gliclazide,Sulfonylurea,KCNJ11,small molecule,0.99,INN; second-generation sulfonylurea
+nateglinide,Meglitinide,ABCC8,small molecule,0.99,INN; short-acting insulin secretagogue
+pioglitazone,PPAR agonist,PPARG,small molecule,0.99,INN; thiazolidinedione class
+actos,PPAR agonist,PPARG,small molecule,0.99,Takeda brand name for pioglitazone
+rosiglitazone,PPAR agonist,PPARG,small molecule,0.99,INN; thiazolidinedione class
+acarbose,Alpha-glucosidase inhibitor,GBA,small molecule,0.99,INN; delays carbohydrate absorption
+miglitol,Alpha-glucosidase inhibitor,GBA,small molecule,0.99,INN; alpha-glucosidase inhibitor
+pramlintide,Amylin analog,IAPP,protein/enzyme therapy,0.99,INN; synthetic amylin (SymlinPen)
