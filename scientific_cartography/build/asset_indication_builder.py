@@ -163,6 +163,9 @@ class AssetIndicationBuilder:
         # Resolve asset name
         asset_resolved = self.asset_alias_resolver.resolve(intervention, trial.sponsor)
         asset_name = intervention  # Use raw intervention name
+        # Resolver always returns a dict; check resolution_status to distinguish
+        # a genuine alias-dictionary hit from a "not found" fallback response.
+        asset_alias_known = asset_resolved is not None and asset_resolved.get("resolution_status") == "resolved"
         asset_confidence = asset_resolved.get("confidence", 0.0) if asset_resolved else 0.0
 
         # Normalize disease
@@ -180,13 +183,34 @@ class AssetIndicationBuilder:
         if trial.source_ref:
             source_refs.append(trial.source_ref)
 
-        # Overall confidence is minimum of mappings
-        overall_confidence = min(
-            asset_confidence,
-            (1.0 if sponsor_is_public or company_id else 0.7),
-            disease_confidence,
-            (0.8 if trial_stage else 0.6),
-        )
+        # Confidence aggregation.
+        # When the asset alias resolver has no entry for an intervention (CT.gov drug
+        # names are not in the alias dictionary), asset_confidence is 0 not because
+        # the asset is low-quality but because the resolver has no opinion. Including
+        # it in a hard min() collapses every record to 0.0.
+        # Rule: if asset alias is unresolved, exclude it from the floor and cap total
+        # confidence at _UNRESOLVED_CAP to signal residual uncertainty without
+        # falsely zeroing records whose disease + sponsor mapping is solid.
+        _UNRESOLVED_CAP = 0.75
+        sponsor_factor = 1.0 if (sponsor_is_public or company_id) else 0.7
+        stage_factor = 0.8 if trial_stage else 0.6
+
+        confidence_warnings: list[str] = []
+        if not asset_alias_known:
+            confidence_warnings.append("asset_alias_unresolved_confidence_capped")
+            overall_confidence = min(
+                sponsor_factor,
+                disease_confidence,
+                stage_factor,
+                _UNRESOLVED_CAP,
+            )
+        else:
+            overall_confidence = min(
+                asset_confidence,
+                sponsor_factor,
+                disease_confidence,
+                stage_factor,
+            )
 
         program = ProgramRecord(
             program_id=program_id,
@@ -213,6 +237,7 @@ class AssetIndicationBuilder:
             source_priority="ctgov",
             source_refs=source_refs,
             confidence=overall_confidence,
+            confidence_warnings=confidence_warnings,
             as_of_date=self.as_of_date,
         )
 

@@ -91,6 +91,9 @@ class ProgramRecord:
     confidence: float = 1.0
     """Confidence in mapping (0.0 to 1.0)."""
 
+    confidence_warnings: list[str] = field(default_factory=list)
+    """Diagnostic flags for confidence computation (e.g. asset_alias_unresolved_confidence_capped)."""
+
     as_of_date: str = ""
     """Date of record (YYYY-MM-DD)."""
 
@@ -123,6 +126,7 @@ class ProgramRecord:
             "source_priority": self.source_priority,
             "source_refs": self.source_refs,
             "confidence": self.confidence,
+            "confidence_warnings": self.confidence_warnings,
             "as_of_date": self.as_of_date,
         }
 
@@ -156,5 +160,6 @@ class ProgramRecord:
             source_priority=data.get("source_priority", "manual"),
             source_refs=data.get("source_refs", []),
             confidence=data.get("confidence", 1.0),
+            confidence_warnings=data.get("confidence_warnings", []),
             as_of_date=data.get("as_of_date", ""),
         )
