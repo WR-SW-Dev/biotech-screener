@@ -1109,6 +1109,12 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
             _elig = row.get("eligible", "").strip()
             if _elig in ("0", "1"):
                 signal_scores.setdefault("eligible", {})[ticker] = float(_elig)
+            _ar = row.get("actionable_rank", "").strip()
+            if _ar:
+                try:
+                    signal_scores.setdefault("actionable_rank", {})[ticker] = float(_ar)
+                except ValueError:
+                    pass
             _tier = row.get("tier_dev", "").strip()
             if _tier:
                 _TIER_MAP = {"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0}
@@ -1255,6 +1261,12 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
             _elig = row.get("eligible", "").strip()
             if _elig in ("0", "1"):
                 signal_scores.setdefault("eligible", {})[ticker] = float(_elig)
+            _ar = row.get("actionable_rank", "").strip()
+            if _ar:
+                try:
+                    signal_scores.setdefault("actionable_rank", {})[ticker] = float(_ar)
+                except ValueError:
+                    pass
             _tier = row.get("tier_dev", "").strip()
             if _tier:
                 _TIER_MAP = {"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0}
@@ -2125,6 +2137,7 @@ def run_backtest(
     allow_rank_ties: bool = False,
     verify_archives: bool = True,
     subset: str = "all",
+    universe_mode: str = "all",
     flip_signal: bool = False,
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
@@ -2133,6 +2146,9 @@ def run_backtest(
     Args:
         subset: Universe subset filter. "all" = full universe, "dev" = dev-stage only,
                 "commercial" = commercial-stage only. Uses archetype from rankings.csv.
+        universe_mode: Gate-level universe filter. "all" = investable (default),
+                       "eligible" = post-gate eligible (~60 tickers),
+                       "actionable" = top-30 post-gates.
         flip_signal: If True, invert signal direction (lower-is-better).
 
     Returns:
@@ -2287,6 +2303,34 @@ def run_backtest(
             signal_scores_data = {s: {t: v for t, v in tv.items() if t in keep} for s, tv in signal_scores_data.items()}
             print(f"  Subset '{subset}': {len(rankings)}/{n_before_subset} tickers retained")
 
+        # --- Apply universe-gate filter (eligible / actionable) ---
+        if universe_mode != "all":
+            n_before_ug = len(rankings)
+            if universe_mode == "eligible":
+                keep_ug = {t for t, v in signal_scores_data.get("eligible", {}).items() if v == 1.0}
+            elif universe_mode == "actionable":
+                keep_ug = {t for t, v in signal_scores_data.get("actionable_rank", {}).items() if v <= 30}
+            else:
+                keep_ug = set(rankings.keys())
+            if not keep_ug:
+                all_skipped.append(
+                    {
+                        "snapshot_date": snapshot_date,
+                        "skipped_reason": f"no_tickers_in_universe_{universe_mode}",
+                    }
+                )
+                print(f"  SKIP {snapshot_date}: no tickers in universe '{universe_mode}'")
+                continue
+            rankings = {t: r for t, r in rankings.items() if t in keep_ug}
+            scores = {t: s for t, s in scores.items() if t in keep_ug}
+            component_scores = {c: {t: v for t, v in tv.items() if t in keep_ug} for c, tv in component_scores.items()}
+            stage_map = {t: s for t, s in stage_map.items() if t in keep_ug}
+            extra_controls = {c: {t: v for t, v in tv.items() if t in keep_ug} for c, tv in extra_controls.items()}
+            signal_scores_data = {
+                s: {t: v for t, v in tv.items() if t in keep_ug} for s, tv in signal_scores_data.items()
+            }
+            print(f"  Universe '{universe_mode}': {len(rankings)}/{n_before_ug} tickers retained")
+
         # Rank uniqueness check
         assert_rank_unique(rankings, snapshot_date, signal_scores_data, allow_ties=allow_rank_ties)
 
@@ -2377,6 +2421,19 @@ def run_backtest(
         }
         if archive_path_str:
             snapshot_result["archive_path"] = archive_path_str
+
+        # Spec 100: top-30 overlap between IC rankings and production actionable_rank
+        _ar_data = signal_scores_data.get("actionable_rank", {})
+        _prod_top30 = {t for t, r in _ar_data.items() if r <= 30}
+        if _prod_top30 and ic_rankings:
+            _top_n = min(30, len(ic_rankings))
+            _ic_top_n = {t for t, r in ic_rankings.items() if r <= _top_n}
+            _denom = max(len(_ic_top_n), len(_prod_top30))
+            snapshot_result["actionable_top30_overlap_pct"] = (
+                round(len(_ic_top_n & _prod_top30) / _denom * 100, 1) if _denom else None
+            )
+        else:
+            snapshot_result["actionable_top30_overlap_pct"] = None
 
         # --- Estimate XBI betas for residual returns ---
         xbi_betas = estimate_xbi_betas(csv_provider, inv_tickers, snapshot_date)
@@ -2537,7 +2594,7 @@ def run_backtest(
     # Pooled interaction regression across all snapshots
     pooled_reg = run_pooled_interaction_regression(per_snapshot)
 
-    agg = _aggregate(per_snapshot, signal_field=signal_field)
+    agg = _aggregate(per_snapshot, signal_field=signal_field, universe_mode=universe_mode)
     if pooled_reg:
         agg["pooled_interaction_regression"] = pooled_reg
 
@@ -2563,7 +2620,11 @@ def run_backtest(
 # =============================================================================
 
 
-def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_rank_pct") -> Dict[str, Any]:
+def _aggregate(
+    per_snapshot: List[Dict[str, Any]],
+    signal_field: str = "score_rank_pct",
+    universe_mode: str = "all",
+) -> Dict[str, Any]:
     """Compute aggregate statistics from per-snapshot IC results.
 
     Spec 100: Added signal_field metadata for labeling composite_score vs final_score IC.
@@ -2575,6 +2636,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_ra
             "metadata": {
                 "tool": "run_rank_ic_backtest.py",
                 "signal_field": signal_field,
+                "universe": universe_mode,
                 "spec_100_status": "CORRECTED (Spec 100 final_score IC replaces prior composite_score claims)",
                 "deprecation_warning": (
                     "⚠️ INVALIDATED: Prior composite_score IC claims (Spec 095 finding). Use Spec 100 final_score IC instead."
@@ -2597,6 +2659,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_ra
         "metadata": {
             "tool": "run_rank_ic_backtest.py",
             "signal_field": signal_field,
+            "universe": universe_mode,
             "spec_100_status": "CORRECTED (Spec 100 final_score IC replaces prior composite_score claims)",
             "deprecation_warning": (
                 "⚠️ INVALIDATED: Prior composite_score IC claims (Spec 095 finding). Use Spec 100 final_score IC instead."
@@ -2610,6 +2673,27 @@ def _aggregate(per_snapshot: List[Dict[str, Any]], signal_field: str = "score_ra
         },
         "per_snapshot": [],
     }
+
+    # Universe sanity check and overlap summary
+    n_investable_vals = [s["n_investable"] for s in per_snapshot if "n_investable" in s]
+    if n_investable_vals:
+        mean_n = sum(n_investable_vals) / len(n_investable_vals)
+        result["metadata"]["universe_size_mean"] = round(mean_n, 1)
+        if universe_mode == "eligible" and mean_n > 120:
+            result["metadata"]["universe_sanity_warn"] = f"eligible universe mean={mean_n:.0f} > 120 (expected ~40-80)"
+        elif universe_mode == "all" and mean_n < 20:
+            result["metadata"]["universe_sanity_warn"] = f"all universe mean={mean_n:.0f} < 20 (suspiciously small)"
+    overlap_vals = [
+        s["actionable_top30_overlap_pct"] for s in per_snapshot if s.get("actionable_top30_overlap_pct") is not None
+    ]
+    if overlap_vals:
+        mean_overlap = round(sum(overlap_vals) / len(overlap_vals), 1)
+        result["metadata"]["actionable_top30_overlap_mean_pct"] = mean_overlap
+        if mean_overlap < 70:
+            result["metadata"]["overlap_warn"] = (
+                f"Mean top-30 overlap {mean_overlap:.1f}% < 70% "
+                "(IC rankings diverge from production actionable_rank)"
+            )
 
     # Clean per-snapshot for output (remove internal fields)
     for snap in per_snapshot:
@@ -3937,6 +4021,18 @@ def main() -> None:
         help="Universe subset: 'dev' = early/mid/late stage, " "'commercial' = commercial stage (default: all)",
     )
     parser.add_argument(
+        "--universe",
+        type=str,
+        default="all",
+        choices=["all", "eligible", "actionable"],
+        help=(
+            "Gate-level universe filter applied before investable-universe filtering. "
+            "'all' = full investable universe (default); "
+            "'eligible' = post-gate eligible tickers only (~60 expected); "
+            "'actionable' = top-30 post-gates only."
+        ),
+    )
+    parser.add_argument(
         "--flip-signal",
         action="store_true",
         help="Invert signal direction (lower-is-better). " "Use to test if a signal is directionally reversed.",
@@ -4038,6 +4134,8 @@ def main() -> None:
     )
     if args.subset != "all":
         print(f"  Subset filter: {args.subset}")
+    if args.universe != "all":
+        print(f"  Universe filter: {args.universe}")
     if args.flip_signal:
         print("  Signal FLIPPED (lower-is-better)")
     print()
@@ -4162,6 +4260,7 @@ def main() -> None:
         allow_rank_ties=args.allow_rank_ties,
         verify_archives=args.verify_archives,
         subset=args.subset,
+        universe_mode=args.universe,
         flip_signal=args.flip_signal,
     )
 
@@ -4170,6 +4269,7 @@ def main() -> None:
     results["signal_field"] = signal_field
     results["signal_field_defaulted"] = signal_defaulted
     results["subset"] = args.subset
+    results["universe"] = args.universe
     results["verify_archives"] = args.verify_archives
     if archives_list:
         results["archive_dir"] = str(args.archive_dir if not args.archive else args.archive.parent)
