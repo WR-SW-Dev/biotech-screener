@@ -5,6 +5,100 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-24 (Shadow monitor immutability + financial periodicity)
+
+### Git activity (past 24h)
+- **biotech-screener** (51 commits):
+  - `18e7cc75` feat: selfimprove Steps 3-4 + Nous Gateway research tools
+  - `9b0d1fe8` chore: manager registry + CUSIP static map cleanup
+  - `679d8f6e` sci-cart: mechanism alias pack v0.1 T2D drug classes + normalizer tests
+  - `c6e1700c` fix(m2-v2): correct 4× burn overstatement in NetIncome + R&D fallback paths
+  - `501fd56d` sci-cart map UX v0.3: visual QA audit memo
+  - `b8f4c66b` audit(sci-cart): v0.3 scope hygiene check
+  - `aa9c8512` audit: full calculation audit 2026-06-23 + forward shadow checkpoints
+  - `5e1eaf45` Scientific Cartography Map UX v0.3 — poster-style layout
+  - `20da2dd0` feat(selfimprove): wire immediate verdict in run_agent_direct (Step 2)
+  - `614561e7` sci-cart mechanism alias pack v0.1: T2D drug classes
+  - `49d78b00` feat(selfimprove): wire skill_exec_id capture in run_agent_direct
+  - `e8f1d475` chore(claude): add governance reviewer, sci-cart skill, Claude config + memos
+  - `379499d3` sci-cart map UX v0.2d: D3 expansion + asset-name canonicalization
+  - `e5052aa8` feat(sci-cart): Map UX v0.2c — D1 dedup + D3 non-drug filter
+  - `91eec238` docs(sci-cart): Map UX v0.2b visual QA memo
+  - `544da12d` feat(sci-cart): Map UX v0.2b — static disease-map generator
+  - `40a621f2` sci-cart Phase 13.7: add CT.gov uppercase/underscore stage aliases
+  - `dc1aaed6` fix(sci-cart): Phase 13.5 R2b — stage parser singular phase field compatibility
+  - `597f3aa7` sci-cart Phase 13.6 R6: mechanism coverage design memo (DESIGN_ONLY)
+  - `f6c78fcc` sci-cart Phase 13.4 R5: wire therapeutic_area from MONDO disease normalizer
+  - `c6f68861` sci-cart Phase 13.3 R3: fix confidence collapse for unresolved asset aliases
+  - `fb244e43` audit(sci-cart): Phase 13.2 R4 normalization sample review — PASS proceed to R3
+  - `c7cc77c1` audit(sci-cart): Scientific Cartography map UX repo audit + RA-style design spec
+  - `9f3e0f6b` fix(data): refresh market data + add run skill + EES log entries
+  - `f4a32df2` fix(sci-cart): Phase 13.1 R2 — add trial_records.json to input discovery order
+  - `96733236` design(ees): Phase 3 CT_PRIMARY_COMPLETION left-tail guardrail design memo
+  - `fb52071f` audit(ees): EES v2 Phase 3 attribution review — CT_PRIMARY_COMPLETION left-tail avoidance signal
+  - `376d9e9d` fix(shadow): harden settled-row immutability against non-boolean truthy forms
+  - `60876b11` feat(shadow): EES v2 Phase 3 shadow monitor — diagnostic-only, append-only ledger
+  - `c35fc1ba` spec(ees): EES v2 Phase 3 shadow monitor design spec
+  - `e80c3ff2` audit(ees): EES forward validation — PASS diagnostic, Phase 3 concentrated signal
+  - `35e662f8` data(herald): replace common-word ticker keywords with company-name Globe searches
+  - `0d41dbd3` data(herald): fill IR URLs for 38 tickers with no press-release source
+  - `692eded0` audit(pit): PIT gap forward return evidence review — PASS diagnostic
+  - `83724549` docs(model): document Semgrep, LangGraph, and CodeGraph developer tooling
+  - `7255cf48` Merge branch 'main' of github.com:Warrenpoobear/biotech-screener
+  - `f55942cf` research(pit): fresh PIT gap forward-return assembly (Method A + B) (#389)
+  - `cef457d3` docs(sci-cart): Phase 13 remediation plan — R2→R4→R3→R5→R6 sequence
+  - `6488ddf0` Merge branch 'main' of github.com:Warrenpoobear/biotech-screener
+  - `b0d70950` docs(audit): Semgrep MCP post-registration audit memo
+  - `d5f15a0b` diag(event-ev): Event EV shadow diagnostic — calibration analysis only (#388)
+  - `7afbd1db` docs(sci-cart): Phase 12.1 Disease Map Operational Review — 2026-06-23
+  - `934b5389` feat(mcp): register Semgrep MCP server for governance scanning
+  - `4592fb6f` fix(event-ev): correct EES status labels — PREDICTIVE_STATUS: UNPROVEN
+  - `c7406c48` feat(event-ev): Event EV shadow diagnostic — market-implied vs base rate
+  - `8555ef25` docs(governance): expectation layer field coverage verification — PASS
+  - `f96ba4d0` data: expression decision log — 2026-06-23 cron run
+  - `f90a1665` feat(mcp): add read-only scientific cartography tools (get_atlas_data)
+  - `38edb0ab` fix(sci-cart): tighten disease normalizer synonym matching + ingester name column
+  - `5a69fcd1` research: assemble PIT gap forward returns (Jan 16 - May 7, 2026) (#382)
+- **asset-allocation** (0 commits)
+
+### Sessions reviewed: 4
+- cron_a15dbdcb6f41_20260624_082230 (weekly-skill-harvester): prior harvest run
+- cron_4013ddd98c6d_20260624_082703 (inst_delta_z governance monitor): routine check
+- cron_7e79501afb6e_20260624_084501 (weekly-signal-regime-sweep): routine check
+- cron_a15dbdcb6f41_20260624_083822 (aa-model-tracker): no AA activity
+
+### Skill patches
+- **openclaw-data-pipeline-debug**: Added Class K (shadow monitor truthy-form immutability — post-merge audit pattern). Confirmed 2026-06-23 commit `376d9e9d`: `forward_complete_20d is True` identity check missed manually edited values like `1` or `"true"`. Added `_is_settled()` helper pattern accepting all truthy forms. +17 tests (54 total).
+- **openclaw-data-pipeline-debug**: Added Class L (financial calculation unit-mismatch — periodicity confusion). Confirmed 2026-06-23 commit `c6e1700c`: Module 2 fallback paths hardcoded `/3` (quarterly) for annual data (should be `/12`). Burn rate overstated 4×, runway understated 4×. Fix uses `_ytd_months_from_date()` with `NetIncome_date` / `R&D_date` fields. +2 golden tests.
+
+### New skills created: none
+
+### Notable: Scientific Cartography expansion
+- 15+ commits advancing sci-cart phases 12.1–13.7 (disease map UX, mechanism alias pack, normalizer hardening)
+- Phase 13 adds MONDO disease normalizer integration for therapeutic_area
+- Mechanism alias pack v0.1: T2D drug classes (first domain-specific alias normalization)
+- Map UX v0.2b→v0.3: static disease-map generator with poster-style layout
+- All diagnostic-only, no production scoring impact
+
+### Notable: Selfimprove loop wiring
+- `18e7cc75` + `20da2dd0` + `49d78b00`: selfimprove Steps 3-4 wired into `run_agent_direct.py`
+- `tools/record_skill_feedback.py`: deferred ground-truth reward signal
+- `tools/pattern_to_skillpatch.py`: auto-drafts skill promotions from LEARNINGS.md patterns
+- `tools/research_ticker.sh` + `tools/research_landscape.sh`: Nous Gateway research tools (read-only)
+
+### Notable: EES v2 Phase 3 shadow monitor
+- `60876b11` + `376d9e9d`: diagnostic-only append-only ledger for EES v2 Phase 3
+- Requires `--as-of-date`, no cron, no scheduler
+- Settled rows immutable (truthy-form guard added post-merge)
+- Observation gate: 20 completed 5d + 20d observations before IC computation
+- 54 tests passing
+
+### Governance
+- Docs/skills/research tools only. No selector, ranker, sizing, final score, decision engine, production KG, cron, or runtime scoring changes.
+- Class L fix (`c6e1700c`) is a bug fix to Module 2 financial calculations — affects burn/runway for tickers reaching fallback paths with annual filings. Not a governance event (silent bug, no behavior change intended).
+
+---
+
 ## 2026-06-19 (Hermes context refresh + registry tombstone split)
 
 ### Follow-up contract fixes (2026-06-20 UTC)

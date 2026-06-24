@@ -228,17 +228,22 @@ After the full 2026-05-06 run: 9 confirmed wrong-company URLs assigned (bad) + 2
 borderline cases (NBP=novabridge, GHRS=domain-root-only) = 11 tickers to null out
 after `--apply`. Full confirmed null list and audit script in `references/ir_url_population.md`.
 
-**Word-collision tickers are structurally unresolvable — null them, don't use domain root:**
+**Word-collision tickers — RESOLVED 2026-06-23 (commit 35e662f8):**
 Common-word tickers (TECH, DRUG, RARE, LAB, DNA, RNA, VIR, IRON, BEAM, ALT, etc.) flood
 GNW keyword search and make GNW JSON-LD unreliable (GNW releases match the word, not the
 company). The `gnw_jsonld_domain` fallback for these tickers almost always returns a wrong
 company's domain. EDGAR XBRL works better (confirms pass 1 results for RARE, LAB, BEAM,
 ALT, COLL, MRNA, EDIT, GLUE, VERA) but some (TECH→tech.com, DNA→no 8-Ks) fail at XBRL
-too. For any gnw_jsonld_domain entry where the domain is clearly a wrong company, explicitly
-null it — don't leave the wrong domain in the JSON, as it will be fetched and produce more
-"other" articles than the GNW keyword fallback would.
+too.
 
-Confirmed wrong gnw_jsonld_domain assignments from 2026-05-06 run:
+**Resolution (2026-06-23, commit 35e662f8):** 12 word-collision tickers (DRUG, DNA, RNA,
+TECH, IRON, BEAM, DAWN, EDIT, FOLD, GRAL, JAZZ, MENS) had their `company_ir_url` entries
+replaced from ticker-keyword searches to company-name searches. This eliminates the false
+positives when GlobeNewswire serves partial HTML. The fix is in `production_data/company_ir_sources.json`
+— these tickers now use company-name-based searches instead of ticker-as-keyword.
+
+**Historical note:** Prior to 2026-06-23, the guidance was to null out wrong-company
+gnw_jsonld_domain entries. Confirmed wrong assignments from 2026-05-06 run:
   TECH  → ownify.com         (not Bio-Techne)
   DRUG  → researchandmarkets.com (not Bright Minds)
   DNA   → delveinsight.com   (not Ginkgo Bioworks)
@@ -246,6 +251,7 @@ Confirmed wrong gnw_jsonld_domain assignments from 2026-05-06 run:
   RNA   → ir.madrigalpharma.com = MDGL, not Avidity Biosciences
   DAWN  → dawnproject.com    (not Day One Biopharma)
   JAZZ  → usmint.gov         (not Jazz Pharmaceuticals)
+These are now resolved via company-name searches; the nulling guidance is historical only.
 
 **Rate limit:** 1.5s between requests. EDGAR best practice: include
 `User-Agent: WakeRobinBiotechScreener research@wakerobincapital.com` header.
@@ -1000,6 +1006,146 @@ tail -1 artifacts/ruleset_health_history.jsonl | python3 -c "import json,sys; d=
 
 ---
 
+### Class K — LangGraph review node artifact_dir None guard (third-runtime pattern)
+
+**Signature:** LangGraph-based review nodes crash with AttributeError or TypeError when
+`artifact_dir` is None. The LangGraph runtime (third alongside Hermes and OpenClaw) has
+different null-handling expectations than the other two runtimes.
+
+**Root cause (confirmed 2026-06-22, commit `afced5d4`):** The LangGraph review node
+assumed `artifact_dir` was always a valid path string. When the node was invoked in
+contexts where no artifact directory was configured (e.g., diagnostic-only runs, certain
+cron triggers), `artifact_dir` was None, causing the node to crash when attempting path
+operations.
+
+**Runtime boundary context:** Commit `96ffea36` (2026-06-22) established the
+"Hermes/OpenClaw/LangGraph runtime boundary map" — LangGraph is now a third runtime
+alongside Hermes (cron-managed agents) and OpenClaw (gateway-managed agents). Each
+runtime has different null-handling, tool-execution, and artifact-path conventions:
+
+- **Hermes**: cron-managed, tool-execution via Hermes agent loop, artifacts at
+  `artifacts/<agent>/` or agent-specific paths. Null args typically default to None
+  and agents handle gracefully.
+- **OpenClaw**: gateway-managed, real bash tool execution, artifacts at declared paths
+  in AGENTS.md. Null args cause tool-execution failures that agents can diagnose.
+- **LangGraph**: graph-based workflow, node-level execution, artifacts at node-declared
+  paths. Null args cause node crashes (AttributeError/TypeError) unless explicitly
+  guarded. See `docs/governance/runtime_boundary_map.md` for the full matrix.
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if the crash is in a LangGraph node (not Hermes/OpenClaw agent)
+grep -r "langgraph\|StateGraph\|node.*artifact_dir" tools/ agents/ --include="*.py" | head -10
+
+# 2. Check the node's artifact_dir parameter handling
+grep -B2 -A5 "artifact_dir" tools/<langgraph_tool>.py | head -20
+# If the node does path operations (e.g., artifact_dir / "file.json") without
+# checking for None first, this is the Class K pattern.
+
+# 3. Check the invocation context
+# LangGraph nodes can be invoked from multiple contexts (cron, manual, diagnostic).
+# Some contexts may not configure artifact_dir. Check the call site.
+```
+
+**Resolution pattern:**
+- Add explicit None guard at the node entry point: `if artifact_dir is None: return {"status": "skip", "reason": "no artifact_dir configured"}`
+- Or provide a default: `artifact_dir = artifact_dir or Path("artifacts/default_review")`
+- The fix should match the node's contract — if the node is designed to work without
+  artifacts in some contexts, return a skip status; if it always needs artifacts, raise
+  a clear error.
+
+**Detection heuristic:** If a LangGraph node crashes with AttributeError/TypeError on
+path operations and the traceback points to `artifact_dir` being None, this is Class K.
+Check the runtime boundary map to confirm the node is LangGraph (not Hermes/OpenClaw).
+
+**Note:** LangGraph is a newer runtime in this ecosystem (admitted 2026-06-22 via
+Package B governance review). Skills and diagnostic patterns are still being built out.
+When encountering LangGraph-specific failures, check `docs/governance/runtime_boundary_map.md`
+for the runtime's conventions before applying Hermes/OpenClaw diagnostic patterns.
+
+---
+
+### Class L — Financial calculation unit-mismatch (periodicity confusion)
+
+**Signature:** Financial metrics (burn rate, runway, cash consumption) are silently wrong
+by a factor of 3-4×. The calculation runs without error, produces plausible-looking numbers,
+but the underlying periodicity assumption is wrong (quarterly divisor applied to annual data,
+or annual divisor applied to quarterly data).
+
+**Root cause (confirmed 2026-06-23, commit `c6e1700c`):** Module 2 (financial health) had
+two fallback burn-rate calculation paths in NetIncome and R&D expense handling. Both paths
+hard-coded `/3` (quarterly assumption) when the SEC filing data was actually annual (Dec
+fiscal year-end 10-K). This overstated monthly burn 4× and understated runway 4× for tickers
+reaching these last-resort fallback paths.
+
+**Confirmed instance:** Tickers with SEC annual filings (fiscal year-end December) reaching
+the NetIncome or R&D fallback paths. The fix ported `_ytd_months_from_date()` from v1 to
+use the `NetIncome_date` / `R&D_date` fields (already passed through in financial_data) to
+infer the correct period. Default remains 3 when date is missing (no behavior change for
+existing data without date fields).
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if financial metrics look plausible
+python3 - << 'EOF'
+import json, glob
+files = sorted(glob.glob('data/snapshots/*/rankings.csv'), reverse=True)
+if not files: exit()
+import csv
+with open(files[0]) as f:
+    reader = csv.DictReader(f)
+    for i, row in enumerate(reader):
+        if i >= 5: break
+        burn = row.get('monthly_burn_rate_mm')
+        runway = row.get('runway_months')
+        cash = row.get('cash_and_securities_mm')
+        if burn and runway:
+            print(f"{row.get('ticker')}: burn={burn}, runway={runway}, cash={cash}")
+            # Sanity check: runway ≈ cash / burn
+            try:
+                expected_runway = float(cash) / float(burn) if float(burn) > 0 else None
+                if expected_runway and abs(expected_runway - float(runway)) > 0.5:
+                    print(f"  ⚠️  Runway mismatch: expected {expected_runway:.1f}, got {runway}")
+            except:
+                pass
+EOF
+
+# 2. Check the calculation code for hardcoded divisors
+grep -n "/3\|/12\|_ytd_months\|period.*month" tools/financial_health.py | head -20
+# Look for: hardcoded /3 or /12 without checking the actual filing period
+
+# 3. Check if date fields are used to infer periodicity
+grep -n "NetIncome_date\|R&D_date\|fiscal_year_end\|period_end" tools/financial_health.py | head -20
+# If date fields exist but aren't used to determine the divisor, this is the Class L pattern
+
+# 4. Verify the fix (post-c6e1700c)
+grep -A10 "_ytd_months_from_date" tools/financial_health.py | head -15
+# Should see: uses the date field to infer months, not hardcoded /3
+```
+
+**Pattern to catch:** Any financial calculation that divides by a hardcoded number (3, 4, 12)
+to convert between periodicities (annual↔quarterly↔monthly) WITHOUT checking the actual
+filing period or date field is suspect. SEC filings have mixed periodicity:
+- 10-K (annual) → divide by 12 for monthly
+- 10-Q (quarterly) → divide by 3 for monthly
+- If the code doesn't distinguish, it will silently produce wrong results
+
+**Test coverage added (commit c6e1700c):** 2 new golden cases verify the annual path
+(Dec date → /12). 136/136 module_2 tests pass; 44/44 golden tests pass.
+
+**Impact on recent screens:** Any screen run between the Module 2 activation and c6e1700c
+had burn rates overstated 4× and runways understated 4× for tickers reaching the fallback
+paths. Use `ls -lt data/snapshots/*/rankings.csv` to find affected dates; the fix produces
+correct burn/runway for annual filers.
+
+**General rule:** When financial metrics look implausible (runway < 6 months for a company
+with $100M+ cash, or burn rate 4× higher than peers), check the periodicity assumption in
+the calculation code. The bug is silent — no exception, no warning, just wrong numbers.
+
+---
+
 ## Support files
 
 - `scripts/patch_financial_records_sti.py` — reusable surgical patch for XBRL STI mismatch
@@ -1009,6 +1155,145 @@ tail -1 artifacts/ruleset_health_history.jsonl | python3 -c "import json,sys; d=
   technique (EDGAR XBRL namespace + GNW JSON-LD), probe path ordering, confirmed results
   for FDMT/KYMR/IMVT, full pass 2 audit (87 entries classified), confirmed null list
   (11 tickers), pitfalls, and log-replay recovery technique for disconnected sessions.
+
+### Class K — Shadow monitor truthy-form immutability (post-merge audit pattern)
+
+**Signature:** A shadow monitor or append-only ledger uses `if forward_complete_20d is True`
+or `if forward_complete_20d == True` to guard settled rows from mutation. Manually edited
+ledger values like `1`, `"true"`, or `"True"` pass the truthiness test but fail the identity
+check, allowing settled rows to be overwritten.
+
+**Root cause (confirmed 2026-06-23, commit `376d9e9d`):** Post-merge audit of shadow monitor
+(commit `60876b11`) identified that `backfill_open_rows()` and the integrity assertion only
+protected rows where `forward_complete_20d is True` (Python identity), missing manually edited
+ledger values like `1` or `"true"`.
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check the immutability guard pattern
+grep -n "forward_complete.*is True\|forward_complete.*== True\|forward_complete" \
+  scripts/research/ees_v2_phase3_shadow_monitor.py | head -20
+
+# 2. Look for all check sites (load, backfill, compute, assertion)
+grep -n "forward_complete_20d\|forward_complete_5d" \
+  scripts/research/ees_v2_phase3_shadow_monitor.py
+
+# 3. Check if a helper function exists for truthy-form acceptance
+grep -n "_is_settled\|def.*settled" \
+  scripts/research/ees_v2_phase3_shadow_monitor.py
+```
+
+**Resolution pattern (confirmed working 2026-06-23):**
+Add a `_is_settled(v)` helper that accepts all truthy forms:
+```python
+def _is_settled(v):
+    """Accept True, 1, 'true'/'True'/'TRUE'; reject False, 0, 'false', None, missing, '1'-as-string"""
+    if v is True or v == 1:
+        return True
+    if isinstance(v, str) and v.lower() in ("true",):
+        return True
+    return False
+```
+
+Apply `_is_settled()` at ALL check sites (load_ledger, backfill_open_rows outer+inner,
+computeSummary, main() integrity assertion). Tests: +17 hardening tests (54 total, was 37).
+
+**Pattern to catch:** Any boolean identity check (`is True`, `== True`) against a field that
+may be manually edited or loaded from JSON/CSV is suspect. JSON/CSV loaders may coerce `true`
+to `True`, `1` to int, or leave `"true"` as string. The guard must accept all settled forms.
+
+**Test coverage added (commit 376d9e9d):**
+- `TestIsSettled`: 11 unit tests covering all accepted/rejected forms
+- `TestBoolishSettledRowImmutability`: 6 integration tests confirming backfill + assertion
+  honor all settled forms
+
+**General rule:** When a ledger has an "immutable after settled" contract, the settled check
+must be a truthy-form acceptance function, not a Python identity check. Post-merge audit is
+the right time to catch this — the initial implementation often uses `is True` for clarity,
+but real-world edits (manual CSV patches, JSON hand-edits) introduce variant forms.
+
+---
+
+### Class L — Financial calculation unit-mismatch (periodicity confusion)
+
+**Signature:** Financial metrics (burn rate, runway, cash consumption) are silently wrong
+by a factor of 3-4×. The calculation runs without error, produces plausible-looking numbers,
+but the underlying periodicity assumption is wrong (quarterly divisor applied to annual data,
+or annual divisor applied to quarterly data).
+
+**Root cause (confirmed 2026-06-23, commit `c6e1700c`):** Module 2 (financial health) had
+two fallback burn-rate calculation paths in NetIncome and R&D expense handling. Both paths
+hard-coded `/3` (quarterly assumption) when the SEC filing data was actually annual (Dec
+fiscal year-end 10-K). This overstated monthly burn 4× and understated runway 4× for tickers
+reaching these last-resort fallback paths.
+
+**Confirmed instance:** Tickers with SEC annual filings (fiscal year-end December) reaching
+the NetIncome or R&D fallback paths. The fix ported `_ytd_months_from_date()` from v1 to
+use the `NetIncome_date` / `R&D_date` fields (already passed through in financial_data) to
+infer the correct period. Default remains 3 when date is missing (no behavior change for
+existing data without date fields).
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if financial metrics look plausible
+python3 - << 'EOF'
+import json, glob
+files = sorted(glob.glob('data/snapshots/*/rankings.csv'), reverse=True)
+if not files: exit()
+import csv
+with open(files[0]) as f:
+    reader = csv.DictReader(f)
+    for i, row in enumerate(reader):
+        if i >= 5: break
+        burn = row.get('monthly_burn_rate_mm')
+        runway = row.get('runway_months')
+        cash = row.get('cash_and_securities_mm')
+        if burn and runway:
+            print(f"{row.get('ticker')}: burn={burn}, runway={runway}, cash={cash}")
+            # Sanity check: runway ≈ cash / burn
+            try:
+                expected_runway = float(cash) / float(burn) if float(burn) > 0 else None
+                if expected_runway and abs(expected_runway - float(runway)) > 0.5:
+                    print(f"  ⚠️  Runway mismatch: expected {expected_runway:.1f}, got {runway}")
+            except:
+                pass
+EOF
+
+# 2. Check the calculation code for hardcoded divisors
+grep -n "/3\|/12\|_ytd_months\|period.*month" tools/financial_health.py | head -20
+# Look for: hardcoded /3 or /12 without checking the actual filing period
+
+# 3. Check if date fields are used to infer periodicity
+grep -n "NetIncome_date\|R&D_date\|fiscal_year_end\|period_end" tools/financial_health.py | head -20
+# If date fields exist but aren't used to determine the divisor, this is the Class L pattern
+
+# 4. Verify the fix (post-c6e1700c)
+grep -A10 "_ytd_months_from_date" tools/financial_health.py | head -15
+# Should see: uses the date field to infer months, not hardcoded /3
+```
+
+**Pattern to catch:** Any financial calculation that divides by a hardcoded number (3, 4, 12)
+to convert between periodicities (annual↔quarterly↔monthly) WITHOUT checking the actual
+filing period or date field is suspect. SEC filings have mixed periodicity:
+- 10-K (annual) → divide by 12 for monthly
+- 10-Q (quarterly) → divide by 3 for monthly
+- If the code doesn't distinguish, it will silently produce wrong results
+
+**Test coverage added (commit c6e1700c):** 2 new golden cases verify the annual path
+(Dec date → /12). 136/136 module_2 tests pass; 44/44 golden tests pass.
+
+**Impact on recent screens:** Any screen run between the Module 2 activation and c6e1700c
+had burn rates overstated 4× and runways understated 4× for tickers reaching the fallback
+paths. Use `ls -lt data/snapshots/*/rankings.csv` to find affected dates; the fix produces
+correct burn/runway for annual filers.
+
+**General rule:** When financial metrics look implausible (runway < 6 months for a company
+with $100M+ cash, or burn rate 4× higher than peers), check the periodicity assumption in
+the calculation code. The bug is silent — no exception, no warning, just wrong numbers.
+
+---
 
 ## Cross-skill diagnostic routing
 
@@ -1052,4 +1337,17 @@ Sentinel ROLLBACK_RECOMMENDED but drift_guardrails/ missing from snapshots?
   → Class J. Drift report pipeline broken. WARN is single-factor (headwind-only).
     Do NOT act on ROLLBACK_RECOMMENDED without drift dimension confirming.
     Also check ruleset_health_history.jsonl freshness.
+
+Shadow monitor / append-only ledger allows settled rows to be overwritten?
+  → Class K. Truthy-form immutability. Check if settled guard uses `is True` identity
+    instead of truthy-form acceptance. Post-merge audit pattern. Confirmed 2026-06-23 (376d9e9d).
+
+Financial metrics (burn, runway) look implausible (4× off)?
+  → Class L. Periodicity confusion. Check if calculation hardcodes /3 or /12 without
+    checking filing period. Confirmed 2026-06-23 (c6e1700c): annual data divided by 3.
+```
+LangGraph node crashes with AttributeError/TypeError on path operations?
+  → Class K. artifact_dir (or similar path arg) is None. LangGraph is the third
+    runtime — check docs/governance/runtime_boundary_map.md before applying
+    Hermes/OpenClaw diagnostic patterns.
 ```
