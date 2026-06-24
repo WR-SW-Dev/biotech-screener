@@ -1,5 +1,11 @@
+# DEPRECATED 2026-06-24: This tool was never functional — load_forward_returns()
+# returns empty {} so no IC is ever computed. Superseded by:
+#   tools/measure_final_score_ic_spec100.py  (authoritative Spec 100 tool)
+# Do not use for any IC measurement or governance claim. See Spec 095 audit:
+#   artifacts/audit/spec095_audit_2026_06_24.md
+
 """
-Spec 100: True Ranker IC Measurement Tooling
+Spec 100: True Ranker IC Measurement Tooling  [DEPRECATED — see header]
 
 Measures ranker IC on eligible universe only (post-gate).
 Separates composite_score IC (selection quality) from ranker IC (ranking quality).
