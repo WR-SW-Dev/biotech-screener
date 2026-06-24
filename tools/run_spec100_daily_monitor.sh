@@ -22,6 +22,14 @@ echo "=== Spec 100 Daily Monitor: base=$BASE_DATE end=$END_DATE ==="
 echo "    Status: MONITOR_ONLY / NOT_PRIMARY_GATE / NOT_PROMOTION_EVIDENCE"
 echo ""
 
+# Patch market_data.json prices from price_history.csv first.
+# yfinance rate-limits the nightly collect_market_data.py run, leaving
+# close_price in snapshots stale. price_history.csv refreshes cleanly.
+# Without this patch, IC measurements return NaN due to stale prices.
+echo "--- Patching market_data.json from price_history.csv ---"
+python3 tools/patch_market_data_prices.py --as-of-date "$END_DATE"
+echo ""
+
 # Run all five fields at all available horizons
 for FLD in final_score catalyst_decay_w catalyst_score coinvest_score_z financial_score; do
     echo "--- $FLD ---"

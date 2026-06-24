@@ -103,7 +103,9 @@ def _spearman_ic(x: List[float], y: List[float]) -> Tuple[float, float]:
     dy = math.sqrt(sum((y_ranks[i] - my) ** 2 for i in range(n_clean)))
 
     if dx < 1e-9 or dy < 1e-9:
-        return (0.0, 0.0)
+        # Zero variance in scores (dx) or returns (dy) — IC unobservable, not zero.
+        # dy near zero typically means stale snapshot prices (all forward returns = 0).
+        return (float("nan"), float("nan"))
 
     ic = num / (dx * dy)
 
@@ -302,9 +304,18 @@ def measure_final_score_ic(
                 final_scores.append(fs)
                 fwd_returns.append(fret)
 
+    # Detect stale snapshot prices: if >80% of forward returns are exactly 0.0,
+    # the forward snapshot likely carries the same close_price as the base snapshot
+    # (price refresh failed). IC is unobservable in that case.
+    stale_prices = False
+    if fwd_returns:
+        zero_frac = sum(1 for r in fwd_returns if r == 0.0) / len(fwd_returns)
+        if zero_frac > 0.8:
+            stale_prices = True
+
     final_score_ic = float("nan")
     final_score_t_stat = float("nan")
-    if len(final_scores) >= 5:
+    if len(final_scores) >= 5 and not stale_prices:
         final_score_ic, final_score_t_stat = _spearman_ic(final_scores, fwd_returns)
 
     # Diagnostic: measure composite_score IC on full universe (INVALIDATED for ranker)
@@ -336,8 +347,9 @@ def measure_final_score_ic(
         "forward_date_mode": forward_date_mode,
         "forward_fallback_used": forward_fallback_used,
         "forward_unobservable_reason": None if observed_forward_date else forward_reason,
+        "stale_prices": stale_prices,
         "eligible_count": len(eligible_rows),
-        "final_score_observations": len(final_scores),
+        "final_score_observations": len(final_scores) if not stale_prices else 0,
         "final_score_ic": final_score_ic,
         "final_score_t_stat": final_score_t_stat,
         "composite_score_observations": len(composite_scores),
@@ -452,12 +464,22 @@ def main():
             )
             if result and "error" not in result:
                 results_by_horizon[horizon].append(result)
+                ic_str = (
+                    f"{result['final_score_ic']:.4f}" if result["final_score_ic"] == result["final_score_ic"] else "nan"
+                )
                 print(
                     f"  {snap_date} T+{horizon}: eligible={result['eligible_count']}, "
-                    f"obs={result['final_score_observations']}, IC={result['final_score_ic']:.4f}, "
+                    f"obs={result['final_score_observations']}, IC={ic_str}, "
                     f"t={result['final_score_t_stat']:.2f}"
+                    if result["final_score_t_stat"] == result["final_score_t_stat"]
+                    else f"  {snap_date} T+{horizon}: eligible={result['eligible_count']}, "
+                    f"obs={result['final_score_observations']}, IC={ic_str}, t=nan"
                 )
-                if result.get("forward_fallback_used"):
+                if result.get("stale_prices"):
+                    print(
+                        f"    [stale-prices] forward snapshot {result.get('observed_forward_date')} has same close_price as base — IC unobservable"
+                    )
+                elif result.get("forward_fallback_used"):
                     print(
                         f"    [forward-fallback] requested {result['requested_forward_date']} -> "
                         f"observed {result['observed_forward_date']} (+{result['forward_date_delta_days']}d)"
