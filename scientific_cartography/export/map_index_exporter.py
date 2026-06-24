@@ -179,6 +179,8 @@ class MapIndexExporter:
         for feature in features:
             disease_key = feature.disease_id or feature.disease_name or "unknown"
             entry = disease_map[disease_key]
+            entry["disease_id"] = feature.disease_id or entry["disease_id"]
+            entry["disease_name"] = feature.disease_name or entry["disease_name"]
             entry["feature_count"] += 1
 
             # Track source refs

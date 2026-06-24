@@ -255,6 +255,360 @@ class TestArtifactManifestExporter:
             assert loaded["artifact_type"] == "scientific_cartography_export_manifest"
 
 
+class TestMapIndexExporterCounts:
+    """Detailed count and aggregation coverage for MapIndexExporter."""
+
+    @pytest.fixture
+    def exporter(self):
+        return MapIndexExporter(as_of_date="2026-06-16")
+
+    def _prog(
+        self, pid, disease_id="D001", disease_name="Disease A", mechanism_class=None, ticker=None, source_refs=None
+    ):
+        return ProgramRecord(
+            program_id=pid,
+            asset_id=f"A_{pid}",
+            asset_name=f"Drug_{pid}",
+            disease_id=disease_id,
+            disease_name=disease_name,
+            mechanism_class=mechanism_class,
+            company_name="Co",
+            ticker=ticker,
+            source_refs=source_refs or [],
+            as_of_date="2026-06-16",
+        )
+
+    def _cluster(self, cid, disease_id="D001", disease_name="Disease A", **stage_counts):
+        from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
+
+        return CompetitiveClusterRecord(
+            cluster_id=cid,
+            disease_id=disease_id,
+            disease_name=disease_name,
+            phase1_count=stage_counts.get("phase1_count", 0),
+            phase2_count=stage_counts.get("phase2_count", 0),
+            phase3_count=stage_counts.get("phase3_count", 0),
+            approved_count=stage_counts.get("approved_count", 0),
+            filed_count=stage_counts.get("filed_count", 0),
+            preclinical_count=stage_counts.get("preclinical_count", 0),
+            discontinued_count=stage_counts.get("discontinued_count", 0),
+            unknown_stage_count=stage_counts.get("unknown_stage_count", 0),
+            source_refs=stage_counts.get("source_refs", []),
+        )
+
+    def _feature(self, fid, disease_id="D001", disease_name="Disease A", source_refs=None):
+        return LandscapeFeatureRecord(
+            feature_id=fid,
+            program_id="P1",
+            disease_id=disease_id,
+            disease_name=disease_name,
+            source_refs=source_refs or [],
+            as_of_date="2026-06-16",
+        )
+
+    # --- counts{} structure ---
+
+    def test_counts_competitive_clusters(self, exporter):
+        clusters = [self._cluster("C1"), self._cluster("C2"), self._cluster("C3")]
+        index = exporter.build_index([], clusters, [])
+        assert index["counts"]["competitive_clusters"] == 3
+
+    def test_counts_landscape_features(self, exporter):
+        features = [self._feature("F1"), self._feature("F2")]
+        index = exporter.build_index([], [], features)
+        assert index["counts"]["landscape_features"] == 2
+
+    def test_counts_known_vs_unknown_mechanism(self, exporter):
+        programs = [
+            self._prog("P1", mechanism_class="JAK inhibitor"),
+            self._prog("P2", mechanism_class="unknown"),
+            self._prog("P3"),  # mechanism_class=None
+        ]
+        index = exporter.build_index(programs, [], [])
+        assert index["counts"]["known_mechanism_programs"] == 1
+        assert index["counts"]["unknown_mechanism_programs"] == 2
+
+    def test_counts_disease_count_excludes_unknown_bucket(self, exporter):
+        programs = [
+            self._prog("P1", disease_id="D001", disease_name="Known Disease"),
+            # truly unknown: no disease_id or name
+            ProgramRecord(
+                program_id="P2",
+                asset_id="A2",
+                asset_name="Drug2",
+                disease_id="",
+                disease_name="",
+                company_name="Co",
+                source_refs=[],
+                as_of_date="2026-06-16",
+            ),
+        ]
+        index = exporter.build_index(programs, [], [])
+        # disease_count only counts named diseases, not the "unknown" bucket
+        assert index["counts"]["disease_count"] == 1
+        # But the diseases list still contains the unknown entry
+        assert len(index["diseases"]) == 2
+
+    def test_counts_ticker_count_deduplicates(self, exporter):
+        programs = [
+            self._prog("P1", ticker="PTGX"),
+            self._prog("P2", ticker="PTGX"),  # duplicate
+            self._prog("P3", ticker="CRBU"),
+        ]
+        index = exporter.build_index(programs, [], [])
+        assert index["counts"]["ticker_count"] == 2
+
+    def test_counts_all_zero_for_empty_input(self, exporter):
+        index = exporter.build_index([], [], [])
+        counts = index["counts"]
+        assert counts["program_records"] == 0
+        assert counts["competitive_clusters"] == 0
+        assert counts["landscape_features"] == 0
+        assert counts["disease_count"] == 0
+        assert counts["ticker_count"] == 0
+        assert counts["known_mechanism_programs"] == 0
+        assert counts["unknown_mechanism_programs"] == 0
+
+    # --- disease-level aggregation ---
+
+    def test_cluster_count_per_disease(self, exporter):
+        programs = [self._prog("P1")]
+        clusters = [self._cluster("C1"), self._cluster("C2")]
+        index = exporter.build_index(programs, clusters, [])
+        disease = index["diseases"][0]
+        assert disease["cluster_count"] == 2
+
+    def test_feature_count_per_disease(self, exporter):
+        programs = [self._prog("P1")]
+        features = [self._feature("F1"), self._feature("F2"), self._feature("F3")]
+        index = exporter.build_index(programs, [], features)
+        disease = index["diseases"][0]
+        assert disease["feature_count"] == 3
+
+    def test_stage_distribution_from_clusters(self, exporter):
+        clusters = [
+            self._cluster("C1", phase3_count=2, phase2_count=1),
+            self._cluster("C2", approved_count=1, filed_count=1),
+        ]
+        programs = [self._prog("P1")]
+        index = exporter.build_index(programs, clusters, [])
+        sd = index["diseases"][0]["stage_distribution"]
+        assert sd["phase3"] == 2
+        assert sd["phase2"] == 1
+        assert sd["approved"] == 1
+        assert sd["filed"] == 1
+        assert sd["phase1"] == 0
+
+    def test_stage_distribution_accumulates_across_clusters(self, exporter):
+        clusters = [
+            self._cluster("C1", phase2_count=3),
+            self._cluster("C2", phase2_count=2),
+        ]
+        programs = [self._prog("P1")]
+        index = exporter.build_index(programs, clusters, [])
+        assert index["diseases"][0]["stage_distribution"]["phase2"] == 5
+
+    def test_public_tickers_deduplicated_and_sorted(self, exporter):
+        programs = [
+            self._prog("P1", ticker="ZBTK"),
+            self._prog("P2", ticker="ABUS"),
+            self._prog("P3", ticker="ZBTK"),  # duplicate
+        ]
+        index = exporter.build_index(programs, [], [])
+        tickers = index["diseases"][0]["public_tickers"]
+        assert tickers == sorted(set(tickers))
+        assert len(tickers) == 2
+
+    def test_source_refs_count(self, exporter):
+        programs = [
+            self._prog("P1", source_refs=["NCT001", "NCT002"]),
+            self._prog("P2", source_refs=["NCT002", "NCT003"]),  # NCT002 overlap
+        ]
+        index = exporter.build_index(programs, [], [])
+        # 3 unique refs: NCT001, NCT002, NCT003
+        assert index["diseases"][0]["source_refs_count"] == 3
+
+    def test_cluster_source_refs_merged(self, exporter):
+        programs = [self._prog("P1", source_refs=["NCT001"])]
+        clusters = [self._cluster("C1", source_refs=["NCT001", "NCT002"])]
+        index = exporter.build_index(programs, clusters, [])
+        # NCT001 deduped between program and cluster
+        assert index["diseases"][0]["source_refs_count"] == 2
+
+    # --- disease key resolution ---
+
+    def test_disease_id_takes_priority_over_name_for_keying(self, exporter):
+        programs = [
+            self._prog("P1", disease_id="D001", disease_name="Alzheimer's"),
+            self._prog("P2", disease_id="D001", disease_name="Alzheimers"),  # name differs
+        ]
+        index = exporter.build_index(programs, [], [])
+        # Both should land in the same bucket (keyed by disease_id)
+        assert len(index["diseases"]) == 1
+        assert index["diseases"][0]["program_count"] == 2
+
+    def test_cluster_links_to_same_disease_as_program(self, exporter):
+        programs = [self._prog("P1", disease_id="D001")]
+        clusters = [self._cluster("C1", disease_id="D001")]
+        index = exporter.build_index(programs, clusters, [])
+        assert len(index["diseases"]) == 1
+        assert index["diseases"][0]["cluster_count"] == 1
+        assert index["diseases"][0]["program_count"] == 1
+
+    def test_cluster_only_disease_creates_entry(self, exporter):
+        """Disease appears in clusters but not programs — should still appear."""
+        clusters = [self._cluster("C1", disease_id="D_CLUSTER_ONLY", disease_name="Rare Disease")]
+        index = exporter.build_index([], clusters, [])
+        assert any(d["disease_id"] == "D_CLUSTER_ONLY" for d in index["diseases"])
+
+    def test_feature_only_disease_creates_entry(self, exporter):
+        features = [self._feature("F1", disease_id="D_FEAT_ONLY", disease_name="Feature Only")]
+        index = exporter.build_index([], [], features)
+        assert any(d["disease_id"] == "D_FEAT_ONLY" for d in index["diseases"])
+
+    # --- ordering and warnings ---
+
+    def test_unknown_disease_sorts_last(self, exporter):
+        programs = [
+            self._prog("P1", disease_id="D001", disease_name="Alzheimer's"),
+            ProgramRecord(
+                program_id="P2",
+                asset_id="A2",
+                asset_name="Drug2",
+                disease_id="",
+                disease_name="",
+                company_name="Co",
+                source_refs=[],
+                as_of_date="2026-06-16",
+            ),
+        ]
+        index = exporter.build_index(programs, [], [])
+        last = index["diseases"][-1]
+        assert last["disease_name"] == "unknown"
+
+    def test_warnings_unknown_disease_present(self, exporter):
+        programs = [
+            ProgramRecord(
+                program_id="P1",
+                asset_id="A1",
+                asset_name="Drug",
+                disease_id="",
+                disease_name="",
+                company_name="Co",
+                source_refs=[],
+                as_of_date="2026-06-16",
+            ),
+        ]
+        index = exporter.build_index(programs, [], [])
+        assert "unknown_disease_present" in index["warnings"]
+
+    def test_no_warnings_when_all_diseases_known(self, exporter):
+        programs = [self._prog("P1", disease_id="D001", disease_name="Cancer")]
+        index = exporter.build_index(programs, [], [])
+        assert index["warnings"] == []
+
+    def test_multiple_diseases_each_get_correct_program_count(self, exporter):
+        programs = [
+            self._prog("P1", disease_id="DA", disease_name="Alpha"),
+            self._prog("P2", disease_id="DA", disease_name="Alpha"),
+            self._prog("P3", disease_id="DB", disease_name="Beta"),
+        ]
+        index = exporter.build_index(programs, [], [])
+        counts = {d["disease_id"]: d["program_count"] for d in index["diseases"]}
+        assert counts["DA"] == 2
+        assert counts["DB"] == 1
+
+
+class TestMapIndexExporterReportingIntegration:
+    """Verify map_index output fields match what LangGraph reporting reads."""
+
+    def _make_index(self):
+        exporter = MapIndexExporter(as_of_date="2026-06-23")
+        from scientific_cartography.schemas.cluster_schema import CompetitiveClusterRecord
+
+        programs = [
+            ProgramRecord(
+                program_id="P1",
+                asset_id="A1",
+                asset_name="Drug1",
+                disease_id="D001",
+                disease_name="Lymphoma",
+                mechanism_class="CD19 CAR-T",
+                ticker="ALLO",
+                company_name="Co",
+                source_refs=["NCT001"],
+                as_of_date="2026-06-23",
+            ),
+            ProgramRecord(
+                program_id="P2",
+                asset_id="A2",
+                asset_name="Drug2",
+                disease_id="D001",
+                disease_name="Lymphoma",
+                mechanism_class=None,
+                ticker="AUTL",
+                company_name="Co2",
+                source_refs=["NCT002"],
+                as_of_date="2026-06-23",
+            ),
+        ]
+        clusters = [
+            CompetitiveClusterRecord(
+                cluster_id="C1",
+                disease_id="D001",
+                disease_name="Lymphoma",
+                phase2_count=1,
+                phase3_count=1,
+                source_refs=["NCT001"],
+            ),
+        ]
+        return exporter.build_index(programs, clusters, [])
+
+    def test_map_index_has_nested_counts(self):
+        """LangGraph load_artifact_index reads index['counts'] — must be nested."""
+        index = self._make_index()
+        assert "counts" in index
+        assert "disease_count" in index["counts"]
+        assert "program_records" in index["counts"]
+        assert "competitive_clusters" in index["counts"]
+        assert "landscape_features" in index["counts"]
+
+    def test_disease_entries_have_disease_id(self):
+        """LangGraph select_review_diseases reads disease['disease_id']."""
+        index = self._make_index()
+        for disease in index["diseases"]:
+            assert "disease_id" in disease
+            assert "disease_key" not in disease  # old schema key must not appear
+
+    def test_disease_entries_have_disease_name(self):
+        """LangGraph reporting reads disease['disease_name']."""
+        index = self._make_index()
+        for disease in index["diseases"]:
+            assert "disease_name" in disease
+            assert "normalized_disease_name" not in disease  # old schema key
+
+    def test_disease_entries_have_public_tickers_list(self):
+        """LangGraph reporting displays disease['public_tickers']."""
+        index = self._make_index()
+        disease = index["diseases"][0]
+        assert isinstance(disease["public_tickers"], list)
+        assert "ALLO" in disease["public_tickers"]
+
+    def test_stage_distribution_has_all_keys(self):
+        """All 8 stage keys present so LG3 can render them without KeyError."""
+        index = self._make_index()
+        expected_keys = {"approved", "filed", "phase3", "phase2", "phase1", "preclinical", "discontinued", "unknown"}
+        for disease in index["diseases"]:
+            assert set(disease["stage_distribution"].keys()) == expected_keys
+
+    def test_source_refs_converted_to_count(self):
+        """Sets must be converted to ints before JSON serialization."""
+        index = self._make_index()
+        disease = index["diseases"][0]
+        assert isinstance(disease["source_refs_count"], int)
+        assert "source_refs" not in disease  # raw set must be removed
+
+
 class TestPhase6Governance:
     """Test Phase 6 governance compliance."""
 
