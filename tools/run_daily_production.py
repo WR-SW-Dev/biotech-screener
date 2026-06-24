@@ -63,6 +63,7 @@ def _timestamp_for_snapshot_dir(snap_dir: Path) -> str:
     except ValueError:
         return "1970-01-01T00:00:00Z"
 
+
 # Canonical gate names — every gate emitted by run_daily() MUST be in this set.
 # Adding a new gate requires updating this allowlist.
 GATE_ALLOWLIST: frozenset[str] = frozenset(
@@ -439,7 +440,7 @@ def validate_xbi_freshness(
         end_dt = through_dt + timedelta(days=1)
 
         xbi = yf.Ticker("XBI")
-        hist = xbi.history(start=start_dt.isoformat(), end=end_dt.isoformat())
+        hist = xbi.history(start=start_dt.strftime("%Y-%m-%d"), end=end_dt.strftime("%Y-%m-%d"))
 
         if hist.empty:
             result["revalidation_error"] = f"yfinance returned no XBI data for {start_dt.date()} to {through_dt.date()}"
