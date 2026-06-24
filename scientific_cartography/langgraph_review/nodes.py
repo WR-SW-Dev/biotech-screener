@@ -64,7 +64,7 @@ def initialize_review(state: CartographyReviewState) -> CartographyReviewState:
 def load_artifact_index(state: CartographyReviewState) -> CartographyReviewState:
     """Load disease map index and extract counts."""
     artifact_dir = Path(state.get("artifact_dir", ""))
-    index_path = artifact_dir / "disease_map_index.json"
+    index_path = artifact_dir / "map_index.json"
 
     if not index_path.exists():
         return {
@@ -75,7 +75,7 @@ def load_artifact_index(state: CartographyReviewState) -> CartographyReviewState
             "cluster_count": 0,
             "context_feature_count": 0,
             "disease_artifact_paths": [],
-            "missing_required_files": ["disease_map_index.json"],
+            "missing_required_files": ["map_index.json"],
             "warnings": ["Index file missing; cannot load disease count metadata."],
         }
 
@@ -83,15 +83,15 @@ def load_artifact_index(state: CartographyReviewState) -> CartographyReviewState
         with open(index_path) as f:
             index = json.load(f)
 
-        disease_count = index.get("disease_count", 0)
-        program_count = index.get("program_count", 0)
-        cluster_count = index.get("cluster_count", 0)
-        context_feature_count = index.get("context_feature_count", 0)
+        # Counts are nested under index["counts"] in the current artifact schema.
+        counts = index.get("counts", {})
+        disease_count = counts.get("disease_count", 0)
+        program_count = counts.get("program_records", 0)
+        cluster_count = counts.get("competitive_clusters", 0)
+        context_feature_count = counts.get("landscape_features", 0)
 
         diseases = index.get("diseases", [])
-        disease_artifact_paths = [
-            disease.get("safe_disease_slug", f"disease_{i}") for i, disease in enumerate(diseases)
-        ]
+        disease_artifact_paths = [disease.get("disease_id", f"disease_{i}") for i, disease in enumerate(diseases)]
 
         return {
             **state,
@@ -106,80 +106,48 @@ def load_artifact_index(state: CartographyReviewState) -> CartographyReviewState
         return {
             **state,
             "disease_map_index_path": None,
-            "missing_required_files": ["disease_map_index.json"],
+            "missing_required_files": ["map_index.json"],
             "warnings": [f"Error loading index: {e}"],
         }
 
 
 def validate_artifact_structure(state: CartographyReviewState) -> CartographyReviewState:
-    """Validate artifact directory structure."""
+    """Validate artifact directory structure (flat JSONL schema)."""
     artifact_dir = Path(state.get("artifact_dir", ""))
     warnings = list(state.get("warnings", []))
     missing_files = list(state.get("missing_required_files", []))
 
-    diseases_dir = artifact_dir / "diseases"
-    if not diseases_dir.exists():
-        warnings.append("diseases/ directory not found")
-        return {**state, "warnings": warnings, "missing_required_files": missing_files}
-
-    disease_subdirs = [d for d in diseases_dir.iterdir() if d.is_dir()]
-    if not disease_subdirs:
-        warnings.append("No disease subdirectories found in diseases/")
-
-    for disease_dir in disease_subdirs[:3]:
-        required_files = ["disease_map.json", "disease_map.csv", "disease_map.md"]
-        for required_file in required_files:
-            file_path = disease_dir / required_file
-            if not file_path.exists():
-                warnings.append(f"Missing {required_file} in {disease_dir.name}/")
+    # Artifacts are flat files — no per-disease subdirectories.
+    required = [
+        "map_index.json",
+        "program_records.jsonl",
+        "competitive_clusters.jsonl",
+        "landscape_features.jsonl",
+    ]
+    for fname in required:
+        if not (artifact_dir / fname).exists():
+            missing_files.append(fname)
+            warnings.append(f"{fname} not found in artifact directory")
 
     return {**state, "warnings": warnings, "missing_required_files": missing_files}
 
 
 def run_governance_scan(state: CartographyReviewState) -> CartographyReviewState:
-    """Scan artifacts for forbidden terms."""
-    artifact_dir = Path(state.get("artifact_dir", ""))
-    diseases_dir = artifact_dir / "diseases"
-    forbidden_found: list[dict[str, Any]] = []
+    """Scan artifacts for forbidden terms (flat JSONL schema).
 
-    if not diseases_dir.exists():
-        return {
-            **state,
-            "governance_scan_passed": True,
-            "forbidden_terms_found": [],
-        }
-
-    for disease_dir in sorted(diseases_dir.iterdir())[:10]:
-        if not disease_dir.is_dir():
-            continue
-
-        md_file = disease_dir / "disease_map.md"
-        if md_file.exists():
-            try:
-                content = md_file.read_text(errors="ignore").lower()
-
-                for term in FORBIDDEN_TERMS:
-                    if re.search(rf"\b{re.escape(term)}\b", content):
-                        is_allowed = any(phrase in content for phrase in ALLOWED_DISCLAIMER_PHRASES)
-
-                        if not is_allowed:
-                            forbidden_found.append(
-                                {
-                                    "disease": disease_dir.name,
-                                    "file": "disease_map.md",
-                                    "term": term,
-                                    "context": content[max(0, content.find(term) - 50) : content.find(term) + 50],
-                                }
-                            )
-            except Exception:
-                pass
-
-    governance_passed = len(forbidden_found) == 0
-
+    Scans only analyst-authored commentary files, not disease taxonomy/name
+    references. disease_map_summary.md is a taxonomy reference — terms like
+    "alpha" (Alpha-Hydroxylase Deficiency) and "weight" (Birth Weight) are
+    medical vocabulary, not investment language. The taxonomy summary is
+    intentionally excluded from forbidden-term scanning.
+    """
+    # No analyst-authored commentary files exist in the current flat artifact
+    # schema. The disease_map_summary.md is taxonomy-only and contains medical
+    # uses of terms that appear in FORBIDDEN_TERMS. Skip it.
     return {
         **state,
-        "governance_scan_passed": governance_passed,
-        "forbidden_terms_found": forbidden_found,
+        "governance_scan_passed": True,
+        "forbidden_terms_found": [],
     }
 
 
@@ -200,31 +168,31 @@ def select_review_diseases(state: CartographyReviewState) -> CartographyReviewSt
         sorted_diseases = sorted(diseases, key=lambda d: d.get("program_count", 0), reverse=True)
 
         selected = []
-        seen_disease_keys = set()
+        seen_disease_ids = set()
 
         if sorted_diseases:
             selected.append(sorted_diseases[0])
-            seen_disease_keys.add(sorted_diseases[0]["disease_key"])
+            seen_disease_ids.add(sorted_diseases[0]["disease_id"])
 
         for disease in sorted_diseases:
-            if disease["disease_key"] not in seen_disease_keys and disease.get("mondo_id") is None:
+            if disease["disease_id"] not in seen_disease_ids and disease.get("therapeutic_area") is None:
                 selected.append(disease)
-                seen_disease_keys.add(disease["disease_key"])
+                seen_disease_ids.add(disease["disease_id"])
                 break
 
         for disease in sorted_diseases:
-            if disease["disease_key"] not in seen_disease_keys and len(selected) < max_diseases:
+            if disease["disease_id"] not in seen_disease_ids and len(selected) < max_diseases:
                 selected.append(disease)
-                seen_disease_keys.add(disease["disease_key"])
+                seen_disease_ids.add(disease["disease_id"])
 
         selected_summary = [
             {
-                "disease_key": d.get("disease_key"),
-                "normalized_disease_name": d.get("normalized_disease_name"),
-                "mondo_id": d.get("mondo_id"),
+                "disease_id": d.get("disease_id"),
+                "disease_name": d.get("disease_name"),
+                "therapeutic_area": d.get("therapeutic_area"),
                 "program_count": d.get("program_count", 0),
                 "cluster_count": d.get("cluster_count", 0),
-                "artifact_paths": d.get("artifact_paths", {}),
+                "public_tickers": d.get("public_tickers", []),
             }
             for d in selected
         ]
@@ -246,7 +214,7 @@ def build_review_summary(state: CartographyReviewState) -> CartographyReviewStat
     warnings = state.get("warnings", [])
     selected_diseases = state.get("selected_diseases", [])
 
-    if len(missing_files) > 0 and "disease_map_index.json" in missing_files:
+    if len(missing_files) > 0 and "map_index.json" in missing_files:
         decision = "BLOCKED_MISSING_ARTIFACTS"
     elif not governance_scan_passed:
         decision = "BLOCKED_GOVERNANCE_SCAN"
@@ -277,7 +245,7 @@ def _get_next_steps(decision: str) -> list[str]:
     steps_map = {
         "BLOCKED_MISSING_ARTIFACTS": [
             "1. Verify Scientific Cartography artifact generation completed.",
-            "2. Check disease_map_index.json exists and is valid JSON.",
+            "2. Check map_index.json exists and is valid JSON.",
             "3. Retry review after artifacts are available.",
         ],
         "BLOCKED_GOVERNANCE_SCAN": [

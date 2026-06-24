@@ -73,14 +73,17 @@ def write_review_summary_md(review_dir: Path, state: CartographyReviewState) -> 
     lines.append("")
     if selected_diseases:
         for i, disease in enumerate(selected_diseases, 1):
-            name = disease.get("normalized_disease_name", "unknown")
-            mondo = disease.get("mondo_id", "unknown")
+            name = disease.get("disease_name") or disease.get("normalized_disease_name", "unknown")
+            area = disease.get("therapeutic_area") or disease.get("mondo_id", "unknown")
             prog_count = disease.get("program_count", 0)
             cluster_count = disease.get("cluster_count", 0)
+            tickers = disease.get("public_tickers", [])
             lines.append(f"{i}. **{name}**")
-            lines.append(f"   - MONDO ID: {mondo}")
+            lines.append(f"   - Therapeutic Area: {area}")
             lines.append(f"   - Programs: {prog_count}")
             lines.append(f"   - Clusters: {cluster_count}")
+            if tickers:
+                lines.append(f"   - Public Tickers: {', '.join(tickers[:5])}")
             lines.append("")
     else:
         lines.append("(No diseases selected)")
