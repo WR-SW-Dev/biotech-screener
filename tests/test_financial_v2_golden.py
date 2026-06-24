@@ -274,6 +274,42 @@ def test_burn_hierarchy_rd_proxy_last_resort():
     print("✓ test_burn_hierarchy_rd_proxy_last_resort passed")
 
 
+def test_burn_hierarchy_net_income_annual_date():
+    """NetIncome with a December date should be treated as annual (÷12, not ÷3)."""
+    data = create_financial_fixture(net_income=-24e6, rd=10e6)
+    data["NetIncome_date"] = "2025-12-31"
+
+    result = calculate_burn_rate_v2(data)
+
+    assert result.burn_source == BurnSource.NET_INCOME
+    assert result.burn_period == "ytd_12mo"
+    # 24M annual / 12 = 2M/month (not 8M/month as the /3 bug produced)
+    expected_monthly = Decimal("2000000")
+    assert abs(result.monthly_burn - expected_monthly) < Decimal(
+        "0.01"
+    ), f"Expected {expected_monthly}, got {result.monthly_burn}"
+
+    print("✓ test_burn_hierarchy_net_income_annual_date passed")
+
+
+def test_burn_hierarchy_rd_proxy_annual_date():
+    """R&D proxy with a December date should be treated as annual (÷12, not ÷3)."""
+    data = create_financial_fixture(rd=12e6)
+    data["R&D_date"] = "2025-12-31"
+
+    result = calculate_burn_rate_v2(data)
+
+    assert result.burn_source == BurnSource.RD_PROXY
+    assert result.burn_period == "ytd_12mo_estimated"
+    # 12M annual R&D * 1.5 / 12 = 1.5M/month (not 6M/month as the /3 bug produced)
+    expected_monthly = Decimal("1500000")
+    assert abs(result.monthly_burn - expected_monthly) < Decimal(
+        "0.01"
+    ), f"Expected {expected_monthly}, got {result.monthly_burn}"
+
+    print("✓ test_burn_hierarchy_rd_proxy_annual_date passed")
+
+
 def test_burn_hierarchy_profitable_company():
     """Profitable companies should have zero burn."""
     data = create_financial_fixture(

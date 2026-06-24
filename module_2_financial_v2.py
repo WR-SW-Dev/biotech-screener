@@ -100,6 +100,26 @@ DILUTION_CASH_MCAP_MED = Decimal("0.15")  # <15% = MODERATE risk
 DILUTION_CASH_MCAP_HIGH = Decimal("0.30")  # <30% = LOW risk
 
 
+def _ytd_months_from_date(date_str: Optional[str]) -> int:
+    """Return months in SEC reporting period (3/6/9/12) inferred from fiscal quarter-end date."""
+    if not date_str:
+        return 3
+    try:
+        from datetime import datetime
+
+        month = datetime.fromisoformat(date_str.split("T")[0]).month
+        if month in [1, 2, 3]:
+            return 3
+        elif month in [4, 5, 6]:
+            return 6
+        elif month in [7, 8, 9]:
+            return 9
+        else:
+            return 12
+    except Exception:
+        return 3
+
+
 class BurnConfidence(str, Enum):
     """Burn rate confidence levels."""
 
@@ -520,13 +540,14 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
 
     # === PRIORITY 6: NET INCOME (FALLBACK) ===
     if net_income is not None and net_income < Decimal("0"):
-        # Assume quarterly net income
-        monthly_burn = abs(net_income) / Decimal("3")
+        ni_date = financial_data.get("NetIncome_date")
+        ytd_months = _ytd_months_from_date(ni_date)
+        monthly_burn = abs(net_income) / Decimal(str(ytd_months))
         return BurnResult(
             monthly_burn=_quantize_rate(monthly_burn),
             burn_source=BurnSource.NET_INCOME,
             burn_confidence=BurnConfidence.MEDIUM,
-            burn_period="quarterly",
+            burn_period=f"ytd_{ytd_months}mo",
             raw_value=net_income,
             rejection_reasons=rejection_reasons,
         )
@@ -541,14 +562,16 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
     effective_rd = rd if rd is not None else rd_alt
 
     if effective_rd is not None and effective_rd > Decimal("0"):
+        rd_date = financial_data.get("R&D_date")
+        ytd_months = _ytd_months_from_date(rd_date)
         # Assume total opex = R&D × 1.5 (add G&A overhead)
-        quarterly_burn = effective_rd * Decimal("1.5")
-        monthly_burn = quarterly_burn / Decimal("3")
+        ytd_burn = effective_rd * Decimal("1.5")
+        monthly_burn = ytd_burn / Decimal(str(ytd_months))
         return BurnResult(
             monthly_burn=_quantize_rate(monthly_burn),
             burn_source=BurnSource.RD_PROXY,
             burn_confidence=BurnConfidence.LOW,
-            burn_period="estimated",
+            burn_period=f"ytd_{ytd_months}mo_estimated",
             raw_value=effective_rd,
             rejection_reasons=rejection_reasons,
         )
