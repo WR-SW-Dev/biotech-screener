@@ -25,7 +25,7 @@
     {
       "ticker": "COGT",
       "company_name": "Cogent Biosciences, Inc.",
-      "entry_price": 35.24,
+      "entry_price": 31.35,
       "current_price": 32.17,
       "change_percent": -8.71,
       "target_weight_pct": 3.33,
@@ -40,7 +40,7 @@
     {
       "ticker": "DNTH",
       "company_name": "Dianthus Therapeutics, Inc.",
-      "entry_price": 90.94,
+      "entry_price": 72.1,
       "current_price": 72.02,
       "change_percent": -20.8,
       "target_weight_pct": 3.33,
@@ -55,7 +55,7 @@
     {
       "ticker": "NRIX",
       "company_name": "Nurix Therapeutics, Inc.",
-      "entry_price": 17.51,
+      "entry_price": 15.46,
       "current_price": 15.72,
       "change_percent": -10.22,
       "target_weight_pct": 3.33,
@@ -70,7 +70,7 @@
     {
       "ticker": "URGN",
       "company_name": "UroGen Pharma Ltd.",
-      "entry_price": 26.43,
+      "entry_price": 28.02,
       "current_price": 28.63,
       "change_percent": 8.32,
       "target_weight_pct": 3.33,
@@ -85,7 +85,7 @@
     {
       "ticker": "ALMS",
       "company_name": "Alumis Inc.",
-      "entry_price": 20.3,
+      "entry_price": 20.37,
       "current_price": 20.7,
       "change_percent": 1.97,
       "target_weight_pct": 3.33,
@@ -100,7 +100,7 @@
     {
       "ticker": "SYRE",
       "company_name": "Spyre Therapeutics, Inc.",
-      "entry_price": 70.48,
+      "entry_price": 76.1,
       "current_price": 78.1,
       "change_percent": 10.81,
       "target_weight_pct": 3.33,
@@ -115,7 +115,7 @@
     {
       "ticker": "RVMD",
       "company_name": "Revolution Medicines, Inc.",
-      "entry_price": 161.26,
+      "entry_price": 143.76,
       "current_price": 145.95,
       "change_percent": -9.49,
       "target_weight_pct": 3.33,
@@ -130,7 +130,7 @@
     {
       "ticker": "CMPS",
       "company_name": "COMPASS Pathways Plc - American",
-      "entry_price": 14.62,
+      "entry_price": 11.3,
       "current_price": 11.59,
       "change_percent": -20.73,
       "target_weight_pct": 3.33,
@@ -145,7 +145,7 @@
     {
       "ticker": "SLDB",
       "company_name": "Solid Biosciences Inc.",
-      "entry_price": 7.26,
+      "entry_price": 6.49,
       "current_price": 6.7,
       "change_percent": -7.71,
       "target_weight_pct": 3.33,
@@ -160,7 +160,7 @@
     {
       "ticker": "DRUG",
       "company_name": "Bright Minds Biosciences Inc.",
-      "entry_price": 86.48,
+      "entry_price": 63.59,
       "current_price": 65.85,
       "change_percent": -23.86,
       "target_weight_pct": 3.33,
@@ -175,7 +175,7 @@
     {
       "ticker": "STOK",
       "company_name": "Stoke Therapeutics, Inc.",
-      "entry_price": 30.51,
+      "entry_price": 28.74,
       "current_price": 29.85,
       "change_percent": -2.16,
       "target_weight_pct": 3.33,
@@ -190,7 +190,7 @@
     {
       "ticker": "PRAX",
       "company_name": "Praxis Precision Medicines, Inc",
-      "entry_price": 338.06,
+      "entry_price": 241.92,
       "current_price": 248.99,
       "change_percent": -26.35,
       "target_weight_pct": 3.33,
@@ -205,7 +205,7 @@
     {
       "ticker": "TRVI",
       "company_name": "Trevi Therapeutics, Inc.",
-      "entry_price": 13.99,
+      "entry_price": 13.43,
       "current_price": 13.7,
       "change_percent": -2.07,
       "target_weight_pct": 3.33,
@@ -220,7 +220,7 @@
     {
       "ticker": "ERAS",
       "company_name": "Erasca, Inc.",
-      "entry_price": 14.68,
+      "entry_price": 13.27,
       "current_price": 13.56,
       "change_percent": -7.63,
       "target_weight_pct": 3.33,
@@ -235,7 +235,7 @@
     {
       "ticker": "XENE",
       "company_name": "Xenon Pharmaceuticals Inc.",
-      "entry_price": 53.66,
+      "entry_price": 51.95,
       "current_price": 53.31,
       "change_percent": -0.65,
       "target_weight_pct": 3.33,
@@ -530,5 +530,8 @@
     },
     "positions_at_major_risk": 4,
     "gate_status_critical": false
-  }
+  },
+  "_correction_note": "Entry prices corrected 2026-06-24 to actual Robinhood fills from production_data/phase2_entry_prices.json (account 802349084). Original artifact used screener Jun-9 reference prices.",
+  "_correction_timestamp": "2026-06-24T00:00:00Z",
+  "_entry_price_source": "production_data/phase2_entry_prices.json"
 }

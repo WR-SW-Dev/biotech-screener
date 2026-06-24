@@ -27,7 +27,7 @@
     {
       "ticker": "COGT",
       "company_name": "Cogent Biosciences, Inc.",
-      "entry_price": 35.24,
+      "entry_price": 31.35,
       "current_price": 33.17,
       "prev_close": 33.1,
       "pnl_vs_entry_pct": -5.87,
@@ -46,7 +46,7 @@
     {
       "ticker": "DNTH",
       "company_name": "Dianthus Therapeutics, Inc.",
-      "entry_price": 90.94,
+      "entry_price": 72.1,
       "current_price": 82.51,
       "prev_close": 82.07,
       "pnl_vs_entry_pct": -9.27,
@@ -65,7 +65,7 @@
     {
       "ticker": "NRIX",
       "company_name": "Nurix Therapeutics, Inc.",
-      "entry_price": 17.51,
+      "entry_price": 15.46,
       "current_price": 17.04,
       "prev_close": 16.95,
       "pnl_vs_entry_pct": -2.68,
@@ -84,7 +84,7 @@
     {
       "ticker": "URGN",
       "company_name": "UroGen Pharma Ltd.",
-      "entry_price": 26.43,
+      "entry_price": 28.02,
       "current_price": 30.86,
       "prev_close": 29.72,
       "pnl_vs_entry_pct": 16.76,
@@ -103,7 +103,7 @@
     {
       "ticker": "ALMS",
       "company_name": "Alumis Inc.",
-      "entry_price": 20.3,
+      "entry_price": 20.37,
       "current_price": 24.15,
       "prev_close": 24.15,
       "pnl_vs_entry_pct": 18.97,
@@ -122,7 +122,7 @@
     {
       "ticker": "SYRE",
       "company_name": "Spyre Therapeutics, Inc.",
-      "entry_price": 70.48,
+      "entry_price": 76.1,
       "current_price": 83.58,
       "prev_close": 80.79,
       "pnl_vs_entry_pct": 18.59,
@@ -141,7 +141,7 @@
     {
       "ticker": "RVMD",
       "company_name": "Revolution Medicines, Inc.",
-      "entry_price": 161.26,
+      "entry_price": 143.76,
       "current_price": 160.06,
       "prev_close": 153.87,
       "pnl_vs_entry_pct": -0.74,
@@ -160,7 +160,7 @@
     {
       "ticker": "CMPS",
       "company_name": "COMPASS Pathways Plc",
-      "entry_price": 14.62,
+      "entry_price": 11.3,
       "current_price": 11.79,
       "prev_close": 12.08,
       "pnl_vs_entry_pct": -19.36,
@@ -179,7 +179,7 @@
     {
       "ticker": "SLDB",
       "company_name": "Solid Biosciences Inc.",
-      "entry_price": 7.26,
+      "entry_price": 6.49,
       "current_price": 7.36,
       "prev_close": 7.14,
       "pnl_vs_entry_pct": 1.38,
@@ -198,7 +198,7 @@
     {
       "ticker": "DRUG",
       "company_name": "Bright Minds Biosciences Inc.",
-      "entry_price": 86.48,
+      "entry_price": 63.59,
       "current_price": 59.17,
       "prev_close": 60.95,
       "pnl_vs_entry_pct": -31.58,
@@ -217,7 +217,7 @@
     {
       "ticker": "STOK",
       "company_name": "Stoke Therapeutics, Inc.",
-      "entry_price": 30.51,
+      "entry_price": 28.74,
       "current_price": 30.0,
       "prev_close": 29.82,
       "pnl_vs_entry_pct": -1.67,
@@ -236,7 +236,7 @@
     {
       "ticker": "PRAX",
       "company_name": "Praxis Precision Medicines, Inc.",
-      "entry_price": 338.06,
+      "entry_price": 241.92,
       "current_price": 264.54,
       "prev_close": 266.58,
       "pnl_vs_entry_pct": -21.75,
@@ -255,7 +255,7 @@
     {
       "ticker": "TRVI",
       "company_name": "Trevi Therapeutics, Inc.",
-      "entry_price": 13.99,
+      "entry_price": 13.43,
       "current_price": 14.66,
       "prev_close": 14.21,
       "pnl_vs_entry_pct": 4.79,
@@ -274,7 +274,7 @@
     {
       "ticker": "ERAS",
       "company_name": "Erasca, Inc.",
-      "entry_price": 14.68,
+      "entry_price": 13.27,
       "current_price": 14.43,
       "prev_close": 14.05,
       "pnl_vs_entry_pct": -1.7,
@@ -293,7 +293,7 @@
     {
       "ticker": "XENE",
       "company_name": "Xenon Pharmaceuticals Inc.",
-      "entry_price": 53.66,
+      "entry_price": 51.95,
       "current_price": 52.4,
       "prev_close": 52.1,
       "pnl_vs_entry_pct": -2.35,
@@ -481,5 +481,8 @@
     "4. [GATE] Drawdown gate: -2.56pp (threshold -2.0pp) \u2014 TRIPPED; improving; manual review required",
     "5. [CRITICAL] IC First Print expected 2026-06-17 (TOMORROW) \u2014 extend-vs-revert decision framework required for Day 7",
     "6. [MONITOR] CMPS approaching -20% CRITICAL threshold at -19.36%"
-  ]
+  ],
+  "_correction_note": "Entry prices corrected 2026-06-24 to actual Robinhood fills from production_data/phase2_entry_prices.json (account 802349084). Original artifact used screener Jun-9 reference prices.",
+  "_correction_timestamp": "2026-06-24T00:00:00Z",
+  "_entry_price_source": "production_data/phase2_entry_prices.json"
 }

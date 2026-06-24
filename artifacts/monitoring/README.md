@@ -94,13 +94,19 @@
 
 ## Portfolio Details
 
-### Entry Prices (Execution: 2026-06-01)
+### Entry Prices — CORRECTED 2026-06-24
+**Authoritative source**: `production_data/phase2_entry_prices.json`  
+**Execution date**: 2026-06-10 (Robinhood account 802349084)  
+**Note**: Original artifacts (Day 1–12) used screener Jun-9 reference prices; corrected 2026-06-24 to actual fills.
+
 ```
-COGT: $35.24  |  DNTH: $90.94  |  NRIX: $17.51  |  URGN: $26.43  |  ALMS: $20.30
-SYRE: $70.48  |  RVMD: $161.26 |  CMPS: $14.62  |  SLDB: $7.26   |  DRUG: $86.48
-STOK: $30.51  |  PRAX: $338.06 |  TRVI: $13.99  |  ERAS: $14.68  |  XENE: $53.66
-Avg:  $65.43
+COGT: $31.35  |  DNTH: $72.10  |  NRIX: $15.46  |  URGN: $28.02  |  ALMS: $20.37
+SYRE: $76.10  |  RVMD: $143.76 |  CMPS: $11.30  |  SLDB: $6.49   |  DRUG: $63.59
+STOK: $28.74  |  PRAX: $241.92 |  TRVI: $13.43  |  ERAS: $13.27  |  XENE: $51.95
 ```
+
+For forward monitoring: load entry prices from `production_data/phase2_entry_prices.json` under
+`positions.<TICKER>.avg_buy_price`. Do NOT use screener rankings snapshot prices as entry prices.
 
 ### Current Prices (2026-06-10)
 ```
@@ -209,10 +215,10 @@ EOF
 ## Document Metadata
 
 - **Created:** 2026-06-10
-- **Last Updated:** 2026-06-10
-- **Status:** Active (daily updates through ~2026-06-17)
-- **Next Review:** 2026-06-11
-- **Archive:** Post-phase-end (2026-06-17 or upon hard exit)
+- **Last Updated:** 2026-06-24 (entry price correction applied to Days 1–12)
+- **Status:** Active (Day 12 complete; next 2026-07-01 gate)
+- **Entry Price Correction:** All Day 1–12 artifacts corrected 2026-06-24; corrected Day 12 in `daily_2026_06_24_corrected.json`
+- **Archive:** Post-phase-end (2026-07-01 gate or upon hard exit)
 
 ---
 

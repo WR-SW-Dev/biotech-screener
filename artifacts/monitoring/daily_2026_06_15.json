@@ -4,11 +4,11 @@
   "timestamp": "2026-06-15T13:10:27.119748Z",
   "phase": "Phase 2 Monitoring (Path C active)",
   "data_as_of": "2026-06-12 close (last available; 2026-06-13 run missed; pre-market 2026-06-15, post-weekend gap)",
-  "note": "Robinhood MCP tools not available. Prices sourced from yfinance (2026-06-12 close). NOTE: 2026-06-13 (Friday) monitoring run was missed — this is the first snapshot using 6/12 close data.",
+  "note": "Robinhood MCP tools not available. Prices sourced from yfinance (2026-06-12 close). NOTE: 2026-06-13 (Friday) monitoring run was missed \u2014 this is the first snapshot using 6/12 close data.",
   "account": {
     "account_id": "Robinhood 802349084",
     "equity_fetchable": false,
-    "equity_note": "Robinhood MCP unavailable — baseline: start_equity=$100.19, equity_as_of_2026-06-10=$85.43 (-14.73%); Day 5 equity not refreshed",
+    "equity_note": "Robinhood MCP unavailable \u2014 baseline: start_equity=$100.19, equity_as_of_2026-06-10=$85.43 (-14.73%); Day 5 equity not refreshed",
     "cash": 99.87,
     "buying_power": 200.06,
     "data_source": "baseline_2026-06-10 (not refreshed)"
@@ -27,7 +27,7 @@
     {
       "ticker": "COGT",
       "company_name": "Cogent Biosciences, Inc.",
-      "entry_price": 35.24,
+      "entry_price": 31.35,
       "current_price": 33.1,
       "prev_close": 32.62,
       "pnl_vs_entry_pct": -6.07,
@@ -45,7 +45,7 @@
     {
       "ticker": "DNTH",
       "company_name": "Dianthus Therapeutics, Inc.",
-      "entry_price": 90.94,
+      "entry_price": 72.1,
       "current_price": 82.07,
       "prev_close": 76.45,
       "pnl_vs_entry_pct": -9.75,
@@ -63,7 +63,7 @@
     {
       "ticker": "NRIX",
       "company_name": "Nurix Therapeutics, Inc.",
-      "entry_price": 17.51,
+      "entry_price": 15.46,
       "current_price": 16.95,
       "prev_close": 16.98,
       "pnl_vs_entry_pct": -3.2,
@@ -81,7 +81,7 @@
     {
       "ticker": "URGN",
       "company_name": "UroGen Pharma Ltd.",
-      "entry_price": 26.43,
+      "entry_price": 28.02,
       "current_price": 29.72,
       "prev_close": 29.5,
       "pnl_vs_entry_pct": 12.45,
@@ -99,7 +99,7 @@
     {
       "ticker": "ALMS",
       "company_name": "Alumis Inc.",
-      "entry_price": 20.3,
+      "entry_price": 20.37,
       "current_price": 24.15,
       "prev_close": 20.9,
       "pnl_vs_entry_pct": 18.97,
@@ -117,7 +117,7 @@
     {
       "ticker": "SYRE",
       "company_name": "Spyre Therapeutics, Inc.",
-      "entry_price": 70.48,
+      "entry_price": 76.1,
       "current_price": 80.79,
       "prev_close": 80.77,
       "pnl_vs_entry_pct": 14.63,
@@ -135,7 +135,7 @@
     {
       "ticker": "RVMD",
       "company_name": "Revolution Medicines, Inc.",
-      "entry_price": 161.26,
+      "entry_price": 143.76,
       "current_price": 153.87,
       "prev_close": 149.23,
       "pnl_vs_entry_pct": -4.58,
@@ -153,7 +153,7 @@
     {
       "ticker": "CMPS",
       "company_name": "COMPASS Pathways Plc",
-      "entry_price": 14.62,
+      "entry_price": 11.3,
       "current_price": 12.08,
       "prev_close": 11.41,
       "pnl_vs_entry_pct": -17.37,
@@ -171,7 +171,7 @@
     {
       "ticker": "SLDB",
       "company_name": "Solid Biosciences Inc.",
-      "entry_price": 7.26,
+      "entry_price": 6.49,
       "current_price": 7.14,
       "prev_close": 7.22,
       "pnl_vs_entry_pct": -1.65,
@@ -189,7 +189,7 @@
     {
       "ticker": "DRUG",
       "company_name": "Bright Minds Biosciences Inc.",
-      "entry_price": 86.48,
+      "entry_price": 63.59,
       "current_price": 60.95,
       "prev_close": 61.57,
       "pnl_vs_entry_pct": -29.52,
@@ -207,7 +207,7 @@
     {
       "ticker": "STOK",
       "company_name": "Stoke Therapeutics, Inc.",
-      "entry_price": 30.51,
+      "entry_price": 28.74,
       "current_price": 29.82,
       "prev_close": 29.36,
       "pnl_vs_entry_pct": -2.26,
@@ -225,7 +225,7 @@
     {
       "ticker": "PRAX",
       "company_name": "Praxis Precision Medicines, Inc.",
-      "entry_price": 338.06,
+      "entry_price": 241.92,
       "current_price": 266.58,
       "prev_close": 247.98,
       "pnl_vs_entry_pct": -21.14,
@@ -243,7 +243,7 @@
     {
       "ticker": "TRVI",
       "company_name": "Trevi Therapeutics, Inc.",
-      "entry_price": 13.99,
+      "entry_price": 13.43,
       "current_price": 14.21,
       "prev_close": 13.46,
       "pnl_vs_entry_pct": 1.57,
@@ -261,7 +261,7 @@
     {
       "ticker": "ERAS",
       "company_name": "Erasca, Inc.",
-      "entry_price": 14.68,
+      "entry_price": 13.27,
       "current_price": 14.05,
       "prev_close": 14.01,
       "pnl_vs_entry_pct": -4.29,
@@ -279,7 +279,7 @@
     {
       "ticker": "XENE",
       "company_name": "Xenon Pharmaceuticals Inc.",
-      "entry_price": 53.66,
+      "entry_price": 51.95,
       "current_price": 52.1,
       "prev_close": 52.19,
       "pnl_vs_entry_pct": -2.91,
@@ -357,7 +357,7 @@
         "volume": 2246600,
         "vol_ratio": 1.31,
         "direction": "UP",
-        "manual_review": "UPSIDE — +15.55% on 1.31x avg volume; verify news/catalyst driver"
+        "manual_review": "UPSIDE \u2014 +15.55% on 1.31x avg volume; verify news/catalyst driver"
       },
       {
         "ticker": "PRAX",
@@ -365,7 +365,7 @@
         "volume": 423200,
         "vol_ratio": 1.01,
         "direction": "UP",
-        "manual_review": "UPSIDE — +7.50% on 1.01x avg volume; verify news/catalyst driver"
+        "manual_review": "UPSIDE \u2014 +7.50% on 1.01x avg volume; verify news/catalyst driver"
       },
       {
         "ticker": "DNTH",
@@ -373,7 +373,7 @@
         "volume": 1380700,
         "vol_ratio": 0.55,
         "direction": "UP",
-        "manual_review": "UPSIDE — +7.35% on 0.55x avg volume; verify news/catalyst driver"
+        "manual_review": "UPSIDE \u2014 +7.35% on 0.55x avg volume; verify news/catalyst driver"
       },
       {
         "ticker": "CMPS",
@@ -381,7 +381,7 @@
         "volume": 2513000,
         "vol_ratio": 0.9,
         "direction": "UP",
-        "manual_review": "UPSIDE — +5.87% on 0.90x avg volume; verify news/catalyst driver"
+        "manual_review": "UPSIDE \u2014 +5.87% on 0.90x avg volume; verify news/catalyst driver"
       },
       {
         "ticker": "TRVI",
@@ -389,7 +389,7 @@
         "volume": 1513500,
         "vol_ratio": 1.47,
         "direction": "UP",
-        "manual_review": "UPSIDE — +5.57% on 1.47x avg volume; verify news/catalyst driver"
+        "manual_review": "UPSIDE \u2014 +5.57% on 1.47x avg volume; verify news/catalyst driver"
       }
     ],
     "gap_count": 5,
@@ -405,21 +405,21 @@
     ],
     "critical_position_count": 2,
     "drawdown_gate_flag": true,
-    "drawdown_gate_note": "TRIPPED: portfolio avg -3.67% vs XBI 0.127% → relative -3.80pp (threshold -2.00pp). IMPROVING: Day2: -6.70pp → Day3: -5.84pp → Day5: -3.80pp (+2.04pp since Day3). MANUAL REVIEW required.",
+    "drawdown_gate_note": "TRIPPED: portfolio avg -3.67% vs XBI 0.127% \u2192 relative -3.80pp (threshold -2.00pp). IMPROVING: Day2: -6.70pp \u2192 Day3: -5.84pp \u2192 Day5: -3.80pp (+2.04pp since Day3). MANUAL REVIEW required.",
     "emergency_exit_armed": true
   },
   "governance_gates": {
     "drawdown_vs_xbi_pp": -3.8,
     "drawdown_change_from_day3_pp": 2.04,
-    "drawdown_method": "price_avg_equal_weight (not capital-weighted — Robinhood MCP unavailable)",
+    "drawdown_method": "price_avg_equal_weight (not capital-weighted \u2014 Robinhood MCP unavailable)",
     "portfolio_return_pct": -3.67,
     "xbi_return_since_entry_pct": 0.127,
     "xbi_entry_price": 133.62,
     "xbi_current_price": 133.79,
     "xbi_day_change_pct": 0.79,
     "drawdown_threshold_pp": -2.0,
-    "drawdown_status": "TRIPPED — -3.80pp vs -2.00pp; improving trend (Day2:-6.70→Day3:-5.84→Day5:-3.80)",
-    "ic_observable": "NO_DATA (first print expected ~2026-06-17 — 2 trading days away)",
+    "drawdown_status": "TRIPPED \u2014 -3.80pp vs -2.00pp; improving trend (Day2:-6.70\u2192Day3:-5.84\u2192Day5:-3.80)",
+    "ic_observable": "NO_DATA (first print expected ~2026-06-17 \u2014 2 trading days away)",
     "jaccard_13f": 0.875,
     "jaccard_threshold": 0.7,
     "jaccard_status": "PASS",
@@ -486,7 +486,7 @@
     "monitoring_period_days": 5,
     "trading_days_covered": 3,
     "missed_run_dates": [
-      "2026-06-13 (Friday — routine missed)"
+      "2026-06-13 (Friday \u2014 routine missed)"
     ],
     "drawdown_trend_pp": [
       -6.7,
@@ -506,28 +506,31 @@
       "NRIX +10.98% (6/11)"
     ],
     "ic_first_print_expected": "2026-06-17 (CRITICAL decision gate)",
-    "syre_catalyst_imminence": "SYRE T-7 as of 2026-06-15 — catalyst enters imminent window"
+    "syre_catalyst_imminence": "SYRE T-7 as of 2026-06-15 \u2014 catalyst enters imminent window"
   },
   "operational_status": {
-    "price_data_currency": "2026-06-12 close (yfinance) ✓",
-    "snapshot_generation": "✓ 2026-06-15 pre-market (post-weekend)",
-    "portfolio_immutability": "✓ Read-only observation (no trades executed)",
+    "price_data_currency": "2026-06-12 close (yfinance) \u2713",
+    "snapshot_generation": "\u2713 2026-06-15 pre-market (post-weekend)",
+    "portfolio_immutability": "\u2713 Read-only observation (no trades executed)",
     "no_unauthorized_trades": true,
-    "robinhood_mcp_status": "UNAVAILABLE — install mcp-server-robinhood for live account data",
+    "robinhood_mcp_status": "UNAVAILABLE \u2014 install mcp-server-robinhood for live account data",
     "missed_run_flag": true,
     "missed_run_note": "2026-06-13 (Friday) monitoring run was not executed. This snapshot covers 6/12 close data.",
     "next_monitoring_day": "2026-06-16 (Tuesday)"
   },
   "next_monitoring_actions": [
-    "1. [CRITICAL] SYRE T-7 — catalyst now imminent; position +14.63% vs entry; monitor for pre-readout drift or halt",
-    "2. [REVIEW] ALMS +15.55% on 6/12 (1.31x avg vol) — investigate news driver; position now +18.97% vs entry",
-    "3. [REVIEW] PRAX +7.50% on 6/12 — improved from -26.65% to -21.14%; verify news; still CRITICAL loss",
-    "4. [REVIEW] DNTH +7.35% on 6/12 — improved from -15.93% to -9.75%; investigate driver",
-    "5. [REVIEW] TRVI +5.57% on 6/12 (1.47x vol) — elevated volume on T-15; check news",
+    "1. [CRITICAL] SYRE T-7 \u2014 catalyst now imminent; position +14.63% vs entry; monitor for pre-readout drift or halt",
+    "2. [REVIEW] ALMS +15.55% on 6/12 (1.31x avg vol) \u2014 investigate news driver; position now +18.97% vs entry",
+    "3. [REVIEW] PRAX +7.50% on 6/12 \u2014 improved from -26.65% to -21.14%; verify news; still CRITICAL loss",
+    "4. [REVIEW] DNTH +7.35% on 6/12 \u2014 improved from -15.93% to -9.75%; investigate driver",
+    "5. [REVIEW] TRVI +5.57% on 6/12 (1.47x vol) \u2014 elevated volume on T-15; check news",
     "6. [MONITOR] DRUG worst position: -29.52% vs entry; no near-term catalyst; continues to drift lower",
     "7. [GATE] Drawdown gate: -3.80pp improving trend; threshold -2.00pp; verify with Robinhood equity",
-    "8. [CRITICAL] IC First Print expected 2026-06-17 — extend-vs-revert decision framework required",
-    "9. [OPS] 2026-06-13 monitoring run missed — schedule health check recommended",
+    "8. [CRITICAL] IC First Print expected 2026-06-17 \u2014 extend-vs-revert decision framework required",
+    "9. [OPS] 2026-06-13 monitoring run missed \u2014 schedule health check recommended",
     "10. [WEEKLY] Day5 checkpoint: portfolio recovered +2.90pp from Day2 nadir; drawdown narrowing but gate still tripped"
-  ]
+  ],
+  "_correction_note": "Entry prices corrected 2026-06-24 to actual Robinhood fills from production_data/phase2_entry_prices.json (account 802349084). Original artifact used screener Jun-9 reference prices.",
+  "_correction_timestamp": "2026-06-24T00:00:00Z",
+  "_entry_price_source": "production_data/phase2_entry_prices.json"
 }
