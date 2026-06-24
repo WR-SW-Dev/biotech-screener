@@ -1,10 +1,11 @@
 # Spec 111: IC Signal Remediation — Phase 1 (Remove)
 
-**Status:** PENDING OPERATOR DECISION  
+**Status:** COMPLETE (2026-06-12, commit 2f402243f)  
 **Created:** 2026-06-12  
 **Author:** Hermes ops_supervisor escalation  
 **Severity:** HIGH (Phase 2 gate health)  
 **Authority:** Governance decision required  
+**Decision:** Option A (REMOVE) — operator approved 2026-06-24  
 
 ---
 
