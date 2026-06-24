@@ -46,7 +46,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tools.skills_logger_v2 import log_skill
+from tools.skills_logger_v2 import log_skill, record_feedback
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
@@ -531,6 +531,17 @@ def main():
             error=result.get("error") if result.get("status") != "success" else None,
             environment="prod",
         )
+        # Immediate verdict: success→helpful, error→unhelpful.
+        # Deferred signal (IC print / catalyst resolution) layered on top via
+        # tools/record_skill_feedback.py once ground truth arrives.
+        if skill_exec_id:
+            _verdict = "helpful" if result.get("status") == "success" else "unhelpful"
+            record_feedback(
+                skill_exec_id,
+                _verdict,
+                notes=f"auto-immediate:{result.get('status', 'unknown')}",
+                environment="prod",
+            )
     except Exception as log_error:
         print(f"[LOG_ERROR] Could not log execution: {log_error}", file=sys.stderr)
 
