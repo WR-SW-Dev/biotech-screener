@@ -68,3 +68,51 @@ rosiglitazone,PPAR agonist,PPARG,small molecule,0.99,INN; thiazolidinedione clas
 acarbose,Alpha-glucosidase inhibitor,GBA,small molecule,0.99,INN; delays carbohydrate absorption
 miglitol,Alpha-glucosidase inhibitor,GBA,small molecule,0.99,INN; alpha-glucosidase inhibitor
 pramlintide,Amylin analog,IAPP,protein/enzyme therapy,0.99,INN; synthetic amylin (SymlinPen)
+# --- v0.2 additions ---
+# Insulin — brand names and variant strings not covered by v0.1
+actrapid,Insulin,INSR,protein/enzyme therapy,0.99,Novo Nordisk brand for short-acting regular human insulin
+novolog,Insulin,INSR,protein/enzyme therapy,0.99,Novo Nordisk USA brand for insulin aspart
+novorapid,Insulin,INSR,protein/enzyme therapy,0.99,Novo Nordisk EU brand for insulin aspart
+novolog/novorapid,Insulin,INSR,protein/enzyme therapy,0.99,slash-variant combining US/EU insulin aspart brand names
+lispro,Insulin,INSR,protein/enzyme therapy,0.99,shortened name for insulin lispro
+glargine insulin,Insulin,INSR,protein/enzyme therapy,0.99,inverted word-order form of insulin glargine
+insulin glargine (hoe901 - u300),Insulin,INSR,protein/enzyme therapy,0.99,U300 concentration; HOE901 code + concentration in same string
+insulin glargine (hoe901 - u100),Insulin,INSR,protein/enzyme therapy,0.99,U100 standard concentration; HOE901 code + concentration
+insulin human/insuman comb 25 (hr1799),Insulin,INSR,protein/enzyme therapy,0.99,Sanofi Insuman biphasic (25% soluble + 75% NPH analogue)
+insulin human/novolin® 30r,Insulin,INSR,protein/enzyme therapy,0.99,Novo Nordisk biphasic (30% regular + 70% NPH)
+insulin degludec 100 u/ml,Insulin,INSR,protein/enzyme therapy,0.99,concentration-tagged degludec (Tresiba); 100 U/mL strength
+lantus® (insulin glargine),Insulin,INSR,protein/enzyme therapy,0.99,parenthetical INN after brand trademark
+lantus (insulin glargine [rdna origin] injection),Insulin,INSR,protein/enzyme therapy,0.99,verbose FDA labeling form with rDNA origin notation
+insulin glargine 0.5 u/kg body wt sc,Insulin,INSR,protein/enzyme therapy,0.90,dose + route tagged glargine arm descriptor
+prandial insulin,Insulin,INSR,protein/enzyme therapy,0.80,generic term for mealtime rapid-acting insulin
+sliding scale regular insulin (ssri),Insulin,INSR,protein/enzyme therapy,0.90,SSRI here = sliding-scale RI protocol (not antidepressant)
+injected insulin,Insulin,INSR,protein/enzyme therapy,0.85,route-prefixed form; distinct from injectable insulin in v0.1
+basal insulin analog,Insulin,INSR,protein/enzyme therapy,0.80,class-level name for long-acting insulin analogues
+insulin infusion (aspart),Insulin,INSR,protein/enzyme therapy,0.95,IV/pump infusion arm; parenthetical specifies rapid-acting type
+# GLP-1 receptor agonist — standalone INN and brand not in v0.1
+lixisenatide,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,standalone INN; v0.1 only covered lixisenatide (ave0010)
+bydureon,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.99,AstraZeneca brand for once-weekly exenatide microspheres
+nex-22a,GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.85,prolonged-release liraglutide formulation in development
+aleniglipron,GLP-1 receptor agonist,GLP1R,small molecule,0.90,AstraZeneca oral small-molecule GLP-1R agonist
+# GLP-1/GCGR dual agonist — new mechanism class
+cotadutide,GLP-1/GCGR dual agonist,GLP1R,protein/enzyme therapy,0.99,AstraZeneca (MEDI0382/AZD9550); dual GLP-1R + glucagon receptor agonist
+experimental: cotadutide,GLP-1/GCGR dual agonist,GLP1R,protein/enzyme therapy,0.99,CT.gov investigational-arm prefix form of cotadutide
+# Biguanide — dose/form suffix variants not caught by exact v0.1 match
+metformin ir,Biguanide,AMPK,small molecule,0.99,immediate-release formulation; same compound
+metformin (active rescue),Biguanide,AMPK,small molecule,0.99,metformin used as rescue therapy in trial design
+metformin immediate release (ir),Biguanide,AMPK,small molecule,0.99,explicit IR designation
+mertformin xr 2 x 500 mg,Biguanide,AMPK,small molecule,0.99,typo variant of metformin XR with dose suffix
+# PPAR agonist — class-level names and parenthetical variants
+pioglitazone (actos),PPAR agonist,PPARG,small molecule,0.99,INN with parenthetical brand name
+thiazolidinedione (pioglitazone),PPAR agonist,PPARG,small molecule,0.95,class name with specific drug in parentheses
+thiazolidinedione (tzd),PPAR agonist,PPARG,small molecule,0.85,class name with abbreviation; includes pioglitazone/rosiglitazone
+thiazolidinedione,PPAR agonist,PPARG,small molecule,0.85,bare class name; conservative confidence
+# Sulfonylurea — development code and class alias
+glimepiride (hoe490),Sulfonylurea,KCNJ11,small molecule,0.99,HOE490 is the development code for glimepiride
+2nd generation sulfonylurea,Sulfonylurea,KCNJ11,small molecule,0.80,class-level alias covering glimepiride/glipizide/glyburide
+# SGLT2 inhibitor — novel agent and class aliases
+tofogliflozin csg452,SGLT2 inhibitor,SLC5A2,small molecule,0.95,Japanese SGLT2i (Chugai/Sanofi); CSG452 = tofogliflozin
+sodium glucose co-transporter 2 inhibitors,SGLT2 inhibitor,SLC5A2,small molecule,0.75,full unabbreviated class name; plural form
+sglt2 inhibitor,SGLT2 inhibitor,SLC5A2,small molecule,0.75,exact class abbreviation used as arm descriptor
+# DPP-4 inhibitor — class alias without hyphen
+dpp4 inhibitor,DPP-4 inhibitor,DPP4,small molecule,0.75,class abbreviation without hyphen

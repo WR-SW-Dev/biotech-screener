@@ -342,7 +342,7 @@ class MechanismNormalizer:
                 reader = csv.DictReader(f)
                 for row in reader:
                     raw_text = row.get("raw_text", "").strip()
-                    if not raw_text:
+                    if not raw_text or raw_text.startswith("#"):
                         continue
 
                     normalizer.mechanism_aliases[raw_text.lower()] = {
