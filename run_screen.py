@@ -9515,6 +9515,17 @@ def run_screening_pipeline(
     for rec in raw_universe:
         normalize_financial_field_alias(rec)
 
+    # --- Delisted filter: exclude tickers marked status="delisted" in universe.json ---
+    # These are acquired/merged/OTC-moved companies with no active price feed.
+    # Kept in universe.json for history; excluded from all active screening.
+    _delisted_excl = [r.get("ticker") for r in raw_universe if isinstance(r, dict) and r.get("status") == "delisted"]
+    if _delisted_excl:
+        raw_universe = [r for r in raw_universe if not (isinstance(r, dict) and r.get("status") == "delisted")]
+        logger.info(
+            f"  Delisted filter: excluded {len(_delisted_excl)} tickers " f"(status=delisted): {sorted(_delisted_excl)}"
+        )
+        print(f"DEBUG_TRACE: Delisted filter: excluded {sorted(_delisted_excl)}", flush=True)
+
     # Extract full universe tickers BEFORE any filtering (for Module 3 stability)
     # This ensures Module 3 always processes the same population regardless of Module 1 filtering
     full_universe_tickers = frozenset(r.get("ticker") for r in raw_universe if r.get("ticker"))
@@ -11378,8 +11389,7 @@ def _load_decision_ruleset_for_cli(args: argparse.Namespace) -> DecisionRuleset:
             raise FileNotFoundError(f"Phase-2 pinned ruleset not found: {PHASE2_DEFAULT_RULESET_PATH}")
         de_ruleset = DecisionRuleset.from_json(str(PHASE2_DEFAULT_RULESET_PATH))
         logger.info(
-            f"Phase-2 mode: loaded pinned ruleset {de_ruleset.ruleset_id} "
-            f"from {PHASE2_DEFAULT_RULESET_PATH.name}"
+            f"Phase-2 mode: loaded pinned ruleset {de_ruleset.ruleset_id} " f"from {PHASE2_DEFAULT_RULESET_PATH.name}"
         )
         if de_ruleset.ruleset_id != PHASE2_PINNED_RULESET_ID:
             raise ValueError(

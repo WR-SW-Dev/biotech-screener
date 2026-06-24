@@ -1461,6 +1461,15 @@ def main() -> None:
     # Load shared data
     print("Loading universe...", file=sys.stderr)
     universe = _load_json(args.universe)
+    # Exclude delisted tickers — keep entries in universe.json for history,
+    # but never pass them into the screening pipeline.
+    _delisted = [e.get("ticker") for e in universe if isinstance(e, dict) and e.get("status") == "delisted"]
+    if _delisted:
+        universe = [e for e in universe if not (isinstance(e, dict) and e.get("status") == "delisted")]
+        print(
+            f"  Delisted filter: excluded {len(_delisted)} tickers (status=delisted): {sorted(_delisted)}",
+            file=sys.stderr,
+        )
 
     print("Loading financial records...", file=sys.stderr)
     fin_records = _load_json(args.financial_records)

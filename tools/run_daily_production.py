@@ -3794,6 +3794,8 @@ def check_market_data_coverage(
     mkt_tickers = {r["ticker"] for r in records if isinstance(r, dict) and r.get("ticker")}
     uni_tickers = set()
     for entry in universe:
+        if isinstance(entry, dict) and entry.get("status") == "delisted":
+            continue  # exclude delisted tickers from coverage denominator
         t = entry.get("ticker") if isinstance(entry, dict) else str(entry)
         if t and not t.startswith("_"):  # exclude synthetic like _XBI_BENCHMARK_
             uni_tickers.add(t)
@@ -3886,6 +3888,8 @@ def _compute_market_data_refresh(
                 universe = json.load(f)
             uni_tickers = set()
             for entry in universe:
+                if isinstance(entry, dict) and entry.get("status") == "delisted":
+                    continue  # exclude delisted tickers from coverage denominator
                 t = entry.get("ticker") if isinstance(entry, dict) else str(entry)
                 if t and not t.startswith("_"):
                     uni_tickers.add(t)

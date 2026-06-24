@@ -4461,7 +4461,7 @@
   {
     "ticker": "APLS",
     "name": "Apellis Pharmaceuticals, Inc.",
-    "status": "active",
+    "status": "delisted",
     "market_cap_usd": "3027735552",
     "price_usd": "23.93",
     "shares_outstanding": "126525218",
@@ -4575,7 +4575,9 @@
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Apellis Pharmaceuticals, Inc.",
-    "sector": "Healthcare"
+    "sector": "Healthcare",
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "AQST",
@@ -18251,7 +18253,7 @@
   {
     "ticker": "GLPG",
     "name": "Galapagos NV",
-    "status": "active",
+    "status": "delisted",
     "market_cap_usd": "2144949632",
     "price_usd": "32.55",
     "shares_outstanding": "65897071",
@@ -18350,7 +18352,9 @@
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Lakefront Biotherapeutics NV",
-    "sector": "Healthcare"
+    "sector": "Healthcare",
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "GLUE",
@@ -25222,7 +25226,7 @@
   {
     "ticker": "KALV",
     "name": "KalVista Pharmaceuticals, Inc.",
-    "status": "active",
+    "status": "delisted",
     "market_cap_usd": "794587712",
     "price_usd": "15.72",
     "shares_outstanding": "50546293",
@@ -25336,7 +25340,9 @@
     },
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "KalVista Pharmaceuticals Inc",
-    "sector": "Healthcare"
+    "sector": "Healthcare",
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "KMDA",
@@ -46663,7 +46669,7 @@
     "name": null,
     "exchange": "",
     "sector": "Biotechnology",
-    "status": "pending_data_collection",
+    "status": "delisted",
     "added_from_etf": true,
     "added_date": "2026-06-21",
     "etf_sources": [
@@ -46676,7 +46682,9 @@
       "financials": "pending",
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
-    }
+    },
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "AKBA",
@@ -46743,7 +46751,7 @@
     "name": null,
     "exchange": "",
     "sector": "Biotechnology",
-    "status": "pending_data_collection",
+    "status": "delisted",
     "added_from_etf": true,
     "added_date": "2026-06-21",
     "etf_sources": [
@@ -46756,7 +46764,9 @@
       "financials": "pending",
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
-    }
+    },
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "DMRA",
@@ -46783,7 +46793,7 @@
     "name": null,
     "exchange": "",
     "sector": "Biotechnology",
-    "status": "pending_data_collection",
+    "status": "delisted",
     "added_from_etf": true,
     "added_date": "2026-06-21",
     "etf_sources": [
@@ -46796,7 +46806,9 @@
       "financials": "pending",
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
-    }
+    },
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "IMNM",
@@ -46883,7 +46895,7 @@
     "name": null,
     "exchange": "",
     "sector": "Biotechnology",
-    "status": "pending_data_collection",
+    "status": "delisted",
     "added_from_etf": true,
     "added_date": "2026-06-21",
     "etf_sources": [
@@ -46896,7 +46908,9 @@
       "financials": "pending",
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
-    }
+    },
+    "delisted_date": "2026-06-24",
+    "delisted_reason": "no_price_data_10d_plus"
   },
   {
     "ticker": "TRAX",
