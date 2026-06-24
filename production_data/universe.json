@@ -4576,8 +4576,8 @@
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Apellis Pharmaceuticals, Inc.",
     "sector": "Healthcare",
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-05-15",
+    "delisted_reason": "corp_action_no_price_data"
   },
   {
     "ticker": "AQST",
@@ -18353,8 +18353,8 @@
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "Lakefront Biotherapeutics NV",
     "sector": "Healthcare",
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-06-09",
+    "delisted_reason": "corp_action_no_price_data"
   },
   {
     "ticker": "GLUE",
@@ -25341,8 +25341,8 @@
     "coverage_refreshed_as_of": "2026-06-19",
     "company_name": "KalVista Pharmaceuticals Inc",
     "sector": "Healthcare",
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-06-10",
+    "delisted_reason": "corp_action_no_price_data"
   },
   {
     "ticker": "KMDA",
@@ -46683,8 +46683,8 @@
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
     },
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-04-29",
+    "delisted_reason": "acquired_no_price_data"
   },
   {
     "ticker": "AKBA",
@@ -46765,8 +46765,8 @@
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
     },
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-04-24",
+    "delisted_reason": "acquired_no_price_data"
   },
   {
     "ticker": "DMRA",
@@ -46807,8 +46807,8 @@
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
     },
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-04-27",
+    "delisted_reason": "acquired_no_price_data"
   },
   {
     "ticker": "IMNM",
@@ -46909,8 +46909,8 @@
       "clinical_trials": "pending",
       "scientific_cartography": "pending"
     },
-    "delisted_date": "2026-06-24",
-    "delisted_reason": "no_price_data_10d_plus"
+    "delisted_date": "2026-05-07",
+    "delisted_reason": "corp_action_no_price_data"
   },
   {
     "ticker": "TRAX",
