@@ -326,10 +326,10 @@ class TestT2DAliasPackV01:
 
     # --- Combination products handled conservatively ---
 
-    def test_combination_not_resolved(self, normalizer):
-        # Combo products should not match either component's entry
+    def test_combination_now_resolved_by_v03(self, normalizer):
+        # iGlarLixi FRC combo was unresolved in v0.1; v0.3 alias pack resolves it
         result = normalizer.normalize("insulin glargine/lixisenatide")
-        assert result.resolution_status == "unknown"
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
 
     def test_metformin_sitagliptin_combo(self, normalizer):
         result = normalizer.normalize("metformin + sitagliptin")
@@ -519,6 +519,280 @@ class TestT2DAliasPackV02:
         result = normalizer.normalize("semaglutide")
         assert result.mechanism_class == "GLP-1 receptor agonist"
 
-    def test_v01_combination_still_unknown(self, normalizer):
-        result = normalizer.normalize("insulin glargine/lixisenatide")
+    def test_v01_unaliased_dev_code_still_unknown(self, normalizer):
+        # AMG 876 was intentionally left out of v0.3 (uncertain mechanism)
+        result = normalizer.normalize("AMG 876")
         assert result.resolution_status == "unknown"
+
+
+class TestT2DAliasPackV03:
+    """Tests for T2D mechanism alias pack v0.3 additions."""
+
+    @pytest.fixture
+    def normalizer(self):
+        csv_path = (
+            Path(__file__).parent.parent.parent / "scientific_cartography" / "data" / "mechanism_aliases_v0_1.csv"
+        )
+        return MechanismNormalizer.from_csv(csv_path)
+
+    # --- Insulin: Technosphere® brand variants ---
+
+    def test_technosphere_ti_variant_resolves(self, normalizer):
+        result = normalizer.normalize("Technosphere Insulin (TI) Inhalation Powder")
+        assert result.mechanism_class == "Insulin"
+        assert result.modality == "protein/enzyme therapy"
+
+    def test_technosphere_registered_powder_resolves(self, normalizer):
+        result = normalizer.normalize("Technosphere® Insulin Inhalation Powder")
+        assert result.mechanism_class == "Insulin"
+
+    def test_technosphere_registered_with_medtone_resolves(self, normalizer):
+        result = normalizer.normalize("Technosphere® Insulin Inhalation Powder and MedTone™ Inhaler")
+        assert result.mechanism_class == "Insulin"
+
+    def test_technosphere_registered_bare_resolves(self, normalizer):
+        result = normalizer.normalize("Technosphere® Insulin")
+        assert result.mechanism_class == "Insulin"
+
+    def test_technosphere_powder_short_resolves(self, normalizer):
+        result = normalizer.normalize("Technosphere Powder")
+        assert result.mechanism_class == "Insulin"
+
+    def test_technosphere_registered_system_resolves(self, normalizer):
+        result = normalizer.normalize("Technosphere® Insulin Inhalation System")
+        assert result.mechanism_class == "Insulin"
+
+    # --- Insulin: Generex buccal spray ---
+
+    def test_generex_oral_lyn_resolves(self, normalizer):
+        result = normalizer.normalize("Generex Oral-lyn™")
+        assert result.mechanism_class == "Insulin"
+
+    # --- Insulin: regimen descriptors ---
+
+    def test_insulin_infusion_bare_resolves(self, normalizer):
+        result = normalizer.normalize("Insulin infusion")
+        assert result.mechanism_class == "Insulin"
+
+    def test_long_intermediate_acting_insulins_resolves(self, normalizer):
+        result = normalizer.normalize("Long- and intermediate- acting insulins")
+        assert result.mechanism_class == "Insulin"
+
+    def test_insulin_analog_mid_mixture_resolves(self, normalizer):
+        result = normalizer.normalize("Insulin Analog Mid Mixture")
+        assert result.mechanism_class == "Insulin"
+
+    def test_nph_regular_insulin_combo_resolves(self, normalizer):
+        result = normalizer.normalize("NPH & regular insulin")
+        assert result.mechanism_class == "Insulin"
+
+    def test_glargine_glulisine_combo_resolves(self, normalizer):
+        result = normalizer.normalize("Glargine & Glulisine")
+        assert result.mechanism_class == "Insulin"
+
+    def test_mixtard_novonordisk_resolves(self, normalizer):
+        result = normalizer.normalize("Mixtard 30:70 Novonordisk® twice daily")
+        assert result.mechanism_class == "Insulin"
+
+    def test_lantus_apidra_regimen_resolves(self, normalizer):
+        result = normalizer.normalize("Lantus® once daily and Apidra® before meals")
+        assert result.mechanism_class == "Insulin"
+
+    def test_any_human_insulin_catch_all_resolves(self, normalizer):
+        result = normalizer.normalize(
+            "any human insulin or analog insulin(s) given in any regimen by subcutaneous injection"
+        )
+        assert result.mechanism_class == "Insulin"
+        assert result.confidence <= 0.80
+
+    # --- GLP-1 RA: long NEX-22A descriptor ---
+
+    def test_nex22a_long_form_resolves(self, normalizer):
+        result = normalizer.normalize("NEX-22A, a prolonged release formulation of liraglutide")
+        assert result.mechanism_class == "GLP-1 receptor agonist"
+
+    # --- GIP/GLP-1 dual agonist: Maridebart cafraglutide ---
+
+    def test_maridebart_cafraglutide_resolves(self, normalizer):
+        result = normalizer.normalize("Maridebart Cafraglutide")
+        assert result.mechanism_class == "GIP/GLP-1 receptor agonist"
+        assert result.modality == "protein/enzyme therapy"
+
+    # --- SGLT2 inhibitor: early-stage compounds ---
+
+    def test_ave2268_resolves(self, normalizer):
+        result = normalizer.normalize("AVE2268")
+        assert result.mechanism_class == "SGLT2 inhibitor"
+
+    def test_dwp16001_resolves(self, normalizer):
+        result = normalizer.normalize("DWP16001")
+        assert result.mechanism_class == "SGLT2 inhibitor"
+
+    # --- DPP-4 inhibitor: Komboglyze and saxagliptin FDCs ---
+
+    def test_komboglyze_xr_500_resolves(self, normalizer):
+        result = normalizer.normalize("Komboglyze XR 5/500 mg")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+
+    def test_komboglyze_xr_1000_resolves(self, normalizer):
+        result = normalizer.normalize("Komboglyze XR 5/1000 mg")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+
+    def test_saxagliptin_metformin_xr_fdc_resolves(self, normalizer):
+        result = normalizer.normalize("Saxagliptin/Metformin XR FDC")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+
+    def test_saxagliptin_dapagliflozin_fdc_resolves(self, normalizer):
+        result = normalizer.normalize("Saxagliptin/Dapagliflozin FDC")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+
+    def test_saxagliptin_metformin_dose_arm_resolves(self, normalizer):
+        result = normalizer.normalize("Saxagliptin, 2.5 mg + Metformin, 500 mg (fasted state)")
+        assert result.mechanism_class == "DPP-4 inhibitor"
+
+    # --- PPAR agonist: Metabolex SPPARγ modulators ---
+
+    def test_mbx102_resolves(self, normalizer):
+        result = normalizer.normalize("MBX-102")
+        assert result.mechanism_class == "PPAR agonist"
+
+    def test_mbx2044_resolves(self, normalizer):
+        result = normalizer.normalize("MBX-2044")
+        assert result.mechanism_class == "PPAR agonist"
+
+    # --- GLP-1/Insulin fixed-ratio combination (iGlarLixi) ---
+
+    def test_iglarlixi_brand_resolves(self, normalizer):
+        result = normalizer.normalize("iGlarLixi")
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
+        assert result.modality == "protein/enzyme therapy"
+
+    def test_iglarlixi_parenthetical_resolves(self, normalizer):
+        result = normalizer.normalize("iGlarLixi (insulin glargine/lixisenatide)")
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
+
+    def test_insulin_glargine_lixisenatide_slash_resolves(self, normalizer):
+        result = normalizer.normalize("Insulin glargine/Lixisenatide")
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
+
+    def test_insulin_glargine_lixisenatide_frc_descriptor_resolves(self, normalizer):
+        result = normalizer.normalize("Insulin glargine/lixisenatide Fixed Ratio Combination")
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
+
+    def test_iglarlixi_hoe901_ave0010_lowercase_resolves(self, normalizer):
+        result = normalizer.normalize("Insulin glargine/Lixisenatide (HOE901/AVE0010)")
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
+
+    def test_iglarlixi_allcaps_dev_codes_resolves(self, normalizer):
+        result = normalizer.normalize("INSULIN GLARGINE/LIXISENATIDE HOE901/AVE0010")
+        assert result.mechanism_class == "GLP-1/Insulin fixed-ratio combination"
+
+    # --- Glucokinase activator ---
+
+    def test_lgd6972_bare_resolves(self, normalizer):
+        result = normalizer.normalize("LGD-6972")
+        assert result.mechanism_class == "Glucokinase activator"
+        assert result.target == "GCK"
+        assert result.modality == "small molecule"
+
+    def test_lgd6972_solution_resolves(self, normalizer):
+        result = normalizer.normalize("LGD-6972 Solution")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_lgd6972_capsules_resolves(self, normalizer):
+        result = normalizer.normalize("LGD-6972 Capsules")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_lgd6972_5mg_resolves(self, normalizer):
+        result = normalizer.normalize("LGD-6972-5 mg")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_lgd6972_10mg_resolves(self, normalizer):
+        result = normalizer.normalize("LGD-6972-10 mg")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_lgd6972_15mg_resolves(self, normalizer):
+        result = normalizer.normalize("LGD-6972-15 mg")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_azd1656_resolves(self, normalizer):
+        result = normalizer.normalize("AZD1656")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_mb07803_resolves(self, normalizer):
+        result = normalizer.normalize("MB07803")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_amg151_resolves(self, normalizer):
+        result = normalizer.normalize("AMG 151")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_gk_activator_generic_resolves(self, normalizer):
+        result = normalizer.normalize("GK Activator (2)")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    def test_icovamenib_dose_arm_resolves(self, normalizer):
+        result = normalizer.normalize("icovamenib 100mg")
+        assert result.mechanism_class == "Glucokinase activator"
+
+    # --- GCGR antisense oligonucleotide ---
+
+    def test_isis_gcgrrx_bare_resolves(self, normalizer):
+        result = normalizer.normalize("ISIS-GCGRRx")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+        assert result.target == "GCGR"
+        assert result.modality == "RNA therapy"
+
+    def test_isis_gcgrrx_dose1_spaced_resolves(self, normalizer):
+        result = normalizer.normalize("ISIS-GCGRRx - Dose Level 1")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+
+    def test_isis_gcgrrx_dose2_spaced_resolves(self, normalizer):
+        result = normalizer.normalize("ISIS-GCGRRx - Dose Level 2")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+
+    def test_isis_gcgrrx_dose1_nospace_resolves(self, normalizer):
+        result = normalizer.normalize("ISIS-GCGRRx- Dose Level 1")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+
+    def test_isis_gcgrrx_dose2_nospace_resolves(self, normalizer):
+        result = normalizer.normalize("ISIS-GCGRRx- Dose Level 2")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+
+    def test_isis_gccrrrx_typo_resolves(self, normalizer):
+        # ISIS-GCCRRx is a CT.gov typo: GCC instead of GCG
+        result = normalizer.normalize("ISIS-GCCRRx")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+        assert result.confidence <= 0.95
+
+    def test_isis_388626_compound_number_resolves(self, normalizer):
+        result = normalizer.normalize("ISIS 388626")
+        assert result.mechanism_class == "GCGR antisense oligonucleotide"
+
+    # --- 11beta-HSD1 inhibitor ---
+
+    def test_incb013739_resolves(self, normalizer):
+        result = normalizer.normalize("INCB013739")
+        assert result.mechanism_class == "11beta-HSD1 inhibitor"
+        assert result.target == "HSD11B1"
+        assert result.modality == "small molecule"
+
+    def test_incb019602_resolves(self, normalizer):
+        result = normalizer.normalize("INCB019602")
+        assert result.mechanism_class == "11beta-HSD1 inhibitor"
+
+    # --- v0.3 comment lines not loaded as aliases ---
+
+    def test_v03_comment_header_not_loaded(self, normalizer):
+        result = normalizer.normalize("# --- v0.3 additions ---")
+        assert result.resolution_status == "unknown"
+
+    # --- v0.2 regression: prior entries still resolve ---
+
+    def test_v02_actrapid_regression(self, normalizer):
+        result = normalizer.normalize("Actrapid")
+        assert result.mechanism_class == "Insulin"
+
+    def test_v02_cotadutide_regression(self, normalizer):
+        result = normalizer.normalize("cotadutide")
+        assert result.mechanism_class == "GLP-1/GCGR dual agonist"

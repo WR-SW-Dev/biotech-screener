@@ -116,3 +116,68 @@ sodium glucose co-transporter 2 inhibitors,SGLT2 inhibitor,SLC5A2,small molecule
 sglt2 inhibitor,SGLT2 inhibitor,SLC5A2,small molecule,0.75,exact class abbreviation used as arm descriptor
 # DPP-4 inhibitor — class alias without hyphen
 dpp4 inhibitor,DPP-4 inhibitor,DPP4,small molecule,0.75,class abbreviation without hyphen
+# --- v0.3 additions ---
+# Insulin — Technosphere® brand variants (registered trademark and system-suffix forms not in v0.1/v0.2)
+technosphere insulin (ti) inhalation powder,Insulin,INSR,protein/enzyme therapy,0.99,MannKind Afrezza; TI abbreviation in parentheses
+technosphere® insulin inhalation powder,Insulin,INSR,protein/enzyme therapy,0.99,same product with registered trademark symbol
+technosphere® insulin inhalation powder and medtone™ inhaler,Insulin,INSR,protein/enzyme therapy,0.99,Technosphere Insulin bundled with MedTone inhaler device
+technosphere® insulin,Insulin,INSR,protein/enzyme therapy,0.95,bare brand name with trademark; likely Afrezza
+technosphere powder,Insulin,INSR,protein/enzyme therapy,0.90,shortened form used in some trial arms
+technosphere® insulin inhalation system,Insulin,INSR,protein/enzyme therapy,0.99,system-level descriptor (inhaler + cartridge)
+# Insulin — Generex buccal spray
+generex oral-lyn™,Insulin,INSR,protein/enzyme therapy,0.99,Generex Biotechnology buccal insulin spray
+# Insulin — regimen descriptors and combination forms
+insulin infusion,Insulin,INSR,protein/enzyme therapy,0.85,bare insulin infusion arm (no route/type qualifier)
+long- and intermediate- acting insulins,Insulin,INSR,protein/enzyme therapy,0.80,class-level descriptor covering NPH + basal analogues
+insulin analog mid mixture,Insulin,INSR,protein/enzyme therapy,0.85,biphasic insulin analogue mixture (e.g. 50/50 or 70/30)
+nph & regular insulin,Insulin,INSR,protein/enzyme therapy,0.99,classic biphasic NPH + short-acting combination regimen
+glargine & glulisine,Insulin,INSR,protein/enzyme therapy,0.99,basal-bolus pairing of two Sanofi insulin analogues
+mixtard 30:70 novonordisk® twice daily,Insulin,INSR,protein/enzyme therapy,0.99,Novo Nordisk Mixtard 30/70 biphasic arm with dosing schedule
+lantus® once daily and apidra® before meals,Insulin,INSR,protein/enzyme therapy,0.99,basal-bolus regimen naming both Sanofi insulin brands
+any human insulin or analog insulin(s) given in any regimen by subcutaneous injection,Insulin,INSR,protein/enzyme therapy,0.75,broad protocol catch-all; any SC insulin arm
+# GLP-1 RA — long-form NEX-22A descriptor not caught by v0.2 exact match
+"nex-22a, a prolonged release formulation of liraglutide",GLP-1 receptor agonist,GLP1R,protein/enzyme therapy,0.85,v0.2 covers bare nex-22a; this is the full CT.gov arm description
+# GIP/GLP-1 dual agonist — Maridebart cafraglutide (AMG 133)
+maridebart cafraglutide,GIP/GLP-1 receptor agonist,GIPR,protein/enzyme therapy,0.95,Amgen AMG 133; GIPR antagonist / GLP-1R agonist bispecific
+# SGLT2 inhibitor — early Sanofi and Korean programmes
+ave2268,SGLT2 inhibitor,SLC5A2,small molecule,0.90,Sanofi-Aventis early SGLT2i (development code)
+dwp16001,SGLT2 inhibitor,SLC5A2,small molecule,0.90,Daewoong SGLT1/SGLT2 dual inhibitor; classified as SGLT2i class
+# DPP-4 inhibitor — Komboglyze FDCs and saxagliptin combination arms
+komboglyze xr 5/500 mg,DPP-4 inhibitor,DPP4,small molecule,0.95,AstraZeneca Komboglyze XR (saxagliptin/metformin); 5mg saxa dose
+komboglyze xr 5/1000 mg,DPP-4 inhibitor,DPP4,small molecule,0.95,AstraZeneca Komboglyze XR; 1000 mg metformin component
+saxagliptin/metformin xr fdc,DPP-4 inhibitor,DPP4,small molecule,0.95,fixed-dose combination; primary mechanism is DPP-4 inhibition
+saxagliptin/dapagliflozin fdc,DPP-4 inhibitor,DPP4,small molecule,0.90,fixed-dose combination; saxagliptin provides DPP-4 inhibition
+"saxagliptin, 2.5 mg + metformin, 500 mg (fasted state)",DPP-4 inhibitor,DPP4,small molecule,0.95,PK/PD study arm; saxagliptin is the active T2D component
+# PPAR agonist — selective PPARγ modulators from Metabolex pipeline
+mbx-102,PPAR agonist,PPARG,small molecule,0.90,Metabolex/INT131 selective PPARγ modulator (SPPARγM)
+mbx-2044,PPAR agonist,PPARG,small molecule,0.85,Metabolex SPPARγ agonist precursor compound
+# GLP-1/Insulin fixed-ratio combination — iGlarLixi (Sanofi Soliqua/Suliqua)
+iglarlixi,GLP-1/Insulin fixed-ratio combination,GLP1R,protein/enzyme therapy,0.99,Sanofi brand for insulin glargine/lixisenatide FRC (Soliqua US/Suliqua EU)
+iglarlixi (insulin glargine/lixisenatide),GLP-1/Insulin fixed-ratio combination,GLP1R,protein/enzyme therapy,0.99,brand name with parenthetical INN expansion
+insulin glargine/lixisenatide,GLP-1/Insulin fixed-ratio combination,GLP1R,protein/enzyme therapy,0.99,INN component slash-combination
+insulin glargine/lixisenatide fixed ratio combination,GLP-1/Insulin fixed-ratio combination,GLP1R,protein/enzyme therapy,0.99,explicit product-type descriptor
+insulin glargine/lixisenatide (hoe901/ave0010),GLP-1/Insulin fixed-ratio combination,GLP1R,protein/enzyme therapy,0.99,INN pair with development codes in parentheses
+insulin glargine/lixisenatide hoe901/ave0010,GLP-1/Insulin fixed-ratio combination,GLP1R,protein/enzyme therapy,0.99,all-caps development code variant
+# Glucokinase activator — LGD-6972 series (Ligand Pharmaceuticals) + parallel GKA programmes
+lgd-6972,Glucokinase activator,GCK,small molecule,0.95,Ligand/Astellas GCK activator; Phase 2 T2D
+lgd-6972 solution,Glucokinase activator,GCK,small molecule,0.95,solution formulation arm of LGD-6972
+lgd-6972 capsules,Glucokinase activator,GCK,small molecule,0.95,capsule formulation arm of LGD-6972
+lgd-6972-5 mg,Glucokinase activator,GCK,small molecule,0.95,5 mg dose arm
+lgd-6972-10 mg,Glucokinase activator,GCK,small molecule,0.95,10 mg dose arm
+lgd-6972-15 mg,Glucokinase activator,GCK,small molecule,0.95,15 mg dose arm
+azd1656,Glucokinase activator,GCK,small molecule,0.95,AstraZeneca GCK activator (Phase 2)
+mb07803,Glucokinase activator,GCK,small molecule,0.90,Metabasis Therapeutics GCK activator
+amg 151,Glucokinase activator,GCK,small molecule,0.90,Amgen GCK activator (Phase 2 T2D)
+gk activator (2),Glucokinase activator,GCK,small molecule,0.80,generic arm descriptor for second GCK activator comparator
+icovamenib 100mg,Glucokinase activator,GCK,small molecule,0.95,Eli Lilly LY3470561; dose-suffixed arm descriptor
+# GCGR antisense oligonucleotide — ISIS-GCGRRx series (Ionis Pharmaceuticals)
+isis-gcgrrx,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.95,Ionis GCGR-targeting ASO (Phase 2 T2D)
+isis-gcgrrx - dose level 1,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.95,low-dose arm with space-padded delimiter
+isis-gcgrrx - dose level 2,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.95,high-dose arm with space-padded delimiter
+isis-gcgrrx- dose level 1,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.95,low-dose arm without space before Dose
+isis-gcgrrx- dose level 2,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.95,high-dose arm without space before Dose
+isis-gccrrx,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.90,single-C typo variant observed in CT.gov data (GCCRRx instead of GCGRRx)
+isis 388626,GCGR antisense oligonucleotide,GCGR,RNA therapy,0.90,Ionis compound number for GCGR ASO programme
+# 11β-HSD1 inhibitor — Incyte cortisol-modulating compounds
+incb013739,11beta-HSD1 inhibitor,HSD11B1,small molecule,0.95,Incyte 11β-HSD1 inhibitor Phase 2 T2D
+incb019602,11beta-HSD1 inhibitor,HSD11B1,small molecule,0.90,Incyte follow-on 11β-HSD1 inhibitor compound
