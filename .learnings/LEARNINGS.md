@@ -347,6 +347,93 @@ Keep preflight in skills/codegraph; log tooling gaps to LEARNINGS with Skill-Pat
 - Recurrence-Count: 2
 - Skill-Path: codegraph
 
+## [LRN-20260624-001] cron_sys_path_isolation
+
+**Logged**: 2026-06-24T21:00:00Z
+**Priority**: high
+**Status**: promoted
+**Area**: hermes_ops
+
+### Summary
+Hermes cron entry scripts fail with `ModuleNotFoundError: No module named 'tools'` when using repo-relative imports without inserting `PROJECT_ROOT` onto `sys.path`. Interactive shells mask the bug via virtualenv or `PYTHONPATH`.
+
+### Details
+Confirmed 2026-06-24 (735ac3f7): `agents_direct` cron fired 42× before fix. Town `cron_missed` events are often the operator's first signal. Pattern: `PROJECT_ROOT = Path(__file__).resolve().parent.parent` then `sys.path.insert(0, str(PROJECT_ROOT))` before any `from tools.*` or `from common.*` imports.
+
+### Suggested Action
+Audit all cron entry scripts for repo-relative imports. Cross-ref `openclaw-data-pipeline-debug` Class P and `town-operator-bridge` triage table.
+
+### Metadata
+- Source: pipeline_recovery_2026-06-24
+- Related Files: agents/*/run_job.py, tools/run_daily_production.py
+- Tags: cron, sys_path, hermes_ops, town_bridge
+- Pattern-Key: cron_sys_path_isolation
+- Recurrence-Count: 1
+- Skill-Path: town-operator-bridge, openclaw-data-pipeline-debug
+
+## [LRN-20260624-002] yfinance_isoformat_date_parse
+
+**Logged**: 2026-06-24T21:30:00Z
+**Priority**: medium
+**Status**: promoted
+**Area**: data_pipeline
+
+### Summary
+Passing `datetime.isoformat()` dates to yfinance produces `T00:00:00` suffix that breaks `history()` parsing.
+
+### Details
+Confirmed 2026-06-24 (399e674c): XBI re-fetch crashed with "unconverted data remains: T00:00:00". Use `strftime("%Y-%m-%d")` for all yfinance date arguments.
+
+### Suggested Action
+Audit all yfinance call sites for datetime vs date string formatting.
+
+### Metadata
+- Source: pipeline_recovery_2026-06-24
+- Pattern-Key: yfinance_isoformat_date_parse
+- Skill-Path: openclaw-data-pipeline-debug
+
+## [LRN-20260624-003] multi_path_universe_leak
+
+**Logged**: 2026-06-24T21:30:00Z
+**Priority**: high
+**Status**: promoted
+**Area**: data_pipeline
+
+### Summary
+Fixing delisted-ticker filtering in one universe loader does not remove the ticker from screen output — multiple loaders must be patched.
+
+### Details
+Confirmed 2026-06-24 (5b3225696): TERN still appeared after refresh_prices fix. Consumers: refresh_prices, run_screen.py, run_screen_from_bundle.py, coverage ratio denominators.
+
+### Suggested Action
+When changing universe.json semantics, audit all consumers with `codegraph_impact` or grep for universe load paths.
+
+### Metadata
+- Source: pipeline_recovery_2026-06-24
+- Pattern-Key: multi_path_universe_leak
+- Skill-Path: openclaw-data-pipeline-debug, screener-ops
+
+## [LRN-20260624-004] argparse_cli_default_masks_function_default
+
+**Logged**: 2026-06-24T21:30:00Z
+**Priority**: high
+**Status**: promoted
+**Area**: ops
+
+### Summary
+argparse CLI defaults override function-parameter defaults when both exist — production cache warm timed out because CLI included slow registries.
+
+### Details
+Confirmed 2026-06-24 (ebb33da5): `--warm-sources` CLI default included EUCTR/CTIS/ISRCTN, masking essential-only function default. Production step 1.5 hit 1800s every run.
+
+### Suggested Action
+Align argparse defaults with function defaults; keep slow registries on dedicated cron with per-source timeouts.
+
+### Metadata
+- Source: pipeline_recovery_2026-06-24
+- Pattern-Key: argparse_cli_default_masks_function_default
+- Skill-Path: openclaw-data-pipeline-debug, screener-ops
+
 ## [LRN-20260601-003] sync_reference_mirror_source
 
 **Logged**: 2026-06-01T12:00:00Z

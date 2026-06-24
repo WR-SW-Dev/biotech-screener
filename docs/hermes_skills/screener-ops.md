@@ -594,10 +594,11 @@ Key findings (pseudo-PIT):
 
 ## Town-Hermes Bridge Status
 
-*Last reviewed: 2026-05-30*
+*Last reviewed: 2026-06-24*
 
 - Phase A complete (dry-run mode, `OPERATOR_DELIVERY_DRY_RUN=1`)
 - Phase B wiring complete (2026-05-30): all event types in repo — held-spec, first-fire, ruleset-integrity, snapshot-missing, contradiction_detected, cron_missed
+- **2026-06-24:** `cron_missed` Town alerts may trace to Class P (cron `sys.path` isolation) — see `openclaw-data-pipeline-debug` Class P and `town-operator-bridge` triage table
 - Phase B live delivery: pending operator sign-off to set `OPERATOR_DELIVERY_DRY_RUN=0` in `.env` (see `docs/hermes_skills/town-operator-bridge.md`)
 - Skill doc: `docs/hermes_skills/town-operator-bridge.md` · Spec 090
 
@@ -621,6 +622,17 @@ Key findings (pseudo-PIT):
 - Sleep-cliff risk: Windows host suspend kills crons silently — `powercfg /change standby-timeout-ac 0`
 - Missed cron signature: 24-48h gap in `data/snapshots/`
 - **Planned**: Linux VPS migration; WSL2 remains dev environment
+
+### Pipeline recovery patterns (2026-06-24)
+
+Cross-ref `openclaw-data-pipeline-debug` Classes M–P and `town-operator-bridge` triage table:
+
+| Class | Signature | Fix |
+| --- | --- | --- |
+| M | yfinance `T00:00:00` parse error | `strftime("%Y-%m-%d")` not `isoformat()` |
+| N | Delisted ticker still in screen | Patch **all** universe loaders, not one |
+| O | Cache warm 1800s timeout | Align `--warm-sources` CLI default to function default |
+| P | `ModuleNotFoundError: No module named 'tools'` in cron | Insert `PROJECT_ROOT` on `sys.path` before imports |
 
 ### Repo plumbing baseline (Cloud + Cursor)
 
