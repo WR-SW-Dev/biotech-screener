@@ -52,7 +52,7 @@ def html_page(title: str, content: str, nav_items: list = None, current_page: st
         nav_html = "<nav><ul>"
         for item_name, item_url in nav_items:
             is_active = item_name == current_page
-            active_class = 'active' if is_active else ''
+            active_class = "active" if is_active else ""
             nav_html += f'<li><a href="{item_url}" class="{active_class}">{item_name}</a></li>'
         nav_html += "</ul></nav>"
 
@@ -87,7 +87,9 @@ def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_arti
     """Index page showing available pages and status."""
     warnings_html = ""
     if missing_artifacts:
-        warnings_html += f'<div class="warning"><strong>Missing Artifacts:</strong> {", ".join(missing_artifacts)}</div>'
+        warnings_html += (
+            f'<div class="warning"><strong>Missing Artifacts:</strong> {", ".join(missing_artifacts)}</div>'
+        )
     if warnings:
         for warning in warnings:
             warnings_html += f'<div class="warning">{warning}</div>'
@@ -95,7 +97,7 @@ def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_arti
     pages_html = '<ul class="page-list">'
     for page_name, page_file, description in pages:
         pages_html += f'<li><a href="{page_file}">{page_name}</a> — {description}</li>'
-    pages_html += '</ul>'
+    pages_html += "</ul>"
 
     governance_info = """
     <div class="governance">
@@ -170,17 +172,17 @@ def disease_maps_template(diseases: list, nav_items: list) -> str:
         rows = ""
         for disease in diseases:
             name = disease.get("disease_name", "unknown")
-            mondo_id = disease.get("mondo_id", "—")
+            therapeutic_area = disease.get("therapeutic_area") or "—"
             program_count = disease.get("program_count", 0)
             cluster_count = disease.get("cluster_count", 0)
-            context_count = disease.get("context_feature_count", 0)
+            feature_count = disease.get("feature_count", 0)
             rows += f"""
             <tr>
               <td>{name}</td>
-              <td><code>{mondo_id}</code></td>
+              <td>{therapeutic_area}</td>
               <td>{program_count}</td>
               <td>{cluster_count}</td>
-              <td>{context_count}</td>
+              <td>{feature_count}</td>
             </tr>
             """
 
@@ -191,10 +193,10 @@ def disease_maps_template(diseases: list, nav_items: list) -> str:
           <thead>
             <tr>
               <th>Disease Name</th>
-              <th>MONDO ID</th>
+              <th>Therapeutic Area</th>
               <th>Programs</th>
               <th>Clusters</th>
-              <th>Context Features</th>
+              <th>Features</th>
             </tr>
           </thead>
           <tbody>{rows}</tbody>
@@ -282,7 +284,9 @@ def scheduled_review_health_template(executions: list, nav_items: list) -> str:
 
             outcome_icon = "✓" if outcome == "success" else "⚠"
             outcome_color = "green" if outcome == "success" else "orange"
-            error_text = f"<details><summary>View error</summary><pre>{error_msg[:200]}...</pre></details>" if error_msg else "—"
+            error_text = (
+                f"<details><summary>View error</summary><pre>{error_msg[:200]}...</pre></details>" if error_msg else "—"
+            )
 
             rows += f"""
             <tr>

@@ -183,16 +183,16 @@ class DashboardGenerator:
 
     def _load_disease_maps(self) -> List[Dict[str, Any]]:
         """Load disease map index."""
-        index_path = self.artifact_dir / "disease_map_index.json"
+        index_path = self.artifact_dir / "map_index.json"
 
         if not index_path.exists():
-            self.artifacts_missing.append("disease_map_index.json")
+            self.artifacts_missing.append("map_index.json")
             return []
 
         try:
             with open(index_path) as f:
                 index = json.load(f)
-                self.artifacts_read.append("disease_map_index.json")
+                self.artifacts_read.append("map_index.json")
                 return index.get("diseases", [])
         except Exception as e:
             self.warnings.append(f"Error reading disease map index: {str(e)}")
