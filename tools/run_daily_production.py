@@ -359,11 +359,7 @@ def refresh_prices(
         with open(universe_path) as f:
             universe = json.load(f)
         if isinstance(universe, list):
-            tickers = [
-                e.get("ticker", e) if isinstance(e, dict) else str(e)
-                for e in universe
-                if not (isinstance(e, dict) and e.get("status") == "delisted")
-            ]
+            tickers = [e.get("ticker", e) if isinstance(e, dict) else str(e) for e in universe]
         elif isinstance(universe, dict) and "tickers" in universe:
             tickers = universe["tickers"]
         # Filter synthetic tickers (e.g. _XBI_BENCHMARK_) — not real symbols
