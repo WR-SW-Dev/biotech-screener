@@ -26,6 +26,28 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-24 (Herald) — TOOLS.md fix + health check + classify path fix
+
+### Agent docs
+- **agents/herald/TOOLS.md**: replaced ops-agent copy-paste with Herald fetch/dedupe/classify/digest commands
+- **agents/herald/AGENTS.md**: Herald daily sequence (was ops agent)
+- **agents/herald/HEARTBEAT.md**: health check as first checklist item
+
+### Tooling
+- **herald_health_check.py**: read-only pipeline health; writes `artifacts/herald/health_check_YYYY-MM-DD.json`; exit 0/1/2
+- **classify_press_releases.py**: fix output naming when input is `deduped_*.jsonl` → `classified_*.jsonl` (supervisor done predicate)
+- **fetch_company_press_releases.py**: fix import order (`sys.path` before `tools.*`) — cron/supervisor no longer require `PYTHONPATH`
+- **cron_data_refresh.sh**: `stage_herald` now runs dedupe before classify (matches supervisor done predicate)
+- **agent_heartbeat_checks.py**: stale-source check uses `classified/classified_*.jsonl` not top-level dir sort
+
+### Tests
+- `tests/test_herald_health_check.py` — 4 tests
+
+### Governance
+- Tier 0 (agent docs + plumbing). No scoring changes.
+
+---
+
 ## 2026-06-24 (stalled-loop + telemetry) — Operator verdicts filled; Cursor implementations
 
 ### Stalled-loop verdicts (Rule 12 efficacy gate)
