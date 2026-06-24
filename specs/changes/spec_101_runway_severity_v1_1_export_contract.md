@@ -1,9 +1,9 @@
 # Spec 101: Runway Severity v1.1 Export Contract
 
-**Status:** Design  
+**Status:** COMPLETE (2026-06-24)  
 **Priority:** P0 (Schema correctness)  
-**Phase:** A (Design & Implementation)  
-**Owner:** [TBD]
+**Phase:** SHIPPED  
+**Owner:** Operator
 
 ---
 
