@@ -8,7 +8,7 @@ metadata:
 
 # Operational State
 
-**Last updated:** 2026-06-22  
+**Last updated:** 2026-06-24  
 **Update cadence:** weekly or upon governance-state change  
 **Authority:** operational status snapshot only; not architectural specification  
 **Staleness risk:** MEDIUM (reference `governance.md` for timeless process)
@@ -145,6 +145,20 @@ metadata:
 - **OpenClaw fenced (PR #372):** `**` wildcards and shell write permissions removed from exec-approvals. Exec allowlist now read-only. Hermes is primary orchestrator. Hard-retire deferred (natural on reboot). See `docs/governance/OPENCLAW_FENCE_DECISION_2026_06_22.md`.
 - **Semgrep Phase 1 ERROR gate active (PR #376):** CI now blocks on Semgrep governance rule violations. Rules cover ranker/selector/final_score mutation guard, PIT annotation enforcement, model-output-as-signal guard, supply-chain checks.
 - **Autonomous research quarantined (PR #379):** An autonomous PIT/backtest research run was quarantined. Outputs are not accepted evidence and must not be used for model decisions. See `docs/governance/AUTONOMOUS_RESEARCH_QUARANTINE_2026_06_22.md`.
+
+---
+
+## Agent Fleet Self-Learning (2026-06-24)
+
+*Updated post-PR #397/#398, phase-2 branch*
+
+- **Heartbeat:** 27 specialized checks in `tools/agent_heartbeat_checks.py`; Hermes on-demand jobs SKIP by design.
+- **Telemetry:** `log_agent_run` on daily builders + `data_auditor` + `ops_supervisor` + Hermes `run_job.py` exits.
+- **Outcome feedback:** all daily builders + qa/supervisor/herald/auditor/postmortem/CRT/event_binder/Hermes exits (policy_shadow overlap ≥80%, universe zero stale-alert, grok zero high alerts, etc.).
+- **Herald recovery:** `tools/herald_recovery.py` / `herald_recovery.sh`; `herald_health_check.py --recover` for F-2026-005.
+- **Cron integration:** evening catchup is **fully deterministic** (no `run_agent_direct` LLM HEARTBEAT); includes ops_digest, ruleset sentinel, CRT, postmortem, supervisor_sentinel; `install_agent_fleet_crontab.sh` for WSL install.
+- **Rule 12:** `docs/governance/RULE_12_PROMOTION_CHECKLIST.md` — weekly workflow + stalled-loop gates.
+- **Stalled loops:** F-2026-005 (Herald host recovery), F-2026-006 (Actions budget) — `SELFIMPROVE_GATES_MET=1` blocked until closed.
 
 ---
 

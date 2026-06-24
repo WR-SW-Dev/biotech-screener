@@ -1,3 +1,7 @@
+---
+name: operational-health-baselines
+---
+
 # Operational Health Baselines
 
 SLA baselines for agent artifact freshness and CI health. Used by fleet heartbeat, Herald health check, and failure-pattern prevention rules (F-2026-005, F-2026-006).

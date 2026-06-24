@@ -17,13 +17,10 @@ set -uo pipefail
 REPO="/mnt/c/Projects/biotech_screener/biotech-screener"
 PYTHON="/usr/bin/python3"
 LOG="$REPO/logs/evening_catchup.log"
-AGENTS_LOG="$REPO/logs/agents.log"
-AGENTS_DIRECT_DIR="$REPO/logs/agents_direct"
 
 cd "$REPO" || exit 1
 
 TODAY=$(TZ=America/Detroit date +%Y-%m-%d)
-TODAY_COMPACT=$(TZ=America/Detroit date +%Y%m%d)
 NOW_HM=$(TZ=America/Detroit date +%H%M)
 DOW=$(TZ=America/Detroit date +%u)
 
@@ -42,12 +39,6 @@ set -a
 source "$REPO/.env" 2>/dev/null || true
 set +a
 
-# True if an agent already has a logs/agents_direct/<agent>_<YYYYMMDD>*.json today
-agent_ran_today() {
-    local agent=$1
-    ls "$AGENTS_DIRECT_DIR/${agent}_${TODAY_COMPACT}"*.json >/dev/null 2>&1
-}
-
 # True if a tool's log file already contains today's date
 tool_log_has_today() {
     local logfile=$1
@@ -57,22 +48,6 @@ tool_log_has_today() {
 # True if a file exists
 file_exists() {
     [ -f "$1" ]
-}
-
-# Run an agent via tools/run_agent_direct.py
-run_agent() {
-    local agent=$1 sched=$2
-    if [ "$NOW_HM" -lt "$sched" ]; then
-        log "defer $agent — scheduled $sched not yet past"
-        return
-    fi
-    if agent_ran_today "$agent"; then
-        log "skip  $agent — already ran today"
-        return
-    fi
-    log "RUN   $agent (scheduled $sched)"
-    $PYTHON "$REPO/tools/run_agent_direct.py" --agent "$agent" --message "HEARTBEAT" \
-        >> "$AGENTS_LOG" 2>&1 && log "done  $agent" || log "FAIL  $agent (exit $?)"
 }
 
 # Run a direct-tool agent, guarded by a check_fn returning 0 if already done
@@ -102,19 +77,17 @@ run_tool() {
     fi
 }
 
-# ---- Agents via run_agent_direct.py ----
-run_agent ops                     1700
-run_agent sentinel                1715
-run_agent crt_resolution_watcher  1800
-# policy_shadow_watch: invoked via deterministic builder (matches daily cron).
-# Was previously `run_agent policy_shadow_watch 1805` (LLM HEARTBEAT path),
-# which the agent's 2026-05-05 memory documented as a Class F broken pattern.
-# See artifacts/audit/p0_date_stamp_root_cause_2026_05_06.md (Fix B).
-run_agent catalyst_delta          1820
-run_agent price_action_watch      1830
-run_agent postmortem              1835
+# ---- Direct-tool agents (deterministic — Class F LLM HEARTBEAT retired) ----
 
-# ---- Direct-tool agents ----
+# ops_digest (17:00) — artifact: artifacts/ops_digest/<TODAY>_digest.json
+check_ops_digest() { file_exists "$REPO/artifacts/ops_digest/${TODAY}_digest.json"; }
+run_tool ops_digest 1700 "$REPO/logs/ops_digest.log" check_ops_digest \
+    "$PYTHON $REPO/tools/build_ops_digest.py --as-of-date $TODAY"
+
+# ruleset_sentinel (17:15) — sidecar: data/snapshots/<TODAY>/ruleset_health.json
+check_ruleset_sentinel() { file_exists "$REPO/data/snapshots/${TODAY}/ruleset_health.json"; }
+run_tool ruleset_sentinel 1715 "$REPO/logs/ruleset_health.log" check_ruleset_sentinel \
+    "$PYTHON $REPO/tools/ruleset_health_monitor.py --as-of-date $TODAY"
 
 # heartbeat_checks (17:30) — log: logs/heartbeat_checks.log
 check_heartbeat() { tool_log_has_today "$REPO/logs/heartbeat_checks.log"; }
@@ -131,6 +104,14 @@ check_event_feedback() { tool_log_has_today "$REPO/logs/event_feedback.log"; }
 run_tool event_feedback 1802 "$REPO/logs/event_feedback.log" check_event_feedback \
     "$PYTHON $REPO/tools/build_event_feedback.py --as-of-date $TODAY"
 
+# hermes_knowledge_layer (18:00) — artifact: artifacts/ops/knowledge_layer/latest_state.json
+check_hermes_knowledge() {
+    local f="$REPO/artifacts/ops/knowledge_layer/latest_state.json"
+    [ -f "$f" ] && grep -q "\"as_of_date\": \"$TODAY\"" "$f" 2>/dev/null
+}
+run_tool hermes_knowledge 1800 "$REPO/logs/hermes_knowledge.log" check_hermes_knowledge \
+    "$PYTHON $REPO/tools/build_hermes_knowledge_layer.py"
+
 # policy_shadow (18:05) — artifact: artifacts/policy_shadow/tier_weighted/<TODAY>_comparison.json
 # Mirrors the daily cron 5 18 * * 1-5 build_policy_shadow_compare.py --as-of-date $(date +%Y-%m-%d).
 # Replaces the previous `run_agent policy_shadow_watch 1805` LLM HEARTBEAT call.
@@ -138,9 +119,53 @@ check_policy_shadow() { file_exists "$REPO/artifacts/policy_shadow/tier_weighted
 run_tool policy_shadow 1805 "$REPO/logs/agents_direct_cron.log" check_policy_shadow \
     "$PYTHON $REPO/tools/build_policy_shadow_compare.py --as-of-date $TODAY"
 
+# hermes_contradiction_detector (18:05) — log: logs/hermes_contradiction.log
+# Runs after knowledge_layer; reads latest_state.json from that build.
+check_hermes_contradiction() { tool_log_has_today "$REPO/logs/hermes_contradiction.log"; }
+run_tool hermes_contradiction 1805 "$REPO/logs/hermes_contradiction.log" check_hermes_contradiction \
+    "$PYTHON $REPO/agents/hermes-contradiction-detector/run_job.py --from-build"
+
+# crt_resolution (18:00) — artifact: output/catalyst_ev/crt_options_join.json
+check_crt_resolution() { file_exists "$REPO/output/catalyst_ev/crt_options_join.json"; }
+run_tool crt_resolution 1800 "$REPO/logs/crt_resolution.log" check_crt_resolution \
+    "$PYTHON $REPO/tools/catalyst_resolution_tracker.py --as-of-date $TODAY && $PYTHON $REPO/scripts/research/build_crt_options_join.py"
+
+# catalyst_delta (18:20) — artifact: artifacts/catalyst_delta/<TODAY>_delta.json
+check_catalyst_delta() { file_exists "$REPO/artifacts/catalyst_delta/${TODAY}_delta.json"; }
+run_tool catalyst_delta 1820 "$REPO/logs/agents_direct_cron.log" check_catalyst_delta \
+    "$PYTHON $REPO/tools/build_catalyst_delta.py --as-of-date $TODAY"
+
+# price_action_watch (18:30) — artifact: artifacts/price_action_watch/<TODAY>_watch.json
+check_price_action_watch() { file_exists "$REPO/artifacts/price_action_watch/${TODAY}_watch.json"; }
+run_tool price_action_watch 1830 "$REPO/logs/price_action_watch.log" check_price_action_watch \
+    "$PYTHON $REPO/tools/build_price_action_watch.py --as-of-date $TODAY"
+
+# postmortem (18:35) — memory: agents/postmortem/memory/<TODAY>.md
+check_postmortem() {
+    file_exists "$REPO/agents/postmortem/memory/${TODAY}.md" || \
+        tool_log_has_today "$REPO/logs/postmortem.log"
+}
+run_tool postmortem 1835 "$REPO/logs/postmortem.log" check_postmortem \
+    "$PYTHON $REPO/agents/postmortem/scripts/run_postmortem.py"
+
 # production_qa_check (18:55) — artifact: artifacts/production_qa/<TODAY>_report.json
 check_production_qa() { file_exists "$REPO/artifacts/production_qa/${TODAY}_report.json"; }
 run_tool production_qa_check 1855 "$REPO/logs/production_qa.log" check_production_qa \
     "$PYTHON $REPO/tools/production_qa_check.py --as-of-date $TODAY"
+
+# herald_health (14:35) — artifact: artifacts/herald/health_check_<TODAY>.json
+check_herald_health() { file_exists "$REPO/artifacts/herald/health_check_${TODAY}.json"; }
+run_tool herald_health 1435 "$REPO/logs/herald_health.log" check_herald_health \
+    "$PYTHON $REPO/tools/herald_health_check.py --as-of-date $TODAY"
+
+# ops_supervisor (19:00) — artifact: artifacts/ops_supervisor/<TODAY>_supervisor.json
+check_ops_supervisor() { file_exists "$REPO/artifacts/ops_supervisor/${TODAY}_supervisor.json"; }
+run_tool ops_supervisor 1900 "$REPO/logs/ops_supervisor.log" check_ops_supervisor \
+    "$PYTHON $REPO/agents/ops_supervisor/supervisor.py --as-of $TODAY"
+
+# supervisor_sentinel (19:15) — artifact: artifacts/ops_supervisor/<TODAY>_sentinel.json
+check_supervisor_sentinel() { file_exists "$REPO/artifacts/ops_supervisor/${TODAY}_sentinel.json"; }
+run_tool supervisor_sentinel 1915 "$REPO/logs/ops_supervisor.log" check_supervisor_sentinel \
+    "$PYTHON $REPO/tools/agent_supervisor_sentinel.py --as-of $TODAY"
 
 log "=== Evening catch-up complete ==="

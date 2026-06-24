@@ -24,6 +24,7 @@ import csv
 import json
 import logging
 import sys
+import time
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -251,12 +252,48 @@ def main():
     parser = argparse.ArgumentParser(description="Universe maintenance report")
     parser.add_argument("--as-of-date", default=datetime.now(timezone.utc).strftime("%Y-%m-%d"))
     args = parser.parse_args()
+    started = time.perf_counter()
 
     result = build_universe_maintenance(args.as_of_date)
     if "error" in result:
         logger.error(result["error"])
+        try:
+            from tools.agent_skill_telemetry import log_agent_run
+
+            log_agent_run(
+                "build_universe_maintenance",
+                f"Universe maintenance for {args.as_of_date}",
+                inputs={"as_of_date": args.as_of_date},
+                outputs={"error": result["error"]},
+                success=False,
+                error=result["error"],
+                latency_ms=(time.perf_counter() - started) * 1000,
+            )
+        except Exception:
+            pass
         sys.exit(1)
     logger.info("Universe: %d tickers, %d flagged", result["universe_size"], result["n_flagged"])
+    try:
+        from tools.agent_skill_telemetry import log_agent_run
+        from tools.record_skill_feedback import attach_outcome_verdict
+
+        stale_alert = (result.get("summary") or {}).get("price_stale_alert", 0)
+        exec_id = log_agent_run(
+            "build_universe_maintenance",
+            f"Universe maintenance for {args.as_of_date}",
+            inputs={"as_of_date": args.as_of_date},
+            outputs={"universe_size": result.get("universe_size"), "n_flagged": result.get("n_flagged")},
+            success=True,
+            latency_ms=(time.perf_counter() - started) * 1000,
+        )
+        if exec_id:
+            attach_outcome_verdict(
+                exec_id,
+                was_correct=stale_alert == 0,
+                evidence=f"price_stale_alert={stale_alert} n_flagged={result.get('n_flagged', 0)}",
+            )
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
