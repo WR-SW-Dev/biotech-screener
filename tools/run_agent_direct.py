@@ -46,9 +46,14 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# Ensure repo root is on sys.path so `tools.*` imports work from cron (no TTY,
+# no virtualenv activation, cwd may differ from PROJECT_ROOT).
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from tools.skills_logger_v2 import log_skill, record_feedback
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
 REGISTRY_PATH = PROJECT_ROOT / "agents" / "AGENT_REGISTRY.json"
 HERMES_JOB_PREFIX = "hermes-"
@@ -531,10 +536,9 @@ def main():
             error=result.get("error") if result.get("status") != "success" else None,
             environment="prod",
         )
-        # Immediate verdict: success→helpful, error→unhelpful.
-        # Deferred signal (IC print / catalyst resolution) layered on top via
-        # tools/record_skill_feedback.py once ground truth arrives.
-        if skill_exec_id:
+        # Immediate verdict: gated behind SELFIMPROVE_IMMEDIATE_VERDICT=1.
+        # Defaults off until governance window closes (selfimprove_audit_2026-06-24).
+        if skill_exec_id and os.getenv("SELFIMPROVE_IMMEDIATE_VERDICT") == "1":
             _verdict = "helpful" if result.get("status") == "success" else "unhelpful"
             record_feedback(
                 skill_exec_id,
