@@ -97,8 +97,8 @@
       "style": "venture_crossover"
     },
     {
-      "cik": "0001465837",
-      "name": "Boxer Capital",
+      "cik": "0002018299",
+      "name": "Boxer Capital Management",
       "aum_b": 1.4,
       "style": "oncology_focused"
     },
@@ -114,12 +114,7 @@
       "aum_b": 0.67,
       "style": "physician_led_fundamental"
     },
-    {
-      "cik": "0001595851",
-      "name": "Ghost Tree Capital",
-      "aum_b": 0.36,
-      "style": "healthcare_long_short"
-    },
+
     {
       "cik": "0001274413",
       "name": "Sectoral Asset Management",
@@ -214,9 +209,9 @@
     }
   ],
   "metadata": {
-    "version": "2.1",
-    "last_updated": "2026-01-28",
-    "total_elite_aum_b": 68.84,
+    "version": "2.2",
+    "last_updated": "2026-06-24",
+    "total_elite_aum_b": 68.48,
     "notes": [
       "Elite Core = primary signal source",
       "Conditional = secondary breadth signal"
