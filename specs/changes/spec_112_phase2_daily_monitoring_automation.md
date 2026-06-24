@@ -1,10 +1,10 @@
 # Spec 112: Phase 2 Daily Monitoring Automation
 
-**Status:** NEW  
+**Status:** PARTIAL — core gate verification COMPLETE (2026-06-24)  
 **Created:** 2026-06-12  
 **Author:** Hermes Phase 2 operations  
 **Severity:** MEDIUM (operational efficiency)  
-**Timeline:** Implementation through 2026-06-17 Phase 2 window
+**Timeline:** Core script shipped 2026-06-24; Phase 2 window extended to 2026-07-01
 
 ---
 
