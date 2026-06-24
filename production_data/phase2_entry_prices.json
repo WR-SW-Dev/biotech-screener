@@ -1,0 +1,27 @@
+{
+  "_schema": {
+    "version": "phase2_entry_prices.v1",
+    "description": "Authoritative Phase 2 entry prices from Robinhood average_buy_price. Sourced via MCP get_equity_positions 2026-06-24. Prior daily monitoring artifacts used screener Jun-9 reference prices (INCORRECT) instead of actual Jun-10 fills.",
+    "account": "802349084",
+    "phase2_entry_date": "2026-06-10",
+    "sourced_at": "2026-06-24T15:38:00Z",
+    "total_invested_usd": 100.13
+  },
+  "positions": {
+    "COGT":  {"avg_buy_price": 31.35,  "quantity": 0.212789},
+    "DNTH":  {"avg_buy_price": 72.10,  "quantity": 0.092928},
+    "NRIX":  {"avg_buy_price": 15.46,  "quantity": 0.430232},
+    "URGN":  {"avg_buy_price": 28.02,  "quantity": 0.237681},
+    "ALMS":  {"avg_buy_price": 20.37,  "quantity": 0.326013},
+    "SYRE":  {"avg_buy_price": 76.10,  "quantity": 0.088041},
+    "RVMD":  {"avg_buy_price": 143.76, "quantity": 0.046465},
+    "CMPS":  {"avg_buy_price": 11.30,  "quantity": 0.590265},
+    "SLDB":  {"avg_buy_price": 6.49,   "quantity": 1.028527},
+    "DRUG":  {"avg_buy_price": 63.59,  "quantity": 0.105839},
+    "STOK":  {"avg_buy_price": 28.74,  "quantity": 0.231758},
+    "PRAX":  {"avg_buy_price": 241.92, "quantity": 0.027530},
+    "TRVI":  {"avg_buy_price": 13.43,  "quantity": 0.496649},
+    "ERAS":  {"avg_buy_price": 13.27,  "quantity": 0.503396},
+    "XENE":  {"avg_buy_price": 51.95,  "quantity": 0.128578}
+  }
+}
