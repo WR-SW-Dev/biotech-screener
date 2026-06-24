@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scientific Cartography Map UX v0.2b — static disease-map generator.
+"""Scientific Cartography Map UX v0.3 — poster-style disease-map generator.
 
 Reads Sci-Cart diagnostic artifacts only. Produces self-contained HTML,
 SVG, JSON, and README for a single disease view. No server, no CDN, no
@@ -18,7 +18,7 @@ from pathlib import Path
 # Constants
 # ---------------------------------------------------------------------------
 
-_VERSION = "v0.2d"
+_VERSION = "v0.3"
 
 _FORBIDDEN_SOURCES = [
     "rankings.csv",
@@ -566,115 +566,260 @@ def render_html(map_data: dict, svg_content: str) -> str:
     meta = map_data["metadata"]
     summ = map_data["summary"]
     warnings = map_data["warnings"]
+    cells = map_data["cells"]
+    lanes = map_data["lanes"]
+
     disease = meta["disease_name"]
     ta = meta.get("therapeutic_area") or "—"
     as_of = meta.get("as_of_date", "unknown")
     generated = meta.get("generated_at_utc", "unknown")
+    mondo_html = ", ".join(meta.get("mondo_ids") or []) or "—"
+
     n_programs = summ["total_programs"]
+    raw_count = summ.get("raw_program_count", n_programs)
+    non_drug_filtered = summ.get("non_drug_filtered_count", 0)
+    deduped = summ.get("deduped_program_count", n_programs)
     stage_pct = summ["stage_coverage_pct"]
     mech_pct = summ["mechanism_coverage_pct"]
     ticker_pct = summ["ticker_coverage_pct"]
     stage_dist = summ.get("stage_distribution", {})
+    canon_merges = summ.get("canonicalization_merge_count", 0)
 
-    stage_dist_html = " | ".join(
-        f"<b>{s}</b>: {c}" for s, c in sorted(stage_dist.items(), key=lambda x: x[1], reverse=True)
+    # Lane counts for right rail
+    lane_counts = [(lane, sum(len(progs) for progs in cells[lane].values())) for lane in lanes]
+
+    def _stage_label(s: str) -> str:
+        labels = {
+            "preclinical": "Preclinical",
+            "phase1": "Phase 1",
+            "phase1/2": "Phase 1/2",
+            "phase2": "Phase 2",
+            "phase2b": "Phase 2b",
+            "phase3": "Phase 3",
+            "filed": "Filed",
+            "approved": "Approved",
+            "unknown": "Unknown stage",
+        }
+        return labels.get(s, s.title())
+
+    max_stage_count = max(stage_dist.values(), default=1)
+    stage_rows = "".join(
+        f'<tr><td class="sd-label">{_stage_label(s)}</td>'
+        f'<td class="sd-count">{c}</td>'
+        f'<td class="sd-bar"><div class="bar" style="width:{min(100, int(100 * c / max_stage_count))}%">'
+        f"</div></td></tr>"
+        for s, c in sorted(stage_dist.items(), key=lambda x: x[1], reverse=True)
     )
 
-    warning_html = ""
-    if warnings:
-        warning_html = '<div class="warning-banner">' + "".join(f"<div>⚠ {w}</div>" for w in warnings) + "</div>"
+    max_lane_count = max((c for _, c in lane_counts if c > 0), default=1)
+    lane_rows = "".join(
+        f'<tr><td class="sd-label">{_xml_escape(ln)}</td>'
+        f'<td class="sd-count">{cnt}</td>'
+        f'<td class="sd-bar"><div class="bar{"" if ln != "Unknown Mechanism" else " bar-unknown"}" '
+        f'style="width:{min(100, int(100 * cnt / max_lane_count))}%"></div></td></tr>'
+        for ln, cnt in lane_counts
+    )
 
-    mondo_html = ", ".join(meta.get("mondo_ids") or []) or "—"
+    warning_blocks = "".join(f'<div class="warning-item">&#9888; {_xml_escape(str(w))}</div>' for w in warnings)
+    warning_section = f'<div class="warning-block">{warning_blocks}</div>' if warnings else ""
 
     legend_swatches = "".join(
-        f'<span class="legend-item"><span class="legend-swatch" style="background:{color}"></span>{name}</span>'
+        f'<span class="ls"><span class="lsw" style="background:{color}"></span>{name}</span>'
         for name, color in _MODALITY_COLORS.items()
+    )
+
+    unknown_count = sum(len(progs) for progs in cells.get("Unknown Mechanism", {}).values())
+    named_count = n_programs - unknown_count
+
+    post_d3 = raw_count - non_drug_filtered
+    pipeline_rows = (
+        f'<div class="inv-row"><span>Raw CT.gov records</span><b>{raw_count:,}</b></div>'
+        + (
+            f'<div class="inv-row filtered"><span>Non-drug filtered (D3)</span>' f"<b>−{non_drug_filtered}</b></div>"
+            if non_drug_filtered
+            else ""
+        )
+        + (
+            f'<div class="inv-row filtered"><span>Deduplicated (D1)</span>' f"<b>{deduped:,} unique</b></div>"
+            if deduped != post_d3
+            else f'<div class="inv-row"><span>After dedup (D1)</span><b>{deduped:,}</b></div>'
+        )
+        + (
+            f'<div class="inv-row filtered"><span>Canon. merges</span>' f"<b>{canon_merges} groups</b></div>"
+            if canon_merges
+            else ""
+        )
     )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Sci-Cart Map — {disease}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scientific Cartography — {_xml_escape(disease)}</title>
 <style>
-body {{ font-family: Arial, Helvetica, sans-serif; margin: 0; background: #f5f5f5; color: #222; }}
-.governance-banner {{
-  background: #2c3e50; color: #ecf0f1; padding: 10px 20px;
-  font-size: 12px; letter-spacing: 0.03em;
-}}
-.governance-banner b {{ color: #e74c3c; }}
-.header {{ background: #fff; border-bottom: 2px solid #2c3e50; padding: 16px 20px; }}
-.header h1 {{ margin: 0 0 6px; font-size: 22px; color: #2c3e50; }}
-.header .meta {{ font-size: 12px; color: #555; }}
-.header .meta span {{ margin-right: 16px; }}
-.warning-banner {{
-  background: #fff3cd; border-left: 4px solid #f0ad4e;
-  padding: 8px 16px; margin: 12px 20px; font-size: 12px; color: #856404;
-}}
-.stats-row {{
-  display: flex; gap: 16px; padding: 12px 20px;
-  background: #fff; border-bottom: 1px solid #e0e0e0;
-  font-size: 12px;
-}}
-.stat {{ background: #f0f4f8; border-radius: 4px; padding: 6px 12px; }}
-.stat b {{ color: #2c3e50; }}
-.map-container {{ padding: 20px; overflow-x: auto; }}
-.legend {{ padding: 12px 20px; background: #fff; border-top: 1px solid #e0e0e0;
-  font-size: 11px; color: #555; }}
-.legend-item {{ display: inline-block; margin-right: 14px; }}
-.legend-swatch {{ display: inline-block; width: 12px; height: 12px;
-  border-radius: 2px; vertical-align: middle; margin-right: 4px; }}
-.footer {{ padding: 10px 20px; font-size: 11px; color: #888; border-top: 1px solid #e0e0e0; }}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:Arial,Helvetica,sans-serif;font-size:13px;background:#eef0f3;color:#1a252f}}
+/* Governance banner */
+.gov-banner{{background:#1a252f;color:#aab7c4;padding:7px 20px;font-size:11px;letter-spacing:.04em;display:flex;align-items:center;gap:16px}}
+.gov-banner b{{color:#e74c3c;font-size:12px}}
+/* Poster header */
+.poster-header{{background:linear-gradient(135deg,#2c3e50 0%,#1a252f 100%);color:#fff;padding:18px 28px 16px}}
+.poster-header .sc-label{{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7f8c8d;margin-bottom:6px}}
+.poster-header h1{{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:10px}}
+.poster-header .header-meta{{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:11px;color:#95a5a6}}
+.poster-header .header-meta span b{{color:#bdc3c7}}
+/* Three-column body */
+.poster-body{{display:flex;align-items:flex-start;min-height:600px}}
+/* Left rail */
+.left-rail{{width:232px;flex-shrink:0;background:#fff;border-right:1px solid #dde1e7;padding:16px;display:flex;flex-direction:column;gap:16px}}
+.rail-section h3{{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#7f8c8d;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #eef0f3}}
+.inv-row{{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;padding:3px 0;border-bottom:1px solid #f5f6f7}}
+.inv-row.filtered{{color:#888}}
+.inv-row b{{font-size:13px;color:#2c3e50}}
+.cov-grid{{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}}
+.cov-cell{{background:#f5f7fa;border-radius:4px;padding:6px 8px;text-align:center}}
+.cov-cell .cov-val{{font-size:18px;font-weight:800;color:#2c3e50;line-height:1}}
+.cov-cell .cov-lbl{{font-size:9px;color:#7f8c8d;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}}
+.caveat-item{{font-size:11px;color:#666;padding:3px 0;border-bottom:1px dotted #eee;line-height:1.4}}
+.provenance-item{{font-size:11px;color:#555;padding:2px 0}}
+/* Center panel */
+.center-panel{{flex:1;min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px}}
+.warning-block{{background:#fff8e1;border-left:3px solid #f0ad4e;padding:8px 12px;border-radius:0 4px 4px 0}}
+.warning-item{{font-size:11px;color:#856404;padding:2px 0;line-height:1.4}}
+.map-viewport{{overflow-x:auto;background:#fff;border:1px solid #dde1e7;border-radius:4px;padding:8px}}
+.legend-strip{{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:10px;color:#555;background:#fff;border:1px solid #dde1e7;border-radius:4px;padding:8px 12px}}
+.ls{{display:inline-flex;align-items:center;gap:4px}}
+.lsw{{display:inline-block;width:10px;height:10px;border-radius:2px;flex-shrink:0}}
+.legend-note{{font-size:10px;color:#888;margin-left:auto}}
+/* Right rail */
+.right-rail{{width:232px;flex-shrink:0;background:#fff;border-left:1px solid #dde1e7;padding:16px;display:flex;flex-direction:column;gap:16px}}
+.sd-table{{width:100%;border-collapse:collapse;font-size:11px}}
+.sd-table td{{padding:3px 0;vertical-align:middle}}
+.sd-label{{color:#2c3e50;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}}
+.sd-count{{color:#7f8c8d;width:28px;text-align:right;padding-right:6px;white-space:nowrap}}
+.sd-bar{{width:60px}}
+.bar{{height:8px;background:#4a90d9;border-radius:2px;min-width:2px}}
+.bar-unknown{{background:#bdc3c7}}
+.gap-row{{font-size:11px;padding:3px 0;display:flex;justify-content:space-between;border-bottom:1px solid #f5f6f7}}
+.gap-row b{{color:#2c3e50}}
+/* Footer */
+.poster-footer{{background:#f8f9fa;border-top:2px solid #dde1e7;padding:10px 20px;font-size:10px;color:#888;display:flex;flex-wrap:wrap;gap:4px 20px}}
+.poster-footer b{{color:#555}}
 </style>
 </head>
 <body>
-<div class="governance-banner">
-  <b>DIAGNOSTIC ONLY — NOT AN INVESTMENT RECOMMENDATION.</b>
-  Scientific Cartography {_VERSION}. Read-only. No ranking, selection, or scoring.
-  Frozen production model. No live data.
+
+<div class="gov-banner">
+  <b>DIAGNOSTIC ONLY — NOT AN INVESTMENT RECOMMENDATION</b>
+  <span>Read-only · No ranking, selection, scoring, or production wiring · Frozen model · No live data</span>
+  <span style="margin-left:auto">Scientific Cartography {_VERSION}</span>
 </div>
 
-<div class="header">
-  <h1>Disease Map — {disease}</h1>
-  <div class="meta">
-    <span><b>Therapeutic Area:</b> {ta}</span>
-    <span><b>MONDO IDs:</b> {mondo_html}</span>
+<header class="poster-header">
+  <div class="sc-label">Scientific Cartography · Disease Landscape Map</div>
+  <h1>{_xml_escape(disease.title())}</h1>
+  <div class="header-meta">
+    <span><b>Therapeutic area:</b> {_xml_escape(ta)}</span>
+    <span><b>MONDO:</b> {mondo_html}</span>
     <span><b>As of:</b> {as_of}</span>
-    <span><b>Generated:</b> {generated}</span>
+    <span><b>Artifact source:</b> CT.gov diagnostic pipeline</span>
   </div>
+</header>
+
+<div class="poster-body">
+
+  <aside class="left-rail">
+    <section class="rail-section">
+      <h3>Pipeline</h3>
+      {pipeline_rows}
+    </section>
+
+    <section class="rail-section">
+      <h3>Coverage</h3>
+      <div class="cov-grid">
+        <div class="cov-cell">
+          <div class="cov-val">{stage_pct}%</div>
+          <div class="cov-lbl">Stage</div>
+        </div>
+        <div class="cov-cell">
+          <div class="cov-val">{mech_pct}%</div>
+          <div class="cov-lbl">Mechanism</div>
+        </div>
+        <div class="cov-cell">
+          <div class="cov-val">{ticker_pct}%</div>
+          <div class="cov-lbl">Ticker</div>
+        </div>
+        <div class="cov-cell">
+          <div class="cov-val">{len(lanes)}</div>
+          <div class="cov-lbl">Lanes</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rail-section">
+      <h3>Data Provenance</h3>
+      <div class="provenance-item">Source: CT.gov trial records</div>
+      <div class="provenance-item">No rankings.csv · No portfolio · No scores</div>
+      <div class="provenance-item">As of: {as_of}</div>
+    </section>
+
+    <section class="rail-section">
+      <h3>Caveats</h3>
+      <div class="caveat-item">Mechanism coverage sparse — Unknown lane expected to dominate.</div>
+      <div class="caveat-item">Ticker linkage requires authorized snapshot input.</div>
+      <div class="caveat-item">Stage = highest observed in CT.gov; may lag reality.</div>
+      <div class="caveat-item">Combination products conservatively left as Unknown Mechanism.</div>
+    </section>
+  </aside>
+
+  <main class="center-panel">
+    {warning_section}
+    <div class="map-viewport">
+      {svg_content}
+    </div>
+    <div class="legend-strip">
+      <b style="font-size:10px;color:#555">Modality:</b>
+      {legend_swatches}
+      <span class="ls"><span class="lsw" style="background:{_DEFAULT_COLOR}"></span>unknown</span>
+      <span class="legend-note">Opacity = confidence · Thick border = ticker linked</span>
+    </div>
+  </main>
+
+  <aside class="right-rail">
+    <section class="rail-section">
+      <h3>Stage Distribution</h3>
+      <table class="sd-table">
+        {stage_rows}
+      </table>
+    </section>
+
+    <section class="rail-section">
+      <h3>Mechanism Lanes</h3>
+      <table class="sd-table">
+        {lane_rows}
+      </table>
+    </section>
+
+    <section class="rail-section">
+      <h3>Coverage Gaps</h3>
+      <div class="gap-row"><span>Unknown mechanism</span><b>{unknown_count}</b></div>
+      <div class="gap-row"><span>Named-lane programs</span><b>{named_count}</b></div>
+      <div class="gap-row"><span>Unlinked tickers</span><b>{n_programs - int(n_programs * ticker_pct / 100)}</b></div>
+      <div class="gap-row"><span>Unknown stage</span><b>{stage_dist.get("unknown", 0)}</b></div>
+    </section>
+  </aside>
+
 </div>
 
-{warning_html}
+<footer class="poster-footer">
+  <span><b>Source:</b> Scientific Cartography diagnostic artifacts only</span>
+  <span><b>Generator:</b> {_VERSION} · {generated}</span>
+  <span><b>Governance:</b> READ_ONLY_DIAGNOSTIC · no production wiring · frozen model</span>
+  <span><b>Forbidden sources:</b> rankings.csv, portfolio_positions.csv, screen_output.json — not read</span>
+  <span>DIAGNOSTIC ONLY — NOT AN INVESTMENT RECOMMENDATION</span>
+</footer>
 
-<div class="stats-row">
-  <div class="stat"><b>Programs:</b> {n_programs:,}</div>
-  <div class="stat"><b>Stage coverage:</b> {stage_pct}%</div>
-  <div class="stat"><b>Mechanism coverage:</b> {mech_pct}%</div>
-  <div class="stat"><b>Ticker linkage:</b> {ticker_pct}%</div>
-  <div class="stat" style="flex:1"><b>Stage distribution:</b> {stage_dist_html}</div>
-</div>
-
-<div class="map-container">
-{svg_content}
-</div>
-
-<div class="legend">
-  <b>Modality colors:</b>
-  {legend_swatches}
-  <span class="legend-item"><span class="legend-swatch" style="background:{_DEFAULT_COLOR}"></span>unknown</span>
-  &nbsp;&nbsp;
-  <b>Opacity:</b> higher = more confident
-  &nbsp;
-  <b>Border:</b> solid thick = has ticker; thin = no ticker linkage
-</div>
-
-<div class="footer">
-  Scientific Cartography {_VERSION} &nbsp;|&nbsp;
-  Source: diagnostic artifacts only &nbsp;|&nbsp;
-  {generated}
-  &nbsp;|&nbsp;
-  DIAGNOSTIC ONLY — NOT AN INVESTMENT RECOMMENDATION
-</div>
 </body>
 </html>"""
 

@@ -370,6 +370,107 @@ class TestRenderHTML:
 
 
 # ---------------------------------------------------------------------------
+# 5b. Poster layout (v0.3)
+# ---------------------------------------------------------------------------
+
+
+class TestRenderHTMLV03Poster:
+    """Tests for v0.3 poster-style layout sections."""
+
+    def _make_html(self, programs=None, disease="test disease"):
+        if programs is None:
+            programs = [
+                _make_program("DrugA", clinical_stage="phase2", mechanism_class="SGLT2 inhibitor"),
+                _make_program("DrugB", clinical_stage="phase3", mechanism_class=None),
+                _make_program("DrugC", clinical_stage="approved", therapeutic_area="Metabolic"),
+            ]
+        md = build_map_data(programs, disease, {})
+        svg = render_svg(md)
+        return render_html(md, svg)
+
+    def test_poster_header_present(self):
+        assert "poster-header" in self._make_html()
+
+    def test_disease_name_in_header(self):
+        assert "Type 2 Diabetes Mellitus" in self._make_html(disease="Type 2 Diabetes Mellitus")
+
+    def test_left_rail_present(self):
+        assert "left-rail" in self._make_html()
+
+    def test_center_panel_present(self):
+        assert "center-panel" in self._make_html()
+
+    def test_right_rail_present(self):
+        assert "right-rail" in self._make_html()
+
+    def test_poster_footer_present(self):
+        assert "poster-footer" in self._make_html()
+
+    def test_stage_distribution_in_right_rail(self):
+        programs = [
+            _make_program("A", clinical_stage="phase3"),
+            _make_program("B", clinical_stage="approved"),
+        ]
+        html = self._make_html(programs=programs)
+        assert "Phase 3" in html
+        assert "Approved" in html
+
+    def test_mechanism_lanes_in_right_rail(self):
+        programs = [
+            _make_program("A", mechanism_class="SGLT2 inhibitor"),
+            _make_program("B", mechanism_class="Biguanide"),
+        ]
+        html = self._make_html(programs=programs)
+        assert "SGLT2 inhibitor" in html
+        assert "Biguanide" in html
+
+    def test_coverage_stats_in_left_rail(self):
+        html = self._make_html()
+        assert "Coverage" in html
+        assert "Stage" in html
+        assert "Mechanism" in html
+
+    def test_pipeline_stats_in_left_rail(self):
+        assert "Pipeline" in self._make_html()
+
+    def test_caveats_section_in_left_rail(self):
+        assert "Caveats" in self._make_html()
+
+    def test_data_provenance_in_left_rail(self):
+        html = self._make_html()
+        assert "Provenance" in html or "provenance" in html
+
+    def test_governance_banner_still_present(self):
+        html = self._make_html()
+        assert "gov-banner" in html
+        assert "DIAGNOSTIC ONLY" in html
+        assert "NOT AN INVESTMENT RECOMMENDATION" in html
+
+    def test_no_cdn_in_poster(self):
+        html = self._make_html()
+        for cdn in ["cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com"]:
+            assert cdn not in html
+
+    def test_no_action_language_in_poster(self):
+        html = self._make_html()
+        for phrase in ["buy ", "sell ", "final_score", " sizing", "trade now"]:
+            assert phrase.lower() not in html.lower()
+
+    def test_svg_embedded_in_center_panel(self):
+        html = self._make_html()
+        assert "map-viewport" in html
+        assert "<svg" in html
+
+    def test_legend_in_center_panel(self):
+        assert "legend-strip" in self._make_html()
+
+    def test_warnings_appear_when_sparse_mechanism(self):
+        programs = [_make_program(f"X{i}") for i in range(20)]
+        html = self._make_html(programs=programs)
+        assert "warning-block" in html or "warning" in html.lower()
+
+
+# ---------------------------------------------------------------------------
 # 6. Full generation
 # ---------------------------------------------------------------------------
 
