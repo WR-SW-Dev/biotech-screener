@@ -1351,3 +1351,34 @@ LangGraph node crashes with AttributeError/TypeError on path operations?
     runtime — check docs/governance/runtime_boundary_map.md before applying
     Hermes/OpenClaw diagnostic patterns.
 ```
+
+XBI targeted re-fetch crashes with "unconverted data remains: T00:00:00"?
+  → Class M. datetime.isoformat() produces ISO 8601 with time component
+    (e.g. 2026-06-19T00:00:00) that yfinance history() cannot parse as a date.
+    Fix: use strftime("%Y-%m-%d") for all date strings passed to yfinance.
+    Applies anywhere a datetime object (not date) is passed to yf API calls.
+    Confirmed 2026-06-24 (399e674c).
+
+Delisted ticker still appears in screen output after marking status="delisted"?
+  → Class N. Multi-path universe leak. universe.json has ONE status field but
+    MULTIPLE universe loaders: refresh_prices(), run_screen.py, run_screen_from_bundle.py,
+    check_market_data_coverage(), _compute_market_data_refresh(). Fixing one loader
+    is not enough — audit all consumers. Filter: skip entries where status=="delisted".
+    Confirmed 2026-06-24 (merge 5b3225696): TERN still appeared in screen after
+    refresh_prices() was fixed but before run_screen.py was patched.
+
+Production step 1.5 cache warm times out (1800s) on every run?
+  → Class O. argparse CLI default masking function-level default. run_daily_production.py
+    had two defaults for --warm-sources: function signature (essential sources only) and
+    CLI argparse default (included euctr/ctis/isrctn/merged_trials). argparse wins →
+    slow registries block production. Fix: align CLI default to function default (essential
+    sources only); move slow registries to cron_data_refresh.sh with per-source timeouts.
+    Confirmed 2026-06-24 (ebb33da5).
+
+agents_direct cron fires 42× ModuleNotFoundError: No module named 'tools'?
+  → Class P. Cron sys.path isolation. `from tools.skills_logger_v2 import ...` resolves
+    in interactive shell (PROJECT_ROOT in sys.path via virtualenv or PYTHONPATH) but
+    fails in cron (no TTY, no activation, cwd may differ). Fix: insert PROJECT_ROOT onto
+    sys.path before any repo-relative imports. Pattern: set PROJECT_ROOT = Path(__file__).
+    resolve().parent.parent, then sys.path.insert(0, str(PROJECT_ROOT)) before imports.
+    Confirmed 2026-06-24 (735ac3f7).

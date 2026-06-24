@@ -5,6 +5,29 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-24 (afternoon) — Pipeline recovery: XBI re-fetch, delisted universe, cache warm, cron import, selfimprove FENCE
+
+### Patterns added to openclaw-data-pipeline-debug (Classes M–P)
+
+- **Class M** — `datetime.isoformat()` → yfinance parse failure. XBI re-fetch crashed with
+  "unconverted data remains: T00:00:00"; fix: `strftime("%Y-%m-%d")`. (399e674c)
+- **Class N** — Multi-path universe leak. Delisted ticker appeared in screen after fixing one
+  loader; must patch all consumers: refresh_prices, run_screen.py, run_screen_from_bundle.py,
+  coverage ratio denominators. (merge 5b3225696)
+- **Class O** — argparse CLI default masking function default. `--warm-sources` CLI default
+  included slow registries (EUCTR/CTIS/ISRCTN), overriding the function's essential-only
+  default. Production timed out 1800s on every run. (ebb33da5)
+- **Class P** — Cron sys.path isolation. `from tools.*` import fails in cron (no virtualenv
+  activation, no PYTHONPATH). Fix: insert PROJECT_ROOT onto sys.path before repo-relative
+  imports. Fired 42× in agents.log before fix. (735ac3f7)
+
+### Governance
+- selfimprove FENCE applied: `record_feedback()` gated behind `SELFIMPROVE_IMMEDIATE_VERDICT=1`;
+  `pattern_to_skillpatch.py` exits 0 unless `SELFIMPROVE_GATES_MET=1`. (735ac3f7)
+- Memo: artifacts/governance/selfimprove_audit_2026-06-24.md
+
+---
+
 ## 2026-06-24 (Shadow monitor immutability + financial periodicity)
 
 ### Git activity (past 24h)
