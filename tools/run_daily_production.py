@@ -3794,6 +3794,8 @@ def check_market_data_coverage(
     mkt_tickers = {r["ticker"] for r in records if isinstance(r, dict) and r.get("ticker")}
     uni_tickers = set()
     for entry in universe:
+        if isinstance(entry, dict) and entry.get("status") == "delisted":
+            continue  # exclude delisted tickers from coverage denominator
         t = entry.get("ticker") if isinstance(entry, dict) else str(entry)
         if t and not t.startswith("_"):  # exclude synthetic like _XBI_BENCHMARK_
             uni_tickers.add(t)
@@ -3886,6 +3888,8 @@ def _compute_market_data_refresh(
                 universe = json.load(f)
             uni_tickers = set()
             for entry in universe:
+                if isinstance(entry, dict) and entry.get("status") == "delisted":
+                    continue  # exclude delisted tickers from coverage denominator
                 t = entry.get("ticker") if isinstance(entry, dict) else str(entry)
                 if t and not t.startswith("_"):
                     uni_tickers.add(t)
@@ -6654,11 +6658,13 @@ def main():
     )
     parser.add_argument(
         "--warm-sources",
-        default="sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials",
+        default="sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory",
         help=(
             "Comma-separated sources passed to warm_caches.py in step 1.5 "
-            "(default: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials). "
-            "Use empty string to skip."
+            "(default: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory). "
+            "Slow registry sources (euctr, ctis, isrctn, merged_trials) are intentionally "
+            "excluded — they run in cron_data_refresh.sh (14:00 ET) to avoid blocking "
+            "the production pipeline. Use empty string to skip."
         ),
     )
     parser.add_argument(

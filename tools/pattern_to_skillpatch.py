@@ -20,9 +20,21 @@ Usage (safe to run any time — only reads LEARNINGS.md, writes to a draft dir):
 """
 
 import argparse
+import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+# FENCE: staged tool — not active until containment gates clear.
+# Set SELFIMPROVE_GATES_MET=1 to enable (selfimprove_audit_2026-06-24).
+if os.getenv("SELFIMPROVE_GATES_MET") != "1":
+    print(
+        "pattern_to_skillpatch: SELFIMPROVE_GATES_MET not set — tool is staged, not active. "
+        "Set SELFIMPROVE_GATES_MET=1 to run.",
+        file=sys.stderr,
+    )
+    sys.exit(0)
 
 # Skills that MUST NOT be auto-patched — they encode production behavior and
 # require a governance Spec, not a learnings-driven edit (self-improving Rule 10).
