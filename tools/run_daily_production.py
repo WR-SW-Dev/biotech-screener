@@ -6654,11 +6654,13 @@ def main():
     )
     parser.add_argument(
         "--warm-sources",
-        default="sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials",
+        default="sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory",
         help=(
             "Comma-separated sources passed to warm_caches.py in step 1.5 "
-            "(default: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials). "
-            "Use empty string to skip."
+            "(default: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory). "
+            "Slow registry sources (euctr, ctis, isrctn, merged_trials) are intentionally "
+            "excluded — they run in cron_data_refresh.sh (14:00 ET) to avoid blocking "
+            "the production pipeline. Use empty string to skip."
         ),
     )
     parser.add_argument(

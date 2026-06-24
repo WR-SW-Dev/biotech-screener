@@ -9,6 +9,10 @@
 #   sec_8k           Warm SEC 8-K catalyst cache (cache/sec/8k_catalysts/)
 #   fda_adcom        Warm FDA AdCom calendar cache (cache/fda/)
 #   fda_regulatory   Warm FDA regulatory notices cache (cache/fda/)
+#   euctr            Warm EUCTR trial cache (~20 min; NOT in production pipeline)
+#   ctis             Warm CTIS trial cache (~17 min; NOT in production pipeline)
+#   isrctn           Warm ISRCTN trial cache (~17 min; NOT in production pipeline)
+#   merged_trials    Rebuild merged trial cache from ctgov+euctr+ctis+isrctn
 #   pdufa_extracted  Build extracted PDUFA sidecar (Phase 1, review-only)
 #   herald           Fetch + classify company press releases
 #   firecrawl        Research-only: search biotech news via Firecrawl (research-only, no alpha)
@@ -16,6 +20,11 @@
 #   universe         Run universe maintenance health check
 #   status           Write logs/data_refresh_status_{date}.json summary
 #   all              Run all stages (default)
+#
+# NOTE: euctr/ctis/isrctn/merged_trials are intentionally kept here and NOT in
+# cron_daily_production.sh — they take 15-25 min each and would cause the
+# production pipeline (step 1.5) to time out. run_daily_production.py defaults
+# to essential sources only: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory.
 #
 # Cron schedule:
 #   0 14 * * 1-5  (2:00 PM ET weekdays — 2.5 hours before production)
@@ -85,6 +94,62 @@ stage_fda_regulatory() {
         log "FDA regulatory warm failed (exit $rc) — continuing"
     else
         log "FDA regulatory warm done"
+    fi
+}
+
+# --- Slow international trial registries ---
+# EUCTR/CTIS/ISRCTN each take 15-25 min. They live here (not in
+# cron_daily_production.sh / run_daily_production.py step 1.5) so they do NOT
+# block the production pipeline. merged_trials depends on all three being fresh.
+stage_euctr() {
+    log "EUCTR warm cache (sources: euctr, timeout 1500s)..."
+    local rc=0
+    timeout 1500 $PYTHON warm_caches.py --sources euctr --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
+    if [ $rc -eq 124 ]; then
+        log "EUCTR warm TIMED OUT after 1500s — partial cache may be present"
+    elif [ $rc -ne 0 ]; then
+        log "EUCTR warm failed (exit $rc) — continuing"
+    else
+        log "EUCTR warm done"
+    fi
+}
+
+stage_ctis() {
+    log "CTIS warm cache (sources: ctis, timeout 1200s)..."
+    local rc=0
+    timeout 1200 $PYTHON warm_caches.py --sources ctis --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
+    if [ $rc -eq 124 ]; then
+        log "CTIS warm TIMED OUT after 1200s — partial cache may be present"
+    elif [ $rc -ne 0 ]; then
+        log "CTIS warm failed (exit $rc) — continuing"
+    else
+        log "CTIS warm done"
+    fi
+}
+
+stage_isrctn() {
+    log "ISRCTN warm cache (sources: isrctn, timeout 1200s)..."
+    local rc=0
+    timeout 1200 $PYTHON warm_caches.py --sources isrctn --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
+    if [ $rc -eq 124 ]; then
+        log "ISRCTN warm TIMED OUT after 1200s — partial cache may be present"
+    elif [ $rc -ne 0 ]; then
+        log "ISRCTN warm failed (exit $rc) — continuing"
+    else
+        log "ISRCTN warm done"
+    fi
+}
+
+stage_merged_trials() {
+    log "Merged-trials rebuild (sources: merged_trials, timeout 300s)..."
+    local rc=0
+    timeout 300 $PYTHON warm_caches.py --sources merged_trials --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
+    if [ $rc -eq 124 ]; then
+        log "merged_trials rebuild TIMED OUT after 300s"
+    elif [ $rc -ne 0 ]; then
+        log "merged_trials rebuild failed (exit $rc) — continuing"
+    else
+        log "merged_trials rebuild done"
     fi
 }
 
@@ -292,6 +357,18 @@ case "$MODE" in
     pdufa_extracted)
         stage_pdufa_extracted
         ;;
+    euctr)
+        stage_euctr
+        ;;
+    ctis)
+        stage_ctis
+        ;;
+    isrctn)
+        stage_isrctn
+        ;;
+    merged_trials)
+        stage_merged_trials
+        ;;
     herald)
         stage_herald
         ;;
@@ -312,6 +389,14 @@ case "$MODE" in
         stage_sec_8k
         stage_fda_adcom
         stage_fda_regulatory
+        # Slow international registries run here (not in production pipeline) to
+        # avoid blocking step 1.5 of run_daily_production.py. Each has its own
+        # timeout; failures are non-fatal and logged. merged_trials runs last as
+        # it depends on euctr/ctis/isrctn caches being present.
+        stage_euctr
+        stage_ctis
+        stage_isrctn
+        stage_merged_trials
         stage_pdufa_extracted
         stage_herald
         stage_firecrawl
@@ -320,7 +405,7 @@ case "$MODE" in
         stage_status
         ;;
     *)
-        echo "Usage: $0 {ctgov|sec_8k|fda_adcom|fda_regulatory|pdufa_extracted|herald|firecrawl|iv|universe|status|all}"
+        echo "Usage: $0 {ctgov|sec_8k|fda_adcom|fda_regulatory|euctr|ctis|isrctn|merged_trials|pdufa_extracted|herald|firecrawl|iv|universe|status|all}"
         exit 1
         ;;
 esac
