@@ -62,6 +62,9 @@ artifacts/*
 !artifacts/audit/
 artifacts/audit/*
 !artifacts/audit/*.md
+!artifacts/spec100/
+artifacts/spec100/*
+!artifacts/spec100/*.md
 !artifacts/**/*.md
 !artifacts/**/*.txt
 # Allow trading execution logs (real order IDs and audit trail)
