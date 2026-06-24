@@ -52,9 +52,9 @@ Thresholds sourced from `FEATURE_COVERAGE_REQUIREMENTS` (single source of truth)
 ### Active / Blocked
 | Spec | Title | Status | Blocker |
 |------|-------|--------|---------|
-| 094 | Selector-only comparator | RANKER_UNPROVEN | Rerun target 2026-05-27 |
+| 094 | Selector-only comparator | RANKER_UNPROVEN | Blocked by scoped freeze |
 | 095 | Evaluation scope (IC tooling gap) | CURRENT_TOOLS_CONFLATED | Blocks ranker IC claims |
-| 100 | Ranker IC tooling correction | Spec written, no impl | Architecture freeze (~May 26) |
+| 100 | Ranker IC tooling correction | Spec written, no impl | Blocked by scoped freeze |
 | 104 | Insider diagnostic stabilization | MEASURED | Isolation guard (R4a) |
 | 105 | Expectation layer coverage verification | CODE-CLOSED | Pending live QA |
 | 102 | Historical backfill for expectation research | DRAFT | — |

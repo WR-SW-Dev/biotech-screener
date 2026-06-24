@@ -34,6 +34,7 @@ under the Spec 055 statistical bar (FM, bootstrap, FDR, LOSO).
 8. **event_type_score is the only 5/5 Checklist v2 pass.** Use as overlay/diagnostic/sizer only — does NOT improve B6 bundle.
 9. **insider_exec and aact_execution downgraded.** Both 1/5 under Checklist v2. Shadow only.
 10. **Forward shadow accumulating daily** (7 arms in coinvest_shadow_tracker v2, wired into run_daily.py).
+11. **score_rank_pct IC HEALTHY as of 2026-06-24**: mean_ic = +0.0432, hit_rate = 54.3%, N = 35 dates. This cleared the Path C IC gate and Day-5 Phase 2 checkpoint. Next IC review: 2026-07-01.
 
 ---
 

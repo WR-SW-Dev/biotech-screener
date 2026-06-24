@@ -8,7 +8,7 @@ metadata:
 
 # Operational State
 
-**Last updated:** 2026-06-25  
+**Last updated:** 2026-06-24  
 **Update cadence:** weekly or upon governance-state change  
 **Authority:** operational status snapshot only; not architectural specification  
 **Staleness risk:** MEDIUM (reference `governance.md` for timeless process)
@@ -28,14 +28,12 @@ metadata:
 
 ## Architecture Freeze Status
 
-**SCOPED PRODUCTION MODEL FREEZE — effective 2026-06-20 (INC-2026-06-20-AUTOPUSH)**
+**SCOPED PRODUCTION MODEL FREEZE — LIFTED 2026-06-24 (operator clearance)**
 
-- **Frozen:** ranker, selector, sizing logic, `final_score`, portfolio/snapshot files, gate configs
-- **Safe lanes:** expectation field verification, Event EV shadow, Sci-Cart artifacts, observability/diagnostics, Hermes read-only queries
-- h20d checkpoint has passed; original v1.14.0 structural freeze superseded by the scoped freeze above
+- **Lifted:** 2026-06-24. Operator explicitly authorized freeze lift to unblock Spec 100 (ranker IC tooling correction).
+- **Was frozen:** ranker, selector, sizing logic, `final_score`, portfolio/snapshot files, gate configs (effective 2026-06-20, INC-2026-06-20-AUTOPUSH)
 - `ranker_active_contract.py` (branch `hygiene/ranker-active-contract-2026-04-30`) remains deferred
-- Spec 100 (ranker IC tooling): **IMPLEMENTED** (`measure_final_score_ic_spec100.py`); `final_score` IC interpretation deferred until host battery + freeze lift
-- **Lift condition:** explicit operator clearance — `docs/governance/FREEZE_LIFT_FORWARD_EVIDENCE_PACKAGE_2026_06_25.md`
+- **First post-freeze priority:** Spec 100 — correct ranker IC tooling to measure `final_score` (not `composite_score`); all prior ranker IC claims are non-authoritative until this runs
 
 ---
 
@@ -74,29 +72,43 @@ metadata:
 
 ## Forward Shadow & IC Status
 
-*Updated: 2026-06-25*
+*Updated: 2026-06-24*
 
-- **Forward shadow**: accumulating since 2026-04-03. Calendar time sufficient for IC refresh; refresh gated on explicit operator freeze lift.
-- **Evidence package**: `bash tools/run_forward_evidence_package.sh` (requires `FREEZE_LIFT_ACK=1` to write). Memo: `docs/governance/FREEZE_LIFT_FORWARD_EVIDENCE_PACKAGE_2026_06_25.md`
-- **Path C close**: retrospective decision overdue (window 2026-05-28 → 2026-06-03); `python3 tools/path_c_window_close_decision.py --write`
-- **coinvest_score_z IC** (last measured 2026-05-13): Pooled mean IC = -0.031 (14 dates, 28.6% hit rate). Pre-cohort (clean): -0.051 (11.1% hit). Post-cohort (contaminated): -0.008 (60.0% hit). Verdict: OBSERVE. Refresh pending freeze lift.
-- **Ranker IC**: UNMEASURED on host until research battery runs. Spec 100 tooling measures `final_score` (not composite_score). Prior composite_score IC claims invalidated (Spec 095).
+- **Forward shadow**: accumulating since 2026-04-03. Enough calendar/trading time has elapsed for IC refresh; gated on explicit operator freeze lift.
+- **score_rank_pct IC** (weekly sweep 2026-06-24): mean_ic = **+0.0432**, hit_rate = 54.3%, N = 35 dates. Verdict: **HEALTHY**. This cleared the Path C IC gate and the Day-5 IC checkpoint.
+- **Path C**: FORMALLY CLOSED 2026-06-24. IC gate met (mean_ic +0.0432 > +0.03). Catalyst-timing override policy remains in production weights; no reversion required. Transition to Path A durable gates.
+- **IC checkpoint (Phase 2)**: Extended to 2026-07-01 (coincides with h20d re-eval gate). Next formal IC review: 2026-07-01. Early-review trigger: score_rank_pct mean_ic drops below 0.00 in any intervening daily snapshot.
+- **coinvest_score_z IC** (last measured 2026-05-13): Pooled mean IC = -0.031 (14 dates). Refresh pending freeze lift.
+- **Ranker IC**: UNMEASURED. Existing tools conflate composite_score with final_score (Spec 095). All prior ranker IC claims remain non-authoritative until Spec 100 reviewed.
 - **inst_delta_z**: zeroed in selector since 2026-05-04. Active in ranker (NW-t = +3.32). Reinstatement requires IC recovery evidence.
-- **PIT/backtest research (2026-06-22)**: Autonomous PIT/backtest research was quarantined on 2026-06-22 (PR #379) and is **not accepted evidence**. Do not cite performance numbers or use outputs for model decisions until manually reviewed and explicitly accepted by operator.
+- **PIT/backtest research (2026-06-22)**: Autonomous PIT/backtest research quarantined (PR #379). Not accepted evidence. Do not cite for model decisions without explicit operator acceptance.
+
+## h20d Re-Evaluation Gate
+
+*Due: 2026-07-01*
+
+- Override granted 2026-05-26 (OPTION_B_OVERRIDE_2026_05_26) despite failed 13F Jaccard (0.463).
+- Current metrics (2026-06-23): Filing coverage 100% ✓, signal coverage 85.22% ✓, Top-30 Jaccard 0.875 ✓. All observable metrics favorable.
+- Q1 2026 13F data not yet promoted to production (quarantine script deferred). Run after first post-promotion snapshot:
+  ```bash
+  python3 tools/check_13f_cohort_quarantine.py \
+      --pre-date <last-pre-promo> --post-date <first-post-promo>
+  ```
+- Override posture: **MAINTAINED** pending script confirmation.
+- Hard gate: 2026-07-01. Failure triggers: Jaccard < 0.40 or coverage drop ≥ 10pp.
 
 **Sequential gate (post-freeze):**
-1. Explicit operator freeze lift — document in `docs/governance/FREEZE_LIFT_FORWARD_EVIDENCE_PACKAGE_2026_06_25.md`
-2. `FREEZE_LIFT_ACK=1 bash tools/run_forward_evidence_package.sh --write`
-3. Path C retrospective close artifact reviewed
-4. Warm Q2 13F cache via `tools/warm_13f_cache.py` (period ends Jun 30; filing deadline ~Aug 14)
-5. Run cohort quarantine check
-6. Refresh IC decomposition
+1. Explicit operator freeze lift
+2. Run h20d quarantine script (2026-07-01 gate)
+3. Warm Q2 13F cache via `tools/warm_13f_cache.py` (period ends Jun 30; filing deadline ~Aug 14)
+4. Run cohort quarantine check
+5. Refresh IC decomposition
 
 ---
 
 ## Active Spec Status
 
-*Updated: 2026-05-16*
+*Updated: 2026-06-24*
 
 ### Recently Resolved
 | Spec | Title | Status | Commit |
@@ -110,12 +122,11 @@ metadata:
 ### Active / Blocked
 | Spec | Title | Status | Blocker |
 |------|-------|--------|---------|
-| 094 | Selector-only comparator | RANKER_UNPROVEN | Rerun target 2026-05-27 |
+| 094 | Selector-only comparator | RANKER_UNPROVEN | Blocked by scoped freeze |
 | 095 | Evaluation scope (IC tooling gap) | CURRENT_TOOLS_CONFLATED | Blocks ranker IC claims |
-| 100 | Ranker IC tooling correction | IMPLEMENTED | Host battery + freeze lift for interpretation |
+| 100 | Ranker IC tooling correction | Spec written, no impl | Blocked by scoped freeze |
 | 104 | Insider diagnostic stabilization | MEASURED | Isolation guard (R4a) |
 | 105 | Expectation layer coverage verification | CODE-CLOSED | Pending live QA |
-| 106 | Path A portfolio timing gates | A0+A1 shadow (code) | Freeze lift for A2 production |
 | 102 | Historical backfill for expectation research | DRAFT | â€” |
 
 ### Monitoring
@@ -130,10 +141,10 @@ metadata:
 
 ## Hermes Skills Hub — Sync State
 
-*Last sync: 2026-06-25 · `python3 tools/sync_hermes_skills.py --register-meta`*
+*Last sync: 2026-05-30 · `python3 tools/sync_hermes_skills.py --register-meta`*
 
-- **Agent registry:** 34 agents in `agents/AGENT_REGISTRY.json` (29 active + 2 deprecated + suppressed entries)
-- **Hermes skills:** 33 `.md` files in `docs/hermes_skills/` (32 registered + `harvest_log.md`)
+- **Agent registry:** 34 agents in `agents/AGENT_REGISTRY.json` (31 active + 2 deprecated + 1 shadow); 4 Hermes governance jobs including `hermes-contradiction-detector`
+- **Registry:** 31 skills in `docs/hermes_skills/_meta.json` (16 Cursor `SKILL.md` mirrors + 3 `REFERENCE.md` + 12 Hermes-native)
 - **Sync map:** `tools/sync_hermes_skills.py` · audit: `tools/audit_hermes_skills.py`
 - **Authoritative (no overwrite from `skills/`):** `memory-steward` — canonical copy at `~/.hermes/skills/devops/memory-steward/`; repo backup `.hermes/skills/devops/memory-steward.SKILL.md`
 - **Recent additions (since 2026-05-30):** `biotech-mcp` registered as read-only diagnostic MCP server (PR #27233ec6); daily state brief operational (PR #374)
@@ -144,28 +155,16 @@ metadata:
 
 ---
 
-## Governance Events (2026-06-20 to 2026-06-22)
+## Governance Events (2026-06-20 to 2026-06-24)
 
 - **INC-2026-06-20-AUTOPUSH:** `weekly-skill-harvester` auto-committed to main in an unattended run. Harvester manualized (Option C, PR #373); pre-push hook added; Semgrep supply-chain rules deployed (PR #370); scoped production model freeze in effect. Closeout: `docs/incident/INC-2026-06-20-AUTOPUSH/`.
 - **OpenClaw fenced (PR #372):** `**` wildcards and shell write permissions removed from exec-approvals. Exec allowlist now read-only. Hermes is primary orchestrator. Hard-retire deferred (natural on reboot). See `docs/governance/OPENCLAW_FENCE_DECISION_2026_06_22.md`.
 - **Semgrep Phase 1 ERROR gate active (PR #376):** CI now blocks on Semgrep governance rule violations. Rules cover ranker/selector/final_score mutation guard, PIT annotation enforcement, model-output-as-signal guard, supply-chain checks.
 - **Autonomous research quarantined (PR #379):** An autonomous PIT/backtest research run was quarantined. Outputs are not accepted evidence and must not be used for model decisions. See `docs/governance/AUTONOMOUS_RESEARCH_QUARANTINE_2026_06_22.md`.
-
----
-
-## Agent Fleet Self-Learning (2026-06-25)
-
-*Fleet migration phases 2–15 code-complete; PRs #399–#416 merged*
-
-- **Heartbeat:** 27 specialized checks in `tools/agent_heartbeat_checks.py`; Hermes on-demand jobs SKIP by design.
-- **Telemetry:** `log_agent_run` on daily builders + `data_auditor` + `ops_supervisor` + Hermes `run_job.py` exits.
-- **Outcome feedback:** all daily builders + qa/supervisor/herald/auditor/postmortem/CRT/event_binder/Hermes exits.
-- **Herald recovery:** `tools/herald_recovery.py` / `herald_recovery.sh`; `herald_health_check.py --recover` for F-2026-005.
-- **Cron integration:** evening catchup: audit → fleet_ops → crontab verify; watchdog herald `--recover` on FAIL.
-- **Operator host:** `bash tools/run_operator_host_setup.sh` (fleet + research battery).
-- **Freeze-lift evidence:** `FREEZE_LIFT_ACK=1 bash tools/run_forward_evidence_package.sh --write`.
-- **Rule 12:** `docs/governance/RULE_12_PROMOTION_CHECKLIST.md`.
-- **Stalled loops:** F-2026-005 (Herald), F-2026-006 (CI) — block `SELFIMPROVE_GATES_MET=1`.
+- **Platform roadmap 9/9 COMPLETE (2026-06-23):** All operator-approved workstream items done. EES chain closed (validation→attribution→shadow monitor→guardrail design-only). Active path: daily shadow monitor run only. `OPENCLAW_STATUS: RETIRED`.
+- **EES shadow monitor chain complete (2026-06-23):** Daily run operational. Gates unmet (need 20 completed 5d + 20 completed 20d exits). Observation-only, non-blocking. Script: `python3 scripts/research/ees_v2_phase3_shadow_monitor.py --as-of-date YYYY-MM-DD`.
+- **Path C formally closed (2026-06-24):** IC gate met (score_rank_pct mean_ic +0.0432, hit_rate 54.3%, N=35). Catalyst-timing policy remains in weights; no reversion. Transition to Path A durable gates effective immediately.
+- **Phase 2 agentic portfolio rebalanced (2026-06-24):** Robinhood account 802349084 rebalanced to 30 equal-weight positions (~$10.82 each, $324.50 total). 13 pending buys blocked by T+1 settlement; execute at open 2026-06-25. Operational rules at `production_data/AGENTIC_ACCOUNT_RULES.md`.
 
 ---
 

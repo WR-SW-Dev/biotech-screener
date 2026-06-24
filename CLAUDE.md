@@ -89,13 +89,14 @@ Every new signal must include:
 | Selector Engine | `selector_engine.py` |
 | Ranker Engine | `ranker_engine.py` |
 | Daily Production | `tools/run_daily_production.py` |
-| **Operator host setup** | `tools/run_operator_host_setup.sh` |
-| **Forward evidence package** | `tools/run_forward_evidence_package.sh` |
-| **Freeze-lift memo** | `docs/governance/FREEZE_LIFT_FORWARD_EVIDENCE_PACKAGE_2026_06_25.md` |
+| Shadow Portfolio | `tools/live_shadow_portfolio.py` |
 | Promotion Battery | `scripts/research/run_promotion_battery.py` |
 | Ruleset Manifest | `production_data/decision_rulesets/manifest.json` |
 | Governance Policy | `governance/AGENT_ROUTING_POLICY.md` |
 | Agent Registry | `agents/AGENT_REGISTRY.json` |
-| Operational state | `.claude/rules/operational-state.md` |
-| Agent fleet index | `docs/AGENT_FLEET_ARCHITECTURE_INDEX.md` |
-| Hermes tools map | `docs/hermes_agents/hermes_tools_map.md` |
+| **Live Portfolio Rules** | `production_data/AGENTIC_ACCOUNT_RULES.md` |
+| **Phase 2 Entry Prices** | `production_data/phase2_entry_prices.json` |
+
+## Live Portfolio (Agentic Account 802349084)
+
+A live Robinhood account (802349084) tracks the model top-30 in real money. Operational rules at `production_data/AGENTIC_ACCOUNT_RULES.md`. Key rules: weekly Monday equal-weight rebalance, hard exit if drawdown vs XBI ≤ −2pp, IRAs managed independently. Claude Code skills for execution: `biotech-rebalance`, `biotech-portfolio-status`, `biotech-governance-check`, etc. (see `~/.claude/skills/biotech-*/`). Entry prices for P&L tracking in `production_data/phase2_entry_prices.json` — do NOT use screener snapshot reference prices as entry prices.

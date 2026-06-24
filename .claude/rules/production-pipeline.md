@@ -59,15 +59,12 @@ All downstream consumers use `actionable_rank` (now driven by selector/ranker, n
 
 ---
 
-## OpenClaw Ops Agent
+## Orchestration — Hermes (Primary) / OpenClaw (RETIRED)
 
-- **Workspace:** `agents/ops/` — SOUL.md, TOOLS.md, HEARTBEAT.md
-- **Role:** read-mostly operator — runs pipeline, reads digest, refuses ruleset mutation
-- **Model:** DeepSeek v4 flash via OpenRouter on operator WSL gateway (2026-05-20+)
-- **Fleet:** 29 active agents + Hermes governance jobs; registry `agents/AGENT_REGISTRY.json`
-- **Evening catchup (22:00 ET):** `fleet_completion_audit` → `fleet_ops_status` → `fleet_crontab_verify`
-- **Operator host:** `bash tools/run_operator_host_setup.sh` after `git pull`
-- **Architecture freeze:** scoped production model freeze (2026-06-20) — no selector/ranker/sizing changes without lift
+- **OpenClaw: RETIRED 2026-06-23.** Do not use as ops agent. Gateway :19001 is dead. Lane A (deterministic scripts) and Lane B (`run_agent_direct.py`) still run directly without any gateway.
+- **Hermes is primary orchestrator.** Gateway :8642. Fleet: Hermes agents per `agents/AGENT_REGISTRY.json`. Three-lane routing: Lane A deterministic, Lane B cheap LLM monitoring, Lane C manual engineering. No cron may depend on a gateway token.
+- **Authority levels**: observe_only, observe_and_propose, write_artifacts, mutate_data, mutate_config. Only `crt_resolution_watcher` holds mutate_data. No agent holds mutate_config — operator-only.
+- **Inference**: Llama 3.3 70B via Together AI. Temperature 0.2, freq penalty 0.1, repetition penalty 1.2, API timeout 2400s.
 
 ---
 

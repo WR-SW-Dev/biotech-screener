@@ -10,12 +10,12 @@ metadata:
 
 ---
 
-## OpenClaw Status: FENCED — LEGACY_READ_ONLY_DORMANT (2026-06-22)
+## OpenClaw Status: RETIRED (2026-06-23)
 
-- **Fenced 2026-06-22 (PR #372):** `**` wildcards and shell write permissions removed from `~/.openclaw/exec-approvals.json`. Exec allowlist is now read-only: `python3, ls, cat, head, tail, grep, find, wc, date, stat, diff, sort, jq`. No bash, no git, no `/mnt/c/**` write access.
-- **Hard retire:** deferred — natural fence on next reboot (no `@reboot`/systemd entry). Gateway is loopback-only; no active OpenClaw cron.
-- **Hermes is now primary orchestrator.** OpenClaw = legacy dormant. Lane A (deterministic scripts) and Lane B (`run_agent_direct.py`) are unaffected.
-- Hermes Agent v0.14.0+ includes native `hermes claw migrate` tool. Any formal migration remains a Tier 4 governance decision.
+- **Fenced 2026-06-22 (PR #372):** `**` wildcards and shell write permissions removed from exec-approvals. Exec allowlist set to read-only tools only.
+- **RETIRED 2026-06-23:** OpenClaw formally retired. All workstream items on platform roadmap complete. Do not restart, do not reference as active executor.
+- **Hermes is primary orchestrator.** Lane A (deterministic scripts) and Lane B (`run_agent_direct.py`) unaffected. All 29 prior OpenClaw agents either migrated to Hermes or decommissioned.
+- Any future migration tooling (`hermes claw migrate`) remains a Tier 4 governance decision if ever needed.
 - See `docs/governance/OPENCLAW_FENCE_DECISION_2026_06_22.md` for audit and decision record.
 
 ---
