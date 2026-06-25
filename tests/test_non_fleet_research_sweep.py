@@ -111,4 +111,3 @@ def test_sciart_summarize_counts_verdicts(tmp_path):
     assert summary["verdict_counts"]["FALSE_POSITIVE"] == 1
     assert summary["complete"] is False
     assert summary["r4_pass"] is False
-

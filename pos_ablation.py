@@ -674,10 +674,6 @@ class AblationReport:
         print(f"{'Variant':<20} {'Mean PoS':>10} {'Median':>10} {'Δ Baseline':>12} {'%Ceiling':>10} {'%Floor':>10}")
         print("-" * 70)
 
-        _baseline_mean = self.all_stats.get(
-            "baseline", self.all_stats[list(self.all_stats.keys())[0]]
-        ).mean_adjusted_pos
-
         for name in [
             "baseline",
             "exact_only",

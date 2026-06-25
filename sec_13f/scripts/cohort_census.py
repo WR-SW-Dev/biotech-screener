@@ -81,9 +81,6 @@ def analyze_cohort_distribution(snapshots: List[Dict]) -> Dict[str, Any]:
 
         # Calculate totals
         total_securities = sum(stage_counts.values())
-        _unknown_stage_count = stage_counts.get("unknown", 0) + stage_counts.get(
-            "early", 0
-        )  # early often contains unknowns
 
         # Track smallest cohorts
         smallest_cohorts = sorted([(k, v["count"]) for k, v in cohort_counts.items()], key=lambda x: x[1])[:5]

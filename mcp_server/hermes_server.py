@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 SERVER_NAME = "Hermes"
 SERVER_VERSION = "0.1.0"
 PROTOCOL_VERSION = "2025-06-18"
@@ -571,9 +570,6 @@ def _write(message: Any) -> None:
 
 
 if __name__ == "__main__":
-    import json
-    import sys
-
     if "--health" in sys.argv:
         print(json.dumps({"ok": True, "server": "hermes", "mode": "stdio"}))
         raise SystemExit(0)

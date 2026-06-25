@@ -702,4 +702,3 @@ def test_check_options_watch_stale(hb_mod, tmp_path):
 
     result = hb_mod.check_options_watch(date.fromisoformat("2026-05-08"))
     assert result.status == "STALE"
-

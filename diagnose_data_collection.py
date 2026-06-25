@@ -227,8 +227,6 @@ def analyze_data_coverage(universe_path: str = "production_data/universe.json"):
 
 
 if __name__ == "__main__":
-    import sys
-
     universe_path = "production_data/universe.json"
     if len(sys.argv) > 1:
         universe_path = sys.argv[1]

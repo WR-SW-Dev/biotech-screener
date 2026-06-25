@@ -1466,12 +1466,15 @@ def extend_price_csv_safe(
     Returns: Same as extend_price_csv — stats dict with extended price data.
     """
     import tempfile
+
     from scripts.yfinance_safe import safe_download_per_ticker
 
-    import yfinance as yf  # lazy — not needed unless --extend-prices
-
     logger = logging.getLogger(__name__)
-    logger.info("Using rate-limit safe yfinance wrapper for price refresh (delay_sec=%s, max_retries=%d)", delay_sec, max_retries)
+    logger.info(
+        "Using rate-limit safe yfinance wrapper for price refresh (delay_sec=%s, max_retries=%d)",
+        delay_sec,
+        max_retries,
+    )
 
     # Load existing data (if any)
     existing_rows: List[Dict[str, str]] = []

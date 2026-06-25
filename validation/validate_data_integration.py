@@ -51,8 +51,6 @@ from common.data_integration_contracts import (  # Schema validators; Join valid
     validate_holdings_schema,
     validate_join_invariants,
     validate_market_data_schema,
-    validate_pit_admissibility,
-    validate_short_interest_schema,
     validate_trial_records_schema,
 )
 

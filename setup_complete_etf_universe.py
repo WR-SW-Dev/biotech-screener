@@ -19,7 +19,7 @@ def run_command(cmd: str, description: str) -> bool:
     print(f"{'='*80}")
 
     try:
-        _result = subprocess.run(cmd, shell=True, check=True, capture_output=False, text=True)
+        subprocess.run(cmd, shell=True, check=True, capture_output=False, text=True)
         print(f"✅ Success: {description}")
         return True
     except subprocess.CalledProcessError as e:
