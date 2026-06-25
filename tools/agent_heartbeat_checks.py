@@ -33,6 +33,8 @@ SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 LOGS_DIR = REPO_ROOT / "logs"
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
+_IC_PENDING_VERDICTS = ARTIFACTS_DIR / "ic_dashboard" / "ic_pending_verdicts.jsonl"
+_IC_VERDICT_EXPIRY_DAYS = 14  # attach unhelpful verdict if signal unresolved after N days
 TERMINAL_UNSUPERVISED_AGENTS = {"ops_supervisor"}
 HERMES_JOB_PREFIX = "hermes-"
 CLOUD_ARTIFACT_STALENESS_PREFIXES = ("MISSING:", "NO_ARTIFACTS:", "STALE", "STALE_")
@@ -163,6 +165,75 @@ def check_qa(dt: date) -> CheckResult:
 # ── IC Health Monitor ─────────────────────────────────────────
 
 
+def _ic_pending_load() -> list[dict]:
+    """Load ic_pending_verdicts.jsonl; return [] on missing/corrupt."""
+    try:
+        if not _IC_PENDING_VERDICTS.exists():
+            return []
+        return [json.loads(line) for line in _IC_PENDING_VERDICTS.read_text().splitlines() if line.strip()]
+    except Exception:
+        return []
+
+
+def _ic_pending_save(entries: list[dict]) -> None:
+    _IC_PENDING_VERDICTS.parent.mkdir(parents=True, exist_ok=True)
+    _IC_PENDING_VERDICTS.write_text("\n".join(json.dumps(e) for e in entries) + ("\n" if entries else ""))
+
+
+def _ic_resolve_pending(current_signals: dict, today_iso: str) -> None:
+    """Attach verdicts for signals that have resolved or expired; prune ledger."""
+    try:
+        from tools.record_skill_feedback import attach_outcome_verdict
+    except Exception:
+        return
+    pending = _ic_pending_load()
+    if not pending:
+        return
+    keep = []
+    for entry in pending:
+        sig = entry.get("signal", "")
+        exec_id = entry.get("exec_id", "")
+        old_health = entry.get("health", "WARN")
+        flagged = entry.get("flagged_date", today_iso)
+        age = (date.fromisoformat(today_iso) - date.fromisoformat(flagged)).days
+        cur = current_signals.get(sig)
+        cur_health = cur.get("health", "UNKNOWN") if isinstance(cur, dict) else "UNKNOWN"
+        if cur_health in ("OK", "HEALTHY") or cur_health not in ("WARN", "ALERT", "CRITICAL", "UNKNOWN"):
+            attach_outcome_verdict(exec_id, True, f"{sig} resolved: was {old_health}, now {cur_health}")
+        elif old_health == "WARN" and cur_health in ("ALERT", "CRITICAL"):
+            attach_outcome_verdict(exec_id, False, f"{sig} escalated: {old_health}→{cur_health}")
+        elif age >= _IC_VERDICT_EXPIRY_DAYS:
+            attach_outcome_verdict(exec_id, False, f"{sig} stale: still {cur_health} after {age}d")
+        else:
+            keep.append(entry)
+    _ic_pending_save(keep)
+
+
+def _ic_record_new_flags(flagged: list[tuple[str, str]], today_iso: str) -> None:
+    """Log newly flagged signals and append them to the pending-verdicts ledger."""
+    try:
+        from tools.agent_skill_telemetry import log_agent_run
+    except Exception:
+        return
+    pending = _ic_pending_load()
+    already = {e["signal"] for e in pending}
+    new_entries = []
+    for sig_name, health in flagged:
+        if sig_name in already:
+            continue
+        exec_id = log_agent_run(
+            "ic_health_monitor",
+            f"IC health flag: {sig_name} = {health} on {today_iso}",
+            inputs={"signal": sig_name, "health": health, "date": today_iso},
+            outputs={"flagged": True},
+            success=False,  # flagging an issue = unsuccessful signal health
+        )
+        if exec_id:
+            new_entries.append({"signal": sig_name, "health": health, "exec_id": exec_id, "flagged_date": today_iso})
+    if new_entries:
+        _ic_pending_save(pending + new_entries)
+
+
 def check_ic_health(dt: date) -> CheckResult:
     """Check IC dashboard exists and signal health."""
     ds = as_of_date(dt)
@@ -187,6 +258,7 @@ def check_ic_health(dt: date) -> CheckResult:
     signals = dash.get("signals", {})
 
     today_iso = ds  # YYYY-MM-DD
+    _ic_resolve_pending(signals, today_iso)
     has_unmuffled_alert = False
 
     for sig_name, sig_data in signals.items():
@@ -230,6 +302,23 @@ def check_ic_health(dt: date) -> CheckResult:
     # FAIL only on unmuffled ALERT/CRITICAL. Carried-alert anomalies (tagged
     # [CARRIED]) escalate to WARN at most. Hard ALERT path preserved for any
     # signal NOT in IC_HEALTH_CARRIED_ALERTS.
+
+    # Record any newly flagged signals (excludes carried/muffled ones).
+    newly_flagged: list[tuple[str, str]] = []
+    for a in anomalies:
+        if a.startswith("[CARRIED]"):
+            continue
+        for prefix, health in (
+            ("SIGNAL_ALERT: ", "ALERT"),
+            ("SIGNAL_CRITICAL: ", "CRITICAL"),
+            ("SIGNAL_WARN: ", "WARN"),
+        ):
+            if a.startswith(prefix):
+                newly_flagged.append((a[len(prefix) :], health))
+                break
+    if newly_flagged:
+        _ic_record_new_flags(newly_flagged, today_iso)
+
     if has_unmuffled_alert:
         return CheckResult("ic_health_monitor", "FAIL", f"attention={attention}", anomalies)
     if anomalies:
