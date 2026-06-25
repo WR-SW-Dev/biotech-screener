@@ -4716,6 +4716,24 @@ def run_daily(
         _emit_self_improvement_artifacts(_final_snap, manifest)
         return manifest
 
+    # --- Pre-patch: update market_data.json prices from price_history.csv ---
+    # price_history.csv refreshes daily via a different endpoint; market_data.json
+    # can get stuck when yfinance rate-limits collect_market_data.py. Patching
+    # before the staleness gate keeps close_price in snapshots current even when
+    # yfinance falls back to cached data.
+    _logger.info("Pre-patching market_data.json prices from price_history.csv ...")
+    _patch_proc = _run_subprocess(
+        [
+            sys.executable,
+            str(REPO_ROOT / "tools" / "patch_market_data_prices.py"),
+            "--as-of-date",
+            as_of_date,
+        ],
+        label="patch_market_data_prices",
+    )
+    if _patch_proc.returncode != 0:
+        _logger.warning("patch_market_data_prices failed (non-blocking) — market_data.json may have stale prices")
+
     # --- Gate: market data staleness ---
     mkt_gate = check_market_data_staleness(data_dir, as_of_date, config.market_data_max_age_days)
     if mkt_gate.status == "FAIL" and auto_refresh_market_data:
