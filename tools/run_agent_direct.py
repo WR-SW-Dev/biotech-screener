@@ -99,7 +99,6 @@ _AGENT_SCOPE_KEYWORDS: dict[str, list[str]] = {
     "ranker_optimizer": ["Ranker/selector/sizing"],
     "spec_089_builder": ["Spec 089"],
     "fleet_steward": ["Ranker/selector/sizing"],
-    "sentinel": ["Ranker/selector/sizing"],
 }
 
 
