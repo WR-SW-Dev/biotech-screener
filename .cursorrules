@@ -56,9 +56,10 @@ Every pipeline output MUST include:
 # Test
 pytest -p no:warnings
 
-# Lint
-ruff check src tests scripts tools
-ruff format --check src tests scripts tools
+# Lint (pre-commit stack: black + isort + flake8)
+black --check --line-length=120 .
+isort --check-only --profile=black --line-length=120 .
+flake8 tools/ scripts/ src/
 ```
 
 ## Key Constraints

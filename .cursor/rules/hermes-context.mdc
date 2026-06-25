@@ -62,7 +62,7 @@ Fleet migration phases 2–15 code-complete. Stalled loops F-2026-005 (Herald) a
 ## Agent Fleet Quick Reference
 
 - Registry: 34 entries (29 active, 1 suppressed, 4 deprecated); 31 directories on disk
-- Model: DeepSeek v4 flash via OpenRouter (gateway on operator WSL)
+- Model: qwen3.7-plus via Nous Research (default); OpenRouter deepseek-v4-flash:free + Together Llama-3.3-70B as fallbacks (gateway on operator WSL)
 - Cron: 5:30 PM ET weekdays (daily production), 10:00 AM ET (universe maintenance)
 - Monitoring: heartbeat → supervisor → post-snapshot → sentinel; evening catchup runs audit → fleet_ops → crontab verify
 - Knowledge-layer cron checks (C1/C3) authoritative on **operator WSL** only; Cloud emits `UNKNOWN_CLOUD_ENV`
