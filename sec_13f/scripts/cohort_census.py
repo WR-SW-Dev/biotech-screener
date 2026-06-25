@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -29,7 +28,7 @@ from module_4_clinical_dev import compute_module_4_clinical_dev
 from module_5_composite import MIN_COHORT_SIZE, compute_module_5_composite
 
 # Import sample data generator
-from scripts.run_first_real_backtest import BIOTECH_UNIVERSE, COMPANY_DATA, generate_monthly_dates, generate_sample_data
+from scripts.run_first_real_backtest import BIOTECH_UNIVERSE, generate_monthly_dates, generate_sample_data
 
 
 def analyze_cohort_distribution(snapshots: List[Dict]) -> Dict[str, Any]:
@@ -48,7 +47,7 @@ def analyze_cohort_distribution(snapshots: List[Dict]) -> Dict[str, Any]:
     for snap in snapshots:
         as_of = snap["as_of_date"]
         cohort_stats = snap.get("cohort_stats", {})
-        _ranked = snap.get("ranked_securities", [])
+        snap.get("ranked_securities", [])
 
         # Count by cohort
         cohort_counts = {}
