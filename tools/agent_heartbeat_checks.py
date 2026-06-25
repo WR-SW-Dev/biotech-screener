@@ -35,6 +35,8 @@ LOGS_DIR = REPO_ROOT / "logs"
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
 _IC_PENDING_VERDICTS = ARTIFACTS_DIR / "ic_dashboard" / "ic_pending_verdicts.jsonl"
 _IC_VERDICT_EXPIRY_DAYS = 14  # attach unhelpful verdict if signal unresolved after N days
+_HB_PENDING_VERDICTS = ARTIFACTS_DIR / "heartbeat" / "pending_verdicts.jsonl"
+_HB_VERDICT_EXPIRY_DAYS = 14
 TERMINAL_UNSUPERVISED_AGENTS = {"ops_supervisor"}
 HERMES_JOB_PREFIX = "hermes-"
 CLOUD_ARTIFACT_STALENESS_PREFIXES = ("MISSING:", "NO_ARTIFACTS:", "STALE", "STALE_")
@@ -1173,6 +1175,100 @@ def check_universe_maintenance(dt: date) -> CheckResult:
     )
 
 
+# ── Generic heartbeat feedback loop ──────────────────────────
+# One shared ledger: artifacts/heartbeat/pending_verdicts.jsonl
+# Each entry: {agent, anomaly_key, exec_id, flagged_date, status}
+# ic_health_monitor uses its own per-signal ledger; all other agents use this.
+
+
+def _hb_anomaly_key(anomaly: str) -> str:
+    """Stable key from anomaly string — strips dynamic date/count values."""
+    key = re.sub(r"\d{4}-\d{2}-\d{2}", "", anomaly)
+    key = key.split("(")[0].strip().rstrip(":")
+    return key[:80]
+
+
+def _hb_pending_load() -> list[dict]:
+    try:
+        if not _HB_PENDING_VERDICTS.exists():
+            return []
+        return [json.loads(line) for line in _HB_PENDING_VERDICTS.read_text().splitlines() if line.strip()]
+    except Exception:
+        return []
+
+
+def _hb_pending_save(entries: list[dict]) -> None:
+    _HB_PENDING_VERDICTS.parent.mkdir(parents=True, exist_ok=True)
+    _HB_PENDING_VERDICTS.write_text("\n".join(json.dumps(e) for e in entries) + ("\n" if entries else ""))
+
+
+def _hb_resolve_for_agent(agent: str, result: CheckResult, today_iso: str) -> None:
+    """Attach verdicts for previously flagged anomalies that have since resolved or expired."""
+    try:
+        from tools.record_skill_feedback import attach_outcome_verdict
+    except Exception:
+        return
+    pending = _hb_pending_load()
+    agent_entries = [e for e in pending if e.get("agent") == agent]
+    if not agent_entries:
+        return
+    current_keys = {_hb_anomaly_key(a) for a in result.anomalies}
+    other_entries = [e for e in pending if e.get("agent") != agent]
+    keep_for_agent = []
+    for entry in agent_entries:
+        key = entry.get("anomaly_key", "")
+        exec_id = entry.get("exec_id", "")
+        flagged = entry.get("flagged_date", today_iso)
+        old_status = entry.get("status", "WARN")
+        age = (date.fromisoformat(today_iso) - date.fromisoformat(flagged)).days
+        if result.status == "OK":
+            attach_outcome_verdict(exec_id, True, f"{agent}/{key} resolved: was {old_status}, now OK after {age}d")
+        elif key not in current_keys:
+            attach_outcome_verdict(exec_id, True, f"{agent}/{key} cleared while agent still {result.status}")
+        elif old_status == "WARN" and result.status == "FAIL":
+            attach_outcome_verdict(exec_id, False, f"{agent}/{key} escalated: WARN→FAIL")
+        elif age >= _HB_VERDICT_EXPIRY_DAYS:
+            attach_outcome_verdict(exec_id, False, f"{agent}/{key} stale: still flagged after {age}d")
+        else:
+            keep_for_agent.append(entry)
+    _hb_pending_save(other_entries + keep_for_agent)
+
+
+def _hb_record_flags(agent: str, result: CheckResult, today_iso: str) -> None:
+    """Log newly flagged anomalies and append them to the heartbeat pending-verdicts ledger."""
+    try:
+        from tools.agent_skill_telemetry import log_agent_run
+    except Exception:
+        return
+    pending = _hb_pending_load()
+    existing_keys = {e["anomaly_key"] for e in pending if e.get("agent") == agent}
+    new_entries = []
+    for anomaly in result.anomalies:
+        key = _hb_anomaly_key(anomaly)
+        if key in existing_keys:
+            continue
+        exec_id = log_agent_run(
+            agent,
+            f"Heartbeat flag: {key} on {today_iso}",
+            inputs={"anomaly": anomaly[:200], "date": today_iso},
+            outputs={"status": result.status},
+            success=False,
+        )
+        if exec_id:
+            new_entries.append(
+                {
+                    "agent": agent,
+                    "anomaly_key": key,
+                    "exec_id": exec_id,
+                    "flagged_date": today_iso,
+                    "status": result.status,
+                }
+            )
+            existing_keys.add(key)
+    if new_entries:
+        _hb_pending_save(pending + new_entries)
+
+
 # ── Orchestrator ──────────────────────────────────────────────
 
 # Specialized check functions, keyed by registry name (agents/AGENT_REGISTRY.json).
@@ -1401,6 +1497,15 @@ def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
                     result.detail = "Memory staleness detected"
 
         results.append(result)
+
+        # Generic feedback loop — skip ic_health_monitor (has its own per-signal loop)
+        if name != "ic_health_monitor" and result.status not in ("SKIP",):
+            try:
+                _hb_resolve_for_agent(name, result, as_of_date(dt))
+                if result.status in ("WARN", "FAIL"):
+                    _hb_record_flags(name, result, as_of_date(dt))
+            except Exception:
+                pass
 
     for name in sorted(opted_out):
         note = opted_out[name].get("notes", "")[:80]
