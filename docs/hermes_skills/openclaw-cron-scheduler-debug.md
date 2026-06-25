@@ -1,6 +1,6 @@
 ---
 name: openclaw-cron-scheduler-debug
-description: "Diagnose cron and scheduler failures for the OpenClaw biotech screener fleet. Encodes real failure patterns from production: crontab REPLACE silent death, WSL2 sleep cliff, Hermes scheduler stall, watchdog idempotency loops, and announce/webchat channel delivery errors."
+description: "Diagnose cron and scheduler failures for the OpenClaw biotech screener fleet. Encodes real failure patterns: crontab REPLACE silent death, WSL2 sleep cliff, Hermes scheduler stall, watchdog idempotency loops, announce/webchat delivery errors, Hermes job token bloat from pre-loaded skills (Class F), sleep-cliff multi-firing without idempotency guard (Class G), cron job script-writing retry loop (Class H)."
 when_to_use: "User says 'cron didn't fire', 'production missed', 'agents not running', 'watchdog looping', 'consecutive errors', or fleet receipt shows broad STALE across many agents with no obvious code cause. Also load when OpenClaw jobs show delivery errors with mode=announce."
 ---
 
@@ -359,29 +359,43 @@ checker only inspects OpenClaw agents and repo artifacts, not Hermes cron jobs.
 
 ---
 
-### Class J — Cron sys.path isolation (ModuleNotFoundError for repo imports)
+## Class J — Pre-push guard for main (defense-in-depth, 2026-06-22)
 
-**Signature:** Hermes/Linux cron entry script logs `ModuleNotFoundError: No module named 'tools'`
-(or `common`) on every scheduled run. Interactive shell works because virtualenv activation
-or `PYTHONPATH` masks the gap.
+**Signature:** Non-interactive `git push` to `main` is blocked by a local git hook.
+Agents/cron/CI that attempt to push to main will fail with "Non-interactive push to
+main blocked" unless `ALLOW_AGENT_PUSH=1` is set in the environment.
 
-**Confirmed instance (2026-06-24):** `agents_direct` cron fired 42× before fix (735ac3f7).
-Town may surface this as `cron_missed` before agents.log is checked.
+**Confirmed instance (2026-06-22, commit `ded2d3b0`):**
+- Hook: `tools/githooks/pre-push` (installed via `tools/githooks/install-hooks.sh`)
+- Trigger: stderr is not a TTY (agent/cron/CI) AND target branch is `main`
+- Escape hatch: `ALLOW_AGENT_PUSH=1 git push` bypasses the check
+- Chains to preserved git-lfs pre-push hook (`pre-push.lfs-orig`)
+- Context: INC-2026-06-20-AUTOPUSH defense-in-depth (work-plan step 3). Free GitHub
+  plan = no server-side branch protection, so this is the local backstop.
 
-**Fix pattern:**
+**Diagnostic recipe:**
 
-```python
-import sys
-from pathlib import Path
+```bash
+# 1. Check if the hook is installed
+ls -la .git/hooks/pre-push
+# If symlink to ../../tools/githooks/pre-push → installed
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent  # adjust depth per script
-sys.path.insert(0, str(PROJECT_ROOT))
+# 2. Check if it would block (dry test)
+echo "" | ALLOW_AGENT_PUSH=0 bash tools/githooks/pre-push origin https://github.com/test/test 2>&1
+# Should print "Non-interactive push to main blocked"
 
-from tools.skills_logger_v2 import ...  # now resolves
+# 3. If an agent push failed unexpectedly, check for the escape hatch
+grep ALLOW_AGENT_PUSH tools/githooks/pre-push
 ```
 
-**Cross-ref:** `openclaw-data-pipeline-debug` Class P · `town-operator-bridge` triage table ·
-`domains/agent_ops.md` · LRN-20260624-001.
+**Triage implication:** If fleet agents or cron jobs need to push to main (e.g., the
+skill harvester before manualization), they must set `ALLOW_AGENT_PUSH=1` in the
+environment. After the harvester manualization (commit `37111ad4`), no Hermes cron
+job pushes to main — the hook is a pure backstop.
+
+**Do NOT remove this hook** without explicit operator approval. It is the last line
+of defense against accidental agent pushes to main on a free-plan repo (no server-side
+branch protection).
 
 ---
 
@@ -402,10 +416,6 @@ Fleet receipt itself is >24h old?
 Hermes cron job failing silently for weeks (NameError, RuntimeError)?
   → Class I. Check mcp_cronjob list for stale error states. No alert is generated.
 
-agents.log shows ModuleNotFoundError: No module named 'tools' on cron runs?
-  → Class J. Cron sys.path isolation. Insert PROJECT_ROOT before repo imports.
-  → Town cron_missed may be first signal — see town-operator-bridge triage table.
-
 data_auditor FAIL on a weekend date?
   → Class E. Known false-positive. Disregard.
 
@@ -421,7 +431,155 @@ Hermes jobs show last_run_at null despite Linux cron alive?
 
   OpenClaw jobs show 20+ consecutive delivery errors, mode=announce?
   → Class G. Add --best-effort-deliver to each affected job.
+
+git push to main fails from agent/cron context?
+  → Class J. Pre-push guard blocking non-interactive pushes.
+  → Set ALLOW_AGENT_PUSH=1 or use interactive terminal.
+
+OpenClaw agents show 5+ days dormant, no cron active?
+  → OpenClaw is FENCED (LEGACY_READ_ONLY_DORMANT) as of 2026-06-22.
+  → See Class I in openclaw-agent-scope-audit. Hermes is primary orchestrator.
 ```
+
+---
+
+## Class K — LangGraph review node artifact_dir None guard (third-runtime pattern)
+
+**Signature:** LangGraph-based review nodes crash with AttributeError or TypeError when
+`artifact_dir` is None. The LangGraph runtime (third alongside Hermes and OpenClaw) has
+different null-handling expectations than the other two runtimes.
+
+**Root cause (confirmed 2026-06-22, commit `afced5d4`):** The LangGraph review node
+assumed `artifact_dir` was always a valid path string. When the node was invoked in
+contexts where no artifact directory was configured (e.g., diagnostic-only runs, certain
+cron triggers), `artifact_dir` was None, causing the node to crash when attempting path
+operations.
+
+**Runtime boundary context:** Commit `96ffea36` (2026-06-22) established the
+"Hermes/OpenClaw/LangGraph runtime boundary map" — LangGraph is now a third runtime
+alongside Hermes (cron-managed agents) and OpenClaw (gateway-managed agents). Each
+runtime has different null-handling, tool-execution, and artifact-path conventions:
+
+- **Hermes**: cron-managed, tool-execution via Hermes agent loop, artifacts at
+  `artifacts/<agent>/` or agent-specific paths. Null args typically default to None
+  and agents handle gracefully.
+- **OpenClaw**: gateway-managed, real bash tool execution, artifacts at declared paths
+  in AGENTS.md. Null args cause tool-execution failures that agents can diagnose.
+- **LangGraph**: graph-based workflow, node-level execution, artifacts at node-declared
+  paths. Null args cause node crashes (AttributeError/TypeError) unless explicitly
+  guarded. See `docs/governance/runtime_boundary_map.md` for the full matrix.
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if the crash is in a LangGraph node (not Hermes/OpenClaw agent)
+grep -r "langgraph\|StateGraph\|node.*artifact_dir" tools/ agents/ --include="*.py" | head -10
+
+# 2. Check the node's artifact_dir parameter handling
+grep -B2 -A5 "artifact_dir" tools/<langgraph_tool>.py | head -20
+# If the node does path operations (e.g., artifact_dir / "file.json") without
+# checking for None first, this is the Class K pattern.
+
+# 3. Check the invocation context
+# LangGraph nodes can be invoked from multiple contexts (cron, manual, diagnostic).
+# Some contexts may not configure artifact_dir. Check the call site.
+```
+
+**Resolution pattern:**
+- Add explicit None guard at the node entry point: `if artifact_dir is None: return {"status": "skip", "reason": "no artifact_dir configured"}`
+- Or provide a default: `artifact_dir = artifact_dir or Path("artifacts/default_review")`
+- The fix should match the node's contract — if the node is designed to work without
+  artifacts in some contexts, return a skip status; if it always needs artifacts, raise
+  a clear error.
+
+**Detection heuristic:** If a LangGraph node crashes with AttributeError/TypeError on
+path operations and the traceback points to `artifact_dir` being None, this is Class K.
+Check the runtime boundary map to confirm the node is LangGraph (not Hermes/OpenClaw).
+
+**Note:** LangGraph is a newer runtime in this ecosystem (admitted 2026-06-22 via
+Package B governance review). Skills and diagnostic patterns are still being built out.
+When encountering LangGraph-specific failures, check `docs/governance/runtime_boundary_map.md`
+for the runtime's conventions before applying Hermes/OpenClaw diagnostic patterns.
+
+---
+
+## Class L — Financial calculation unit-mismatch (periodicity confusion)
+
+**Signature:** Financial metrics (burn rate, runway, cash consumption) are silently wrong
+by a factor of 3-4×. The calculation runs without error, produces plausible-looking numbers,
+but the underlying periodicity assumption is wrong (quarterly divisor applied to annual data,
+or annual divisor applied to quarterly data).
+
+**Root cause (confirmed 2026-06-23, commit `c6e1700c`):** Module 2 (financial health) had
+two fallback burn-rate calculation paths in NetIncome and R&D expense handling. Both paths
+hard-coded `/3` (quarterly assumption) when the SEC filing data was actually annual (Dec
+fiscal year-end 10-K). This overstated monthly burn 4× and understated runway 4× for tickers
+reaching these last-resort fallback paths.
+
+**Confirmed instance:** Tickers with SEC annual filings (fiscal year-end December) reaching
+the NetIncome or R&D fallback paths. The fix ported `_ytd_months_from_date()` from v1 to
+use the `NetIncome_date` / `R&D_date` fields (already passed through in financial_data) to
+infer the correct period. Default remains 3 when date is missing (no behavior change for
+existing data without date fields).
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if financial metrics look plausible
+python3 - << 'EOF'
+import json, glob
+files = sorted(glob.glob('data/snapshots/*/rankings.csv'), reverse=True)
+if not files: exit()
+import csv
+with open(files[0]) as f:
+    reader = csv.DictReader(f)
+    for i, row in enumerate(reader):
+        if i >= 5: break
+        burn = row.get('monthly_burn_rate_mm')
+        runway = row.get('runway_months')
+        cash = row.get('cash_and_securities_mm')
+        if burn and runway:
+            print(f"{row.get('ticker')}: burn={burn}, runway={runway}, cash={cash}")
+            # Sanity check: runway ≈ cash / burn
+            try:
+                expected_runway = float(cash) / float(burn) if float(burn) > 0 else None
+                if expected_runway and abs(expected_runway - float(runway)) > 0.5:
+                    print(f"  ⚠️  Runway mismatch: expected {expected_runway:.1f}, got {runway}")
+            except:
+                pass
+EOF
+
+# 2. Check the calculation code for hardcoded divisors
+grep -n "/3\|/12\|_ytd_months\|period.*month" tools/financial_health.py | head -20
+# Look for: hardcoded /3 or /12 without checking the actual filing period
+
+# 3. Check if date fields are used to infer periodicity
+grep -n "NetIncome_date\|R&D_date\|fiscal_year_end\|period_end" tools/financial_health.py | head -20
+# If date fields exist but aren't used to determine the divisor, this is the Class L pattern
+
+# 4. Verify the fix (post-c6e1700c)
+grep -A10 "_ytd_months_from_date" tools/financial_health.py | head -15
+# Should see: uses the date field to infer months, not hardcoded /3
+```
+
+**Pattern to catch:** Any financial calculation that divides by a hardcoded number (3, 4, 12)
+to convert between periodicities (annual↔quarterly↔monthly) WITHOUT checking the actual
+filing period or date field is suspect. SEC filings have mixed periodicity:
+- 10-K (annual) → divide by 12 for monthly
+- 10-Q (quarterly) → divide by 3 for monthly
+- If the code doesn't distinguish, it will silently produce wrong results
+
+**Test coverage added (commit c6e1700c):** 2 new golden cases verify the annual path
+(Dec date → /12). 136/136 module_2 tests pass; 44/44 golden tests pass.
+
+**Impact on recent screens:** Any screen run between the Module 2 activation and c6e1700c
+had burn rates overstated 4× and runways understated 4× for tickers reaching the fallback
+paths. Use `ls -lt data/snapshots/*/rankings.csv` to find affected dates; the fix produces
+correct burn/runway for annual filers.
+
+**General rule:** When financial metrics look implausible (runway < 6 months for a company
+with $100M+ cash, or burn rate 4× higher than peers), check the periodicity assumption in
+the calculation code. The bug is silent — no exception, no warning, just wrong numbers.
 
 ---
 
@@ -482,6 +640,144 @@ with a different message.
 
 ---
 
+### Class F — Hermes job token bloat from pre-loaded skills
+
+**Signature:** A single cron session consumes millions of tokens. `hermes insights --days 7`
+shows one job's session dramatically above all others (e.g. 6.1M tokens in one run).
+The job's `jobs.json` entry has a non-null `"skill"` field or a non-empty `"skills"` array.
+
+**Root cause:** The `"skill"` field in `~/.hermes/cron/jobs.json` injects a full SKILL.md
+as the system prompt for the session. The `"skills"` array pre-loads additional skills into
+context before the first user turn. Large skills (openclaw-fleet-triage = ~100K chars / ~25K
+tokens) are loaded even when irrelevant to the job's actual task.
+
+**Confirmed instance (2026-06-25):** `weekly-skill-harvester` (a15dbdcb6f41) consumed 6.1M
+tokens in one session. Root causes:
+- `"skill": "openclaw-fleet-triage"` — loaded the full 100K-char fleet triage skill as primary
+  instruction, causing the job to run a complete fleet triage before harvesting skills
+- `"skills": ["openclaw-fleet-triage", "openclaw-cron-scheduler-debug", ...]` — 6 skills
+  pre-loaded totaling ~286K chars / ~72K tokens upfront
+- `weekly-signal-regime-sweep` also loaded `openclaw-fleet-triage` in its `skills` array
+  despite being a signal regime check with no fleet triage need
+
+**Token hog audit recipe:**
+
+```python
+import json
+with open('/home/arrenchulz/.hermes/cron/jobs.json') as f:
+    data = json.load(f)
+
+for job in data['jobs']:
+    skill = job.get('skill')
+    skills = job.get('skills', [])
+    if skill or skills:
+        print(f"{job['id']} {job['name']}")
+        print(f"  skill={skill!r}, skills={skills}")
+```
+
+Then check skill sizes:
+```bash
+find ~/.hermes/skills -name "SKILL.md" | xargs wc -c | sort -rn | head -10
+```
+
+**Fix:**
+1. Set `"skill": null` — removes the primary skill system-prompt injection
+2. Set `"skills": []` — removes all pre-loaded context skills
+3. Rewrite prompt to load skills lazily: add `skill_view(name='<skill-name>')` call in the
+   step that actually needs it, rather than front-loading everything
+
+**Patch via Python (safe, preserves all other fields):**
+```python
+import json
+with open('/home/arrenchulz/.hermes/cron/jobs.json') as f:
+    data = json.load(f)
+for job in data['jobs']:
+    if job['id'] == '<job-id>':
+        job['skill'] = None
+        job['skills'] = []
+        # also update prompt to use lazy skill_view() calls
+with open('/home/arrenchulz/.hermes/cron/jobs.json', 'w') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+```
+
+**Pitfall:** `jobs.json` top-level is `{"jobs": [...]}`, not a bare list. Iterating `data`
+directly (without `data['jobs']`) raises `AttributeError: 'str' object has no attribute 'get'`.
+
+**Known large skills (as of 2026-06-25):**
+- `openclaw-fleet-triage`: ~100K chars / ~25K tokens — PINNED, never auto-patch
+- `biotech-screener-audit`: ~59K chars / ~15K tokens
+- `aa-model-tracker`: ~42K chars / ~11K tokens
+- `biotech-screener-output-qa`: ~29K chars / ~7K tokens
+
+---
+
+### Class G — Sleep-cliff job multi-firing (no idempotency guard)
+
+**Signature:** A weekly or once-daily Hermes cron job shows 3–5 sessions on the same day in
+`hermes insights`. No `[SILENT]` in any output. Each session ran the full workload.
+
+**Root cause:** WSL2 sleep cliff causes the cron watchdog to re-trigger missed jobs on wake.
+If the job has no idempotency guard it runs in full each time, multiplying token cost.
+
+**Confirmed instances (2026-06-24):**
+- `weekly-signal-regime-sweep` (7e79501afb6e): 3 sessions Jun 24, each running full sweep
+- `event-outcome-binder-watch` (f7635b487132): 3 sessions Jun 24, each running full report
+- `weekly-skill-harvester` (a15dbdcb6f41): ran multiple times due to sleep cliff catchup
+
+**Fix — STEP 0 idempotency guard (prepend to job prompt):**
+
+For jobs that write a dated output file:
+```
+STEP 0 — IDEMPOTENCY CHECK
+Run: date +%Y-%m-%d
+Check for recent output:
+  ls -t ~/.hermes/cron/output/<job-id>/ 2>/dev/null | head -1
+Extract date from filename (format: YYYY-MM-DD_HH-MM-SS.md).
+If that date is today, respond with exactly [SILENT] and stop.
+```
+
+For jobs that write a repo artifact:
+```
+STEP 0 — IDEMPOTENCY CHECK
+Run: date +%Y-%m-%d
+  ls -t /mnt/c/Projects/biotech_screener/biotech-screener/<artifact-path>*.md 2>/dev/null | head -1
+If a file exists with today's date (or within N days for weekly jobs), respond [SILENT] and stop.
+```
+
+**Rule for N (window size):**
+- Daily jobs: N = same-day check (today only)
+- Weekly jobs: N = 5–7 days (prevents re-run across the full schedule window)
+
+**`[SILENT]` behavior:** Hermes cron treats `[SILENT]` as a suppressed-delivery no-op run.
+The session completes, `last_run_at` updates, but no output is delivered to the user.
+Combine with the guard: if the guard fires, respond with ONLY `[SILENT]` — no other text.
+
+---
+
+### Class H — Cron job script-writing retry loop
+
+**Signature:** A normally lightweight cron job (< 300K tokens/run) spikes to 1M+ tokens.
+Job has terminal access. Output log shows repeated write_file + SyntaxError + fix cycles.
+
+**Confirmed instance (2026-06-24):** `pdufa-proximity-alert` (e84535b22a2a) hit 1.19M tokens
+in one session. It wrote a Python filtering script, encountered a SyntaxError, tried to fix it,
+repeated the cycle. Normal runs are ~200K tokens.
+
+**Root cause:** Agent has `terminal` toolset and no constraint against writing scripts.
+When faced with data filtering, it writes a Python script instead of using read_file + in-memory
+manipulation or available MCP tools.
+
+**Fix — add constraint to job prompt:**
+```
+CONSTRAINT: Do NOT write any Python scripts or temporary files at any point.
+Read files directly with read_file and process data in-memory.
+Do not use write_file to create helper scripts. If data filtering is needed, do it inline.
+```
+
+**Also add idempotency guard** (Class G) so a spike run doesn't trigger additional catch-up runs.
+
+---
+
 ## Related skills
 
 - `biotech-screener-catchup-hardening` — load this when moving from diagnosis to remediation. Covers writing resilient catch-up scripts, idempotency patterns, weekend backstops, and the SMTP-creds hallucination pattern. Complements this skill: this skill diagnoses, that skill hardens.
@@ -501,6 +797,14 @@ with a different message.
 - **data/snapshots/ absence on a weekend date is NORMAL.** Do not attempt backfill.
   The catch-up script also guards against this — if it says "no missed runs found"
   for a date range containing only weekends, that is correct behavior.
+
+- **CLI flag typos cause silent argparse crashes.** Confirmed 2026-06-22 (commit `4e6815ed`):
+  snapshot generator had `--as-o` instead of `--as-of` in the CLI flag definition. argparse
+  silently accepted the truncated flag but it didn't match the expected parameter name,
+  causing the tool to crash when invoked with `--as-of <date>`. Diagnostic: if a tool
+  suddenly stops producing output with no log entries and no error, check the argparse
+  flag definitions for truncation or typo. `python3 tools/<tool>.py --help` will show
+  the actual registered flags — compare against the crontab invocation.
 
 ```bash
 # 1. Backup (timestamped)
