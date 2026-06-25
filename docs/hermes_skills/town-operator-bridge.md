@@ -1,6 +1,16 @@
+---
+name: town-operator-bridge
+description: Hermes→Town event delivery via send_operator_event() — Spec 090. Phase B LIVE (DRY_RUN=0). Use when wiring job completion events, hard failures, or contradiction alerts to the operator's Town inbox.
+version: 1.1.0
+metadata:
+  hermes:
+    tags: [town, operator-delivery, email, governance, spec-090]
+    related_skills: [screener-ops, town-hermes-feedback-protocol, openclaw-data-pipeline-debug]
+---
+
 # Town-Hermes Bridge (Spec 090)
 
-**Status:** Phase B wired (live delivery pending operator sign-off)  
+**Status:** Phase B LIVE (email delivery active, `OPERATOR_DELIVERY_DRY_RUN=0`)  
 **Architecture:** Email-based delivery (Phase A), webhook-ready structure  
 **Governance:** Read-only ops layer; Town has no production mutation authority
 
@@ -218,7 +228,7 @@ Example:
 **Code status (2026-05-30):** All Phase B event types wired in repo:
 - `build_hermes_knowledge_layer.py` + `hermes-contradiction-detector` → `contradiction_detected`
 - `ops_supervisor` runtime health + `cron_watchdog.sh` → `cron_missed`
-- Operator action remaining: set `OPERATOR_DELIVERY_DRY_RUN=0` in `.env` after smoke tests
+- **Phase B LIVE (2026-06-25): `OPERATOR_DELIVERY_DRY_RUN=0` confirmed in `.env`. Email delivery active.**
 
 **Call sites:**
 - `hermes-held-spec-ledger` job (entry point)
