@@ -876,3 +876,13 @@ Tier 0 observability/plumbing only. No ranker, selector, sizing, or `final_score
 - memory-steward.md (patched)
 - openclaw-agent-scope-audit.md (patched)
 - references/ir_url_population.md (from ~/.hermes/skills/devops/openclaw-data-pipeline-debug/references/)
+
+## 2026-06-25
+### Git activity (past 7d)
+- biotech-screener: cron token bloat fixes, lint sweep, price patch wiring, backfills
+- asset-allocation: n/a
+### Sessions reviewed: 1 (self-improvement loop draft)
+### Skill patches
+- screener-ops: added "Size Confound In Raw Event Counts" under Signal Quality Pitfalls — LRN-20260329-001 (3× recurrence), residualize count features against n_total_trials before IC testing
+### New skills created: none
+### Pending drafts applied: 1 of 2 (skipped f_string_no_placeholder — trivial lint)
