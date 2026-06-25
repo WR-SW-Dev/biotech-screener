@@ -148,9 +148,11 @@ check_postmortem() {
 run_tool postmortem 1835 "$REPO/logs/postmortem.log" check_postmortem \
     "$PYTHON $REPO/agents/postmortem/scripts/run_postmortem.py"
 
-# production_qa_check (18:55) — artifact: artifacts/production_qa/<TODAY>_report.json
+# production_qa_check (16:30) — artifact: artifacts/production_qa/<TODAY>_report.json
+# Time guard lowered from 1855→1630 so the 22:00 cron and @reboot catchup can both cover it
+# (morning reliability check also runs this after snapshot exists)
 check_production_qa() { file_exists "$REPO/artifacts/production_qa/${TODAY}_report.json"; }
-run_tool production_qa_check 1855 "$REPO/logs/production_qa.log" check_production_qa \
+run_tool production_qa_check 1630 "$REPO/logs/production_qa.log" check_production_qa \
     "$PYTHON $REPO/tools/production_qa_check.py --as-of-date $TODAY"
 
 # herald_health (14:35) — artifact: artifacts/herald/health_check_<TODAY>.json

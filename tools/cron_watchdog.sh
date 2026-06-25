@@ -219,14 +219,6 @@ if ! grep -qE "^\[$TODAY " "$BELLRINGER_LOG" 2>/dev/null; then
     bash "$REPO/tools/cron_bellringer.sh" all >> "$BELLRINGER_LOG" 2>&1 || log "Bellringer recovery failed (exit $?)"
 fi
 
-# Conference abstracts refresh (06:00 ET slot). Grep anchored to today's cache-file
-# line so it doesn't false-match older dates mentioned in summary tables.
-CONF_LOG="$REPO/logs/conference_refresh.log"
-if ! grep -q "abstracts_$TODAY\.json" "$CONF_LOG" 2>/dev/null; then
-    log "MISSED conference abstracts for $TODAY — recovering"
-    source "$REPO/.env" 2>/dev/null || true
-    $PYTHON "$REPO/tools/fetch_conference_abstracts_grok.py" --all >> "$CONF_LOG" 2>&1 || log "Conference refresh failed (exit $?)"
-fi
 
 # Trapops monitor recovery — check artifact, not log mtime.
 # The production pipeline writes trapops_daily_summary.json into the promoted

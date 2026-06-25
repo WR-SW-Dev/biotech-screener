@@ -25,11 +25,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from tools.artifact_freshness import (  # noqa: E402
-    age_days,
-    format_stale_source,
-    newest_artifact_freshness,
-)
+from tools.artifact_freshness import age_days, format_stale_source, newest_artifact_freshness  # noqa: E402
 from tools.ic_health_memory_hygiene import MemoryHygieneChecker  # noqa: E402
 from tools.skills_logger_v2 import log_skill  # noqa: E402
 
@@ -1028,17 +1024,6 @@ def check_price_action_watch(dt: date) -> CheckResult:
     )
 
 
-def check_grok_biotech_watch(dt: date) -> CheckResult:
-    ds = as_of_date(dt)
-    return _check_dated_artifact_file(
-        "grok_biotech_watch",
-        dt,
-        today_path=ARTIFACTS_DIR / "grok_watch" / f"{ds}_alerts.json",
-        freshness_globs=["artifacts/grok_watch/"],
-        cadence_key="intraday",
-    )
-
-
 def check_intraday_mover_watch(dt: date) -> CheckResult:
     ds = as_of_date(dt)
     return _check_dated_artifact_file(
@@ -1126,7 +1111,6 @@ SPECIALIZED_CHECKS = {
     "options_watch": check_options_watch,
     "price_action_watch": check_price_action_watch,
     "earnings_calendar_sync": check_earnings_calendar_sync,
-    "grok_biotech_watch": check_grok_biotech_watch,
     "intraday_mover_watch": check_intraday_mover_watch,
     "event_analyst": check_event_analyst,
     "universe_maintenance": check_universe_maintenance,

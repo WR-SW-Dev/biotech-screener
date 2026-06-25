@@ -17,7 +17,6 @@ import hashlib
 import html
 import json
 import logging
-import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -27,26 +26,10 @@ from typing import Any, Dict, List
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# Load .env for API keys
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv(PROJECT_ROOT / ".env")
-except ImportError:
-    pass
-
 logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = "dem_grok_news_feed.v1"
 OUTPUT_DIR = PROJECT_ROOT / "data" / "press_releases" / "classified"
-
-# Try to import OpenAI client for xAI
-try:
-    from openai import OpenAI
-
-    HAS_OPENAI = True
-except ImportError:
-    HAS_OPENAI = False
 
 
 SYSTEM_PROMPT = """You are a point-in-time biotech event normalizer for the Wake Robin DEM/CRT pipeline.
@@ -98,44 +81,8 @@ Return a JSON object with these fields:
 """
 
 
-def _classify_with_grok(
-    ticker: str,
-    company: str,
-    headline: str,
-    source_url: str,
-    published_at: str,
-    client: Any,
-    model: str,
-) -> Dict[str, Any]:
-    """Classify a single PR using xAI Grok."""
-    user_prompt = USER_PROMPT_TEMPLATE.format(
-        ticker=ticker,
-        company=company,
-        headline=headline,
-        source_url=source_url,
-        published_at=published_at,
-    )
-
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.1,
-        max_tokens=800,
-        response_format={"type": "json_object"},
-    )
-
-    text = response.choices[0].message.content
-    return json.loads(text)
-
-
 def _classify_locally(headline: str) -> Dict[str, Any]:
-    """Fast local classification using keyword rules (no API call).
-
-    Used as fallback when XAI_API_KEY is not set or for dry-run mode.
-    """
+    """Fast local classification using keyword rules (no API call)."""
     hl = headline.lower()
 
     # GUARD: Clinical event classification takes priority over informational suppression.
@@ -728,32 +675,20 @@ def _collision_counterfactual_would_rescue(hl_lower: str) -> bool:
 
 def classify_releases(
     raw_records: List[Dict[str, Any]],
-    use_grok: bool = False,
-    model: str = "grok-3-mini-fast",
 ) -> List[Dict[str, Any]]:
     """Classify a batch of raw PR records.
 
     Tiered strategy:
     1. Filter noise (lawsuits, stock alerts) — skip entirely
     1.5. Flag ticker collisions (headline doesn't match registered company)
-    2. Local keyword classification for clear cases
-    3. Grok only for ambiguous records (if enabled)
+    2. Local keyword classification
     """
-    client = None
-    if use_grok and HAS_OPENAI:
-        api_key = os.getenv("XAI_API_KEY")
-        if api_key:
-            client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
-        else:
-            logger.warning("XAI_API_KEY not set, falling back to local classification")
-
     company_names = _load_company_names()
 
     classified = []
     noise_skipped = 0
     collision_flagged = 0
     collision_soft_flagged = 0
-    grok_calls = 0
 
     for rec in raw_records:
         ticker = rec.get("ticker", "")
@@ -799,22 +734,6 @@ def classify_releases(
             result["ticker_collision_flag"] = False
             result["collision_severity"] = "none"
 
-        # Tier 3: escalate to Grok if ambiguous and Grok is available
-        if client and result.get("needs_review") and not result.get("informational_only"):
-            try:
-                result = _classify_with_grok(
-                    ticker=ticker,
-                    company=rec.get("company", ""),
-                    headline=headline,
-                    source_url=rec.get("source_url", ""),
-                    published_at=rec.get("published_at_utc", ""),
-                    client=client,
-                    model=model,
-                )
-                grok_calls += 1
-            except Exception as e:
-                logger.warning("Grok failed for %s: %s", ticker, e)
-
         # Build normalized event record
         event_id = str(uuid.uuid4())
         dedupe_raw = f"{ticker}|{result.get('event_category', '')}|{result.get('event_subtype', '')}|{rec.get('published_at_utc', '')}|{rec.get('source_url', '')}"
@@ -830,9 +749,7 @@ def classify_releases(
             "source_type": rec.get("source_type", "company_ir"),
             "published_at_utc": rec.get("published_at_utc", ""),
             "classified_at_utc": datetime.now(timezone.utc).isoformat(),
-            "classification_method": (
-                "grok" if (client and grok_calls > 0 and result.get("needs_review") is False) else "local_keywords"
-            ),
+            "classification_method": "local_keywords",
             **result,
         }
         classified.append(normalized)
@@ -846,9 +763,6 @@ def classify_releases(
             collision_soft_flagged,
             collision_flagged - collision_soft_flagged,
         )
-    if grok_calls:
-        logger.info("Grok API calls: %d (ambiguous records only)", grok_calls)
-
     return classified
 
 
@@ -857,8 +771,6 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="PR classification (Spec 044 Phase 2)")
     parser.add_argument("--input", type=Path, required=True, help="Path to raw releases JSONL")
-    parser.add_argument("--use-grok", action="store_true", help="Use xAI Grok API (requires XAI_API_KEY)")
-    parser.add_argument("--model", default="grok-4-1-fast")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--stdout-only", action="store_true")
     args = parser.parse_args()
@@ -877,7 +789,7 @@ def main() -> int:
     print(f"Loaded {len(records)} raw PR records")
 
     # Classify
-    classified = classify_releases(records, use_grok=args.use_grok, model=args.model)
+    classified = classify_releases(records)
     print(f"Classified {len(classified)} records")
 
     # Summary

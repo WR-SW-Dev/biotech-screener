@@ -90,7 +90,7 @@ def run_day(d: str) -> DayDiff:
     diff.canonical_count = len(canonical)
 
     # Run patched classifier on raw
-    shadow = classify_releases(raw, use_grok=False)
+    shadow = classify_releases(raw)
     diff.shadow_count = len(shadow)
 
     # Write shadow output

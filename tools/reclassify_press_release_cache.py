@@ -3,8 +3,7 @@
 
 Reads every `classified_*.jsonl` in `data/press_releases/classified/`,
 reconstructs a minimal raw record from each entry, and re-runs it through
-`classify_releases([rec], use_grok=False)` with the current CH-1..CH-5 + P2
-patched classifier.
+`classify_releases([rec])` with the current patched classifier.
 
 Output goes to `data/press_releases/classified/reclassified/` — **originals
 are NEVER overwritten** (CCFT "Frozen" rule). A per-file diff report and an
@@ -101,7 +100,7 @@ def reclassify_file(src: Path, limit: Optional[int] = None) -> tuple[List[Dict[s
     diff.n_original = len(originals)
 
     raw_records = [_raw_from_classified(r) for r in originals]
-    new_classified = classify_releases(raw_records, use_grok=False)
+    new_classified = classify_releases(raw_records)
 
     # Build an index by (ticker, headline) to rejoin originals with re-classified
     by_key: Dict[tuple, Dict[str, Any]] = {}

@@ -6295,15 +6295,13 @@ def run_daily(
                 # Classify deduped output
                 _deduped_path = REPO_ROOT / "data" / "press_releases" / "deduped" / f"deduped_{as_of_date}.jsonl"
                 _classify_input = _deduped_path if _deduped_path.exists() else _releases_path
-                _grok_flag = ["--use-grok"] if os.getenv("XAI_API_KEY") else []
                 _classify_result = _sp_herald.run(
                     [
                         sys.executable,
                         str(REPO_ROOT / "tools" / "classify_press_releases.py"),
                         "--input",
                         str(_classify_input),
-                    ]
-                    + _grok_flag,
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=300,

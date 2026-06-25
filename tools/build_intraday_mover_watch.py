@@ -246,13 +246,8 @@ def lookup_same_day_news(
     *,
     herald_classified_dir: Path,
     herald_raw_dir: Path,
-    grok_watch_dir: Path,
 ) -> Dict[str, Any]:
-    """Look up same-day news for a ticker in source-priority order.
-
-    Scaffolding-level implementation: scans JSON files by date. Production
-    path should use indexed lookups; Phase 2 will optimize.
-    """
+    """Look up same-day news for a ticker in source-priority order."""
     # 1. Herald classified
     classified_path = herald_classified_dir / f"{as_of_date}.json"
     hit = _find_hit_in_herald(classified_path, ticker)
@@ -264,12 +259,6 @@ def lookup_same_day_news(
     hit = _find_hit_in_herald(raw_path, ticker)
     if hit:
         return _mark(hit, status="OFFICIAL", rank=2)
-
-    # 3. Grok watch
-    grok_path = grok_watch_dir / f"{as_of_date}_watch.json"
-    hit = _find_hit_in_grok(grok_path, ticker)
-    if hit:
-        return _mark(hit, status="SUPPORTING", rank=4, source_type="grok")
 
     return _null_news_record()
 
@@ -283,20 +272,6 @@ def _find_hit_in_herald(path: Path, ticker: str) -> Optional[Dict[str, Any]]:
         return None
     rows = data.get("releases") or data.get("items") or data.get("rows") or []
     for row in rows:
-        if row.get("ticker") == ticker:
-            return row
-    return None
-
-
-def _find_hit_in_grok(path: Path, ticker: str) -> Optional[Dict[str, Any]]:
-    if not path.exists():
-        return None
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return None
-    alerts = data.get("alerts") or data.get("rows") or []
-    for row in alerts:
         if row.get("ticker") == ticker:
             return row
     return None
@@ -332,7 +307,6 @@ def build_intraday_mover_watch(
     artifacts_dir: Path = REPO_ROOT / "artifacts",
     herald_classified_dir: Path = REPO_ROOT / "artifacts" / "herald" / "classified",
     herald_raw_dir: Path = REPO_ROOT / "artifacts" / "herald" / "raw",
-    grok_watch_dir: Path = REPO_ROOT / "artifacts" / "grok_biotech_watch",
     send_email: bool = False,
 ) -> Dict[str, Any]:
     as_of_date = as_of_ts[:10]
@@ -384,7 +358,6 @@ def build_intraday_mover_watch(
             as_of_date,
             herald_classified_dir=herald_classified_dir,
             herald_raw_dir=herald_raw_dir,
-            grok_watch_dir=grok_watch_dir,
         )
         row.update(news)
 

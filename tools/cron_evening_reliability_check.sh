@@ -79,6 +79,57 @@ fi
         fi
     fi
 
+    # production_qa_check — today's QA report (needs today's snapshot)
+    PROD_QA_ARTIFACT="${REPO_ROOT}/artifacts/production_qa/${TODAY}_report.json"
+    RANKINGS="${REPO_ROOT}/data/snapshots/${TODAY}/rankings.csv"
+    if [ -f "$PROD_QA_ARTIFACT" ]; then
+        echo "${LOG_PREFIX} ✅ production_qa report exists: ${TODAY}"
+    elif [ ! -f "$RANKINGS" ]; then
+        echo "${LOG_PREFIX} ⏳ production_qa deferred — no rankings.csv for ${TODAY} yet"
+    else
+        echo "${LOG_PREFIX} ⚠️  Missing production_qa for ${TODAY}; running backfill..."
+        if /usr/bin/python3 "${REPO_ROOT}/tools/production_qa_check.py" \
+                --as-of-date "${TODAY}" >> "${REPO_ROOT}/logs/production_qa.log" 2>&1; then
+            echo "${LOG_PREFIX} ✅ production_qa completed for ${TODAY}"
+        else
+            echo "${LOG_PREFIX} ⚠️  production_qa exit non-zero for ${TODAY} (alerts or FAIL — see log)"
+        fi
+    fi
+
+    # calibration_evidence + event_feedback_metrics — weekly Friday jobs
+    # Find most recent Friday (or today if today is Friday)
+    if [ "$(date +%u)" -eq 5 ]; then
+        LAST_FRIDAY="${TODAY}"
+    else
+        LAST_FRIDAY=$(date -d "last friday" +%Y-%m-%d)
+    fi
+
+    CAL_ARTIFACT="${REPO_ROOT}/artifacts/calibration_evidence/${LAST_FRIDAY}_evidence.json"
+    if [ -f "$CAL_ARTIFACT" ]; then
+        echo "${LOG_PREFIX} ✅ calibration_evidence exists: ${LAST_FRIDAY}"
+    else
+        echo "${LOG_PREFIX} ⚠️  Missing calibration_evidence for ${LAST_FRIDAY}; running backfill..."
+        if /usr/bin/python3 "${REPO_ROOT}/tools/build_calibration_evidence.py" \
+                --as-of-date "${LAST_FRIDAY}" >> "${REPO_ROOT}/logs/calibration_evidence.log" 2>&1; then
+            echo "${LOG_PREFIX} ✅ calibration_evidence completed for ${LAST_FRIDAY}"
+        else
+            echo "${LOG_PREFIX} ❌ calibration_evidence FAILED for ${LAST_FRIDAY}"
+        fi
+    fi
+
+    EFM_ARTIFACT="${REPO_ROOT}/artifacts/event_feedback/metrics_${LAST_FRIDAY}.json"
+    if [ -f "$EFM_ARTIFACT" ]; then
+        echo "${LOG_PREFIX} ✅ event_feedback_metrics exists: ${LAST_FRIDAY}"
+    else
+        echo "${LOG_PREFIX} ⚠️  Missing event_feedback_metrics for ${LAST_FRIDAY}; running backfill..."
+        if /usr/bin/python3 "${REPO_ROOT}/tools/build_event_feedback_metrics.py" \
+                --as-of-date "${LAST_FRIDAY}" >> "${REPO_ROOT}/logs/event_feedback_metrics.log" 2>&1; then
+            echo "${LOG_PREFIX} ✅ event_feedback_metrics completed for ${LAST_FRIDAY}"
+        else
+            echo "${LOG_PREFIX} ❌ event_feedback_metrics FAILED for ${LAST_FRIDAY}"
+        fi
+    fi
+
     echo "${LOG_PREFIX} Evening reliability check complete"
 
 } | tee -a "$LOG_FILE"

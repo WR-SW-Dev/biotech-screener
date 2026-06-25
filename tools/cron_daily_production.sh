@@ -314,7 +314,7 @@ if [ -d "${PRICE_CACHE}" ]; then
 fi
 
 # Prune old artifact watch/digest dirs (>6 months)
-for artifact_type in grok_watch price_action_watch ops_digest shadow_monitor; do
+for artifact_type in price_action_watch ops_digest shadow_monitor; do
     artifact_dir="${REPO_ROOT}/artifacts/${artifact_type}"
     [ -d "${artifact_dir}" ] || continue
     find "${artifact_dir}" -name "20[0-9][0-9]-*" -mtime +${ARTIFACT_PRUNE_DAYS} -delete 2>/dev/null

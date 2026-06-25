@@ -23,7 +23,6 @@ Exit codes:
 import argparse
 import json
 import logging
-import os
 import subprocess
 import sys
 import time
@@ -251,7 +250,6 @@ def task_herald(as_of: str) -> TaskOutcome:
 
     # Stage 3: classify (best-effort; failure here doesn't fail Herald,
     # since the dedupe artifact — our done predicate — is already on disk)
-    grok_flag = ["--use-grok"] if os.getenv("XAI_API_KEY") else []
     try:
         r = _run_subprocess(
             [
@@ -259,8 +257,7 @@ def task_herald(as_of: str) -> TaskOutcome:
                 str(REPO_ROOT / "tools" / "classify_press_releases.py"),
                 "--input",
                 str(deduped_path),
-            ]
-            + grok_flag,
+            ],
             timeout=300,
             label="herald-classify",
         )
