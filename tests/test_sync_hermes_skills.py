@@ -12,6 +12,7 @@ sys.path.insert(0, str(REPO))
 from tools.sync_hermes_skills import (  # noqa: E402
     SOURCE_AUTHORITY_HERMES_AUTHORITATIVE,
     SOURCE_AUTHORITY_HERMES_NATIVE,
+    SOURCE_AUTHORITY_HERMES_SKILL,
     source_authority_for,
 )
 
@@ -25,7 +26,14 @@ def test_source_authority_for_reference():
 
 
 def test_source_authority_for_hermes_native():
-    assert source_authority_for("town-operator-bridge", "town-operator-bridge.md") == SOURCE_AUTHORITY_HERMES_NATIVE
+    assert (
+        source_authority_for("governance-spec-enforcement", "governance-spec-enforcement.md")
+        == SOURCE_AUTHORITY_HERMES_NATIVE
+    )
+
+
+def test_source_authority_for_hermes_skill():
+    assert source_authority_for("town-operator-bridge", "town-operator-bridge.md") == SOURCE_AUTHORITY_HERMES_SKILL
 
 
 def test_source_authority_for_memory_steward():

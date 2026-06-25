@@ -5,8 +5,8 @@
     "town-operator-bridge": {
       "name": "Town-Hermes Bridge (Spec 090)",
       "file": "town-operator-bridge.md",
-      "status": "Phase B wired; live delivery pending OPERATOR_DELIVERY_DRY_RUN=0",
-      "phase": "B",
+      "status": "Phase B LIVE (OPERATOR_DELIVERY_DRY_RUN=0 confirmed 2026-06-25)",
+      "phase": "B_LIVE",
       "event_types": [
         "held_spec_ledger",
         "first_fire_pass",
@@ -25,8 +25,8 @@
         "agent_supervisor (watchdog)",
         "hermes-ruleset-integrity (future)"
       ],
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "screener-ops": {
       "name": "Screener Ops & Governance",
@@ -46,8 +46,8 @@
       "name": "13F Cohort Validation",
       "file": "13f-validation-coordinator.md",
       "status": "Active",
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "governance-spec-enforcement": {
       "name": "Spec Enforcement & Governance",
@@ -219,8 +219,8 @@
       "name": "Browser Automation (OpenClaw)",
       "file": "browser-automation.md",
       "status": "Active",
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "hermeslink-state-capture": {
       "name": "Hermes Knowledge Layer State Capture",
@@ -233,29 +233,29 @@
       "name": "OpenClaw Agent Scope Audit",
       "file": "openclaw-agent-scope-audit.md",
       "status": "Active",
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "openclaw-cron-scheduler-debug": {
       "name": "OpenClaw Cron Scheduler Debug",
       "file": "openclaw-cron-scheduler-debug.md",
       "status": "Active",
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "openclaw-data-pipeline-debug": {
       "name": "OpenClaw Data Pipeline Debug",
       "file": "openclaw-data-pipeline-debug.md",
       "status": "Active",
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "openclaw-session-routing-debug": {
       "name": "OpenClaw Session Routing Debug",
       "file": "openclaw-session-routing-debug.md",
       "status": "Active",
-      "source": "hermes_native",
-      "source_authority": "hermes_native"
+      "source": "hermes_skill",
+      "source_authority": "hermes_skill"
     },
     "phase-2-step-4-readiness": {
       "name": "Phase 2 Step 4 Readiness",
@@ -383,7 +383,8 @@
   "source_authority_legend": {
     "skills/SKILL.md": "Edit skills/<dir>/SKILL.md then sync",
     "skills/<dir>/REFERENCE.md": "Edit skills/<dir>/REFERENCE.md then sync",
-    "hermes_native": "Edit docs/hermes_skills/<file>.md directly",
+    "hermes_native": "Edit docs/hermes_skills/<file>.md directly (no Hermes source)",
+    "hermes_skill": "Edit ~/.hermes/skills/<category>/<name>/SKILL.md; sync via weekly-skill-harvester",
     "hermes_authoritative": "Edit docs/hermes_skills mirror only (sync skips)"
   }
 }

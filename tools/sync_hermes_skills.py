@@ -55,19 +55,26 @@ REFERENCE_MAP: dict[str, str] = {
 }
 
 # Hermes-only docs (no skills/ source) — registered in _meta only
+# Truly repo-native: no source in ~/.hermes/skills/ — edit docs/hermes_skills/<file>.md directly.
 HERMES_NATIVE: dict[str, str] = {
-    "browser-automation": "Browser Automation (OpenClaw)",
     "governance-spec-enforcement": "Spec Enforcement & Governance",
     "hermeslink-state-capture": "Hermes Knowledge Layer State Capture",
+    "phase-2-step-4-readiness": "Phase 2 Step 4 Readiness",
+    "path-c-governance-monitoring": "Path C Governance Monitoring",
+    "path-c-operational-runbook": "Path C Operational Runbook",
+}
+
+# Hermes-runtime-sourced: source lives in ~/.hermes/skills/<category>/<name>/SKILL.md.
+# Edit the source there; sync to repo via weekly-skill-harvester (Step 6 cp).
+# DO NOT edit docs/hermes_skills/<file>.md directly — changes will be overwritten on next harvest.
+HERMES_SKILL: dict[str, str] = {
+    "browser-automation": "Browser Automation (OpenClaw)",
     "openclaw-agent-scope-audit": "OpenClaw Agent Scope Audit",
     "openclaw-cron-scheduler-debug": "OpenClaw Cron Scheduler Debug",
     "openclaw-data-pipeline-debug": "OpenClaw Data Pipeline Debug",
     "openclaw-session-routing-debug": "OpenClaw Session Routing Debug",
-    "phase-2-step-4-readiness": "Phase 2 Step 4 Readiness",
     "town-operator-bridge": "Town-Hermes Bridge (Spec 090)",
     "13f-validation-coordinator": "13F Cohort Validation",
-    "path-c-governance-monitoring": "Path C Governance Monitoring",
-    "path-c-operational-runbook": "Path C Operational Runbook",
 }
 
 HERMES_ONLY_SECTIONS: dict[str, list[str]] = {
@@ -82,6 +89,7 @@ HERMES_AUTHORITATIVE: set[str] = {
 
 # Values stored in _meta.json `source_authority` (audit + operator runbook).
 SOURCE_AUTHORITY_HERMES_NATIVE = "hermes_native"
+SOURCE_AUTHORITY_HERMES_SKILL = "hermes_skill"
 SOURCE_AUTHORITY_HERMES_AUTHORITATIVE = "hermes_authoritative"
 
 DISPLAY_NAMES: dict[str, str] = {
@@ -188,6 +196,8 @@ def source_authority_for(meta_key: str, fname: str) -> str:
     for skill_key, hermes_name in REFERENCE_MAP.items():
         if hermes_name == fname:
             return f"skills/{skill_key}/REFERENCE.md"
+    if meta_key in HERMES_SKILL or Path(fname).stem in HERMES_SKILL:
+        return SOURCE_AUTHORITY_HERMES_SKILL
     if meta_key in HERMES_NATIVE or Path(fname).stem in HERMES_NATIVE:
         return SOURCE_AUTHORITY_HERMES_NATIVE
     return "unknown"
@@ -233,7 +243,12 @@ def register_meta(dry_run: bool) -> list[str]:
         if (HERMES / fname).exists():
             add(meta_key, fname, name, SOURCE_AUTHORITY_HERMES_NATIVE)
 
-    # Backfill source_authority on entries not touched above (e.g. town-operator-bridge extras).
+    for meta_key, name in HERMES_SKILL.items():
+        fname = f"{meta_key}.md"
+        if (HERMES / fname).exists():
+            add(meta_key, fname, name, SOURCE_AUTHORITY_HERMES_SKILL)
+
+    # Backfill source_authority on entries not touched above.
     for meta_key, entry in skills.items():
         fname = entry.get("file", f"{meta_key}.md")
         authority = source_authority_for(meta_key, fname)
@@ -246,7 +261,8 @@ def register_meta(dry_run: bool) -> list[str]:
     data["source_authority_legend"] = {
         "skills/SKILL.md": "Edit skills/<dir>/SKILL.md then sync",
         "skills/<dir>/REFERENCE.md": "Edit skills/<dir>/REFERENCE.md then sync",
-        SOURCE_AUTHORITY_HERMES_NATIVE: "Edit docs/hermes_skills/<file>.md directly",
+        SOURCE_AUTHORITY_HERMES_NATIVE: "Edit docs/hermes_skills/<file>.md directly (no Hermes source)",
+        SOURCE_AUTHORITY_HERMES_SKILL: "Edit ~/.hermes/skills/<category>/<name>/SKILL.md; sync via weekly-skill-harvester",
         SOURCE_AUTHORITY_HERMES_AUTHORITATIVE: "Edit docs/hermes_skills mirror only (sync skips)",
     }
     if not dry_run:
