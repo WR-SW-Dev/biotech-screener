@@ -48,6 +48,9 @@ HORIZON = 21  # ~1 month, fastest feedback loop
 # WS4 threshold
 WS4_T_THRESHOLD = 1.65
 
+# Native v3 epoch: first snapshot with ees_v3_score natively populated
+V3_NATIVE_EPOCH = "2026-04-14"
+
 SIGNALS = [
     "ees_v3_score",
     "conditional_misprice_score",
@@ -323,6 +326,7 @@ def run_monitor(
     horizon: int = HORIZON,
     min_dates: int = 3,
     max_snapshots: int = 60,
+    start_date: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Run forward monitor across production snapshots.
 
@@ -330,6 +334,9 @@ def run_monitor(
         max_snapshots: Only process the most recent N snapshots.
             Re-scoring 460+ historical snapshots is too slow for daily use.
             Default 60 (~2 months of daily snapshots).
+        start_date: ISO date (YYYY-MM-DD). Only process snapshots on or after
+            this date. Pass V3_NATIVE_EPOCH for clean WS4 tracking on native
+            v3 data only (excludes re-scored pre-fix historical snapshots).
     """
 
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -343,8 +350,11 @@ def run_monitor(
     sorted_dates_by_ticker = {tk: sorted(px.keys()) for tk, px in prices.items()}
 
     all_snap_dates = _discover_snapshot_dates(snapshots_dir)
+    if start_date:
+        all_snap_dates = [d for d in all_snap_dates if d >= start_date]
+        logger.info("start_date=%s: %d snapshot dates after filter", start_date, len(all_snap_dates))
     snap_dates = all_snap_dates[-max_snapshots:]
-    logger.info("Found %d production snapshot dates", len(snap_dates))
+    logger.info("Processing %d production snapshot dates", len(snap_dates))
 
     # ── Per-date scoring + forward returns ──────────────────────────
     ic_series: Dict[str, List[Tuple[str, float]]] = {s: [] for s in SIGNALS}
@@ -472,6 +482,8 @@ def run_monitor(
         "schema": "ees_v3_forward_monitor.v1",
         "generated": dt_date.today().isoformat(),
         "horizon_trading_days": horizon,
+        "start_date_filter": start_date,
+        "native_only_mode": start_date == V3_NATIVE_EPOCH,
         "n_snapshots_total": len(snap_dates),
         "n_snapshots_scored": sum(1 for d in date_details if d["status"] == "scored"),
         "n_rescored": n_rescored,
@@ -556,10 +568,31 @@ def main() -> None:
     parser.add_argument("--trials", type=Path, default=DEFAULT_TRIAL_RECORDS)
     parser.add_argument("--horizon", type=int, default=HORIZON)
     parser.add_argument("--max-snapshots", type=int, default=60, help="Max recent snapshots to process")
+    parser.add_argument(
+        "--start-date",
+        type=str,
+        default=None,
+        help="Only process snapshots on or after this ISO date (YYYY-MM-DD)",
+    )
+    parser.add_argument(
+        "--native-only",
+        action="store_true",
+        help=f"Restrict to native v3 snapshots only (start_date={V3_NATIVE_EPOCH}). "
+        "Produces clean WS4 tracking without re-scored pre-fix contamination.",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
-    report = run_monitor(args.snapshots_dir, args.prices, args.trials, args.horizon, max_snapshots=args.max_snapshots)
+    start_date = V3_NATIVE_EPOCH if args.native_only else args.start_date
+
+    report = run_monitor(
+        args.snapshots_dir,
+        args.prices,
+        args.trials,
+        args.horizon,
+        max_snapshots=args.max_snapshots,
+        start_date=start_date,
+    )
 
     _print_summary(report)
 
