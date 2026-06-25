@@ -15,8 +15,6 @@ Date: 2026-01-09
 
 import csv
 import json
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional

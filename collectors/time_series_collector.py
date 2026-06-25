@@ -6,7 +6,7 @@ Uses market_data_provider.py for PIT-safe data with caching
 # Import the market data provider (in parent directory)
 import sys
 import time
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Dict, List
 

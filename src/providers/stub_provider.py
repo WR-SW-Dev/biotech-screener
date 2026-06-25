@@ -7,7 +7,7 @@ Used when --clinical-provider=stub or as fallback.
 
 from datetime import date
 
-from .protocols import ClinicalTrialsProvider, ProviderResult, TrialRow
+from .protocols import ProviderResult
 
 
 class StubClinicalTrialsProvider:

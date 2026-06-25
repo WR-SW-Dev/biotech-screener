@@ -6,7 +6,6 @@ Analyzes what data exists and identifies gaps in the collection pipeline.
 
 import json
 import sys
-from pathlib import Path
 
 
 def analyze_data_coverage(universe_path: str = "production_data/universe.json"):

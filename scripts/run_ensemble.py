@@ -12,6 +12,7 @@ Usage:
     python scripts/run_ensemble.py --top 15
     python scripts/run_ensemble.py --output output/my_report.md
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,14 +22,16 @@ import math
 import os
 import sys
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_DIR = Path(os.environ.get(
-    "BIOTECH_PROJECT_DIR",
-    Path(__file__).resolve().parent.parent,
-))
+PROJECT_DIR = Path(
+    os.environ.get(
+        "BIOTECH_PROJECT_DIR",
+        Path(__file__).resolve().parent.parent,
+    )
+)
 DATA_DIR = PROJECT_DIR / "data"
 OUTPUT_DIR = PROJECT_DIR / "output"
 PRICES_FILE = DATA_DIR / "daily_prices.csv"
@@ -37,23 +40,35 @@ AACT_DIR = DATA_DIR / "aact_snapshots"
 
 # Therapeutic area mapping (domain knowledge — AACT CSVs lack condition field)
 THERAPEUTIC_AREA: dict[str, str] = {
-    "MRNA": "Infectious Disease", "BNTX": "Infectious Disease",
-    "VRTX": "Rare Disease", "REGN": "Immunology",
-    "BIIB": "Neurology", "ALNY": "Rare Disease",
-    "BMRN": "Rare Disease", "INCY": "Oncology",
-    "EXEL": "Oncology", "AMGN": "Oncology",
-    "SGEN": "Oncology", "ACAD": "Neurology",
-    "ARWR": "Rare Disease", "BEAM": "Rare Disease",
-    "BLUE": "Rare Disease", "EDIT": "Rare Disease",
-    "HALO": "Oncology",          # Halozyme — enzyme replacement, oncology adjunct
-    "FOLD": "Rare Disease",      # Amicus Therapeutics — lysosomal storage disorders
-    "RARE": "Rare Disease",      # Ultragenyx — rare and ultra-rare diseases
-    "IMVT": "Immunology",        # Immunovant — autoimmune FcRn inhibitors
+    "MRNA": "Infectious Disease",
+    "BNTX": "Infectious Disease",
+    "VRTX": "Rare Disease",
+    "REGN": "Immunology",
+    "BIIB": "Neurology",
+    "ALNY": "Rare Disease",
+    "BMRN": "Rare Disease",
+    "INCY": "Oncology",
+    "EXEL": "Oncology",
+    "AMGN": "Oncology",
+    "SGEN": "Oncology",
+    "ACAD": "Neurology",
+    "ARWR": "Rare Disease",
+    "BEAM": "Rare Disease",
+    "BLUE": "Rare Disease",
+    "EDIT": "Rare Disease",
+    "HALO": "Oncology",  # Halozyme — enzyme replacement, oncology adjunct
+    "FOLD": "Rare Disease",  # Amicus Therapeutics — lysosomal storage disorders
+    "RARE": "Rare Disease",  # Ultragenyx — rare and ultra-rare diseases
+    "IMVT": "Immunology",  # Immunovant — autoimmune FcRn inhibitors
 }
 
 PHASE_RANK: dict[str, int] = {
-    "Phase 1": 1, "Phase 1/Phase 2": 2, "Phase 2": 3,
-    "Phase 2/Phase 3": 4, "Phase 3": 5, "Phase 4": 6,
+    "Phase 1": 1,
+    "Phase 1/Phase 2": 2,
+    "Phase 2": 3,
+    "Phase 2/Phase 3": 4,
+    "Phase 3": 5,
+    "Phase 4": 6,
 }
 ACTIVE_STATUSES = {"Recruiting", "Active, not recruiting", "Not yet recruiting"}
 
@@ -61,6 +76,7 @@ ACTIVE_STATUSES = {"Recruiting", "Active, not recruiting", "Not yet recruiting"}
 # ═══════════════════════════════════════════════════════════════════
 # Data loading
 # ═══════════════════════════════════════════════════════════════════
+
 
 def find_latest_snapshot() -> Path | None:
     """Find the latest snapshot JSON in output/."""
@@ -139,6 +155,7 @@ def load_aact_data() -> tuple[dict[str, dict], dict[str, list[str]]]:
 # Fundamental analysis (price-based)
 # ═══════════════════════════════════════════════════════════════════
 
+
 def compute_price_metrics(
     prices: list[tuple[str, float]],
     as_of: str,
@@ -195,6 +212,7 @@ def health_rating(vol: float | None, max_dd: float | None, momentum: float | Non
 # ═══════════════════════════════════════════════════════════════════
 # Clinical analysis (AACT-based)
 # ═══════════════════════════════════════════════════════════════════
+
 
 def parse_pcd(pcd_str: str) -> date | None:
     if not pcd_str:
@@ -284,6 +302,7 @@ def analyze_clinical(
 # ═══════════════════════════════════════════════════════════════════
 # Ensemble merging
 # ═══════════════════════════════════════════════════════════════════
+
 
 def consensus_rating(health: str, grade: str, has_optimized: bool, composite_score: float | None) -> str:
     """Determine BUY/HOLD/AVOID consensus from multiple signals."""
@@ -379,9 +398,11 @@ def run_ensemble(
 
         # Fundamental
         price_data = prices.get(ticker, [])
-        price_metrics = compute_price_metrics(price_data, as_of_date) if price_data else {
-            "momentum_6m": None, "volatility": None, "max_drawdown": None, "n_days": 0
-        }
+        price_metrics = (
+            compute_price_metrics(price_data, as_of_date)
+            if price_data
+            else {"momentum_6m": None, "volatility": None, "max_drawdown": None, "n_days": 0}
+        )
         health = health_rating(
             price_metrics["volatility"],
             price_metrics["max_drawdown"],
@@ -406,23 +427,25 @@ def run_ensemble(
         # Consensus
         consensus = consensus_rating(health, clinical["grade"], is_optimized, composite_score)
 
-        results.append({
-            "ticker": ticker,
-            "composite_score": composite_score,
-            "composite_rank": company.get("composite_rank"),
-            "momentum_6m": price_metrics["momentum_6m"],
-            "volatility": price_metrics["volatility"],
-            "max_drawdown": price_metrics["max_drawdown"],
-            "financial_health": health,
-            "lead_phase": clinical["lead_phase"],
-            "active_trials": clinical["active_trials"],
-            "total_trials": clinical["total_trials"],
-            "catalysts": clinical["catalysts"],
-            "sponsor_diversity": clinical["sponsor_diversity"],
-            "therapeutic_area": clinical["therapeutic_area"],
-            "pipeline_grade": clinical["grade"],
-            "consensus": consensus,
-        })
+        results.append(
+            {
+                "ticker": ticker,
+                "composite_score": composite_score,
+                "composite_rank": company.get("composite_rank"),
+                "momentum_6m": price_metrics["momentum_6m"],
+                "volatility": price_metrics["volatility"],
+                "max_drawdown": price_metrics["max_drawdown"],
+                "financial_health": health,
+                "lead_phase": clinical["lead_phase"],
+                "active_trials": clinical["active_trials"],
+                "total_trials": clinical["total_trials"],
+                "catalysts": clinical["catalysts"],
+                "sponsor_diversity": clinical["sponsor_diversity"],
+                "therapeutic_area": clinical["therapeutic_area"],
+                "pipeline_grade": clinical["grade"],
+                "consensus": consensus,
+            }
+        )
 
     # Generate report
     report = generate_report(results, as_of_date, snapshot_path.name, is_optimized)
@@ -447,17 +470,17 @@ def generate_report(
     now = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
 
     lines = [
-        f"# 🧬 Wake Robin Biotech Ensemble Report",
+        "# 🧬 Wake Robin Biotech Ensemble Report",
         f"**Generated:** {now}",
         f"**Snapshot:** `{snapshot_name}` (as-of: {as_of})",
         f"**Method:** Deterministic ensemble (fundamental + clinical{' + optimized scores' if is_optimized else ''})",
-        f"",
-        f"---",
-        f"",
-        f"## Unified Investment Matrix",
-        f"",
-        f"| Ticker | Score | 6M Mom% | Vol% | MaxDD% | Health | Phase | Active | Grade | TA | Consensus |",
-        f"|--------|-------|---------|------|--------|--------|-------|--------|-------|----|-----------|",
+        "",
+        "---",
+        "",
+        "## Unified Investment Matrix",
+        "",
+        "| Ticker | Score | 6M Mom% | Vol% | MaxDD% | Health | Phase | Active | Grade | TA | Consensus |",
+        "|--------|-------|---------|------|--------|--------|-------|--------|-------|----|-----------|",
     ]
 
     for r in results:
@@ -476,26 +499,30 @@ def generate_report(
     hold = [r for r in results if r["consensus"] == "HOLD"]
     avoid = [r for r in results if r["consensus"] == "AVOID"]
 
-    lines.extend([
-        f"",
-        f"---",
-        f"",
-        f"## Consensus Picks",
-        f"",
-        f"| Rating | Tickers |",
-        f"|--------|---------|",
-        f"| 🟢 **BUY** | {', '.join(r['ticker'] for r in buy) or 'None'} |",
-        f"| 🟡 **HOLD** | {', '.join(r['ticker'] for r in hold) or 'None'} |",
-        f"| 🔴 **AVOID** | {', '.join(r['ticker'] for r in avoid) or 'None'} |",
-        f"",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## Consensus Picks",
+            "",
+            "| Rating | Tickers |",
+            "|--------|---------|",
+            f"| 🟢 **BUY** | {', '.join(r['ticker'] for r in buy) or 'None'} |",
+            f"| 🟡 **HOLD** | {', '.join(r['ticker'] for r in hold) or 'None'} |",
+            f"| 🔴 **AVOID** | {', '.join(r['ticker'] for r in avoid) or 'None'} |",
+            "",
+        ]
+    )
 
     # Top picks detail
     if buy:
-        lines.extend([f"### 🟢 Top BUY Signals", f""])
+        lines.extend(["### 🟢 Top BUY Signals", ""])
         for r in buy[:3]:
-            lines.append(f"**{r['ticker']}** — Health: {r['financial_health']}, Pipeline: {r['pipeline_grade']}, "
-                        f"Phase: {r['lead_phase']}, {r['active_trials']} active trial(s)")
+            lines.append(
+                f"**{r['ticker']}** — Health: {r['financial_health']}, Pipeline: {r['pipeline_grade']}, "
+                f"Phase: {r['lead_phase']}, {r['active_trials']} active trial(s)"
+            )
             if r["catalysts"]:
                 lines.append(f"  Catalysts: {'; '.join(r['catalysts'])}")
             lines.append("")
@@ -503,14 +530,16 @@ def generate_report(
     # Catalysts
     all_catalysts = [(r["ticker"], c) for r in results for c in r["catalysts"]]
     if all_catalysts:
-        lines.extend([
-            f"---",
-            f"",
-            f"## Upcoming Catalysts",
-            f"",
-            f"| Ticker | Catalyst |",
-            f"|--------|----------|",
-        ])
+        lines.extend(
+            [
+                "---",
+                "",
+                "## Upcoming Catalysts",
+                "",
+                "| Ticker | Catalyst |",
+                "|--------|----------|",
+            ]
+        )
         for ticker, cat in all_catalysts:
             lines.append(f"| {ticker} | {cat} |")
         lines.append("")
@@ -520,35 +549,43 @@ def generate_report(
     for r in results:
         ta_counts[r["therapeutic_area"]] += 1
     if ta_counts:
-        lines.extend([
-            f"---",
-            f"",
-            f"## Therapeutic Area Distribution",
-            f"",
-            f"| Area | Companies |",
-            f"|------|-----------|",
-        ])
+        lines.extend(
+            [
+                "---",
+                "",
+                "## Therapeutic Area Distribution",
+                "",
+                "| Area | Companies |",
+                "|------|-----------|",
+            ]
+        )
         for ta, cnt in sorted(ta_counts.items(), key=lambda x: -x[1]):
             lines.append(f"| {ta} | {cnt} |")
         lines.append("")
 
-    lines.extend([
-        f"---",
-        f"",
-        f"## Methodology",
-        f"",
-        f"| Dimension | Source | Key Metrics |",
-        f"|-----------|--------|-------------|",
-        f"| **Fundamental** | `data/daily_prices.csv` | 6M momentum, annualized volatility, max drawdown |",
-        f"| **Clinical** | `data/aact_snapshots/` + `data/trial_mapping.csv` | Phase, active trials, catalysts, sponsor diversity, A-F grade |",
-    ])
+    lines.extend(
+        [
+            "---",
+            "",
+            "## Methodology",
+            "",
+            "| Dimension | Source | Key Metrics |",
+            "|-----------|--------|-------------|",
+            "| **Fundamental** | `data/daily_prices.csv` | 6M momentum, annualized volatility, max drawdown |",
+            "| **Clinical** | `data/aact_snapshots/` + `data/trial_mapping.csv` | Phase, active trials, catalysts, sponsor diversity, A-F grade |",
+        ]
+    )
     if is_optimized:
-        lines.append(f"| **Optimized Scores** | Grid-search weighted composite | IC-optimized feature weights (clinical + financial) |")
-    lines.extend([
-        f"",
-        f"**Consensus Logic:** BUY = 2+ buy signals, 0 avoid. AVOID = 2+ avoid signals, 0 buy. HOLD = everything else.",
-        f"",
-    ])
+        lines.append(
+            "| **Optimized Scores** | Grid-search weighted composite | IC-optimized feature weights (clinical + financial) |"
+        )
+    lines.extend(
+        [
+            "",
+            "**Consensus Logic:** BUY = 2+ buy signals, 0 avoid. AVOID = 2+ avoid signals, 0 buy. HOLD = everything else.",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -556,6 +593,7 @@ def generate_report(
 # ═══════════════════════════════════════════════════════════════════
 # CLI
 # ═══════════════════════════════════════════════════════════════════
+
 
 def main():
     parser = argparse.ArgumentParser(description="Run biotech ensemble analysis")

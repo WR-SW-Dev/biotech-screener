@@ -41,6 +41,7 @@ STALLED_LOOP_ACTIONS: dict[str, dict[str, str]] = {
     },
 }
 
+
 def _stalled_loops_status() -> list[dict[str, str]]:
     from tools.skills_loop_review import stalled_loop_entries
 
@@ -60,10 +61,7 @@ def _stalled_loops_status() -> list[dict[str, str]]:
     if rows:
         return rows
     # Fallback when memory.md table unavailable (e.g. cloud clone)
-    return [
-        {"id": fid, "status": "OPEN", **meta}
-        for fid, meta in STALLED_LOOP_ACTIONS.items()
-    ]
+    return [{"id": fid, "status": "OPEN", **meta} for fid, meta in STALLED_LOOP_ACTIONS.items()]
 
 
 def _selfimprove_gates() -> dict[str, Any]:
@@ -228,10 +226,7 @@ def _print_human(report: dict[str, Any]) -> None:
     print("\nHerald")
     print(f"  verdict: {herald['verdict']}  done={herald['herald_done']}")
     if herald.get("latest_classified_date"):
-        print(
-            f"  latest classified: {herald['latest_classified_date']} "
-            f"({herald.get('source_age_days')}d ago)"
-        )
+        print(f"  latest classified: {herald['latest_classified_date']} " f"({herald.get('source_age_days')}d ago)")
     for issue in herald.get("issues", [])[:5]:
         print(f"  - {issue}")
 

@@ -92,7 +92,7 @@ def get_short_interest_data(ticker: str) -> Optional[Dict[str, Any]]:
             "report_date": report_date,
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 

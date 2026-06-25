@@ -5,7 +5,6 @@ Uses multiple shuffle seeds to estimate null distribution.
 
 import random
 import sys
-from decimal import Decimal
 from statistics import mean, stdev
 from typing import Any, Dict, List
 

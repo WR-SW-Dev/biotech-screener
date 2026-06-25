@@ -24,7 +24,7 @@ import argparse
 import json
 import math
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from statistics import mean, median, stdev
@@ -1008,7 +1008,7 @@ def run_comparison_backtest(
         ic_diff = ic_v3_mean - ic_v2_mean
         ic_significant = abs(ic_diff) > 0.02 and not ci_overlap if ic_v2_ci and ic_v3_ci else False
 
-        _v2_sharper = ic_v2_mean > ic_v3_mean and ic_v2_tstat and ic_v2_tstat > 2
+        ic_v2_mean > ic_v3_mean and ic_v2_tstat and ic_v2_tstat > 2
         v3_more_stable = ic_v3_90d and ic_v2_90d and stdev(ic_v3_90d) < stdev(ic_v2_90d)
 
         if ic_significant and ic_diff > 0:
@@ -1133,7 +1133,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        _results = run_comparison_backtest(
+        run_comparison_backtest(
             start_date=args.start_date,
             end_date=args.end_date,
             frequency_days=args.frequency,

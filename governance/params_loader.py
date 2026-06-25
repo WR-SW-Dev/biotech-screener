@@ -22,13 +22,7 @@ from governance.hashing import hash_canonical_json_short
 
 # Import hardening utilities
 try:
-    from common.production_hardening import (
-        MAX_CONFIG_FILE_SIZE_MB,
-        FileSizeError,
-        PathTraversalError,
-        validate_file_size,
-        validate_path_within_base,
-    )
+    from common.production_hardening import MAX_CONFIG_FILE_SIZE_MB, FileSizeError, validate_file_size
 
     HAS_HARDENING = True
 except ImportError:
@@ -37,7 +31,6 @@ except ImportError:
 
 # Import schema validation
 try:
-    from common.schema_validation import ValidationResult
     from common.schema_validation import validate_params as validate_params_schema
     from common.schema_validation import validate_weights_sum
 
@@ -54,13 +47,9 @@ DEFAULT_PARAMS_DIR = "params_archive"
 class ParamsLoadError(Exception):
     """Error loading parameters from archive."""
 
-    pass
-
 
 class ParamsValidationError(ParamsLoadError):
     """Error validating parameters against schema."""
-
-    pass
 
 
 def get_params_path(

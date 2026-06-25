@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from decimal import Decimal
 from pathlib import Path
 from statistics import StatisticsError, correlation, mean, stdev
 from typing import Any, Dict, List, Tuple
@@ -24,7 +23,6 @@ from typing import Any, Dict, List, Tuple
 sys.path.insert(0, "/home/claude/biotech_screener")
 
 from backtest.metrics import compute_forward_windows, compute_spearman_ic, run_metrics_suite
-from backtest.returns_provider import CSVReturnsProvider
 from backtest.sharadar_provider import (
     DELISTING_POLICY_CONSERVATIVE,
     DELISTING_POLICY_LAST_PRICE,
@@ -142,7 +140,7 @@ def compute_ic_by_stage(
 
     if pooled_ic is not None and stage_ics:
         # Check if pooled sign matches 2/3 stages
-        _pooled_sign = 1 if pooled_ic > 0 else -1
+        1 if pooled_ic > 0 else -1
         matching_signs = sum(1 for ic in stage_ics.values() if (ic > 0) == (pooled_ic > 0))
 
         if matching_signs >= len(stage_ics) * 2 / 3:

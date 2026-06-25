@@ -21,12 +21,10 @@ Version: 1.0.0
 """
 
 import hashlib
-import io
 import json
 import ssl
 import urllib.request
 from datetime import date, timedelta
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -219,7 +217,7 @@ def parse_finra_short_volume_file(file_path: Path, trade_date: date) -> List[Dic
                 return header.index(n)
         return -1
 
-    _idx_date = find_col(["DATE", "TRADEDATE"])
+    find_col(["DATE", "TRADEDATE"])
     idx_symbol = find_col(["SYMBOL", "TICKER"])
     idx_short = find_col(["SHORTVOLUME", "SHORT_VOLUME", "SHORTVOL"])
     idx_exempt = find_col(["SHORTEXEMPTVOLUME", "SHORT_EXEMPT_VOLUME", "EXEMPTVOLUME"])

@@ -3,7 +3,6 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from scientific_cartography.langgraph_review.state import CartographyReviewState
 

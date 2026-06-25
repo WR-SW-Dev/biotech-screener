@@ -8,8 +8,7 @@ import random
 
 # Add parent to path for imports
 import sys
-from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 sys.path.insert(0, "/home/claude/biotech_screener")
 

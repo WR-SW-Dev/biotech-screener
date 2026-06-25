@@ -36,7 +36,7 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -95,14 +95,9 @@ def extract_high_moves(digest: dict) -> list[HighMove]:
             seen_tickers.add(ticker)
             move_type = f"INTRADAY_{move_list_key.upper()}_HIGH"
             magnitude = float(
-                move.get("stock_abs_move_pct")
-                or move.get("rel_move_vs_xbi_pct")
-                or move.get("move_pct")
-                or 0.0
+                move.get("stock_abs_move_pct") or move.get("rel_move_vs_xbi_pct") or move.get("move_pct") or 0.0
             )
-            high_moves.append(
-                HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude)
-            )
+            high_moves.append(HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude))
 
     # Fall back to legacy format if available
     if not high_moves:
@@ -122,9 +117,7 @@ def extract_high_moves(digest: dict) -> list[HighMove]:
                         seen_tickers.add(ticker)
                         move_type = code
                         magnitude = alert.get("magnitude", 0.0)
-                        high_moves.append(
-                            HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude)
-                        )
+                        high_moves.append(HighMove(ticker=ticker, move_type=move_type, magnitude=magnitude))
                         break
 
     return high_moves
@@ -150,9 +143,7 @@ def search_news_for_ticker(
         return []
 
 
-def enrich_digest(
-    digest: dict, high_moves: list[HighMove], api_key: Optional[str] = None
-) -> dict:
+def enrich_digest(digest: dict, high_moves: list[HighMove], api_key: Optional[str] = None) -> dict:
     """Enrich digest with Firecrawl news context for HIGH-severity moves."""
     if not api_key:
         api_key = os.getenv("FIRECRAWL_API_KEY")
@@ -187,9 +178,7 @@ def enrich_digest(
                 "governance": "research_only",
                 "news_sources": news_results,
             }
-            logger.info(
-                f"Enriched {ticker}: {len(news_results)} news sources found"
-            )
+            logger.info(f"Enriched {ticker}: {len(news_results)} news sources found")
 
     # Add enrichment to digest under _firecrawl_context
     if firecrawl_context:

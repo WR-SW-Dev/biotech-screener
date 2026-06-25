@@ -15,7 +15,6 @@ Usage:
 import random
 import sys
 from datetime import datetime, timezone
-from decimal import Decimal
 from pathlib import Path
 from statistics import mean, stdev
 from typing import Any, Dict, List
@@ -24,8 +23,7 @@ sys.path.insert(0, "/home/claude/biotech_screener")
 
 from backtest.metrics import HORIZON_DISPLAY_NAMES, compute_forward_windows, run_metrics_suite
 from backtest.returns_provider import CSVReturnsProvider, LaggedReturnsProvider, ShuffledReturnsProvider
-from common.provenance import create_provenance
-from common.run_manifest import RunManifest, compute_content_hash, create_data_hashes, log_backtest_run
+from common.run_manifest import compute_content_hash, log_backtest_run
 from module_1_universe import compute_module_1_universe
 from module_2_financial import compute_module_2_financial
 from module_3_catalyst import compute_module_3_catalyst
@@ -402,7 +400,6 @@ def validate_cohort_coverage(snapshots: List[Dict]) -> Dict[str, Any]:
     print(f"  {'Cohort':<25} {'Min':>6} {'Max':>6} {'Fallback':<15}")
     print("  " + "-" * 55)
 
-    _all_ok = True
     for cohort, counts in sorted(all_cohorts.items()):
         min_count = min(counts)
         max_count = max(counts)

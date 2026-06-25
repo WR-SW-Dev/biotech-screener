@@ -22,6 +22,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+
 def get_hedge_reports():
     """List all hedge_report_*.json files by date."""
     hr_dir = PROJECT_ROOT / "output/hedge_report"
@@ -78,8 +79,7 @@ def generate_status():
         "current_count": len(fresh),
         "threshold_met": len(fresh) >= 4,
         "threshold_date_estimate": (
-            None if len(fresh) >= 4
-            else (next_friday + timedelta(days=14 * max(0, 4 - len(fresh)))).isoformat()
+            None if len(fresh) >= 4 else (next_friday + timedelta(days=14 * max(0, 4 - len(fresh)))).isoformat()
         ),
         "cron_schedule": "Fridays 8:00 AM ET (0 8 * * 5)",
         "reports": [
@@ -99,7 +99,8 @@ def generate_status():
             "next_expected_friday": next_friday.isoformat(),
             "days_until_threshold": max(0, 4 - len(fresh)) * 7,
             "estimated_approval_ready": (
-                "READY NOW" if len(fresh) >= 4
+                "READY NOW"
+                if len(fresh) >= 4
                 else f"Ready ~{(next_friday + timedelta(days=14 * max(0, 4 - len(fresh)))).isoformat()}"
             ),
         },
@@ -124,7 +125,8 @@ def generate_status():
             "monitoring_start": "2026-05-14",
             "as_of": today.isoformat(),
             "estimated_ready_date": (
-                next_friday.isoformat() if len(fresh) >= 4
+                next_friday.isoformat()
+                if len(fresh) >= 4
                 else (next_friday + timedelta(days=14 * max(0, 4 - len(fresh)))).isoformat()
             ),
         },
@@ -149,7 +151,9 @@ def main():
         print(f"{'='*70}\n")
         print(f"Current Count: {status['current_count']}/4 reports")
         print(f"Threshold Met: {status['threshold_met']}")
-        print(f"Latest Report: {status['analysis']['latest_report_date']} ({status['analysis']['latest_report_age_days']}d old)")
+        print(
+            f"Latest Report: {status['analysis']['latest_report_date']} ({status['analysis']['latest_report_age_days']}d old)"
+        )
         print(f"Next Expected: {status['analysis']['next_expected_friday']}")
         print(f"Estimated Ready: {status['analysis']['estimated_approval_ready']}")
         print(f"\nNext Action: {status['governance']['next_allowed_action']}\n")

@@ -394,7 +394,6 @@ class ExecutiveDashboardValidator:
         flags: List[SanityFlag] = []
 
         existing_tickers = set(existing_holdings.keys())
-        existing_sectors: Dict[str, List[str]] = {}
 
         # Build sector map for existing holdings (would need more data)
         # For now, track overlap

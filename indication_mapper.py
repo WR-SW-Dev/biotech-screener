@@ -27,7 +27,7 @@ import json
 import re
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 __version__ = "2.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -35,8 +35,6 @@ __author__ = "Wake Robin Capital Management"
 
 class MappingValidationError(Exception):
     """Raised when mapping configuration is invalid."""
-
-    pass
 
 
 class IndicationMapper:

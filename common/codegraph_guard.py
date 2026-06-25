@@ -29,14 +29,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 _FILE_PATH_RE = re.compile(
-    r"[/\\]|"
-    r"\.(py|json|csv|yaml|yml|txt|md|sh|toml|cfg|ini|lock)$",
+    r"[/\\]|" r"\.(py|json|csv|yaml|yml|txt|md|sh|toml|cfg|ini|lock)$",
     re.IGNORECASE,
 )
 
@@ -100,10 +98,7 @@ class CodegraphResult:
         return self.confidence == ProofConfidence.FULL and not self.warnings
 
     def format(self) -> str:
-        lines = [
-            f"=== codegraph_guard [{self.command}] '{self.query}' "
-            f"[{self.confidence.value.upper()}] ==="
-        ]
+        lines = [f"=== codegraph_guard [{self.command}] '{self.query}' " f"[{self.confidence.value.upper()}] ==="]
         for w in self.warnings:
             lines.append(f"  ⚠  {w}")
         if self.fallback_instructions:
@@ -165,13 +160,15 @@ class CodegraphGuard:
             confidence = ProofConfidence.PARTIAL
 
         result = CodegraphResult(
-            query=symbol, command="query", output=output,
-            confidence=confidence, warnings=warnings, exit_code=code,
+            query=symbol,
+            command="query",
+            output=output,
+            confidence=confidence,
+            warnings=warnings,
+            exit_code=code,
         )
         if confidence == ProofConfidence.PARTIAL:
-            result.fallback_instructions.append(
-                f"Re-run with file_hint='<specific_file.py>' to disambiguate."
-            )
+            result.fallback_instructions.append("Re-run with file_hint='<specific_file.py>' to disambiguate.")
         return result
 
     def callers(self, symbol: str, file_hint: Optional[str] = None) -> CodegraphResult:
@@ -179,8 +176,11 @@ class CodegraphGuard:
         path_warn = self._gate_file_path(symbol)
         if path_warn:
             return CodegraphResult(
-                query=symbol, command="callers", output="",
-                confidence=ProofConfidence.UNVERIFIED, warnings=path_warn,
+                query=symbol,
+                command="callers",
+                output="",
+                confidence=ProofConfidence.UNVERIFIED,
+                warnings=path_warn,
                 fallback_instructions=[f"rg '{symbol}' --type py"],
             )
 
@@ -206,8 +206,12 @@ class CodegraphGuard:
             confidence = ProofConfidence.PARTIAL
 
         return CodegraphResult(
-            query=symbol, command="callers", output=output,
-            confidence=confidence, warnings=warnings, exit_code=code,
+            query=symbol,
+            command="callers",
+            output=output,
+            confidence=confidence,
+            warnings=warnings,
+            exit_code=code,
         )
 
     def callees(self, symbol: str) -> CodegraphResult:
@@ -215,8 +219,11 @@ class CodegraphGuard:
         path_warn = self._gate_file_path(symbol)
         if path_warn:
             return CodegraphResult(
-                query=symbol, command="callees", output="",
-                confidence=ProofConfidence.UNVERIFIED, warnings=path_warn,
+                query=symbol,
+                command="callees",
+                output="",
+                confidence=ProofConfidence.UNVERIFIED,
+                warnings=path_warn,
             )
 
         output, code = self._run(["callees", symbol])
@@ -224,8 +231,12 @@ class CodegraphGuard:
         confidence = ProofConfidence.PARTIAL if warnings else ProofConfidence.FULL
 
         return CodegraphResult(
-            query=symbol, command="callees", output=output,
-            confidence=confidence, warnings=warnings, exit_code=code,
+            query=symbol,
+            command="callees",
+            output=output,
+            confidence=confidence,
+            warnings=warnings,
+            exit_code=code,
         )
 
     def impact(self, symbol: str, depth: int = 2) -> CodegraphResult:
@@ -233,8 +244,11 @@ class CodegraphGuard:
         path_warn = self._gate_file_path(symbol)
         if path_warn:
             return CodegraphResult(
-                query=symbol, command="impact", output="",
-                confidence=ProofConfidence.UNVERIFIED, warnings=path_warn,
+                query=symbol,
+                command="impact",
+                output="",
+                confidence=ProofConfidence.UNVERIFIED,
+                warnings=path_warn,
             )
 
         output, code = self._run(["impact", "--depth", str(depth), symbol])
@@ -250,8 +264,12 @@ class CodegraphGuard:
         confidence = ProofConfidence.PARTIAL if warnings else ProofConfidence.FULL
 
         return CodegraphResult(
-            query=symbol, command="impact", output=output,
-            confidence=confidence, warnings=warnings, exit_code=code,
+            query=symbol,
+            command="impact",
+            output=output,
+            confidence=confidence,
+            warnings=warnings,
+            exit_code=code,
         )
 
     def tier3_gate(self, symbol: str) -> tuple[bool, list[str]]:

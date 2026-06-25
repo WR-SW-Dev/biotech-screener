@@ -7,7 +7,6 @@ Demonstrates end-to-end flow from raw data to IC metrics.
 
 import random
 import sys
-from decimal import Decimal
 from typing import Any, Dict, List
 
 sys.path.insert(0, "/home/claude/biotech_screener")
@@ -157,7 +156,7 @@ def generate_sample_data(as_of_date: str) -> Dict[str, List[Dict]]:
 
         for i in range(num_trials):
             # Generate trial with some variation
-            _days_offset = random.randint(30, 365)
+            random.randint(30, 365)
 
             trial_records.append(
                 {

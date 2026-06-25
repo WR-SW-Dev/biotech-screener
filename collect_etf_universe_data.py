@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import json
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -30,7 +29,6 @@ except ImportError:
 # Try to import yahoo_collector for market data
 try:
     from wake_robin_data_pipeline.collectors.yahoo_collector import collect_batch as yahoo_collect_batch
-    from wake_robin_data_pipeline.collectors.yahoo_collector import collect_yahoo_data
 
     HAS_YAHOO_COLLECTOR = True
 except ImportError:
@@ -343,7 +341,7 @@ def fetch_ctgov_trials_for_sponsor(sponsor_name: str) -> List[Dict]:
 
         return trials
 
-    except Exception as e:
+    except Exception:
         return []
 
 

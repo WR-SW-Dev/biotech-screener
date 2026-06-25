@@ -67,7 +67,7 @@ def get_financial_health(ticker: str) -> str:
         equity = rec.get("ShareholdersEquity") or 0
         assets = rec.get("Assets") or 0
         current_assets = rec.get("CurrentAssets") or 0
-        _liabilities = rec.get("Liabilities") or 0
+        rec.get("Liabilities") or 0
         current_liabilities = rec.get("CurrentLiabilities") or 0
         revenue = rec.get("Revenue") or 0
         rd = rec.get("R&D") or 0

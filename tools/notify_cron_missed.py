@@ -34,7 +34,7 @@ def main() -> int:
         missed_noncritical_times=[],
         runtime_severity="RED",
         reasons=[args.reason],
-        artifact=f"logs/watchdog.log",
+        artifact="logs/watchdog.log",
         recovery_triggered=args.recovery_triggered,
         source="cron_watchdog",
     )

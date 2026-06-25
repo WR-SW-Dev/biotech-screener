@@ -160,8 +160,8 @@ def generate_all_reports(results_file):
             if fin_scores:
                 f.write(f"  Average: {sum(fin_scores)/len(fin_scores):.2f}\n")
                 f.write(f"  Range: {min(fin_scores):.2f} - {max(fin_scores):.2f}\n")
-                f.write(f"  Strong (>80): {len([s for s in fin_scores if s>80])} securities\n")
-                f.write(f"  Stressed (<50): {len([s for s in fin_scores if s<50])} securities\n")
+                f.write(f"  Strong (>80): {len([s for s in fin_scores if s > 80])} securities\n")
+                f.write(f"  Stressed (<50): {len([s for s in fin_scores if s < 50])} securities\n")
             else:
                 f.write("  No financial data available\n")
             f.write("\n")
@@ -172,8 +172,8 @@ def generate_all_reports(results_file):
                 f.write(f"  Range: {min(clin_scores):.2f} - {max(clin_scores):.2f}\n")
             else:
                 f.write("  No clinical data available\n")
-            f.write(f"  Excellent (>90): {len([s for s in clin_scores if s>90])} securities\n")
-            f.write(f"  Limited (<50): {len([s for s in clin_scores if s<50])} securities\n")
+            f.write(f"  Excellent (>90): {len([s for s in clin_scores if s > 90])} securities\n")
+            f.write(f"  Limited (<50): {len([s for s in clin_scores if s < 50])} securities\n")
             f.write("\n")
 
             f.write("STAGE DISTRIBUTION\n")

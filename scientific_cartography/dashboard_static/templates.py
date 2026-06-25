@@ -134,7 +134,6 @@ def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_arti
     {governance_info}
     """
 
-    nav_items = [("Index", "index.html", "overview")]
     return html_page("Dashboard Index", content, current_page="Index")
 
 
@@ -280,7 +279,7 @@ def scheduled_review_health_template(executions: list, nav_items: list) -> str:
             outcome = execution.get("outcome", "unknown")
             duration = execution.get("duration_seconds", 0)
             error_msg = execution.get("error_message", "")
-            non_blocking = execution.get("governance", {}).get("non_blocking", True)
+            execution.get("governance", {}).get("non_blocking", True)
 
             outcome_icon = "✓" if outcome == "success" else "⚠"
             outcome_color = "green" if outcome == "success" else "orange"

@@ -13,10 +13,10 @@ Key signals:
 """
 
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 class PartnerTier(Enum):
@@ -383,7 +383,7 @@ class PartnershipEngine:
                 self.partnerships_by_ticker[ticker].append(partnership)
                 loaded += 1
 
-            except Exception as e:
+            except Exception:
                 # Skip malformed records
                 continue
 

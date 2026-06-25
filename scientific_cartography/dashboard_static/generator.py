@@ -3,7 +3,7 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from scientific_cartography.dashboard_static import templates
 
@@ -247,7 +247,7 @@ class DashboardGenerator:
                             # Filter to this date if present
                             if entry.get("as_of_date") == self._extract_date_from_path():
                                 executions.append(entry)
-            except Exception as e:
+            except Exception:
                 pass  # Non-critical, don't warn
 
         return executions

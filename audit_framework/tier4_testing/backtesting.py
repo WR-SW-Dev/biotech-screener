@@ -208,7 +208,7 @@ class BacktestValidator:
         hist_data = self.check_historical_data()
 
         # Check metrics
-        _metrics = self.check_metrics_implementation()
+        self.check_metrics_implementation()
 
         # Determine specific capabilities
         has_walk_forward = any(c.present for c in capabilities if c.capability == "walk_forward")

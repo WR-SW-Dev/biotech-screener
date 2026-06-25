@@ -505,7 +505,7 @@ def main():
         financial_data = load_financial_data(args.financial_data)
 
     # Generate report
-    _signals = generate_report(
+    generate_report(
         data, market_data=market_data, financial_data=financial_data, output_file=args.output, as_of_date=args.as_of
     )
 

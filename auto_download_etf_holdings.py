@@ -99,7 +99,7 @@ def download_xbi_holdings(output_dir: Path) -> bool:
 
                 return True
 
-        except Exception as e:
+        except Exception:
             continue
 
     print("  ❌ All download attempts failed")
@@ -157,7 +157,7 @@ def download_nbi_holdings(output_dir: Path) -> bool:
                     print(f"  ✅ Downloaded NBI: ~{lines-2} holdings")
                     return True
 
-        except Exception as e:
+        except Exception:
             continue
 
     print("  ❌ All download attempts failed")

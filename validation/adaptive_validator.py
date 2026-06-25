@@ -18,10 +18,8 @@ Version: 1.0.0
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
 from decimal import Decimal
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from validation.validation_config import (
     AdaptiveCoverageConfig,
@@ -32,7 +30,6 @@ from validation.validation_config import (
     ValidationOutcome,
     ValidationResult,
     ValidationSummary,
-    get_adaptive_config,
 )
 
 
@@ -479,7 +476,7 @@ class AdaptiveValidator:
 
         # Check and activate fallbacks if component metrics provided
         if component_metrics:
-            _updated_metrics = self.check_and_activate_fallbacks(component_metrics)
+            self.check_and_activate_fallbacks(component_metrics)
 
         # Validate backtest metrics
         metric_results = self.validate_backtest_metrics(backtest_results)

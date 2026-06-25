@@ -515,9 +515,8 @@ def analyze_enhancement_impact(ranked: List[RankedSecurity]) -> Dict[str, Any]:
     min_delta = min(deltas)
 
     # Count by delta direction
-    _positive_count = sum(1 for d in deltas if d > 0)
-    _negative_count = sum(1 for d in deltas if d < 0)
-    _zero_count = sum(1 for d in deltas if d == 0)
+    sum(1 for d in deltas if d > 0)
+    sum(1 for d in deltas if d < 0)
 
     # Score ranges
     avg_enhanced = sum(enhanced_scores) / len(enhanced_scores)

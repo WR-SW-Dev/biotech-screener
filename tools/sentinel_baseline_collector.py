@@ -25,11 +25,12 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 sys.path.insert(0, str(Path(__file__).parent))
 try:
     from skills_logger_v2 import SkillExecutionLoggerV2
+
     SKILLS_LOGGER = SkillExecutionLoggerV2()
 except Exception:
     SKILLS_LOGGER = None
@@ -111,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
     """Instrument sentinel execution and collect baseline metrics."""
     logger.info("Starting sentinel baseline instrumentation")
 
-    start_time = time.time()
+    time.time()
 
     # Run sentinel
     exit_code, elapsed_ms, stdout, stderr = run_sentinel()

@@ -20,7 +20,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -338,7 +338,7 @@ def run_evaluation(
         for rc in RETURN_COLS:
             ic_ts = compute_ic(df, sv, rc)
             ics = ic_summary(ic_ts)
-            _prefix = rc.replace("fwd_", "")
+            rc.replace("fwd_", "")
             for k, v in ics.items():
                 summary_rows.append(
                     {

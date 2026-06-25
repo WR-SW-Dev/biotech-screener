@@ -105,7 +105,7 @@ def calculate_relative_cash_strength(
 def calculate_absolute_cash_fortress(
     cash_usd: Optional[Decimal],
     debt_usd: Optional[Decimal],
-    threshold: Decimal = Decimal("1000000000"),  #  default
+    threshold: Decimal = Decimal("1000000000"),  # default
 ) -> Dict[str, Any]:
     """
     Legacy absolute cash fortress check.
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     result1 = calculate_relative_cash_strength(
         cash_usd=Decimal("7500000000"),  # .5B cash
         debt_usd=Decimal("500000000"),  # .5B debt
-        market_cap_usd=Decimal("20000000000"),  #  market cap
+        market_cap_usd=Decimal("20000000000"),  # market cap
     )
     print(f"Net Cash Ratio: {result1['net_cash_ratio']}")
     print(f"Status: {result1['status']}")
@@ -217,9 +217,9 @@ if __name__ == "__main__":
     print("\nExample 2: VRTX (Mid Cap, Adequate Cash)")
     print("-" * 40)
     result2 = calculate_relative_cash_strength(
-        cash_usd=Decimal("2000000000"),  #  cash
+        cash_usd=Decimal("2000000000"),  # cash
         debt_usd=Decimal("500000000"),  # .5B debt
-        market_cap_usd=Decimal("8000000000"),  #  market cap
+        market_cap_usd=Decimal("8000000000"),  # market cap
     )
     print(f"Net Cash Ratio: {result2['net_cash_ratio']}")
     print(f"Status: {result2['status']}")
@@ -229,9 +229,9 @@ if __name__ == "__main__":
     print("\nExample 3: Small Biotech (Weak Cash)")
     print("-" * 40)
     result3 = calculate_relative_cash_strength(
-        cash_usd=Decimal("100000000"),  #  cash
-        debt_usd=Decimal("20000000"),  #  debt
-        market_cap_usd=Decimal("800000000"),  #  market cap
+        cash_usd=Decimal("100000000"),  # cash
+        debt_usd=Decimal("20000000"),  # debt
+        market_cap_usd=Decimal("800000000"),  # market cap
     )
     print(f"Net Cash Ratio: {result3['net_cash_ratio']}")
     print(f"Status: {result3['status']}")

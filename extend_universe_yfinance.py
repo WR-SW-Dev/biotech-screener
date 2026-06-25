@@ -237,7 +237,7 @@ def main():
     # Load existing universe
     print("Loading existing universe...")
     existing = load_existing_universe(args.base)
-    _existing_tickers = {sec["ticker"] for sec in existing}
+    {sec["ticker"] for sec in existing}
     print(f"✓ Loaded {len(existing)} existing securities")
     print()
 

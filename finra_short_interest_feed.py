@@ -22,18 +22,13 @@ Version: 1.0.0
 """
 
 import hashlib
-import io
 import json
-import os
-import re
 import ssl
 import urllib.request
-import zipfile
 from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -143,7 +138,6 @@ def get_latest_available_settlement_date(as_of_date: date) -> date:
     """
     # Work backwards from as_of_date to find latest available settlement
     # Subtract dissemination lag to get approximate settlement window
-    _earliest_settlement = as_of_date - timedelta(days=DISSEMINATION_LAG_BUSINESS_DAYS + 7)
 
     # Find mid-month and end-month settlement dates for relevant months
     candidates = []
@@ -412,7 +406,7 @@ def parse_finra_si_file(file_path: Path, settlement_date: date) -> List[Dict[str
 
             records.append(record)
 
-        except (ValueError, IndexError) as e:
+        except (ValueError, IndexError):
             continue  # Skip malformed rows
 
     return records

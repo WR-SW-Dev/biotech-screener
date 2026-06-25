@@ -20,13 +20,13 @@ Cron integration:
 Output goes to stdout. Cron jobs deliver stdout to the user.
 Stays SILENT (empty stdout) when there's nothing to report.
 """
+
 from __future__ import annotations
 
 import csv
-import json
 import os
 import sys
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
 
 PROJECT_DIR = Path(os.environ.get("BIOTECH_PROJECT_DIR", Path(__file__).resolve().parent.parent))
@@ -90,6 +90,7 @@ def load_aact_studies(aact_dir: Path) -> dict[str, dict]:
 
 # ─── Modes ───────────────────────────────────────────────────────────
 
+
 def mode_status():
     """Print current screener status."""
     universe = load_universe()
@@ -125,12 +126,22 @@ def mode_refresh():
     # Try to run the snapshot generator
     try:
         import subprocess
+
         result = subprocess.run(
-            [sys.executable, "-m", "src.snapshot_generator",
-             "--as-of", today,
-             "--universe", str(UNIVERSE_FILE),
-             "--output", str(OUTPUT_DIR)],
-            capture_output=True, text=True, timeout=300,
+            [
+                sys.executable,
+                "-m",
+                "src.snapshot_generator",
+                "--as-of",
+                today,
+                "--universe",
+                str(UNIVERSE_FILE),
+                "--output",
+                str(OUTPUT_DIR),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
             cwd=str(PROJECT_DIR),
         )
         if result.returncode != 0:
@@ -179,14 +190,16 @@ def mode_catalyst():
                     pcd_date = date.fromisoformat(pcd[:10])
                     days_until = (pcd_date - today).days
                     if 0 <= days_until <= 90:
-                        upcoming.append({
-                            "ticker": ticker,
-                            "nct_id": nct,
-                            "pcd": pcd[:10],
-                            "days": days_until,
-                            "phase": study.get("phase", "Unknown"),
-                            "status": status,
-                        })
+                        upcoming.append(
+                            {
+                                "ticker": ticker,
+                                "nct_id": nct,
+                                "pcd": pcd[:10],
+                                "days": days_until,
+                                "phase": study.get("phase", "Unknown"),
+                                "status": status,
+                            }
+                        )
                 except ValueError:
                     pass
 

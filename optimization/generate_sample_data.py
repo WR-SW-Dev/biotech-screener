@@ -310,7 +310,7 @@ def main():
             # Assume we're in project root
             output_path = os.path.join("optimization", output_path)
 
-    _n_obs = generate_training_data(
+    generate_training_data(
         output_path=output_path,
         start_date=args.start_date,
         end_date=args.end_date,

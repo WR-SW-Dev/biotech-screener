@@ -31,10 +31,10 @@ Version: 1.0.0
 """
 
 import json
-from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from datetime import date
+from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 __author__ = "Wake Robin Capital Management"
@@ -42,14 +42,11 @@ __author__ = "Wake Robin Capital Management"
 
 # Import feed modules
 try:
-    from finra_short_interest_feed import RAW_DATA_DIR as SI_RAW_DIR
     from finra_short_interest_feed import (
         download_finra_si_file,
         get_available_settlement_dates,
         get_latest_available_settlement_date,
-        is_data_available,
         load_cached_si_data,
-        parse_finra_si_file,
     )
 
     HAS_SI_FEED = True
@@ -57,11 +54,9 @@ except ImportError:
     HAS_SI_FEED = False
 
 try:
-    from finra_short_volume_feed import RAW_DATA_DIR as SV_RAW_DIR
     from finra_short_volume_feed import (
         compute_short_volume_stats,
         download_finra_short_volume,
-        get_available_trade_date,
         get_available_trade_dates,
         load_cached_short_volume,
         prev_business_day,
@@ -76,7 +71,6 @@ try:
         download_nasdaq_threshold_list,
         download_nyse_threshold_list,
         get_threshold_flags_for_universe,
-        load_threshold_securities,
     )
 
     HAS_THRESHOLD_FEED = True

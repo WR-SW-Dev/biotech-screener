@@ -1424,8 +1424,6 @@ def collect_conference_derived_events(
         as_of_date=as_of_date,
     )
 
-    # Collect unmatched sample for the meta sidecar
-    unmatched_sample: List[dict] = []
     # Re-derive unmatched for logging (bounded in derive_events_from_records)
     # — stats already contain the count
 

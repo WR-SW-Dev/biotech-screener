@@ -28,7 +28,6 @@ from sanity_checks.types import (
     RankingSnapshot,
     SanityCheckResult,
     SanityFlag,
-    SecurityContext,
     ThresholdConfig,
 )
 

@@ -207,10 +207,6 @@ def _extract_events_from_html(
     seen_ids: set = set()
 
     # Strategy 1: <time datetime="YYYY-MM-DD"> or data-date attributes
-    _time_pattern = re.compile(
-        r'(?:datetime|data-date)\s*=\s*["\'](\d{4}-\d{2}-\d{2})["\']',
-        re.IGNORECASE,
-    )
     # Find surrounding text for title extraction
     # We look for the time tag and then grab nearby text
     block_pattern = re.compile(

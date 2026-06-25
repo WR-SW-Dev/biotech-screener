@@ -1,10 +1,8 @@
 """Deterministic nodes for Scientific Cartography review workflow."""
 
 import json
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from scientific_cartography.langgraph_review.state import CartographyReviewState
 
@@ -153,7 +151,7 @@ def run_governance_scan(state: CartographyReviewState) -> CartographyReviewState
 
 def select_review_diseases(state: CartographyReviewState) -> CartographyReviewState:
     """Select representative disease maps for human review."""
-    artifact_dir = Path(state.get("artifact_dir") or "")
+    Path(state.get("artifact_dir") or "")
     index_path = Path(state.get("disease_map_index_path") or "")
     max_diseases = state.get("max_diseases", 5)
 

@@ -250,7 +250,7 @@ class MarketMicrostructureChecker:
 
             # Count C-suite transactions
             csuite_sells = [t for t in txns["sell"] if t.is_c_suite]
-            _csuite_buys = [t for t in txns["buy"] if t.is_c_suite]
+            [t for t in txns["buy"] if t.is_c_suite]
 
             # Check aggressive C-suite selling
             if len(csuite_sells) >= 2:

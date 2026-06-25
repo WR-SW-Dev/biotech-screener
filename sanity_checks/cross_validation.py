@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from sanity_checks.types import (
     DEFAULT_THRESHOLDS,

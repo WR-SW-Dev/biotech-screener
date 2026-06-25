@@ -11,12 +11,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -25,7 +23,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from backtest.fmb import drop_constant_features, fama_macbeth, zscore_features
+from backtest.fmb import fama_macbeth
 from backtest.metrics_m1 import spearman_rank_ic
 
 logging.basicConfig(

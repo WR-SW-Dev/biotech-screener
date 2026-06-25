@@ -8,12 +8,18 @@ exclude =
     dist,
     *.egg-info,
     .venv,
+    .venv-wsl,
+    venv,
+    vendor,
+    node_modules,
     deprecated,
     data,
     cache,
     backtest_results,
     production_data,
-    artifacts
+    artifacts,
+    mnt,
+    output
 per-file-ignores =
     # F401/F841 unused imports/vars are common in test fixtures and re-export
     # stubs; E712 (== True) is intentional in strict boolean tests;

@@ -24,9 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 logger = logging.getLogger(__name__)
 
-from backtest_engine import PointInTimeBacktester, create_sample_scoring_function
+from backtest_engine import create_sample_scoring_function
 
-from backtest.metrics import HORIZON_DISPLAY_NAMES, run_metrics_suite
 from backtest.returns_provider import CSVReturnsProvider
 
 # =============================================================================
@@ -297,7 +296,6 @@ def create_production_scorer():
     """
     from module_1_universe import compute_module_1_universe
     from module_2_financial import compute_module_2_financial
-    from module_3_catalyst import compute_module_3_catalyst
     from module_4_clinical_dev import compute_module_4_clinical_dev
     from module_5_composite import compute_module_5_composite
 
@@ -854,7 +852,6 @@ def run_direct_backtest(
                 scores_sorted = sorted((t, round(s, 4)) for t, s in period_scores.items())
                 blob = "|".join(f"{t}:{s}" for t, s in scores_sorted)
                 all_hash = hashlib.sha256(blob.encode()).hexdigest()[:8]
-                _top_hash = hashlib.sha256(", ".join(sorted(top_set)).encode()).hexdigest()[:8]
                 all_scores_hashes.append((test_date.strftime("%Y-%m-%d"), all_hash))
                 prev_top_decile = top_set
 

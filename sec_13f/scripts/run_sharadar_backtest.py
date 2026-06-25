@@ -54,7 +54,7 @@ sys.path.insert(0, "/home/claude/biotech_screener")
 
 from backtest.data_readiness import print_preflight_report, run_data_readiness_preflight
 from backtest.metrics import compute_forward_windows, run_metrics_suite
-from backtest.returns_provider import CSVReturnsProvider, LaggedReturnsProvider, ShuffledReturnsProvider
+from backtest.returns_provider import LaggedReturnsProvider, ShuffledReturnsProvider
 from backtest.sanity_metrics import (
     compute_delisting_sensitivity,
     compute_factor_stability,
@@ -72,7 +72,7 @@ from backtest.stability_attribution import (
     diagnose_instability,
     print_stability_attribution,
 )
-from common.run_manifest import RunManifest, compute_content_hash, compute_results_hash
+from common.run_manifest import RunManifest, compute_content_hash
 from common.run_summary import generate_run_summary, print_run_summary
 from module_1_universe import compute_module_1_universe
 from module_2_financial import compute_module_2_financial
@@ -349,7 +349,6 @@ def run_validation_suite(
     }
 
     # V4: Cohort coverage (securities-based)
-    from collections import defaultdict
 
     normal_securities = 0
     fallback_securities = 0

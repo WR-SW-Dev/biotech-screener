@@ -23,16 +23,14 @@ import csv
 import json
 import math
 import os
-import sys
 from collections import defaultdict
-from datetime import date, datetime, timedelta
-from itertools import product
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any
 
 # scipy for Spearman correlation
 try:
     from scipy.stats import spearmanr
+
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
@@ -50,6 +48,7 @@ AACT_DIR = DATA_DIR / "aact_snapshots"
 # Data loading
 # ═══════════════════════════════════════════════════════════════════
 
+
 def load_universe() -> list[dict]:
     with open(UNIVERSE_FILE, newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
@@ -62,10 +61,12 @@ def load_prices() -> dict[str, list[dict]]:
         for row in csv.DictReader(f):
             ticker = row.get("ticker", "").strip().upper()
             if ticker:
-                prices[ticker].append({
-                    "date": row.get("date", ""),
-                    "price": float(row.get("adj_close", 0)),
-                })
+                prices[ticker].append(
+                    {
+                        "date": row.get("date", ""),
+                        "price": float(row.get("adj_close", 0)),
+                    }
+                )
     for ticker in prices:
         prices[ticker].sort(key=lambda x: x["date"])
     return prices
@@ -122,14 +123,21 @@ def load_aact_sponsors() -> dict[str, list[str]]:
 # Feature engineering
 # ═══════════════════════════════════════════════════════════════════
 
+
 def phase_rank(phase: str) -> int:
     p = (phase or "").lower()
-    if "phase 4" in p: return 5
-    if "phase 3" in p: return 4
-    if "phase 2" in p and "phase 3" in p: return 3
-    if "phase 2" in p: return 3
-    if "phase 1" in p and "phase 2" in p: return 2
-    if "phase 1" in p: return 1
+    if "phase 4" in p:
+        return 5
+    if "phase 2" in p and "phase 3" in p:
+        return 3
+    if "phase 3" in p:
+        return 4
+    if "phase 1" in p and "phase 2" in p:
+        return 2
+    if "phase 2" in p:
+        return 3
+    if "phase 1" in p:
+        return 1
     return 0
 
 
@@ -270,7 +278,10 @@ def compute_financial_features(price_features: dict[str, float]) -> dict[str, fl
 # Forward returns
 # ═══════════════════════════════════════════════════════════════════
 
-def compute_forward_returns(prices: dict[str, list[dict]], as_of: str, horizons: list[int]) -> dict[str, dict[int, float | None]]:
+
+def compute_forward_returns(
+    prices: dict[str, list[dict]], as_of: str, horizons: list[int]
+) -> dict[str, dict[int, float | None]]:
     """Compute forward returns for each ticker at given horizons (trading days)."""
     result: dict[str, dict[int, float | None]] = {}
 
@@ -308,6 +319,7 @@ def compute_forward_returns(prices: dict[str, list[dict]], as_of: str, horizons:
 # ═══════════════════════════════════════════════════════════════════
 # Scoring
 # ═══════════════════════════════════════════════════════════════════
+
 
 def normalize_0_100(values: dict[str, float]) -> dict[str, float]:
     """Min-max normalize values to 0-100 range."""
@@ -352,10 +364,7 @@ def compute_composite_scores(
         component_scores = {k: normalized[k].get(ticker, 50.0) for k in normalized}
 
         # Weighted composite
-        composite = sum(
-            weights.get(k, 0) * component_scores[k]
-            for k in component_scores
-        )
+        composite = sum(weights.get(k, 0) * component_scores[k] for k in component_scores)
         total_weight = sum(weights.get(k, 0) for k in component_scores)
         if total_weight > 0:
             composite /= total_weight
@@ -403,6 +412,7 @@ def compute_ic(scores: dict[str, float], forward_returns: dict[str, float | None
 # Grid search optimization
 # ═══════════════════════════════════════════════════════════════════
 
+
 def grid_search_weights(
     tickers: list[str],
     clinical_features: dict[str, dict[str, float]],
@@ -422,10 +432,34 @@ def grid_search_weights(
 
     # Clinical sub-weight options
     clin_sub_options = [
-        {"clinical_trial_count": 0.3, "clinical_max_phase": 0.3, "clinical_active": 0.15, "clinical_catalyst": 0.15, "clinical_sponsor": 0.1},
-        {"clinical_trial_count": 0.2, "clinical_max_phase": 0.4, "clinical_active": 0.2, "clinical_catalyst": 0.1, "clinical_sponsor": 0.1},
-        {"clinical_trial_count": 0.4, "clinical_max_phase": 0.2, "clinical_active": 0.2, "clinical_catalyst": 0.15, "clinical_sponsor": 0.05},
-        {"clinical_trial_count": 0.15, "clinical_max_phase": 0.35, "clinical_active": 0.15, "clinical_catalyst": 0.25, "clinical_sponsor": 0.1},
+        {
+            "clinical_trial_count": 0.3,
+            "clinical_max_phase": 0.3,
+            "clinical_active": 0.15,
+            "clinical_catalyst": 0.15,
+            "clinical_sponsor": 0.1,
+        },
+        {
+            "clinical_trial_count": 0.2,
+            "clinical_max_phase": 0.4,
+            "clinical_active": 0.2,
+            "clinical_catalyst": 0.1,
+            "clinical_sponsor": 0.1,
+        },
+        {
+            "clinical_trial_count": 0.4,
+            "clinical_max_phase": 0.2,
+            "clinical_active": 0.2,
+            "clinical_catalyst": 0.15,
+            "clinical_sponsor": 0.05,
+        },
+        {
+            "clinical_trial_count": 0.15,
+            "clinical_max_phase": 0.35,
+            "clinical_active": 0.15,
+            "clinical_catalyst": 0.25,
+            "clinical_sponsor": 0.1,
+        },
     ]
 
     # Financial sub-weight options
@@ -467,6 +501,7 @@ def grid_search_weights(
 # Snapshot generation
 # ═══════════════════════════════════════════════════════════════════
 
+
 def generate_optimized_snapshot(
     as_of: str,
     tickers: list[str],
@@ -487,36 +522,38 @@ def generate_optimized_snapshot(
         ff = financial_features[ticker]
 
         # Map to production snapshot field names
-        ranked_securities.append({
-            "ticker": ticker,
-            "composite_score": round(s["composite"], 2),
-            "composite_rank": rank,
-            "clinical_dev_raw": round(s["clinical_max_phase"], 2),
-            "clinical_dev_normalized": round(s.get("clinical_max_phase", 0), 2),
-            "financial_raw": round(s["fin_momentum"], 2),
-            "financial_normalized": round(s.get("fin_momentum", 0), 2),
-            "catalyst_raw": round(s["clinical_catalyst"], 2),
-            "catalyst_normalized": round(s.get("clinical_catalyst", 0), 2),
-            "market_cap_bucket": "unknown",
-            "stage_bucket": "late" if cf["max_phase"] >= 4 else "mid" if cf["max_phase"] >= 2 else "early",
-            "severity": "sev0" if cf["trial_count"] > 0 else "sev1",
-            "uncertainty_penalty": 0.0 if cf["trial_count"] > 0 else 5.0,
-            "missing_subfactor_pct": 0.0 if cf["trial_count"] > 0 else 50.0,
-            "rankable": True,
-            "flags": [] if cf["trial_count"] > 0 else ["no_trials", "early_stage"],
-            # New optimized fields
-            "optimized_features": {
-                "trial_count": cf["trial_count"],
-                "max_phase": cf["max_phase"],
-                "active_trials": cf["active_trials"],
-                "catalyst_proximity": cf["catalyst_proximity"],
-                "sponsor_diversity": cf["sponsor_diversity"],
-                "momentum_63d": ff["momentum_health"],
-                "volatility_health": ff["vol_health"],
-                "drawdown_health": ff["drawdown_health"],
-                "rsi_health": ff["rsi_health"],
-            },
-        })
+        ranked_securities.append(
+            {
+                "ticker": ticker,
+                "composite_score": round(s["composite"], 2),
+                "composite_rank": rank,
+                "clinical_dev_raw": round(s["clinical_max_phase"], 2),
+                "clinical_dev_normalized": round(s.get("clinical_max_phase", 0), 2),
+                "financial_raw": round(s["fin_momentum"], 2),
+                "financial_normalized": round(s.get("fin_momentum", 0), 2),
+                "catalyst_raw": round(s["clinical_catalyst"], 2),
+                "catalyst_normalized": round(s.get("clinical_catalyst", 0), 2),
+                "market_cap_bucket": "unknown",
+                "stage_bucket": "late" if cf["max_phase"] >= 4 else "mid" if cf["max_phase"] >= 2 else "early",
+                "severity": "sev0" if cf["trial_count"] > 0 else "sev1",
+                "uncertainty_penalty": 0.0 if cf["trial_count"] > 0 else 5.0,
+                "missing_subfactor_pct": 0.0 if cf["trial_count"] > 0 else 50.0,
+                "rankable": True,
+                "flags": [] if cf["trial_count"] > 0 else ["no_trials", "early_stage"],
+                # New optimized fields
+                "optimized_features": {
+                    "trial_count": cf["trial_count"],
+                    "max_phase": cf["max_phase"],
+                    "active_trials": cf["active_trials"],
+                    "catalyst_proximity": cf["catalyst_proximity"],
+                    "sponsor_diversity": cf["sponsor_diversity"],
+                    "momentum_63d": ff["momentum_health"],
+                    "volatility_health": ff["vol_health"],
+                    "drawdown_health": ff["drawdown_health"],
+                    "rsi_health": ff["rsi_health"],
+                },
+            }
+        )
 
     return {
         "snapshot_id": f"optimized_{as_of}",
@@ -528,8 +565,15 @@ def generate_optimized_snapshot(
             "ic_results": {str(k): round(v, 4) if v is not None else None for k, v in ic_results.items()},
             "method": "grid_search_spearman_ic",
             "features": [
-                "trial_count", "max_phase", "active_trials", "catalyst_proximity", "sponsor_diversity",
-                "vol_health", "drawdown_health", "momentum_health", "rsi_health"
+                "trial_count",
+                "max_phase",
+                "active_trials",
+                "catalyst_proximity",
+                "sponsor_diversity",
+                "vol_health",
+                "drawdown_health",
+                "momentum_health",
+                "rsi_health",
             ],
         },
         "ranked_securities": ranked_securities,
@@ -544,6 +588,7 @@ def generate_optimized_snapshot(
 # Main
 # ═══════════════════════════════════════════════════════════════════
 
+
 def main():
     parser = argparse.ArgumentParser(description="Optimize biotech screener scores")
     parser.add_argument("--snapshot", default="2024-01-02", help="Point-in-time date (YYYY-MM-DD)")
@@ -554,7 +599,7 @@ def main():
     as_of = args.snapshot
     horizons = [63, 126, 252]
 
-    print(f"🧬 Biotech Score Optimizer")
+    print("🧬 Biotech Score Optimizer")
     print(f"   As-of date: {as_of}")
     print(f"   Optimization horizon: {args.horizon}d")
     print()
@@ -567,9 +612,7 @@ def main():
     aact_sponsors = load_aact_sponsors()
 
     # All tickers = universe + price tickers
-    all_tickers = sorted(set(
-        [c["ticker"].upper() for c in universe] + list(prices.keys())
-    ))
+    all_tickers = sorted(set([c["ticker"].upper() for c in universe] + list(prices.keys())))
 
     print(f"   Universe: {len(universe)} companies")
     print(f"   With price data: {len(prices)} tickers")
@@ -606,7 +649,7 @@ def main():
     )
 
     print(f"   Best IC at {args.horizon}d: {best_ic:.4f}")
-    print(f"   Optimal weights:")
+    print("   Optimal weights:")
     for k, v in sorted(best_weights.items(), key=lambda x: -x[1]):
         print(f"     {k:25s}: {v:.4f}")
     print()
@@ -626,11 +669,13 @@ def main():
 
     # Score distribution
     scores_list = sorted(composite_scores.values())
-    print(f"📊 Score distribution:")
+    print("📊 Score distribution:")
     print(f"   Min:    {scores_list[0]:.2f}")
     print(f"   Max:    {scores_list[-1]:.2f}")
     print(f"   Range:  {scores_list[-1] - scores_list[0]:.2f}")
-    print(f"   Stdev:  {(sum((s - sum(scores_list)/len(scores_list))**2 for s in scores_list) / len(scores_list))**0.5:.2f}")
+    print(
+        f"   Stdev:  {(sum((s - sum(scores_list)/len(scores_list))**2 for s in scores_list) / len(scores_list))**0.5:.2f}"
+    )
     print(f"   Unique: {len(set(round(s, 2) for s in scores_list))}")
     print()
 
@@ -639,17 +684,20 @@ def main():
     print("🏆 Top 5:")
     for t in sorted_by_score[:5]:
         cf = clinical_features[t]
-        print(f"   {t:6s} score={composite_scores[t]:6.2f}  phase={cf['max_phase']:.0f}  trials={cf['trial_count']:.0f}  catalyst={cf['catalyst_proximity']:.1f}")
+        print(
+            f"   {t:6s} score={composite_scores[t]:6.2f}  phase={cf['max_phase']:.0f}  trials={cf['trial_count']:.0f}  catalyst={cf['catalyst_proximity']:.1f}"
+        )
     print("📉 Bottom 5:")
     for t in sorted_by_score[-5:]:
         cf = clinical_features[t]
-        print(f"   {t:6s} score={composite_scores[t]:6.2f}  phase={cf['max_phase']:.0f}  trials={cf['trial_count']:.0f}  catalyst={cf['catalyst_proximity']:.1f}")
+        print(
+            f"   {t:6s} score={composite_scores[t]:6.2f}  phase={cf['max_phase']:.0f}  trials={cf['trial_count']:.0f}  catalyst={cf['catalyst_proximity']:.1f}"
+        )
     print()
 
     # Generate optimized snapshot
     snapshot = generate_optimized_snapshot(
-        as_of, all_tickers, best_scores, clinical_features, financial_features,
-        best_weights, ic_results
+        as_of, all_tickers, best_scores, clinical_features, financial_features, best_weights, ic_results
     )
 
     # Save
@@ -664,8 +712,8 @@ def main():
 
     # Summary
     print("═" * 60)
-    print(f"  OPTIMIZATION COMPLETE")
-    print(f"  Before: IC = 0.0000 (all scores = 31.50)")
+    print("  OPTIMIZATION COMPLETE")
+    print("  Before: IC = 0.0000 (all scores = 31.50)")
     print(f"  After:  IC = {best_ic:.4f} at {args.horizon}d")
     improvement = best_ic - 0.0
     print(f"  Improvement: +{improvement:.4f}")

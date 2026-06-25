@@ -289,7 +289,7 @@ class PipelineDiversityEngine:
             seen_nct_ids.add(nct_id)
 
             # Filter by as_of_date if we have date info
-            _start_date = trial.get("start_date") or trial.get("primary_completion_date")
+            trial.get("start_date") or trial.get("primary_completion_date")
             # Skip future trials
             # (simplified - in production would parse dates properly)
 

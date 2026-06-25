@@ -762,7 +762,7 @@ def check_sanity_override(
                 driving_factor = comp.get("name")
 
     # Check enhancement signals
-    _enhancements = score_breakdown.get("enhancements", {})
+    score_breakdown.get("enhancements", {})
 
     # Check interaction terms
     interaction_adj = Decimal(str(score_breakdown.get("interaction_terms", {}).get("total_adjustment", "0")))

@@ -30,15 +30,9 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional, TypedDict, Union
 
-from common.hash_utils import compute_hash, compute_snapshot_id, compute_trial_facts_hash, stable_json_dumps
+from common.hash_utils import compute_hash, compute_snapshot_id, compute_trial_facts_hash
 
-from .providers import (
-    AACTClinicalTrialsProvider,
-    ClinicalTrialsProvider,
-    ProviderResult,
-    StubClinicalTrialsProvider,
-    TrialRow,
-)
+from .providers import AACTClinicalTrialsProvider, ClinicalTrialsProvider, StubClinicalTrialsProvider
 from .providers.aact_provider import load_trial_mapping
 
 

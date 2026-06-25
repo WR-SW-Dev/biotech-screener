@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
 
 PROJECT_DIR = Path(os.environ.get("BIOTECH_PROJECT_DIR", Path(__file__).resolve().parent.parent))

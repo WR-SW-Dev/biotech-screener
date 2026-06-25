@@ -10,12 +10,11 @@ Orchestrates pipeline execution with:
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from governance.audit_log import AuditErrorCode, AuditLog, AuditStage, AuditStatus, StageIO
-from governance.canonical_json import canonical_dumps
-from governance.hashing import compute_input_hashes, hash_file
-from governance.mapping_loader import MappingLoadError, SchemaMismatchError, load_mapping, validate_source_schema
+from governance.hashing import compute_input_hashes
+from governance.mapping_loader import MappingLoadError, load_mapping
 from governance.output_writer import build_input_lineage, get_environment_fingerprint, write_canonical_output
 from governance.params_loader import ParamsLoadError, load_params
 from governance.run_id import compute_run_id

@@ -36,6 +36,7 @@ from typing import Any, Dict, Optional
 sys.path.insert(0, str(Path(__file__).parent))
 try:
     from skills_logger_v2 import SkillExecutionLoggerV2
+
     SKILLS_LOGGER = SkillExecutionLoggerV2()
 except Exception:
     SKILLS_LOGGER = None
@@ -83,9 +84,7 @@ def collect_baseline_metrics(output_dir: Path) -> Dict[str, Any]:
             metrics["urls_succeeded"] = sum(1 for s in sources if s.get("fetch_status") == "success")
             metrics["urls_failed"] = sum(1 for s in sources if s.get("fetch_status") == "failed")
             metrics["scrape_success_rate"] = (
-                metrics["urls_succeeded"] / max(1, metrics["urls_attempted"])
-                if metrics["urls_attempted"] > 0
-                else 0
+                metrics["urls_succeeded"] / max(1, metrics["urls_attempted"]) if metrics["urls_attempted"] > 0 else 0
             )
 
             # Error patterns
@@ -179,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
         args.out,
     )
 
-    start_time = time.time()
+    time.time()
 
     # Run firecrawl
     exit_code, elapsed_ms = run_firecrawl_ingest(

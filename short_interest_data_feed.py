@@ -31,7 +31,7 @@ import argparse
 import hashlib
 import json
 from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 

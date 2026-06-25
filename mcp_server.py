@@ -152,6 +152,7 @@ def _load_json_file(path: Path) -> dict | None:
 
 # ─── Tool implementations ────────────────────────────────────────────
 
+
 def tool_get_universe() -> str:
     """List all biotech companies in the investable universe."""
     universe = _load_universe()
@@ -161,8 +162,7 @@ def tool_get_universe() -> str:
     result = {
         "total": len(universe),
         "companies": [
-            {"ticker": r.get("ticker", ""), "name": r.get("name", ""), "sector": r.get("sector", "")}
-            for r in universe
+            {"ticker": r.get("ticker", ""), "name": r.get("name", ""), "sector": r.get("sector", "")} for r in universe
         ],
     }
     return json.dumps(result, indent=2)
@@ -224,13 +224,15 @@ def tool_get_catalysts(ticker: str) -> str:
                 pass
 
         if upcoming or status.lower() in {"recruiting", "active, not recruiting"}:
-            catalysts.append({
-                "nct_id": nct,
-                "phase": study.get("phase", "Unknown"),
-                "status": status,
-                "primary_completion_date": pcd,
-                "upcoming": upcoming,
-            })
+            catalysts.append(
+                {
+                    "nct_id": nct,
+                    "phase": study.get("phase", "Unknown"),
+                    "status": status,
+                    "primary_completion_date": pcd,
+                    "upcoming": upcoming,
+                }
+            )
 
     result = {
         "ticker": ticker,
@@ -295,6 +297,7 @@ def tool_screen_universe(as_of: str = "", filters: str = "") -> str:
         results = [r for r in results if r["trial_count"] >= min_t]
     if "min_score" in filter_dict:
         min_s = float(filter_dict["min_score"])
+
         def _safe_score(r):
             s = r.get("composite_score")
             if s is None:
@@ -303,14 +306,18 @@ def tool_screen_universe(as_of: str = "", filters: str = "") -> str:
                 return float(s) >= min_s
             except (TypeError, ValueError):
                 return False
+
         results = [r for r in results if _safe_score(r)]
 
-    return json.dumps({
-        "as_of": as_of or "latest",
-        "total_companies": len(results),
-        "filters_applied": filter_dict,
-        "results": results,
-    }, indent=2)
+    return json.dumps(
+        {
+            "as_of": as_of or "latest",
+            "total_companies": len(results),
+            "filters_applied": filter_dict,
+            "results": results,
+        },
+        indent=2,
+    )
 
 
 def tool_compare_snapshots(date_a: str, date_b: str) -> str:
@@ -339,37 +346,46 @@ def tool_compare_snapshots(date_a: str, date_b: str) -> str:
         elif b and not a:
             diffs.append({"ticker": ticker, "status": "added_in_b"})
         elif a.get("composite_score") != b.get("composite_score"):
-            diffs.append({
-                "ticker": ticker,
-                "status": "score_changed",
-                "score_a": a.get("composite_score"),
-                "score_b": b.get("composite_score"),
-                "rank_a": a.get("composite_rank"),
-                "rank_b": b.get("composite_rank"),
-            })
+            diffs.append(
+                {
+                    "ticker": ticker,
+                    "status": "score_changed",
+                    "score_a": a.get("composite_score"),
+                    "score_b": b.get("composite_score"),
+                    "rank_a": a.get("composite_rank"),
+                    "rank_b": b.get("composite_rank"),
+                }
+            )
         elif a.get("composite_rank") != b.get("composite_rank"):
-            diffs.append({
-                "ticker": ticker,
-                "status": "rank_changed",
-                "rank_a": a.get("composite_rank"),
-                "rank_b": b.get("composite_rank"),
-            })
+            diffs.append(
+                {
+                    "ticker": ticker,
+                    "status": "rank_changed",
+                    "rank_a": a.get("composite_rank"),
+                    "rank_b": b.get("composite_rank"),
+                }
+            )
 
-    return json.dumps({
-        "date_a": date_a,
-        "date_b": date_b,
-        "tickers_compared": len(set(secs_a.keys()) | set(secs_b.keys())),
-        "diffs": diffs,
-    }, indent=2)
+    return json.dumps(
+        {
+            "date_a": date_a,
+            "date_b": date_b,
+            "tickers_compared": len(set(secs_a.keys()) | set(secs_b.keys())),
+            "diffs": diffs,
+        },
+        indent=2,
+    )
 
 
 def tool_get_atlas_data(category: str = "") -> str:
     """Get scientific cartography data."""
     if not CARTOGRAPHY_DIR.exists():
-        return json.dumps({
-            "error": "Scientific cartography module not found",
-            "expected_path": str(CARTOGRAPHY_DIR),
-        })
+        return json.dumps(
+            {
+                "error": "Scientific cartography module not found",
+                "expected_path": str(CARTOGRAPHY_DIR),
+            }
+        )
 
     result: dict[str, Any] = {
         "module": "scientific_cartography",
@@ -457,7 +473,9 @@ def tool_get_company_detail(ticker: str) -> str:
                     "confidence": t.get("mapping_confidence", ""),
                     "phase": aact_studies.get(t.get("nct_id", ""), {}).get("phase", "Unknown"),
                     "overall_status": aact_studies.get(t.get("nct_id", ""), {}).get("overall_status", "Unknown"),
-                    "primary_completion_date": aact_studies.get(t.get("nct_id", ""), {}).get("primary_completion_date", ""),
+                    "primary_completion_date": aact_studies.get(t.get("nct_id", ""), {}).get(
+                        "primary_completion_date", ""
+                    ),
                     "all_sponsors": aact_sponsors.get(t.get("nct_id", ""), []),
                 }
                 for t in trials
@@ -497,12 +515,15 @@ def tool_get_backtest() -> str:
             }
         summary.append(period_summary)
 
-    return json.dumps({
-        "run_id": data.get("run_id"),
-        "horizons": horizons,
-        "periods": summary,
-        "aggregate": data.get("aggregate_metrics", {}),
-    }, indent=2)
+    return json.dumps(
+        {
+            "run_id": data.get("run_id"),
+            "horizons": horizons,
+            "periods": summary,
+            "aggregate": data.get("aggregate_metrics", {}),
+        },
+        indent=2,
+    )
 
 
 # ─── MCP Protocol (stdio) ────────────────────────────────────────────
@@ -538,7 +559,10 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "as_of": {"type": "string", "description": "Point-in-time date (YYYY-MM-DD). Defaults to latest."},
-                "filters": {"type": "string", "description": "Comma-separated filters (e.g., 'min_trials=2,min_score=30')"},
+                "filters": {
+                    "type": "string",
+                    "description": "Comma-separated filters (e.g., 'min_trials=2,min_score=30')",
+                },
             },
             "required": [],
         },
@@ -560,7 +584,9 @@ TOOLS = [
         "description": "Get scientific cartography data — disease maps, program records, normalizers, schemas.",
         "inputSchema": {
             "type": "object",
-            "properties": {"category": {"type": "string", "description": "Optional filter: diseases, programs, review"}},
+            "properties": {
+                "category": {"type": "string", "description": "Optional filter: diseases, programs, review"}
+            },
             "required": [],
         },
     },

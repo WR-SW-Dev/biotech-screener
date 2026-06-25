@@ -22,7 +22,7 @@ import json
 import logging
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +114,7 @@ def tissue_for(ticker: str, flags: Optional[List[str]] = None) -> str:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _to_float(value: Any) -> Optional[float]:
     """Best-effort conversion to float; returns ``None`` on failure/None."""
     if value is None:
@@ -132,6 +133,7 @@ def _to_int(value: Any) -> Optional[int]:
 # ---------------------------------------------------------------------------
 # Loaders
 # ---------------------------------------------------------------------------
+
 
 def load_universe() -> Dict[str, Dict[str, str]]:
     """Load the universe CSV -> ``{ticker: {name, sector, ...}}``."""
@@ -237,17 +239,11 @@ def _ranked_sec_to_dict(sec: Dict[str, Any]) -> Dict[str, Any]:
         "ticker": (sec.get("ticker") or "").upper(),
         "composite_score": _to_float(sec.get("composite_score")),
         "composite_rank": _to_int(sec.get("composite_rank")),
-        "clinical_dev_score": _to_float(
-            sec.get("clinical_dev_normalized") or sec.get("clinical_dev_raw")
-        ),
+        "clinical_dev_score": _to_float(sec.get("clinical_dev_normalized") or sec.get("clinical_dev_raw")),
         "clinical_dev_raw": _to_float(sec.get("clinical_dev_raw")),
-        "financial_score": _to_float(
-            sec.get("financial_normalized") or sec.get("financial_raw")
-        ),
+        "financial_score": _to_float(sec.get("financial_normalized") or sec.get("financial_raw")),
         "financial_raw": _to_float(sec.get("financial_raw")),
-        "catalyst_score": _to_float(
-            sec.get("catalyst_normalized") or sec.get("catalyst_raw")
-        ),
+        "catalyst_score": _to_float(sec.get("catalyst_normalized") or sec.get("catalyst_raw")),
         "catalyst_raw": _to_float(sec.get("catalyst_raw")),
         "market_cap_bucket": sec.get("market_cap_bucket") or "unknown",
         "stage_bucket": sec.get("stage_bucket") or "unknown",
@@ -317,6 +313,7 @@ def load_aact_sponsors() -> Dict[str, List[str]]:
 # ---------------------------------------------------------------------------
 # Cell construction (the biological metaphor)
 # ---------------------------------------------------------------------------
+
 
 def _phase_rank(phase: str) -> int:
     """Numeric rank for a trial phase string (higher = later stage)."""
@@ -388,14 +385,16 @@ def build_cell(
             except ValueError:
                 upcoming = False
         if upcoming or status.lower() in {"recruiting", "active, not recruiting"}:
-            catalysts.append({
-                "nct_id": nct,
-                "phase": study.get("phase", "Unknown"),
-                "status": status,
-                "primary_completion_date": pcd,
-                "type": "readout",
-                "upcoming": upcoming,
-            })
+            catalysts.append(
+                {
+                    "nct_id": nct,
+                    "phase": study.get("phase", "Unknown"),
+                    "status": status,
+                    "primary_completion_date": pcd,
+                    "type": "readout",
+                    "upcoming": upcoming,
+                }
+            )
 
     # ---- Signaling: trial connections (shared sponsors) ----
     sponsor_set: set = set()
@@ -510,12 +509,7 @@ def build_all_cells(snapshot_date: Optional[str] = None) -> List[Dict[str, Any]]
     if cache_key in _cells_cache:
         return _cells_cache[cache_key]
 
-    cells = [
-        build_cell(
-            t, universe, prices, trials, scores, aact_studies, aact_sponsors
-        )
-        for t in sorted(tickers)
-    ]
+    cells = [build_cell(t, universe, prices, trials, scores, aact_studies, aact_sponsors) for t in sorted(tickers)]
     _cells_cache[cache_key] = cells
     return cells
 

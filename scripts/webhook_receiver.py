@@ -37,9 +37,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 from datetime import datetime
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -97,17 +96,21 @@ class WebhookHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({
-                "status": "ok",
-                "events_file": str(EVENTS_FILE),
-                "events_logged": self._count_events(),
-            }).encode())
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "status": "ok",
+                        "events_file": str(EVENTS_FILE),
+                        "events_logged": self._count_events(),
+                    }
+                ).encode()
+            )
         else:
             self.send_error(404, "Not found. Use POST /webhook/fda or /webhook/clinicaltrials")
 
     def _process_fda(self, payload: dict) -> dict:
         """Process FDA webhook payload."""
-        event_id = f"fda_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{payload.get('drug','unknown')}"
+        event_id = f"fda_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{payload.get('drug', 'unknown')}"
         return {
             "event_id": event_id,
             "source": "FDA",
@@ -115,7 +118,9 @@ class WebhookHandler(BaseHTTPRequestHandler):
             "drug": payload.get("drug", ""),
             "ticker": payload.get("company", "").upper() if payload.get("company") else None,
             "date": payload.get("date", datetime.utcnow().strftime("%Y-%m-%d")),
-            "description": payload.get("description", f"FDA event: {payload.get('event', 'unknown')} — {payload.get('drug', 'N/A')}"),
+            "description": payload.get(
+                "description", f"FDA event: {payload.get('event', 'unknown')} — {payload.get('drug', 'N/A')}"
+            ),
             "raw": payload,
             "received_at": datetime.utcnow().isoformat() + "Z",
         }
@@ -165,7 +170,6 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Suppress default logging."""
-        pass
 
 
 def main():
@@ -175,14 +179,14 @@ def main():
     args = parser.parse_args()
 
     server = HTTPServer((args.host, args.port), WebhookHandler)
-    print(f"🧬 Biotech Webhook Receiver")
+    print("🧬 Biotech Webhook Receiver")
     print(f"   Listening: http://{args.host}:{args.port}")
-    print(f"   FDA:       POST /webhook/fda")
-    print(f"   CT.gov:    POST /webhook/clinicaltrials")
-    print(f"   Generic:   POST /webhook/generic")
-    print(f"   Health:    GET  /health")
+    print("   FDA:       POST /webhook/fda")
+    print("   CT.gov:    POST /webhook/clinicaltrials")
+    print("   Generic:   POST /webhook/generic")
+    print("   Health:    GET  /health")
     print(f"   Events:    {EVENTS_FILE}")
-    print(f"   Press Ctrl+C to stop")
+    print("   Press Ctrl+C to stop")
     print()
 
     try:

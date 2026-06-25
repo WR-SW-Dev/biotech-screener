@@ -638,7 +638,6 @@ def get_momentum_validation(
 # ============================================================================
 
 if __name__ == "__main__":
-    import sys
     from pathlib import Path
 
     # Load data

@@ -28,10 +28,10 @@ import hashlib
 import json
 import time
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Optional
 
 try:
     import requests
@@ -40,7 +40,7 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
-from cusip_resolver import CUSIPResolver, resolve_cusip
+from cusip_resolver import CUSIPResolver
 
 # =============================================================================
 # DATA CLASSES
@@ -217,7 +217,7 @@ class SEC13FFetcher:
                 primary_doc = primary_docs[i] if i < len(primary_docs) else ""
 
                 # Construct URLs
-                _accession_formatted = accessions[i]
+                accessions[i]
                 base_url = f"{self.EDGAR_BASE}/Archives/edgar/data/{cik_int}/{accession}"
                 primary_url = f"{base_url}/{primary_doc}"
 

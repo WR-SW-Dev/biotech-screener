@@ -8,7 +8,6 @@ Uses sample financial data (replace with real API when available).
 import json
 import random
 import sys
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -16,7 +15,7 @@ sys.path.insert(0, "/home/claude/biotech_screener")
 
 from backtest.metrics import HORIZON_DISPLAY_NAMES, run_metrics_suite
 from backtest.returns_provider import CSVReturnsProvider
-from data_sources.ctgov_client import BIOTECH_TICKER_MAP, ClinicalTrialsClient, fetch_trials_for_tickers
+from data_sources.ctgov_client import BIOTECH_TICKER_MAP, fetch_trials_for_tickers
 from module_1_universe import compute_module_1_universe
 from module_2_financial import compute_module_2_financial
 from module_3_catalyst import compute_module_3_catalyst
@@ -260,7 +259,7 @@ def main():
     ]
 
     # Run backtest
-    _result = run_production_backtest(dates, use_cached_trials=True)
+    run_production_backtest(dates, use_cached_trials=True)
 
     print("\n" + "=" * 70)
     print("COMPLETE")

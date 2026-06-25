@@ -21,7 +21,6 @@ Decision gate:
 import random
 import sys
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
 from pathlib import Path
 from statistics import mean, stdev
 from typing import Any, Dict, List

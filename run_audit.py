@@ -25,8 +25,8 @@ from pathlib import Path
 # Add codebase to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from audit_framework.orchestrator import AuditOrchestrator, run_full_audit
-from audit_framework.types import AuditTier, PassCriteria
+from audit_framework.orchestrator import AuditOrchestrator
+from audit_framework.types import AuditTier
 
 
 def main():

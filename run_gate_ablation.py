@@ -38,13 +38,6 @@ from typing import Any, Dict, List, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from backfill_decision_columns import (
-    _load_catalyst_map,
-    _load_decision_inputs,
-    _load_defensive_map,
-    _load_holdings_map,
-    build_rec,
-)
 from decision_engine import DecisionRuleset, compute_decision_fields
 from run_decision_ruleset_sweep import (
     ArchiveData,

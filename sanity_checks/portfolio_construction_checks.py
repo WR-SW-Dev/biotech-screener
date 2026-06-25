@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from sanity_checks.types import (
     DEFAULT_THRESHOLDS,
@@ -564,7 +564,7 @@ def generate_investable_capital_report(
     Returns:
         Detailed investability report
     """
-    _checker = PortfolioConstructionChecker(mandate=mandate)
+    PortfolioConstructionChecker(mandate=mandate)
 
     top20 = [s for s in securities if s.rank is not None and s.rank <= 20]
 

@@ -22,7 +22,6 @@ from typing import Optional
 
 from scientific_cartography.schemas.trial_schema import TrialRecord
 
-
 # Map raw mapping-source labels to canonical source_priority buckets.
 _SOURCE_PRIORITY_MAP = {
     "clinicaltrials.gov": "ctgov",
@@ -209,11 +208,10 @@ class TrialIngest:
         collaborators = [
             (r.get("name") or "").strip()
             for r in sponsor_rows
-            if (r.get("lead_or_collaborator") or "").upper() == "COLLABORATOR"
-            and (r.get("name") or "").strip()
+            if (r.get("lead_or_collaborator") or "").upper() == "COLLABORATOR" and (r.get("name") or "").strip()
         ]
 
-        mapping_confidence = _normalize_confidence(mapping_row.get("mapping_confidence"))
+        _normalize_confidence(mapping_row.get("mapping_confidence"))
         source_label = _normalize_source(mapping_row.get("source"))
 
         return TrialRecord(

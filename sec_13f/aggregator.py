@@ -20,14 +20,13 @@ Usage:
         print(f"{ticker}: {signal['overlap_count']} managers, score={signal['conviction_score']:.2f}")
 """
 
-import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 
-from edgar_13f import Filing13F, Holding, SEC13FFetcher, get_manager_holdings
-from elite_managers import ELITE_MANAGERS, get_all_ciks, get_manager_by_cik, get_manager_weight, get_tier_1_managers
+from edgar_13f import Filing13F, Holding, SEC13FFetcher
+from elite_managers import ELITE_MANAGERS, get_manager_weight, get_tier_1_managers
 
 # =============================================================================
 # DATA STRUCTURES
@@ -463,7 +462,7 @@ def get_elite_conviction_score(
 # =============================================================================
 
 if __name__ == "__main__":
-    import sys
+    pass
 
     print("Elite Position Aggregator")
     print("=" * 60)

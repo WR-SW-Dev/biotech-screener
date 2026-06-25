@@ -7,9 +7,8 @@ biotech universe and prepare data for time-series defensive overlays.
 
 import json
 from datetime import date
-from typing import Dict, List
 
-from market_data_provider import BatchPriceProvider, PriceDataProvider, get_adv, get_log_returns, get_prices
+from market_data_provider import BatchPriceProvider, PriceDataProvider
 
 # =============================================================================
 # EXAMPLE 1: Single ticker deep dive

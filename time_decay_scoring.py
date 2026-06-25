@@ -28,7 +28,6 @@ from module_3_schema_v2 import (
     CONFIDENCE_WEIGHTS,
     SEVERITY_SCORE_CONTRIBUTION,
     CatalystEventV2,
-    ConfidenceLevel,
     EventSeverity,
     compute_date_uncertainty_factor,
 )

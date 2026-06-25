@@ -27,7 +27,7 @@ def run_collection(script_name: str, description: str) -> bool:
     print("=" * 80 + "\n")
 
     try:
-        _result = subprocess.run([sys.executable, script_name], check=True)
+        subprocess.run([sys.executable, script_name], check=True)
 
         print(f"\n✅ {description} completed successfully")
         return True

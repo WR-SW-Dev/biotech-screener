@@ -238,7 +238,6 @@ class SecurityValidator:
             r"environ\[",
         ]
 
-        has_env_usage = False
         for root, _, files in os.walk(self.codebase_path):
             if any(skip in root for skip in ["test", "deprecated", "venv"]):
                 continue
@@ -254,7 +253,6 @@ class SecurityValidator:
 
                     for pattern in env_patterns:
                         if re.search(pattern, content):
-                            _has_env_usage = True
                             break
 
                 except Exception:

@@ -27,7 +27,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -257,7 +257,7 @@ def _sec_event_days(event: Dict[str, Any], as_of: date) -> Optional[int]:
 
     Returns positive days if event is in the future, else None.
     """
-    _precision = event.get("date_precision", "DAY")
+    event.get("date_precision", "DAY")
     confidence = event.get("confidence", "")
 
     # Skip LOW confidence (vague "mid-year" / "year-end" language)

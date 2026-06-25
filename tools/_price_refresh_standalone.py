@@ -9,12 +9,13 @@ one ticker at a time.
 Usage:
     python tools/_price_refresh_standalone.py --as-of-date 2026-06-02
 """
-import sys
+
 import csv
 import json
 import logging
-import time
 import random
+import sys
+import time
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -25,14 +26,15 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT))
 
 import argparse
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--as-of-date", required=True)
 parser.add_argument("--delay-sec", type=float, default=1.0)
 parser.add_argument("--start-date", default="2020-01-01")
 args = parser.parse_args()
 
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 
 universe_path = REPO_ROOT / "production_data" / "universe.json"
 price_csv = REPO_ROOT / "production_data" / "price_history.csv"
@@ -103,7 +105,7 @@ for i, ticker in enumerate(tickers):
         count = 0
         for dt, row in df.iterrows():
             close = row.get("Close") or row.get("Adj Close")
-            if close is None or (hasattr(close, '__float__') and close != close):
+            if close is None or (hasattr(close, "__float__") and close != close):
                 continue
             try:
                 close_f = float(close)
@@ -125,15 +127,17 @@ for i, ticker in enumerate(tickers):
                 except (TypeError, ValueError):
                     return ""
 
-            new_rows.append({
-                "date": dt.strftime("%Y-%m-%d"),
-                "ticker": ticker,
-                "close": str(close_f),
-                "open": _f(row.get("Open")),
-                "high": _f(row.get("High")),
-                "low": _f(row.get("Low")),
-                "volume": _vi(row.get("Volume")),
-            })
+            new_rows.append(
+                {
+                    "date": dt.strftime("%Y-%m-%d"),
+                    "ticker": ticker,
+                    "close": str(close_f),
+                    "open": _f(row.get("Open")),
+                    "high": _f(row.get("High")),
+                    "low": _f(row.get("Low")),
+                    "volume": _vi(row.get("Volume")),
+                }
+            )
             count += 1
 
         # Free DataFrame memory immediately
@@ -157,7 +161,8 @@ for idx, row in enumerate(all_rows):
 deduped = [all_rows[i] for i in sorted(seen.values())]
 logger.info("Writing %d rows to %s", len(deduped), price_csv)
 
-import tempfile, os
+import tempfile
+
 price_csv.parent.mkdir(parents=True, exist_ok=True)
 fd, tmp_path = tempfile.mkstemp(suffix=".csv", dir=price_csv.parent)
 try:

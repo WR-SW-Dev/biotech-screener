@@ -10,7 +10,6 @@ This generates static HTML pages only. No server, no runtime dependencies.
 """
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -23,9 +22,7 @@ from scientific_cartography.dashboard_static.generator import DashboardGenerator
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate static HTML dashboard from Scientific Cartography artifacts"
-    )
+    parser = argparse.ArgumentParser(description="Generate static HTML dashboard from Scientific Cartography artifacts")
     parser.add_argument(
         "--artifact-dir",
         required=True,
@@ -55,19 +52,19 @@ def main():
         generator = DashboardGenerator(str(artifact_dir), str(output_dir))
         manifest = generator.generate()
 
-        print(f"✓ Dashboard generated successfully")
+        print("✓ Dashboard generated successfully")
         print()
         print("Generated files:")
         for page in manifest["pages_written"]:
             print(f"  - {page}.html")
-        print(f"  - dashboard_manifest.json")
+        print("  - dashboard_manifest.json")
         print()
         print(f"Artifacts read: {len(manifest['artifacts_read'])}")
         print(f"Artifacts missing: {len(manifest['artifacts_missing'])}")
         if manifest["artifacts_missing"]:
             print(f"  Missing: {', '.join(manifest['artifacts_missing'])}")
         print()
-        print(f"Governance status:")
+        print("Governance status:")
         for flag, value in manifest["governance_flags"].items():
             status = "✓" if value is True or value is False else "?"
             print(f"  {status} {flag}: {value}")

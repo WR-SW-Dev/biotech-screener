@@ -18,19 +18,17 @@ Note: Free tier is 100 messages/month. For production, upgrade to paid plan.
 
 import os
 import sys
-import requests
+from typing import List, Optional
+
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict
+import requests
 
 IEX_BASE_URL = "https://cloud.iexapis.com/stable"
 IEX_API_KEY = os.environ.get("IEX_CLOUD_API_KEY")
 
+
 def get_historical_bars(
-    symbols: List[str],
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    range_type: str = "3m"
+    symbols: List[str], start_date: Optional[str] = None, end_date: Optional[str] = None, range_type: str = "3m"
 ) -> pd.DataFrame:
     """
     Fetch historical OHLCV bars from IEX Cloud.
@@ -72,15 +70,17 @@ def get_historical_bars(
             bars = response.json()
 
             for bar in bars:
-                all_data.append({
-                    'symbol': symbol,
-                    'date': bar.get('date'),
-                    'open': bar.get('open'),
-                    'high': bar.get('high'),
-                    'low': bar.get('low'),
-                    'close': bar.get('close'),
-                    'volume': bar.get('volume'),
-                })
+                all_data.append(
+                    {
+                        "symbol": symbol,
+                        "date": bar.get("date"),
+                        "open": bar.get("open"),
+                        "high": bar.get("high"),
+                        "low": bar.get("low"),
+                        "close": bar.get("close"),
+                        "volume": bar.get("volume"),
+                    }
+                )
 
             print(f"✓ {symbol}: {len(bars)} bars", file=sys.stderr)
 
@@ -97,29 +97,28 @@ def get_historical_bars(
         raise RuntimeError("No data retrieved from IEX Cloud")
 
     # Parse dates
-    df['date'] = pd.to_datetime(df['date'])
+    df["date"] = pd.to_datetime(df["date"])
 
     # Filter by date range if specified
     if start_date:
-        df = df[df['date'] >= start_date]
+        df = df[df["date"] >= start_date]
     if end_date:
-        df = df[df['date'] <= end_date]
+        df = df[df["date"] <= end_date]
 
     # Convert to float
-    for col in ['open', 'high', 'low', 'close']:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-    df['volume'] = pd.to_numeric(df['volume'], errors='coerce').fillna(0).astype(int)
+    for col in ["open", "high", "low", "close"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["volume"] = pd.to_numeric(df["volume"], errors="coerce").fillna(0).astype(int)
 
     return df
+
 
 def main():
     """CLI entrypoint."""
 
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Download historical price data from IEX Cloud"
-    )
+    parser = argparse.ArgumentParser(description="Download historical price data from IEX Cloud")
     parser.add_argument("symbols", nargs="*", help="Ticker symbols (or read from stdin)")
     parser.add_argument("--start-date", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end-date", help="End date (YYYY-MM-DD)")
@@ -140,12 +139,7 @@ def main():
         sys.exit(1)
 
     try:
-        df = get_historical_bars(
-            symbols,
-            start_date=args.start_date,
-            end_date=args.end_date,
-            range_type=args.range
-        )
+        df = get_historical_bars(symbols, start_date=args.start_date, end_date=args.end_date, range_type=args.range)
 
         if args.csv:
             print(df.to_csv(index=False))
@@ -157,6 +151,7 @@ def main():
     except Exception as e:
         print(f"✗ Error: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

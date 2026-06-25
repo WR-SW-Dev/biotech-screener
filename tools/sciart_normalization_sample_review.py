@@ -127,9 +127,7 @@ def render_markdown(sample: list[dict[str, object]], *, trials_path: Path, as_of
     for target in TOP_DISEASE_TARGETS:
         lines.append(f"- {target}: {counts.get(target, 0)}")
     lines.extend(["", "## Annotated sample", ""])
-    lines.append(
-        "| target | nct_id | raw_condition | normalized | mondo_id | tier | confidence | verdict |"
-    )
+    lines.append("| target | nct_id | raw_condition | normalized | mondo_id | tier | confidence | verdict |")
     lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for row in sample:
         raw = str(row["raw_condition"]).replace("|", "\\|")[:80]
@@ -192,7 +190,7 @@ def summarize_verdicts(parsed_rows: list[dict[str, str]], *, worksheet: Path) ->
 
     tp = verdict_counts.get("TRUE_POSITIVE", 0)
     fp = verdict_counts.get("FALSE_POSITIVE", 0)
-    amb = verdict_counts.get("AMBIGUOUS", 0)
+    verdict_counts.get("AMBIGUOUS", 0)
     precision_denom = tp + fp
     precision = round(tp / precision_denom, 4) if precision_denom else None
 

@@ -20,10 +20,9 @@ from __future__ import annotations
 import json
 import sys
 from collections import defaultdict
-from decimal import Decimal
 from pathlib import Path
 from statistics import mean
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, "/home/claude/biotech_screener")
 
@@ -304,7 +303,7 @@ def diagnose_instability(
     mean_attr = summary.get("mean_attribution", {})
 
     rank_corr = rank_stability.get("rank_corr_mean")
-    _churn = rank_stability.get("churn_mean")
+    rank_stability.get("churn_mean")
 
     # Check for uncertainty-driven instability
     if mean_attr.get("uncertainty_pct", 0) > 30:

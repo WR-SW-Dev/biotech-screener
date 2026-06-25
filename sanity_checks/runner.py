@@ -49,17 +49,7 @@ from sanity_checks.portfolio_construction_checks import FundMandate, PortfolioCo
 from sanity_checks.regression_tests import GoldenTestCase, RegressionTestRunner
 from sanity_checks.review_triggers import ICDocumentation, ReviewTriggerChecker
 from sanity_checks.time_series_checks import CatalystEvent, TimeSeriesChecker
-from sanity_checks.types import (
-    DEFAULT_THRESHOLDS,
-    CheckCategory,
-    FlagSeverity,
-    RankingSnapshot,
-    SanityCheckResult,
-    SanityFlag,
-    SecurityContext,
-    ThresholdConfig,
-    ValidationReport,
-)
+from sanity_checks.types import DEFAULT_THRESHOLDS, RankingSnapshot, SecurityContext, ThresholdConfig, ValidationReport
 
 logger = logging.getLogger(__name__)
 
@@ -399,7 +389,7 @@ def generate_battle_tested_report(
         None,
     )
 
-    _review_result = next(
+    next(
         (r for r in report.check_results if r.check_name == "review_triggers"),
         None,
     )
