@@ -1006,156 +1006,6 @@ tail -1 artifacts/ruleset_health_history.jsonl | python3 -c "import json,sys; d=
 
 ---
 
-### Class K — LangGraph review node artifact_dir None guard (third-runtime pattern)
-
-**Signature:** LangGraph-based review nodes crash with AttributeError or TypeError when
-`artifact_dir` is None. The LangGraph runtime (third alongside Hermes and OpenClaw) has
-different null-handling expectations than the other two runtimes.
-
-**Root cause (confirmed 2026-06-22, commit `afced5d4`):** The LangGraph review node
-assumed `artifact_dir` was always a valid path string. When the node was invoked in
-contexts where no artifact directory was configured (e.g., diagnostic-only runs, certain
-cron triggers), `artifact_dir` was None, causing the node to crash when attempting path
-operations.
-
-**Runtime boundary context:** Commit `96ffea36` (2026-06-22) established the
-"Hermes/OpenClaw/LangGraph runtime boundary map" — LangGraph is now a third runtime
-alongside Hermes (cron-managed agents) and OpenClaw (gateway-managed agents). Each
-runtime has different null-handling, tool-execution, and artifact-path conventions:
-
-- **Hermes**: cron-managed, tool-execution via Hermes agent loop, artifacts at
-  `artifacts/<agent>/` or agent-specific paths. Null args typically default to None
-  and agents handle gracefully.
-- **OpenClaw**: gateway-managed, real bash tool execution, artifacts at declared paths
-  in AGENTS.md. Null args cause tool-execution failures that agents can diagnose.
-- **LangGraph**: graph-based workflow, node-level execution, artifacts at node-declared
-  paths. Null args cause node crashes (AttributeError/TypeError) unless explicitly
-  guarded. See `docs/governance/runtime_boundary_map.md` for the full matrix.
-
-**Diagnostic chain:**
-
-```bash
-# 1. Check if the crash is in a LangGraph node (not Hermes/OpenClaw agent)
-grep -r "langgraph\|StateGraph\|node.*artifact_dir" tools/ agents/ --include="*.py" | head -10
-
-# 2. Check the node's artifact_dir parameter handling
-grep -B2 -A5 "artifact_dir" tools/<langgraph_tool>.py | head -20
-# If the node does path operations (e.g., artifact_dir / "file.json") without
-# checking for None first, this is the Class K pattern.
-
-# 3. Check the invocation context
-# LangGraph nodes can be invoked from multiple contexts (cron, manual, diagnostic).
-# Some contexts may not configure artifact_dir. Check the call site.
-```
-
-**Resolution pattern:**
-- Add explicit None guard at the node entry point: `if artifact_dir is None: return {"status": "skip", "reason": "no artifact_dir configured"}`
-- Or provide a default: `artifact_dir = artifact_dir or Path("artifacts/default_review")`
-- The fix should match the node's contract — if the node is designed to work without
-  artifacts in some contexts, return a skip status; if it always needs artifacts, raise
-  a clear error.
-
-**Detection heuristic:** If a LangGraph node crashes with AttributeError/TypeError on
-path operations and the traceback points to `artifact_dir` being None, this is Class K.
-Check the runtime boundary map to confirm the node is LangGraph (not Hermes/OpenClaw).
-
-**Note:** LangGraph is a newer runtime in this ecosystem (admitted 2026-06-22 via
-Package B governance review). Skills and diagnostic patterns are still being built out.
-When encountering LangGraph-specific failures, check `docs/governance/runtime_boundary_map.md`
-for the runtime's conventions before applying Hermes/OpenClaw diagnostic patterns.
-
----
-
-### Class L — Financial calculation unit-mismatch (periodicity confusion)
-
-**Signature:** Financial metrics (burn rate, runway, cash consumption) are silently wrong
-by a factor of 3-4×. The calculation runs without error, produces plausible-looking numbers,
-but the underlying periodicity assumption is wrong (quarterly divisor applied to annual data,
-or annual divisor applied to quarterly data).
-
-**Root cause (confirmed 2026-06-23, commit `c6e1700c`):** Module 2 (financial health) had
-two fallback burn-rate calculation paths in NetIncome and R&D expense handling. Both paths
-hard-coded `/3` (quarterly assumption) when the SEC filing data was actually annual (Dec
-fiscal year-end 10-K). This overstated monthly burn 4× and understated runway 4× for tickers
-reaching these last-resort fallback paths.
-
-**Confirmed instance:** Tickers with SEC annual filings (fiscal year-end December) reaching
-the NetIncome or R&D fallback paths. The fix ported `_ytd_months_from_date()` from v1 to
-use the `NetIncome_date` / `R&D_date` fields (already passed through in financial_data) to
-infer the correct period. Default remains 3 when date is missing (no behavior change for
-existing data without date fields).
-
-**Diagnostic chain:**
-
-```bash
-# 1. Check if financial metrics look plausible
-python3 - << 'EOF'
-import json, glob
-files = sorted(glob.glob('data/snapshots/*/rankings.csv'), reverse=True)
-if not files: exit()
-import csv
-with open(files[0]) as f:
-    reader = csv.DictReader(f)
-    for i, row in enumerate(reader):
-        if i >= 5: break
-        burn = row.get('monthly_burn_rate_mm')
-        runway = row.get('runway_months')
-        cash = row.get('cash_and_securities_mm')
-        if burn and runway:
-            print(f"{row.get('ticker')}: burn={burn}, runway={runway}, cash={cash}")
-            # Sanity check: runway ≈ cash / burn
-            try:
-                expected_runway = float(cash) / float(burn) if float(burn) > 0 else None
-                if expected_runway and abs(expected_runway - float(runway)) > 0.5:
-                    print(f"  ⚠️  Runway mismatch: expected {expected_runway:.1f}, got {runway}")
-            except:
-                pass
-EOF
-
-# 2. Check the calculation code for hardcoded divisors
-grep -n "/3\|/12\|_ytd_months\|period.*month" tools/financial_health.py | head -20
-# Look for: hardcoded /3 or /12 without checking the actual filing period
-
-# 3. Check if date fields are used to infer periodicity
-grep -n "NetIncome_date\|R&D_date\|fiscal_year_end\|period_end" tools/financial_health.py | head -20
-# If date fields exist but aren't used to determine the divisor, this is the Class L pattern
-
-# 4. Verify the fix (post-c6e1700c)
-grep -A10 "_ytd_months_from_date" tools/financial_health.py | head -15
-# Should see: uses the date field to infer months, not hardcoded /3
-```
-
-**Pattern to catch:** Any financial calculation that divides by a hardcoded number (3, 4, 12)
-to convert between periodicities (annual↔quarterly↔monthly) WITHOUT checking the actual
-filing period or date field is suspect. SEC filings have mixed periodicity:
-- 10-K (annual) → divide by 12 for monthly
-- 10-Q (quarterly) → divide by 3 for monthly
-- If the code doesn't distinguish, it will silently produce wrong results
-
-**Test coverage added (commit c6e1700c):** 2 new golden cases verify the annual path
-(Dec date → /12). 136/136 module_2 tests pass; 44/44 golden tests pass.
-
-**Impact on recent screens:** Any screen run between the Module 2 activation and c6e1700c
-had burn rates overstated 4× and runways understated 4× for tickers reaching the fallback
-paths. Use `ls -lt data/snapshots/*/rankings.csv` to find affected dates; the fix produces
-correct burn/runway for annual filers.
-
-**General rule:** When financial metrics look implausible (runway < 6 months for a company
-with $100M+ cash, or burn rate 4× higher than peers), check the periodicity assumption in
-the calculation code. The bug is silent — no exception, no warning, just wrong numbers.
-
----
-
-## Support files
-
-- `scripts/patch_financial_records_sti.py` — reusable surgical patch for XBRL STI mismatch
-  (Class H). Patches financial_records.json, financial_data.json, and all pit_archive dates
-  from pit_financials source of truth. Run with `--apply` to write; dry-run by default.
-- `references/ir_url_population.md` — detailed notes on the two-pass IR URL sourcing
-  technique (EDGAR XBRL namespace + GNW JSON-LD), probe path ordering, confirmed results
-  for FDMT/KYMR/IMVT, full pass 2 audit (87 entries classified), confirmed null list
-  (11 tickers), pitfalls, and log-replay recovery technique for disconnected sessions.
-
 ### Class K — Shadow monitor truthy-form immutability (post-merge audit pattern)
 
 **Signature:** A shadow monitor or append-only ledger uses `if forward_complete_20d is True`
@@ -1295,6 +1145,245 @@ the calculation code. The bug is silent — no exception, no warning, just wrong
 
 ---
 
+### Class M — Stale price from yfinance rate-limit fallback (silent data staleness)
+
+**Signature:** `close_price` in snapshots goes stale for multiple days without any error or warning. IC measurements return NaN or misleading 0.0 values. The pipeline runs successfully but produces wrong results.
+
+**Root cause (confirmed 2026-06-24, commits `fe0d8e66` + `be47e268`):** `collect_market_data.py` uses yfinance to fetch prices. When yfinance rate-limits during the 5:30 PM pipeline run, it falls back to cached data instead of raising an error. `market_data.json` gets stuck on old prices (confirmed: stuck on 2026-06-18 prices for all snapshots from 2026-06-19 through 2026-06-23). Meanwhile, `price_history.csv` refreshes via a different endpoint and stays current.
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if close_price is stale in recent snapshots
+python3 - << 'EOF'
+import json, glob
+files = sorted(glob.glob('data/snapshots/*/rankings.csv'), reverse=True)
+if not files: exit()
+import csv
+with open(files[0]) as f:
+    reader = csv.DictReader(f)
+    for i, row in enumerate(reader):
+        if i >= 3: break
+        print(f"{row.get('ticker')}: close_price={row.get('close_price')}, as_of={row.get('as_of_date')}")
+EOF
+
+# 2. Check market_data.json collected_at date
+python3 -c "
+import json
+d = json.load(open('production_data/market_data.json'))
+print('collected_at:', d.get('collected_at'))
+print('sample price date:', list(d.get('prices', {}).values())[0].get('date') if d.get('prices') else 'N/A')
+"
+
+# 3. Check if price_history.csv is current
+tail -1 production_data/price_history.csv | cut -d',' -f1,2
+
+# 4. Check forward returns in IC measurement — if >80% are exactly 0.0, prices are stale
+python3 -c "
+import json
+# If measure_final_score_ic_spec100.py exists, check its stale-price detection
+# It marks dates as [stale-prices] when forward returns are exactly 0.0
+"
+```
+
+**Resolution pattern:**
+
+```bash
+# 1. Patch market_data.json from price_history.csv (bypasses yfinance rate limit)
+python3 tools/patch_market_data_prices.py
+# Atomic write, patches price field from price_history.csv
+
+# 2. Verify patch worked
+python3 -c "
+import json
+d = json.load(open('production_data/market_data.json'))
+print('collected_at:', d.get('collected_at'))
+"
+
+# 3. Re-run IC measurement to confirm fresh prices
+python3 tools/measure_final_score_ic_spec100.py --as-of-date $(date +%F)
+```
+
+**Pipeline-level fix (confirmed 2026-06-25, commit `be47e268`):**
+Insert a non-blocking price-patch step in `run_daily_production.py` before the market data staleness gate:
+
+```python
+# In run_daily_production.py, before market data staleness check:
+try:
+    from tools.patch_market_data_prices import patch_market_data_prices
+    patch_market_data_prices()  # Non-blocking, patches from price_history.csv
+except Exception as e:
+    logger.warning(f"Price patch failed (non-blocking): {e}")
+```
+
+**Pattern to catch:** Any API call that falls back to cached data on rate-limit or timeout without raising an error is a silent staleness hazard. The pipeline runs successfully but produces wrong results. Diagnostic: check the `collected_at` timestamp in the cached data file — if it's days old, the fallback fired.
+
+**Test coverage added (commit `fe0d8e66`):** `measure_final_score_ic_spec100.py` now detects stale prices (forward returns exactly 0.0) and returns NaN instead of misleading IC=0.0000. Also fixes `_spearman_ic` to return NaN (not 0.0) for zero-variance inputs.
+
+---
+
+### Class N — yfinance date format silent rejection (isoformat vs strftime)
+
+**Signature:** yfinance API calls return empty results without error. The pipeline runs successfully but produces no data for the affected date range.
+
+**Root cause (confirmed 2026-06-24, commit `411cbe40`):** `run_daily_production.py` passed `datetime.isoformat()` to `xbi.history(start=..., end=...)`. The `isoformat()` method on a datetime object includes the time component (e.g., `"2026-06-24T00:00:00"`). yfinance silently rejects this format and returns empty results. The fix: use `strftime("%Y-%m-%d")` instead (e.g., `"2026-06-24"`).
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if yfinance calls return empty results
+grep -n "isoformat\|strftime" tools/run_daily_production.py | head -10
+# If isoformat() is used for date parameters, this is the Class N pattern
+
+# 2. Test yfinance directly with both formats
+python3 - << 'EOF'
+import yfinance as yf
+from datetime import datetime
+
+# Wrong: isoformat includes time
+xbi = yf.Ticker("XBI")
+result1 = xbi.history(start=datetime(2026, 6, 24).isoformat(), end=datetime(2026, 6, 25).isoformat())
+print(f"isoformat: {len(result1)} rows")
+
+# Right: strftime is date-only
+result2 = xbi.history(start=datetime(2026, 6, 24).strftime("%Y-%m-%d"), end=datetime(2026, 6, 25).strftime("%Y-%m-%d"))
+print(f"strftime: {len(result2)} rows")
+EOF
+
+# 3. Check if XBI freshness validation is empty
+grep -A5 "xbi.*freshness\|XBI.*freshness" tools/run_daily_production.py | head -10
+```
+
+**Resolution:**
+
+```python
+# Wrong:
+start_date = datetime(2026, 6, 24).isoformat()  # "2026-06-24T00:00:00"
+xbi.history(start=start_date, end=end_date)
+
+# Right:
+start_date = datetime(2026, 6, 24).strftime("%Y-%m-%d")  # "2026-06-24"
+xbi.history(start=start_date, end=end_date)
+```
+
+**Pattern to catch:** Any yfinance API call that uses `datetime.isoformat()` for date parameters is suspect. yfinance expects date-only strings (`"YYYY-MM-DD"`), not datetime strings with time components. The rejection is silent — no exception, no warning, just empty results.
+
+**General rule:** When yfinance calls return empty results without error, check the date format first. `isoformat()` includes time; `strftime("%Y-%m-%d")` is date-only. The fix is a one-line change.
+
+---
+
+### Class O — Universe contamination from delisted tickers
+
+**Signature:** Screening results include delisted tickers with stale or missing data. Coverage ratios are inflated because delisted tickers are in the denominator but don't have current data. Universe filtering is inconsistent across pipeline stages.
+
+**Root cause (confirmed 2026-06-24, commit `974a67b9`):** `universe.json` contained 7 delisted tickers (ACLX, APLS, DAWN, FOLD, GLPG, KALV, TERN) with `status: delisted` but no consistent filter was applied across all universe consumers. Each pipeline stage loaded the universe independently and applied different filters (or no filter), causing:
+- `run_screen.py` included delisted tickers in screening
+- `scripts/run_screen_from_bundle.py` passed delisted tickers to the screen function
+- `tools/run_daily_production.py` included delisted tickers in coverage ratio denominators
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if universe.json has delisted tickers
+python3 -c "
+import json
+d = json.load(open('production_data/universe.json'))
+delisted = [t for t, info in d.items() if info.get('status') == 'delisted']
+print(f'{len(delisted)} delisted tickers: {delisted[:10]}')
+"
+
+# 2. Check if run_screen.py filters delisted tickers
+grep -n "status.*delisted\|delisted.*filter" run_screen.py | head -10
+# Should see: filter applied immediately after universe load, before full_universe_tickers
+
+# 3. Check if coverage ratio includes delisted tickers
+grep -A10 "check_market_data_coverage\|_compute_market_data_refresh" tools/run_daily_production.py | head -20
+# Should see: delisted excluded from denominator
+
+# 4. Check if all universe consumers apply the filter
+grep -rn "universe.json\|load_universe" tools/ scripts/ --include="*.py" | grep -v "test_" | head -20
+# Each consumer should filter status!=delisted
+```
+
+**Resolution pattern:**
+
+```python
+# In run_screen.py, immediately after loading universe:
+raw_universe = load_universe()
+# Filter delisted tickers BEFORE computing full_universe_tickers
+active_universe = {t: info for t, info in raw_universe.items() 
+                   if info.get('status') != 'delisted'}
+logger.info(f"Excluded {len(raw_universe) - len(active_universe)} delisted tickers")
+full_universe_tickers = list(active_universe.keys())
+
+# In coverage ratio calculation:
+active_tickers = [t for t in universe if universe[t].get('status') != 'delisted']
+coverage = len(tickers_with_data) / len(active_tickers)  # Not len(universe)
+```
+
+**Pattern to catch:** Any pipeline that loads a universe with a `status` field (delisted, active, pending) must filter consistently at every stage. If one stage filters and another doesn't, you get inconsistent results. The fix is to apply the filter immediately after loading, before any downstream computation.
+
+**Test coverage added (commit `974a67b9`):** Delisted ticker exclusion verified in run_screen.py, run_screen_from_bundle.py, and run_daily_production.py coverage calculations.
+
+---
+
+### Class P — LangGraph artifact schema drift (cascading key mismatches)
+
+**Signature:** LangGraph review nodes crash or produce wrong results because the artifact schema (map_index.json, disease_map_summary.md, etc.) changed but the node code wasn't updated. Multiple fields cascade: file names, key paths, field names all drift simultaneously.
+
+**Root cause (confirmed 2026-06-24, commit `54d9196e`):** The LangGraph review nodes in `nodes.py` had 4 cascading mismatches against the actual artifact format produced by the scientific cartography pipeline:
+1. `load_artifact_index`: looked for `disease_map_index.json` but actual file is `map_index.json`; read counts from flat keys but actual structure nests them under `counts{}`; used `safe_disease_slug` but actual field is `disease_id`
+2. `validate_artifact_structure`: checked for `diseases/` subdirectory (doesn't exist); should check 4 flat JSONL/JSON artifact files
+3. `select_review_diseases`: used `disease_key` but actual field is `disease_id`; `normalized_disease_name` should be `disease_name` in summary output
+4. `run_governance_scan`: scanned `disease_map_summary.md` for forbidden terms, but it's a disease taxonomy reference (not analyst commentary); medical terms like "Alpha-Hydroxylase" and "Body Weight" false-positived
+
+**Diagnostic chain:**
+
+```bash
+# 1. Check if LangGraph nodes reference the correct artifact file names
+grep -n "disease_map_index.json\|map_index.json" tools/langgraph_review/nodes.py | head -5
+# If nodes.py references disease_map_index.json but actual file is map_index.json → Class P
+
+# 2. Check if field names match the actual artifact schema
+grep -n "disease_key\|disease_id\|safe_disease_slug" tools/langgraph_review/nodes.py | head -10
+# If nodes.py uses disease_key but artifact has disease_id → Class P
+
+# 3. Check if the artifact structure validation matches reality
+grep -A10 "validate_artifact_structure" tools/langgraph_review/nodes.py | head -15
+# If it checks for diseases/ subdirectory but actual structure is flat files → Class P
+
+# 4. Verify the actual artifact schema
+ls -la artifacts/scientific_cartography/ | head -10
+python3 -c "
+import json
+d = json.load(open('artifacts/scientific_cartography/map_index.json'))
+print('Top-level keys:', list(d.keys())[:5])
+print('Sample entry:', list(d.values())[0] if d else 'empty')
+"
+```
+
+**Resolution pattern:**
+
+```python
+# Wrong (old schema):
+artifact_index = load_json("disease_map_index.json")
+counts = {k: len(v) for k, v in artifact_index.items()}
+disease_slug = entry["safe_disease_slug"]
+
+# Right (actual schema):
+artifact_index = load_json("map_index.json")
+counts = artifact_index["counts"]  # Nested under counts{}
+disease_id = entry["disease_id"]
+```
+
+**Pattern to catch:** When a LangGraph node reads artifacts produced by a different pipeline (scientific cartography, data auditor, etc.), the schema can drift silently. The node code references old field names, old file names, or old structure assumptions. The fix is to align the node code to the actual artifact schema, not the assumed schema.
+
+**Test coverage added (commit `54d9196e`):** Updated LangGraph review tests to match the flat artifact schema. Tests now verify `map_index.json` (not `disease_map_index.json`), `counts{}` nesting, `disease_id` field, and flat JSONL/JSON file structure.
+
+**General rule:** When a LangGraph node crashes with KeyError or produces wrong results, check if the artifact schema changed. The node code may be referencing old field names or old file names. The fix is to update the node code to match the actual artifact schema, then update the tests.
+
+---
+
 ## Cross-skill diagnostic routing
 
 ```
@@ -1352,33 +1441,28 @@ LangGraph node crashes with AttributeError/TypeError on path operations?
     Hermes/OpenClaw diagnostic patterns.
 ```
 
-XBI targeted re-fetch crashes with "unconverted data remains: T00:00:00"?
-  → Class M. datetime.isoformat() produces ISO 8601 with time component
-    (e.g. 2026-06-19T00:00:00) that yfinance history() cannot parse as a date.
-    Fix: use strftime("%Y-%m-%d") for all date strings passed to yfinance.
-    Applies anywhere a datetime object (not date) is passed to yf API calls.
-    Confirmed 2026-06-24 (399e674c).
+---
 
-Delisted ticker still appears in screen output after marking status="delisted"?
-  → Class N. Multi-path universe leak. universe.json has ONE status field but
-    MULTIPLE universe loaders: refresh_prices(), run_screen.py, run_screen_from_bundle.py,
-    check_market_data_coverage(), _compute_market_data_refresh(). Fixing one loader
-    is not enough — audit all consumers. Filter: skip entries where status=="delisted".
-    Confirmed 2026-06-24 (merge 5b3225696): TERN still appeared in screen after
-    refresh_prices() was fixed but before run_screen.py was patched.
+## Code Quality Pitfalls
 
-Production step 1.5 cache warm times out (1800s) on every run?
-  → Class O. argparse CLI default masking function-level default. run_daily_production.py
-    had two defaults for --warm-sources: function signature (essential sources only) and
-    CLI argparse default (included euctr/ctis/isrctn/merged_trials). argparse wins →
-    slow registries block production. Fix: align CLI default to function default (essential
-    sources only); move slow registries to cron_data_refresh.sh with per-source timeouts.
-    Confirmed 2026-06-24 (ebb33da5).
+### F-String With No Placeholder (Flake8 F541)
 
-agents_direct cron fires 42× ModuleNotFoundError: No module named 'tools'?
-  → Class P. Cron sys.path isolation. `from tools.skills_logger_v2 import ...` resolves
-    in interactive shell (PROJECT_ROOT in sys.path via virtualenv or PYTHONPATH) but
-    fails in cron (no TTY, no activation, cwd may differ). Fix: insert PROJECT_ROOT onto
-    sys.path before any repo-relative imports. Pattern: set PROJECT_ROOT = Path(__file__).
-    resolve().parent.parent, then sys.path.insert(0, str(PROJECT_ROOT)) before imports.
-    Confirmed 2026-06-24 (735ac3f7).
+f-strings with no `{}` interpolation trigger flake8 F541. Recurred 5× across markdown
+formatters in bioshort_watch, catalyst_history_diagnostics, eval_policy_candidate,
+build_policy_shadow_compare.
+
+**Pattern:** Static markdown table headers written as f-strings:
+```python
+# triggers F541
+header = f"| Ticker | Score | Rank |"
+```
+
+**Fix:** Use a plain string:
+```python
+header = "| Ticker | Score | Rank |"
+```
+
+Only use `f"..."` when the string contains at least one `{variable}`. Pre-commit will catch
+this — fix before commit, not after.
+
+(source: LRN-20260329-004, Pattern-Key f_string_no_placeholder)
