@@ -399,7 +399,9 @@ def save_ledger(rows):
 def compute_cumulative(ledger):
     stats = {}
     for h in HORIZONS:
-        settled = [r for r in ledger if r.get(f"fwd_{h}d_settled")]
+        # Only count rows where a veto actually occurred (n_vetoed > 0)
+        # Zero-veto rows (pre-EES-v3 snapshots) don't produce meaningful alpha
+        settled = [r for r in ledger if r.get(f"fwd_{h}d_settled") and r.get("n_vetoed", 0) > 0]
         alphas = [r[f"fwd_{h}d_veto_alpha"] for r in settled if r.get(f"fwd_{h}d_veto_alpha") is not None]
         sel_exc = [r[f"fwd_{h}d_selected_excess"] for r in settled if r.get(f"fwd_{h}d_selected_excess") is not None]
         veto_exc = [r[f"fwd_{h}d_vetoed_excess"] for r in settled if r.get(f"fwd_{h}d_vetoed_excess") is not None]

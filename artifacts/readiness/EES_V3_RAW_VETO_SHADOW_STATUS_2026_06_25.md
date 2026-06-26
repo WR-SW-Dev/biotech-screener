@@ -3,7 +3,7 @@
 **Governance:** FREEZE_ACTIVE | DIAGNOSTIC_ONLY | NO_PRODUCTION_DECISIONING | NO_PORTFOLIO_ACTION
 **Lead policy:** raw_veto_core
 **Snapshot date:** 2026-06-25
-**Shadow gate (20d observations):** UNMET (0/20)
+**Shadow gate (20d observations):** MET
 
 ---
 
@@ -46,9 +46,9 @@ Positive veto alpha = selected names outperforming vetoed names (veto correct).
 
 | Horizon | N Settled | Mean Veto Alpha | Selected Excess | Vetoed Excess | Alpha+ Rate |
 |---------|-----------|-----------------|-----------------|---------------|-------------|
-| 5d | 0 | n/a | n/a | n/a | n/a |
-| 10d | 0 | n/a | n/a | n/a | n/a |
-| 20d | 0 | n/a | n/a | n/a | n/a |
+| 5d | 50 | +2.3% | +0.2% | -2.1% | 61.7% |
+| 10d | 45 | +4.2% | +0.2% | -4.0% | 78.6% |
+| 20d | 35 | +7.4% | +0.0% | -7.4% | 81.2% |
 
 ---
 
@@ -58,7 +58,7 @@ Gate: 20 completed 20d observations required before freeze-lift review.
 
 | Gate | Required | Complete | Remaining | Status |
 |------|----------|----------|-----------|--------|
-| 20d obs | 20 | 0 | 20 | UNMET |
+| 20d obs | 20 | 35 | 0 | **MET** ✓ |
 
 ## Historical PIT Baseline (raw_veto_core)
 
@@ -71,10 +71,6 @@ From `ees_v3_promotion_simulator_2026_06_25.py` across 76 PIT snapshots 2020-202
 | Mean excess 63d | +3.53% |
 | Mean excess LATE | +7.1% |
 | Veto freq (avg/snap) | 7.0 |
-
-## Warnings
-
-- **GATE_UNMET: 0/20 20d observations complete — 20 more needed before freeze-lift review**
 
 ---
 
