@@ -36,14 +36,14 @@ log() {
 
 log "Starting for ${TODAY}"
 
-$PYTHON tools/generate_allocation_lens.py --as-of-date "$TODAY" 2>&1 | while IFS= read -r line; do
+$PYTHON tools/generate_allocation_lens.py --as-of-date "$TODAY" --no-overwrite 2>&1 | while IFS= read -r line; do
     log "$line"
 done
 
 EXIT_CODE="${PIPESTATUS[0]}"
 
 if [ "$EXIT_CODE" -eq 0 ]; then
-    log "Done — artifacts/surveillance/${TODAY}_allocation_lens.{md,json} written"
+    log "Done — artifacts/surveillance/${TODAY}_allocation_lens.{md,json} (created/overwrote/skipped logged above)"
 else
     log "ERROR: generator exited with code $EXIT_CODE"
     exit "$EXIT_CODE"

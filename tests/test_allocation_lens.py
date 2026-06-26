@@ -32,6 +32,9 @@ from tools.generate_allocation_lens import (
     check_overrides,
     generate_lens,
     render_md,
+    run_selfcheck,
+    write_lens_artifacts,
+    write_selfcheck,
 )
 
 # ---------------------------------------------------------------------------
@@ -377,6 +380,118 @@ def test_allocation_lens_daily_override_trigger():
 
 # ---------------------------------------------------------------------------
 # 7. Governance language guard
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# 8. Idempotence — no-overwrite (default cron behavior)
+# ---------------------------------------------------------------------------
+
+
+def test_idempotent_second_run_no_overwrite(tmp_path):
+    """Second run with allow_overwrite=False must not mutate core artifacts."""
+    lens = generate_lens(
+        as_of_date="2026-06-26",
+        rankings=_make_rankings(10),
+        catalyst_delta=None,
+        ops_digest=None,
+        ees_scorecard=None,
+        cartography=None,
+        warnings=[],
+    )
+    out_md = tmp_path / "2026-06-26_allocation_lens.md"
+    out_json = tmp_path / "2026-06-26_allocation_lens.json"
+
+    r1 = write_lens_artifacts(lens, out_md, out_json, allow_overwrite=True)
+    assert r1["md"] == "created"
+    assert r1["json"] == "created"
+
+    content_md = out_md.read_text()
+    content_json = out_json.read_text()
+
+    r2 = write_lens_artifacts(lens, out_md, out_json, allow_overwrite=False)
+    assert r2["md"] == "skipped"
+    assert r2["json"] == "skipped"
+    assert out_md.read_text() == content_md
+    assert out_json.read_text() == content_json
+
+
+def test_allow_overwrite_flag(tmp_path):
+    """allow_overwrite=True must overwrite existing artifacts."""
+    out_md = tmp_path / "2026-06-26_allocation_lens.md"
+    out_json = tmp_path / "2026-06-26_allocation_lens.json"
+    out_md.write_text("old content")
+    out_json.write_text("{}")
+
+    lens = generate_lens(
+        as_of_date="2026-06-26",
+        rankings=_make_rankings(10),
+        catalyst_delta=None,
+        ops_digest=None,
+        ees_scorecard=None,
+        cartography=None,
+        warnings=[],
+    )
+    r = write_lens_artifacts(lens, out_md, out_json, allow_overwrite=True)
+    assert r["md"] == "overwrote"
+    assert r["json"] == "overwrote"
+    assert out_md.read_text() != "old content"
+    assert out_json.read_text() != "{}"
+
+
+def test_selfcheck_deterministic_except_timestamp():
+    """Same lens must produce identical selfcheck notes on two consecutive calls."""
+    lens = generate_lens(
+        as_of_date="2026-06-26",
+        rankings=_make_rankings(10),
+        catalyst_delta=None,
+        ops_digest=None,
+        ees_scorecard=None,
+        cartography=None,
+        warnings=[],
+    )
+    c1 = run_selfcheck(lens)
+    c2 = run_selfcheck(lens)
+
+    def _strip(c):
+        return {k: v for k, v in c.items() if k != "checked_at"}
+
+    assert _strip(c1) == _strip(c2)
+
+
+def test_selfcheck_sidecar_not_rewritten_if_unchanged(tmp_path):
+    """Selfcheck sidecar is skipped when content (excluding checked_at) is unchanged."""
+    lens = generate_lens(
+        as_of_date="2026-06-26",
+        rankings=_make_rankings(10),
+        catalyst_delta=None,
+        ops_digest=None,
+        ees_scorecard=None,
+        cartography=None,
+        warnings=[],
+    )
+    check = run_selfcheck(lens)
+    out_check = tmp_path / "2026-06-26_allocation_lens_selfcheck.json"
+
+    r1 = write_selfcheck(check, out_check, allow_overwrite=False)
+    assert r1 == "created"
+    content_before = out_check.read_text()
+
+    r2 = write_selfcheck(check, out_check, allow_overwrite=False)
+    assert r2 == "skipped"
+    assert out_check.read_text() == content_before
+
+
+def test_cron_wrapper_passes_no_overwrite():
+    """Cron wrapper must explicitly pass --no-overwrite to the generator."""
+    wrapper = Path(__file__).resolve().parent.parent / "tools" / "cron_allocation_lens.sh"
+    assert wrapper.exists(), f"Cron wrapper not found: {wrapper}"
+    content = wrapper.read_text()
+    assert "--no-overwrite" in content, "Cron wrapper must pass --no-overwrite to the generator"
+
+
+# ---------------------------------------------------------------------------
+# 7. Governance language guard  (renumbered — was 7, now follows 8 additions above)
 # ---------------------------------------------------------------------------
 
 

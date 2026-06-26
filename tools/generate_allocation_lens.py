@@ -896,6 +896,63 @@ def run_selfcheck(lens: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Idempotent artifact writers
+# ---------------------------------------------------------------------------
+
+
+def _selfcheck_materially_changed(new_check: dict, existing_path: Path) -> bool:
+    """Return True if selfcheck content changed, ignoring the checked_at timestamp."""
+    if not existing_path.exists():
+        return True
+    try:
+        existing = json.loads(existing_path.read_text())
+        strip = lambda d: {k: v for k, v in d.items() if k != "checked_at"}  # noqa: E731
+        return strip(new_check) != strip(existing)
+    except (json.JSONDecodeError, OSError):
+        return True
+
+
+def write_lens_artifacts(
+    lens: dict,
+    out_md: Path,
+    out_json: Path,
+    allow_overwrite: bool,
+) -> dict[str, str]:
+    """Write core lens artifacts (MD + JSON).
+
+    Returns {"md": action, "json": action} where action is one of:
+    "created", "overwrote", "skipped".
+    """
+    actions: dict[str, str] = {}
+    for key, path, content in [
+        ("md", out_md, render_md(lens)),
+        ("json", out_json, json.dumps(lens, indent=2)),
+    ]:
+        existed = path.exists()
+        if existed and not allow_overwrite:
+            actions[key] = "skipped"
+        else:
+            path.write_text(content)
+            actions[key] = "overwrote" if existed else "created"
+    return actions
+
+
+def write_selfcheck(check: dict, out_check: Path, allow_overwrite: bool) -> str:
+    """Write selfcheck sidecar. Returns action: "created", "overwrote", or "skipped".
+
+    Skips rewrite if content is materially unchanged (only checked_at differs),
+    unless allow_overwrite is set.
+    """
+    if not out_check.exists():
+        out_check.write_text(json.dumps(check, indent=2))
+        return "created"
+    if allow_overwrite or _selfcheck_materially_changed(check, out_check):
+        out_check.write_text(json.dumps(check, indent=2))
+        return "overwrote"
+    return "skipped"
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -933,6 +990,20 @@ def main() -> int:
         action="store_false",
         help="Skip self-check",
     )
+    overwrite_group = parser.add_mutually_exclusive_group()
+    overwrite_group.add_argument(
+        "--no-overwrite",
+        dest="allow_overwrite",
+        action="store_false",
+        help="Skip if same-day artifacts already exist (default)",
+    )
+    overwrite_group.add_argument(
+        "--allow-overwrite",
+        dest="allow_overwrite",
+        action="store_true",
+        help="Overwrite existing artifacts (explicit rerun / correction)",
+    )
+    parser.set_defaults(allow_overwrite=False)
     args = parser.parse_args()
 
     warnings: list[str] = []
@@ -987,19 +1058,21 @@ def main() -> int:
     out_md = args.out_md or surveillance_dir / f"{as_of_date}_allocation_lens.md"
     out_json = args.out_json or surveillance_dir / f"{as_of_date}_allocation_lens.json"
 
-    out_md.write_text(render_md(lens))
-    out_json.write_text(json.dumps(lens, indent=2))
-
-    print(f"Wrote {out_md}")
-    print(f"Wrote {out_json}")
+    artifact_actions = write_lens_artifacts(lens, out_md, out_json, args.allow_overwrite)
+    for key, path in [("md", out_md), ("json", out_json)]:
+        action = artifact_actions[key]
+        if action == "skipped":
+            print(f"Skipped (exists): {path}")
+        else:
+            print(f"{action.capitalize()}: {path}")
 
     if args.selfcheck:
         check = run_selfcheck(lens)
         out_check = surveillance_dir / f"{as_of_date}_allocation_lens_selfcheck.json"
-        out_check.write_text(json.dumps(check, indent=2))
+        check_action = write_selfcheck(check, out_check, args.allow_overwrite)
         severity = check["overall_severity"]
         n = check["n_issues"]
-        print(f"Selfcheck: {severity} ({n} issue{'s' if n != 1 else ''})")
+        print(f"Selfcheck: {severity} ({n} issue{'s' if n != 1 else ''}) [{check_action}]")
         if severity == "MAJOR":
             for note in check["notes"]:
                 if note["severity"] == "MAJOR":
