@@ -592,6 +592,23 @@
       "production_decisioning": false,
       "mutation_authority": "none",
       "cron_enabled": true
+    },
+    "hermes-skill-sync-agent": {
+      "role": "Hermes skill canonical sync guard — detect drift between skills/ sources, docs/hermes_skills/ mirrors, and retired references",
+      "category": "control_plane",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/governance/hermes_skill_sync/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "governance_lead",
+      "notes": "Weekly Sunday 08:00 ET. no_agent Hermes cron: hermes-skill-sync-guard (script: hermes_skill_sync_agent.sh). Read-only scan of skills/ + docs/hermes_skills/; writes only to artifacts/governance/hermes_skill_sync/. Retired Correction Ledger references in canonical sources trigger DRIFT_CRITICAL. In sync mode, max 3 mirror files regenerated per run. Town notified via ruleset_mismatch event on CRITICAL or WARNING. Miss threshold: 8 days; stale threshold: 10 days. Cron install: hermes cron add --name hermes-skill-sync-guard --schedule '0 8 * * 0' --no-agent --script hermes_skill_sync_agent.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
+      "llm_policy": "none",
+      "requires_preflight": false,
+      "cron_enabled": false,
+      "mutation_authority": "none"
     }
   }
 }
