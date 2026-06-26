@@ -21,10 +21,14 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+from tools.artifact_freshness import age_days, newest_artifact_freshness  # noqa: E402
+
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
 GOVERNANCE_DIR = REPO_ROOT / "artifacts" / "governance"
 
@@ -67,6 +71,7 @@ class AgentRow:
         authority_level: str,
         supervised: bool,
         heartbeat: dict | None,
+        artifact_paths: list[str] | None = None,
     ):
         self.agent_id = agent_id
         self.role = role
@@ -76,32 +81,55 @@ class AgentRow:
         self.tier = AUTHORITY_TO_TIER.get(authority_level, -1)
         self.supervised = supervised
         self.heartbeat = heartbeat
+        self.artifact_paths = artifact_paths or []
         self.health_status = self._compute_health()
         self.detail = self._compute_detail()
+
+    def _artifact_age(self) -> tuple[int | None, str]:
+        """Return (age_in_days, detail_str) from artifact_paths freshness, or (None, reason)."""
+        if not self.artifact_paths:
+            return None, "no artifact_paths"
+        newest, sample, method = newest_artifact_freshness(REPO_ROOT, self.artifact_paths)
+        if newest is None:
+            return None, "NO_ARTIFACTS"
+        today = date.today()
+        a = age_days(today, newest)
+        label = sample.relative_to(REPO_ROOT) if sample else "?"
+        return a, f"artifact {a}d ago [{method}] {label}"
 
     def _compute_health(self) -> str:
         if self.status in ("deprecated", "suppressed") or not self.supervised:
             return "SKIP"
 
-        # on_demand agents don't have regular heartbeats; skip freshness checks.
+        # on_demand agents: skip if no heartbeat (no regular cadence)
         if self.cadence in ("on_demand", "unknown"):
             if self.heartbeat is None:
                 return "SKIP"
 
         hb = self.heartbeat
         if hb is None:
-            return "RED"  # supervised agent with no heartbeat
+            # Fallback: artifact-based freshness
+            a, _ = self._artifact_age()
+            if a is None:
+                return "RED"
+            fail_thresh = STALENESS_FAIL.get(self.cadence)
+            warn_thresh = STALENESS_WARN.get(self.cadence)
+            if fail_thresh and a > fail_thresh:
+                return "RED"
+            if warn_thresh and a > warn_thresh:
+                return "AMBER"
+            return "GREEN"
 
         run_ts_str = hb.get("run_ts")
         if run_ts_str:
             try:
                 run_ts = datetime.fromisoformat(run_ts_str)
-                age_days = (datetime.now(timezone.utc) - run_ts).days
+                hb_age = (datetime.now(timezone.utc) - run_ts).days
                 warn_thresh = STALENESS_WARN.get(self.cadence)
                 fail_thresh = STALENESS_FAIL.get(self.cadence)
-                if fail_thresh and age_days > fail_thresh:
+                if fail_thresh and hb_age > fail_thresh:
                     return "RED"
-                if warn_thresh and age_days > warn_thresh:
+                if warn_thresh and hb_age > warn_thresh:
                     return "AMBER"
             except ValueError:
                 return "RED"
@@ -121,26 +149,27 @@ class AgentRow:
 
     def _compute_detail(self) -> str:
         if self.health_status == "SKIP":
-            return f"{self.status}"
+            return self.status
 
         hb = self.heartbeat
         if hb is None:
-            return "NO_HEARTBEAT"
+            _, detail = self._artifact_age()
+            return detail
 
         run_ts_str = hb.get("run_ts", "")
         age_str = ""
         if run_ts_str:
             try:
                 run_ts = datetime.fromisoformat(run_ts_str)
-                age_days = (datetime.now(timezone.utc) - run_ts).days
-                age_str = f"{age_days}d ago"
+                hb_age = (datetime.now(timezone.utc) - run_ts).days
+                age_str = f"{hb_age}d ago"
             except ValueError:
                 age_str = "invalid_ts"
 
         hb_status = hb.get("status", "?")
         n_c = hb.get("n_critical", 0)
         n_w = hb.get("n_warning", 0)
-        parts = [hb_status]
+        parts = [f"hb:{hb_status}"]
         if age_str:
             parts.append(age_str)
         if n_c:
@@ -196,6 +225,7 @@ def build_rows(registry: dict) -> list[AgentRow]:
             authority_level=entry.get("authority_level", "observe_only"),
             supervised=entry.get("supervised_by_orchestrator", False),
             heartbeat=hb,
+            artifact_paths=entry.get("artifact_paths", []),
         )
         rows.append(row)
     return rows
