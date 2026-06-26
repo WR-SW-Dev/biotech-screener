@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-06-24",
+  "as_of": "2026-06-25",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agent directories may be retained for history and must be registered with status=deprecated and merged_into pointing at the canonical agent.",
   "enums": {
     "category": [
@@ -21,7 +21,7 @@
     "status": [
       "active",
       "shadow",
-        "suppressed",
+      "suppressed",
       "deprecated"
     ],
     "authority_level": [
@@ -571,6 +571,27 @@
       "sunset_date": "2026-06-19",
       "archive_date": "2026-07-31",
       "removal_date": "2026-08-15"
+    },
+    "ees_v3_veto_monitor": {
+      "role": "EES v3 raw_veto_core shadow-policy monitor \u2014 diagnostic only, no production decisioning",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "shadow",
+      "artifact_paths": [
+        "artifacts/shadow/ees_v3_veto_shadow_card_*.json",
+        "artifacts/readiness/EES_V3_VETO_SHADOW_STATUS_*.md",
+        "agents/ees_v3_veto_monitor/memory/"
+      ],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "signal_lead",
+      "notes": "FREEZE_ACTIVE | DIAGNOSTIC_ONLY | CRON_NOT_ENABLED. Shadow gate MET 2026-06-25 (35/20 20d obs, +7.4% veto alpha). Freeze-lift review memo: artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md. Lead policy: raw_veto_core. Active production veto NOT authorized. Cron activation requires explicit operator approval. Runbook: docs/agent_runbooks/EES_V3_VETO_MONITOR_RUNBOOK.md.",
+      "llm_policy": "manual_only",
+      "requires_preflight": true,
+      "freeze_sensitive": true,
+      "production_decisioning": false,
+      "mutation_authority": "none",
+      "cron_enabled": false
     }
   }
 }
