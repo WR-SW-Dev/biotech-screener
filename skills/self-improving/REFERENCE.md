@@ -66,7 +66,7 @@ See `skills/self-improving/SKILL.md` Rule 12. Summary:
 | Operator verdict | ≥3 helpful on same skill | Eligible for merge |
 | Observation | 7+ days true-PIT telemetry | Eligible for routing changes |
 
-**Feeds:** Hermes `LEARNINGS.md` + `failure-patterns`; Town Correction Ledger (`recurrence_count >= 3`). Do not fork thresholds (F-2026-001).
+**Feeds:** Hermes `LEARNINGS.md` + `failure-patterns`; Town: in-session occurrence counting + operator-approved correction notes. Do not fork thresholds (F-2026-001).
 
 **Lane:** `Promotion-lane: spec` → governance Spec only, never `pattern_to_skillpatch` merge.
 

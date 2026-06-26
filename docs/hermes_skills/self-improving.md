@@ -198,7 +198,7 @@ A lesson is *captured* the moment it's logged; it is *promoted* only when it cle
 
 **Candidate feed (where promotion candidates come from):**
 - **Hermes side:** `.learnings/LEARNINGS.md` entries with a `Pattern-Key`, and `failure-patterns` entries with `recurrence_count >= 3` and `promotion_status: PENDING`.
-- **Town side:** the Town Correction Ledger (`content://collections/self-improvement/correction-ledger`), `recurrence_count >= 3` rows. These are already-counted and deterministic — use them as the feed rather than re-deciding promotability from ad-hoc chat corrections.
+- **Town side:** Promotion candidates are identified through in-session occurrence counting against recent Town memories and operator-approved correction notes. Count from verified in-session occurrences; the `>= 3` recurrence threshold remains but the candidate source is in-session counting, not any legacy external feed.
 
 **Promotion gates (a candidate must clear the matching row before its Action):**
 
@@ -253,7 +253,7 @@ Knowledge stack map: `.learnings/README.md` · Runbook: `docs/hermes_agents/oper
 
 Town is the primary memory surface; Hermes/Cursor uses `.learnings/` files. **Dual-write** significant corrections:
 
-1. **Town:** `add_memory()` or Town Correction Ledger (`content://collections/self-improvement/correction-ledger`)
+1. **Town:** `add_memory()` (correction notes and operator-approved findings)
 2. **Hermes:** append `[LRN-...]` to `LEARNINGS.md` with `Pattern-Key`, `Area`, `Promotion-lane`
 3. Run `audit_learnings.py` — promotion candidates must match Rule 12 feeds (do not re-count from chat)
 4. If skill-worthy and `Promotion-lane: skill` → Rule 12 propose path → sync → `harvest_log.md` → commit
