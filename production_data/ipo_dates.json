@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-05-18T10:34:22.765624",
+  "generated_at": "2026-06-26T14:23:01.625496+00:00",
   "source": "price_history.csv first-price-date proxy",
-  "ticker_count": 356,
+  "ticker_count": 360,
   "tickers": {
     "AARD": {
       "first_price_date": "2025-02-13",
@@ -1426,6 +1426,22 @@
     "KYNB": {
       "first_price_date": "2020-01-02",
       "last_price_date": "2026-05-17"
+    },
+    "KLRA": {
+      "first_price_date": "2026-04-17",
+      "last_price_date": "2026-06-23"
+    },
+    "PBLS": {
+      "first_price_date": "2026-06-10",
+      "last_price_date": "2026-06-23"
+    },
+    "GENB": {
+      "first_price_date": "2026-02-27",
+      "last_price_date": "2026-06-23"
+    },
+    "KARD": {
+      "first_price_date": "2026-06-18",
+      "last_price_date": "2026-06-23"
     }
   }
 }

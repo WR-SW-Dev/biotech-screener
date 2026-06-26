@@ -103,10 +103,24 @@ def check_rankings_coverage(
     universe_tickers: Set[str],
     as_of_date: str,
 ) -> Set[str]:
-    """Find universe tickers missing from latest rankings."""
+    """Find universe tickers missing from the most recent available rankings snapshot.
+
+    Falls back to the latest snapshot dir when as_of_date's snapshot is absent.
+    This prevents the maintenance report from spuriously flagging all tickers on
+    days when no production run has fired (which is the normal case during HOLD).
+    """
     rankings_path = snapshots_dir / as_of_date / "rankings.csv"
     if not rankings_path.exists():
-        return universe_tickers
+        # Use most recent available snapshot
+        available = (
+            sorted(d for d in snapshots_dir.iterdir() if d.is_dir() and (d / "rankings.csv").exists())
+            if snapshots_dir.exists()
+            else []
+        )
+        if not available:
+            return universe_tickers  # No snapshots at all
+        rankings_path = available[-1] / "rankings.csv"
+        logger.info("rankings check: no snapshot for %s — using most recent: %s", as_of_date, available[-1].name)
     with open(rankings_path, encoding="utf-8") as f:
         ranked_tickers = {row["ticker"] for row in csv.DictReader(f) if row.get("ticker")}
     return universe_tickers - ranked_tickers
@@ -137,7 +151,7 @@ def build_universe_maintenance(
     as_of_date: str,
     *,
     production_dir: Path = REPO_ROOT / "production_data",
-    snapshots_dir: Path = REPO_ROOT / "data" / "snapshots",
+    snapshots_dir: Path = REPO_ROOT / "data" / "snapshots_pit",
     cache_dir: Path = REPO_ROOT / "cache" / "ctgov",
     price_csv: Path = REPO_ROOT / "production_data" / "price_history.csv",
 ) -> Dict[str, Any]:
