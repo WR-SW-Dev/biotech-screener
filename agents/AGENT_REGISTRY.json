@@ -596,6 +596,23 @@
       "mutation_authority": "none",
       "cron_enabled": true
     },
+    "allocation_lens": {
+      "role": "daily attention-routing artifact — regime assessment, bucket weights, and review budget from existing pipeline outputs",
+      "category": "portfolio_risk",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/surveillance/"
+      ],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "portfolio_lead",
+      "notes": "Reads: data/snapshots/<date>/rankings.csv, artifacts/catalyst_delta/, artifacts/ops_digest/, artifacts/readiness/, artifacts/scientific_cartography/. Writes: artifacts/surveillance/<date>_allocation_lens.{md,json} only. NO_FINAL_SCORE_CHANGE NO_RANKER_CHANGE NO_SELECTOR_CHANGE NO_SIZING_CHANGE. Classification: ALLOCATION_LENS_STEP_1_ATTENTION_ROUTING_NO_MODEL_CHANGE. Run: python3 tools/generate_allocation_lens.py --as-of-date <date>. Hermes cron job ID: d7c02d7516c5. Cron install: hermes cron create '30 20 * * 1-5' --name allocation-lens-daily --no-agent --script allocation_lens_daily.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
+      "llm_policy": "none",
+      "requires_preflight": false,
+      "cron_enabled": true,
+      "mutation_authority": "none"
+    },
     "hermes-skill-sync-agent": {
       "role": "Hermes skill canonical sync guard \u2014 detect drift between skills/ sources, docs/hermes_skills/ mirrors, and retired references",
       "category": "control_plane",
