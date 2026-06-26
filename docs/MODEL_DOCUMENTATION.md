@@ -1,8 +1,8 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-06-21 (added § Recent Updates — ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
-**Prior update:** 2026-06-02 (added § 14.6.7 PIT trim shadow study: research-only, forward-window maturity blocker documented, no production action)
+**Last updated:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
+**Prior update:** 2026-06-21 (added § Recent Updates — ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
 **Earlier update:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
 **Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
@@ -12,6 +12,38 @@ weights. See `production_data/ranker_v2_model.json` → `provenance` block for t
 stale selector/ranker prose with the already-active v1.14.0 configuration. The
 selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW Top-30
 construction remain frozen; this document does not authorize behavior changes.
+
+---
+
+## Recent Updates — 2026-06-25
+
+Diagnostic and documentation only. **No selector, ranker, weight, formula, eligibility, sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
+
+### EES v3 raw_veto_core — Shadow Gate MET, Freeze-Lift Review Ready
+
+Five commits (`149c8f56` / `6123739c` / `0d47544f` / `c56b2c2a` / `22e7312b`) completed
+the EES v3 research-to-shadow-gate pipeline:
+
+- **Promotion simulator** (149c8f56): 9-policy PIT backtest across 76 snapshots. `raw_veto_core`
+  selected as lead integration candidate: IC 0.064, NW t=2.36, LATE excess +7.1% at 63d.
+  All blend/confirmation/conditional variants rejected (lower t-stat or too rare to fire).
+- **Veto autopsy** (6123739c): 533 HL observations. Overall 55.6% true-negative rate (LATE 60.5%).
+  Dominant failure mode `no_options_coverage` (67.4%, near-random); theoretically grounded modes
+  `dilution_overhang` (67.0% tn, −7.4% excess) and `market_already_priced` (62.5% tn, −6.0% excess)
+  are the high-accuracy vetoes. False-negative trap: `catalyst_too_far` (26.7% tn, +22.7% excess).
+- **Conditional veto simulator** (0d47544f): `RAW_VETO_REMAINS_BEST` — conditioning the veto
+  on high-accuracy modes reduces veto frequency (7.0 → 1.8/snap) and collapses t-stat (2.36 → 2.14).
+  Correct upgrade path: expand options coverage, not condition on current evidence.
+- **Shadow card Day 1** (c56b2c2a): 8 vetoed from 43 top-Q names. **0× `no_options_coverage`**
+  at 87% production-regime `priced_move_pct` coverage — veto firing correctly.
+- **Backfill + gate fix** (22e7312b): 202 snapshots processed; 56 have EES v3 data (2026-04-14+);
+  146 zero-veto rows excluded from gate denominator. **20d gate: 35/20 MET.** Cumulative 20d
+  alpha +7.4%, 81.2% alpha-positive.
+
+**Freeze-lift review memo** (`a42d3396`): All provenance checks pass. PIT score integrity confirmed
+(backfill reads stored scores, no recomputation). No-lookahead verified in code. No production
+wiring. Verdict: `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`. Active veto NOT authorized — requires
+explicit operator approval. Full memo: `artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md`.
 
 ---
 
@@ -1223,6 +1255,7 @@ Regime detector auto-switches to conservative mode (Q20/T30) when: correlation >
 ### EES v3 — Conditional Mispricing Model (diagnostic overlay)
 
 **Status:** Production-emitting since 2026-04-14. Checklist v2: **4/5 PASS** (WS4 pending forward data). Does NOT affect ranking or selection yet.
+**Shadow gate:** 20d gate **MET** (35/20 veto-active settled observations, 2026-04-14 onward). **`READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`** — active production veto NOT authorized pending explicit operator approval. See `artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md`.
 
 A two-factor model replacing the v2 trap/quality overlay with PIT-validated signals:
 
@@ -1247,19 +1280,37 @@ ees_v3_score = 0.70 × z(conditional_misprice_score)
 
 **Execution capacity** (`event_ev/execution_capacity.py`): post-sizing guardrail. Checklist: 6/6 PASS at $3M NAV. Participation limits: scale down >5% ADV, skip >20% ADV.
 
+### raw_veto_core Shadow Gate (2026-06-25)
+
+Integration candidate: **`raw_veto_core`** — exclude EES v3 bottom-quintile names from ranker top-Q selection.
+
+**PIT backtest (76 monthly snapshots, 2020–2026):**
+
+| Metric | Value |
+|--------|-------|
+| IC | 0.064 |
+| Newey-West t-stat | 2.36 |
+| Mean excess 63d | +3.53% |
+| LATE regime excess (2024–2026) | +7.1% |
+| Avg vetoes per snapshot | 7.0 |
+
+**Shadow ledger (veto-active observations only, 2026-04-14 onward):**
+
+| Horizon | N Settled | Veto Alpha | Selected Excess | Vetoed Excess | Alpha+ Rate |
+|---------|-----------|-----------|-----------------|---------------|-------------|
+| 5d | 50 | +2.3% | +0.2% | −2.1% | 61.7% |
+| 10d | 45 | +4.2% | +0.2% | −4.0% | 78.6% |
+| 20d | **35** | **+7.4%** | +0.0% | **−7.4%** | **81.2%** |
+
+**Day-1 veto card (2026-06-25):** 8 vetoed from 43 top-Q names. Failure mode distribution: 6× `market_already_priced`, 1× `catalyst_too_far`, 2× other, **0× `no_options_coverage`** — veto firing on theoretically grounded signal at 87% `priced_move_pct` coverage.
+
+**Freeze-lift review verdict:** `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW` — full provenance memo at `artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md`. Active production veto requires explicit operator approval. Proposed staged path: artifact-only → decision preview → paper overlay → operator-approved active veto.
+
+Scripts: `scripts/research/ees_v3_raw_veto_shadow_card.py` (daily card), `scripts/research/ees_v3_veto_backfill.py` (one-shot backfill). Ledger: `artifacts/shadow/ees_v3_raw_veto_shadow_ledger.jsonl` (gitignored).
+
 ### Forward Monitor
 
-`tools/ees_v3_forward_monitor.py` tracks rolling evidence toward WS4 clearance (dependence-adjusted t ≥ 1.65). Re-scores historical snapshots on-the-fly for pre-v3 dates, reads native v3 columns from 2026-04-14+.
-
-Current forward state (re-scored, 433 snapshots):
-
-| Signal | Mean IC | rho1 | n_eff | t_adj | Status |
-|--------|---------|------|-------|-------|--------|
-| conditional_expected_move | +0.025 | 0.75 | 54 | +0.99 | Leading candidate — only positive signal |
-| ees_v3_score | -0.023 | 0.62 | 93 | -1.23 | Negative (misprice saturation in pre-v3 data) |
-| conditional_misprice_score | -0.077 | 0.34 | 32 | -4.12 | Contaminated by pre-fix unit mismatch |
-
-Native v3 snapshots begin 2026-04-14. Clean forward evidence requires ~21 trading days (h20 returns). WS4 clearance expected after accumulation in production archives.
+`tools/ees_v3_forward_monitor.py` tracks rolling evidence toward WS4 clearance (dependence-adjusted t ≥ 1.65). Native v3 snapshots begin 2026-04-14. Pre-2026-04-14 signal table is stale (contaminated by pre-fix unit mismatch); monitor state superseded by raw_veto_core shadow gate evidence above.
 
 ### Runway-to-Catalyst Severity (risk-control overlay)
 
