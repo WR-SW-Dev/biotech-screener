@@ -1175,6 +1175,76 @@ def check_universe_maintenance(dt: date) -> CheckResult:
     )
 
 
+def check_hermes_skill_sync(dt: date) -> CheckResult:
+    """Check hermes-skill-sync-agent heartbeat freshness and last-run status."""
+    heartbeat_path = REPO_ROOT / "artifacts" / "governance" / "hermes_skill_sync" / "latest_heartbeat.json"
+    MISS_DAYS = 8
+    FAIL_DAYS = 10
+
+    if not heartbeat_path.exists():
+        return CheckResult(
+            "hermes-skill-sync-agent",
+            "STALE",
+            "No heartbeat — agent has never run",
+            ["NO_HEARTBEAT: artifacts/governance/hermes_skill_sync/latest_heartbeat.json"],
+        )
+
+    try:
+        hb = json.loads(heartbeat_path.read_text())
+    except (json.JSONDecodeError, OSError) as exc:
+        return CheckResult("hermes-skill-sync-agent", "FAIL", f"Heartbeat unreadable: {exc}", [f"EXCEPTION: {exc}"])
+
+    run_ts_str: str = hb.get("run_ts", "")
+    status: str = hb.get("status", "UNKNOWN")
+    n_critical: int = hb.get("n_critical", 0)
+    n_warning: int = hb.get("n_warning", 0)
+    sync_ran: bool = hb.get("sync_ran", False)
+    sync_files_changed: list = hb.get("sync_files_changed", [])
+
+    run_date_str = run_ts_str[:10] if run_ts_str else "unknown"
+    age: int | None = None
+    if run_ts_str:
+        try:
+            run_date = datetime.fromisoformat(run_ts_str).date()
+            age = age_days(dt, run_date)
+        except ValueError:
+            pass
+
+    if age is not None and age > FAIL_DAYS:
+        return CheckResult(
+            "hermes-skill-sync-agent",
+            "FAIL",
+            f"Heartbeat {run_date_str} is {age}d ago (>{FAIL_DAYS}d — missed)",
+            [f"STALE_HEARTBEAT: last run {run_date_str} ({age}d ago)"],
+        )
+    if age is not None and age > MISS_DAYS:
+        return CheckResult(
+            "hermes-skill-sync-agent",
+            "WARN",
+            f"Heartbeat {run_date_str} is {age}d ago (>{MISS_DAYS}d miss threshold)",
+            [f"STALE_HEARTBEAT: last run {run_date_str} ({age}d ago)"],
+        )
+
+    anomalies: list[str] = []
+    if status in ("DRIFT_CRITICAL", "ERROR") or n_critical > 0:
+        return CheckResult(
+            "hermes-skill-sync-agent",
+            "FAIL",
+            f"Last run {run_date_str}: status={status} n_critical={n_critical} n_warning={n_warning}",
+            [f"LAST_RUN_FAILED: {status} n_critical={n_critical}"],
+        )
+    if status == "DRIFT_WARNING" or n_warning > 0:
+        anomalies.append(f"DRIFT_WARNING: {n_warning} warning items in last audit")
+    if sync_ran and len(sync_files_changed) > 3:
+        anomalies.append(f"SYNC_CAP_BREACH: sync_files_changed={len(sync_files_changed)} (cap=3)")
+
+    age_note = f" ({age}d ago)" if age is not None else ""
+    detail = f"Last run {run_date_str}{age_note}: status={status} n_critical={n_critical} n_warning={n_warning}"
+    if anomalies:
+        return CheckResult("hermes-skill-sync-agent", "WARN", detail, anomalies)
+    return CheckResult("hermes-skill-sync-agent", "OK", detail)
+
+
 # ── Generic heartbeat feedback loop ──────────────────────────
 # One shared ledger: artifacts/heartbeat/pending_verdicts.jsonl
 # Each entry: {agent, anomaly_key, exec_id, flagged_date, status}
@@ -1299,6 +1369,7 @@ SPECIALIZED_CHECKS = {
     "intraday_mover_watch": check_intraday_mover_watch,
     "event_analyst": check_event_analyst,
     "universe_maintenance": check_universe_maintenance,
+    "hermes-skill-sync-agent": check_hermes_skill_sync,
 }
 
 # CLI --agent map: registry names only.

@@ -1,3 +1,7 @@
+---
+name: memory-steward
+---
+
 # Memory Steward
 
 ## Purpose

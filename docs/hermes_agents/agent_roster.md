@@ -1,12 +1,12 @@
 # Hermes & OpenClaw Agent Roster
 
-Last updated: 2026-06-19
+Last updated: 2026-06-26
 
 This document has **two layers** — do not conflate them:
 
-| Layer | Source of truth | Count (registry `as_of` 2026-06-19) |
+| Layer | Source of truth | Count (registry `as_of` 2026-06-26) |
 | --- | --- | --- |
-| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | **34** registry entries: **29** active, **1** suppressed, **4** deprecated; **31** directories on disk |
+| **Repo agent fleet** | `agents/AGENT_REGISTRY.json` + `agents/<name>/` | **35** registry entries: **29** active, **1** suppressed, **5** deprecated; **32** directories on disk |
 | **Hermes scheduler jobs** | Hermes gateway (`hermes cron list`) | ~19 jobs (below; IDs may drift) |
 
 **Lint:** `pytest tests/test_agent_registry.py -q -p no:warnings` (bidirectional registry ↔ disk).
@@ -45,6 +45,7 @@ to be directory-less; active and suppressed entries must still have workspaces.
 | `hermes-first-fire-validator` | `run_job.py` | `first_fire_pass`, `first_fire_fail` |
 | `hermes-ruleset-integrity` | `run_job.py` | `ruleset_mismatch` |
 | `hermes-contradiction-detector` | `run_job.py` | `contradiction_detected` |
+| `hermes-skill-sync-agent` | `scripts/run_hermes_skill_sync_agent.sh` | `hermes_skill_sync_drift`, `hermes_skill_sync_failed` |
 
 Also wired (not separate registry agents): `tools/agent_supervisor_sentinel.py` → `snapshot_missing`; `ops_supervisor` + `cron_watchdog.sh` → `cron_missed`.
 
@@ -193,6 +194,24 @@ To manage: ask Hermes "pause/resume/remove <job name>".
 - **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
 - **Purpose:** Weekly LLM token usage digest and accounting rollup.
 
+### hermes-skill-sync-guard
+- **Schedule:** Sun 08:00 ET (Hermes cron `no_agent`)
+- **Toolsets:** terminal
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Registry agent:** `hermes-skill-sync-agent` (heartbeat supervised by `agent_heartbeat_checks.py`)
+- **Purpose:** Weekly drift audit between `skills/` canonical sources and `docs/hermes_skills/` mirrors.
+  Detects retired Correction Ledger references (`DRIFT_CRITICAL`), missing frontmatter, mirror
+  content mismatches, orphaned mirrors. In `sync` mode regenerates up to 3 mirror files.
+  Writes heartbeat to `artifacts/governance/hermes_skill_sync/latest_heartbeat.json` and
+  dated report to `artifacts/governance/hermes_skill_sync/hermes_skill_sync_YYYY_MM_DD.md`.
+  Town notified via `hermes_skill_sync_failed` (CRITICAL) or `hermes_skill_sync_drift` (WARNING).
+- **Cron install (Hermes, not Linux crontab):**
+  ```bash
+  hermes cron add --name "hermes-skill-sync-guard" --schedule "0 8 * * 0" \
+    --no-agent --script hermes_skill_sync_agent.sh \
+    --workdir /mnt/c/Projects/biotech_screener/biotech-screener
+  ```
+- **Runbook:** `docs/ops/hermes_skill_sync.md`
 
 
 ### aa-model daily tracker

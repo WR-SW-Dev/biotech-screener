@@ -1,3 +1,7 @@
+---
+name: dossier-generation
+---
+
 # Dossier Generation Skill
 
 ## Purpose

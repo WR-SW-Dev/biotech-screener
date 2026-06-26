@@ -1,3 +1,7 @@
+---
+name: self-improving
+---
+
 # Self-Improving Skill
 
 Structured learning capture with promotion, demotion, and **repo skill recursion** for persistent improvement.

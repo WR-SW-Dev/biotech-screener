@@ -1,3 +1,7 @@
+---
+name: firecrawl-research-discovery
+---
+
 # Firecrawl Research Discovery Skill
 
 ## Purpose

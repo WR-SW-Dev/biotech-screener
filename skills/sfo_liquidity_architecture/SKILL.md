@@ -1,3 +1,7 @@
+---
+name: sfo-liquidity-architecture
+---
+
 # SFO Liquidity Architecture Skill
 
 ## Purpose

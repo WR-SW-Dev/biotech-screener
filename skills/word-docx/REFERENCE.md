@@ -1,3 +1,7 @@
+---
+name: word-docx
+---
+
 # Word / DOCX Skill
 
 Best-practice instructions for AI agents handling Microsoft Word documents.

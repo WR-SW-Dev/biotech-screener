@@ -422,10 +422,11 @@ def notify_town(result: AuditResult, report_path: Optional[Path]) -> None:
         logger.warning("Town notification unavailable (common.operator_delivery not importable)")
         return
     severity = "FAIL" if result.n_critical > 0 else "WARN"
+    event_type = "hermes_skill_sync_failed" if result.n_critical > 0 else "hermes_skill_sync_drift"
     send_operator_event(
         channel="town",
         severity=severity,
-        event_type="ruleset_mismatch",
+        event_type=event_type,
         title=(f"Skill sync drift: {result.n_critical} critical, {result.n_warning} warnings"),
         summary=(
             f"Hermes skill sync guard detected {result.n_critical} CRITICAL and "

@@ -1,3 +1,7 @@
+---
+name: screener-ops
+---
+
 # Screener Ops & Governance Skill
 
 ## Purpose

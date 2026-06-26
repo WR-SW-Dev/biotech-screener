@@ -1,3 +1,7 @@
+---
+name: clinical-scoring
+---
+
 # Clinical Scoring Skill
 
 ## Purpose

@@ -1,3 +1,7 @@
+---
+name: codegraph
+---
+
 # Codegraph Repo Intelligence Skill
 
 ## Purpose

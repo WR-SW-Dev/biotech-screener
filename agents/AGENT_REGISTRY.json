@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-06-25",
+  "as_of": "2026-06-26",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agent directories may be retained for history and must be registered with status=deprecated and merged_into pointing at the canonical agent.",
   "enums": {
     "category": [
@@ -213,16 +213,14 @@
       "role": "watchlist-scoped Grok/xAI search monitor",
       "category": "signal_monitor",
       "cadence": "intraday",
-      "status": "active",
-      "artifact_paths": [
-        "artifacts/grok_watch/"
-      ],
+      "status": "deprecated",
+      "artifact_paths": [],
       "authority_level": "write_artifacts",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "signal_lead",
-      "notes": "",
+      "notes": "Removed in commit 809da0ce2 (remove xAI/Grok agents and clean up all dependencies)",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "requires_preflight": false
     },
     "herald": {
       "role": "biotech news collection, classification, and digests",
@@ -594,7 +592,7 @@
       "cron_enabled": true
     },
     "hermes-skill-sync-agent": {
-      "role": "Hermes skill canonical sync guard — detect drift between skills/ sources, docs/hermes_skills/ mirrors, and retired references",
+      "role": "Hermes skill canonical sync guard \u2014 detect drift between skills/ sources, docs/hermes_skills/ mirrors, and retired references",
       "category": "control_plane",
       "cadence": "weekly",
       "status": "active",
@@ -602,12 +600,12 @@
         "artifacts/governance/hermes_skill_sync/"
       ],
       "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
+      "supervised_by_orchestrator": true,
       "owner": "governance_lead",
-      "notes": "Weekly Sunday 08:00 ET. no_agent Hermes cron: hermes-skill-sync-guard (script: hermes_skill_sync_agent.sh). Read-only scan of skills/ + docs/hermes_skills/; writes only to artifacts/governance/hermes_skill_sync/. Retired Correction Ledger references in canonical sources trigger DRIFT_CRITICAL. In sync mode, max 3 mirror files regenerated per run. Town notified via ruleset_mismatch event on CRITICAL or WARNING. Miss threshold: 8 days; stale threshold: 10 days. Cron install: hermes cron add --name hermes-skill-sync-guard --schedule '0 8 * * 0' --no-agent --script hermes_skill_sync_agent.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
+      "notes": "Weekly Sunday 08:00 ET. no_agent Hermes cron: hermes-skill-sync-guard (script: hermes_skill_sync_agent.sh). Read-only scan of skills/ + docs/hermes_skills/; writes only to artifacts/governance/hermes_skill_sync/. Retired Correction Ledger references in canonical sources trigger DRIFT_CRITICAL. In sync mode, max 3 mirror files regenerated per run. Town notified via ruleset_mismatch event on CRITICAL or WARNING. Miss threshold: 8 days; stale threshold: 10 days. Hermes cron job ID: 49b6a56cc6ee. Cron install: hermes cron add --name hermes-skill-sync-guard --schedule '0 8 * * 0' --no-agent --script hermes_skill_sync_agent.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
       "llm_policy": "none",
       "requires_preflight": false,
-      "cron_enabled": false,
+      "cron_enabled": true,
       "mutation_authority": "none"
     }
   }

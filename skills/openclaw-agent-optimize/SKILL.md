@@ -1,3 +1,7 @@
+---
+name: openclaw-agent-optimize
+---
+
 # Agent Optimization Skill
 
 Tune agent workspaces for cost-aware routing, parallel-first delegation, and lean context.

@@ -1,3 +1,7 @@
+---
+name: selector-ranker
+---
+
 # Selector / Ranker / Construction Skill
 
 ## Purpose
