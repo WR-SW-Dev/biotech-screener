@@ -21,7 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -85,6 +85,21 @@ class AgentRow:
         self.health_status = self._compute_health()
         self.detail = self._compute_detail()
 
+    def _snapshot_age(self) -> tuple[int | None, str]:
+        """Fast qa check: walk back from today to find the most recent dated snapshot dir.
+
+        Uses only Path.is_dir() calls (no rglob) so it stays fast on WSL/NTFS.
+        """
+        snap_base = REPO_ROOT / "data" / "snapshots"
+        if not snap_base.is_dir():
+            return None, "NO_SNAPSHOTS_DIR"
+        today = date.today()
+        for delta in range(15):
+            d = today - timedelta(days=delta)
+            if (snap_base / d.strftime("%Y-%m-%d")).is_dir():
+                return delta, f"snapshot {d} exists ({delta}d ago)"
+        return None, "NO_RECENT_SNAPSHOT (>14d)"
+
     def _artifact_age(self) -> tuple[int | None, str]:
         """Return (age_in_days, detail_str) from artifact_paths freshness, or (None, reason)."""
         if not self.artifact_paths:
@@ -112,8 +127,8 @@ class AgentRow:
 
         hb = self.heartbeat
         if hb is None:
-            # Fallback: artifact-based freshness
-            a, _ = self._artifact_age()
+            # Fallback: snapshot-dir check for qa; artifact-based for all others
+            a, _ = self._snapshot_age() if self.agent_id == "qa" else self._artifact_age()
             if a is None:
                 return "RED"
             fail_thresh = STALENESS_FAIL.get(self.cadence)
@@ -157,7 +172,10 @@ class AgentRow:
 
         hb = self.heartbeat
         if hb is None:
-            _, detail = self._artifact_age()
+            if self.agent_id == "qa":
+                _, detail = self._snapshot_age()
+            else:
+                _, detail = self._artifact_age()
             return detail
 
         run_ts_str = hb.get("run_ts", "")

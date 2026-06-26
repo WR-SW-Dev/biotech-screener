@@ -121,17 +121,18 @@
       "role": "monitor for new CRT resolutions, update join tables",
       "category": "research",
       "cadence": "daily_after_production",
-      "status": "active",
+      "status": "suppressed",
       "artifact_paths": [
         "output/catalyst_ev/",
         "agents/crt_resolution_watcher/memory/"
       ],
       "authority_level": "mutate_data",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "research_lead",
-      "notes": "Crontab: 18:00.",
+      "notes": "Suppressed 2026-06-26: last ran 2026-06-11, before INC-2026-06-20-AUTOPUSH containment. Reactivation requires operator decision. Sunset review: 2026-09-30.",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "requires_preflight": true,
+      "sunset_review_date": "2026-09-30"
     },
     "ctgov_poller": {
       "role": "clinical trial status monitor, detect transitions",
@@ -182,17 +183,18 @@
       "role": "event-resolution pattern analyst, synthesize lessons",
       "category": "research",
       "cadence": "weekly",
-      "status": "active",
+      "status": "suppressed",
       "artifact_paths": [
         "artifacts/event_analyst/",
         "agents/event_analyst/memory/"
       ],
       "authority_level": "observe_only",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "research_lead",
-      "notes": "Weekly Friday cadence (P1 #4 reduction landed 2026-05-06). LLM agent fires Fri 18:55 ET; deterministic builder fires Fri 19:10 ET. Was previously daily Mon-Fri (both entries); reduced to Friday-only after ROI/noise audit. Watchdog event_analyst auto-recovery removed in the same change to prevent re-firing on Mon-Thu. Manual invocation path preserved: tools/run_agent_direct.py --agent event_analyst, tools/build_event_analyst.py --as-of-date YYYY-MM-DD.",
+      "notes": "Suppressed 2026-06-26: last ran 2026-06-08, before INC-2026-06-20-AUTOPUSH containment. Reactivation requires operator decision. Sunset review: 2026-09-30.",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "requires_preflight": true,
+      "sunset_review_date": "2026-09-30"
     },
     "fleet_steward": {
       "role": "control-plane agent, fleet health and dispatch",
