@@ -9,6 +9,19 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-06-26
+### Skill patches applied (canonical source)
+- **screener-ops**: added "Research & Coding Pitfalls" section to `skills/screener_ops/SKILL.md`
+  - `raw_count_size_confound` (LRN-20260329-001, recurrence=3): residualize count features before IC testing
+  - `f_string_no_placeholder` (LRN-20260329-004, recurrence=5): plain strings for static headers (Flake8 F541)
+  - Note: prior session (2026-06-25) patched the mirror directly, bypassing the canonical source; those commits were orphaned. Applied correctly to `skills/` source this time.
+- Mirror synced via `sync_hermes_skills.py` (1 updated); audit clean (no drift)
+- Drafts cleared: `skill_patch_drafts_20260623T231134Z.md` and `skill_patch_drafts_20260624T122345Z.md`
+### Blocker status
+- `hermes-skill-sync-guard` cron: already registered in Hermes (`0 8 * * 0`, next fire 2026-06-28) — was stale in memory
+
+---
+
 ## 2026-06-25 (prompt context MD sweep) — Agent bootstrap docs sync
 
 ### Updated for code-prompt context
