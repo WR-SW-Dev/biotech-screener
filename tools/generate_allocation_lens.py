@@ -774,6 +774,128 @@ def render_md(lens: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Self-check / improvement loop
+# ---------------------------------------------------------------------------
+
+_SELFCHECK_SCHEMA = "allocation_lens_selfcheck_v1"
+
+_SELFCHECK_SEVERITY_RANK = {"CLEAN": 0, "MINOR": 1, "MAJOR": 2}
+
+
+def run_selfcheck(lens: dict) -> dict:
+    """Inspect a generated lens for known quality issues.
+
+    Returns a structured improvement-notes dict. Called automatically by the
+    cron wrapper after every run so issues accumulate in the weekly review.
+    """
+    notes: list[dict] = []
+    worst = 0
+
+    def _flag(check: str, severity: str, detail: str, improvement: str = "") -> None:
+        nonlocal worst
+        worst = max(worst, _SELFCHECK_SEVERITY_RANK.get(severity, 0))
+        entry: dict = {"check": check, "severity": severity, "detail": detail}
+        if improvement:
+            entry["improvement"] = improvement
+        notes.append(entry)
+
+    # 1. Missing optional inputs
+    warnings = lens.get("warnings") or []
+    if warnings:
+        _flag("missing_inputs", "MINOR", "; ".join(warnings))
+
+    # 2. Daily override triggered (unusual — surfaces for weekly review)
+    override = (lens.get("regime") or {}).get("daily_override") or {}
+    if override.get("triggered"):
+        _flag(
+            "override_triggered",
+            "MAJOR",
+            override.get("reason", "unknown trigger"),
+            "Review whether bucket stances should shift in response.",
+        )
+
+    # 3. Regime signals unavailable (≥3 means XBI + rates + M&A all missing)
+    regime = lens.get("regime") or {}
+    unavail = [k for k, v in regime.items() if isinstance(v, str) and "unavailable" in v.lower()]
+    if len(unavail) >= 3:
+        _flag(
+            "regime_signals_unavailable",
+            "MINOR",
+            f"{len(unavail)} signals unavailable: {unavail}",
+            "Wire XBI price, rates, M&A/IPO feed into pipeline for richer regime assessment.",
+        )
+
+    # 4. Catalyst-date concentration (≥6 names in same 14d window)
+    cat_conc = (lens.get("construction_notes") or {}).get("catalyst_date_concentration", "")
+    m = re.search(r"(\d+) catalysts cluster", cat_conc)
+    if m and int(m.group(1)) >= 6:
+        _flag(
+            "catalyst_concentration_high",
+            "MAJOR",
+            cat_conc,
+            "Diversify catalyst windows in review budget; consider explicit date-spread constraint.",
+        )
+
+    # 5. Financing risk >20% of top names
+    fin_conc = (lens.get("construction_notes") or {}).get("financing_risk_concentration", "")
+    fm = re.match(r"(\d+)/(\d+)", fin_conc)
+    if fm and int(fm.group(2)) > 0:
+        pct = int(fm.group(1)) / int(fm.group(2))
+        if pct > 0.20:
+            _flag(
+                "financing_risk_concentration_high",
+                "MAJOR",
+                f"{fin_conc} ({pct:.0%})",
+                "Tighten cash_poor_platform underweight stance or lower short-runway inclusion threshold.",
+            )
+
+    # 6. Mechanism data unavailable (cartography not loaded)
+    mech = (lens.get("construction_notes") or {}).get("mechanism_concentration", "")
+    if "unavailable" in mech:
+        _flag(
+            "mechanism_data_unavailable",
+            "MINOR",
+            "Scientific Cartography not loaded",
+            "Ensure cartography run completes before allocation lens fires (cron ordering).",
+        )
+
+    # 7. EES-blocked names surfaced in review budget
+    budget = lens.get("review_budget") or []
+    ees_blocked = sum(1 for item in budget if "EES gate blocked" in (item.get("model_risk") or ""))
+    if ees_blocked > 0:
+        _flag(
+            "ees_gate_blocked_in_review_budget",
+            "MINOR",
+            f"{ees_blocked} review budget names have EES gate blocked",
+            "Consider SUPPRESS action for EES-blocked names unless catalyst is imminent.",
+        )
+
+    # 8. Near-term binary names with short runway (double risk)
+    double_risk = [
+        item["ticker"]
+        for item in budget
+        if item.get("bucket") == "near_term_binary_catalyst" and "financing risk" in (item.get("model_risk") or "")
+    ]
+    if double_risk:
+        _flag(
+            "binary_catalyst_plus_short_runway",
+            "MINOR",
+            f"{len(double_risk)} near-term binary names also have short runway: {double_risk}",
+            "Flag these names for enhanced financing-risk review before catalyst date.",
+        )
+
+    severity_label = {0: "CLEAN", 1: "MINOR", 2: "MAJOR"}
+    return {
+        "schema": _SELFCHECK_SCHEMA,
+        "as_of_date": lens.get("as_of_date"),
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "overall_severity": severity_label[worst],
+        "n_issues": len(notes),
+        "notes": notes,
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -798,6 +920,18 @@ def main() -> int:
         type=Path,
         default=None,
         help="JSON output path (default: artifacts/surveillance/<date>_allocation_lens.json)",
+    )
+    parser.add_argument(
+        "--selfcheck",
+        action="store_true",
+        default=True,
+        help="Run self-check and write sidecar JSON (default: on)",
+    )
+    parser.add_argument(
+        "--no-selfcheck",
+        dest="selfcheck",
+        action="store_false",
+        help="Skip self-check",
     )
     args = parser.parse_args()
 
@@ -858,6 +992,19 @@ def main() -> int:
 
     print(f"Wrote {out_md}")
     print(f"Wrote {out_json}")
+
+    if args.selfcheck:
+        check = run_selfcheck(lens)
+        out_check = surveillance_dir / f"{as_of_date}_allocation_lens_selfcheck.json"
+        out_check.write_text(json.dumps(check, indent=2))
+        severity = check["overall_severity"]
+        n = check["n_issues"]
+        print(f"Selfcheck: {severity} ({n} issue{'s' if n != 1 else ''})")
+        if severity == "MAJOR":
+            for note in check["notes"]:
+                if note["severity"] == "MAJOR":
+                    print(f"  MAJOR: {note['check']} — {note['detail']}", file=sys.stderr)
+
     if warnings:
         for w in warnings:
             print(f"WARN: {w}", file=sys.stderr)
