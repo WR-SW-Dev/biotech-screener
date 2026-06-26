@@ -45,8 +45,7 @@
       "status": "active",
       "artifact_paths": [
         "data/aact/snapshots/",
-        "data/aact/linked/",
-        "agents/aact_trial_ingest/memory/"
+        "data/aact/linked/"
       ],
       "authority_level": "observe_only",
       "llm_policy": "none",
@@ -124,7 +123,8 @@
       "cadence": "daily_after_production",
       "status": "active",
       "artifact_paths": [
-        "output/catalyst_ev/"
+        "output/catalyst_ev/",
+        "agents/crt_resolution_watcher/memory/"
       ],
       "authority_level": "mutate_data",
       "supervised_by_orchestrator": true,
@@ -184,7 +184,8 @@
       "cadence": "weekly",
       "status": "active",
       "artifact_paths": [
-        "artifacts/event_analyst/"
+        "artifacts/event_analyst/",
+        "agents/event_analyst/memory/"
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
@@ -306,7 +307,7 @@
       "cadence": "daily_after_production",
       "status": "active",
       "artifact_paths": [
-        "agents/ic_health_monitor/memory/"
+        "artifacts/ic_dashboard/"
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
@@ -427,7 +428,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": [],
+      "artifact_paths": [
+        "agents/review_queue_steward/memory/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "signal_lead",
@@ -576,8 +579,8 @@
       "cadence": "daily_after_production",
       "status": "shadow",
       "artifact_paths": [
-        "artifacts/shadow/ees_v3_veto_shadow_card_*.json",
-        "artifacts/readiness/EES_V3_VETO_SHADOW_STATUS_*.md",
+        "artifacts/shadow/",
+        "artifacts/readiness/",
         "agents/ees_v3_veto_monitor/memory/"
       ],
       "authority_level": "write_artifacts",

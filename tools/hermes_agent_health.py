@@ -94,6 +94,10 @@ class AgentRow:
             return None, "NO_ARTIFACTS"
         today = date.today()
         a = age_days(today, newest)
+        if a < 0:
+            # Future-dated files (e.g. resolution data) are spurious — treat as fresh.
+            label = sample.relative_to(REPO_ROOT) if sample else "?"
+            return 0, f"artifact 0d ago [future-date clamped: {label}]"
         label = sample.relative_to(REPO_ROOT) if sample else "?"
         return a, f"artifact {a}d ago [{method}] {label}"
 
