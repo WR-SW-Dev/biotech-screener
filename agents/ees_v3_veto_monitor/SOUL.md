@@ -23,7 +23,7 @@ FREEZE_ACTIVE
 EES_V3_RAW_VETO_CORE_DIAGNOSTIC_ONLY
 PRODUCTION_DECISIONING = false
 MUTATION_AUTHORITY = none
-CRON_ENABLED = false
+CRON_ENABLED = true   # activated 2026-06-25, operator-approved, 17:50 ET Mon-Fri
 ```
 
 ## Core principles

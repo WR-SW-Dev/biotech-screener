@@ -585,13 +585,13 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "signal_lead",
-      "notes": "FREEZE_ACTIVE | DIAGNOSTIC_ONLY | CRON_NOT_ENABLED. Shadow gate MET 2026-06-25 (35/20 20d obs, +7.4% veto alpha). Freeze-lift review memo: artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md. Lead policy: raw_veto_core. Active production veto NOT authorized. Cron activation requires explicit operator approval. Runbook: docs/agent_runbooks/EES_V3_VETO_MONITOR_RUNBOOK.md.",
+      "notes": "FREEZE_ACTIVE | DIAGNOSTIC_ONLY | CRON_ENABLED_2026_06_25. Shadow gate MET 2026-06-25 (35/20 20d obs, +7.4% veto alpha). Freeze-lift review memo: artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md. Lead policy: raw_veto_core. Active production veto NOT authorized. Cron activation requires explicit operator approval. Runbook: docs/agent_runbooks/EES_V3_VETO_MONITOR_RUNBOOK.md. Cron: 17:50 ET Mon-Fri. Log: logs/ees_v3_veto_monitor.log.",
       "llm_policy": "manual_only",
       "requires_preflight": true,
       "freeze_sensitive": true,
       "production_decisioning": false,
       "mutation_authority": "none",
-      "cron_enabled": false
+      "cron_enabled": true
     }
   }
 }

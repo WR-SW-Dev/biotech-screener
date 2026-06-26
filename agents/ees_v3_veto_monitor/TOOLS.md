@@ -141,5 +141,5 @@ agents/ees_v3_veto_monitor/memory/
 
 ## Cadence
 
-Daily after production snapshot, before daily status brief. **CRON NOT YET ENABLED.**
-Manual invocation only until operator approves scheduling.
+Daily Mon-Fri 17:50 ET, after production snapshot chain completes (~17:45).
+Log: `logs/ees_v3_veto_monitor.log`. Cron activated 2026-06-25 (operator-approved).
