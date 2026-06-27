@@ -363,14 +363,31 @@ def refresh_snapshot(as_of_date: str = "") -> dict:
         fed_rate_change_3m = irx_current - irx_3m_ago if irx_current is not None else None
 
     def _fmt(v):
+        """Format a float value; None produces None (not '0') to surface feed failures."""
         if v is None:
-            return "0"
+            return None
         return f"{v:.2f}"
 
     fed_rate_str = (
         _fmt(fed_rate_change_3m) if fed_rate_change_3m is not None else str(existing.get("fed_rate_change_3m", "0.00"))
     )
     fed_rate_source = "live" if fed_rate_change_3m is not None else "carried"
+
+    feeds = {
+        "vix": "live" if vix_current is not None else "failed",
+        "spy": "live" if spy_30d is not None else "failed",
+        "xbi": "live" if xbi_30d is not None else "failed",
+        "hyg": "live" if hyg_30d is not None else "failed",
+        "tnx": "live" if tnx_current is not None else "failed",
+        "irx": "live" if irx_current is not None else "failed",
+        "fed_rate": fed_rate_source,
+        "hy_oas_fred": "live" if hy_oas_current is not None else "failed",
+        "biotech_fund_flows": (
+            "live_aum"
+            if (etf_aum and ETF_AUM_LEDGER.exists())
+            else "live_volume_proxy" if biotech_fund_flows is not None else "failed"
+        ),
+    }
 
     snapshot = {
         "provenance": {
@@ -379,7 +396,7 @@ def refresh_snapshot(as_of_date: str = "") -> dict:
             "vix_date": vix_date,
             "generated_by": "refresh_market_snapshot.py",
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "version": "1.4.0",
+            "version": "1.5.0",
         },
         "vix": _fmt(vix_current),
         "xbi_vs_spy_30d": _fmt(xbi_vs_spy_30d),
@@ -393,21 +410,7 @@ def refresh_snapshot(as_of_date: str = "") -> dict:
         "yield_curve_slope_bps": _fmt(yield_curve_slope),
         "tnx_10y_yield": _fmt(tnx_current),
         "irx_13w_yield": _fmt(irx_current),
-        "feeds": {
-            "vix": "live" if vix_current is not None else "failed",
-            "spy": "live" if spy_30d is not None else "failed",
-            "xbi": "live" if xbi_30d is not None else "failed",
-            "hyg": "live" if hyg_30d is not None else "failed",
-            "tnx": "live" if tnx_current is not None else "failed",
-            "irx": "live" if irx_current is not None else "failed",
-            "fed_rate": fed_rate_source,
-            "hy_oas_fred": "live" if hy_oas_current is not None else "failed",
-            "biotech_fund_flows": (
-                "live_aum"
-                if (etf_aum and ETF_AUM_LEDGER.exists())
-                else "live_volume_proxy" if biotech_fund_flows is not None else "failed"
-            ),
-        },
+        "feeds": feeds,
         "notes": {
             "vix": f"CBOE VIX index: {vix_current:.2f}" if vix_current else "Feed failed",
             "xbi_vs_spy_30d": (
@@ -443,11 +446,91 @@ def refresh_snapshot(as_of_date: str = "") -> dict:
         },
     }
 
-    # Write
+    # Validate before writing — fail closed if critical feeds are absent/impossible
+    issues = _validate_snapshot(snapshot)
+    if issues:
+        log.error(
+            "Snapshot validation FAILED — not writing to disk. Issues: %s",
+            "; ".join(issues),
+        )
+        log.error(
+            "Preserving existing snapshot at %s (as_of_date=%s)",
+            SNAPSHOT_PATH,
+            existing.get("provenance", {}).get("as_of_date", "unknown"),
+        )
+        raise SnapshotValidationError(
+            f"Refresh produced invalid snapshot ({len(issues)} issue(s)): " + "; ".join(issues)
+        )
+
     SNAPSHOT_PATH.write_text(json.dumps(snapshot, indent=2) + "\n")
     log.info("Wrote %s", SNAPSHOT_PATH)
 
     return snapshot
+
+
+# ---------------------------------------------------------------------------
+# Snapshot validation
+# ---------------------------------------------------------------------------
+
+
+class SnapshotValidationError(RuntimeError):
+    """Raised when a freshly computed snapshot fails plausibility checks.
+
+    The existing snapshot is preserved on disk; this exception surfaces the
+    issues to the caller so they can decide how to proceed.
+    """
+
+
+def _validate_snapshot(snapshot: dict, test_mode: bool = False) -> list[str]:
+    """Return a list of issues found in a snapshot dict.
+
+    An empty list means the snapshot is valid and safe to write.
+    ``test_mode=True`` relaxes the zero-value check for fixtures that
+    intentionally hold zeroed fields (e.g. unit-test stubs).
+    """
+    issues: list[str] = []
+
+    prov = snapshot.get("provenance", {})
+    if not prov.get("as_of_date"):
+        issues.append("provenance.as_of_date missing")
+
+    if not test_mode:
+        # VIX must be present and plausible (5–90 normal operating range)
+        vix_raw = snapshot.get("vix")
+        if vix_raw is None:
+            issues.append("vix is null — VIX feed failed")
+        else:
+            try:
+                vix_val = float(vix_raw)
+                if vix_val == 0.0:
+                    issues.append("vix = 0 — impossible for live market data; " "feed likely returned empty")
+                elif vix_val < 5.0 or vix_val > 90.0:
+                    issues.append(f"vix = {vix_val} is outside plausible range [5, 90]")
+            except (ValueError, TypeError):
+                issues.append(f"vix = {vix_raw!r} is not a number")
+
+        # XBI must be present (either as_of xbi_vs_spy_30d or xbi_momentum_10d)
+        xbi_rel = snapshot.get("xbi_vs_spy_30d")
+        xbi_mom = snapshot.get("xbi_momentum_10d")
+        if xbi_rel is None and xbi_mom is None:
+            issues.append("both xbi_vs_spy_30d and xbi_momentum_10d are null — " "XBI feed failed")
+
+        # Detect all-zero signal pattern (sign of a wholesale feed failure)
+        signal_fields = (
+            "vix",
+            "xbi_vs_spy_30d",
+            "xbi_momentum_10d",
+            "spy_momentum_10d",
+            "xbi_realized_vol_20d",
+        )
+        non_null = [snapshot.get(f) for f in signal_fields if snapshot.get(f) is not None]
+        if non_null and all(float(v) == 0.0 for v in non_null):
+            issues.append(
+                "all signal fields are 0.0 — indicates wholesale feed failure "
+                "where missing values were silently zeroed"
+            )
+
+    return issues
 
 
 def main():
