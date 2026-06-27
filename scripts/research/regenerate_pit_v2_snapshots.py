@@ -443,12 +443,13 @@ def main():
     parser.add_argument(
         "--stage-pit-institutional",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Option B-lite (default ON as of 2026-04-17 19-date quarter-end validation): "
-        "when a PIT 13F cache exists with >=50%% manager coverage for this date, build a "
-        "staging data_dir with a PIT-derived coinvest_signals.json overlay before calling "
-        "run_screen.py. Preserves full current-model output schema. Pass "
-        "--no-stage-pit-institutional to disable and fall back to current holdings_detailed.",
+        default=False,
+        help="Option B-lite: when a PIT 13F cache exists with >=50%% manager coverage for "
+        "this date, build a staging data_dir with a PIT-derived coinvest_signals.json overlay "
+        "before calling run_screen.py. DEFAULT OFF — the shadow mechanism is fragile on /mnt/c/ "
+        "NTFS (early partial files cause false-success on retry). Use only for dates with "
+        "confirmed 13F PIT cache coverage (typically pre-2026-04). Validated ON as of "
+        "2026-04-17 19-date quarter-end run.",
     )
     parser.add_argument(
         "--dates",
@@ -505,7 +506,9 @@ def main():
     if args.use_bundle:
         print("Mode:          bundle-native (Option A) when bundle exists, run_screen fallback otherwise")
     if args.stage_pit_institutional:
-        print("Mode:          PIT 13F staging (Option B-lite) when cache coverage >= 50%, current path otherwise")
+        print("Mode:          PIT 13F staging (Option B-lite) ENABLED — fragile on /mnt/c/ NTFS, use with supervision")
+    else:
+        print("Mode:          staging OFF (safe default) — current holdings_detailed used for institutional")
     if args.out_dir:
         print(f"Out dir:       {effective_out}")
     if args.clean_partial:
