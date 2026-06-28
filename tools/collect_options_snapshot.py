@@ -4,15 +4,27 @@
 Fetches ATM IV, IV rank, term structure, event premium, and liquidity state
 for all active universe tickers via tastytrade market metrics API.
 
+Every universe ticker receives an explicit row regardless of whether options
+data exists. Tickers with no listed contracts are recorded with:
+    opt_has_options = 0
+    opt_coverage_status = NO_LISTED_OPTIONS
+    (all true options-derived fields = null)
+
+Coverage status values:
+    VALID_OPTIONS       — options exist and passed quote-quality checks
+    LOW_LIQUIDITY_CHAIN — options exist but liquidity is absent/negligible
+    NO_LISTED_OPTIONS   — tastytrade returned no IV data (no listed chain)
+    FETCH_FAILED        — batch exception prevented any fetch for this ticker
+
+Classification:
+    OPTIONS_COVERAGE_NORMALIZATION / NO_MODEL_CHANGE / NO_RANKER_CHANGE /
+    NO_SELECTOR_CHANGE / NO_SCORING_CHANGE / NO_TRADING_CHANGE
+
 Writes dated snapshot to:
     production_data/options_snapshot_{as_of_date}.json
 
 Also writes/overwrites the rolling latest:
     production_data/options_snapshot_latest.json
-
-Governance:
-    OBSERVABILITY_ONLY / NO_MODEL_CHANGE / NO_RANKER_CHANGE /
-    NO_SELECTOR_CHANGE / NO_SCORING_CHANGE / NO_TRADING_CHANGE
 
 Usage:
     python3 tools/collect_options_snapshot.py
@@ -94,6 +106,43 @@ def _liq_state(liq: float | None) -> str:
     return "absent"
 
 
+def _coverage_status(atm_iv: float | None, liq_state: str) -> str:
+    """Classify options coverage quality. VALID / LOW_LIQUIDITY / NO_LISTED_OPTIONS."""
+    if atm_iv is None:
+        return "NO_LISTED_OPTIONS"
+    if liq_state == "absent":
+        return "LOW_LIQUIDITY_CHAIN"
+    return "VALID_OPTIONS"
+
+
+def _null_record(status: str, fetch_ts: str) -> dict:
+    """Explicit null row for a ticker with no options data."""
+    return {
+        "opt_has_options": 0,
+        "opt_coverage_status": status,
+        "opt_has_data": 0,
+        "opt_quote_ts": fetch_ts,
+        "opt_atm_iv": None,
+        "opt_iv_rank_tos": None,
+        "opt_iv_rank_tw": None,
+        "opt_iv_percentile": None,
+        "opt_iv_5d_change": None,
+        "opt_iv_30d": None,
+        "opt_hv_30d": None,
+        "opt_hv_60d": None,
+        "opt_hv_90d": None,
+        "opt_iv_hv_spread": None,
+        "opt_front_iv": None,
+        "opt_back_iv": None,
+        "opt_term_slope": None,
+        "opt_event_premium": None,
+        "opt_iv_regime": None,
+        "opt_liquidity_rank": None,
+        "opt_liquidity_state": None,
+        "opt_use_for_judgment": "NO",
+    }
+
+
 def load_universe_tickers(universe_path: Path) -> list[str]:
     u = json.loads(universe_path.read_text())
     items = u if isinstance(u, list) else u.get("universe", u.get("tickers", []))
@@ -126,8 +175,10 @@ async def _fetch(tickers: list[str], batch_size: int, verbose: bool) -> dict:
             print(f"  Batch {bn}/{n_batches} ({len(batch)} tickers)...", end=" ", flush=True)
         try:
             metrics = await get_market_metrics(session, batch)
+            returned_syms = set()
             for m in metrics:
                 sym = m.symbol
+                returned_syms.add(sym)
                 front_iv, back_iv, slope, event_prem = _parse_term(
                     m.option_expiration_implied_volatilities or [], today
                 )
@@ -135,8 +186,11 @@ async def _fetch(tickers: list[str], batch_size: int, verbose: bool) -> dict:
                 liq = _d(m.liquidity_rank)
                 ls = _liq_state(liq)
                 regime = _iv_regime(atm_iv)
+                cov = _coverage_status(atm_iv, ls)
                 usable = "YES" if (atm_iv is not None and ls != "absent" and regime != "EXTREME") else "NO"
                 snapshot[sym] = {
+                    "opt_has_options": 1 if atm_iv is not None else 0,
+                    "opt_coverage_status": cov,
                     "opt_has_data": 1 if atm_iv is not None else 0,
                     "opt_quote_ts": fetch_ts,
                     "opt_atm_iv": atm_iv,
@@ -160,18 +214,41 @@ async def _fetch(tickers: list[str], batch_size: int, verbose: bool) -> dict:
                     "opt_liquidity_state": ls,
                     "opt_use_for_judgment": usable,
                 }
+            # Tickers in the batch but absent from the API response → no listed chain
+            for t in batch:
+                if t not in returned_syms:
+                    snapshot[t] = _null_record("NO_LISTED_OPTIONS", fetch_ts)
             if verbose:
-                print(f"OK ({len(metrics)} returned)")
+                n_valid = sum(1 for t in batch if snapshot.get(t, {}).get("opt_has_options"))
+                n_no_chain = sum(
+                    1 for t in batch if snapshot.get(t, {}).get("opt_coverage_status") == "NO_LISTED_OPTIONS"
+                )
+                print(f"OK ({len(metrics)} returned | valid={n_valid} no_chain={n_no_chain})")
         except Exception as e:
+            # Entire batch failed — mark all as FETCH_FAILED
+            for t in batch:
+                if t not in snapshot:
+                    snapshot[t] = _null_record("FETCH_FAILED", fetch_ts)
             if verbose:
-                print(f"FAIL: {str(e)[:100]}")
+                print(f"FAIL [{len(batch)} tickers marked FETCH_FAILED]: {str(e)[:80]}")
+
+    # Defensive pass: any ticker still missing gets NO_LISTED_OPTIONS
+    for t in tickers:
+        if t not in snapshot:
+            snapshot[t] = _null_record("NO_LISTED_OPTIONS", fetch_ts)
 
     return snapshot
 
 
 def build_output(snapshot: dict, tickers: list[str], as_of_date: str) -> dict:
-    fetch_ts = next((v["opt_quote_ts"] for v in snapshot.values()), datetime.now(timezone.utc).isoformat())
-    has_data = sum(1 for v in snapshot.values() if v["opt_has_data"])
+    fetch_ts = next(
+        (v["opt_quote_ts"] for v in snapshot.values()),
+        datetime.now(timezone.utc).isoformat(),
+    )
+    valid = sum(1 for v in snapshot.values() if v["opt_coverage_status"] == "VALID_OPTIONS")
+    low_liq = sum(1 for v in snapshot.values() if v["opt_coverage_status"] == "LOW_LIQUIDITY_CHAIN")
+    no_chain = sum(1 for v in snapshot.values() if v["opt_coverage_status"] == "NO_LISTED_OPTIONS")
+    fetch_failed = sum(1 for v in snapshot.values() if v["opt_coverage_status"] == "FETCH_FAILED")
     liquid = sum(1 for v in snapshot.values() if v["opt_liquidity_state"] == "liquid")
     thin = sum(1 for v in snapshot.values() if v["opt_liquidity_state"] == "thin")
     usable = sum(1 for v in snapshot.values() if v["opt_use_for_judgment"] == "YES")
@@ -183,15 +260,24 @@ def build_output(snapshot: dict, tickers: list[str], as_of_date: str) -> dict:
             "fetch_timestamp": fetch_ts,
             "as_of_date": as_of_date,
             "source": "tastytrade_market_metrics",
+            "classification": "OPTIONS_COVERAGE_NORMALIZATION/NO_MODEL_CHANGE",
             "universe_count": len(tickers),
             "returned_count": len(snapshot),
-            "has_options_data": has_data,
+            # Coverage breakdown — every ticker accounted for
+            "coverage_valid": valid,
+            "coverage_low_liquidity": low_liq,
+            "coverage_no_chain": no_chain,
+            "coverage_fetch_failed": fetch_failed,
+            # Liquidity sub-counts (within VALID_OPTIONS)
             "liquid_count": liquid,
             "thin_count": thin,
             "usable_for_judgment": usable,
+            # IV regime counts
             "iv_regime_extreme": extreme,
             "iv_regime_elevated": elevated,
             "event_premium_detected": event_p,
+            # Legacy compat
+            "has_options_data": valid + low_liq,
         },
         "tickers": snapshot,
     }
@@ -221,10 +307,12 @@ def run(as_of_date: str, batch_size: int, dry_run: bool, verbose: bool) -> dict:
     meta = output["metadata"]
     if verbose:
         print(
-            f"\nSummary: {meta['returned_count']}/{meta['universe_count']} fetched | "
-            f"liquid={meta['liquid_count']} thin={meta['thin_count']} | "
-            f"usable={meta['usable_for_judgment']} | "
-            f"event_premium={meta['event_premium_detected']}"
+            f"\nCoverage: valid={meta['coverage_valid']} "
+            f"low_liq={meta['coverage_low_liquidity']} "
+            f"no_chain={meta['coverage_no_chain']} "
+            f"failed={meta['coverage_fetch_failed']} "
+            f"| usable={meta['usable_for_judgment']} "
+            f"| event_premium={meta['event_premium_detected']}"
         )
 
     return output
