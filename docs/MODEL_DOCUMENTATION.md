@@ -70,7 +70,7 @@ The prior regime conditional alpha artifact (v1, raw prices) showed 2026 YTD as 
 
 **Prior claim "current regime (bull) adverse" is RETRACTED.** Root cause: corrupted 2026 YTD data from split artifacts. 2026 YTD corrected: Jan=−0.283pp, Feb=+9.084pp, mean=+4.40pp.
 
-Alpha type: `RALLY_PARTICIPATION_ALPHA_WITH_CROSS_SECTIONAL_RESIDUAL`. Pre-2025 beta=0.05 (cross-sectional); 2025+ beta=0.52 (rally-participation dominant). Corrected artifacts: `artifacts/backtests/dem_current_ranker_ytd/` (v2), `artifacts/backtests/dem_regime_conditional_alpha/` (v2). Governance unchanged: NO_MODEL_CHANGE / NO_PRODUCTION_WIRING / EES_SHADOW_GATE (20+20 still unmet).
+Alpha type: `RALLY_PARTICIPATION_ALPHA_WITH_CROSS_SECTIONAL_RESIDUAL`. Portfolio beta vs XBI: pre-2025=1.05, 2025+=1.52. Alpha-stream beta (excess vs XBI): pre-2025=0.05 (excess near-uncorrelated with XBI — cross-sectional selection), 2025+=0.52 (excess increasingly driven by rally participation). Note: prior artifacts reported alpha-stream beta as "portfolio beta" — corrected in v2. Corrected artifacts: `artifacts/backtests/dem_current_ranker_ytd/` (v2), `artifacts/backtests/dem_regime_conditional_alpha/` (v2). Governance unchanged: NO_MODEL_CHANGE / NO_PRODUCTION_WIRING / EES_SHADOW_GATE (20+20 still unmet).
 
 ---
 
