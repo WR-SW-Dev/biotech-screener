@@ -70,7 +70,27 @@ The prior regime conditional alpha artifact (v1, raw prices) showed 2026 YTD as 
 
 **Prior claim "current regime (bull) adverse" is RETRACTED.** Root cause: corrupted 2026 YTD data from split artifacts. 2026 YTD corrected: Jan=−0.283pp, Feb=+9.084pp, mean=+4.40pp.
 
-Alpha type: `RALLY_PARTICIPATION_ALPHA_WITH_CROSS_SECTIONAL_RESIDUAL`. Portfolio beta vs XBI: pre-2025=1.05, 2025+=1.52. Alpha-stream beta (excess vs XBI): pre-2025=0.05 (excess near-uncorrelated with XBI — cross-sectional selection), 2025+=0.52 (excess increasingly driven by rally participation). Note: prior artifacts reported alpha-stream beta as "portfolio beta" — corrected in v2. Corrected artifacts: `artifacts/backtests/dem_current_ranker_ytd/` (v2), `artifacts/backtests/dem_regime_conditional_alpha/` (v2). Governance unchanged: NO_MODEL_CHANGE / NO_PRODUCTION_WIRING / EES_SHADOW_GATE (20+20 still unmet).
+Alpha type: `RALLY_PARTICIPATION_ALPHA_WITH_CROSS_SECTIONAL_RESIDUAL`. Corrected artifacts: `artifacts/backtests/dem_current_ranker_ytd/` (v2), `artifacts/backtests/dem_regime_conditional_alpha/` (v2). Governance unchanged: NO_MODEL_CHANGE / NO_PRODUCTION_WIRING / EES_SHADOW_GATE (20+20 still unmet).
+
+#### Beta Correction — Prior Artifacts Reported Wrong Series
+
+Prior backtest artifacts reported `beta(bl_hedged, XBI)` — the beta of the *excess* return against XBI — as if it were the portfolio beta. This is always exactly 1 less than the true portfolio beta:
+
+```
+beta(DEM_raw, XBI) = beta(bl_hedged, XBI) + 1
+```
+
+because `DEM_raw = bl_hedged + XBI` by construction (bl_hedged is XBI-hedged excess return).
+
+| Window | Portfolio β (DEM_raw vs XBI) | Alpha-stream β (excess vs XBI) |
+|---|---|---|
+| Full 69p | **1.1745** | 0.1745 |
+| Pre-2025 (55p) | **1.0507** | 0.0507 |
+| 2025+ (14p) | **1.5202** | 0.5202 |
+
+The DEM portfolio runs at approximately market-level XBI beta pre-2025 (~1.05), rising to ~1.52 in 2025+ as the model selected high-beta names during the biotech rally. It is not a low-beta strategy.
+
+The **alpha-stream beta** (excess vs XBI) remains the correct diagnostic for selection quality: 0.05 pre-2025 means the excess return was nearly uncorrelated with XBI movements over 55 periods — alpha came from cross-sectional stock picking, not sector-timing. The 2025+ alpha-stream beta of 0.52 reflects that the excess return itself became partly driven by the rally (model picked names that surged with the sector), consistent with the "rally participation" alpha label.
 
 ---
 

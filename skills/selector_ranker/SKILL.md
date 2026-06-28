@@ -115,9 +115,17 @@ Coinvest selects WHICH 30 names enter the portfolio. It captures institutional c
 
 ### Production Evidence
 
-- True PIT backtest: +2.34pp/mo net-of-cost, t = 2.57, 69% hit rate, 67 monthly periods \(Jun 2020 - Apr 2026\)
-- Bear/neutral alpha engine: Bear +3.37pp \(75% hit\), Neutral +6.23pp \(93% hit\), Bull -0.37pp \(50% hit\)
-- Regime caveat: expect bounded underperformance in strong bull markets
+- True PIT backtest (split-adjusted v2, 2026-06-27): **+3.33pp/mo hedged** (+3.20pp net-of-cost), t_nw=2.74, 66.7% hit rate, 69 monthly periods (Jun 2020 – Feb 2026)
+- Regime breakdown (all three regimes positive — prior "bull adverse" claim RETRACTED, was split artifact):
+
+| Regime | n | Mean (pp/mo) | t (NW) | Hit% |
+|---|---|---|---|---|
+| Bull | 30 | **+3.05** | 2.06 | 66.7% |
+| Bear | 26 | **+1.94** | 1.95 | 61.5% |
+| Neutral | 13 | **+6.76** | 2.69 | 76.9% |
+
+- **Prior claim retracted**: "Bear/neutral engine, Bull -0.37pp (50% hit)" was from raw (unadjusted) price file. Split-adjusted data shows bull regime +3.05pp.
+- YTD (Dec 31 → Jun 26, monthly EW rebalance): **DEM +38.52% vs XBI +27.43%, +11.09pp excess**
 
 ---
 
