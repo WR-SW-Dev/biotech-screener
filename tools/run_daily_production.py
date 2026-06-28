@@ -5635,6 +5635,45 @@ def run_daily(
         except Exception as _ov11_err:
             _logger.warning(f"Options v1.1 failed: {_ov11_err}")
 
+        # --- Step 5k.5f: Options shadow layer (TT-only; RH cache unavailable in cron) ---
+        try:
+            from tools.collect_options_shadow import run_options_shadow
+
+            _os_result = run_options_shadow(
+                as_of_date,
+                tickers=None,  # auto-resolved from latest rankings.csv (top-30)
+                rh_cache_file=None,  # no RH MCP in cron; session writes cache separately
+                snapshots_dir=final_snapshots_dir,
+            )
+            if "error" in _os_result:
+                _logger.info(f"Options shadow → skipped ({_os_result['error']})")
+            else:
+                _os_n = _os_result.get("n_tickers", 0)
+                _os_ep = _os_result.get("n_event_premium", 0)
+                _os_hc = _os_result.get("n_high_confidence", 0)
+                _logger.info(f"Options shadow → {_os_n} tickers, {_os_hc} HIGH_CONFIDENCE, {_os_ep} event-premium")
+        except Exception as _os_err:
+            _logger.warning(f"Options shadow failed: {_os_err}")
+
+        # --- Step 5k.5g: EES v3 daily shadow card (non-blocking) ---
+        try:
+            from tools.build_ees_shadow_card import run_ees_shadow_card
+
+            _ees_card = run_ees_shadow_card(as_of_date)
+            if "error" in _ees_card:
+                _logger.info(f"EES shadow card → skipped ({_ees_card['error']})")
+            else:
+                _ees_gate = _ees_card.get("gate_20d_met", False)
+                _ees_done = _ees_card.get("windows_completed", 0)
+                _ees_req = _ees_card.get("gate_20d_required", 20)
+                _ees_fires = _ees_card.get("n_veto_fires", 0)
+                _logger.info(
+                    f"EES shadow card → gate {'MET' if _ees_gate else f'UNMET ({_ees_done}/{_ees_req})'}"
+                    f", {_ees_fires} shadow veto fires"
+                )
+        except Exception as _ees_err:
+            _logger.warning(f"EES shadow card failed: {_ees_err}")
+
         # --- Step 5k.6: Shadow monitor (non-blocking) ---
         try:
             from tools.build_shadow_monitor import build_shadow_monitor

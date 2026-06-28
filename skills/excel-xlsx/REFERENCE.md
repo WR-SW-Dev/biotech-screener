@@ -1,3 +1,7 @@
+---
+name: excel-xlsx
+---
+
 # Excel / XLSX Skill
 
 Best-practice instructions for AI agents handling spreadsheet operations.

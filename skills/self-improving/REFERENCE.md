@@ -1,3 +1,7 @@
+---
+name: self-improving-reference
+---
+
 # Self-Improving — Reference (biotech-screener)
 
 Long-form templates and checklists. Entry point: `skills/self-improving/SKILL.md`.

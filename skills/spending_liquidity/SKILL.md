@@ -1,3 +1,7 @@
+---
+name: spending-liquidity
+---
+
 # Spending & Liquidity Skill
 
 ## Purpose

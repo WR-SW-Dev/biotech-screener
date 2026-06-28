@@ -1,3 +1,7 @@
+---
+name: catalyst-resolution
+---
+
 # Catalyst & Event Resolution Skill
 
 ## Purpose

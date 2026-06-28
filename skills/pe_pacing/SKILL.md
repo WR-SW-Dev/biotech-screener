@@ -1,3 +1,7 @@
+---
+name: pe-pacing
+---
+
 # PE Pacing Skill
 
 ## Purpose

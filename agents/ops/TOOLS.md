@@ -34,6 +34,11 @@ Read this first:
 
 If the digest flags something, drill into only these inputs:
 
+0. `data/snapshots/YYYY-MM-DD/run_manifest.json`
+   - Pipeline completion record: overall_status, step timings, gate outcomes
+   - **NOTE**: this file lives inside the snapshot dir, not at `artifacts/run_manifest.json`
+     (that path does not exist). Always substitute the actual date for `YYYY-MM-DD`.
+
 1. `data/snapshots/YYYY-MM-DD/phase2_health.json`
    - Core pipeline health, gate outcomes, turnover, catalyst coverage
 

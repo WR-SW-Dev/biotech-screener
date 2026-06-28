@@ -1387,6 +1387,7 @@ def _convert_holdings_to_coinvest(
 
     # PIT audit counters (persisted into run_metadata via audit_out)
     skipped_future_filings = 0
+    holder_count_pit_skips = 0  # future filings excluded from overlap/tier1 counts
     missing_total_value = 0
     filed_at_parse_failures = 0
 
@@ -1429,11 +1430,27 @@ def _convert_holdings_to_coinvest(
                 holder_name = f"Manager_{cik[-4:]}"
                 tier = 2
 
-            # Track current holders by name (not CIK)
+            # Track current holders by name (not CIK).
+            # PIT guard: only count holders whose filing was available as of ref_date.
+            # Future filings (filed_at > ref_date) must not activate smart_money_score.
+            # When filed_at is absent the holder is counted (AVAILABILITY_UNKNOWN --
+            # matches conviction-path behaviour; flagged separately in the audit log).
             if cik in current:
-                holder_names.append(holder_name)
-                if tier == 1:
-                    tier1_count += 1
+                _hc_filed_at = None
+                _hc_filed_str = (filings_metadata.get(cik, {}).get("filed_at", "") or "").strip()
+                if _hc_filed_str:
+                    try:
+                        if _hc_filed_str.endswith("Z"):
+                            _hc_filed_str = _hc_filed_str[:-1]
+                        _hc_filed_at = datetime.fromisoformat(_hc_filed_str).replace(tzinfo=None)
+                    except (ValueError, TypeError):
+                        _hc_filed_at = None
+                if ref_date is not None and _hc_filed_at is not None and _hc_filed_at > ref_date:
+                    holder_count_pit_skips += 1
+                else:
+                    holder_names.append(holder_name)
+                    if tier == 1:
+                        tier1_count += 1
 
             # Store tier by holder name (int, not dict)
             holder_tiers[holder_name] = tier
@@ -1549,9 +1566,15 @@ def _convert_holdings_to_coinvest(
         }
 
     # Log PIT audit summary
-    if skipped_future_filings > 0 or missing_total_value > 0 or filed_at_parse_failures > 0:
+    if (
+        skipped_future_filings > 0
+        or holder_count_pit_skips > 0
+        or missing_total_value > 0
+        or filed_at_parse_failures > 0
+    ):
         logger.info(
-            f"  Conviction PIT audit: future_filing_skips={skipped_future_filings}, "
+            f"  PIT audit (conviction+counts): future_conviction_skips={skipped_future_filings}, "
+            f"holder_count_pit_skips={holder_count_pit_skips}, "
             f"missing_total_value={missing_total_value}, filed_at_parse_failures={filed_at_parse_failures}"
         )
 
@@ -1561,6 +1584,7 @@ def _convert_holdings_to_coinvest(
             {
                 "as_of_date": as_of_date,
                 "future_filing_skips": int(skipped_future_filings),
+                "holder_count_pit_skips": int(holder_count_pit_skips),
                 "missing_total_value": int(missing_total_value),
                 "filed_at_parse_failures": int(filed_at_parse_failures),
             }

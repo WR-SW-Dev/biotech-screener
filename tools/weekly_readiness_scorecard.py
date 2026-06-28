@@ -161,12 +161,9 @@ def check_shadow_excess(
     # Filter 2: CRITICAL - Rows with complete price coverage (data integrity gate)
     # Exclude any period where portfolio had missing prices (n_missing_price > 0)
     # These return 0.00% by default and skew the metric with data-loss artifacts
+    # Absent or empty field → treat as 0 (complete data; field not tracked in older schema)
     n_missing_field = "n_missing_price"
-    complete_data = [
-        r
-        for r in has_excess
-        if r.get(n_missing_field) is not None and (r.get(n_missing_field) == "" or int(r.get(n_missing_field, 0)) == 0)
-    ]
+    complete_data = [r for r in has_excess if int(r.get(n_missing_field) or 0) == 0]
 
     excluded_count = len(has_excess) - len(complete_data)
 

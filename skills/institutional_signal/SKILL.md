@@ -1,3 +1,7 @@
+---
+name: institutional-signal
+---
+
 # Institutional Signal Skill
 
 ## Purpose

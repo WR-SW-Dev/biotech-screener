@@ -100,7 +100,8 @@
       "cik": "0002018299",
       "name": "Boxer Capital Management",
       "aum_b": 1.4,
-      "style": "oncology_focused"
+      "style": "oncology_focused",
+      "notes": "CIK updated 2026-04-13. Was 0001465837 (Boxer Capital LLC — shell, 1 holding). Migrated to Management LLC (CIK 0002018299) starting Q4 2024."
     },
     {
       "cik": "0001587114",
@@ -114,7 +115,6 @@
       "aum_b": 0.67,
       "style": "physician_led_fundamental"
     },
-
     {
       "cik": "0001274413",
       "name": "Sectoral Asset Management",
@@ -168,6 +168,148 @@
       "name": "Opaleye Management",
       "aum_b": 0.64,
       "style": "binary_catalyst_biotech"
+    },
+    {
+      "cik": "0001056807",
+      "name": "BVF Inc/IL",
+      "aum_b": 3.0,
+      "style": "biotech_specialist",
+      "notes": "CIK corrected 2026-04-13. Was 0001079114 (Greenlight Capital — wrong entity). Correct entity: BVF Inc/IL, Mark Lampert, pure biotech."
+    },
+    {
+      "cik": "0001633313",
+      "name": "Avoro Capital Advisors",
+      "aum_b": 2.0,
+      "style": "biotech_specialist",
+      "notes": "CIK 0001633313 is Avoro Capital (formerly venBio Select Advisor). Was labeled Consonance Capital Management — different firm (Consonance CIK 0001544773, stopped filing Q3 2022). Avoro has 34 active biotech holdings, correct entity for this slot."
+    },
+    {
+      "cik": "0001577524",
+      "name": "Sarissa Capital Management",
+      "aum_b": 1.0,
+      "style": "biotech_activist"
+    },
+    {
+      "cik": "0001704132",
+      "name": "Foresite Capital IV",
+      "aum_b": 1.2,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0001792206",
+      "name": "Foresite Capital V",
+      "aum_b": 1.2,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0002013341",
+      "name": "Foresite Capital VI",
+      "aum_b": 1.1,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0001601692",
+      "name": "Broadfin Capital (Kotler)",
+      "aum_b": 1.5,
+      "style": "healthcare_event_driven"
+    },
+    {
+      "cik": "0001727492",
+      "name": "Caligan Partners",
+      "aum_b": 0.5,
+      "style": "biotech_activist",
+      "notes": "Added 2026-04-13. Activist biotech, 24 holdings, 79% biotech concentration. +92% in 2025."
+    },
+    {
+      "cik": "0001674712",
+      "name": "Vivo Capital",
+      "aum_b": 4.0,
+      "style": "healthcare_crossover",
+      "notes": "Added 2026-04-13. Healthcare crossover, 47 holdings, 77% biotech concentration."
+    },
+    {
+      "cik": "0001389933",
+      "name": "DAFNA Capital Management",
+      "aum_b": 0.65,
+      "style": "biotech_long_short",
+      "notes": "Added 2026-04-15. Nathan Fischel (MD), est 1999. Long/short biotech+medtech. $430M 13F portfolio. Top: RVMD, XBI, STXS, ATRC, CYTK."
+    },
+    {
+      "cik": "0001802528",
+      "name": "Fairmount Funds Management",
+      "aum_b": 1.3,
+      "style": "concentrated_clinical_stage",
+      "notes": "Added 2026-04-25. Peter Harwin / Tommy Salzmann, West Conshohocken PA. Highly concentrated biotech specialist. Q4 2025 13F: 13 holdings, $1.31B reportable. Files 13F-HR since 2019."
+    },
+    {
+      "cik": "0001974915",
+      "name": "Vestal Point Capital",
+      "aum_b": 2.9,
+      "style": "healthcare_fundamental",
+      "notes": "Added 2026-04-25. 76 holdings / $2.94B reportable in Q4 2025 13F. Files 13F-HR since 2023-Q4 (filed 2024-02-13). West Conshohocken-area healthcare fund."
+    },
+    {
+      "cik": "0001907884",
+      "name": "Kynam Capital Management",
+      "aum_b": 1.57,
+      "style": "biotech_specialist",
+      "notes": "Added 2026-04-25. Jared Keller. 37 holdings / $1.57B reportable in Q4 2025 13F. Files 13F-HR since 2021-Q4 (filed 2022-02-14)."
+    },
+    {
+      "cik": "0001802630",
+      "name": "Soleus Capital Management",
+      "aum_b": 2.71,
+      "style": "healthcare_long_short",
+      "notes": "Added 2026-04-25. Guy Levy / Harold Schaaff. 95 holdings / $2.71B reportable in Q4 2025 13F. Files 13F-HR since 2019-Q4 (filed 2020-02-14, 26 quarters)."
+    },
+    {
+      "cik": "0001892134",
+      "name": "Frazier Life Sciences Management",
+      "aum_b": 3.89,
+      "style": "biotech_crossover",
+      "notes": "Added 2026-05-22. 38 holdings / $3.89B reportable in Q1 2026 13F (filed 2026-05-15). Frazier Healthcare crossover fund; top Q1 2026 holdings: MIRM, NAMS, ERAS, BBIO."
+    },
+    {
+      "cik": "0002005245",
+      "name": "Siren LLC",
+      "aum_b": 3.61,
+      "style": "concentrated_clinical_stage",
+      "notes": "Added 2026-05-22. 100 holdings / $3.61B reportable in Q1 2026 13F (filed 2026-05-14). Clinical-stage biotech focus; top holdings include SRRK, KYMR, BNT."
+    },
+    {
+      "cik": "0001839948",
+      "name": "TCG Crossover Management",
+      "aum_b": 3.5,
+      "style": "biotech_crossover",
+      "notes": "Added 2026-05-22. 49 holdings / $3.5B reportable in Q1 2026 13F (filed 2026-05-15). Chen Yu; science-driven crossover; public + private life sciences."
+    },
+    {
+      "cik": "0001920938",
+      "name": "Braidwell LP",
+      "aum_b": 3.0,
+      "style": "biotech_long_short",
+      "notes": "Added 2026-05-22. 88 holdings / $3.0B reportable in Q1 2026 13F (filed 2026-05-15). Alex Karnal; long/short across biotech, pharma, medtech, diagnostics."
+    },
+    {
+      "cik": "0001773206",
+      "name": "Integral Health Asset Management",
+      "aum_b": 1.89,
+      "style": "healthcare_long_short",
+      "notes": "Added 2026-05-22. 86 holdings / $1.89B reportable in Q1 2026 13F (filed 2026-05-15). Jay Rao MD/JD; absolute-return healthcare L/S across pharma, biotech, medtech, healthcare services."
+    },
+    {
+      "cik": "0001773195",
+      "name": "Affinity Asset Advisors",
+      "aum_b": 1.7,
+      "style": "biotech_long_short",
+      "notes": "Added 2026-05-22. 95 holdings / $1.7B reportable in Q1 2026 13F (filed 2026-05-14). Biotech L/S; top Q1 2026 holdings: XBI, APGE, INSM, ABVX, IBB."
+    },
+    {
+      "cik": "0001855655",
+      "name": "Paradigm Biocapital Advisors",
+      "aum_b": 4.89,
+      "style": "biotech_crossover",
+      "notes": "Added 2026-05-22. 35 holdings / $4.89B reportable in Q1 2026 13F (filed 2026-05-15). Top Q1 2026 holdings: NUVL, RVMD, ACLX, GMAB, TARS."
     }
   ],
   "conditional": [
@@ -209,12 +351,13 @@
     }
   ],
   "metadata": {
-    "version": "2.2",
-    "last_updated": "2026-06-24",
-    "total_elite_aum_b": 68.48,
+    "version": "3.2",
+    "last_updated": "2026-05-22",
+    "total_elite_aum_b": 153.83,
     "notes": [
       "Elite Core = primary signal source",
-      "Conditional = secondary breadth signal"
+      "Conditional = secondary breadth signal",
+      "v2.5: Ghost Tree removed — t=-5.16 anti-signal across 454 obs / 12 quarters"
     ]
   }
 }

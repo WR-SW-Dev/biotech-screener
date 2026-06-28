@@ -629,13 +629,6 @@
     "first_seen_date": "2026-06-01",
     "estimated_event_date": "2026-12-01"
   },
-  "GILD": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 24,
-    "first_seen_date": "2026-06-01",
-    "estimated_event_date": "2026-06-25"
-  },
   "VTRS": {
     "catalyst_event_type": "FDA_PDUFA_DATE",
     "catalyst_source": "SEC_8K_FILING",
@@ -762,32 +755,39 @@
     "first_seen_date": "2026-06-17",
     "estimated_event_date": "2026-07-26"
   },
+  "EXEL": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 5,
+    "first_seen_date": "2026-06-26",
+    "estimated_event_date": "2026-07-01"
+  },
+  "GILD": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 5,
+    "first_seen_date": "2026-06-26",
+    "estimated_event_date": "2026-07-01"
+  },
+  "ZLAB": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 188,
+    "first_seen_date": "2026-06-26",
+    "estimated_event_date": "2026-12-31"
+  },
+  "MLYS": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 158,
+    "first_seen_date": "2026-06-26",
+    "estimated_event_date": "2026-12-01"
+  },
   "MLTX": {
     "catalyst_event_type": "DATA_READOUT",
     "catalyst_source": "SEC_8K_FILING",
     "catalyst_days_at_first_seen": 5,
     "first_seen_date": "2026-06-25",
     "estimated_event_date": "2026-06-30"
-  },
-  "MLYS": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 159,
-    "first_seen_date": "2026-06-25",
-    "estimated_event_date": "2026-12-01"
-  },
-  "EXEL": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 6,
-    "first_seen_date": "2026-06-25",
-    "estimated_event_date": "2026-07-01"
-  },
-  "ZLAB": {
-    "catalyst_event_type": "DATA_READOUT",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 189,
-    "first_seen_date": "2026-06-25",
-    "estimated_event_date": "2026-12-31"
   }
 }

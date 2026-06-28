@@ -245,12 +245,31 @@ def stage_data_dir_with_pit_institutional(
     return staging, stage_kind
 
 
+def _snapshot_is_partial(date_str: str, out_dir: Path) -> bool:
+    """Return True if a snapshot dir exists but rankings.csv is missing."""
+    snap_dir = out_dir / date_str
+    return snap_dir.exists() and not (snap_dir / "rankings.csv").exists()
+
+
+def _clean_partial_dir(date_str: str, out_dir: Path) -> bool:
+    """Remove a partial snapshot dir. Returns True if removed."""
+    import shutil
+
+    snap_dir = out_dir / date_str
+    if snap_dir.exists() and not (snap_dir / "rankings.csv").exists():
+        shutil.rmtree(snap_dir)
+        return True
+    return False
+
+
 def run_one(
     date_str: str,
     dry_run: bool = False,
     use_bundle: bool = False,
     stage_pit_institutional: bool = False,
     out_dir: Path | None = None,
+    force_overwrite: bool = False,
+    allow_weekend: bool = False,
 ) -> dict:
     """Run a regen for one date. Returns status dict.
 
@@ -264,9 +283,14 @@ def run_one(
     dir (Option B-lite). Mutually exclusive with `use_bundle`.
 
     `out_dir` defaults to PIT_V2_DIR.
+
+    SUCCESS REQUIRES rankings.csv: even if the subprocess exits 0, the result
+    is classified as `failed_false_success` if rankings.csv is absent. This
+    catches run_screen.py's silent refusal to overwrite existing snapshot dirs.
     """
     if dry_run:
-        return {"date": date_str, "status": "dry_run"}
+        partial = _snapshot_is_partial(date_str, out_dir or PIT_V2_DIR)
+        return {"date": date_str, "status": "dry_run", "partial_dir": partial}
 
     data_dir, data_source = _resolve_data_dir(date_str)
     effective_out = out_dir or PIT_V2_DIR
@@ -313,6 +337,10 @@ def run_one(
             "--diagnostics",
             "none",
         ]
+        if force_overwrite:
+            cmd.append("--force-overwrite")
+        if allow_weekend:
+            cmd.append("--allow-weekend")
 
     t0 = time.time()
     try:
@@ -324,34 +352,81 @@ def run_one(
             cwd=str(PROJECT_ROOT),
         )
         elapsed = time.time() - t0
-        if result.returncode == 0:
-            out = {
-                "date": date_str,
-                "status": "ok",
-                "data_source": data_source,
-                "institutional_source": institutional_source,
-                "exec_path": exec_path,
-                "elapsed_s": round(elapsed, 1),
-            }
-            if stage_result:
-                out["stage_result"] = stage_result
-            return out
-        else:
-            # Extract last few lines of stderr for diagnosis
-            err_tail = result.stderr.strip().split("\n")[-5:]
+        stdout_tail = result.stdout.strip().split("\n")[-10:]
+        stderr_tail = result.stderr.strip().split("\n")[-10:]
+        rankings_exists = (effective_out / date_str / "rankings.csv").exists()
+
+        if result.returncode != 0:
             return {
                 "date": date_str,
                 "status": "error",
                 "returncode": result.returncode,
+                "rankings_csv_exists": rankings_exists,
                 "exec_path": exec_path,
                 "elapsed_s": round(elapsed, 1),
-                "error_tail": err_tail,
+                "stdout_tail": stdout_tail,
+                "stderr_tail": stderr_tail,
                 "stage_result": stage_result,
             }
+
+        # Exit 0 is NOT sufficient — rankings.csv must exist.
+        if not rankings_exists:
+            return {
+                "date": date_str,
+                "status": "failed_false_success",
+                "returncode": 0,
+                "rankings_csv_exists": False,
+                "exec_path": exec_path,
+                "elapsed_s": round(elapsed, 1),
+                "stdout_tail": stdout_tail,
+                "stderr_tail": stderr_tail,
+                "stage_result": stage_result,
+                "hint": (
+                    "run_screen.py exited 0 but wrote no rankings.csv. "
+                    "Likely cause: snapshot dir already existed (partial prior run). "
+                    "Use --clean-partial or --force-overwrite to retry."
+                ),
+            }
+
+        out = {
+            "date": date_str,
+            "status": "ok",
+            "returncode": 0,
+            "rankings_csv_exists": True,
+            "data_source": data_source,
+            "institutional_source": institutional_source,
+            "exec_path": exec_path,
+            "elapsed_s": round(elapsed, 1),
+        }
+        if stage_result:
+            out["stage_result"] = stage_result
+        return out
+
     except subprocess.TimeoutExpired:
-        return {"date": date_str, "status": "timeout", "elapsed_s": 600}
+        return {"date": date_str, "status": "timeout", "elapsed_s": 600, "rankings_csv_exists": False}
     except Exception as e:
-        return {"date": date_str, "status": "exception", "error": str(e)}
+        return {"date": date_str, "status": "exception", "error": str(e), "rankings_csv_exists": False}
+
+
+MANIFEST_DIR = PROJECT_ROOT / "artifacts" / "audit" / "pit_v2_regeneration"
+
+
+def _write_manifest(results: list[dict], manifest_dir: Path) -> Path:
+    """Write per-run manifest JSON to manifest_dir. Returns path written."""
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    path = manifest_dir / f"regen_manifest_{ts}.json"
+    with open(path, "w") as f:
+        json.dump(
+            {
+                "schema": "pit_v2_regen_manifest.v1",
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "results": results,
+            },
+            f,
+            indent=2,
+        )
+    return path
 
 
 def main():
@@ -368,12 +443,13 @@ def main():
     parser.add_argument(
         "--stage-pit-institutional",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Option B-lite (default ON as of 2026-04-17 19-date quarter-end validation): "
-        "when a PIT 13F cache exists with >=50%% manager coverage for this date, build a "
-        "staging data_dir with a PIT-derived coinvest_signals.json overlay before calling "
-        "run_screen.py. Preserves full current-model output schema. Pass "
-        "--no-stage-pit-institutional to disable and fall back to current holdings_detailed.",
+        default=False,
+        help="Option B-lite: when a PIT 13F cache exists with >=50%% manager coverage for "
+        "this date, build a staging data_dir with a PIT-derived coinvest_signals.json overlay "
+        "before calling run_screen.py. DEFAULT OFF — the shadow mechanism is fragile on /mnt/c/ "
+        "NTFS (early partial files cause false-success on retry). Use only for dates with "
+        "confirmed 13F PIT cache coverage (typically pre-2026-04). Validated ON as of "
+        "2026-04-17 19-date quarter-end run.",
     )
     parser.add_argument(
         "--dates",
@@ -384,6 +460,24 @@ def main():
         "--out-dir",
         default="",
         help="Override output snapshot dir (default: data/snapshots_pit_v2)",
+    )
+    parser.add_argument(
+        "--clean-partial",
+        action="store_true",
+        help="Before running each date, remove its snapshot dir if it exists but lacks rankings.csv "
+        "(partial dir from a prior failed run). Never removes a complete snapshot dir.",
+    )
+    parser.add_argument(
+        "--force-overwrite",
+        action="store_true",
+        help="Pass --force-overwrite to run_screen.py so it overwrites existing snapshot dirs. "
+        "Implies --clean-partial is NOT needed, but does not protect against complete dirs being "
+        "re-run unintentionally. Prefer --clean-partial for safety.",
+    )
+    parser.add_argument(
+        "--allow-weekend",
+        action="store_true",
+        help="Pass --allow-weekend to run_screen.py for dates that fall on Saturday/Sunday.",
     )
     args = parser.parse_args()
 
@@ -396,16 +490,33 @@ def main():
         dates = get_monthly_dates(args.start)
         todo = [d for d in dates if not (effective_out / d / "rankings.csv").exists()]
     done = [d for d in dates if (effective_out / d / "rankings.csv").exists()]
+    partial = [d for d in todo if _snapshot_is_partial(d, effective_out)]
 
     print(f"Dates:         {len(dates)}")
     print(f"Already done:  {len(done)}")
     print(f"To process:    {len(todo)}")
+    if partial:
+        print(f"Partial dirs:  {len(partial)} — {partial}")
+        if not args.clean_partial and not args.force_overwrite:
+            print(
+                "  WARNING: partial dirs exist. Use --clean-partial to remove them before "
+                "re-running, or --force-overwrite to let run_screen.py overwrite them. "
+                "Without one of these, those dates will likely produce FAILED_FALSE_SUCCESS."
+            )
     if args.use_bundle:
         print("Mode:          bundle-native (Option A) when bundle exists, run_screen fallback otherwise")
     if args.stage_pit_institutional:
-        print("Mode:          PIT 13F staging (Option B-lite) when cache coverage >= 50%, current path otherwise")
+        print("Mode:          PIT 13F staging (Option B-lite) ENABLED — fragile on /mnt/c/ NTFS, use with supervision")
+    else:
+        print("Mode:          staging OFF (safe default) — current holdings_detailed used for institutional")
     if args.out_dir:
         print(f"Out dir:       {effective_out}")
+    if args.clean_partial:
+        print("Clean partial: ON")
+    if args.force_overwrite:
+        print("Force overwrite: ON")
+    if args.allow_weekend:
+        print("Allow weekend: ON")
 
     if args.max_dates > 0:
         todo = todo[: args.max_dates]
@@ -426,17 +537,26 @@ def main():
     for i, date_str in enumerate(todo, 1):
         prefix = f"[{i}/{len(todo)}]"
         if args.dry_run:
-            print(f"{prefix} {date_str} — dry run")
-            results.append(run_one(date_str, dry_run=True))
+            partial_flag = _snapshot_is_partial(date_str, effective_out)
+            print(f"{prefix} {date_str} — dry run{' (PARTIAL DIR)' if partial_flag else ''}")
+            results.append(run_one(date_str, dry_run=True, out_dir=effective_out))
             continue
 
-        print(f"{prefix} {date_str} ...", end=" ", flush=True)
+        # Clean partial dir before running if requested.
+        cleaned = False
+        if args.clean_partial and _snapshot_is_partial(date_str, effective_out):
+            cleaned = _clean_partial_dir(date_str, effective_out)
+
+        print(f"{prefix} {date_str}{' [cleaned partial]' if cleaned else ''} ...", end=" ", flush=True)
         r = run_one(
             date_str,
             use_bundle=args.use_bundle,
             stage_pit_institutional=args.stage_pit_institutional,
             out_dir=effective_out,
+            force_overwrite=args.force_overwrite,
+            allow_weekend=args.allow_weekend,
         )
+        r["cleaned_partial_dir"] = cleaned
         results.append(r)
 
         if r["status"] == "ok":
@@ -449,10 +569,12 @@ def main():
             print(f"OK ({r['elapsed_s']}s, exec={exe}, data={src}, inst={inst}{stg_str})")
         else:
             n_err += 1
-            print(f"FAIL: {r['status']}")
-            if "error_tail" in r:
-                for line in r["error_tail"]:
-                    print(f"    {line}")
+            label = r["status"].upper()
+            print(f"FAIL [{label}]")
+            if r.get("hint"):
+                print(f"    HINT: {r['hint']}")
+            for line in r.get("stderr_tail") or r.get("error_tail", []):
+                print(f"    {line}")
 
     elapsed_total = time.time() - t_start
 
@@ -477,8 +599,15 @@ def main():
     with open(LOG_PATH, "w") as f:
         json.dump(log, f, indent=2)
 
+    # Write per-run audit manifest.
+    manifest_path = _write_manifest(results, MANIFEST_DIR)
+
     print(f"\nDone: {n_ok} ok, {n_err} errors in {elapsed_total:.0f}s")
-    print(f"Log: {LOG_PATH}")
+    print(f"Log:      {LOG_PATH}")
+    print(f"Manifest: {manifest_path}")
+
+    if n_err > 0:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

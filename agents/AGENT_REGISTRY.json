@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-06-25",
+  "as_of": "2026-06-26",
   "notes": "Canonical roster of agent directories under agents/. Every subdirectory must appear here exactly once; every entry must correspond to an existing subdirectory. See tests/test_agent_registry.py. Retired overlapping agent directories may be retained for history and must be registered with status=deprecated and merged_into pointing at the canonical agent.",
   "enums": {
     "category": [
@@ -45,8 +45,7 @@
       "status": "active",
       "artifact_paths": [
         "data/aact/snapshots/",
-        "data/aact/linked/",
-        "agents/aact_trial_ingest/memory/"
+        "data/aact/linked/"
       ],
       "authority_level": "observe_only",
       "llm_policy": "none",
@@ -122,16 +121,18 @@
       "role": "monitor for new CRT resolutions, update join tables",
       "category": "research",
       "cadence": "daily_after_production",
-      "status": "active",
+      "status": "suppressed",
       "artifact_paths": [
-        "output/catalyst_ev/"
+        "output/catalyst_ev/",
+        "agents/crt_resolution_watcher/memory/"
       ],
       "authority_level": "mutate_data",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "research_lead",
-      "notes": "Crontab: 18:00.",
+      "notes": "Suppressed 2026-06-26: last ran 2026-06-11, before INC-2026-06-20-AUTOPUSH containment. Reactivation requires operator decision. Sunset review: 2026-09-30.",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "requires_preflight": true,
+      "sunset_review_date": "2026-09-30"
     },
     "ctgov_poller": {
       "role": "clinical trial status monitor, detect transitions",
@@ -182,16 +183,18 @@
       "role": "event-resolution pattern analyst, synthesize lessons",
       "category": "research",
       "cadence": "weekly",
-      "status": "active",
+      "status": "suppressed",
       "artifact_paths": [
-        "artifacts/event_analyst/"
+        "artifacts/event_analyst/",
+        "agents/event_analyst/memory/"
       ],
       "authority_level": "observe_only",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "research_lead",
-      "notes": "Weekly Friday cadence (P1 #4 reduction landed 2026-05-06). LLM agent fires Fri 18:55 ET; deterministic builder fires Fri 19:10 ET. Was previously daily Mon-Fri (both entries); reduced to Friday-only after ROI/noise audit. Watchdog event_analyst auto-recovery removed in the same change to prevent re-firing on Mon-Thu. Manual invocation path preserved: tools/run_agent_direct.py --agent event_analyst, tools/build_event_analyst.py --as-of-date YYYY-MM-DD.",
+      "notes": "Suppressed 2026-06-26: last ran 2026-06-08, before INC-2026-06-20-AUTOPUSH containment. Reactivation requires operator decision. Sunset review: 2026-09-30.",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "requires_preflight": true,
+      "sunset_review_date": "2026-09-30"
     },
     "fleet_steward": {
       "role": "control-plane agent, fleet health and dispatch",
@@ -213,16 +216,14 @@
       "role": "watchlist-scoped Grok/xAI search monitor",
       "category": "signal_monitor",
       "cadence": "intraday",
-      "status": "active",
-      "artifact_paths": [
-        "artifacts/grok_watch/"
-      ],
+      "status": "deprecated",
+      "artifact_paths": [],
       "authority_level": "write_artifacts",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "signal_lead",
-      "notes": "",
+      "notes": "Removed in commit 809da0ce2 (remove xAI/Grok agents and clean up all dependencies)",
       "llm_policy": "direct_llama_on_anomaly",
-      "requires_preflight": true
+      "requires_preflight": false
     },
     "herald": {
       "role": "biotech news collection, classification, and digests",
@@ -308,7 +309,7 @@
       "cadence": "daily_after_production",
       "status": "active",
       "artifact_paths": [
-        "agents/ic_health_monitor/memory/"
+        "artifacts/ic_dashboard/"
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
@@ -429,7 +430,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": [],
+      "artifact_paths": [
+        "agents/review_queue_steward/memory/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "signal_lead",
@@ -578,8 +581,8 @@
       "cadence": "daily_after_production",
       "status": "shadow",
       "artifact_paths": [
-        "artifacts/shadow/ees_v3_veto_shadow_card_*.json",
-        "artifacts/readiness/EES_V3_VETO_SHADOW_STATUS_*.md",
+        "artifacts/shadow/",
+        "artifacts/readiness/",
         "agents/ees_v3_veto_monitor/memory/"
       ],
       "authority_level": "write_artifacts",
@@ -593,8 +596,25 @@
       "mutation_authority": "none",
       "cron_enabled": true
     },
+    "allocation_lens": {
+      "role": "daily attention-routing artifact — regime assessment, bucket weights, and review budget from existing pipeline outputs",
+      "category": "portfolio_risk",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/surveillance/"
+      ],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "portfolio_lead",
+      "notes": "Reads: data/snapshots/<date>/rankings.csv, artifacts/catalyst_delta/, artifacts/ops_digest/, artifacts/readiness/, artifacts/scientific_cartography/. Writes: artifacts/surveillance/<date>_allocation_lens.{md,json} only. NO_FINAL_SCORE_CHANGE NO_RANKER_CHANGE NO_SELECTOR_CHANGE NO_SIZING_CHANGE. Classification: ALLOCATION_LENS_STEP_1_ATTENTION_ROUTING_NO_MODEL_CHANGE. Run: python3 tools/generate_allocation_lens.py --as-of-date <date>. Hermes cron job ID: d7c02d7516c5. Cron install: hermes cron create '30 20 * * 1-5' --name allocation-lens-daily --no-agent --script allocation_lens_daily.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
+      "llm_policy": "none",
+      "requires_preflight": false,
+      "cron_enabled": true,
+      "mutation_authority": "none"
+    },
     "hermes-skill-sync-agent": {
-      "role": "Hermes skill canonical sync guard — detect drift between skills/ sources, docs/hermes_skills/ mirrors, and retired references",
+      "role": "Hermes skill canonical sync guard \u2014 detect drift between skills/ sources, docs/hermes_skills/ mirrors, and retired references",
       "category": "control_plane",
       "cadence": "weekly",
       "status": "active",
@@ -602,12 +622,12 @@
         "artifacts/governance/hermes_skill_sync/"
       ],
       "authority_level": "observe_only",
-      "supervised_by_orchestrator": false,
+      "supervised_by_orchestrator": true,
       "owner": "governance_lead",
-      "notes": "Weekly Sunday 08:00 ET. no_agent Hermes cron: hermes-skill-sync-guard (script: hermes_skill_sync_agent.sh). Read-only scan of skills/ + docs/hermes_skills/; writes only to artifacts/governance/hermes_skill_sync/. Retired Correction Ledger references in canonical sources trigger DRIFT_CRITICAL. In sync mode, max 3 mirror files regenerated per run. Town notified via ruleset_mismatch event on CRITICAL or WARNING. Miss threshold: 8 days; stale threshold: 10 days. Cron install: hermes cron add --name hermes-skill-sync-guard --schedule '0 8 * * 0' --no-agent --script hermes_skill_sync_agent.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
+      "notes": "Weekly Sunday 08:00 ET. no_agent Hermes cron: hermes-skill-sync-guard (script: hermes_skill_sync_agent.sh). Read-only scan of skills/ + docs/hermes_skills/; writes only to artifacts/governance/hermes_skill_sync/. Retired Correction Ledger references in canonical sources trigger DRIFT_CRITICAL. In sync mode, max 3 mirror files regenerated per run. Town notified via ruleset_mismatch event on CRITICAL or WARNING. Miss threshold: 8 days; stale threshold: 10 days. Hermes cron job ID: 49b6a56cc6ee. Cron install: hermes cron add --name hermes-skill-sync-guard --schedule '0 8 * * 0' --no-agent --script hermes_skill_sync_agent.sh --workdir /mnt/c/Projects/biotech_screener/biotech-screener",
       "llm_policy": "none",
       "requires_preflight": false,
-      "cron_enabled": false,
+      "cron_enabled": true,
       "mutation_authority": "none"
     }
   }

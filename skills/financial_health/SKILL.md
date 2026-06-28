@@ -1,3 +1,7 @@
+---
+name: financial-health
+---
+
 # Financial Health Scoring Skill
 
 ## Purpose

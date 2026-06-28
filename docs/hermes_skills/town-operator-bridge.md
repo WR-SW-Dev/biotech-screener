@@ -65,6 +65,8 @@ Hermes job completes
 | `stale_artifact` | WARN | artifact past staleness threshold | review |
 | `cron_missed` | FAIL | cron job did not fire | investigate |
 | `contradiction_detected` | WARN | hard contradiction in ledger | review |
+| `hermes_skill_sync_drift` | WARN | hermes-skill-sync-agent: WARNING drift (frontmatter/mismatch) | review |
+| `hermes_skill_sync_failed` | FAIL | hermes-skill-sync-agent: CRITICAL drift or ERROR | investigate |
 
 **Phase C (future):** `first_fire_fail`, `snapshot_missing`, `ruleset_mismatch`, `cron_missed`, `contradiction_detected` → dual Telegram + Town routing for hard failures.
 

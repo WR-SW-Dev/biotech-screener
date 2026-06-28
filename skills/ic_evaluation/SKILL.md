@@ -1,3 +1,7 @@
+---
+name: ic-evaluation
+---
+
 # IC & Signal Evaluation Skill
 
 ## Purpose

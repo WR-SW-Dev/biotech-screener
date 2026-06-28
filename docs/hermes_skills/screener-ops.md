@@ -570,6 +570,22 @@ Research-enablement tooling for backfilling expectation fields into historical s
 
 ---
 
+## Research & Coding Pitfalls
+
+### Size Confound In Raw Event Counts
+
+Residualize all count-based research features against pipeline size (`n_total_trials`) or `market_cap_bucket` before testing for signal. Raw event counts (graveyard burden, catalyst density, `neg_reg` count, `n_trials`) correlate positively with forward returns because they capture "well-covered large company," not genuine alpha. Do not promote raw count features.
+
+(source: LRN-20260329-001, Pattern-Key `raw_count_size_confound`, recurrence=3)
+
+### F-String No Placeholder (Flake8 F541)
+
+Use plain strings for static markdown table headers and other static text; f-strings only when interpolating values. Flake8 F541 fires silently on f-strings with no `{}` placeholders and can block CI.
+
+(source: LRN-20260329-004, Pattern-Key `f_string_no_placeholder`, recurrence=5)
+
+---
+
 # SECTION 2: OPERATIONAL STATE
 
 > **SNAPSHOT DATA** - The values below are point-in-time and go stale. Verify against current pipeline or infrastructure before citing.

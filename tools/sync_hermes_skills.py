@@ -59,9 +59,6 @@ REFERENCE_MAP: dict[str, str] = {
 HERMES_NATIVE: dict[str, str] = {
     "governance-spec-enforcement": "Spec Enforcement & Governance",
     "hermeslink-state-capture": "Hermes Knowledge Layer State Capture",
-    "phase-2-step-4-readiness": "Phase 2 Step 4 Readiness",
-    "path-c-governance-monitoring": "Path C Governance Monitoring",
-    "path-c-operational-runbook": "Path C Operational Runbook",
 }
 
 # Hermes-runtime-sourced: source lives in ~/.hermes/skills/<category>/<name>/SKILL.md.
@@ -170,7 +167,7 @@ def sync_pair(skill_key: str, hermes_name: str, dry_run: bool) -> str:
     hermes_path = HERMES / hermes_name
     if skill_path is None:
         return f"SKIP {skill_key}: no SKILL.md or REFERENCE.md"
-    skill_body = unescape_md(skill_path.read_text())
+    _, skill_body = split_frontmatter(unescape_md(skill_path.read_text()))
     frontmatter, old_body = split_frontmatter(hermes_path.read_text()) if hermes_path.exists() else ("", "")
     if not frontmatter:
         frontmatter = f"---\nname: {hermes_path.stem}\n---\n"

@@ -50,6 +50,16 @@ cat <<EOF
 # Crontab verify: python3 tools/fleet_crontab_verify.py --write
 # Host onboarding (one command): bash tools/run_fleet_host_onboarding.sh
 
+# --- Hermes-managed cron (NOT Linux crontab — register once on host) ---
+# Hermes skill sync guard: Sunday 08:00 ET
+#   hermes cron add --name "hermes-skill-sync-guard" --schedule "0 8 * * 0" \
+#     --no-agent --script hermes_skill_sync_agent.sh \
+#     --workdir ${REPO_ROOT}
+# Wrapper:   scripts/run_hermes_skill_sync_agent.sh
+# Audit:     tools/hermes_skill_sync_audit.py
+# Heartbeat: artifacts/governance/hermes_skill_sync/latest_heartbeat.json
+# Runbook:   docs/ops/hermes_skill_sync.md
+
 # Close F-2026-005/006 on host before enabling:
 #   export SELFIMPROVE_GATES_MET=1
 # Herald dark pipeline recovery:

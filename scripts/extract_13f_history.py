@@ -290,9 +290,9 @@ def run_extraction(
         cusip_map = json.load(f)
 
     # Get managers
-    managers = registry.get("elite_core", [])
+    managers = registry.get("elite_core", []) + registry.get("conditional", [])
     if not managers:
-        raise ValueError("No elite_core managers in registry")
+        raise ValueError("No managers in registry (elite_core + conditional)")
 
     # Get universe tickers
     universe_tickers = {

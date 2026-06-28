@@ -203,6 +203,11 @@ def find_13f_filing_via_submissions_api(cik: str, quarter_end: date) -> Optional
         return None
 
 
+def _is_info_table_xml(content: str) -> bool:
+    """Return True if content looks like a 13F information table (any namespace prefix)."""
+    return "informationTable" in content
+
+
 def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) -> Optional[Tuple[str, str]]:
     """
     Fetch 13F information table XML document.
@@ -226,7 +231,7 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
     # Try 1: Primary document (often the information table)
     content = fetch_url_with_rate_limit(primary_doc_url)
 
-    if content and ("<informationTable" in content or "<ns1:informationTable" in content):
+    if content and _is_info_table_xml(content):
         print("      Found information table in primary document")
         return content, primary_doc_url
 
@@ -241,7 +246,7 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
         xml_url = f"{base_dir}/{xml_name}"
         content = fetch_url_with_rate_limit(xml_url)
 
-        if content and ("<informationTable" in content or "<ns1:informationTable" in content):
+        if content and _is_info_table_xml(content):
             print(f"      Found information table: {xml_name}")
             return content, xml_url
 
@@ -269,7 +274,7 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
                     continue  # Already tried
                 xml_url = f"{base_dir}/{xml_fname}"
                 content = fetch_url_with_rate_limit(xml_url)
-                if content and ("<informationTable" in content or "<ns1:informationTable" in content):
+                if content and _is_info_table_xml(content):
                     print(f"      Found information table via index.json: {xml_fname}")
                     return content, xml_url
         except Exception:

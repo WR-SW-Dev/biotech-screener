@@ -1,9 +1,9 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
-**Prior update:** 2026-06-21 (added § Recent Updates — ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
-**Earlier update:** 2026-05-24 (documentation sync to active v1.14.0: coinvest-only selector, capped Family C 2-feature ranker, freeze/quarantine active)
+**Last updated:** 2026-06-28 (YTD backtest data integrity audit — split-adjusted price fix + Jun 26 endpoint correction; corrected YTD DEM +38.52% vs XBI +27.43% (+11.09pp); regime diagnostic corrected; **no production change**)
+**Prior update:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
+**Earlier update:** 2026-06-21 (ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
 **Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
@@ -12,6 +12,85 @@ weights. See `production_data/ranker_v2_model.json` → `provenance` block for t
 stale selector/ranker prose with the already-active v1.14.0 configuration. The
 selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW Top-30
 construction remain frozen; this document does not authorize behavior changes.
+
+---
+
+## Recent Updates — 2026-06-28
+
+Diagnostic and documentation only. **No selector, ranker, weight, formula, eligibility, sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
+
+### YTD Backtest Data Integrity Audit — Two Bugs Found and Corrected
+
+A full data-integrity sweep of the YTD monthly-rebalanced DEM Top-30 backtest (Dec 31, 2025 → Jun 26, 2026) identified and corrected two independent data errors. Corrected artifacts in `artifacts/backtests/dem_current_ranker_ytd/` (v2) and `artifacts/backtests/dem_regime_conditional_alpha/` (v2).
+
+#### Bug 1 — Wrong price file (PIT backtest)
+
+`scripts/research/pit_backtest_a4.py` was previously using `production_data/price_history.csv` (raw, unadjusted closes). When a stock in the basket split within the 63-business-day measurement window, the script compared a pre-split start price to a post-split end price, producing a large spurious negative return. Three tickers had confirmed mid-window splits:
+
+| Ticker | Split date | Ratio | Periods affected |
+|---|---|---|---|
+| REPL | 2025-07-22 | ~4.39:1 | 2025-04-30 |
+| RNA | 2026-02-27 | ~4.93:1 | 2025-11-28, 2025-12-31, 2026-01-30 |
+| GOSS | 2026-02-23 | ~5.03:1 | 2025-12-31, 2026-01-30 |
+
+Fix: switched to `production_data/price_history_split_adj.csv` (commit `4c8280dfa`). Four-period provenance investigation confirmed the delta (96.7%–100% explained by split mechanics). Corrected values:
+
+| Period | Raw (wrong) | Adj (correct) | Error |
+|---|---|---|---|
+| 2025-04-30 | +1.35 pp | **+9.485 pp** | +8.14 pp |
+| 2025-11-28 | +7.12 pp | **+9.989 pp** | +2.87 pp |
+| 2025-12-31 | −5.10 pp | **−1.052 pp** | +4.05 pp |
+| 2026-01-30 | −5.05 pp | **−0.283 pp** | +4.77 pp |
+
+#### Bug 2 — Stale endpoints in June period (YTD monthly-rebalanced)
+
+The raw and split-adjusted price files both end Jun 23, 2026 for all 30 basket tickers; the raw file's XBI series ends Jun 24. The May29→Jun26 period was therefore measuring DEM returns to Jun 23 and XBI to Jun 24 — a 3-day asymmetric lag that artificially showed DEM +1.42% vs XBI +9.39% (−7.97pp gap). Fixed by sourcing Jun 26 close prices for all 30 basket tickers from the Robinhood historicals API.
+
+#### Corrected YTD Results (Dec 31, 2025 → Jun 26, 2026, monthly-rebalanced EW)
+
+| Period | Basket | DEM EW | XBI | Excess | Notes |
+|---|---|---|---|---|---|
+| Dec31→Jan30 | 2025-12-31 | +1.85% | +2.31% | −0.47pp | clean |
+| Jan30→Feb28 | 2026-01-30 | +1.63% | +2.10% | −0.47pp | Feb28=Sat; adj prices handle RNA/GOSS splits |
+| Feb28→Mar31 | 2026-02-28 | +4.54% | +0.28% | +4.26pp | clean |
+| Mar31→Apr30 | 2026-03-31 | +7.00% | +2.82% | +4.18pp | clean |
+| Apr30→May29 | 2026-04-30 | +4.26% | +4.08% | +0.18pp | clean |
+| May29→Jun26 | 2026-05-29 | **+14.76%** | +13.67% | +1.08pp | **corrected** (was +1.42% stale) |
+| **YTD chain-linked** | | **+38.52%** | **+27.43%** | **+11.09pp** | XBI cross-check: 121.93→155.38=+27.43% ✓ |
+
+#### Regime Diagnostic — Prior "Adverse" Claim Retracted
+
+The prior regime conditional alpha artifact (v1, raw prices) showed 2026 YTD as adverse in both Jan and Feb. With corrected split-adjusted prices, DEM is positive in all three regime states:
+
+| Regime | n | Mean (pp/mo) | t (NW, L=2) | Hit% |
+|---|---|---|---|---|
+| Bull | 30 | +3.049 | 2.055 | 66.7% |
+| Bear | 26 | +1.943 | 1.954 | 61.5% |
+| Neutral | 13 | +6.755 | 2.688 | 76.9% |
+
+**Prior claim "current regime (bull) adverse" is RETRACTED.** Root cause: corrupted 2026 YTD data from split artifacts. 2026 YTD corrected: Jan=−0.283pp, Feb=+9.084pp, mean=+4.40pp.
+
+Alpha type: `RALLY_PARTICIPATION_ALPHA_WITH_CROSS_SECTIONAL_RESIDUAL`. Corrected artifacts: `artifacts/backtests/dem_current_ranker_ytd/` (v2), `artifacts/backtests/dem_regime_conditional_alpha/` (v2). Governance unchanged: NO_MODEL_CHANGE / NO_PRODUCTION_WIRING / EES_SHADOW_GATE (20+20 still unmet).
+
+#### Beta Correction — Prior Artifacts Reported Wrong Series
+
+Prior backtest artifacts reported `beta(bl_hedged, XBI)` — the beta of the *excess* return against XBI — as if it were the portfolio beta. This is always exactly 1 less than the true portfolio beta:
+
+```
+beta(DEM_raw, XBI) = beta(bl_hedged, XBI) + 1
+```
+
+because `DEM_raw = bl_hedged + XBI` by construction (bl_hedged is XBI-hedged excess return).
+
+| Window | Portfolio β (DEM_raw vs XBI) | Alpha-stream β (excess vs XBI) |
+|---|---|---|
+| Full 69p | **1.1745** | 0.1745 |
+| Pre-2025 (55p) | **1.0507** | 0.0507 |
+| 2025+ (14p) | **1.5202** | 0.5202 |
+
+The DEM portfolio runs at approximately market-level XBI beta pre-2025 (~1.05), rising to ~1.52 in 2025+ as the model selected high-beta names during the biotech rally. It is not a low-beta strategy.
+
+The **alpha-stream beta** (excess vs XBI) remains the correct diagnostic for selection quality: 0.05 pre-2025 means the excess return was nearly uncorrelated with XBI movements over 55 periods — alpha came from cross-sectional stock picking, not sector-timing. The 2025+ alpha-stream beta of 0.52 reflects that the excess return itself became partly driven by the rally (model picked names that surged with the sector), consistent with the "rally participation" alpha label.
 
 ---
 

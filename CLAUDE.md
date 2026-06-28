@@ -31,6 +31,12 @@ See `.claude/rules/operational-state.md` for freeze scope and post-freeze priori
 
 ---
 
+## Subagent Delegation
+
+When a major biotech model change, validation finding, backtest correction, governance status change, or alpha/investability conclusion occurs, use the `model-doc-and-skill-sync` subagent to update `docs/MODEL_DOCUMENTATION.md` and synchronize any affected biotech skills. Documentation remains the source of truth; skill updates are downstream instruction hygiene only. No model, ranker, selector, sizing, production, or trading behavior may change through this agent.
+
+---
+
 ## PIT Rules
 
 1. **Never call the historical set "true PIT"** unless archived raw inputs, archived code, AND archived derived artifacts all exist as-of each date.
