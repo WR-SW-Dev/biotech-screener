@@ -15,6 +15,12 @@ construction remain frozen; this document does not authorize behavior changes.
 
 ---
 
+## Recent Updates — 2026-06-28 (Regime Reconciliation — interpretation-only)
+
+2026-06-28 regime reconciliation: the claim "model strongest when XBI bearish" is **unresolved / mixed**, not confirmed. Full-history HAC regime analysis (`dem_regime_conditional_alpha.json`, 69 monthly periods, trailing-20d-XBI definition, Newey-West) shows **bear is the THINNEST edge** (mean +1.94pp, t=1.95, hit 62%) vs neutral best (+6.76pp) and bull solid (+3.05pp); the model's alpha is classified `RALLY_PARTICIPATION_ALPHA`. A narrower weekly/YTD stress cut (XBI<−3%) suggested stress windows may show better relative performance, but uses a different definition/sample. **Conclusion: regime is interpretation-only — it must NOT drive ranking, selection, sizing, or stress-wrapper activation without forward validation.** Stress-wrapper activation is driven by realized drawdown / repeat-offenders / EES-false / replacement-bench behavior, not by a regime label. Canonical stress wrapper = `tools/stress_wrapper_monitor.py` (PR #441); a concurrent parallel build (commit e9a94bc2) was **not merged** and archived. Artifact: `artifacts/backtests/regime_reconciliation/`. `RESEARCH_RECONCILIATION / NO_MODEL_CHANGE / NO_SELECTOR_CHANGE / NO_SIZING_CHANGE / NO_TRADING_CHANGE`.
+
+---
+
 ## Recent Updates — 2026-06-28 (YTD Top-30 Bootstrap Control)
 
 2026-06-28 YTD Top-30 bootstrap control: monthly-rebalanced PIT Top-30 was compared against **2,000 random Top-30 equal-weight baskets** from the same eligible biotech universe. Model excess vs XBI was about **+9.9%**, while the random-basket mean excess was about **−10.3%**; the model landed around the **99th percentile** with empirical **p ≈ 0.009**. This materially strengthens the selection-skill evidence versus random biotech exposure (and explains the sub-50% raw batting average — random picks fare far worse), but remains **YTD/in-sample and gross of costs**. Forward bootstrap validation remains required. Artifact: `artifacts/backtests/ytd_top30_bootstrap_control/`. `RESEARCH_BOOTSTRAP_CONTROL / SELECTION_VALIDATION / NO_MODEL_CHANGE`.
