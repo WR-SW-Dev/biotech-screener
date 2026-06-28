@@ -65,11 +65,19 @@ Always warm 8-K cache BEFORE running screen.
 
 6000s \(100 min\) to cover worst-case AACT + tail steps. Previous 4500s was killing mid-AACT on Mondays.
 
-### Forward Validation Protocol — daily truth-card (SPEC-ONLY, NOT WIRED)
+### Forward Validation Protocol — daily truth-card (RATIFIED + WIRED 2026-06-28)
 
-`docs/FORWARD_VALIDATION_PROTOCOL.md` (RATIFIED 2026-06-28) pre-registers a daily "truth card" plus weekly/monthly summaries for the frozen DEM Top-30 candidate (v1.4 / ruleset `8887576e`). Suggested artifact path: `artifacts/live_shadow/forward_validation/<YYYY-MM-DD>/TRUTH_CARD.md`, alongside the existing `artifacts/live_shadow/go_nogo/<date>/GO_NOGO.md`.
+`docs/FORWARD_VALIDATION_PROTOCOL.md` (RATIFIED 2026-06-28) pre-registers a daily "truth card" plus weekly/monthly summaries for the frozen DEM Top-30 candidate (v1.4 / ruleset `8887576e`; candidate `model_hash=a9983a67c6954813`).
 
-**This is NOT a pipeline step.** The truth-card / weekly / monthly artifacts are specification-only; they are NOT in the 13-step orchestrator above and have NOT been built, scheduled, or authorized. Wiring them into `tools/run_daily_production.py` (or cron) is a separate, NOT-yet-approved governed task gated on CI green + freeze clearance + operator sign-off. Do not treat the truth card as an existing output.
+**WIRED into the daily pipeline (commit `a90297f8`, 2026-06-28).** The tooling exists and runs:
+- `tools/run_forward_validation.py` — immutable daily truth-card capture (top-30 EW by `actionable_rank`), model-hash check vs `CANDIDATE.json`, 8-point DQ gate, adversarial seeds (1000-bootstrap + bottom-30)
+- `tools/fill_forward_returns.py` — fills 1d/5d/20d forward returns when each endpoint becomes observable
+- `tools/weekly_validation_summary.py` — non-overlapping 5d window stats + gate progress → `WEEKLY_SUMMARY.md`
+- wired via `tools/cron_daily_production.sh` (after the diagnostic-reports block)
+
+Initial ledger: 10 captures (2026-06-12 → 2026-06-26); 1 completed 5d window (2026-W25 / Jun 15: basket +9.76%, XBI +8.31%, excess +1.45%, boot-pct 98%). Gate progress: 1/20 windows; confirmation eligibility ≈ 2026-10-31.
+
+**Governance:** NO_MODEL_CHANGE — the candidate is *observed*, not promoted. Clearing the 20-window gate only makes it *eligible* for an operator promotion decision; promotion/unfreeze remain explicit operator actions, and the §2 test is locked (not to be re-specified after data is seen).
 
 ---
 
