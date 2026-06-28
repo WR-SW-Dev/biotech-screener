@@ -4976,6 +4976,30 @@ def run_daily(
     except Exception as _ctg_err:
         _logger.warning(f"CTgov daily poll failed: {_ctg_err}")
 
+    # --- Step 1.45: Options IV snapshot (non-blocking, observability only) ---
+    # Fetches tastytrade market metrics for all universe tickers and writes
+    # production_data/options_snapshot_{as_of_date}.json and _latest.json.
+    # Does NOT affect rankings, weights, gates, or any scoring field.
+    # OBSERVABILITY_ONLY / NO_MODEL_CHANGE / NO_RANKER_CHANGE
+    try:
+        from tools.collect_options_snapshot import run as _collect_options
+
+        _opt_result = _collect_options(
+            as_of_date=as_of_date,
+            batch_size=100,
+            dry_run=False,
+            verbose=False,
+        )
+        _opt_meta = _opt_result.get("metadata", {})
+        _logger.info(
+            f"Options snapshot → {_opt_meta.get('returned_count', 0)}/"
+            f"{_opt_meta.get('universe_count', 0)} fetched | "
+            f"liquid={_opt_meta.get('liquid_count', 0)} "
+            f"event_premium={_opt_meta.get('event_premium_detected', 0)}"
+        )
+    except Exception as _opt_err:
+        _logger.warning(f"Options snapshot failed (non-blocking): {_opt_err}")
+
     # --- Step 1.5: Pre-warm caches (sec_8k, ctgov, sec_13f) ---
     # Must run BEFORE the ctgov gate so the gate sees the freshly-warmed cache.
     # All three sources are idempotent (short-circuit if cache already exists).
