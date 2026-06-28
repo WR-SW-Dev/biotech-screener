@@ -128,6 +128,10 @@ Cross-sectional regression with Newey-West corrected standard errors.
 
 The ONLY true out-of-sample evidence. Accumulates daily from production.
 
+> **Related pre-registration (RATIFIED 2026-06-28):** `docs/FORWARD_VALIDATION_PROTOCOL.md` pre-registers a separate forward out-of-sample test for the **DEM Top-30 candidate** (v1.4 / ruleset `8887576e`): weekly non-overlapping 5-day excess vs XBI as the primary gate, 20-window minimum, adversarial controls (random-30 / inverse-rank / XBI-only), confirmation eligibility ≈ 2026-10-31. The protocol's §2 test is locked and must not be re-specified after forward data is seen.
+>
+> **NOT YET WIRED.** The daily truth-card / weekly / monthly artifacts described in that protocol (§5–§7) are **specification-only**; building or cron-wiring them is a separate, NOT-yet-authorized task. This coinvest\_shadow\_tracker v2 remains the live forward-shadow mechanism. Do not treat the protocol's artifacts as existing pipeline outputs.
+
 ### Arms
 
 7 shadow arms tracking different signal combinations and construction variants.
