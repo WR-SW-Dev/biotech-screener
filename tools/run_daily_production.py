@@ -5000,6 +5000,31 @@ def run_daily(
     except Exception as _opt_err:
         _logger.warning(f"Options snapshot failed (non-blocking): {_opt_err}")
 
+    # --- Step 1.46: Options feature enrichment (non-blocking, shadow diagnostics) ---
+    # Runs after options snapshot. Computes realized vol, VRP, event pricing, term
+    # structure, and cross-sectional features. Writes to artifacts/options_enrichment/.
+    # OPTIONS_ENRICHMENT / EXPECTATION_LAYER_SHADOW / NO_MODEL_CHANGE / NO_RANKER_CHANGE
+    try:
+        from tools.enrich_options_features import run as _enrich_options
+
+        _enrich_out_dir = REPO_ROOT / "artifacts" / "options_enrichment" / as_of_date.replace("-", "_")
+        _enrich_summary = _enrich_options(
+            as_of_date=as_of_date,
+            output_dir=_enrich_out_dir,
+            write_shadow_only=True,
+            include_synthetic=True,
+            verbose=False,
+        )
+        _enrich_cov = _enrich_summary.get("coverage", {})
+        _logger.info(
+            f"Options enrichment → {_enrich_summary.get('universe_count', 0)} tickers | "
+            f"valid={_enrich_cov.get('valid_options', 0)} "
+            f"event_prem_high={_enrich_summary.get('flags', {}).get('event_premium_high', 0)} "
+            f"extreme_iv={_enrich_summary.get('flags', {}).get('extreme_iv', 0)}"
+        )
+    except Exception as _enrich_err:
+        _logger.warning(f"Options enrichment failed (non-blocking): {_enrich_err}")
+
     # --- Step 1.5: Pre-warm caches (sec_8k, ctgov, sec_13f) ---
     # Must run BEFORE the ctgov gate so the gate sees the freshly-warmed cache.
     # All three sources are idempotent (short-circuit if cache already exists).
