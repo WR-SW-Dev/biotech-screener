@@ -15,6 +15,12 @@ construction remain frozen; this document does not authorize behavior changes.
 
 ---
 
+## Recent Updates — 2026-06-28 (YTD Top-30 Risk Attribution)
+
+2026-06-28 YTD Top-30 risk attribution: monthly-rebalanced PIT Top-30 returned **+26.22% vs XBI +15.80%** through 2026-06-18 (+10.42pp excess). Beta was **1.07**; roughly **+8–9pp of the +10.42% excess was selection rather than beta tilt** (~87% selection / ~13% beta in the annualized decomposition) — correcting the prior "higher-beta tilt" narrative. However alpha t-stat was only **~0.85 OLS / ~1.03 Newey-West**, so the result is directionally supportive but **not investability proof**. Gross of costs, single ~5.5-month window. Artifact: `artifacts/backtests/ytd_top30_risk_attribution/`. `RESEARCH_ATTRIBUTION / NO_MODEL_CHANGE`.
+
+---
+
 ## Recent Updates — 2026-06-28 (Rank-Depth Shadow Tracking)
 
 Classification: `VALIDATION_INFRASTRUCTURE / RANK_DEPTH_SHADOW_TRACKING / NO_MODEL_CHANGE`
