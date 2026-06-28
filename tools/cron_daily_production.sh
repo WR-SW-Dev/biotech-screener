@@ -239,6 +239,21 @@ if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
         echo "[$(date -Iseconds)] WARN: sentinel_ticker_report exited non-zero" | tee -a "${LOG_FILE}"
 fi
 
+# --- Forward validation: capture today's Top-30 EW basket + fill completed returns ---
+# Immutable daily capture appended to artifacts/forward_validation/captures.jsonl.
+# Fill script updates returns for any pending capture whose forward window is now observable.
+# Both are read-only with respect to the model; no scoring or selection logic changes.
+if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
+    ${PYTHON} tools/run_forward_validation.py \
+        --as-of-date "${AS_OF_DATE}" \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: run_forward_validation exited non-zero" | tee -a "${LOG_FILE}"
+
+    ${PYTHON} tools/fill_forward_returns.py \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: fill_forward_returns exited non-zero" | tee -a "${LOG_FILE}"
+fi
+
 # --- Housekeeping: prune pre-staging, old logs, and old caches ---
 # Pre-staging (__pre_*) dirs older than 7 days are removed (temporary staging).
 # Snapshots older than 18 months are compressed to tar.gz archives.
