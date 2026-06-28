@@ -2,7 +2,7 @@
 
 **Generated:** 2026-06-28
 **Classification:** `PRE_REGISTRATION_NO_MODEL_CHANGE`
-**Status:** DRAFT — pending operator ratification
+**Status:** RATIFIED 2026-06-28 (operator) — test specification locked; not to be re-specified after forward data is seen
 **Author scope:** Documentation-only. This file specifies a test. It does not create, wire, or modify any cron job, pipeline step, agent, ranker, selector, sizing rule, score, eligibility rule, or production artifact.
 
 ---
@@ -58,7 +58,7 @@ The daily validation record exists to **observe** the frozen model. It must not 
 - **Significance basis:** weekly non-overlapping draws only. Daily-overlapping t-stats are reported as context but are **not** the gate (autocorrelation inflates them).
 - **One-tailed** at 95% is the directional gate; two-tailed 95% (|t| ≥ 1.96) is the stronger confirmation milestone.
 
-This test is fixed as of this document's ratification. It is not to be re-specified after data is seen.
+This test is fixed as of ratification (2026-06-28). It is not to be re-specified after data is seen.
 
 ---
 
@@ -112,7 +112,7 @@ Each trading day, produce one page: **DEM Daily Forward Validation Card**. Appen
 - Whether the candidate remains valid
 - Whether operator action is required
 
-Suggested artifact path (specification only — not wired by this document): `artifacts/live_shadow/forward_validation/<YYYY-MM-DD>/TRUTH_CARD.md`, alongside the existing `artifacts/live_shadow/go_nogo/<date>/GO_NOGO.md`.
+Suggested artifact path (specification only — **NOT wired** by this document; wiring is deferred, see §10): `artifacts/live_shadow/forward_validation/<YYYY-MM-DD>/TRUTH_CARD.md`, alongside the existing `artifacts/live_shadow/go_nogo/<date>/GO_NOGO.md`.
 
 ---
 
@@ -182,8 +182,18 @@ Current honest verdict: **"The model is behaving as if it has real cross-section
 - `trading_action: False`
 - `classification: PRE_REGISTRATION_NO_MODEL_CHANGE`
 - Freeze status: 2026-06-20 scoped architecture freeze remains in effect; unchanged by this document.
-- Operator action required: **ratify this protocol** (and, separately, decide whether to wire the daily truth-card artifact into the pipeline — explicitly out of scope here).
+
+### Ratification log
+
+| Date | Action | By | Note |
+|------|--------|----|------|
+| 2026-06-28 | DRAFT created | Town assistant (GitHub API) | Pre-registration authored; merged via PR #428 |
+| 2026-06-28 | **RATIFIED** | Operator (Darren) | Test specification locked. The §2 primary test must not be re-specified after forward data is seen. |
+
+### Deferred — NOT yet authorized
+
+- **Wiring the daily truth-card artifact (§5) into the pipeline is explicitly deferred.** The operator has NOT authorized it. Ratifying this protocol does **not** authorize building, scheduling, or cron-wiring the daily card, weekly/monthly summaries, or any artifact generation. That remains a separate, governed implementation task requiring its own explicit operator approval (and would touch `tools/run_daily_production.py` / cron — outside the observe-only/docs lane).
 
 ---
 
-*This document pre-registers a test. It does not run one, wire one, or change the model. Implementation of the daily card / weekly / monthly artifacts is a separate, explicitly-authorized task.*
+*This document pre-registers a test. It does not run one, wire one, or change the model. Implementation of the daily card / weekly / monthly artifacts is a separate, explicitly-authorized task that has NOT been approved.*
