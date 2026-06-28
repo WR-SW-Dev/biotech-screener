@@ -866,7 +866,7 @@ Production model freeze remains ACTIVE.
 
 - Mechanism coverage is sparse (~{mech_pct}% resolved). Unknown mechanism lane
   is dominant and expected; do not interpret as competitive insight.
-- Ticker linkage requires snapshot with `rankings.csv` — not used here by design.
+- Ticker linkage comes from the diagnostic's authorized company/universe snapshot (`--company-file`); the live `rankings.csv` is never read here by design.
 - Stage distribution: {summ.get("stage_distribution", {})}
 """
 
