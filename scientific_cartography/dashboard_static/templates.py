@@ -1,5 +1,13 @@
 """HTML templates for static dashboard pages."""
 
+import html
+
+
+def _esc(value) -> str:
+    """Escape a value for safe HTML interpolation (handles None and non-str)."""
+    return html.escape("" if value is None else str(value), quote=True)
+
+
 BASE_CSS = """
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,7 +61,7 @@ def html_page(title: str, content: str, nav_items: list = None, current_page: st
         for item_name, item_url in nav_items:
             is_active = item_name == current_page
             active_class = "active" if is_active else ""
-            nav_html += f'<li><a href="{item_url}" class="{active_class}">{item_name}</a></li>'
+            nav_html += f'<li><a href="{_esc(item_url)}" class="{active_class}">{_esc(item_name)}</a></li>'
         nav_html += "</ul></nav>"
 
     return f"""<!DOCTYPE html>
@@ -61,7 +69,7 @@ def html_page(title: str, content: str, nav_items: list = None, current_page: st
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{title}</title>
+  <title>{_esc(title)}</title>
   {BASE_CSS}
 </head>
 <body>
@@ -76,27 +84,27 @@ def html_page(title: str, content: str, nav_items: list = None, current_page: st
     </main>
   </div>
   <footer>
-    <p>Dashboard generated: <code>tools/generate_scientific_cartography_dashboard.py</code></p>
+    <p>Dashboard generated: <code>scientific_cartography/dashboard_static/generator.py</code></p>
     <p>Governance: READ_ONLY_DIAGNOSTIC | NO_SCORING | NO_AUTOMATION_APPROVAL</p>
   </footer>
 </body>
 </html>"""
 
 
-def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_artifacts: list, warnings: list) -> str:
+def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_artifacts: list, warnings: list, nav_items: list = None) -> str:
     """Index page showing available pages and status."""
     warnings_html = ""
     if missing_artifacts:
         warnings_html += (
-            f'<div class="warning"><strong>Missing Artifacts:</strong> {", ".join(missing_artifacts)}</div>'
+            f'<div class="warning"><strong>Missing Artifacts:</strong> {", ".join(_esc(m) for m in missing_artifacts)}</div>'
         )
     if warnings:
         for warning in warnings:
-            warnings_html += f'<div class="warning">{warning}</div>'
+            warnings_html += f'<div class="warning">{_esc(warning)}</div>'
 
     pages_html = '<ul class="page-list">'
     for page_name, page_file, description in pages:
-        pages_html += f'<li><a href="{page_file}">{page_name}</a> — {description}</li>'
+        pages_html += f'<li><a href="{_esc(page_file)}">{_esc(page_name)}</a> — {_esc(description)}</li>'
     pages_html += "</ul>"
 
     governance_info = """
@@ -123,8 +131,8 @@ def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_arti
 
     content = f"""
     <h2>Dashboard Overview</h2>
-    <p><strong>Artifact Directory:</strong> <code>{artifact_dir}</code></p>
-    <p><strong>As-of Date:</strong> <code>{as_of_date or "unknown"}</code></p>
+    <p><strong>Artifact Directory:</strong> <code>{_esc(artifact_dir)}</code></p>
+    <p><strong>As-of Date:</strong> <code>{_esc(as_of_date or "unknown")}</code></p>
 
     {warnings_html}
 
@@ -134,7 +142,7 @@ def index_template(artifact_dir: str, as_of_date: str, pages: list, missing_arti
     {governance_info}
     """
 
-    return html_page("Dashboard Index", content, current_page="Index")
+    return html_page("Dashboard Index", content, nav_items, "Index")
 
 
 def review_runs_template(artifact_dir: str, review_data: dict, nav_items: list) -> str:
@@ -142,18 +150,18 @@ def review_runs_template(artifact_dir: str, review_data: dict, nav_items: list) 
     rows = ""
     if review_data:
         for key, value in review_data.items():
-            value_text = str(value)
+            value_text = _esc(value)
             if value is True:
                 value_text = '<span style="color: green;">✓ true</span>'
             elif value is False:
                 value_text = '<span style="color: red;">✗ false</span>'
-            rows += f"<tr><td>{key}</td><td>{value_text}</td></tr>"
+            rows += f"<tr><td>{_esc(key)}</td><td>{value_text}</td></tr>"
     else:
         rows = "<tr><td colspan='2'>No review data available</td></tr>"
 
     content = f"""
     <h2>Review Run Status</h2>
-    <p><strong>Directory:</strong> <code>{artifact_dir}</code></p>
+    <p><strong>Directory:</strong> <code>{_esc(artifact_dir)}</code></p>
     <table>
       <thead><tr><th>Field</th><th>Value</th></tr></thead>
       <tbody>{rows}</tbody>
@@ -177,11 +185,11 @@ def disease_maps_template(diseases: list, nav_items: list) -> str:
             feature_count = disease.get("feature_count", 0)
             rows += f"""
             <tr>
-              <td>{name}</td>
-              <td>{therapeutic_area}</td>
-              <td>{program_count}</td>
-              <td>{cluster_count}</td>
-              <td>{feature_count}</td>
+              <td>{_esc(name)}</td>
+              <td>{_esc(therapeutic_area)}</td>
+              <td>{_esc(program_count)}</td>
+              <td>{_esc(cluster_count)}</td>
+              <td>{_esc(feature_count)}</td>
             </tr>
             """
 
@@ -201,7 +209,7 @@ def disease_maps_template(diseases: list, nav_items: list) -> str:
           <tbody>{rows}</tbody>
         </table>
         <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
-          Note: Sorting available via artifact browser. No ranking or prioritization applied.
+          Note: Listed in source order. No ranking or prioritization applied.
         </p>
         """
 
@@ -234,10 +242,10 @@ def human_decisions_template(decisions: list, nav_items: list) -> str:
 
             rows += f"""
             <tr>
-              <td><code>{timestamp}</code></td>
-              <td>{state}</td>
-              <td>{actor}</td>
-              <td>{reason}</td>
+              <td><code>{_esc(timestamp)}</code></td>
+              <td>{_esc(state)}</td>
+              <td>{_esc(actor)}</td>
+              <td>{_esc(reason)}</td>
               <td>{approved_text}</td>
               <td>{automation_text}</td>
             </tr>
@@ -279,19 +287,20 @@ def scheduled_review_health_template(executions: list, nav_items: list) -> str:
             outcome = execution.get("outcome", "unknown")
             duration = execution.get("duration_seconds", 0)
             error_msg = execution.get("error_message", "")
-            execution.get("governance", {}).get("non_blocking", True)
+            non_blocking = execution.get("governance", {}).get("non_blocking", True)
+            blocking_text = "No (non-blocking)" if non_blocking else "Yes"
 
             outcome_icon = "✓" if outcome == "success" else "⚠"
             outcome_color = "green" if outcome == "success" else "orange"
             error_text = (
-                f"<details><summary>View error</summary><pre>{error_msg[:200]}...</pre></details>" if error_msg else "—"
+                f"<details><summary>View error</summary><pre>{_esc(error_msg[:200])}{'\u2026' if len(error_msg) > 200 else ''}</pre></details>" if error_msg else "—"
             )
 
             rows += f"""
             <tr>
-              <td><code>{timestamp}</code></td>
-              <td><span style="color: {outcome_color};">{outcome_icon} {outcome}</span></td>
-              <td>0 (always)</td>
+              <td><code>{_esc(timestamp)}</code></td>
+              <td><span style="color: {outcome_color};">{outcome_icon} {_esc(outcome)}</span></td>
+              <td>{blocking_text}</td>
               <td>{duration:.2f}s</td>
               <td>{error_text}</td>
             </tr>
@@ -309,7 +318,7 @@ def scheduled_review_health_template(executions: list, nav_items: list) -> str:
             <tr>
               <th>Timestamp</th>
               <th>Outcome</th>
-              <th>Exit Code</th>
+              <th>Blocking</th>
               <th>Duration</th>
               <th>Error (if any)</th>
             </tr>
@@ -318,7 +327,7 @@ def scheduled_review_health_template(executions: list, nav_items: list) -> str:
         </table>
         """
 
-    return html_page("Scheduled Review Health", content, nav_items, "Scheduled Review Health")
+    return html_page("Scheduled Review Health", content, nav_items, "Scheduled Review")
 
 
 def governance_template(nav_items: list) -> str:

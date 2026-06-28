@@ -52,17 +52,7 @@ class DashboardGenerator:
         human_decisions = self._load_human_decisions()
         scheduled_executions = self._load_scheduled_review_health()
 
-        # Navigation items (shared across all pages)
-        nav_items = [
-            ("Index", "index.html"),
-            ("Review Runs", "review_runs.html"),
-            ("Disease Maps", "disease_maps.html"),
-            ("Human Decisions", "human_decisions.html"),
-            ("Scheduled Review", "scheduled_review_health.html"),
-            ("Governance", "governance.html"),
-        ]
-
-        # Generate pages
+        # Pages = single source of truth for both the page list and the nav.
         pages = [
             ("Index", "index.html", "overview"),
             ("Review Runs", "review_runs.html", "LG1/LG3 metadata"),
@@ -72,6 +62,9 @@ class DashboardGenerator:
             ("Governance", "governance.html", "governance boundaries"),
         ]
 
+        # Navigation items derived from pages (shared across all pages; prevents drift)
+        nav_items = [(name, url) for name, url, _ in pages]
+
         # Index page
         index_html = templates.index_template(
             str(self.artifact_dir),
@@ -79,6 +72,7 @@ class DashboardGenerator:
             pages,
             self.artifacts_missing,
             self.warnings,
+            nav_items,
         )
         self._write_page("index.html", index_html)
 

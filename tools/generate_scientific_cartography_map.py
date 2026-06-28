@@ -405,6 +405,9 @@ def build_map_data(programs: list[dict], disease_query: str, manifest: dict) -> 
             "stage_coverage_pct": round(100 * stage_known / len(programs), 1) if programs else 0,
             "mechanism_coverage_pct": round(mech_pct, 1),
             "ticker_coverage_pct": round(100 * ticker_known / len(programs), 1) if programs else 0,
+            "ticker_linked_count": ticker_known,
+            "stage_known_count": stage_known,
+            "mechanism_known_count": mech_known,
             "stage_distribution": stage_dist,
             "mechanism_lane_count": len(lanes),
             "stage_column_count": len(active_stages),
@@ -466,10 +469,13 @@ def render_svg(map_data: dict) -> str:
     total_w = _LANE_LABEL_W + len(columns) * _CELL_W + 20
     total_h = _COL_HEADER_H + sum(lane_heights.values()) + 20
 
+    aria = _xml_escape("Disease landscape map: " + (map_data["metadata"].get("disease_name") or ""))
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" '
         f'width="{total_w}" height="{total_h}" '
-        f'style="font-family:Arial,sans-serif;font-size:11px;">'
+        f'role="img" aria-label="{aria}" '
+        f'style="font-family:Arial,sans-serif;font-size:11px;">',
+        f"<title>{aria}</title>",
     ]
 
     # Background
@@ -486,7 +492,7 @@ def render_svg(map_data: dict) -> str:
         lines.append(
             f'<text x="{x + _CELL_W//2}" y="{_COL_HEADER_H//2 + 5}" '
             f'text-anchor="middle" fill="white" font-weight="bold" font-size="11">'
-            f"{label}</text>"
+            f"{_xml_escape(label)}</text>"
         )
 
     # Lane rows
@@ -528,10 +534,18 @@ def render_svg(map_data: dict) -> str:
                 stroke = "#333" if has_ticker else "#aaa"
                 stroke_w = "1.5" if has_ticker else "0.5"
                 label_text = _truncate(node.get("asset_name") or "—", 20)
+                full_name = node.get("asset_name") or "\u2014"
+                tip = [full_name]
+                if node.get("ticker"):
+                    tip.append("(" + node["ticker"] + ")")
+                if node.get("clinical_stage"):
+                    tip.append("\u00b7 " + node["clinical_stage"])
+                tooltip = _xml_escape(" ".join(tip))
                 lines.append(
                     f'<rect x="{cx + 4}" y="{ny}" width="{_CELL_W - 8}" height="{_CELL_H_PER_NODE - 2}" '
                     f'fill="{color}" opacity="{opacity}" '
-                    f'stroke="{stroke}" stroke-width="{stroke_w}" rx="2"/>'
+                    f'stroke="{stroke}" stroke-width="{stroke_w}" rx="2">'
+                    f"<title>{tooltip}</title></rect>"
                 )
                 lines.append(
                     f'<text x="{cx + 7}" y="{ny + 13}" fill="#1a1a1a" font-size="9">'
@@ -555,6 +569,19 @@ def render_svg(map_data: dict) -> str:
 
 def _xml_escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _display_disease(name: str) -> str:
+    """Title-case a disease label while preserving acronyms and alphanumeric tokens
+    (e.g. NSCLC, HER2, COPD are not lowercased the way str.title() would).
+    """
+    out = []
+    for w in (name or "").split():
+        if w.isupper() or any(ch.isdigit() for ch in w):
+            out.append(w)
+        else:
+            out.append(w[:1].upper() + w[1:])
+    return " ".join(out)
 
 
 # ---------------------------------------------------------------------------
@@ -582,6 +609,7 @@ def render_html(map_data: dict, svg_content: str) -> str:
     stage_pct = summ["stage_coverage_pct"]
     mech_pct = summ["mechanism_coverage_pct"]
     ticker_pct = summ["ticker_coverage_pct"]
+    ticker_linked = summ.get("ticker_linked_count", round(n_programs * ticker_pct / 100))
     stage_dist = summ.get("stage_distribution", {})
     canon_merges = summ.get("canonicalization_merge_count", 0)
 
@@ -718,7 +746,7 @@ body{{font-family:Arial,Helvetica,sans-serif;font-size:13px;background:#eef0f3;c
 
 <header class="poster-header">
   <div class="sc-label">Scientific Cartography · Disease Landscape Map</div>
-  <h1>{_xml_escape(disease.title())}</h1>
+  <h1>{_xml_escape(_display_disease(disease))}</h1>
   <div class="header-meta">
     <span><b>Therapeutic area:</b> {_xml_escape(ta)}</span>
     <span><b>MONDO:</b> {mondo_html}</span>
@@ -782,7 +810,7 @@ body{{font-family:Arial,Helvetica,sans-serif;font-size:13px;background:#eef0f3;c
       <b style="font-size:10px;color:#555">Modality:</b>
       {legend_swatches}
       <span class="ls"><span class="lsw" style="background:{_DEFAULT_COLOR}"></span>unknown</span>
-      <span class="legend-note">Opacity = confidence · Thick border = ticker linked</span>
+      <span class="legend-note">Opacity \u221d confidence (0.3 floor) · Thick border = ticker linked</span>
     </div>
   </main>
 
@@ -805,7 +833,7 @@ body{{font-family:Arial,Helvetica,sans-serif;font-size:13px;background:#eef0f3;c
       <h3>Coverage Gaps</h3>
       <div class="gap-row"><span>Unknown mechanism</span><b>{unknown_count}</b></div>
       <div class="gap-row"><span>Named-lane programs</span><b>{named_count}</b></div>
-      <div class="gap-row"><span>Unlinked tickers</span><b>{n_programs - int(n_programs * ticker_pct / 100)}</b></div>
+      <div class="gap-row"><span>Unlinked tickers</span><b>{n_programs - ticker_linked}</b></div>
       <div class="gap-row"><span>Unknown stage</span><b>{stage_dist.get("unknown", 0)}</b></div>
     </section>
   </aside>
