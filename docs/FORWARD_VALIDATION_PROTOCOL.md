@@ -1,9 +1,11 @@
 # Forward Validation Protocol — DEM Top-30 Candidate Model
 
 **Generated:** 2026-06-28
+**Ratified:** 2026-06-28 (operator decision)
 **Classification:** `PRE_REGISTRATION_NO_MODEL_CHANGE`
-**Status:** DRAFT — pending operator ratification
+**Status:** RATIFIED
 **Author scope:** Documentation-only. This file specifies a test. It does not create, wire, or modify any cron job, pipeline step, agent, ranker, selector, sizing rule, score, eligibility rule, or production artifact.
+**Daily truth-card pipeline integration:** OUT OF SCOPE — separate governed task, not part of this protocol ratification.
 
 ---
 

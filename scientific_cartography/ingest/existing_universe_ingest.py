@@ -3,6 +3,7 @@
 import csv
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -56,7 +57,9 @@ class ExistingUniverseIngest:
         market_data = item.get("market_data") if isinstance(item.get("market_data"), dict) else {}
         aliases = []
         seen = {value.lower() for value in (company_name, ticker) if value}
-        for value in (item.get("company"), market_data.get("company_name"), item.get("company_name"), item.get("name")):
+        explicit = item.get("aliases")
+        explicit = explicit if isinstance(explicit, list) else ([explicit] if explicit else [])
+        for value in [*explicit, item.get("company"), market_data.get("company_name"), item.get("company_name"), item.get("name")]:
             if not value:
                 continue
             alias = str(value).strip()
@@ -97,6 +100,8 @@ class ExistingUniverseIngest:
                         else row.get("name", "").strip() if row.get("name") else None
                     )
                     cik = row.get("cik", "").strip() if row.get("cik") else None
+                    aliases_raw = row.get("aliases") or ""
+                    aliases = [a.strip() for a in re.split(r"[;|]", aliases_raw) if a.strip()]
 
                     # Skip if no identifying information
                     if not (ticker or company):
@@ -114,6 +119,7 @@ class ExistingUniverseIngest:
                         ticker=ticker,
                         company_name=company or ticker or "Unknown",
                         cik=cik,
+                        aliases=aliases,
                         is_public=bool(ticker),
                         as_of_date=self.as_of_date,
                         source_refs=[str(csv_path)],

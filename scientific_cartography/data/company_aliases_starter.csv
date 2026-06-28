@@ -1,0 +1,31 @@
+ticker,company,cik,aliases,verified,notes
+PFE,Pfizer Inc.,,Pfizer|Wyeth|Seagen|Array BioPharma|Arena Pharmaceuticals,web-verified (Seagen completed Dec 2023),subsidiary/former names
+AMGN,Amgen Inc.,,Amgen|Horizon Therapeutics|Onyx Pharmaceuticals|Five Prime Therapeutics,web-verified (Horizon completed Oct 2023),
+BMY,Bristol Myers Squibb,,Bristol-Myers Squibb|Celgene|Karuna Therapeutics|Juno Therapeutics|MyoKardia|Mirati Therapeutics,web-verified (Karuna completed 2024),
+ABBV,AbbVie Inc.,,AbbVie|Pharmacyclics|Allergan|Cerevel Therapeutics|ImmunoGen,high-confidence; confirm Cerevel/ImmunoGen 2024,
+LLY,Eli Lilly and Company,,Eli Lilly|Lilly|Loxo Oncology|Loxo@Lilly|Dermira|Point Biopharma,high-confidence,
+GILD,"Gilead Sciences, Inc.",,Gilead|Kite Pharma|Immunomedics|CymaBay Therapeutics,high-confidence,
+AZN,AstraZeneca,,AstraZeneca|MedImmune|Alexion Pharmaceuticals|Alexion,high-confidence,
+SNY,Sanofi,,Sanofi|Genzyme|Bioverativ|Translate Bio|Provention Bio,high-confidence,
+RHHBY,Roche Holding (US ADR),,Roche|Genentech|Hoffmann-La Roche|F. Hoffmann-La Roche,web-verified (Genentech wholly-owned by Roche; US ADR RHHBY),Swiss lines RO/ROG/ROP
+JNJ,Johnson & Johnson,,Janssen|Janssen Pharmaceuticals|Janssen Research & Development|Janssen Biotech|Janssen-Cilag|Johnson & Johnson Innovative Medicine,high-confidence,Janssen rebranded to J&J Innovative Medicine 2024
+MRK,"Merck & Co., Inc.",,Merck Sharp & Dohme|MSD|Acceleron Pharma|Prometheus Biosciences,high-confidence,CAUTION: Merck KGaA/EMD Serono is a DIFFERENT company; do NOT alias to MRK
+GSK,GSK plc,,GlaxoSmithKline|Tesaro|Sierra Oncology|Affinivax|Bellus Health,high-confidence,
+NVS,Novartis,,Novartis Pharmaceuticals|The Medicines Company|Chinook Therapeutics|Morphosys,high-confidence,Sandoz spun off 2023
+VRTX,Vertex Pharmaceuticals,,Vertex|Vertex Pharmaceuticals Incorporated,high-confidence,
+IMVT,"Immunovant, Inc.",,Immunovant,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+VCYT,"Veracyte, Inc.",,Veracyte,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+GPCR,Structure Therapeutics Inc.,,Structure Therapeutics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1; ADR
+OCUL,"Ocular Therapeutix, Inc.",,Ocular Therapeutix,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+CYTK,"Cytokinetics, Incorporated",,Cytokinetics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+MLYS,"Mineralys Therapeutics, Inc.",,Mineralys Therapeutics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+MAZE,"Maze Therapeutics, Inc.",,Maze Therapeutics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+ALKS,Alkermes plc,,Alkermes,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+TNGX,"Tango Therapeutics, Inc.",,Tango Therapeutics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+IMCR,Immunocore Holdings plc,,Immunocore,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T1
+VRDN,"Viridian Therapeutics, Inc.",,Viridian Therapeutics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T2; PDUFA Jun 30
+ORKA,"Oruka Therapeutics, Inc.",,Oruka Therapeutics,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T2
+RVMD,"Revolution Medicines, Inc.",,Revolution Medicines,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T3
+ERAS,"Erasca, Inc.",,Erasca,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T3
+GH,"Guardant Health, Inc.",,Guardant Health,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T3
+TARS,"Tarsus Pharmaceuticals, Inc.",,Tarsus Pharmaceuticals,roster-confirmed (Coinvest Weekly Roll-Up Jun 26 2026),watchlist T3

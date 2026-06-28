@@ -11,6 +11,7 @@ Cache-only, read-only, non-blocking by default.
 import argparse
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Ensure repo root is in path for standalone execution from tools/
 repo_root = Path(__file__).parent.parent
@@ -29,6 +30,61 @@ from scientific_cartography.normalize.disease_normalizer import DiseaseNormalize
 from scientific_cartography.normalize.mechanism_normalizer import MechanismNormalizer  # noqa: E402
 from scientific_cartography.normalize.sponsor_resolver import SponsorResolver  # noqa: E402
 from scientific_cartography.normalize.stage_normalizer import StageNormalizer  # noqa: E402
+
+
+def _load_company_records(
+    args: argparse.Namespace,
+    snapshot_dir: Path,
+    as_of_date: str,
+    status: dict,
+) -> tuple[list, Optional[str]]:
+    """Load company/ticker reference records for sponsor resolution.
+
+    Precedence (PIT-safe; never auto-loads the live ranked screener output):
+      1. --company-file: explicit static universe reference (CSV or JSON). This
+         bypasses the snapshot_dir/rankings.csv lookup entirely.
+      2. snapshot_dir/rankings.csv: legacy default lookup.
+      3. Empty: ticker resolution stays disabled (warned loudly; fatal only when
+         the caller runs in --strict mode).
+
+    A requested-but-missing/unreadable --company-file is reported as a loud
+    warning rather than silently degrading to empty company data.
+
+    Returns:
+        Tuple of (company_records, source_label). source_label is None when no
+        records were loaded.
+    """
+    universe_ingest = ExistingUniverseIngest(as_of_date=as_of_date)
+    companies: list = []
+    source: Optional[str] = None
+
+    company_file = getattr(args, "company_file", None)
+    if company_file:
+        company_path = Path(company_file)
+        if company_path.is_file():
+            try:
+                if company_path.suffix.lower() == ".json":
+                    companies = universe_ingest.ingest_from_json(company_path)
+                else:
+                    companies = universe_ingest.ingest_from_csv(company_path)
+                source = company_path.name
+            except Exception as e:
+                status["warnings"].append(f"Failed to load --company-file {company_path}: {e}")
+        else:
+            status["warnings"].append(f"--company-file not found: {company_path}")
+        return companies, source
+
+    rankings_csv = snapshot_dir / "rankings.csv"
+    if rankings_csv.exists():
+        try:
+            companies = universe_ingest.ingest_from_rankings_csv(rankings_csv)
+            source = rankings_csv.name
+        except Exception as e:
+            status["warnings"].append(f"Failed to load from rankings.csv: {e}")
+    else:
+        status["warnings"].append("rankings.csv not found in snapshot_dir")
+
+    return companies, source
 
 
 def run_diagnostics(args: argparse.Namespace) -> int:
@@ -79,18 +135,8 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         if not quiet:
             print(f"Loading universe data from {snapshot_dir}...", file=sys.stderr)
 
-        universe_ingest = ExistingUniverseIngest(as_of_date=as_of_date)
-        companies = []
-
-        # Try loading from standard locations in snapshot directory
-        rankings_csv = snapshot_dir / "rankings.csv"
-        if rankings_csv.exists():
-            try:
-                companies = universe_ingest.ingest_from_rankings_csv(rankings_csv)
-            except Exception as e:
-                status["warnings"].append(f"Failed to load from rankings.csv: {e}")
-        else:
-            status["warnings"].append("rankings.csv not found in snapshot_dir")
+        companies, _company_source = _load_company_records(args, snapshot_dir, as_of_date, status)
+        status["company_source"] = _company_source
 
         if not companies:
             if strict:
@@ -98,7 +144,8 @@ def run_diagnostics(args: argparse.Namespace) -> int:
             status["warnings"].append("Continuing with empty company data")
 
         if not quiet:
-            print(f"✓ Loaded {len(companies)} companies", file=sys.stderr)
+            _company_label = _company_source or "none"
+            print(f"✓ Loaded {len(companies)} companies (source: {_company_label})", file=sys.stderr)
 
         # Step 2: Load CTGov trial data (from cache)
         if not quiet:
@@ -160,18 +207,31 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         stage_normalizer = StageNormalizer()
         asset_alias_resolver = AssetAliasResolver(as_of_date=as_of_date)
         sponsor_resolver = SponsorResolver(company_records=companies)
-        # Load mechanism aliases: explicit override → well-known path → built-in only
+        # Load mechanism aliases: explicit override → well-known path → built-in only.
+        # Surface the resolved source and warn loudly on a missing pack rather than
+        # silently degrading to the built-in normalizer (same input-path discipline as
+        # --company-file; mirrors the recurring manager_registry.json 404 class).
         _mech_alias_override = getattr(args, "mechanism_aliases", None)
         _mech_alias_default = repo_root / "scientific_cartography" / "data" / "mechanism_aliases_v0_1.csv"
-        _mech_alias_path = (
-            Path(_mech_alias_override)
-            if _mech_alias_override
-            else (_mech_alias_default if _mech_alias_default.exists() else None)
-        )
+        if _mech_alias_override:
+            _mech_alias_path = Path(_mech_alias_override)
+            if not _mech_alias_path.exists():
+                status["warnings"].append(f"--mechanism-aliases not found: {_mech_alias_path}")
+                _mech_alias_path = None
+        elif _mech_alias_default.exists():
+            _mech_alias_path = _mech_alias_default
+        else:
+            _mech_alias_path = None
+            status["warnings"].append(
+                f"mechanism alias pack not found at {_mech_alias_default}; "
+                "using built-in normalizer only (mechanism coverage will be degraded)"
+            )
         if _mech_alias_path is not None:
             mechanism_normalizer = MechanismNormalizer.from_csv(_mech_alias_path, as_of_date=as_of_date)
+            status["mechanism_alias_source"] = _mech_alias_path.name
         else:
             mechanism_normalizer = MechanismNormalizer(as_of_date=as_of_date)
+            status["mechanism_alias_source"] = "builtin"
 
         # Step 4: Build programs from trials
         if not quiet:
@@ -386,6 +446,28 @@ def main() -> int:
         type=str,
         default=None,
         help="Optional direct path to trials JSON/JSONL (bypasses ctgov-cache lookup)",
+    )
+    parser.add_argument(
+        "--company-file",
+        type=str,
+        default=None,
+        help=(
+            "Optional PIT-safe company/universe reference (CSV or JSON) for "
+            "sponsor->ticker resolution. Bypasses snapshot_dir/rankings.csv. "
+            "Supply a static universe snapshot, NOT the live ranked screener output. "
+            "CSV columns: ticker,company[,cik][,aliases]; aliases is ;|-delimited "
+            "sponsor-name variants (e.g. subsidiaries) that resolve to the ticker."
+        ),
+    )
+    parser.add_argument(
+        "--mechanism-aliases",
+        type=str,
+        default=None,
+        help=(
+            "Optional path to a mechanism alias CSV. Overrides the bundled "
+            "scientific_cartography/data/mechanism_aliases_v0_1.csv. A missing "
+            "override or bundled pack is warned (not silently ignored)."
+        ),
     )
     parser.add_argument(
         "--output-dir",

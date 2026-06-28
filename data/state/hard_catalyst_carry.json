@@ -782,5 +782,12 @@
     "catalyst_days_at_first_seen": 158,
     "first_seen_date": "2026-06-26",
     "estimated_event_date": "2026-12-01"
+  },
+  "MLTX": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 5,
+    "first_seen_date": "2026-06-25",
+    "estimated_event_date": "2026-06-30"
   }
 }
