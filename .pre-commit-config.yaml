@@ -81,3 +81,14 @@ repos:
         language: system
         types: [python]
         require_serial: true
+
+      # Model-affecting diffs (scoring/ranking/selector/ruleset/model weights)
+      # must ship with a documentation update so hash-locked changes leave a
+      # paper trail. Reads the staged index itself; override with
+      # ALLOW_MODEL_DOCS_SKIP=1 when the rationale lives in the commit body.
+      - id: model-docs-sync
+        name: model-affecting changes require a docs update
+        entry: python3 scripts/check_model_docs_sync.py
+        language: system
+        pass_filenames: false
+        always_run: true

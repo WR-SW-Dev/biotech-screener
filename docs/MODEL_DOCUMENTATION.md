@@ -2607,4 +2607,49 @@ Post-review (2026-05-28 onward):
 
 ---
 
-*Document updated 2026-06-02 (added § 14.6.7 PIT trim shadow study documentation; research-only artifact with forward-window maturity blocker). Prior updates: 2026-05-24 (v1.14.0 sync), 2026-05-06 (ruleset reference), 2026-04-27 (baseline). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
+## Production execution hygiene (2026-06-28) — infrastructure only
+
+`PRODUCTION_OPTIMIZATION / NO_MODEL_CHANGE / NO_RANKER_CHANGE / NO_SELECTOR_CHANGE / NO_RULESET_CHANGE`
+
+A set of additive, behavior-preserving changes sharpen `run_screen.py` /
+`tools/run_daily_production.py` production execution **without touching the
+frozen model**. Ranker, selector, scoring formulas, feature weights, ruleset,
+eligibility, sizing, actionability, and PIT semantics are unchanged. Verified
+byte-identical via the golden-baseline regression suite
+(`tests/test_golden_baseline.py` + composite/clinical/catalyst/financial/IC
+golden suites — all pass).
+
+- **Stage timing** — `run_screen.py` prints `[timing] <stage>: N.NNs` for load
+  and each module (1–5); a `_timed()` context manager is available. Observability
+  only.
+- **Price-history parse-once cache** — `price_history.csv` (28MB+) was re-parsed
+  by momentum, beta/alpha, and drawdown/beta-rsi hydration. A run-scoped
+  `_read_price_history_rows()` cache (keyed by path/mtime/size; one file retained)
+  serves the exact `csv.DictReader` rows to all consumers, which each still
+  rebuild their own filtered view → identical output. Saves redundant 28MB parses.
+- **Cheap-exclusion prune log** — a `[prune] universe: loaded N → M` line is
+  emitted before expensive modules. Existing delisted + PIT-survivorship filters
+  already run before any live fetch/enrichment; no new pruning was added (no
+  ranking change).
+- **Source-freshness gate** (`run_daily_production.py`) — per-source TTLs
+  (prices/ctgov daily … 13F quarterly, euctr/ctis/isrctn weekly). Stale **non-core**
+  sources emit WARN; core staleness (prices/XBI) stays blocking via the existing
+  dedicated FAIL gates. Visibility, not new blocking.
+- **Manifest provenance + health categories** — `run_manifest.json` carries a
+  `hashes` block (model/universe/price/clinical/ruleset/rankings) and a
+  `health_summary` (blocking_failures vs warnings).
+- **No-op detection (logging-only)** — `NO_MATERIAL_INPUT_CHANGE` is logged when
+  current input hashes match the prior snapshot's manifest. **Never skips work or
+  snapshot creation.**
+- **Run modes / scoped price refresh** — `--mode {daily-validation,daily-production,
+  full-refresh,research}` and `--price-refresh-scope {full,top30}`. Default mode
+  `daily-production` resolves to the prior defaults, so **cron and existing callers
+  are unaffected**.
+
+**Operator action required:** none. Defaults preserve current cron behavior. The
+new `--mode daily-validation` / `--price-refresh-scope top30` are opt-in for fast
+forward-evidence runs.
+
+---
+
+*Document updated 2026-06-28 (added § Production execution hygiene; infrastructure-only, no model/ranker/selector/ruleset change, cron defaults preserved). Prior: 2026-06-02 (added § 14.6.7 PIT trim shadow study documentation; research-only artifact with forward-window maturity blocker). Prior updates: 2026-05-24 (v1.14.0 sync), 2026-05-06 (ruleset reference), 2026-04-27 (baseline). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
