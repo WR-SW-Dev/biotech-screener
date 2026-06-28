@@ -1,0 +1,363 @@
+ticker,company_name,status,exchange,sector,etf_sources,known_delisted,exclusion_reason,model_classification,is_stale,has_any_price,last_price_date
+AARD,"Aardvark Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ABBV,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+ABCL,AbCellera Biologics Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ABEO,Abeona Therapeutics Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ABOS,"Acumen Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ABSI,Absci Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ABUS,Arbutus Biopharma Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ABVX,ABIVAX Société Anonyme,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ACAD,ACADIA Pharmaceuticals Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ACHV,"Achieve Life Sciences, Inc.",active,NASDAQ,Biotechnology,XBI,False,,ACTIVE_BUT_STALE_PRICE,,,
+ACIU,AC Immune SA,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ACLX,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-04-29
+ACRS,"Aclaris Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ACRV,"Acrivon Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ADCT,ADC Therapeutics SA,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ADMA,"ADMA Biologics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ADPT,Adaptive Biotechnologies Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AGIO,"Agios Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+AKBA,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+AKTX,"Akari Therapeutics, Plc",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ALDX,"Aldeyra Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ALGS,"Aligos Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ALKS,Alkermes plc,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ALLO,"Allogene Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ALMS,Alumis Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ALNY,"Alnylam Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ALT,"Altimmune, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ALVO,Alvotech,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AMGN,Amgen Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+AMLX,"Amylyx Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AMPH,"Amphastar Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+AMRX,"Amneal Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+ANAB,"AnaptysBio, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ANIP,"ANI Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+ANNX,"Annexon, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ANRO,ANRO,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+APGE,"Apogee Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+APLS,"Apellis Pharmaceuticals, Inc.",delisted,,Healthcare,,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-05-15
+AQST,"Aquestive Therapeutics, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+ARCT,Arcturus Therapeutics Holdings Inc.,pending_coverage,,Healthcare,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+ARDX,"Ardelyx, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+ARGX,argenx SE,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ARQT,"Arcutis Biotherapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ARTV,"Artiva Biotherapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ARVN,"Arvinas, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ARWR,"Arrowhead Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ASMB,"Assembly Biosciences, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ASND,Ascendis Pharma A/S,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ATAI,AtaiBeckley Inc.,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+AUPH,Aurinia Pharmaceuticals Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AURA,"Aura Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AUTL,Autolus Therapeutics plc,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+AVBP,"ArriVent BioPharma, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AVIR,"Atea Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AVTR,"Avantor, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+AVTX,"Avalo Therapeutics, Inc.",active,NASDAQ,Biotechnology,XBI,False,,ACTIVE_BUT_STALE_PRICE,,,
+AVXL,Anavex Life Sciences Corp.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+AXSM,"Axsome Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+AZN,AstraZeneca PLC,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+BBIO,"BridgeBio Pharma, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BBOT,"BridgeBio Oncology Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+BCAX,Bicara Therapeutics Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+BCRX,"BioCryst Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BCYC,BCYC,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+BDTX,"Black Diamond Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BEAM,Beam Therapeutics Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BHVN,Biohaven Ltd.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+BIIB,Biogen Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BIOA,"BioAge Labs, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+BLTE,"Belite Bio, Inc",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BMEA,"Biomea Fusion, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BMRN,BioMarin Pharmaceutical Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BNTX,BioNTech SE,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+BRKR,Bruker Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CABA,"Cabaletta Bio, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CADL,"Candel Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CAI,"Caris Life Sciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CAPR,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+CATX,"Perspective Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CCCC,"C4 Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CDNA,"CareDx, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CDXS,"Codexis, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CELC,Celcuity Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CERS,Cerus Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CGEM,"Cullinan Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CGON,"CG Oncology, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CHRS,"Coherus Oncology, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+CLDX,"Celldex Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CLLS,Cellectis S.A.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CLYM,"Climb Bio, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CMPS,COMPASS Pathways plc,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CMPX,"Compass Therapeutics, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+CNTA,Centessa Pharmaceuticals plc,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CNTX,Context Therapeutics Inc.,active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+COGT,"Cogent Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+COLL,"Collegium Pharmaceutical, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+CPRX,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+CRBU,"Caribou Biosciences, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CRL,"Charles River Laboratories International, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CRMD,CorMedix Inc.,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+CRNX,"Crinetics Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CRSP,CRISPR Therapeutics AG,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CRVS,"Corvus Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+CSTL,"Castle Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CTKB,"Cytek Biosciences, Inc.",pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+CTMX,"CytomX Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CTNM,"Contineum Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+CYTK,"Cytokinetics, Incorporated",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+DAWN,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-04-24
+DFTX,"Definium Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+DMRA,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+DNA,"Ginkgo Bioworks Holdings, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+DNLI,Denali Therapeutics Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+DNTH,"Dianthus Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+DRMA,"Dermata Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+DRUG,Bright Minds Biosciences Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+DSGN,"Design Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+DYN,"Dyne Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+EBS,Emergent BioSolutions Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+EDIT,"Editas Medicine, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ELDN,"Eledon Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ELVN,"Enliven Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ENGN,enGene Therapeutics Inc.,pending_coverage,,Healthcare,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+ENTA,"Enanta Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+EOLS,"Evolus, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+EPRX,Eupraxia Pharmaceuticals Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ERAS,"Erasca, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ESPR,"Esperion Therapeutics, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+ETON,"Eton Pharmaceuticals, Inc.",pending_coverage,NASDAQ,Biotechnology,NBI,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+EWTX,"Edgewise Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+EXEL,"Exelixis, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+EYPT,"EyePoint, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+FATE,"Fate Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+FDMT,"4D Molecular Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+FHTX,Foghorn Therapeutics Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+FLGT,"Fulgent Genetics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+FOLD,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-04-27
+FTRE,Fortrea Holdings Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+FULC,"Fulcrum Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+GENB,"Generate Biomedicines, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+GERN,Geron Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+GH,"Guardant Health, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+GHRS,GH Research PLC,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+GILD,"Gilead Sciences, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+GLPG,Lakefront Biotherapeutics NV,delisted,,Healthcare,,True,status=delisted,DELISTED_OR_INACTIVE,False,True,2026-06-26
+GLUE,"Monte Rosa Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+GMAB,Genmab A/S,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+GOSS,"Gossamer Bio, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+GPCR,Structure Therapeutics Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+GRAL,"GRAIL, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+GRFS,"Grifols, S.A.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+HALO,"Halozyme Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+HOWL,"Werewolf Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+HRMY,"Harmony Biosciences Holdings, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+HROW,"Harrow, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+HRTX,"Heron Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+HUMA,"Humacyte, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+IBRX,"ImmunityBio, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+IDYA,"IDEAYA Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+IKT,"Inhibikase Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+ILMN,"Illumina, Inc.",pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+IMCR,Immunocore Holdings plc,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+IMMP,Immutep Limited,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+IMMX,"Immix Biopharma, Inc.",active,NASDAQ,Biotechnology,XBI,False,,ACTIVE_BUT_STALE_PRICE,,,
+IMNM,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+IMRX,Immuneering Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+IMTX,Immatics N.V.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+IMVT,"Immunovant, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+INBX,"Inhibrx Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+INCY,Incyte Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+INDV,"Indivior Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+INSM,Insmed Incorporated,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+INVA,"Innoviva, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+IONS,"Ionis Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+IOVA,"Iovance Biotherapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+IRON,"Disc Medicine, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+IRWD,"Ironwood Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+IVVD,"Invivyd, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+JANX,"Janux Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+JAZZ,Jazz Pharmaceuticals plc,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+JBIO,"Jade Biosciences, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+KALA,"KALA BIO, Inc.",pending_coverage,,Healthcare,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+KALV,KalVista Pharmaceuticals Inc,delisted,,Healthcare,,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-06-12
+KARD,"Kardigan, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+KLRA,"Kailera Therapeutics, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+KMDA,Kamada Ltd.,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+KNSA,"Kiniksa Pharmaceuticals International, plc",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+KOD,Kodiak Sciences Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+KROS,"Keros Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+KRYS,"Krystal Biotech, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+KURA,"Kura Oncology, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+KYMR,"Kymera Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+KYNB,"Kyntra Bio, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+KYTX,"Kyverna Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+LAB,Standard BioTools Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+LBRX,LB Pharmaceuticals Inc,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+LCTX,"Lineage Cell Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+LEGN,Legend Biotech Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+LENZ,"LENZ Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+LFCR,"Lifecore Biomedical, Inc.",pending_coverage,NASDAQ,Biotechnology,NBI,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+LGND,Ligand Pharmaceuticals Incorporated,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+LQDA,Liquidia Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+LRMR,"Larimar Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+LXEO,"Lexeo Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+LYEL,"Lyell Immunopharma, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MAZE,"Maze Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MBX,"MBX Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MCRB,"Seres Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+MDGL,"Madrigal Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+MDXG,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+MEDP,"Medpace Holdings, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MENS,Jyong Biotech Ltd.,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+MESO,Mesoblast Limited,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MGTX,MeiraGTx Holdings plc,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+MIRM,"Mirum Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MLTX,MoonLake Immunotherapeutics,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+MLYS,"Mineralys Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MNKD,MannKind Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+MPLT,"MapLight Therapeutics, Inc.",active,NASDAQ,Biotechnology,XBI,False,,ACTIVE_BUT_STALE_PRICE,,,
+MRNA,"Moderna, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+MRVI,"Maravai LifeSciences Holdings, Inc.",pending_coverage,,Healthcare,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+MYGN,"Myriad Genetics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NAMS,NewAmsterdam Pharma Company N.V.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NAUT,"Nautilus Biotechnology, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+NBIX,"Neurocrine Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NBP,NovaBridge Biosciences,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+NGNE,Neurogene Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NKTX,"Nkarta, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+NMRA,"Neumora Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NRIX,"Nurix Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NTLA,"Intellia Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+NTRA,"Natera, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+NUVB,Nuvation Bio Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NUVL,"Nuvalent, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+NVAX,"Novavax, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+NVCR,NovoCure Limited,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+OABI,"OmniAb, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+OBIO,"Orchestra BioMed Holdings, Inc.",pending_coverage,NASDAQ,Biotechnology,NBI,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+OCGN,"Ocugen, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+OCS,Oculis Holding AG,pending_coverage,,Healthcare,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+OCUL,"Ocular Therapeutix, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+OLMA,"Olema Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+OMER,Omeros Corporation,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+ONC,BeOne Medicines AG,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+OPCH,"Option Care Health, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+OPK,"OPKO Health, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ORIC,"ORIC Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ORKA,"Oruka Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+OVID,Ovid Therapeutics Inc.,active,NASDAQ,Biotechnology,XBI,False,,ACTIVE_BUT_STALE_PRICE,,,
+PACB,"Pacific Biosciences of California, Inc.",pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+PAHC,Phibro Animal Health Corporation,pending_coverage,NASDAQ,Biotechnology,NBI,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+PBLS,"Parabilis Medicines, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+PBYI,"Puma Biotechnology, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+PCRX,"Pacira BioSciences, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PCVX,"Vaxcyte, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PEPG,PepGen Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+PGEN,"Precigen, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PHAT,"Phathom Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+PHVS,Pharvaris N.V.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+PRAX,"Praxis Precision Medicines, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+PRLD,Prelude Therapeutics Incorporated,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PRME,"Prime Medicine, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+PRQR,ProQR Therapeutics N.V.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PRTA,Prothena Corporation plc,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PRVA,"Privia Health Group, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PSNL,"Personalis, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+PTCT,"PTC Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PTGX,"Protagonist Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PVLA,"Palvella Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+PYXS,"Pyxis Oncology, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+QSI,Quantum-Si incorporated,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+QTRX,Quanterix Corporation,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+QURE,uniQure N.V.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+RANI,"Rani Therapeutics Holdings, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+RAPP,"Rapport Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+RARE,Ultragenyx Pharmaceutical Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RCKT,"Rocket Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+RCUS,"Arcus Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+REGN,"Regeneron Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+REPL,"Replimune Group, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+RGEN,Repligen Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RGNX,REGENXBIO Inc.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RIGL,"Rigel Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+RLAY,"Relay Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+RNA,"Atrium Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RNAC,,pending_data_collection,,Biotechnology,IBB,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+ROIV,Roivant Sciences Ltd.,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RPRX,Royalty Pharma plc,pending_coverage,NASDAQ,Biotechnology,NBI,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+RVMD,"Revolution Medicines, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RXRX,"Recursion Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+RYTM,"Rhythm Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SABS,"SAB Biotherapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SANA,"Sana Biotechnology, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SEPN,"Septerna, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SERA,"Sera Prognostics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SGMO,"Sangamo Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SGMT,Sagimet Biosciences Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SIGA,"SIGA Technologies, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+SION,"Sionna Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SKYE,"Skye Bioscience, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SLDB,Solid Biosciences Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SLN,Silence Therapeutics plc,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SLS,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+SMMT,Summit Therapeutics Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SNDX,"Syndax Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SNY,Sanofi,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+SPRY,"ARS Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SRPT,"Sarepta Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+SRRK,Scholar Rock Holding Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SRZN,"Surrozen, Inc.",pending_coverage,NASDAQ,Biotechnology,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+STOK,"Stoke Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+STRO,"Sutro Biopharma, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+STVN,Stevanato Group S.p.A.,pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+SUPN,"Supernus Pharmaceuticals, Inc.",active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+SVRA,Savara Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SYRE,"Spyre Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TARA,"Protara Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TARS,"Tarsus Pharmaceuticals, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TBPH,"Theravance Biopharma, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TCRX,"TScan Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TECH,Bio-Techne Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TECX,"Tectonic Therapeutic, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TEM,"Tempus AI, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TENX,"Tenax Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TERN,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-05-07
+TEVA,Teva Pharmaceutical Industries Limited,active,NYSE,Pharmaceuticals,,False,,ACTIVE_VALID,False,True,2026-06-26
+TGTX,"TG Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+TKNO,"Alpha Teknova, Inc.",pending_coverage,NASDAQ,Biotechnology,IBB,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+TNGX,"Tango Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TNYA,"Tenaya Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TRAX,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+TRDA,"Entrada Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TRVI,"Trevi Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TSHA,"Taysha Gene Therapies, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TVTX,"Travere Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TWST,Twist Bioscience Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TXG,"10x Genomics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+TYRA,"Tyra Biosciences, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+UPB,"Upstream Bio, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+URGN,UroGen Pharma Ltd.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+UTHR,United Therapeutics Corporation,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+VCEL,Vericel Corporation,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+VCYT,"Veracyte, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+VERA,"Vera Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+VIR,"Vir Biotechnology, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+VKTX,"Viking Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+VNDA,Vanda Pharmaceuticals Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+VOR,Vor Biopharma Inc.,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+VRDN,"Viridian Therapeutics, Inc.",active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+VRTX,Vertex Pharmaceuticals Incorporated,active,,Healthcare,,False,,ACTIVE_VALID,False,True,2026-06-26
+VSTM,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+VTRS,Viatris Inc.,active,NASDAQ,Biotechnology,NBI,False,,ACTIVE_VALID,False,True,2026-06-26
+VYGR,"Voyager Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+WVE,Wave Life Sciences Ltd.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+XENE,Xenon Pharmaceuticals Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+XERS,"Xeris Biopharma Holdings, Inc.",pending_coverage,NASDAQ,Biotechnology,NBI,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
+XNCR,"Xencor, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ZBIO,ZBIO,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ZLAB,Zai Lab Limited,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ZVRA,"Zevra Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+ZYME,Zymeworks Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+_XBI_BENCHMARK_,,benchmark,,,,False,,ACTIVE_BUT_STALE_PRICE,,,

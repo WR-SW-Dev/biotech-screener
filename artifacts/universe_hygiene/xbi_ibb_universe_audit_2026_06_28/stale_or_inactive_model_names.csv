@@ -1,0 +1,14 @@
+ticker,company_name,status,exchange,sector,etf_sources,description,known_delisted,exclusion_reason,last_price_date_split_adj,last_price_date_raw,last_price_date_combined,has_any_price,is_stale,model_classification,last_price_date
+ACHV,"Achieve Life Sciences, Inc.",active,NASDAQ,Biotechnology,XBI,Added from XBI ETF holdings audit 2026-06-28 (universe hygiene pass). Smoking cessation / addiction therapeutics.,False,,,,,,,ACTIVE_BUT_STALE_PRICE,
+ACLX,,delisted,,Biotechnology,IBB,Added from ETF holdings (IBB),True,status=delisted,2026-04-29,2026-04-29,2026-04-29,True,True,DELISTED_OR_INACTIVE,2026-04-29
+APLS,"Apellis Pharmaceuticals, Inc.",delisted,,Healthcare,,,True,status=delisted,2026-05-15,2026-05-15,2026-05-15,True,True,DELISTED_OR_INACTIVE,2026-05-15
+AVTX,"Avalo Therapeutics, Inc.",active,NASDAQ,Biotechnology,XBI,Added from XBI ETF holdings audit 2026-06-28 (universe hygiene pass). Clinical-stage CNS biotech.,False,,,,,,,ACTIVE_BUT_STALE_PRICE,
+DAWN,,delisted,,Biotechnology,IBB,Added from ETF holdings (IBB),True,status=delisted,2026-04-24,2026-04-24,2026-04-24,True,True,DELISTED_OR_INACTIVE,2026-04-24
+FOLD,,delisted,,Biotechnology,IBB,Added from ETF holdings (IBB),True,status=delisted,2026-04-27,2026-04-27,2026-04-27,True,True,DELISTED_OR_INACTIVE,2026-04-27
+GLPG,Lakefront Biotherapeutics NV,delisted,,Healthcare,,,True,status=delisted,2026-06-26,2026-06-26,2026-06-26,True,False,DELISTED_OR_INACTIVE,2026-06-26
+IMMX,"Immix Biopharma, Inc.",active,NASDAQ,Biotechnology,XBI,Added from XBI ETF holdings audit 2026-06-28 (universe hygiene pass). Clinical-stage oncology/hematology.,False,,,,,,,ACTIVE_BUT_STALE_PRICE,
+KALV,KalVista Pharmaceuticals Inc,delisted,,Healthcare,,,True,status=delisted,2026-06-12,2026-06-12,2026-06-12,True,True,DELISTED_OR_INACTIVE,2026-06-12
+MPLT,"MapLight Therapeutics, Inc.",active,NASDAQ,Biotechnology,XBI,Added from XBI ETF holdings audit 2026-06-28 (universe hygiene pass). CNS/psychiatric drug discovery.,False,,,,,,,ACTIVE_BUT_STALE_PRICE,
+OVID,Ovid Therapeutics Inc.,active,NASDAQ,Biotechnology,XBI,Added from XBI ETF holdings audit 2026-06-28 (universe hygiene pass). Rare neurological diseases.,False,,,,,,,ACTIVE_BUT_STALE_PRICE,
+TERN,,delisted,,Biotechnology,IBB,Added from ETF holdings (IBB),True,status=delisted,2026-05-07,2026-05-07,2026-05-07,True,True,DELISTED_OR_INACTIVE,2026-05-07
+_XBI_BENCHMARK_,,benchmark,,,,,False,,,,,,,ACTIVE_BUT_STALE_PRICE,

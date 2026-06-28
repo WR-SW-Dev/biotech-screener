@@ -12,7 +12,8 @@ Feeds integrated:
   index_quotes   — XBI/SPY live quotes → header context
   price_drift    — 5d post-snapshot drift vs snap close → HIGH/MEDIUM alerts
   fundamentals   — live market cap tier → tier drift detection
-  regime_inputs  — VIX + XBI/SPY momentum → live regime classification
+  regime_inputs       — VIX + XBI/SPY momentum → live regime classification
+  morningstar_pulse   — sector fundamentals pulse (local, no MCP call)
 
 Architecture:
   Writer functions are called from a Claude session AFTER MCP data is fetched.
@@ -59,6 +60,7 @@ BINARY_NOW_ALERT_DAYS = 5
 INTRADAY_MOVE_ALERT_PCT = 0.05  # 5% intraday move triggers alert
 
 SCHEMA_VERSION = "rh_feed_sync.v1"
+MORNINGSTAR_MCP_DATA = PRODUCTION_DATA / "morningstar_mcp_data.json"
 
 
 # ---------------------------------------------------------------------------
@@ -1015,6 +1017,115 @@ def write_regime_inputs(
 
 
 # ---------------------------------------------------------------------------
+# Morningstar sector pulse (local computation — no MCP call needed)
+# ---------------------------------------------------------------------------
+
+
+def _ms_median(values: list) -> Optional[float]:
+    vals = sorted(v for v in values if v is not None)
+    n = len(vals)
+    if n == 0:
+        return None
+    mid = n // 2
+    return round(vals[mid] if n % 2 else (vals[mid - 1] + vals[mid]) / 2, 4)
+
+
+def write_morningstar_pulse(
+    as_of: str,
+    top30_tickers: Optional[List[str]] = None,
+) -> Path:
+    """Compute Morningstar sector fundamentals pulse -> {date}_rh_morningstar_pulse.json.
+
+    Reads production_data/morningstar_mcp_data.json (local file, no MCP call needed).
+    top30_tickers: optional list to compute cohort aggregates alongside the universe.
+
+    Metrics (cross-sectional, TTM where noted):
+      roic_positive_pct      - % names with ROIC > 0 (commercial viability)
+      ps_ratio_median        - median P/S (TTM); biotech-relevant valuation
+      debt_to_capital_median - median D/Capital (TTM)
+      net_margin_median      - median net margin % (TTM)
+      sales_growth_median    - median sales growth % (TTM)
+      price_to_book_median   - median P/B
+      quant_fv_median        - median Morningstar quantitative fair value (per share)
+      eps_positive_pct       - % names with positive diluted EPS (TTM)
+      moat_pct               - % names with any analyst moat rating assigned
+      data_age_days          - calendar days since Morningstar data was pulled
+    """
+    if not MORNINGSTAR_MCP_DATA.exists():
+        payload: dict = {
+            "as_of_date": as_of,
+            "schema": "morningstar_pulse.v1",
+            "error": "morningstar_mcp_data.json not found",
+            "universe": {},
+            "top30": None,
+        }
+        return _write_json(_cache_path(as_of, "morningstar_pulse"), payload)
+
+    raw = json.loads(MORNINGSTAR_MCP_DATA.read_text())
+    records: dict = raw.get("records", {})
+    meta: dict = raw.get("metadata", {})
+    pull_date_str: str = meta.get("pull_date") or meta.get("refreshed_at") or ""
+    data_age_days: Optional[int] = None
+    if pull_date_str:
+        from datetime import date as _date
+
+        try:
+            pull_dt = _date.fromisoformat(pull_date_str[:10])
+            as_of_dt = _date.fromisoformat(as_of)
+            data_age_days = (as_of_dt - pull_dt).days
+        except Exception:
+            pass
+
+    def _agg(ticker_subset: Optional[List[str]]) -> dict:
+        keys = list(ticker_subset) if ticker_subset else list(records.keys())
+        recs = [records[t] for t in keys if t in records]
+        n = len(recs)
+        if n == 0:
+            return {"n_tickers": 0}
+
+        def _floats(dp_id: str) -> list:
+            return [v for v in (_safe_float(r.get(dp_id)) for r in recs) if v is not None]
+
+        roic_vals = _floats("STA4Z")
+        roic_positive_pct = round(sum(1 for v in roic_vals if v > 0) / len(roic_vals) * 100, 1) if roic_vals else None
+        eps_vals = _floats("ST263")
+        eps_positive_pct = round(sum(1 for v in eps_vals if v > 0) / len(eps_vals) * 100, 1) if eps_vals else None
+        moat_pct = round(sum(1 for r in recs if r.get("LT181") is not None) / n * 100, 1)
+
+        return {
+            "n_tickers": n,
+            "roic_positive_pct": roic_positive_pct,
+            "ps_ratio_median": _ms_median(_floats("HS05U")),
+            "debt_to_capital_median": _ms_median(_floats("HS06U")),
+            "net_margin_median": _ms_median(_floats("HS08D")),
+            "sales_growth_median": _ms_median(_floats("HS035")),
+            "price_to_book_median": _ms_median(_floats("ST408")),
+            "quant_fv_median": _ms_median(_floats("QV009")),
+            "eps_positive_pct": eps_positive_pct,
+            "moat_pct": moat_pct,
+        }
+
+    universe_agg = _agg(None)
+    payload = {
+        "as_of_date": as_of,
+        "schema": "morningstar_pulse.v1",
+        "data_age_days": data_age_days,
+        "data_pull_date": pull_date_str[:10] if pull_date_str else None,
+        "universe": universe_agg,
+        "top30": _agg(top30_tickers) if top30_tickers else None,
+    }
+    out = _write_json(_cache_path(as_of, "morningstar_pulse"), payload)
+    print(
+        f"[morningstar_pulse] {universe_agg['n_tickers']} tickers"
+        f" | data_age={data_age_days}d"
+        f" | ROIC+={universe_agg['roic_positive_pct']}%"
+        f" | PS={universe_agg['ps_ratio_median']}"
+        f" -> {out}"
+    )
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Unified cache loader (consumed by build_personal_pilot_action_card.py)
 # ---------------------------------------------------------------------------
 
@@ -1032,6 +1143,7 @@ def load_rh_feed(as_of: str) -> Dict[str, Any]:
         "price_drift",
         "fundamentals",
         "regime_inputs",
+        "morningstar_pulse",
     ]
     result: Dict[str, Any] = {"as_of_date": as_of, "available": []}
     for feed in feeds:

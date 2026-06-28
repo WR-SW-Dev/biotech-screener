@@ -237,6 +237,10 @@ def refresh_mcp_data(tickers: List[str], dry_run: bool = False) -> bool:
         "records": records,
     }
 
+    if not records:
+        logger.error("All batches returned 0 records — aborting write to avoid data loss. Check auth token.")
+        return False
+
     out_path = DATA_DIR / "morningstar_mcp_data.json"
     _atomic_write_json(out_path, output)
     logger.info(

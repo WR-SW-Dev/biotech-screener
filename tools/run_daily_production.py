@@ -4976,6 +4976,55 @@ def run_daily(
     except Exception as _ctg_err:
         _logger.warning(f"CTgov daily poll failed: {_ctg_err}")
 
+    # --- Step 1.45: Options IV snapshot (non-blocking, observability only) ---
+    # Fetches tastytrade market metrics for all universe tickers and writes
+    # production_data/options_snapshot_{as_of_date}.json and _latest.json.
+    # Does NOT affect rankings, weights, gates, or any scoring field.
+    # OBSERVABILITY_ONLY / NO_MODEL_CHANGE / NO_RANKER_CHANGE
+    try:
+        from tools.collect_options_snapshot import run as _collect_options
+
+        _opt_result = _collect_options(
+            as_of_date=as_of_date,
+            batch_size=100,
+            dry_run=False,
+            verbose=False,
+        )
+        _opt_meta = _opt_result.get("metadata", {})
+        _logger.info(
+            f"Options snapshot → {_opt_meta.get('returned_count', 0)}/"
+            f"{_opt_meta.get('universe_count', 0)} fetched | "
+            f"liquid={_opt_meta.get('liquid_count', 0)} "
+            f"event_premium={_opt_meta.get('event_premium_detected', 0)}"
+        )
+    except Exception as _opt_err:
+        _logger.warning(f"Options snapshot failed (non-blocking): {_opt_err}")
+
+    # --- Step 1.46: Options feature enrichment (non-blocking, shadow diagnostics) ---
+    # Runs after options snapshot. Computes realized vol, VRP, event pricing, term
+    # structure, and cross-sectional features. Writes to artifacts/options_enrichment/.
+    # OPTIONS_ENRICHMENT / EXPECTATION_LAYER_SHADOW / NO_MODEL_CHANGE / NO_RANKER_CHANGE
+    try:
+        from tools.enrich_options_features import run as _enrich_options
+
+        _enrich_out_dir = REPO_ROOT / "artifacts" / "options_enrichment" / as_of_date.replace("-", "_")
+        _enrich_summary = _enrich_options(
+            as_of_date=as_of_date,
+            output_dir=_enrich_out_dir,
+            write_shadow_only=True,
+            include_synthetic=True,
+            verbose=False,
+        )
+        _enrich_cov = _enrich_summary.get("coverage", {})
+        _logger.info(
+            f"Options enrichment → {_enrich_summary.get('universe_count', 0)} tickers | "
+            f"valid={_enrich_cov.get('valid_options', 0)} "
+            f"event_prem_high={_enrich_summary.get('flags', {}).get('event_premium_high', 0)} "
+            f"extreme_iv={_enrich_summary.get('flags', {}).get('extreme_iv', 0)}"
+        )
+    except Exception as _enrich_err:
+        _logger.warning(f"Options enrichment failed (non-blocking): {_enrich_err}")
+
     # --- Step 1.5: Pre-warm caches (sec_8k, ctgov, sec_13f) ---
     # Must run BEFORE the ctgov gate so the gate sees the freshly-warmed cache.
     # All three sources are idempotent (short-circuit if cache already exists).
