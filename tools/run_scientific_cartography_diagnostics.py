@@ -454,7 +454,9 @@ def main() -> int:
         help=(
             "Optional PIT-safe company/universe reference (CSV or JSON) for "
             "sponsor->ticker resolution. Bypasses snapshot_dir/rankings.csv. "
-            "Supply a static universe snapshot, NOT the live ranked screener output."
+            "Supply a static universe snapshot, NOT the live ranked screener output. "
+            "CSV columns: ticker,company[,cik][,aliases]; aliases is ;|-delimited "
+            "sponsor-name variants (e.g. subsidiaries) that resolve to the ticker."
         ),
     )
     parser.add_argument(
