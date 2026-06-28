@@ -5635,6 +5635,26 @@ def run_daily(
         except Exception as _ov11_err:
             _logger.warning(f"Options v1.1 failed: {_ov11_err}")
 
+        # --- Step 5k.5f: Options shadow layer (TT-only; RH cache unavailable in cron) ---
+        try:
+            from tools.collect_options_shadow import run_options_shadow
+
+            _os_result = run_options_shadow(
+                as_of_date,
+                tickers=None,  # auto-resolved from latest rankings.csv (top-30)
+                rh_cache_file=None,  # no RH MCP in cron; session writes cache separately
+                snapshots_dir=final_snapshots_dir,
+            )
+            if "error" in _os_result:
+                _logger.info(f"Options shadow → skipped ({_os_result['error']})")
+            else:
+                _os_n = _os_result.get("n_tickers", 0)
+                _os_ep = _os_result.get("n_event_premium", 0)
+                _os_hc = _os_result.get("n_high_confidence", 0)
+                _logger.info(f"Options shadow → {_os_n} tickers, {_os_hc} HIGH_CONFIDENCE, {_os_ep} event-premium")
+        except Exception as _os_err:
+            _logger.warning(f"Options shadow failed: {_os_err}")
+
         # --- Step 5k.6: Shadow monitor (non-blocking) ---
         try:
             from tools.build_shadow_monitor import build_shadow_monitor
