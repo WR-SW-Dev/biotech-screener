@@ -50,7 +50,7 @@ from scipy import stats
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-ENRICHMENT_VERSION = "1.0.0"
+ENRICHMENT_VERSION = "1.1.0"
 # ATM straddle approximation constant: straddle_pct ≈ STRADDLE_K * iv * sqrt(T)
 STRADDLE_K = math.sqrt(2 / math.pi)  # ≈ 0.7979
 # Tenor assumed for TT implied_volatility_index (approx 30-day constant maturity)
@@ -496,8 +496,32 @@ def build_enriched_features(
         elif vrp_flag == "IV_BELOW_REALIZED":
             flags.append("IV_BELOW_REALIZED")
 
-        if row.get("is_sell_only") and _sf(row.get("observed_iv_rank_tw")) is not None:
-            if (_sf(row.get("observed_iv_rank_tw")) or 0) > 0.60:
+        # IV momentum — 5d change in ATM IV (applies to any ticker with IV data,
+        # including LOW_LIQUIDITY_CHAIN; meaningful even without full liquidity)
+        iv_5d = _sf(row.get("observed_iv_5d_change"))
+        if iv_5d is not None:
+            if iv_5d >= 0.05:
+                flags.append("IV_RISING")
+            elif iv_5d <= -0.05:
+                flags.append("IV_FALLING")
+
+        # IV rank context for LOW_LIQ names — IVRk still reflects historical
+        # positioning even when chain liquidity is absent
+        iv_rk = _sf(row.get("observed_iv_rank_tw"))
+        if iv_rk is not None and cov == LOW_LIQUIDITY_CHAIN:
+            if iv_rk >= 0.70:
+                flags.append("IV_RANK_HIGH")
+            elif iv_rk >= 0.30:
+                flags.append("IV_RANK_MODERATE")
+
+        # High idiosyncratic vol — useful for no-chain names where realized vol
+        # is the only signal available (proxy for name-specific binary risk)
+        idio = _sf(row.get("idiosyncratic_vol_60d"))
+        if idio is not None and idio >= 0.50 and cov == NO_LISTED_OPTIONS:
+            flags.append("HIGH_IDIO_VOL")
+
+        if row.get("is_sell_only") and iv_rk is not None:
+            if iv_rk > 0.60:
                 flags.append("SELL_ONLY_IV_PEAK")
 
         if row.get("synthetic_warning") == "NOT_MARKET_IMPLIED":
@@ -857,6 +881,11 @@ def run(
             "steep_backwardation": int(df["options_flags"].str.contains("BACKWARDATION", na=False).sum()),
             "high_vrp": int(df["options_flags"].str.contains("HIGH_VRP", na=False).sum()),
             "iv_below_realized": int(df["options_flags"].str.contains("IV_BELOW_REALIZED", na=False).sum()),
+            "iv_rising": int(df["options_flags"].str.contains("IV_RISING", na=False).sum()),
+            "iv_falling": int(df["options_flags"].str.contains("IV_FALLING", na=False).sum()),
+            "iv_rank_high": int(df["options_flags"].str.contains("IV_RANK_HIGH", na=False).sum()),
+            "iv_rank_moderate": int(df["options_flags"].str.contains("IV_RANK_MODERATE", na=False).sum()),
+            "high_idio_vol": int(df["options_flags"].str.contains("HIGH_IDIO_VOL", na=False).sum()),
             "sell_only_iv_peak": int(df["options_flags"].str.contains("SELL_ONLY_IV_PEAK", na=False).sum()),
             "synthetic_only": int(df["options_flags"].str.contains("SYNTHETIC_ONLY", na=False).sum()),
         },
