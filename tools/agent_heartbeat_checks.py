@@ -952,7 +952,7 @@ def check_sentinel(dt: date) -> CheckResult:
             anomalies.append(f"MISSING_RULESET_HEALTH: {detail}")
 
     if promotions_dir.is_dir():
-        receipts = sorted(promotions_dir.glob("*_receipt.json"))
+        receipts = sorted(promotions_dir.glob("promotion_*.json")) + sorted(promotions_dir.glob("rollback_*.json"))
         if not receipts:
             anomalies.append("NO_PROMOTION_RECEIPTS: artifacts/promotions empty")
     else:
