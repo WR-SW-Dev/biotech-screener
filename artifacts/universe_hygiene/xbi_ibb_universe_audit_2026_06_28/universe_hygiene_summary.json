@@ -1,0 +1,122 @@
+{
+  "audit_timestamp": "2026-06-28T21:52:16.902778+00:00",
+  "reference_date": "2026-06-28",
+  "stale_cutoff": "2026-06-15",
+  "governance": [
+    "UNIVERSE_HYGIENE_AUDIT",
+    "COVERAGE_DIAGNOSTIC",
+    "NO_MODEL_CHANGE",
+    "NO_RANKER_CHANGE",
+    "NO_SELECTOR_CHANGE",
+    "NO_SIZING_CHANGE",
+    "NO_TRADING_CHANGE"
+  ],
+  "model_universe": {
+    "total": 362,
+    "by_classification": {
+      "ACTIVE_VALID": 315,
+      "NEEDS_REVIEW": 34,
+      "DELISTED_OR_INACTIVE": 7,
+      "ACTIVE_BUT_STALE_PRICE": 6
+    }
+  },
+  "xbi": {
+    "holdings_count": 150,
+    "source": "SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-06-28T21:52:18.838413+00:00",
+    "missing_from_model": 1,
+    "missing_by_classification": {
+      "MISSING_LOW_RELEVANCE": 1
+    }
+  },
+  "ibb": {
+    "holdings_count": 242,
+    "source": "BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-06-28T21:52:19.489926+00:00",
+    "missing_from_model": 5,
+    "missing_by_classification": {
+      "MISSING_CORE_BIOTECH_CANDIDATE": 2,
+      "MISSING_ADR_OR_FOREIGN": 1,
+      "MISSING_LOW_RELEVANCE": 1,
+      "MISSING_NEEDS_MANUAL_REVIEW": 1
+    }
+  },
+  "identifier_conflicts": 0,
+  "proposed_actions": 19,
+  "known_problem_tickers": {
+    "RNA": {
+      "in_model": true,
+      "model_classification": "ACTIVE_VALID",
+      "status": "active",
+      "company_name": "Atrium Therapeutics, Inc.",
+      "last_price_date": "2026-06-26"
+    },
+    "GOSS": {
+      "in_model": true,
+      "model_classification": "ACTIVE_VALID",
+      "status": "active",
+      "company_name": "Gossamer Bio, Inc.",
+      "last_price_date": "2026-06-26"
+    },
+    "REPL": {
+      "in_model": true,
+      "model_classification": "ACTIVE_VALID",
+      "status": "active",
+      "company_name": "Replimune Group, Inc.",
+      "last_price_date": "2026-06-26"
+    },
+    "ACLX": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "",
+      "last_price_date": "2026-04-29"
+    },
+    "APLS": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "Apellis Pharmaceuticals, Inc.",
+      "last_price_date": "2026-05-15"
+    },
+    "DAWN": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "",
+      "last_price_date": "2026-04-24"
+    },
+    "FOLD": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "",
+      "last_price_date": "2026-04-27"
+    },
+    "GLPG": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "Lakefront Biotherapeutics NV",
+      "last_price_date": "2026-06-26"
+    },
+    "KALV": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "KalVista Pharmaceuticals Inc",
+      "last_price_date": "2026-06-12"
+    },
+    "TERN": {
+      "in_model": true,
+      "model_classification": "DELISTED_OR_INACTIVE",
+      "status": "delisted",
+      "company_name": "",
+      "last_price_date": "2026-05-07"
+    }
+  },
+  "notes": [
+    "39 corrupt rows in price CSV (TICKER\\n pattern) filtered out",
+    "ATXS/CVAC/MRSN have price data but are not in universe.json (orphaned historical rows)",
+    "_XBI_BENCHMARK_ entry in universe.json has no price data (expected)",
+    "RNA ticker reuse: old RNA=Avidity Biosciences (acquired), new RNA=Atrium Therapeutics"
+  ]
+}

@@ -35,6 +35,8 @@ See `.claude/rules/operational-state.md` for freeze scope and post-freeze priori
 
 When a major biotech model change, validation finding, backtest correction, governance status change, or alpha/investability conclusion occurs, use the `model-doc-and-skill-sync` subagent to update `docs/MODEL_DOCUMENTATION.md` and synchronize any affected biotech skills. Documentation remains the source of truth; skill updates are downstream instruction hygiene only. No model, ranker, selector, sizing, production, or trading behavior may change through this agent.
 
+When universe coverage, stale tickers, XBI/IBB constituents, missing biotech names, delisted names, ticker mapping, or ETF coverage drift are discussed, use the `universe-hygiene-auditor` subagent. The agent may write audit artifacts and proposals only; it must not directly mutate the production universe without separate operator approval.
+
 ---
 
 ## PIT Rules
