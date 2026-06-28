@@ -242,6 +242,47 @@ def regenerate_truth_card(capture: dict, fill: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Per-name forward returns (repeat-offender / replacement shadow data)
+# ---------------------------------------------------------------------------
+# VALIDATION_INFRASTRUCTURE / NO_MODEL_CHANGE. Annotation only — records each
+# held name's forward return + excess vs XBI so downstream shadow monitors can
+# identify repeat offenders and simulate 31-60 replacements. Never affects the
+# production basket, ranker, or selector.
+
+
+def compute_name_forward_returns(
+    names_meta: list[tuple],
+    effective_start: str,
+    universe_dates: list[str],
+    xbi_start: float | None,
+) -> dict:
+    """Per-name forward return + excess vs XBI at each horizon.
+
+    names_meta: list of (ticker, rank, cohort). Returns
+    {ticker: {rank, cohort, <label>: {ret, xs, end_date}}}. None where the
+    forward endpoint or the name's price is unavailable.
+    """
+    out: dict[str, dict] = {}
+    for ticker, rank, cohort in names_meta:
+        if not ticker or ticker in out:
+            continue
+        rec: dict[str, Any] = {"rank": rank, "cohort": cohort}
+        for label, n_days in HORIZONS.items():
+            end_date = nth_trading_day_after(effective_start, n_days, universe_dates)
+            r: dict[str, Any] = {"ret": None, "xs": None, "end_date": end_date}
+            if end_date is not None and xbi_start:
+                nr = compute_basket_return([ticker], effective_start, end_date)  # single-name EW = its return
+                xe = get_xbi_price(end_date)
+                if nr is not None and xe is not None and xbi_start:
+                    xr = (xe - xbi_start) / xbi_start
+                    r["ret"] = round(nr, 6)
+                    r["xs"] = round(nr - xr, 6)
+            rec[label] = r
+        out[ticker] = rec
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Fill one capture
 # ---------------------------------------------------------------------------
 
@@ -329,6 +370,21 @@ def fill_capture(capture: dict, existing_fill: dict | None, dry_run: bool) -> di
         cohort_returns = compute_cohort_returns(cohorts, effective_start, universe_dates, xbi_start)
         fill["cohorts"] = cohort_returns
         if not existing_fill or existing_fill.get("cohorts") != cohort_returns:
+            changed = True
+
+    # --- Per-name forward returns (top30 + rank31_60 bench) ---
+    names_meta = [(t.get("ticker"), t.get("rank"), "top30") for t in capture.get("top30", [])]
+    band = [
+        (e.get("ticker"), e.get("rank"), "rank31_60") for e in (capture.get("rank31_60") or []) if isinstance(e, dict)
+    ]
+    if not band:
+        band = [(t, None, "rank31_60") for t in ((capture.get("cohorts") or {}).get("rank31_60") or [])]
+    names_meta += band
+    if names_meta:
+        xbi_start = capture.get("xbi_price_at_capture") or get_xbi_price(effective_start)
+        per_name = compute_name_forward_returns(names_meta, effective_start, universe_dates, xbi_start)
+        fill["per_name"] = per_name
+        if not existing_fill or existing_fill.get("per_name") != per_name:
             changed = True
 
     if not changed and existing_fill is not None:
