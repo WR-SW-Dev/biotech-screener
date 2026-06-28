@@ -207,18 +207,31 @@ def run_diagnostics(args: argparse.Namespace) -> int:
         stage_normalizer = StageNormalizer()
         asset_alias_resolver = AssetAliasResolver(as_of_date=as_of_date)
         sponsor_resolver = SponsorResolver(company_records=companies)
-        # Load mechanism aliases: explicit override → well-known path → built-in only
+        # Load mechanism aliases: explicit override → well-known path → built-in only.
+        # Surface the resolved source and warn loudly on a missing pack rather than
+        # silently degrading to the built-in normalizer (same input-path discipline as
+        # --company-file; mirrors the recurring manager_registry.json 404 class).
         _mech_alias_override = getattr(args, "mechanism_aliases", None)
         _mech_alias_default = repo_root / "scientific_cartography" / "data" / "mechanism_aliases_v0_1.csv"
-        _mech_alias_path = (
-            Path(_mech_alias_override)
-            if _mech_alias_override
-            else (_mech_alias_default if _mech_alias_default.exists() else None)
-        )
+        if _mech_alias_override:
+            _mech_alias_path = Path(_mech_alias_override)
+            if not _mech_alias_path.exists():
+                status["warnings"].append(f"--mechanism-aliases not found: {_mech_alias_path}")
+                _mech_alias_path = None
+        elif _mech_alias_default.exists():
+            _mech_alias_path = _mech_alias_default
+        else:
+            _mech_alias_path = None
+            status["warnings"].append(
+                f"mechanism alias pack not found at {_mech_alias_default}; "
+                "using built-in normalizer only (mechanism coverage will be degraded)"
+            )
         if _mech_alias_path is not None:
             mechanism_normalizer = MechanismNormalizer.from_csv(_mech_alias_path, as_of_date=as_of_date)
+            status["mechanism_alias_source"] = _mech_alias_path.name
         else:
             mechanism_normalizer = MechanismNormalizer(as_of_date=as_of_date)
+            status["mechanism_alias_source"] = "builtin"
 
         # Step 4: Build programs from trials
         if not quiet:
@@ -442,6 +455,16 @@ def main() -> int:
             "Optional PIT-safe company/universe reference (CSV or JSON) for "
             "sponsor->ticker resolution. Bypasses snapshot_dir/rankings.csv. "
             "Supply a static universe snapshot, NOT the live ranked screener output."
+        ),
+    )
+    parser.add_argument(
+        "--mechanism-aliases",
+        type=str,
+        default=None,
+        help=(
+            "Optional path to a mechanism alias CSV. Overrides the bundled "
+            "scientific_cartography/data/mechanism_aliases_v0_1.csv. A missing "
+            "override or bundled pack is warned (not silently ignored)."
         ),
     )
     parser.add_argument(
