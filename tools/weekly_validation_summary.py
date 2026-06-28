@@ -107,7 +107,9 @@ def main() -> int:
     mean_xs = sum(xs_vals) / n
     variance = sum((x - mean_xs) ** 2 for x in xs_vals) / max(n - 1, 1)
     std_xs = variance**0.5
-    t_stat = mean_xs / (std_xs / n**0.5) if std_xs > 0 else 0.0
+    t_stat_reliable = n >= 10
+    t_stat_val = mean_xs / (std_xs / n**0.5) if (std_xs > 0 and n >= 2) else None
+    t_stat_display = f"{t_stat_val:.2f}" if (t_stat_val is not None and t_stat_reliable) else f"— (n={n}, need ≥10)"
     hit_rate = sum(1 for x in xs_vals if x > 0) / n
     cum_xs = sum(xs_vals)
     cum_basket = sum(basket_vals)
@@ -145,7 +147,7 @@ def main() -> int:
         f"| Non-overlapping 5d windows | **{n}** |",
         f"| Mean weekly excess (basket − XBI) | **{mean_xs:+.3%}** |",
         f"| Std weekly excess | {std_xs:.3%} |",
-        f"| t-stat | **{t_stat:.2f}** |",
+        f"| t-stat | **{t_stat_display}** |",
         f"| Hit rate (excess > 0) | **{hit_rate:.0%}** |",
         f"| Cumulative excess | **{cum_xs:+.2%}** |",
         f"| Cumulative basket | {cum_basket:+.2%} |",
@@ -212,16 +214,23 @@ def main() -> int:
         "",
         "## Interpretation Notes",
         "",
-        f"- t={t_stat:.2f} across {n} independent weekly periods.",
-        "  One-tailed 95% threshold: ~1.65. Two-tailed 95%: 1.96.",
+        f"- {n} independent weekly 5d periods. One-tailed 95% threshold: ~1.65. Two-tailed 95%: 1.96.",
     ]
 
-    if t_stat >= 1.96:
-        lines.append("  **Two-tailed 95% cleared. Operator review of investability gate required.**")
-    elif t_stat >= 1.65:
-        lines.append("  One-tailed 95% cleared. Two-tailed gate not yet met.")
+    if not t_stat_reliable:
+        lines.append(
+            f"  t-stat suppressed — need ≥10 windows for a meaningful estimate (n={n})." " Accumulating evidence."
+        )
+    elif t_stat_val is None:
+        lines.append(f"  t-stat undefined (std=0 with n={n}). Accumulating evidence.")
+    elif t_stat_val >= 1.96:
+        lines.append(
+            f"  t={t_stat_val:.2f} — two-tailed 95% cleared." " Operator review of investability gate required."
+        )
+    elif t_stat_val >= 1.65:
+        lines.append(f"  t={t_stat_val:.2f} — one-tailed 95% cleared. Two-tailed gate not yet met.")
     else:
-        lines.append("  Neither one- nor two-tailed threshold cleared. Accumulating evidence.")
+        lines.append(f"  t={t_stat_val:.2f} — neither one- nor two-tailed threshold cleared." " Accumulating evidence.")
 
     lines += [
         "",

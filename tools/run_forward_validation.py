@@ -85,8 +85,8 @@ def register_candidate(model_hash: str, ruleset_hash: str, as_of_date: str) -> d
         "top_n": TOP_N,
         "weighting": "equal-weight",
         "benchmark": "XBI",
-        "price_source": "universe_prices.csv (adj_close)",
-        "xbi_source": "indices_prices.csv (adj_close)",
+        "price_source": "production_data/price_history.csv (close, split-adjusted)",
+        "xbi_source": "production_data/price_history.csv (close, split-adjusted, ticker=XBI)",
         "protocol": "docs/FORWARD_VALIDATION_PROTOCOL.md",
         "status": "active",
     }

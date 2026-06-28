@@ -58,6 +58,10 @@ data/archives_secadcom/
 
 # Generated analysis artifacts (heavy outputs)
 artifacts/*
+# Allow forward validation immutable ledger (captures, fills, candidate declaration)
+!artifacts/forward_validation/CANDIDATE.json
+!artifacts/forward_validation/captures.jsonl
+!artifacts/forward_validation/fills.jsonl
 # Allow governance memos and summary reports (but not date-stamped one-offs)
 !artifacts/audit/
 artifacts/audit/*
