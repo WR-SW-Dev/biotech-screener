@@ -252,6 +252,10 @@ if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
     ${PYTHON} tools/fill_forward_returns.py \
         2>&1 | tee -a "${LOG_FILE}" || \
         echo "[$(date -Iseconds)] WARN: fill_forward_returns exited non-zero" | tee -a "${LOG_FILE}"
+
+    ${PYTHON} tools/weekly_validation_summary.py \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: weekly_validation_summary exited non-zero" | tee -a "${LOG_FILE}"
 fi
 
 # --- Housekeeping: prune pre-staging, old logs, and old caches ---
