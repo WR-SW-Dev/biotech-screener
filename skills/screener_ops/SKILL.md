@@ -65,6 +65,12 @@ Always warm 8-K cache BEFORE running screen.
 
 6000s \(100 min\) to cover worst-case AACT + tail steps. Previous 4500s was killing mid-AACT on Mondays.
 
+### Forward Validation Protocol — daily truth-card (SPEC-ONLY, NOT WIRED)
+
+`docs/FORWARD_VALIDATION_PROTOCOL.md` (RATIFIED 2026-06-28) pre-registers a daily "truth card" plus weekly/monthly summaries for the frozen DEM Top-30 candidate (v1.4 / ruleset `8887576e`). Suggested artifact path: `artifacts/live_shadow/forward_validation/<YYYY-MM-DD>/TRUTH_CARD.md`, alongside the existing `artifacts/live_shadow/go_nogo/<date>/GO_NOGO.md`.
+
+**This is NOT a pipeline step.** The truth-card / weekly / monthly artifacts are specification-only; they are NOT in the 13-step orchestrator above and have NOT been built, scheduled, or authorized. Wiring them into `tools/run_daily_production.py` (or cron) is a separate, NOT-yet-approved governed task gated on CI green + freeze clearance + operator sign-off. Do not treat the truth card as an existing output.
+
 ---
 
 ## Hermes Knowledge Layer \(Spec 089\)
