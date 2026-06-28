@@ -37,7 +37,7 @@ from ranker_engine import compute_ranker_adjustments
 from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_selector_scores
 
 SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots_pit_v2"
-PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
+PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history_split_adj.csv"
 IPO_DATES_PATH = PROJECT_ROOT / "production_data" / "ipo_dates.json"
 OUTPUT_DIR = PROJECT_ROOT / "output" / "pit_backtest"
 
