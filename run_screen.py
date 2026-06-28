@@ -352,6 +352,144 @@ SCHEMA_PORTFOLIO_POSITIONS = "portfolio_positions.v1"
 SCHEMA_METADATA = "metadata.v1"
 
 # =============================================================================
+# STAGE TIMING HELPER
+# =============================================================================
+
+from contextlib import contextmanager as _contextmanager
+
+
+@_contextmanager
+def _timed(label: str):
+    """Print wall-clock time for a named pipeline stage."""
+    import time as _time
+
+    _t0 = _time.time()
+    yield
+    print(f"[timing] {label}: {_time.time() - _t0:.2f}s", flush=True)
+
+
+# =============================================================================
+# RANK-DEPTH SHADOW COHORTS
+# =============================================================================
+# VALIDATION_INFRASTRUCTURE / RANK_DEPTH_SHADOW_TRACKING / NO_MODEL_CHANGE.
+#
+# Annotation-only layer that labels ranked names by depth-of-rank cohort and
+# exports a Top-60 sidecar. It NEVER affects rank, score, eligibility, sizing,
+# or production selection. The Top-30 remains the primary model basket; ranks
+# 31-60 are monitored as shadow candidates only; Top-60 tests rank-depth
+# robustness. Nothing here is tradable by default.
+
+_RANK_DEPTH_TOP30_MAX = 30
+_RANK_DEPTH_BAND_MAX = 60  # ranks 31..60 form the shadow reserve bench
+
+# Sidecar column -> source field in rankings.csv (csv_rows). Computed/derived
+# columns (as_of_date + cohort flags) are filled separately.
+_RANK_DEPTH_SIDECAR_FIELDS = [
+    ("ticker", "ticker"),
+    ("company_name", "company_name"),
+    ("actionable_rank", "actionable_rank"),
+    ("final_score", "final_score"),
+    ("market_cap_mm", "market_cap_mm"),
+    ("close_price", "close_price"),
+    ("catalyst_bucket", "catalyst_bucket"),
+    ("catalyst_date", "next_catalyst_date"),
+    ("primary_catalyst", "catalyst_event_type"),
+    ("institutional_score", "inst_delta_z"),
+    ("coinvest_score", "coinvest_score_z"),
+    ("expectation_gap", "expectation_error_score"),
+    ("ees_shadow_flag", "ees_v3_gate"),
+    ("options_shadow_flag", "opt_use_for_judgment"),
+    ("data_quality_flags", "risk_flags"),
+]
+
+
+def _rank_depth_safe_rank(rank):
+    """Coerce an actionable_rank to int; non-numeric/blank -> large sentinel."""
+    try:
+        return int(float(rank))
+    except (TypeError, ValueError):
+        return 10**9
+
+
+def _classify_rank_depth(rank):
+    """Return (cohort, is_top30, is_rank31_60, is_top60) for one actionable_rank.
+
+    Non-numeric / blank ranks (ineligible rows) fall into ``outside_top60``.
+    """
+    r = _rank_depth_safe_rank(rank)
+    is_top30 = 1 <= r <= _RANK_DEPTH_TOP30_MAX
+    is_band = _RANK_DEPTH_TOP30_MAX < r <= _RANK_DEPTH_BAND_MAX
+    is_top60 = 1 <= r <= _RANK_DEPTH_BAND_MAX
+    if is_top30:
+        cohort = "top30"
+    elif is_band:
+        cohort = "rank31_60"
+    else:
+        cohort = "outside_top60"
+    return (cohort, is_top30, is_band, is_top60)
+
+
+def add_rank_depth_cohorts(df, rank_col="actionable_rank"):
+    """Annotate a ranked dataframe with rank-depth shadow cohorts.
+
+    VALIDATION_INFRASTRUCTURE / RANK_DEPTH_SHADOW_TRACKING / NO_MODEL_CHANGE.
+    Adds ``rank_depth_cohort`` (top30 | rank31_60 | outside_top60) plus boolean
+    ``is_top30`` / ``is_rank31_60`` / ``is_top60`` columns. Annotation only:
+    does not affect rank, score, eligibility, sizing, or selection.
+    """
+    import pandas as pd
+
+    out = df.copy()
+    rank = pd.to_numeric(out[rank_col], errors="coerce")
+    is_top30 = rank.between(1, _RANK_DEPTH_TOP30_MAX)
+    is_band = rank.between(_RANK_DEPTH_TOP30_MAX + 1, _RANK_DEPTH_BAND_MAX)
+
+    out["rank_depth_cohort"] = "outside_top60"
+    out.loc[is_top30, "rank_depth_cohort"] = "top30"
+    out.loc[is_band, "rank_depth_cohort"] = "rank31_60"
+    out["is_top30"] = is_top30
+    out["is_rank31_60"] = is_band
+    out["is_top60"] = rank.between(1, _RANK_DEPTH_BAND_MAX)
+    return out
+
+
+def export_rank_depth_top60_sidecar(csv_rows, snap_path, as_of_date):
+    """Write snapshots/<date>/rank_depth_top60.csv from the ranked rows.
+
+    Shadow discovery + depth-validation artifact: who is populating ranks
+    31-60, and why. Annotation only — derived from the already-written
+    rankings.csv rows, never mutating them. Returns the output Path or None.
+    """
+    out_path = Path(snap_path) / "rank_depth_top60.csv"
+    header = (
+        ["as_of_date"]
+        + [name for name, _ in _RANK_DEPTH_SIDECAR_FIELDS]
+        + ["rank_depth_cohort", "is_top30", "is_rank31_60", "is_top60"]
+    )
+    out_rows = []
+    for row in csv_rows:
+        cohort, is_top30, is_band, is_top60 = _classify_rank_depth(row.get("actionable_rank"))
+        if not is_top60:
+            continue  # sidecar is Top-60 only
+        rec = {"as_of_date": as_of_date}
+        for name, src in _RANK_DEPTH_SIDECAR_FIELDS:
+            rec[name] = row.get(src, "")
+        rec["rank_depth_cohort"] = cohort
+        rec["is_top30"] = is_top30
+        rec["is_rank31_60"] = is_band
+        rec["is_top60"] = is_top60
+        out_rows.append(rec)
+
+    out_rows.sort(key=lambda r: _rank_depth_safe_rank(r["actionable_rank"]))
+    with open(out_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=header, extrasaction="ignore", lineterminator="\n")
+        writer.writeheader()
+        for rec in out_rows:
+            writer.writerow(rec)
+    return out_path
+
+
+# =============================================================================
 # CATALYST WINDOW PRESETS AND DECAY FUNCTIONS
 # =============================================================================
 
@@ -1687,6 +1825,44 @@ def enrich_volatility_from_morningstar_prices(
     return enriched
 
 
+# =============================================================================
+# PRICE HISTORY ROW CACHE (production I/O optimization — behavior-preserving)
+# =============================================================================
+# price_history.csv (28MB+) was opened and fully re-parsed by every consumer
+# (momentum, beta/alpha recompute, drawdown/beta-rsi hydration). This run-scoped
+# cache parses it once and serves the EXACT csv.DictReader rows to all consumers,
+# which each still rebuild their own filtered view — so outputs are byte-identical
+# (proven by tests/test_golden_baseline.py). Keyed by (resolved path, mtime_ns,
+# size); only the current file is retained so memory stays bounded. Read-only:
+# callers must not mutate the returned row dicts.
+_PRICE_HISTORY_ROW_CACHE: Dict[tuple, List[Dict[str, str]]] = {}
+
+
+def _read_price_history_rows(price_history_path: Path) -> List[Dict[str, str]]:
+    """Return cached csv.DictReader rows for price_history.csv (parsed once per run).
+
+    Falls back to a direct uncached read if the file cannot be stat'd. The
+    returned list MUST be treated as read-only by callers.
+    """
+    p = Path(price_history_path)
+    try:
+        st = p.stat()
+        key = (str(p.resolve()), st.st_mtime_ns, st.st_size)
+    except OSError:
+        with open(p, "r", encoding="utf-8") as fh:
+            return list(csv.DictReader(fh))
+    cached = _PRICE_HISTORY_ROW_CACHE.get(key)
+    if cached is None:
+        with open(p, "r", encoding="utf-8") as fh:
+            cached = list(csv.DictReader(fh))
+        _PRICE_HISTORY_ROW_CACHE.clear()  # retain only the current file → bounded memory
+        _PRICE_HISTORY_ROW_CACHE[key] = cached
+        logger.info(f"[price-cache] parsed price_history.csv once ({len(cached)} rows); reused downstream")
+    else:
+        logger.debug(f"[price-cache] reusing parsed price_history.csv ({len(cached)} rows)")
+    return cached
+
+
 def compute_momentum_from_price_history(
     price_history_path: Path, as_of_date: str, market_data_by_ticker: Dict[str, Dict], xbi_ticker: str = "XBI"
 ) -> int:
@@ -1722,8 +1898,8 @@ def compute_momentum_from_price_history(
     logger.info(f"Loading price history from {price_history_path}...")
     prices_by_ticker = {}
 
-    with open(price_history_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
+    with __import__("contextlib").nullcontext():
+        reader = _read_price_history_rows(price_history_path)
         for row in reader:
             ticker = row.get("ticker", "").upper()
             date_str = row.get("date", "")
@@ -2136,8 +2312,8 @@ def _hydrate_drawdown(
     # Read prices for ALL universe tickers + XBI
     xbi_want = {"XBI"}
     prices_by_ticker: Dict[str, List[float]] = {}
-    with open(price_history_path, "r", encoding="utf-8") as fh:
-        reader = _csv.DictReader(fh)
+    with __import__("contextlib").nullcontext():
+        reader = _read_price_history_rows(price_history_path)
         for row in reader:
             ticker = (row.get("ticker") or "").upper()
             if ticker not in all_tickers and ticker not in alias_targets and ticker not in xbi_want:
@@ -2373,8 +2549,8 @@ def _hydrate_beta_rsi(
     # ------------------------------------------------------------------
     ticker_set = set(all_tickers) | {"XBI"}
     prices_by_ticker: Dict[str, List] = {}
-    with open(price_history_path, "r", encoding="utf-8") as fh:
-        reader = _csv.DictReader(fh)
+    with __import__("contextlib").nullcontext():
+        reader = _read_price_history_rows(price_history_path)
         for row in reader:
             ticker = (row.get("ticker") or "").upper()
             if ticker not in ticker_set:
@@ -6873,6 +7049,15 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.debug("Snapshot manifest write failed: %s", exc)
 
+    # --- Write rank-depth Top-60 shadow sidecar (annotation only) ---
+    # VALIDATION_INFRASTRUCTURE / RANK_DEPTH_SHADOW_TRACKING / NO_MODEL_CHANGE.
+    # Non-blocking: a failure here must never affect the production snapshot.
+    try:
+        _rd_path = export_rank_depth_top60_sidecar(csv_rows, snap_path, as_of_date)
+        logger.info(f"  Rank-depth Top-60 sidecar written: {_rd_path}")
+    except Exception as exc:
+        logger.warning(f"  rank_depth_top60.csv sidecar write failed (non-blocking): {exc}")
+
     # --- Write options diagnostics sidecar ---
     try:
         from common.options_snapshot import write_options_snapshot
@@ -9554,6 +9739,7 @@ def run_screening_pipeline(
 
     # Load input data
     logger.info("[1/7] Loading input data...")
+    _t_load_data = __import__("time").time()
     universe_path = data_dir / "universe.json"
     logger.info(f"  Loading universe from: {universe_path}")
     logger.info(f"  Universe file exists: {universe_path.exists()}")
@@ -9562,6 +9748,10 @@ def run_screening_pipeline(
     raw_universe = load_json_data(universe_path, "Universe")
     logger.info(f"  Loaded {len(raw_universe)} records from universe.json")
     print(f"DEBUG_TRACE: Loaded {len(raw_universe)} records from {universe_path}", flush=True)
+    # Pruning observability: record the loaded count so the cheap-exclusion
+    # summary (delisted + PIT survivorship) can be logged in one place before
+    # any expensive enrichment / live fetch / module work begins.
+    _universe_loaded_n = len(raw_universe)
 
     # Normalize legacy field aliases (e.g. 'financials' → 'financial_data')
     # before any downstream code inspects these keys.
@@ -9667,7 +9857,18 @@ def run_screening_pipeline(
                 f"Run: python src/scripts/clean_universe.py to fix."
             )
         logger.info(f"  Universe validation passed: {validation_result['stats']['valid_count']} valid tickers")
+    # Consolidated cheap-exclusion summary (delisted + PIT survivorship) BEFORE
+    # any expensive enrichment / live fetch / module work. Surfaces how many
+    # names were pruned by cheap filters so stale/invalid names never silently
+    # reach expensive stages. Behavior-preserving: only the existing filters run.
+    _surviving_n = len(raw_universe)
+    logger.info(
+        f"  [prune] universe: loaded {_universe_loaded_n} → {_surviving_n} after cheap exclusions "
+        f"(pruned {_universe_loaded_n - _surviving_n}) before expensive modules"
+    )
+    print(f"[timing] load universe: {__import__('time').time() - _t_load_data:.2f}s", flush=True)
 
+    _t_load_financial = __import__("time").time()
     financial_records = load_json_data(data_dir / "financial_records.json", "Financial")
 
     # Financial records staleness check
@@ -9712,9 +9913,11 @@ def run_screening_pipeline(
         )
     elif pit_mode != "off":
         logger.debug("  PIT financials: pit_financials/ directory not found — using static financial_records.json")
+    print(f"[timing] load financial: {__import__('time').time() - _t_load_financial:.2f}s", flush=True)
 
     # Resolve trial_records: prefer PIT-filtered cache if available
     # ctgov_cache_dir=False disables cache lookup (used by tests)
+    _t_load_trials = __import__("time").time()
     if ctgov_cache_dir is False:
         _ctgov_cache = None
     else:
@@ -9757,7 +9960,9 @@ def run_screening_pipeline(
                 f"  PIT fallback filter: {_pre_count} → {_post_count} trials "
                 f"(removed {_pre_count - _post_count} with posting date > {_pit_cutoff})"
             )
+    print(f"[timing] load trials: {__import__('time').time() - _t_load_trials:.2f}s", flush=True)
 
+    _t_load_market = __import__("time").time()
     market_records = load_json_data(data_dir / "market_data.json", "Market data")
 
     # --- Ingestion schema validation (advisory, non-blocking) ---
@@ -9826,6 +10031,7 @@ def run_screening_pipeline(
     else:
         if not price_history_path.exists():
             logger.info("  Price history not found, skipping momentum computation")
+    print(f"[timing] load market + enrich: {__import__('time').time() - _t_load_market:.2f}s", flush=True)
 
     coinvest_signals = None
     coinvest_audit_data = {}  # PIT audit counters for run_metadata
@@ -10053,6 +10259,7 @@ def run_screening_pipeline(
 
     # Module 1: Universe filtering
     logger.info("[2/7] Module 1: Universe filtering...")
+    _t_m1 = __import__("time").time()
     m1_result = None
     if resume_index > 0 and checkpoint_dir:
         m1_result = load_checkpoint(checkpoint_dir, "module_1", as_of_date)
@@ -10071,9 +10278,11 @@ def run_screening_pipeline(
 
     active_tickers = [s["ticker"] for s in m1_result["active_securities"]]
     logger.info(f"  Active: {len(active_tickers)}, Excluded: {len(m1_result['excluded_securities'])}")
+    print(f"[timing] module_1: {__import__('time').time() - _t_m1:.2f}s", flush=True)
 
     # Module 2: Financial health
     logger.info("[3/7] Module 2: Financial health...")
+    _t_m2 = __import__("time").time()
     m2_result = None
     if resume_index > 1 and checkpoint_dir:
         m2_result = load_checkpoint(checkpoint_dir, "module_2", as_of_date)
@@ -10096,12 +10305,14 @@ def run_screening_pipeline(
     logger.info(
         f"  Scored: {diag.get('scored', len(m2_result.get('scores', [])))}, " f"Missing: {diag.get('missing', 'N/A')}"
     )
+    print(f"[timing] module_2: {__import__('time').time() - _t_m2:.2f}s", flush=True)
 
     # ========================================================================
     # Module 3: Catalyst Detection (NEW: Delta-based event detection)
     # ========================================================================
 
     logger.info("[4/7] Module 3: Catalyst detection...")
+    _t_m3 = __import__("time").time()
     m3_result = None
     if resume_index > 2 and checkpoint_dir:
         m3_result = load_checkpoint(checkpoint_dir, "module_3", as_of_date)
@@ -10190,9 +10401,11 @@ def run_screening_pipeline(
     # ========================================================================
     # End Module 3
     # ========================================================================
+    print(f"[timing] module_3: {__import__('time').time() - _t_m3:.2f}s", flush=True)
 
     # Module 4: Clinical development
     logger.info("[5/7] Module 4: Clinical development...")
+    _t_m4 = __import__("time").time()
     m4_result = None
     if resume_index > 3 and checkpoint_dir:
         m4_result = load_checkpoint(checkpoint_dir, "module_4", as_of_date)
@@ -10249,6 +10462,7 @@ def run_screening_pipeline(
         f"Trials evaluated: {diag.get('total_trials', 'N/A')}, "
         f"PIT filtered: {diag.get('pit_filtered', 'N/A')}"
     )
+    print(f"[timing] module_4: {__import__('time').time() - _t_m4:.2f}s", flush=True)
 
     # ========================================================================
     # Company Archetype Classification
@@ -11116,6 +11330,7 @@ def run_screening_pipeline(
                 )
             # else: m5_weights stays None → defaults
 
+        _t_m5 = __import__("time").time()
         m5_result = compute_module_5_composite_with_defensive(
             universe_result=m1_filtered,
             financial_result=m2_filtered,
@@ -11147,6 +11362,7 @@ def run_screening_pipeline(
 
     # Validate Module 5 output schema
     validate_module_5_output(m5_result)
+    print(f"[timing] module_5: {__import__('time').time() - _t_m5:.2f}s", flush=True)
 
     diag = m5_result.get("diagnostic_counts", {})
     logger.info(
@@ -12398,6 +12614,15 @@ Module 3 Catalyst Detection:
         help="Allow running on weekends/non-trading days (for research/testing only).",
     )
 
+    parser.add_argument(
+        "--validation-daily",
+        action="store_true",
+        default=False,
+        help="Fast daily validation mode: degrade gracefully on missing PIT cache, "
+        "skip live SEC/clinical refresh (use cached data only). Preserves PIT integrity, "
+        "model hash, and data-quality checks. Use for forward-evidence capture, not model updates.",
+    )
+
     args = parser.parse_args()
 
     # =========================================================================
@@ -12405,6 +12630,20 @@ Module 3 Catalyst Detection:
     # =========================================================================
     if getattr(args, "scoring_mode", None) == "enhanced":
         args.scoring_mode = "legacy"
+
+    # =========================================================================
+    # Propagate --validation-daily implications (before logging level is set)
+    # --validation-daily does NOT change the model, ranker, selector, or PIT
+    # integrity checks. It only disables live fetches and degrades gracefully
+    # when the PIT cache is missing instead of aborting.
+    # =========================================================================
+    if getattr(args, "validation_daily", False):
+        if args.pit_mode == "strict":
+            args.pit_mode = "degrade"
+        args.sec_8k_live = False
+        args.refresh_price_history_live = False
+        # Print before logger is configured — this is intentional for visibility.
+        print("[VALIDATION-DAILY] Fast validation mode: live fetches disabled, PIT degrades gracefully", flush=True)
 
     # =========================================================================
     # Configure logging level FIRST (before any logging calls)

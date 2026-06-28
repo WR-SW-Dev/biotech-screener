@@ -42,7 +42,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from dotenv import load_dotenv
 
 load_dotenv(REPO_ROOT / ".env")
-from archive_snapshot import get_git_info
+from archive_snapshot import get_git_info, sha256_file
 
 # ---------------------------------------------------------------------------
 # Ops contract constants
@@ -92,6 +92,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "portfolio_weights",
         "eligibility_consistency",
         "cache_health",
+        "source_freshness",
         "ruleset_health",
         "exposure_missingness",
         "risk_concentration",
@@ -339,13 +340,90 @@ class DriftThresholds:
 # Step 1: Price refresh
 # ---------------------------------------------------------------------------
 
+# Mode → baseline refresh breadth + warm sources. A mode never changes the
+# model, ranker, selector, ruleset, or PIT integrity checks — only refresh
+# breadth and snapshot location.
+MODE_DEFAULTS = {
+    "daily-validation": {
+        "price_refresh_scope": "top30",
+        "warm_sources": "ctgov",
+    },
+    "daily-production": {
+        "price_refresh_scope": "full",
+        "warm_sources": "sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory",
+    },
+    "full-refresh": {
+        "price_refresh_scope": "full",
+        "warm_sources": "sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials",
+    },
+    "research": {
+        "price_refresh_scope": "top30",
+        "warm_sources": "ctgov",
+    },
+}
+
+
+def resolve_validation_rank_depth_scope(
+    validation_rank_depth: Optional[int],
+    scope_explicitly_set: bool,
+    current_scope: str,
+) -> str:
+    """Resolve the price-refresh scope after applying --validation-rank-depth.
+
+    VALIDATION_INFRASTRUCTURE / NO_MODEL_CHANGE: governs refresh breadth only.
+    Explicit --price-refresh-scope always wins. When a rank depth is given and
+    scope was not set explicitly, widen to cover the cohort (>=60 -> top60,
+    else top30). Otherwise the scope is left unchanged.
+    """
+    if validation_rank_depth is None or scope_explicitly_set:
+        return current_scope
+    return "top60" if validation_rank_depth >= 60 else "top30"
+
+
+def _load_top_n_tickers_from_prior_snapshot(
+    snapshot_dir: Path,
+    as_of_date: str,
+    top_n: int = 30,
+) -> Optional[List[str]]:
+    """Read the most recent prior snapshot's rankings.csv and return the top-N tickers.
+
+    Returns None if no prior snapshot found or rankings.csv is missing/unreadable.
+    Skips the as_of_date snapshot itself (looks for dates strictly before it).
+    """
+    try:
+        prior_dates = sorted(
+            d.name for d in snapshot_dir.iterdir() if d.is_dir() and d.name < as_of_date and len(d.name) == 10
+        )
+        if not prior_dates:
+            return None
+        prior_date = prior_dates[-1]
+        rankings_path = snapshot_dir / prior_date / "rankings.csv"
+        if not rankings_path.exists():
+            return None
+        tickers: List[str] = []
+        with open(rankings_path, newline="", encoding="utf-8") as f:
+            for i, row in enumerate(csv.DictReader(f)):
+                if i >= top_n:
+                    break
+                t = (row.get("ticker") or "").strip().upper()
+                if t:
+                    tickers.append(t)
+        return tickers if tickers else None
+    except Exception:
+        return None
+
 
 def refresh_prices(
     price_csv: Path,
     through_date: str,
     universe_path: Optional[Path] = None,
+    tickers_override: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Incrementally refresh price_history.csv via extend_price_csv().
+
+    When tickers_override is provided, only those tickers (plus XBI) are
+    refreshed. Use this for daily-validation mode where only Top-N + XBI
+    prices are needed — full-universe refresh is deferred to weekly runs.
 
     Returns stats dict from extend_price_csv plus xbi_last_date.
     """
@@ -353,21 +431,26 @@ def refresh_prices(
     sys.path.insert(0, str(REPO_ROOT / "scripts"))
     from backtest_signal_robustness import extend_price_csv_safe as extend_price_csv
 
-    # Collect tickers from universe.json if available
-    tickers: Optional[List[str]] = None
-    if universe_path and universe_path.exists():
-        with open(universe_path) as f:
-            universe = json.load(f)
-        if isinstance(universe, list):
-            tickers = [e.get("ticker", e) if isinstance(e, dict) else str(e) for e in universe]
-        elif isinstance(universe, dict) and "tickers" in universe:
-            tickers = universe["tickers"]
-        # Filter synthetic tickers (e.g. _XBI_BENCHMARK_) — not real symbols
-        if tickers:
-            tickers = [t for t in tickers if t and not t.startswith("_")]
-        # Always include XBI benchmark
-        if tickers and "XBI" not in tickers:
+    if tickers_override is not None:
+        # Scoped refresh: caller-supplied list (e.g. Top-30 + XBI)
+        tickers = [t for t in tickers_override if t and not t.startswith("_")]
+        if "XBI" not in tickers:
             tickers.append("XBI")
+        _logger.info(f"  Scoped price refresh: {len(tickers)} tickers (Top-N + XBI)")
+    else:
+        # Full-universe refresh: collect tickers from universe.json
+        tickers = None
+        if universe_path and universe_path.exists():
+            with open(universe_path) as f:
+                universe = json.load(f)
+            if isinstance(universe, list):
+                tickers = [e.get("ticker", e) if isinstance(e, dict) else str(e) for e in universe]
+            elif isinstance(universe, dict) and "tickers" in universe:
+                tickers = universe["tickers"]
+            if tickers:
+                tickers = [t for t in tickers if t and not t.startswith("_")]
+            if tickers and "XBI" not in tickers:
+                tickers.append("XBI")
 
     stats = extend_price_csv(
         csv_path=price_csv,
@@ -737,6 +820,129 @@ def check_xbi_staleness(
         detail=f"XBI last={xbi_last}, gap={trading_days} trading days",
         value=trading_days,
         threshold=threshold_days,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Source-specific freshness policy (item #4)
+# ---------------------------------------------------------------------------
+# TTLs are calendar days. Exceeding a TTL is a NON-BLOCKING WARN — it surfaces
+# stale-source drag without failing the run. Core sources (prices, ctgov) also
+# have dedicated FAIL gates upstream; this gate adds whole-pipeline visibility,
+# especially for slow foreign registries that should refresh weekly, not daily.
+# Alpha-preserving rule: stale sources must be VISIBLE, never silently used.
+FRESHNESS_TTLS: Dict[str, int] = {
+    "prices": 4,  # daily (trading-day gap; XBI also has a hard FAIL gate)
+    "market_data": 5,  # daily
+    "ctgov": 2,  # daily clinical delta
+    "sec_8k": 4,  # every few days
+    "sec_13f": 100,  # quarterly-aware
+    "fda_adcom": 7,  # weekly
+    "euctr": 14,  # weekly unless catalyst-critical
+    "ctis": 14,
+    "isrctn": 14,
+}
+
+
+def _latest_dated_file_age(
+    directory: Path,
+    glob_pattern: str,
+    as_of_date: str,
+) -> Optional[int]:
+    """Age in calendar days of the newest dated file (<= as_of_date) under directory.
+
+    Filenames must embed a YYYY-MM-DD token. Returns None if directory missing
+    or no qualifying file found.
+    """
+    import re as _re
+
+    if not directory.exists():
+        return None
+    _date_re = _re.compile(r"(\d{4}-\d{2}-\d{2})")
+    best: Optional[str] = None
+    for p in directory.glob(glob_pattern):
+        m = _date_re.search(p.name)
+        if not m:
+            continue
+        d = m.group(1)
+        if d <= as_of_date and (best is None or d > best):
+            best = d
+    if best is None:
+        return None
+    return (datetime.strptime(as_of_date, "%Y-%m-%d") - datetime.strptime(best, "%Y-%m-%d")).days
+
+
+def check_source_freshness(
+    as_of_date: str,
+    *,
+    price_csv: Path,
+    data_dir: Path,
+    ctgov_cache_dir: Optional[Path] = None,
+    repo_root: Path = REPO_ROOT,
+) -> GateResult:
+    """Per-source freshness audit (non-blocking WARN).
+
+    Computes the age of each tracked source against its TTL and reports any that
+    are stale. Sources with no cache present are SKIPPED, not penalized, so an
+    absent optional registry never creates noise. Never returns FAIL.
+    """
+    ages: Dict[str, Any] = {}
+    stale: List[str] = []
+    skipped: List[str] = []
+
+    # prices: XBI last date in the CSV (calendar-day gap)
+    _xbi_last = _get_ticker_last_date(price_csv, "XBI")
+    if _xbi_last:
+        ages["prices"] = (datetime.strptime(as_of_date, "%Y-%m-%d") - datetime.strptime(_xbi_last, "%Y-%m-%d")).days
+    else:
+        skipped.append("prices")
+
+    # market_data: collected_at age via mtime fallback
+    _mkt = data_dir / "market_data.json"
+    if _mkt.exists():
+        ages["market_data"] = (
+            datetime.strptime(as_of_date, "%Y-%m-%d").date() - datetime.fromtimestamp(_mkt.stat().st_mtime).date()
+        ).days
+    else:
+        skipped.append("market_data")
+
+    # Dated-glob sources: (source, directory, glob)
+    _ctgov_dir = ctgov_cache_dir or (repo_root / "cache" / "ctgov")
+    _dated_specs = [
+        ("ctgov", _ctgov_dir, "trial_records_*.json"),
+        ("sec_8k", repo_root / "cache" / "sec" / "8k_catalysts", "8k_catalysts_*.json"),
+        ("fda_adcom", repo_root / "cache" / "fda", "adcom_calendar_*.json"),
+        ("euctr", repo_root / "cache" / "trials" / "euctr", "euctr_*.json"),
+        ("ctis", repo_root / "cache" / "trials" / "ctis", "ctis_*.json"),
+        ("isrctn", repo_root / "cache" / "trials" / "isrctn", "isrctn_*.json"),
+    ]
+    for _src, _dir, _glob in _dated_specs:
+        _age = _latest_dated_file_age(_dir, _glob, as_of_date)
+        if _age is None:
+            skipped.append(_src)
+        else:
+            ages[_src] = _age
+
+    # Compare each measured source to its TTL
+    for _src, _age in ages.items():
+        _ttl = FRESHNESS_TTLS.get(_src)
+        if _ttl is not None and isinstance(_age, int) and _age > _ttl:
+            stale.append(f"{_src}={_age}d>{_ttl}d")
+
+    if stale:
+        return GateResult(
+            name="source_freshness",
+            status="WARN",
+            detail="Stale sources: " + ", ".join(sorted(stale)) + (f"; skipped={sorted(skipped)}" if skipped else ""),
+            value={"ages": ages, "stale": stale, "skipped": skipped},
+            threshold=FRESHNESS_TTLS,
+        )
+    return GateResult(
+        name="source_freshness",
+        status="PASS",
+        detail=f"All measured sources within TTL ({len(ages)} checked, {len(skipped)} skipped)",
+        value={"ages": ages, "stale": [], "skipped": skipped},
+        threshold=FRESHNESS_TTLS,
     )
 
 
@@ -3910,6 +4116,108 @@ def _compute_market_data_refresh(
 # ---------------------------------------------------------------------------
 
 
+def _safe_file_hash(path: Optional[Path]) -> str:
+    """SHA-256 of a file, or "" if missing/unreadable. Never raises."""
+    try:
+        if path and Path(path).exists() and Path(path).is_file():
+            return sha256_file(Path(path))
+    except (OSError, ValueError):
+        pass
+    return ""
+
+
+def _compute_provenance_hashes(
+    *,
+    as_of_date: str,
+    data_dir: Optional[Path],
+    price_csv: Optional[Path],
+    ctgov_cache_dir: Optional[Path],
+    snapshot_date_dir: Optional[Path],
+    model_path: Optional[Path] = None,
+) -> Dict[str, str]:
+    """Compute content hashes of the inputs/outputs that define a run's state.
+
+    Pure provenance — does NOT change scoring, ranking, or gates. Lets the
+    validation ledger point at the exact production state used. Every hash
+    degrades to "" rather than raising, so a missing file never aborts the run.
+    """
+    _model = model_path or (REPO_ROOT / "production_data" / "ranker_v2_model.json")
+    _universe = (data_dir / "universe.json") if data_dir else None
+    _ctgov_dir = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov")
+    _clinical = Path(_ctgov_dir) / f"trial_records_{as_of_date}.json"
+    _rankings = (snapshot_date_dir / "rankings.csv") if snapshot_date_dir else None
+    return {
+        "model_hash": _safe_file_hash(_model),
+        "universe_hash": _safe_file_hash(_universe),
+        "price_hash": _safe_file_hash(price_csv),
+        "clinical_hash": _safe_file_hash(_clinical),
+        "rankings_hash": _safe_file_hash(_rankings),
+    }
+
+
+def detect_no_material_input_change(
+    as_of_date: str,
+    *,
+    data_dir: Path,
+    price_csv: Path,
+    ctgov_cache_dir: Optional[Path],
+    final_snapshots_dir: Path,
+) -> Optional[Dict[str, Any]]:
+    """Logging-only no-op detector (item F).
+
+    Compares the current run's INPUT hashes (model, universe, price, clinical)
+    against the most recent prior snapshot's run_manifest.json. Returns a dict
+    describing the comparison, or None if no prior manifest is available.
+
+    CONSERVATIVE: this never skips work or snapshot creation — it only surfaces
+    NO_MATERIAL_INPUT_CHANGE so operators can distinguish real rank movement
+    from pipeline churn. Any introduction of skip behavior must be test-covered.
+    """
+    try:
+        prior_dates = sorted(
+            d.name for d in final_snapshots_dir.iterdir() if d.is_dir() and d.name < as_of_date and len(d.name) == 10
+        )
+    except OSError:
+        return None
+    prior_manifest_hashes: Dict[str, str] = {}
+    for _pd in reversed(prior_dates):
+        _mp = final_snapshots_dir / _pd / "run_manifest.json"
+        if _mp.exists():
+            try:
+                prior_manifest_hashes = json.loads(_mp.read_text(encoding="utf-8")).get("hashes", {}) or {}
+            except (json.JSONDecodeError, OSError):
+                continue
+            if prior_manifest_hashes:
+                break
+    if not prior_manifest_hashes:
+        return None
+
+    current = _compute_provenance_hashes(
+        as_of_date=as_of_date,
+        data_dir=data_dir,
+        price_csv=price_csv,
+        ctgov_cache_dir=ctgov_cache_dir,
+        snapshot_date_dir=None,  # rankings is an OUTPUT — excluded from input no-op test
+    )
+    # Compare only INPUT hashes that are meaningful pre-screen.
+    input_keys = ("model_hash", "universe_hash", "price_hash", "clinical_hash")
+    changed = [
+        k
+        for k in input_keys
+        if current.get(k) and prior_manifest_hashes.get(k) and current.get(k) != prior_manifest_hashes.get(k)
+    ]
+    unchanged = [k for k in input_keys if current.get(k) and current.get(k) == prior_manifest_hashes.get(k)]
+    no_op = bool(unchanged) and not changed
+    return {
+        "no_material_input_change": no_op,
+        "unchanged_inputs": unchanged,
+        "changed_inputs": changed,
+        "compared_against": next(
+            (d for d in reversed(prior_dates) if (final_snapshots_dir / d / "run_manifest.json").exists()), None
+        ),
+    }
+
+
 def build_run_manifest(
     as_of_date: str,
     gate_results: List[GateResult],
@@ -3923,6 +4231,9 @@ def build_run_manifest(
     git_pre_run: Optional[Dict[str, Any]] = None,
     git_post_run: Optional[Dict[str, Any]] = None,
     data_dir: Optional[Path] = None,
+    mode: str = "daily-production",
+    price_csv: Optional[Path] = None,
+    ctgov_cache_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Build the run_manifest.json with full provenance.
 
@@ -3991,6 +4302,18 @@ def build_run_manifest(
         if g.status == "WARN" and overall_status != "FAIL":
             overall_status = "WARN"
 
+    # Explicit production health categories (item #11): a FAIL gate is BLOCKING
+    # (snapshot not promoted), a WARN is NON-BLOCKING (promoted but flagged).
+    # Lets downstream consumers react proportionally instead of treating every
+    # gate verdict the same.
+    health_summary = {
+        "blocking_failures": [g.name for g in gate_results if g.status == "FAIL"],
+        "warnings": [g.name for g in gate_results if g.status == "WARN"],
+        "n_pass": sum(1 for g in gate_results if g.status == "PASS"),
+        "n_warn": sum(1 for g in gate_results if g.status == "WARN"),
+        "n_fail": sum(1 for g in gate_results if g.status == "FAIL"),
+    }
+
     _requested = requested_as_of_date or as_of_date
 
     # Enrich git block with pre/post-run dirty flags
@@ -4029,13 +4352,27 @@ def build_run_manifest(
     if data_dir:
         mkt_refresh = _compute_market_data_refresh(data_dir, as_of_date)
 
+    # Content hashes of the inputs/outputs that define this run's state.
+    # Mirror ruleset_hash into the hashes block so the ledger has one canonical
+    # provenance map (model + ruleset + universe + price + clinical + rankings).
+    provenance_hashes = _compute_provenance_hashes(
+        as_of_date=as_of_date,
+        data_dir=data_dir,
+        price_csv=price_csv,
+        ctgov_cache_dir=ctgov_cache_dir,
+        snapshot_date_dir=snapshot_date_dir,
+    )
+    provenance_hashes["ruleset_hash"] = ruleset_info.get("ruleset_hash", "")
+
     return {
         "manifest_version": MANIFEST_VERSION,
+        "mode": mode,
         "requested_as_of_date": _requested,
         "effective_as_of_date": as_of_date,
         "as_of_date": as_of_date,  # backward compat alias
         "generated_at": _deterministic_timestamp(as_of_date),
         "git": git_block,
+        "hashes": provenance_hashes,
         "ruleset": ruleset_info,
         "row_counts": row_counts,
         "price_refresh": {
@@ -4058,6 +4395,7 @@ def build_run_manifest(
             for g in gate_results
         ],
         "overall_status": overall_status,
+        "health_summary": health_summary,
         "screen_exit_code": screen_proc.returncode,
         "audit_exit_code": audit_proc.returncode if audit_proc else None,
         "gate_config": {k: v for k, v in asdict(config).items()},
@@ -4436,6 +4774,8 @@ def run_daily(
     scientific_cartography_strict: bool = False,
     run_scientific_cartography_phase13c: bool = False,
     scientific_cartography_phase13c_strict: bool = False,
+    price_refresh_scope: str = "full",
+    mode: str = "daily-production",
 ) -> Dict[str, Any]:
     """Execute the full daily Phase-2 pipeline.
 
@@ -4559,7 +4899,25 @@ def run_daily(
     if not skip_price_refresh:
         _logger.info("\n[1/5] Refreshing price_history.csv ...")
         universe_path = data_dir / "universe.json"
-        price_stats = refresh_prices(price_csv, as_of_date, universe_path)
+        # Scoped refresh: only fetch prices for Top-N + XBI (fast daily validation).
+        # top60 widens scope to the rank-depth shadow cohort (ranks 1-60) so that
+        # ranks 31-60 forward returns are computed on fresh prices. Annotation/
+        # validation only — never changes the model, ranker, selector, or sizing.
+        _top_n_tickers: Optional[List[str]] = None
+        if price_refresh_scope in ("top30", "top60"):
+            _scope_n = 60 if price_refresh_scope == "top60" else 30
+            _top_n_tickers = _load_top_n_tickers_from_prior_snapshot(final_snapshots_dir, as_of_date, top_n=_scope_n)
+            if _top_n_tickers:
+                _logger.info(
+                    f"  Price refresh scope={price_refresh_scope}: "
+                    f"{len(_top_n_tickers)} prior-snapshot tickers + XBI"
+                )
+            else:
+                _logger.info(
+                    f"  Price refresh scope={price_refresh_scope}: "
+                    "no prior snapshot found — falling back to full universe"
+                )
+        price_stats = refresh_prices(price_csv, as_of_date, universe_path, tickers_override=_top_n_tickers)
         _logger.info(
             f"  Extended {price_stats.get('n_extended', 0)} tickers, "
             f"{price_stats.get('n_rows_appended', 0)} rows appended, "
@@ -4674,6 +5032,36 @@ def run_daily(
     if effective_as_of_date != as_of_date:
         _logger.info(f"Date fallback: {as_of_date} → {effective_as_of_date}")
         as_of_date = effective_as_of_date
+
+    # --- Gate: source freshness (non-blocking; whole-pipeline staleness audit) ---
+    freshness_gate = check_source_freshness(
+        as_of_date,
+        price_csv=price_csv,
+        data_dir=data_dir,
+        ctgov_cache_dir=ctgov_cache_dir,
+    )
+    gate_results.append(freshness_gate)
+    _logger.info(f"Source freshness gate: {freshness_gate.status} — {freshness_gate.detail}")
+
+    # --- No-op detection (logging-only; never skips work) ---
+    try:
+        _noop = detect_no_material_input_change(
+            as_of_date,
+            data_dir=data_dir,
+            price_csv=price_csv,
+            ctgov_cache_dir=ctgov_cache_dir,
+            final_snapshots_dir=final_snapshots_dir,
+        )
+        if _noop and _noop["no_material_input_change"]:
+            _logger.info(
+                "NO_MATERIAL_INPUT_CHANGE — model/universe/price/clinical inputs match "
+                f"prior snapshot {_noop['compared_against']} (unchanged={_noop['unchanged_inputs']}). "
+                "Running normally; rank movement (if any) is not driven by new core inputs."
+            )
+        elif _noop:
+            _logger.info(f"Material input change since {_noop['compared_against']}: changed={_noop['changed_inputs']}")
+    except Exception as _noop_err:
+        _logger.debug(f"No-op detection skipped: {_noop_err}")
 
     # --- Gate: required inputs present ---
     inputs_gate = check_inputs_present(data_dir)
@@ -5205,6 +5593,9 @@ def run_daily(
         git_pre_run=git_pre_run,
         git_post_run=git_post_run,
         data_dir=data_dir,
+        mode=mode,
+        price_csv=price_csv,
+        ctgov_cache_dir=ctgov_cache_dir,
     )
 
     # Stamp governance mode
@@ -6661,6 +7052,46 @@ def main():
         help="Skip incremental price refresh (use existing price_history.csv)",
     )
     parser.add_argument(
+        "--mode",
+        default="daily-production",
+        choices=["daily-validation", "daily-production", "full-refresh", "research"],
+        help=(
+            "Run mode (composes price scope, warm sources, and snapshot target):\n"
+            "  daily-validation — fast frozen-model proof: Top-30+XBI prices, ctgov-only warm.\n"
+            "  daily-production — normal screen (DEFAULT): core sources, full price refresh.\n"
+            "  full-refresh     — weekly/deep: all sources incl. slow registries (euctr/ctis/isrctn).\n"
+            "  research         — experimental: writes to data/research_snapshots, drift/forward gates skipped.\n"
+            "Explicit --price-refresh-scope / --warm-sources / --snapshot-dir override the mode default."
+        ),
+    )
+    parser.add_argument(
+        "--price-refresh-scope",
+        default=None,
+        choices=["full", "top30", "top60"],
+        help=(
+            "Price refresh scope: 'full' (all universe tickers), 'top30' "
+            "(prior-snapshot Top-30 + XBI — fastest), or 'top60' (prior-snapshot "
+            "Top-60 + XBI — covers the rank-depth shadow cohort so ranks 31-60 "
+            "forward returns use fresh prices). Falls back to full if no prior "
+            "snapshot found. Default is set by --mode (top30 for daily-validation, "
+            "full otherwise). Annotation/validation only — never changes the model."
+        ),
+    )
+    parser.add_argument(
+        "--validation-rank-depth",
+        type=int,
+        default=None,
+        choices=[30, 60],
+        help=(
+            "Explicit rank-depth for daily validation runs. When set, widens the "
+            "price-refresh scope to cover the cohort (30 -> top30, 60 -> top60 + XBI) "
+            "unless --price-refresh-scope is given explicitly. The rank-depth shadow "
+            "cohorts (top30 / rank31_60 / top60) are tracked in the forward "
+            "validation ledger regardless. VALIDATION_INFRASTRUCTURE / NO_MODEL_CHANGE: "
+            "does not change ranking, selection, scoring, eligibility, sizing, or trading."
+        ),
+    )
+    parser.add_argument(
         "--skip-audit",
         action="store_true",
         help="Skip data integrity audit step",
@@ -6713,13 +7144,15 @@ def main():
     )
     parser.add_argument(
         "--warm-sources",
-        default="sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory",
+        default=None,
         help=(
-            "Comma-separated sources passed to warm_caches.py in step 1.5 "
-            "(default: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory). "
-            "Slow registry sources (euctr, ctis, isrctn, merged_trials) are intentionally "
-            "excluded — they run in cron_data_refresh.sh (14:00 ET) to avoid blocking "
-            "the production pipeline. Use empty string to skip."
+            "Comma-separated sources passed to warm_caches.py in step 1.5. "
+            "Default is set by --mode (ctgov for daily-validation; "
+            "sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory for daily-production; "
+            "+euctr,ctis,isrctn,merged_trials for full-refresh). "
+            "Slow registry sources are excluded from the daily path — they run in "
+            "cron_data_refresh.sh (14:00 ET) to avoid blocking production. "
+            "Use empty string to skip."
         ),
     )
     parser.add_argument(
@@ -6780,6 +7213,55 @@ def main():
 
         setup_structured_logging()
 
+    # --- Resolve --mode into concrete flags ---
+    # The mode sets a baseline for price scope + warm sources + snapshot target.
+    # An explicit --price-refresh-scope / --warm-sources / --snapshot-dir on the
+    # command line always overrides the mode default (detected via argparse
+    # sentinel None for scope/sources, and sys.argv for snapshot-dir).
+    # NOTE: mode never changes the model, ranker, selector, ruleset, or PIT
+    # integrity checks — it only governs refresh breadth and snapshot location.
+    _mode_cfg = MODE_DEFAULTS[args.mode]
+    if args.price_refresh_scope is None:
+        args.price_refresh_scope = _mode_cfg["price_refresh_scope"]
+    if args.warm_sources is None:
+        args.warm_sources = _mode_cfg["warm_sources"]
+
+    # --validation-rank-depth makes rank-depth shadow tracking explicit and widens
+    # the price-refresh scope to cover the cohort so ranks 31-60 use fresh prices.
+    # Explicit --price-refresh-scope still wins. NO_MODEL_CHANGE: this only governs
+    # refresh breadth — never ranking, selection, scoring, sizing, or trading.
+    _resolved_scope = resolve_validation_rank_depth_scope(
+        args.validation_rank_depth,
+        scope_explicitly_set="--price-refresh-scope" in sys.argv,
+        current_scope=args.price_refresh_scope,
+    )
+    if _resolved_scope != args.price_refresh_scope:
+        args.price_refresh_scope = _resolved_scope
+        _logger.info(
+            "[MODE] --validation-rank-depth=%s → price_refresh_scope=%s",
+            args.validation_rank_depth,
+            args.price_refresh_scope,
+        )
+
+    # Research mode: never write a production snapshot. Redirect to a scratch
+    # snapshot tree and skip drift/forward-eval gates (they compare against
+    # production priors that won't exist there).
+    if args.mode == "research":
+        if "--snapshot-dir" not in sys.argv:
+            args.snapshot_dir = REPO_ROOT / "data" / "research_snapshots"
+        args.skip_drift = True
+        args.skip_forward_eval = True
+        _logger.info(
+            "[MODE] research → snapshot_dir=%s, drift/forward-eval gates skipped",
+            args.snapshot_dir,
+        )
+    _logger.info(
+        "[MODE] %s → price_refresh_scope=%s, warm_sources=%s",
+        args.mode,
+        args.price_refresh_scope,
+        args.warm_sources,
+    )
+
     config = GateConfig()
     if args.gate_config:
         config = GateConfig.from_json(args.gate_config)
@@ -6816,6 +7298,8 @@ def main():
             scientific_cartography_strict=args.scientific_cartography_strict,
             run_scientific_cartography_phase13c=args.run_scientific_cartography_phase13c,
             scientific_cartography_phase13c_strict=args.scientific_cartography_phase13c_strict,
+            price_refresh_scope=args.price_refresh_scope,
+            mode=args.mode,
         )
     except Exception as exc:
         # Ensure a FAIL manifest + ledger entry exist even on unhandled crash

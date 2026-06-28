@@ -15,6 +15,61 @@ construction remain frozen; this document does not authorize behavior changes.
 
 ---
 
+## Recent Updates — 2026-06-28 (Rank-Depth Shadow Tracking)
+
+Classification: `VALIDATION_INFRASTRUCTURE / RANK_DEPTH_SHADOW_TRACKING / NO_MODEL_CHANGE`
+
+**Summary:**
+- Added shadow tracking for the **Top-60** ranked names and the **ranks 31–60** band, alongside the existing Top-30 forward-validation basket.
+- **Top-30 remains the primary validation basket / selected model** — unchanged.
+- **Ranks 31–60** are now monitored as a reserve-candidate ("shadow bench") cohort.
+- **Top-60** is tracked as a depth-of-rank validation cohort (does alpha persist beyond rank 30?).
+- Diagnostic/measurement only. Not tradable by default.
+
+**Governance verdict:**
+- `NO_MODEL_CHANGE`. No ranker, selector, scoring, eligibility, sizing, production-default, cron, or trading change.
+- Frozen status: **2026-06-20 scoped architecture freeze remains in effect** (DEM FROZEN / BLOCKED_LEVEL_0). This change does not promote or clear any gate.
+- Operator action required: none. Optionally decide later whether to (a) commit the docs, (b) record a ratification entry in `docs/FORWARD_VALIDATION_PROTOCOL.md`, and (c) promote daily rank-depth reporting to cron — see "Cron boundary" below.
+
+**Evidence:**
+- Commit `10cae69e` on branch `feat/rank-depth-shadow` (pushed to origin; not merged).
+- `run_screen.py` — `add_rank_depth_cohorts()` + `export_rank_depth_top60_sidecar()`.
+- `tools/run_forward_validation.py` — captures record `cohorts {top30, rank31_60, top60}`.
+- `tools/fill_forward_returns.py` — `compute_cohort_returns()` (per-cohort EW/XBI/XS at 1d/5d/20d).
+- `tools/run_daily_production.py` — `top60` price-refresh scope + opt-in `--validation-rank-depth {30,60}`.
+- `tools/rank_depth_validation_summary.py` (new) → `artifacts/validation/rank_depth/RANK_DEPTH_VALIDATION.md`.
+- `tests/test_rank_depth_validation.py` — 9/9 pass; ~770 regression tests touching the modified tools pass (0 failures); real-snapshot smoke test produced exactly 60 sidecar rows.
+
+**Impact on alpha interpretation:**
+- Provides a cleaner read on whether the ranker has a real **slope** beyond the Top-30 cutoff. A genuine slope would look like `Top-30 XS > Top-60 XS > Ranks 31–60 XS > 0`; a positive 31–60 band would indicate a viable substitute pool rather than a fragile top basket.
+- **No alpha is claimed.** Cohort returns are pending forward data and are diagnostic only; the Top-30 forward-validation gate remains the primary proof path and is still unmet.
+
+**What changed:**
+- A new **non-blocking production sidecar artifact** `snapshots/<date>/rank_depth_top60.csv` is now written on every snapshot (try/except-guarded — cannot affect the frozen production snapshot). This is validation infrastructure, not model behavior.
+- Forward-validation captures/fills now carry rank-depth cohorts; a new rank-depth summary card tool exists (run manually).
+
+**What did not change:**
+- Ranker: unchanged.
+- Selector: unchanged.
+- Scoring: unchanged.
+- Eligibility: unchanged.
+- Sizing: unchanged.
+- Production wiring / cron / default behavior: unchanged. `daily-production` still defaults to `full` price scope; Top-60 refresh is opt-in only.
+- Trading / actionability: unchanged.
+
+**Cron boundary (explicit):** `docs/FORWARD_VALIDATION_PROTOCOL.md` (ratified 2026-06-28) defers pipeline/cron scheduling of validation artifacts to a separate operator authorization. This change respects that: the opt-in flags and the always-on sidecar were operator-instructed, but **daily rank-depth reporting was NOT wired into cron**. Promotion to cron remains a separate, explicit operator decision.
+
+**Skill synchronization:**
+- Skills reviewed: repo-scoped skills/agents referencing forward validation, Top-30 framing, weekly sweep, roster/IC. No repo-scoped skill asserted a claim made stale by this change (Top-30 remains primary; rank-depth is additive shadow-only).
+- Skills updated: none required.
+- Skills not updated: global `~/.claude/skills/*` left untouched by policy (out of repo scope; no behavior change warranted).
+
+**Open questions / next validation:**
+- Accrue ≥20 non-overlapping weekly 5d windows per cohort, then read the rank-depth slope.
+- Operator decision pending on whether to promote daily rank-depth reporting to cron and/or record a protocol ratification entry.
+
+---
+
 ## Recent Updates — 2026-06-28
 
 Diagnostic and documentation only. **No selector, ranker, weight, formula, eligibility, sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
@@ -2607,6 +2662,51 @@ Post-review (2026-05-28 onward):
 
 ---
 
+## Production execution hygiene (2026-06-28) — infrastructure only
+
+`PRODUCTION_OPTIMIZATION / NO_MODEL_CHANGE / NO_RANKER_CHANGE / NO_SELECTOR_CHANGE / NO_RULESET_CHANGE`
+
+A set of additive, behavior-preserving changes sharpen `run_screen.py` /
+`tools/run_daily_production.py` production execution **without touching the
+frozen model**. Ranker, selector, scoring formulas, feature weights, ruleset,
+eligibility, sizing, actionability, and PIT semantics are unchanged. Verified
+byte-identical via the golden-baseline regression suite
+(`tests/test_golden_baseline.py` + composite/clinical/catalyst/financial/IC
+golden suites — all pass).
+
+- **Stage timing** — `run_screen.py` prints `[timing] <stage>: N.NNs` for load
+  and each module (1–5); a `_timed()` context manager is available. Observability
+  only.
+- **Price-history parse-once cache** — `price_history.csv` (28MB+) was re-parsed
+  by momentum, beta/alpha, and drawdown/beta-rsi hydration. A run-scoped
+  `_read_price_history_rows()` cache (keyed by path/mtime/size; one file retained)
+  serves the exact `csv.DictReader` rows to all consumers, which each still
+  rebuild their own filtered view → identical output. Saves redundant 28MB parses.
+- **Cheap-exclusion prune log** — a `[prune] universe: loaded N → M` line is
+  emitted before expensive modules. Existing delisted + PIT-survivorship filters
+  already run before any live fetch/enrichment; no new pruning was added (no
+  ranking change).
+- **Source-freshness gate** (`run_daily_production.py`) — per-source TTLs
+  (prices/ctgov daily … 13F quarterly, euctr/ctis/isrctn weekly). Stale **non-core**
+  sources emit WARN; core staleness (prices/XBI) stays blocking via the existing
+  dedicated FAIL gates. Visibility, not new blocking.
+- **Manifest provenance + health categories** — `run_manifest.json` carries a
+  `hashes` block (model/universe/price/clinical/ruleset/rankings) and a
+  `health_summary` (blocking_failures vs warnings).
+- **No-op detection (logging-only)** — `NO_MATERIAL_INPUT_CHANGE` is logged when
+  current input hashes match the prior snapshot's manifest. **Never skips work or
+  snapshot creation.**
+- **Run modes / scoped price refresh** — `--mode {daily-validation,daily-production,
+  full-refresh,research}` and `--price-refresh-scope {full,top30}`. Default mode
+  `daily-production` resolves to the prior defaults, so **cron and existing callers
+  are unaffected**.
+
+**Operator action required:** none. Defaults preserve current cron behavior. The
+new `--mode daily-validation` / `--price-refresh-scope top30` are opt-in for fast
+forward-evidence runs.
+
+---
+
 ## Options Features Stage 1 — shadow quality/gap fields (2026-06-28)
 
 `NO_MODEL_CHANGE / NO_RANKER_CHANGE / NO_SELECTOR_CHANGE`
@@ -2634,4 +2734,4 @@ that pin column sets should add the new columns.
 
 ---
 
-*Document updated 2026-06-28 (added § Options Features Stage 1; shadow-only production output-schema expansion, no model/ranker/selector change). Prior: 2026-06-02 (added § 14.6.7 PIT trim shadow study documentation; research-only artifact with forward-window maturity blocker). Prior updates: 2026-05-24 (v1.14.0 sync), 2026-05-06 (ruleset reference), 2026-04-27 (baseline). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
+*Document updated 2026-06-28 (added § Production execution hygiene [infrastructure-only, no model/ranker/selector/ruleset change, cron defaults preserved] and § Options Features Stage 1 [shadow-only production output-schema expansion, no model/ranker/selector change]). Prior: 2026-06-02 (added § 14.6.7 PIT trim shadow study documentation; research-only artifact with forward-window maturity blocker). Prior updates: 2026-05-24 (v1.14.0 sync), 2026-05-06 (ruleset reference), 2026-04-27 (baseline). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
