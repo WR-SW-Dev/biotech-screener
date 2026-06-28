@@ -888,6 +888,48 @@ def build_card(
     ]
     lines += [r for r in regime_lines if r is not None]
 
+    # Morningstar sector pulse
+    ms = rh.get("morningstar_pulse", {}) if rh else {}
+    ms_universe = ms.get("universe", {}) if ms else {}
+    if ms_universe.get("n_tickers", 0) > 0:
+        age = ms.get("data_age_days")
+        pull = ms.get("data_pull_date", "?")
+        age_note = f"data as of {pull}" + (f" ({age}d ago)" if age is not None else "")
+        ms_top30 = ms.get("top30") or {}
+        lines += [
+            "## Morningstar Sector Fundamentals Pulse",
+            "",
+            f"*{age_note} — TTM metrics; use for cross-sectional context, not live valuation*",
+            "",
+            "| Metric | Universe | Top-30 |",
+            "|--------|----------|--------|",
+        ]
+        for label, key, fmt in [
+            ("ROIC positive %", "roic_positive_pct", "{:.0f}%"),
+            ("EPS positive %", "eps_positive_pct", "{:.0f}%"),
+            ("Median P/S (TTM)", "ps_ratio_median", "{:.2f}x"),
+            ("Median P/B", "price_to_book_median", "{:.2f}x"),
+            ("Median D/Capital", "debt_to_capital_median", "{:.1f}%"),
+            ("Median Net Margin", "net_margin_median", "{:.1f}%"),
+            ("Median Sales Growth", "sales_growth_median", "{:.1f}%"),
+            ("Analyst Moat coverage", "moat_pct", "{:.0f}%"),
+        ]:
+            uval = ms_universe.get(key)
+            tval = ms_top30.get(key) if ms_top30 else None
+            ustr = fmt.format(uval) if uval is not None else "—"
+            tstr = fmt.format(tval) if tval is not None else "—"
+            lines.append(f"| {label} | {ustr} | {tstr} |")
+        lines += ["", "---", ""]
+    else:
+        lines += [
+            "## Morningstar Sector Fundamentals Pulse",
+            "",
+            "*No morningstar_pulse cache — run write_morningstar_pulse() to enable.*",
+            "",
+            "---",
+            "",
+        ]
+
     # Evidence
     lines += [
         "## Evidence Trackers",
