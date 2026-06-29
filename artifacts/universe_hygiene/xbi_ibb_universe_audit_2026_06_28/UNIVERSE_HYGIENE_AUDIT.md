@@ -1,6 +1,6 @@
 # Universe Hygiene Audit Report
 
-**Audit timestamp:** 2026-06-28T21:52:16.902778+00:00
+**Audit timestamp:** 2026-06-29T01:41:53.919361+00:00
 **Reference date:** 2026-06-28
 **Stale price cutoff:** 2026-06-15 (10 trading days before 2026-06-28)
 
@@ -22,18 +22,18 @@ NO_TRADING_CHANGE
 
 ## Executive Verdict
 
-Model universe: **362 tickers**.
+Model universe: **357 tickers**.
 - Active/valid: **315**
 - Already flagged delisted/inactive: **7** (APLS, GLPG, KALV, ACLX, DAWN, FOLD, TERN)
-- Stale price (>10 trading days): **6** (no price since before 2026-06-15)
+- Stale price (>10 trading days): **1** (no price since before 2026-06-15)
 - Price data missing entirely: **0** (placeholder `_XBI_BENCHMARK_` entry)
 - Pending / needs review: **34**
 
 XBI ETF: **150 holdings** (source: SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/pr...)
 IBB ETF: **242 holdings** (source: BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20...)
 
-Missing from model: **1 XBI** / **5 IBB** candidates
-High-priority new candidates (XBI small/mid pure-play): **0**
+Missing from model: **6 XBI** / **5 IBB** candidates
+High-priority new candidates (XBI small/mid pure-play): **5**
 
 **No production files were modified.** All findings are proposals only.
 
@@ -41,11 +41,11 @@ High-priority new candidates (XBI small/mid pure-play): **0**
 
 ## Data Sources
 
-- **Model universe:** `production_data/universe.json` — 362 entries
+- **Model universe:** `production_data/universe.json` — 357 entries
 - **Split-adjusted prices:** `production_data/price_history_split_adj.csv` — clean ticker count varies
 - **Raw prices:** `production_data/price_history.csv`
-- **XBI holdings:** SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-06-28T21:52:18.838413+00:00
-- **IBB holdings:** BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-06-28T21:52:19.489926+00:00
+- **XBI holdings:** SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-06-29T01:41:56.095011+00:00
+- **IBB holdings:** BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-06-29T01:41:56.874481+00:00
 
 ---
 
@@ -53,10 +53,10 @@ High-priority new candidates (XBI small/mid pure-play): **0**
 
 | Metric | Value |
 | --- | --- |
-| Total tickers | 362 |
+| Total tickers | 357 |
 | Active (valid price) | 315 |
 | Delisted / inactive | 7 |
-| Active but stale price | 6 |
+| Active but stale price | 1 |
 | Price data missing | 0 |
 | Pending / needs review | 34 |
 
@@ -64,23 +64,28 @@ High-priority new candidates (XBI small/mid pure-play): **0**
 
 ## XBI Coverage Section
 
-XBI ETF (150 holdings) vs model (362 tickers).
+XBI ETF (150 holdings) vs model (357 tickers).
 
-- Tickers in XBI not in model: **1**
-- Core biotech candidates (XBI small/mid): **0**
+- Tickers in XBI not in model: **6**
+- Core biotech candidates (XBI small/mid): **5**
 
 ### Missing XBI Names
 
 | ticker | name | missing_classification |
 | --- | --- | --- |
 | PURR | HYPERLIQUID STRATEGIES | MISSING_LOW_RELEVANCE |
+| AVTX | AVALO THERAPEUTICS INC | MISSING_CORE_BIOTECH_CANDIDATE |
+| IMMX | IMMIX BIOPHARMA INC | MISSING_CORE_BIOTECH_CANDIDATE |
+| MPLT | MAPLIGHT THERAPEUTICS INC | MISSING_CORE_BIOTECH_CANDIDATE |
+| OVID | OVID THERAPEUTICS INC | MISSING_CORE_BIOTECH_CANDIDATE |
+| ACHV | ACHIEVE LIFE SCIENCES INC | MISSING_CORE_BIOTECH_CANDIDATE |
 
 
 ---
 
 ## IBB Coverage Section
 
-IBB ETF (242 holdings) vs model (362 tickers).
+IBB ETF (242 holdings) vs model (357 tickers).
 
 - Tickers in IBB not in model: **5**
 - Core biotech candidates (IBB): **2**
@@ -104,19 +109,14 @@ Tickers in model flagged as stale or inactive that should be reviewed for remova
 
 | ticker | company_name | model_classification | status | last_price |
 | --- | --- | --- | --- | --- |
-| ACHV | Achieve Life Sciences, Inc. | ACTIVE_BUT_STALE_PRICE | active | N/A |
-| ACLX |  | DELISTED_OR_INACTIVE | delisted | 2026-04-29 |
 | APLS | Apellis Pharmaceuticals, Inc. | DELISTED_OR_INACTIVE | delisted | 2026-05-15 |
-| AVTX | Avalo Therapeutics, Inc. | ACTIVE_BUT_STALE_PRICE | active | N/A |
+| GLPG | Lakefront Biotherapeutics NV | DELISTED_OR_INACTIVE | delisted | 2026-06-26 |
+| KALV | KalVista Pharmaceuticals Inc | DELISTED_OR_INACTIVE | delisted | 2026-06-12 |
+| _XBI_BENCHMARK_ |  | ACTIVE_BUT_STALE_PRICE | benchmark | N/A |
+| ACLX |  | DELISTED_OR_INACTIVE | delisted | 2026-04-29 |
 | DAWN |  | DELISTED_OR_INACTIVE | delisted | 2026-04-24 |
 | FOLD |  | DELISTED_OR_INACTIVE | delisted | 2026-04-27 |
-| GLPG | Lakefront Biotherapeutics NV | DELISTED_OR_INACTIVE | delisted | 2026-06-26 |
-| IMMX | Immix Biopharma, Inc. | ACTIVE_BUT_STALE_PRICE | active | N/A |
-| KALV | KalVista Pharmaceuticals Inc | DELISTED_OR_INACTIVE | delisted | 2026-06-12 |
-| MPLT | MapLight Therapeutics, Inc. | ACTIVE_BUT_STALE_PRICE | active | N/A |
-| OVID | Ovid Therapeutics Inc. | ACTIVE_BUT_STALE_PRICE | active | N/A |
 | TERN |  | DELISTED_OR_INACTIVE | delisted | 2026-05-07 |
-| _XBI_BENCHMARK_ |  | ACTIVE_BUT_STALE_PRICE | benchmark | N/A |
 
 
 ---
@@ -129,12 +129,12 @@ Staleness cutoff: last price before 2026-06-15 (10 trading days before 2026-06-2
 
 | Ticker | Company | Status | Last Price | Note |
 | --- | --- | --- | --- | --- |
-| ACLX |  | delisted | 2026-04-29 | Already flagged |
 | APLS | Apellis Pharmaceuticals, Inc. | delisted | 2026-05-15 | Already flagged |
-| DAWN |  | delisted | 2026-04-24 | Already flagged |
-| FOLD |  | delisted | 2026-04-27 | Already flagged |
 | GLPG | Lakefront Biotherapeutics NV | delisted | 2026-06-26 | Already flagged |
 | KALV | KalVista Pharmaceuticals Inc | delisted | 2026-06-12 | Already flagged |
+| ACLX |  | delisted | 2026-04-29 | Already flagged |
+| DAWN |  | delisted | 2026-04-24 | Already flagged |
+| FOLD |  | delisted | 2026-04-27 | Already flagged |
 | TERN |  | delisted | 2026-05-07 | Already flagged |
 
 ### Price Data Notes
@@ -190,7 +190,7 @@ GOSS (Gossamer Bio) shows `status=active` but price data in split-adjusted CSV m
 The ticker `RNA` now maps to Atrium Therapeutics (new post-spinoff entity). Ensure backtest data before the Novartis acquisition of old RNA (Avidity) is not contaminating model signals for the new entity.
 
 ### 4. ETF coverage gap candidates
-If ETF data was successfully fetched: evaluate 0 XBI core biotech candidates and 2 IBB core biotech candidates for potential addition in the next universe refresh cycle.
+If ETF data was successfully fetched: evaluate 5 XBI core biotech candidates and 2 IBB core biotech candidates for potential addition in the next universe refresh cycle.
 
 ### 5. Orphaned price rows
 ATXS, CVAC, MRSN have price history rows but are not in universe.json. These are likely historical tickers that were removed. Consider cleaning the price CSV.

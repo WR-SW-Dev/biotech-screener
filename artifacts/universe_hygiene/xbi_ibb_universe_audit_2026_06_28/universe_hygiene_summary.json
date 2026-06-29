@@ -1,5 +1,5 @@
 {
-  "audit_timestamp": "2026-06-28T21:52:16.902778+00:00",
+  "audit_timestamp": "2026-06-29T01:41:53.919361+00:00",
   "reference_date": "2026-06-28",
   "stale_cutoff": "2026-06-15",
   "governance": [
@@ -12,25 +12,26 @@
     "NO_TRADING_CHANGE"
   ],
   "model_universe": {
-    "total": 362,
+    "total": 357,
     "by_classification": {
       "ACTIVE_VALID": 315,
       "NEEDS_REVIEW": 34,
       "DELISTED_OR_INACTIVE": 7,
-      "ACTIVE_BUT_STALE_PRICE": 6
+      "ACTIVE_BUT_STALE_PRICE": 1
     }
   },
   "xbi": {
     "holdings_count": 150,
-    "source": "SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-06-28T21:52:18.838413+00:00",
-    "missing_from_model": 1,
+    "source": "SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-06-29T01:41:56.095011+00:00",
+    "missing_from_model": 6,
     "missing_by_classification": {
+      "MISSING_CORE_BIOTECH_CANDIDATE": 5,
       "MISSING_LOW_RELEVANCE": 1
     }
   },
   "ibb": {
     "holdings_count": 242,
-    "source": "BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-06-28T21:52:19.489926+00:00",
+    "source": "BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-06-29T01:41:56.874481+00:00",
     "missing_from_model": 5,
     "missing_by_classification": {
       "MISSING_CORE_BIOTECH_CANDIDATE": 2,
