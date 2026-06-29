@@ -240,6 +240,13 @@
       "status": "Active",
       "source": "cursor_skill",
       "source_authority": "skills/operational_health_baselines/SKILL.md"
+    },
+    "biotech-ic-council": {
+      "name": "Biotech Ic Council",
+      "file": "biotech-ic-council.md",
+      "status": "Active",
+      "source": "cursor_skill",
+      "source_authority": "skills/biotech-ic-council/SKILL.md"
     }
   },
   "path_c_governance_window_status": {

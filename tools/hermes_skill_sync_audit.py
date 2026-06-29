@@ -132,6 +132,11 @@ def _strip_frontmatter(text: str) -> str:
     return text[end + 4 :].lstrip("\n")
 
 
+def _unescape_md(text: str) -> str:
+    """Match sync_hermes_skills.unescape_md — source files may have backslash-escaped chars."""
+    return text.replace("\\(", "(").replace("\\)", ")").replace("\\-", "-")
+
+
 def _has_frontmatter(text: str) -> bool:
     return text.startswith("---")
 
@@ -250,7 +255,7 @@ def scan_mirror_drift(
             continue
 
         mirror_text = mirror_path.read_text(encoding="utf-8")
-        source_body = _strip_frontmatter(source_text)
+        source_body = _unescape_md(_strip_frontmatter(source_text))
         mirror_body = _strip_frontmatter(mirror_text)
 
         if _sha256_content(source_body) != _sha256_content(mirror_body):

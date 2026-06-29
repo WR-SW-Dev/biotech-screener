@@ -44,6 +44,7 @@ SKILL_MAP: dict[str, str] = {
     "operational_health_baselines": "operational-health-baselines.md",
     "pe_pacing": "pe-pacing.md",
     "openclaw-agent-optimize": "openclaw-agent-optimize.md",
+    "biotech-ic-council": "biotech-ic-council.md",
 }
 
 # skills/<dir>/REFERENCE.md -> docs/hermes_skills/<file>
