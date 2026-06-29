@@ -1,140 +1,81 @@
-# Recursive Self-Improvement Protocol
+# IC Council — Recursive Improvement
 
-Use this reference when a Biotech IC Council review should produce durable improvements to Hermes/Wake Robin review quality, tests, monitors, or promotion standards.
+Companion reference for `skills/biotech-ic-council/SKILL.md`. Load this when a review asks how the system should learn from failures, postmortems, repeated manual checks, or promotion-gate debates — i.e. when you are operating the recursive self-improvement loop, not just judging a single change.
 
-## 1. Definition
+This reference is the operational expansion of the skill's "Recursive self-improvement rule" and "Post-review LRN protocol" sections. It is read-only governance text: it tells the council how to capture and promote lessons, never how to mutate models or production autonomously.
 
-Recursive self-improvement means converting each review into better future review machinery. It does not mean autonomous model rewrites, automatic production promotion, or trading actions.
+## The loop in one line
 
-Good recursive improvement:
+A review is only complete when it has (a) reached a decision AND (b) emitted the learning that makes the same debate cheaper or unnecessary next time. Detection without encoding is a stalled loop.
 
-- turns repeated manual concerns into tests, fixtures, monitors, schemas, or checklists
-- makes false alpha harder to accept next time
-- improves point-in-time replay and source-date discipline
-- makes backtest contamination easier to detect
-- clarifies when a change is alpha, plumbing, expectation-layer, or governance-only
-- improves post-merge monitoring and rollback criteria
+```
+review → Recursive Improvement Register (Section 7)
+       → LRN entry in .learnings/LEARNINGS.md
+       → [recurrence ≥ 3] → skill patch / Spec proposal
+       → operator review → sync + audit → harvest_log → commit
+```
 
-Bad recursive improvement:
+## Three classes of improvement (and where each goes)
 
-- silently changes model weights, thresholds, rankers, selectors, gates, or final_score
-- lets an LLM approve its own future changes
-- expands cron or production writes without operator approval
-- treats a process improvement as alpha
-- adds complexity without a named failure mode
+| Class | Examples | Destination |
+|-------|----------|-------------|
+| **safe process improvement** | new checklist item, sharper cross-examination probe, naming fix, runbook step, dashboard note | LRN now; eligible for an IC skill patch at recurrence ≥ 3 |
+| **safe deterministic guardrail** | unit test, fixture, schema assertion, provenance check, null-coverage check, replay check | LRN now; propose the test/assertion as a normal PR (not a model change) |
+| **model-affecting improvement** | feature/weight/threshold change, ranker/selector edit, event-EV math, gate or sizing change | LRN now, but NEVER auto-promote — route to a separate Spec + its own IC review |
 
-## 2. Learning loop
+The single most important boundary: a recursive improvement must never silently become a model change. If encoding the lesson would touch `final_score`, a selector, a ranker, a gate threshold, event-EV math, sizing, or snapshot-promotion semantics, it leaves the recursive loop and enters Spec governance.
 
-Apply this loop at the end of each review:
+## LRN capture (every review)
 
-1. **Observe:** What evidence, failure, near miss, or uncertainty appeared?
-2. **Classify:** Is it alpha, PIT/provenance, clinical/catalyst, production, portfolio/risk, or review-process related?
-3. **Encode:** Can it become a unit test, fixture, CI guard, schema check, dashboard monitor, runbook step, memo template, or review rubric update?
-4. **Constrain:** Is the proposed improvement read-only/process-only, deterministic guardrail, or model-affecting?
-5. **Validate:** What proves the improvement works without creating false confidence?
-6. **Review again:** Any model-affecting improvement must return to the council as a separate proposal.
+Write 1–3 LRN entries per review, following the format in the SKILL.md "Post-review LRN protocol". Key fields:
 
-## 3. Improvement classes
+- **Pattern-Key** — `IC_<DOMAIN>_<description>`, snake_case, ≤6 words, from the namespace (`IC_CORP_ACTION_`, `IC_PIT_LEAK_`, `IC_CATALYST_`, `IC_EXPECTATION_`, `IC_BACKTEST_`, `IC_PRODUCTION_`, `IC_PORTFOLIO_`, `IC_PROCESS_`). Reuse the exact key when the same pattern recurs so the count is trackable.
+- **Recurrence-Count** — increment when the Pattern-Key already exists; start at 1 otherwise. Judge recurrence in-session against existing LRN entries / memories (there is no separate ledger to consult — that was retired 2026-06-26 in the `self-improving` skill).
+- **Promotion-lane** — `skill` (eligible to patch this skill), `spec` (model-affecting, needs a Spec), or `none` (one-off, log only).
 
-### Safe process improvement
+Only `safe process improvement` and `safe deterministic guardrail` items become LRN entries with a `skill` lane. `model-affecting` items get `spec`. One-offs and context-specific notes get `none`.
 
-Use for low-risk changes that improve human review quality.
+## Promotion threshold
 
-Examples:
+The canonical bar is **recurrence ≥ 3** — a 7-day rolling window for behavioral patterns, all-time for failure modes (matching the `failure-patterns` and `self-improving` skills). Below 3, the lesson stays an LRN entry and is allowed to recur; it is not encoded. A single sharp insight is logged, not promoted, unless the operator explicitly directs encoding.
 
-- add a checklist item for spinouts after discovering RNA-like contamination
-- add a runbook note that expectation-layer field wiring is not alpha
-- add a standard section for source-date/effective-date evidence
-- add a template line for XBI-relative returns
+A PENDING pattern that has cleared the threshold for more than one review cycle is a **stalled loop**, not a backlog item — surface it for operator decision rather than letting it sit.
 
-Default treatment: acceptable as documentation/governance unless it implies production behavior.
+## Promotion path (recurrence ≥ 3, lane = skill)
 
-### Safe deterministic guardrail
+1. Propose a patch to `skills/biotech-ic-council/SKILL.md` — a new checklist item, a sharper probe, a domain anchor, or an example added to this file.
+2. Generate drafts only: `SELFIMPROVE_GATES_MET=1 python3 tools/pattern_to_skillpatch.py --min-recurrence 3 --out artifacts/skill_patch_drafts`.
+3. Operator reviews and hand-edits the SKILL.md (no autonomous skill mutation).
+4. Sync and verify:
+   ```bash
+   python3 tools/sync_hermes_skills.py
+   python3 tools/audit_hermes_skills.py
+   ```
+5. Append the promotion to `docs/hermes_skills/harvest_log.md` and commit.
+6. Refresh the Town mirror of this skill so the loadable copy matches (the repo is canonical).
 
-Use for objective checks that can run without changing model behavior.
+## Eligibility gate (skill patch vs Spec)
 
-Examples:
+| Eligible for an IC skill patch | Ineligible — needs a Spec |
+|-------------------------------|---------------------------|
+| New cross-examination probe | Ranker / selector / weight changes |
+| Sharper checklist item | Event-EV math or gate thresholds |
+| New domain anchor or example | Production cron or sizing policy |
+| Updated rubric severity | Forward-return / alpha threshold |
+| PIT/provenance assertion template | Snapshot-promotion semantics |
 
-- regression fixture for reverse split contamination
-- source-date assertion for CT.gov deltas
-- snapshot replay check that fails on live fetch evidence
-- rankings.csv null-coverage report for expectation-layer fields
-- schema compatibility check for downstream consumers
-- corporate-action suspect-name audit for extreme returns
+## Learning from failures and postmortems
 
-Default treatment: good candidate for future PR, but still require tests and no-production-impact review.
+When a review re-derives a failure that is already cataloged, do not re-investigate from scratch:
 
-### Model-affecting improvement
+- Check the `failure-patterns` catalog first (by category and keyword). If a match exists with a documented resolution, apply the known fix and increment recurrence rather than re-litigating.
+- If the match is UNRESOLVED, add recurrence + any new diagnostic detail; do not declare it fixed.
+- A failure mode at recurrence ≥ 3 with `promotion_status: PENDING` is a candidate for promoting its prevention rule into the relevant operational skill — surface it.
 
-Use for changes that alter prediction, ranking, selection, scoring, event EV math, gates, thresholds, or portfolio actionability.
+## Patch efficacy (close the loop on the loop)
 
-Examples:
+A promoted patch is a hypothesis, not a fix, until verified. Record a 2-week post-merge efficacy check (per the harvest_log convention): did the pattern stop recurring after the patch landed? If efficacy can't be measured yet (e.g. telemetry not implemented), say so explicitly rather than assuming the patch worked.
 
-- new feature in final_score
-- changed selector threshold
-- changed event severity weights
-- new expectation-gap trading/ranking rule
-- changed sizing or risk policy
+## Restraint (does this lesson deserve to be encoded?)
 
-Default treatment: must be reviewed as a new alpha/model or portfolio/risk proposal. Do not bundle into a process-cleanup merge.
-
-## 4. Recursive improvement decision tests
-
-Before recommending a recursive improvement, answer:
-
-- What exact prior failure or near miss does this address?
-- Would this have caught the current issue earlier?
-- Is it deterministic enough to test?
-- Is it cheaper than repeated manual review?
-- Could it block valid alpha because of overfitting to one incident?
-- Does it preserve point-in-time replay?
-- Does it avoid changing the model unless separately approved?
-
-Reject or defer broad improvements that cannot name a failure mode.
-
-## 5. Biotech-specific examples
-
-### Corporate-action learning
-
-If a backtest is distorted by a reverse split, spinout, or delisting:
-
-- recommend a corporate-action suspect audit for extreme single-name returns
-- add fixture names and dates if known
-- require split-adjusted/raw price comparison in future validation
-- do not mark the alpha signal invalid until recomputed on cleaned data
-
-### CT.gov/FDA source-date learning
-
-If a catalyst review lacks source-date proof:
-
-- recommend a required `source_date`, `effective_date`, and observable-source field in future artifacts
-- add a next-trading-day effective-date fixture
-- mark post-event knowledge as an S0 blocker if it enters historical features
-
-### Expectation-layer learning
-
-If field wiring improves coverage:
-
-- recommend coverage monitoring and consumption checks
-- distinguish export coverage from model consumption
-- require historical backfill before historical research claims
-- do not create a selector/ranker rule without forward validation
-
-### Production replay learning
-
-If a replay uses live sources or mutable caches:
-
-- recommend a no-live-fetch replay assertion
-- add input-hash and generated-artifact boundary checks
-- require stable projection of decision-relevant fields
-- treat cron expansion as separate operator-approved work
-
-## 6. Output language
-
-Use precise phrasing:
-
-- “Recursive follow-up: convert this manual concern into a deterministic guardrail.”
-- “This is a process improvement, not model improvement.”
-- “This should become a fixture before the next similar promotion review.”
-- “Do not encode this as a model rule until forward validation supports it.”
-- “The system learned a review standard, not an alpha signal.”
+Borrowed from `self-improving` Rule 10: insight is not the move. A captured lesson counts only when it changes a future decision or action — not when it is filed. Prefer fewer, sharper checklist items over an ever-growing rubric. Documentation of a recurring problem is not its resolution; if a pattern keeps recurring, escalate it toward a concrete fix or owner instead of re-logging it.

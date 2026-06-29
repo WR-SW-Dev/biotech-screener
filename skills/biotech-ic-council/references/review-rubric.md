@@ -1,205 +1,66 @@
-# Biotech IC Council Review Rubric
+# IC Council — Review Rubric
 
-Use this rubric for strict merge, hold, revert, or production-readiness decisions.
+Companion reference for `skills/biotech-ic-council/SKILL.md`. Defines the strict severity levels, merge gates, blocker classification, and recursive-improvement gates the council applies. Load this when you need to assign a severity, decide whether something blocks a merge, or judge whether a finding has cleared its promotion gate.
+
+This rubric is read-only governance text. It never authorizes a merge, a production change, or a model change by itself — it only standardizes how the council labels findings so the operator's decision is consistent across reviews.
 
 ## Severity levels
 
-### S0 — blocker
+Assign exactly one severity per finding. When in doubt, escalate one level rather than down-rank.
 
-Use when the issue can create false historical alpha, contaminate production, mutate trading-adjacent state, expose credentials, or make deterministic replay impossible.
+| Severity | Meaning | Council effect |
+|----------|---------|----------------|
+| **BLOCKER** | Would cause wrong production output, PIT leakage, a false alpha claim, or an irreversible/unsafe action if merged. | Forces `reject / revert` or `hold pending validation`. Never compatible with `merge / approve`. |
+| **HIGH** | Real correctness or governance risk that is contained or conditional (e.g. wrong only in an unobserved regime, or behind a flag). | Forces at most `merge only as research-only` or `merge only as plumbing / no-alpha-claim` until resolved. |
+| **MEDIUM** | Inconsistency, missing test, or undocumented assumption that should be fixed but does not invalidate the change. | Compatible with merge if a required follow-up check is recorded. |
+| **LOW** | Style, naming, or documentation nit. | Informational; never blocks. |
+| **UNOBSERVED** | Evidence required to judge is missing. NOT a pass. | Treat as HIGH for any alpha/PIT/production dimension until evidence is supplied. Never infer the missing evidence. |
 
-Examples:
+`UNOBSERVED` is the rubric's single most important discipline: the council must mark missing evidence as missing, never assume it favorable. A decision-matrix row may only be `pass` when positive evidence exists.
 
-- point-in-time leakage
-- forward returns, later trial outcomes, or future source dates entering features
-- raw split/unadjusted corporate-action artifact driving IC, spread, or returns
-- reverse split, spinout, merger, ticker change, or delisting not handled in a backtest window
-- production snapshot overwrite without guardrails
-- credential exposure in scripts, logs, process args, CI, or provider detection
-- cron/automation writes without explicit operator approval
-- schema change that breaks downstream consumers without migration
-- brokerage/trading action implied by model output
-- historical replay performs live fetches or refreshes mutable sources
+## Decision-matrix status mapping
 
-Default decision: reject, revert, or hold pending fix.
+The Section 6 decision matrix uses `pass | watch | fail | unobserved`. Map severities to status:
 
-### S1 — high
+- Any **BLOCKER** on a dimension → that dimension is `fail`.
+- **HIGH** → `fail` if it directly undermines the dimension, else `watch`.
+- **MEDIUM** → `watch`.
+- **LOW** → `pass` (note the nit in rationale).
+- Missing evidence → `unobserved` (never `pass`).
 
-Use when the issue could materially distort research conclusions or production reliability but is bounded and fixable.
+## Merge gates
 
-Examples:
+The Final IC Recommendation (Section 8) is constrained by the matrix:
 
-- untested fallback behavior
-- incomplete delisting or stale-universe handling
-- stale XBI, price, clinical, or universe source
-- fragile JSON/CSV construction
-- generated artifacts included in input hashes unintentionally
-- validation only on a favorable date/window
-- insufficient corporate-action screen
-- CT.gov/FDA event has weak source-date or effective-date proof
-- expectation-layer fields exported but not confirmed consumed
-- production wrapper can fail after writing partial artifacts
+| Final recommendation | Allowed only when |
+|----------------------|-------------------|
+| **merge / approve** | No BLOCKER and no `fail` row; all alpha/PIT/production dimensions are `pass`; rollback path stated. |
+| **merge only as research-only** | Diagnostic value is real but a production dimension is `watch`/`unobserved`; no BLOCKER. Output must not feed production sort keys. |
+| **merge only as plumbing / no-alpha-claim** | Improves coverage/observability/expectation estimation only; carries no forward-return or alpha claim; no BLOCKER. |
+| **hold pending validation** | A HIGH or UNOBSERVED dimension blocks confidence and the missing evidence is obtainable. |
+| **reject / revert** | Any BLOCKER, or the change is outside mandate (leaky, trading-adjacent, or silently model-affecting). |
+| **no consensus** | Seats reach irreducible disagreement; escalate to operator with the open question stated in one line. |
 
-Default decision: hold pending validation, or merge as research-only if isolated.
+Hard rule: **CI is never assumed green.** If CI status is unobserved or red, no recommendation above `hold pending validation` may be issued for a production-path change. State the CI basis explicitly.
 
-### S2 — medium
+## Blocker classification
 
-Use when the issue weakens confidence but does not obviously invalidate the result.
+A finding is a BLOCKER if any of the following is true:
 
-Examples:
+- It introduces **PIT leakage** (a forward return or future-dated source enters a feature, or a generated artifact feeds an input hash unintentionally).
+- It makes a **forward-return / IC / hit-rate / alpha claim** unsupported by out-of-sample or forward evidence.
+- It silently alters `final_score`, a selector, a ranker, a gate threshold, event-EV math, or sizing/portfolio policy without a separate model-change review.
+- It accepts a biotech price series without checking splits, reverse splits, spinouts, M&A, delistings, or special distributions.
+- It accepts a catalyst claim without source-date / effective-date discipline.
+- It breaks deterministic replay or removes a rollback path on a production change.
+- It would take an irreversible or trading-adjacent action from council output alone.
 
-- missing secondary window
-- unclear metric naming
-- weak documentation
-- incomplete monitoring plan
-- limited fixture coverage
-- non-critical output field coverage gap
-- no ablation for a plausible but bounded feature change
-- insufficient explanation of XBI-relative vs raw return
+Anything trading-adjacent, credential-touching, or cron-mutating that lacks an explicit blast-radius + rollback discussion is at minimum HIGH and usually BLOCKER.
 
-Default decision: watch or require post-merge monitoring.
+## Recursive-improvement gates
 
-### S3 — low
+A finding only earns a place in the Section 7 register (and a downstream LRN entry) when it is supported by evidence or a clearly repeated risk — never speculation.
 
-Use when the issue is cosmetic, documentation-only, or easily reversible.
+Promotion of a recurring pattern into the skill body or a companion reference is gated on **recurrence ≥ 3** (the canonical threshold: 7-day rolling window for behavioral patterns, all-time for failure modes). Below that threshold the lesson is logged as an LRN entry and left to recur; it is not encoded.
 
-Examples:
-
-- wording ambiguity
-- harmless formatting drift
-- non-semantic refactor with passing tests
-- documentation-only memo with no production path
-
-Default decision: approve with notes.
-
-## Merge gates by change type
-
-### Alpha/model changes
-
-Require:
-
-- baseline comparison against current production ranker/selector
-- out-of-sample or forward validation appropriate to horizon
-- alternate window/regime check, including XBI-relative framing
-- corporate-action, delisting, and survivorship artifact screen
-- PIT source-date proof
-- ablation or reasoned attribution for the claimed improvement
-- selection count, turnover, and implementation-friction review
-- clear rollback path
-
-### Event EV / expectation-layer changes
-
-Require:
-
-- field coverage before/after for expected inputs
-- proof newly exported fields are actually consumed by the expectation model
-- distinction between market-implied expectation estimation and alpha selection
-- historical backfill plan if research uses prior snapshots
-- null/coverage behavior for small caps and options-unavailable names
-- no claim of alpha without separate forward validation
-
-### Feature/plumbing changes
-
-Require:
-
-- field coverage before/after
-- schema compatibility check
-- downstream consumer check
-- representative historical replay if historical artifacts are affected
-- no claim of new alpha unless separately validated
-- production snapshot check after first live run if applicable
-
-### Production/reliability changes
-
-Require:
-
-- targeted tests
-- deterministic replay or stable output projection
-- failure-mode test
-- no unintended artifact writes
-- no cron expansion unless explicitly approved
-- cache/fallback behavior tested if touched
-- rollback command or revert path
-
-### Clinical/catalyst changes
-
-Require:
-
-- source-date anchored clinical/regulatory evidence
-- next-trading-day effective-date logic where appropriate
-- endpoint/population/phase/indication/mechanism mapping check
-- event timing and severity/noise-band justification
-- ACTUAL vs ESTIMATED dates separated
-- no use of post-event knowledge in pre-event snapshots
-
-### Portfolio/risk changes
-
-Require:
-
-- liquidity and ADV guardrail check
-- concentration, beta, and sector exposure check
-- turnover/slippage consideration
-- options/priced-move interpretation separated from alpha signal
-- short-interest/crowding risk considered
-- drawdown/regime stress where relevant
-
-## Decision language
-
-Use precise language:
-
-- “This improves plumbing/coverage, not proven alpha.”
-- “This improves expectation estimation, not selector validity.”
-- “This is research-valid but not production-ready.”
-- “This should merge only behind a no-production-impact flag.”
-- “This is blocked because it can create false historical alpha.”
-- “This is blocked until corporate-action contamination is ruled out.”
-- “No consensus: human operator should decide after the listed validation.”
-
-## Recursive self-improvement gates
-
-Use these gates when a review recommends future changes to tests, monitors, rubrics, or model behavior.
-
-### Process-only recursive improvements
-
-Approve when the item:
-
-- clarifies a recurring manual judgment
-- improves review consistency
-- does not alter production behavior or model outputs
-- has a named failure mode or ambiguity it addresses
-
-Examples:
-
-- add a checklist for corporate-action screening
-- add standard language separating expectation-layer plumbing from alpha
-- add a postmortem template section for source-date evidence
-
-### Deterministic guardrail improvements
-
-Hold for implementation review unless the guardrail is already implemented and tested. Require:
-
-- exact failure mode
-- deterministic pass/fail condition
-- fixture or representative test case
-- no unintended production writes
-- no model-output changes unless explicitly scoped
-
-Examples:
-
-- CI check for source_date > snapshot_date
-- replay assertion that historical runs do not live-fetch mutable sources
-- schema/null-coverage check for `rankings.csv` expectation fields
-- corporate-action audit for extreme biotech returns
-
-### Model-affecting recursive improvements
-
-Treat as a new model or portfolio proposal. Require a full council review before merge.
-
-Examples:
-
-- changing final_score weights based on a postmortem
-- promoting an expectation-gap rule into a selector
-- changing catalyst severity weights after one event
-- changing portfolio sizing or risk gates
-
-Default language: “This learning is valid, but encoding it into the model requires separate alpha validation.”
+Eligibility for an IC *skill* patch (vs. requiring a separate Spec) follows the table in the SKILL.md "What may become an IC skill patch" section: process/checklist/rubric/anchor/template edits are eligible; anything touching ranker/selector/weights, event-EV math, gate or alpha thresholds, cron, sizing, or snapshot-promotion semantics requires a Spec, not a skill patch.
