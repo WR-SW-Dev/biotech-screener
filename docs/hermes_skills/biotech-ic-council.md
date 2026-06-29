@@ -31,6 +31,36 @@ Use exactly five seats unless the user requests otherwise:
 4. **Production reliability reviewer** — checks determinism, schema stability, tests, CI, snapshot hygiene, cron safety, fallback behavior, cache behavior, output compatibility, and rollback path.
 5. **Portfolio/risk reviewer** — evaluates liquidity, market cap, short interest, crowding, priced move/options interpretation, sector regime, XBI-relative risk, concentration, turnover, drawdown, and whether the change affects sizing or only ranking/review.
 
+## Edge advocate (rotating role)
+
+The edge advocate is **not a permanent sixth seat**. It is a per-review role activated only when:
+
+- the triage gate returns YES on `alpha/model` or `backtest claim`; AND
+- the review is proceeding to a full council (not fast exit).
+
+**Assignment:** deterministic rotation through seats 1→2→3→4→5→1, or chair assignment when one seat is already the natural skeptic counterpart. Record the assigned seat number in the DOL row. A seat assigned the advocate role writes a dual assessment in the blind round: its normal seat perspective plus the advocate framing.
+
+**Rotation rationale:** a fixed advocate becomes ceremonial; any seat may hold the role; the assignment is auditable.
+
+**Authority (may):**
+- argue the strongest good-faith case the signal is real
+- identify the conditioning under which a concentrated or noisy edge is usable (regime, horizon, sizing posture, risk wrapper)
+- flag when the council is about to discard something valid-but-inconvenient
+- require a structured forward-shadow mandate when evidence is promising but insufficient
+- recommend: `FORWARD_SHADOW_MANDATE`, `CONDITIONAL_EDGE_TRACKING`, `REGIME_CONDITIONED_TRACKING`, `RISK_WRAPPER_TRACKING`, `REJECT_BUT_LOG_FALSE_NEGATIVE_RISK`
+
+**Hard limits (may not):**
+- approve production, override gates, change ranker/selector/sizing, recommend trading
+
+**Required questions — the advocate must address all six before Step 4:**
+
+1. What is the strongest case this signal is real?
+2. What condition would make this edge usable (regime, horizon, sizing posture, risk wrapper)?
+3. Is the council confusing conditional/noisy alpha with no alpha?
+4. What forward-shadow test would prove or disprove the edge within the evaluation window?
+5. What would we regret discarding if this later proves correct?
+6. Is the evidence still insufficient — and if so, what is the minimum viable test before the next review?
+
 ## Recursive self-improvement rule
 
 Every review must produce a small learning artifact. The council should not only decide whether this change is acceptable; it must also identify how this review should make the system harder to fool next time.
@@ -178,6 +208,13 @@ Classify the proposal in ≤5 lines before any deliberation. Answer each signal 
 
 When skipping a seat, note it explicitly: `[seat N not required — <reason>]`.
 
+**Edge advocate assignment** — when `alpha/model` or `backtest claim` is YES:
+
+- Assign the edge advocate role before Step 1 using deterministic rotation (track last assigned seat to determine next).
+- Note assignment: `[edge advocate: seat N — <seat name>]`
+- The assigned seat writes a dual assessment in Step 3 (normal seat perspective + advocate framing).
+- Record `edge_advocate_assigned`, `edge_advocate_seat` in the DOL row.
+
 ### 1. Restatement gate
 
 Begin by restating the proposed change in one paragraph and classify it as one or more of:
@@ -235,7 +272,9 @@ Write one short independent assessment from each seat before synthesis. Each sea
 - biotech-alpha relevance
 - learning-loop implication
 
-Do not let later seats defer to earlier seats. Preserve disagreement.
+If an edge advocate was assigned: the assigned seat writes a **dual assessment** — first its normal seat perspective, then a separate advocate framing addressing the six required questions. Label the sections clearly: `[Seat N — normal]` and `[Seat N — edge advocate]`.
+
+Do not let later seats defer to earlier seats. Preserve disagreement. The advocate framing must not simply endorse the proposal; it must argue the strongest good-faith case and identify the falsifiable shadow test.
 
 ### 4. Cross-examination
 
@@ -249,6 +288,13 @@ List the strongest challenge each seat would pose to another seat. Use this to e
 - does the production path preserve deterministic replay?
 - could this increase turnover, crowding, slippage, or false conviction?
 - should this concern become a durable test, monitor, fixture, or checklist item?
+
+**When edge advocate is active — required cross-examination pair:**
+
+- Skeptic → advocate: "Is this rally participation that will vanish in a down-regime, or is it genuinely cross-sectional?"
+- Advocate → skeptic: "Are you rejecting beta concentration when the right answer is regime-conditional sizing?"
+
+Both challenges must be logged. Preserving both directions of dissent is the point of the rotating role.
 
 ### 5. Dissent and novelty gate
 
@@ -277,8 +323,11 @@ Return a table with these rows:
 - test adequacy
 - rollback clarity
 - recursive improvement value
+- **false-negative risk** (if edge advocate was active: advocate's read on whether real edge is being discarded)
 
 Use status values only: `pass`, `watch`, `fail`, `unobserved`.
+
+For `false-negative risk`: `pass` = no plausible edge being discarded; `watch` = plausible edge, shadow mandate warranted; `fail` = council is about to discard likely valid conditional alpha without a forward test; `unobserved` = insufficient evidence to judge.
 
 ### 7. Recursive improvement register
 
@@ -298,12 +347,16 @@ Bias toward small, testable, reversible improvements. Do not create broad automa
 
 Choose exactly one final recommendation:
 
-- **merge / approve** — evidence is sufficient and blast radius is controlled.
-- **merge only as research-only** — useful diagnostic, not production-approved.
-- **merge only as plumbing / no-alpha-claim** — improves coverage, export, observability, or expectation estimation, but does not yet prove alpha.
-- **hold pending validation** — promising but missing required proof.
-- **reject / revert** — likely harmful, misleading, leaky, or outside mandate.
-- **no consensus** — irreducible disagreement; escalate to human operator.
+- **APPROVE** — evidence is sufficient and blast radius is controlled.
+- **RESEARCH_ONLY** — useful diagnostic, not production-approved.
+- **PLUMBING_ONLY** — improves coverage, export, observability, or expectation estimation; does not yet prove alpha.
+- **HOLD** — promising but missing required proof.
+- **REJECT** — likely harmful, misleading, leaky, or outside mandate.
+- **NO_CONSENSUS** — irreducible disagreement; escalate to human operator.
+- **FORWARD_SHADOW_MANDATE** — evidence is promising but insufficient; no production change; a structured measurable forward test is required. Must be accompanied by a shadow mandate artifact.
+- **CONDITIONAL_EDGE_TRACKING** — signal appears real only under specific conditions (regime, horizon, catalyst bucket, liquidity, risk wrapper state); track under those conditions with explicit labels and forward validation.
+
+Neither `FORWARD_SHADOW_MANDATE` nor `CONDITIONAL_EDGE_TRACKING` may change production behavior.
 
 Include:
 
@@ -314,6 +367,8 @@ Include:
 - one-sentence alpha thesis
 - one-sentence risk thesis
 - decision-owner note: what the human operator must decide
+
+**If recommendation is FORWARD_SHADOW_MANDATE or CONDITIONAL_EDGE_TRACKING — also emit a shadow mandate and a DOL row stub.** See `skills/biotech-ic-council/SKILL.md` for the required fields.
 
 ## Required output format
 
@@ -395,3 +450,6 @@ Use this structure:
 - Use `references/review-rubric.md` for strict severity levels, merge gates, blocker classification, and recursive improvement gates.
 - Use `references/biotech-domain-checks.md` when the review involves event EV, CT.gov/FDA catalyst logic, corporate actions, expectation-layer fields, Hermes/Wake Robin artifacts, or backtest validity.
 - Use `references/recursive-improvement.md` when the review asks how the system should learn from failures, postmortems, repeated manual checks, or promotion-gate debates.
+- Use `references/decision-outcome-ledger.md` for the full DOL schema, evaluation window taxonomy, resolution authority rules, outcome field constraints, and calibration metrics. See also `docs/COUNCIL_DOL_ALPHA_SENSITIVITY_SPEC.md` for design rationale.
+
+> **Town mirror note:** This file mirrors `skills/biotech-ic-council/SKILL.md`. Canonical source is the skills file; update both together.

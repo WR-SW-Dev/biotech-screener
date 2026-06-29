@@ -87,6 +87,13 @@ artifacts/monitoring/*
 !artifacts/shadow/
 artifacts/shadow/*
 !artifacts/shadow/.gitkeep
+# Allow IC council Decision Outcome Ledger and shadow mandates
+!artifacts/ic_council/
+artifacts/ic_council/*
+!artifacts/ic_council/decision_outcome_ledger.jsonl
+!artifacts/ic_council/shadows/
+artifacts/ic_council/shadows/*
+!artifacts/ic_council/shadows/*.md
 # Allow quality audit reports (data accuracy findings, system diagnostics)
 !artifacts/quality_audits/
 artifacts/quality_audits/*
