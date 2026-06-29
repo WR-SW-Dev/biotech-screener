@@ -909,3 +909,18 @@ Tier 0 observability/plumbing only. No ranker, selector, sizing, or `final_score
 ### New skills created: none
 ### LEARNINGS.md entries added: LRN-20260628-001 through LRN-20260628-004
 ### Sync: 3 updated (biotech-run-pipeline → biotech-run-pipeline.md; side effect synced selector_ranker + ic_evaluation); 0 drift
+
+## 2026-06-28 (session 2 — universe refresh + IC health)
+### Git activity
+- biotech-screener: universe stub enrichment (11 tickers promoted active, +1317 CTGov records), weekly cron script added, MODEL_DOCUMENTATION.md IC health update, LEARNINGS additions
+### Sessions reviewed: 1 (2026-06-28 universe maintenance + IC health session)
+### Skill patches
+- **biotech-snapshot-qa**: No file change — but learned: `fetch_pending_biotech_data.py` is the correct fix tool for `pending_data_collection` stubs (not refresh_eligible alone). `--finalize-collection` required to avoid circular re-downgrade of `pending_coverage` tickers in weekly automated runs.
+- **biotech-ic-check**: No file change — confirmed IC artifact at `artifacts/ic_dashboard/YYYY-MM-DD_dashboard.json`; 4-phase trend documented (inversion Apr 8–22 tariff shock, crossover Apr 23, peak +0.276 May 14, normalization May 15–Jun 25 +0.030)
+### New skills created: none
+### LEARNINGS.md entries added: LRN-20260628-005 through LRN-20260628-008
+### Operational findings
+- `run_agent_direct.py` confirmed routes to Together.ai/Anthropic directly — no Hermes gateway
+- Weekly universe refresh cron created: `cron_universe_weekly_refresh.sh` (Monday 08:30 ET, 4 steps)
+- Universe nested `market_data` dict in universe.json entries is distinct from `production_data/market_data.json`
+### Sync: pending (run sync_hermes_skills.py after this entry)

@@ -571,3 +571,101 @@ Step 1.47 (options shadow IC) requires 5 business days of forward price data bef
 - Pattern-Key: options_ic_5bday_forward_window
 - Recurrence-Count: 1
 - Promotion-lane: none
+
+## [LRN-20260628-005] fetch_pending_biotech_data_is_the_fix_tool
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: high
+**Status**: logged
+**Area**: universe_maintenance
+
+### Summary
+`tools/fetch_pending_biotech_data.py` is the purpose-built tool for fixing `pending_data_collection` stubs. `refresh_eligible_biotech_universe.py` only flags — it does not fetch or fix.
+
+### Details
+`refresh_eligible_biotech_universe.py` identifies gaps and marks statuses but cannot fetch data. `fetch_pending_biotech_data.py` is the counterpart that actually fetches: market data + company_name from yfinance, financial data from SEC/yfinance, and CTGov trials from the API. It processes all tickers with status `pending_data_collection` or `pending_coverage`, merges results, runs `refresh_universe(finalize_collection=True)` internally, and writes back to both `production_data/universe.json` and `production_data/trial_records.json` when `--apply` is passed.
+
+ETF-sourced stubs (added via `audit_universe_against_xbi_ibb.py`) arrive with bare universe.json entries (no nested `market_data` dict, no `name`). `market_data.json` may have price/market_cap for these tickers already, but the coverage check reads the nested `market_data` dict inside each universe.json row — not `market_data.json`. Only `fetch_pending_biotech_data.py` populates that nested dict.
+
+### Suggested Action
+When `refresh_eligible_biotech_universe.py` reports `pending_data_collection` tickers, the fix is: `python3 tools/fetch_pending_biotech_data.py --as-of-date YYYY-MM-DD --apply`. Dry-run first (omit `--apply`) to preview market_success, trial_success, promoted_active counts. Typical run: ~2 min for 11 stubs + 23 pending_coverage retries.
+
+### Metadata
+- Source: universe_refresh_session_2026-06-28
+- Pattern-Key: fetch_pending_biotech_data_is_the_fix_tool
+- Recurrence-Count: 1
+- Promotion-lane: skill
+- Skill-Path: biotech-snapshot-qa
+
+## [LRN-20260628-006] refresh_eligible_universe_finalize_collection_flag
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: high
+**Status**: logged
+**Area**: universe_maintenance
+
+### Summary
+Without `--finalize-collection`, `refresh_eligible_biotech_universe.py` re-downgrades `pending_coverage` tickers to `pending_data_collection` every run, creating a circular report of 23+ "new" problems each week.
+
+### Details
+`pending_coverage` = "company + market data covered, CTGov has no trials for this ticker." Without `--finalize-collection`, the script treats any ticker missing `clinical_trials` or `scientific_cartography` as needing data collection, regardless of prior coverage attempts. With `--finalize-collection`, tickers whose only gaps are `clinical_trials`/`scientific_cartography` and whose `company_name` + `market_data` are covered get correctly classified as `pending_coverage` (tried, unavailable) rather than `pending_data_collection` (not yet tried).
+
+The weekly refresh script (`cron_universe_weekly_refresh.sh`) must use `--finalize-collection` in step 1, and `fetch_pending_biotech_data.py` always uses `finalize_collection=True` internally. Running step 1 without it will falsely inflate the pending count by ~27 tickers weekly.
+
+### Suggested Action
+Always pass `--finalize-collection` to `refresh_eligible_biotech_universe.py` in automated/weekly contexts. For one-off diagnostics only (pre-fetch, to see raw gap count), omitting it is fine.
+
+### Metadata
+- Source: universe_refresh_session_2026-06-28
+- Pattern-Key: refresh_eligible_universe_finalize_collection_flag
+- Recurrence-Count: 1
+- Promotion-lane: skill
+- Skill-Path: biotech-snapshot-qa
+
+## [LRN-20260628-007] run_agent_direct_bypasses_hermes_gateway
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: medium
+**Status**: logged
+**Area**: infrastructure
+
+### Summary
+`tools/run_agent_direct.py` calls Together.ai and Anthropic APIs directly. It does NOT route through the Hermes gateway (:8642/:8644). `HERMES_JOB_PREFIX = "hermes-"` is a naming guard, not a gateway reference.
+
+### Details
+The file's docstring says "Workaround for OpenClaw gateway billing issue." It instantiates `openai.OpenAI(base_url="https://api.together.xyz/v1")` or `anthropic.Anthropic(api_key=...)` directly. No HTTP calls to :8642, :8644, or :19001. The constant `HERMES_JOB_PREFIX = "hermes-"` guards against dispatching agents whose job names start with "hermes-" (those belong to the OpenClaw/Hermes scheduler, not run_agent_direct). The Hermes gateway manages its own separate fleet via the Hermes scheduler cron system.
+
+When investigating whether ops/sentinel run "through Hermes," grep for gateway URLs (8642|8644) in the file — the result is empty. The Together.ai key is what matters for these agents' availability.
+
+### Metadata
+- Source: agent_routing_investigation_2026-06-28
+- Pattern-Key: run_agent_direct_bypasses_hermes_gateway
+- Recurrence-Count: 1
+- Promotion-lane: none
+
+## [LRN-20260628-008] ic_health_artifact_location_and_interpretation
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: medium
+**Status**: logged
+**Area**: validation
+
+### Summary
+IC health lives at `artifacts/ic_dashboard/YYYY-MM-DD_dashboard.json`. Primary signal is `score_rank_pct`; thresholds: HEALTHY ≥ +0.030, ALERT < 0.00. Regime monitor is at `artifacts/forward_validation/dem_regime_monitor_YYYY-MM-DD.json`.
+
+### Details
+`ic_dashboard` files are generated daily and contain `signals.score_rank_pct.{mean_ic, hit_rate, n_dates, health, per_date[]}`. `attention` field summarizes overall health (LOW / MEDIUM / HIGH). The `per_date` array gives individual IC readings — useful for trend analysis.
+
+The 2026-04-08 to 2026-04-22 inversion (IC −0.18 at worst) was caused by the tariff-shock macro sell-off. Crossover to positive happened Apr 23 as XBI found its floor. The signal then ran strongly to +0.276 peak (May 14) before normalizing. This pattern should inform interpretation of future inversions: a sharp policy-driven macro shock can invert cross-sectional IC without implying model breakdown — recovery occurred within 15 trading days.
+
+Regime monitor gate threshold: 20 windows. As of 2026-06-28, gate met at 118/20.
+
+### Suggested Action
+When checking model health, read `ic_dashboard` first (`sort -r` for latest file). If `attention=HIGH` or `mean_ic < 0.00`, do not open new positions. IC inversions during macro shocks can be transient — check `per_date` trend before concluding breakdown.
+
+### Metadata
+- Source: ic_health_check_2026-06-28
+- Pattern-Key: ic_health_artifact_location_and_interpretation
+- Recurrence-Count: 1
+- Promotion-lane: skill
+- Skill-Path: biotech-ic-check
