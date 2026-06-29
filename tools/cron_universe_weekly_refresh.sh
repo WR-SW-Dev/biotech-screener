@@ -39,6 +39,14 @@ source .env 2>/dev/null || true
   && echo "[$(ts)] Step 2: OK" >> "$LOG" \
   || echo "[$(ts)] Step 2: FAIL (non-blocking)" >> "$LOG"
 
+# Step 2.5: Merge any newly enriched stubs into financial_records.json
+# fetch_pending_biotech_data writes to financial_data.json; run_screen reads
+# financial_records.json. Without this merge, new stubs get financials_missing.
+echo "[$(ts)] Step 2.5: merge_financial_data_to_records" >> "$LOG"
+/usr/bin/python3 tools/merge_financial_data_to_records.py >> "$LOG" 2>&1 \
+  && echo "[$(ts)] Step 2.5: OK" >> "$LOG" \
+  || echo "[$(ts)] Step 2.5: FAIL (non-blocking)" >> "$LOG"
+
 # Step 3: XBI/IBB audit — proposals only, no universe.json mutation
 echo "[$(ts)] Step 3: audit_universe_against_xbi_ibb" >> "$LOG"
 /usr/bin/python3 tools/audit_universe_against_xbi_ibb.py \
