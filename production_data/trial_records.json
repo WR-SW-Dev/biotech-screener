@@ -530187,5 +530187,2268 @@
     "enrollment": null,
     "sponsor": "Johns Hopkins University",
     "collected_at": "2026-06-28"
+  },
+  {
+    "ticker": "GENB",
+    "nct_id": "NCT03772366",
+    "title": "Genital Haemorrhage in Woman of Childbearing Age Treated for Venous Thromboembolism Disease : Comparison According to Oral Anticoagulant and Impact on Quality of Life",
+    "status": "UNKNOWN",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Genital Haemorrhage"
+    ],
+    "interventions": [],
+    "first_posted": "2018-12-11",
+    "start_date": "2019-06-01",
+    "primary_completion_date": "2021-12-31",
+    "completion_date": "2024-01-31",
+    "results_first_posted": null,
+    "last_update_posted": "2023-11-30",
+    "enrollment": null,
+    "sponsor": "Assistance Publique Hopitaux De Marseille",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02279745",
+    "title": "Long-term Safety and Efficacy of Ralinepag in Pulmonary Arterial Hypertension",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Pulmonary Arterial Hypertension"
+    ],
+    "interventions": [
+      "Ralinepag"
+    ],
+    "first_posted": "2014-10-31",
+    "start_date": "2015-07-08",
+    "primary_completion_date": "2021-03-29",
+    "completion_date": "2021-03-29",
+    "results_first_posted": "2021-12-22",
+    "last_update_posted": "2021-12-22",
+    "enrollment": null,
+    "sponsor": "United Therapeutics",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06568042",
+    "title": "Effects of LY3848575 Versus Placebo in Participants With Painful Distal Sensory Polyneuropathy",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Neuropathic Pain",
+      "Distal Sensory Polyneuropathy"
+    ],
+    "interventions": [
+      "LY3848575",
+      "Placebo"
+    ],
+    "first_posted": "2024-08-23",
+    "start_date": "2024-08-22",
+    "primary_completion_date": "2026-06-01",
+    "completion_date": "2026-09-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-04-29",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT07135921",
+    "title": "Sleep Hygiene Education in Individuals With Cardiovascular Disease: Effects on Sleep Quality and Disease Management",
+    "status": "NOT_YET_RECRUITING",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Cardiovascular Disease and Sleep Hygiene"
+    ],
+    "interventions": [
+      "Sleep Hygiene Education"
+    ],
+    "first_posted": "2025-08-22",
+    "start_date": "2025-09-11",
+    "primary_completion_date": "2025-10-31",
+    "completion_date": "2025-12-30",
+    "results_first_posted": null,
+    "last_update_posted": "2025-08-24",
+    "enrollment": null,
+    "sponsor": "Near East University, Turkey",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01838668",
+    "title": "An Efficacy and Safety Study of BG00012 (Dimethyl Fumarate) in Asian Subjects With Relapsing Remitting Multiple Sclerosis (RRMS)",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Relapsing-Remitting Multiple Sclerosis",
+      "Multiple Sclerosis"
+    ],
+    "interventions": [
+      "Placebo",
+      "dimethyl fumarate"
+    ],
+    "first_posted": "2013-04-24",
+    "start_date": "2013-03-28",
+    "primary_completion_date": "2015-06-16",
+    "completion_date": "2018-09-04",
+    "results_first_posted": null,
+    "last_update_posted": "2018-11-20",
+    "enrollment": null,
+    "sponsor": "Biogen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04752774",
+    "title": "A Study to Assess the Safety and Efficacy of IPN10200 in Adult Participants With Upper Limb Spasticity.",
+    "status": "RECRUITING",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Spasticity"
+    ],
+    "interventions": [
+      "IPN10200",
+      "Placebo",
+      "Dysport"
+    ],
+    "first_posted": "2021-02-12",
+    "start_date": "2021-04-29",
+    "primary_completion_date": "2029-03-30",
+    "completion_date": "2029-03-30",
+    "results_first_posted": null,
+    "last_update_posted": "2026-05-05",
+    "enrollment": null,
+    "sponsor": "Ipsen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT07250750",
+    "title": "A Phase 1b/2 Study of IM-101 in Adult Participants With Generalized Myasthenia Gravis and Ocular Myasthenia Gravis",
+    "status": "RECRUITING",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Myasthenia Gravis"
+    ],
+    "interventions": [
+      "IM-101 Part A",
+      "Placebo Part A",
+      "IM-101 Part B",
+      "Placebo Part B"
+    ],
+    "first_posted": "2025-11-26",
+    "start_date": "2026-02-05",
+    "primary_completion_date": "2027-12-01",
+    "completion_date": "2028-06-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-02-11",
+    "enrollment": null,
+    "sponsor": "ImmunAbs Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03446001",
+    "title": "Safety and Efficacy of TRx0237 in Subjects With Alzheimer's Disease Followed by Open-Label Treatment",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "TRx0237 16 mg/day",
+      "Control",
+      "TRx0237 8 mg/day"
+    ],
+    "first_posted": "2018-02-26",
+    "start_date": "2017-12-01",
+    "primary_completion_date": "2022-03-31",
+    "completion_date": "2023-04-04",
+    "results_first_posted": "2025-09-04",
+    "last_update_posted": "2025-09-04",
+    "enrollment": null,
+    "sponsor": "TauRx Therapeutics Ltd",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03877510",
+    "title": "Open Label Extension (OLE) Study of the Safety and Clinical Utility of IPX203 in Parkinson's Disease (PD) Participants With Motor Fluctuations",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Parkinson Disease"
+    ],
+    "interventions": [
+      "IPX203"
+    ],
+    "first_posted": "2019-03-15",
+    "start_date": "2019-04-03",
+    "primary_completion_date": "2022-03-21",
+    "completion_date": "2022-03-21",
+    "results_first_posted": "2023-06-06",
+    "last_update_posted": "2023-07-13",
+    "enrollment": null,
+    "sponsor": "Impax Laboratories, LLC",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05021835",
+    "title": "ZEUS - A Research Study to Look at How Ziltivekimab Works Compared to Placebo in People With Cardiovascular Disease, Chronic Kidney Disease and Inflammation",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Cardiovascular Risk",
+      "Chronic Kidney Disease",
+      "Inflammation"
+    ],
+    "interventions": [
+      "Ziltivekimab B",
+      "Ziltivekimab C",
+      "Placebo (Ziltivekimab B)",
+      "Placebo (Ziltivekimab C)"
+    ],
+    "first_posted": "2021-08-26",
+    "start_date": "2021-08-30",
+    "primary_completion_date": "2026-06-09",
+    "completion_date": "2026-06-09",
+    "results_first_posted": null,
+    "last_update_posted": "2026-04-13",
+    "enrollment": null,
+    "sponsor": "Novo Nordisk A/S",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01864148",
+    "title": "Study to Assess the Efficacy, Safety, Tolerability, and Pharmacokinetics of BIIB033 in Participants With Relapsing Forms of Multiple Sclerosis When Used Concurrently With Avonex",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Sclerosis"
+    ],
+    "interventions": [
+      "BIIB033",
+      "Placebo",
+      "Avonex"
+    ],
+    "first_posted": "2013-05-29",
+    "start_date": "2013-08-01",
+    "primary_completion_date": "2015-12-01",
+    "completion_date": "2016-03-01",
+    "results_first_posted": "2017-05-03",
+    "last_update_posted": "2017-05-03",
+    "enrollment": null,
+    "sponsor": "Biogen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04984278",
+    "title": "Evaluation of the Effect of Nabiximols Oromucosal Spray on Clinical Measures of Spasticity in Participants With Multiple Sclerosis",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Spasticity With Multiple Sclerosis"
+    ],
+    "interventions": [
+      "Nabiximols",
+      "Placebo"
+    ],
+    "first_posted": "2021-07-30",
+    "start_date": "2021-08-16",
+    "primary_completion_date": "2022-11-11",
+    "completion_date": "2022-11-11",
+    "results_first_posted": "2024-02-05",
+    "last_update_posted": "2024-12-11",
+    "enrollment": null,
+    "sponsor": "Jazz Pharmaceuticals",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05508789",
+    "title": "A Study of Donanemab (LY3002813) in Participants With Early Symptomatic Alzheimer's Disease (TRAILBLAZER-ALZ 5)",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease",
+      "Dementia",
+      "Brain Diseases",
+      "Central Nervous System Diseases",
+      "Nervous System Diseases",
+      "Tauopathies",
+      "Neurodegenerative Diseases",
+      "Neurocognitive Disorders",
+      "Mental Disorders"
+    ],
+    "interventions": [
+      "Donanemab",
+      "Placebo"
+    ],
+    "first_posted": "2022-08-19",
+    "start_date": "2022-10-10",
+    "primary_completion_date": "2028-05-01",
+    "completion_date": "2028-07-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-03",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01678924",
+    "title": "A Safety and Efficacy Study of AGN-214868 in Patients With Postherpetic Neuralgia",
+    "status": "TERMINATED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Neuralgia, Postherpetic"
+    ],
+    "interventions": [
+      "AGN-214868",
+      "AGN-214868 Placebo (Vehicle)"
+    ],
+    "first_posted": "2012-09-05",
+    "start_date": "2013-01-01",
+    "primary_completion_date": "2015-05-01",
+    "completion_date": "2015-09-01",
+    "results_first_posted": "2020-01-07",
+    "last_update_posted": "2020-01-07",
+    "enrollment": null,
+    "sponsor": "Allergan",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04957719",
+    "title": "Selatogrel Outcome Study in Suspected Acute Myocardial Infarction",
+    "status": "ENROLLING_BY_INVITATION",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Acute Myocardial Infarction"
+    ],
+    "interventions": [
+      "Selatogrel",
+      "Placebo"
+    ],
+    "first_posted": "2021-07-12",
+    "start_date": "2021-08-14",
+    "primary_completion_date": "2026-12-01",
+    "completion_date": "2026-12-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-17",
+    "enrollment": null,
+    "sponsor": "Viatris Innovation GmbH",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT00667810",
+    "title": "Study Evaluating The Efficacy And Safety Of Bapineuzumab In Alzheimer Disease Patients",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "bapineuzumab",
+      "bapineuzumab",
+      "placebo"
+    ],
+    "first_posted": "2008-04-28",
+    "start_date": "2008-06-01",
+    "primary_completion_date": "2012-10-01",
+    "completion_date": "2013-08-01",
+    "results_first_posted": "2016-01-08",
+    "last_update_posted": "2016-01-08",
+    "enrollment": null,
+    "sponsor": "Pfizer",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06686615",
+    "title": "A Study of Bempedoic Acid in Combination With Ezetimibe and Either Rosuvastatin or Atorvastatin in Patients With Primary Hypercholesterolemia or Mixed Dyslipidemia",
+    "status": "RECRUITING",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Primary Hypercholesterolemiia",
+      "Mixed Dyslipidemia"
+    ],
+    "interventions": [
+      "Bempedoic acid",
+      "Ezetimibe",
+      "Rosuvastatin",
+      "Atorvastatin"
+    ],
+    "first_posted": "2024-11-13",
+    "start_date": "2025-02-12",
+    "primary_completion_date": "2027-07-31",
+    "completion_date": "2028-01-31",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-11",
+    "enrollment": null,
+    "sponsor": "Daiichi Sankyo Europe, GmbH, a Daiichi Sankyo Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05441488",
+    "title": "Masitinib in the Treatment of Patients With Primary Progressive or Non-active Secondary Progressive Multiple Sclerosis",
+    "status": "SUSPENDED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Progressive Multiple Sclerosis"
+    ],
+    "interventions": [
+      "Placebo",
+      "Masitinib (4.5)"
+    ],
+    "first_posted": "2022-07-01",
+    "start_date": "2022-06-28",
+    "primary_completion_date": "2028-12-01",
+    "completion_date": "2028-12-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-05-06",
+    "enrollment": null,
+    "sponsor": "AB Science",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02484547",
+    "title": "221AD302 Phase 3 Study of Aducanumab (BIIB037) in Early Alzheimer's Disease",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Aducanumab (BIIB037)",
+      "Aducanumab (BIIB037)",
+      "Placebo"
+    ],
+    "first_posted": "2015-06-29",
+    "start_date": "2015-09-15",
+    "primary_completion_date": "2019-08-05",
+    "completion_date": "2019-08-05",
+    "results_first_posted": "2021-09-02",
+    "last_update_posted": "2021-09-02",
+    "enrollment": null,
+    "sponsor": "Biogen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05070858",
+    "title": "A Study to Test How Safe Pozelimab and Cemdisiran Combination Therapy and Cemdisiran Alone Are and How Well They Work in Adult Patients With Generalized Myasthenia Gravis",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Generalized Myasthenia Gravis"
+    ],
+    "interventions": [
+      "Pozelimab + Cemdisiran",
+      "Cemdisiran",
+      "Placebo",
+      "Pozelimab"
+    ],
+    "first_posted": "2021-10-07",
+    "start_date": "2021-12-14",
+    "primary_completion_date": "2025-07-08",
+    "completion_date": "2028-11-11",
+    "results_first_posted": null,
+    "last_update_posted": "2026-02-12",
+    "enrollment": null,
+    "sponsor": "Regeneron Pharmaceuticals",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03495102",
+    "title": "A Study of the Efficacy and Safety of Dulaglutide (LY2189265) in Participants With Type 2 Diabetes",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Diabetes Mellitus, Type 2"
+    ],
+    "interventions": [
+      "Dulaglutide"
+    ],
+    "first_posted": "2018-04-11",
+    "start_date": "2018-04-05",
+    "primary_completion_date": "2019-05-28",
+    "completion_date": "2019-10-10",
+    "results_first_posted": "2020-06-12",
+    "last_update_posted": "2020-06-12",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04711148",
+    "title": "A Phase 2 Study of Orelabrutinib in Patients With Relapsing-Remitting Multiple Sclerosis",
+    "status": "UNKNOWN",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Relapsing Remitting Multiple Sclerosis"
+    ],
+    "interventions": [
+      "placebo",
+      "orelabrutinib"
+    ],
+    "first_posted": "2021-01-15",
+    "start_date": "2021-03-01",
+    "primary_completion_date": "2026-02-25",
+    "completion_date": "2026-03-01",
+    "results_first_posted": null,
+    "last_update_posted": "2023-04-21",
+    "enrollment": null,
+    "sponsor": "Beijing InnoCare Pharma Tech Co., Ltd.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01689246",
+    "title": "Safety and Efficacy Study Evaluating TRx0237 in Subjects With Mild to Moderate Alzheimer's Disease",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "TRx0237 150 mg/day",
+      "TRx0237 250 mg/day",
+      "Placebo"
+    ],
+    "first_posted": "2012-09-21",
+    "start_date": "2013-01-01",
+    "primary_completion_date": "2015-11-01",
+    "completion_date": "2015-11-01",
+    "results_first_posted": null,
+    "last_update_posted": "2018-03-14",
+    "enrollment": null,
+    "sponsor": "TauRx Therapeutics Ltd",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05350202",
+    "title": "Emp-Activity: Empagliflozin Functional Capacity",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Heart Failure"
+    ],
+    "interventions": [
+      "Empagliflozin"
+    ],
+    "first_posted": "2022-04-28",
+    "start_date": "2022-12-18",
+    "primary_completion_date": "2024-07-25",
+    "completion_date": "2024-07-25",
+    "results_first_posted": "2025-08-26",
+    "last_update_posted": "2025-08-26",
+    "enrollment": null,
+    "sponsor": "Boehringer Ingelheim",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02782013",
+    "title": "Study of Progression of Community Acquired Pneumonia in the Hospital",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Pneumonia",
+      "Sepsis",
+      "Shock, Septic"
+    ],
+    "interventions": [],
+    "first_posted": "2016-05-25",
+    "start_date": "2009-08-25",
+    "primary_completion_date": "2022-06-01",
+    "completion_date": "2022-06-01",
+    "results_first_posted": null,
+    "last_update_posted": "2022-10-17",
+    "enrollment": null,
+    "sponsor": "Pneumonia Research Network on Genetic Resistance and Susceptibility for the Evolution of Severe Seps",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04339413",
+    "title": "A Study to Evaluate the Safety and Tolerability of Long-term Administration of Gantenerumab in Participants With Alzheimer's Disease (AD)",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "Gantenerumab"
+    ],
+    "first_posted": "2020-04-09",
+    "start_date": "2020-05-22",
+    "primary_completion_date": "2023-01-04",
+    "completion_date": "2023-01-04",
+    "results_first_posted": "2024-01-18",
+    "last_update_posted": "2024-01-18",
+    "enrollment": null,
+    "sponsor": "Hoffmann-La Roche",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04241068",
+    "title": "A Study to Evaluate Safety and Tolerability of Aducanumab in Participants With Alzheimer's Disease Who Had Previously Participated in the Aducanumab Studies 221AD103, 221AD301, 221AD302 and 221AD205",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Aducanumab"
+    ],
+    "first_posted": "2020-01-27",
+    "start_date": "2020-03-02",
+    "primary_completion_date": "2024-07-22",
+    "completion_date": "2024-07-22",
+    "results_first_posted": "2025-02-21",
+    "last_update_posted": "2025-02-21",
+    "enrollment": null,
+    "sponsor": "Biogen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05556512",
+    "title": "A Study of Tirzepatide (LY3298176) on the Reduction on Morbidity and Mortality in Adults With Obesity",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Obesity",
+      "Overweight"
+    ],
+    "interventions": [
+      "Tirzepatide",
+      "Placebo"
+    ],
+    "first_posted": "2022-09-27",
+    "start_date": "2022-10-11",
+    "primary_completion_date": "2027-10-01",
+    "completion_date": "2027-10-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-01-12",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05798520",
+    "title": "A Study to Learn About the Safety of BIIB091 and Its Effect on Brain Inflammation When Taken Alone or With Diroximel Fumarate (DRF) in Adults With Relapsing Forms of Multiple Sclerosis (MS)",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Relapsing Forms of Multiple Sclerosis"
+    ],
+    "interventions": [
+      "BIIB091",
+      "DRF",
+      "Placebo"
+    ],
+    "first_posted": "2023-04-04",
+    "start_date": "2023-07-25",
+    "primary_completion_date": "2026-02-10",
+    "completion_date": "2026-02-10",
+    "results_first_posted": null,
+    "last_update_posted": "2026-02-20",
+    "enrollment": null,
+    "sponsor": "Biogen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06074562",
+    "title": "A Study of LY3556050 in Adult Participants With Diabetic Peripheral Neuropathic Pain",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Diabetic Peripheral Neuropathy"
+    ],
+    "interventions": [
+      "LY3556050",
+      "Placebo"
+    ],
+    "first_posted": "2023-10-10",
+    "start_date": "2023-10-05",
+    "primary_completion_date": "2025-06-11",
+    "completion_date": "2025-06-11",
+    "results_first_posted": null,
+    "last_update_posted": "2025-07-03",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03670953",
+    "title": "A Study to Evaluate the Safety and Efficacy of IPX203 in Parkinson's Disease Participants With Motor Fluctuations",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Parkinson's Disease (Disorder)"
+    ],
+    "interventions": [
+      "IR CD-LD",
+      "IPX203 ER CD-LD",
+      "Placebo Matching IPX203",
+      "Placebo Matching IR CD-LD"
+    ],
+    "first_posted": "2018-09-14",
+    "start_date": "2018-11-06",
+    "primary_completion_date": "2021-06-15",
+    "completion_date": "2021-06-15",
+    "results_first_posted": "2023-02-09",
+    "last_update_posted": "2023-02-09",
+    "enrollment": null,
+    "sponsor": "Impax Laboratories, LLC",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02337907",
+    "title": "BI 409306 in Patients With Cognitive Impairment Due to Alzheimer's Disease.",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "Placebo",
+      "Placebo",
+      "BI 409306",
+      "Donepezil"
+    ],
+    "first_posted": "2015-01-14",
+    "start_date": "2015-01-21",
+    "primary_completion_date": "2017-09-15",
+    "completion_date": "2017-10-10",
+    "results_first_posted": "2018-11-14",
+    "last_update_posted": "2018-11-14",
+    "enrollment": null,
+    "sponsor": "Boehringer Ingelheim",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01224106",
+    "title": "A Study of Gantenerumab in Participants With Prodromal Alzheimer's Disease",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Gantenerumab",
+      "Placebo"
+    ],
+    "first_posted": "2010-10-19",
+    "start_date": "2010-11-30",
+    "primary_completion_date": "2020-09-10",
+    "completion_date": "2020-09-10",
+    "results_first_posted": "2021-12-13",
+    "last_update_posted": "2021-12-13",
+    "enrollment": null,
+    "sponsor": "Hoffmann-La Roche",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06220669",
+    "title": "A Study of LY3541860 in Adult Participants With Relapsing Multiple Sclerosis",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Sclerosis"
+    ],
+    "interventions": [
+      "LY3541860",
+      "Placebo"
+    ],
+    "first_posted": "2024-01-24",
+    "start_date": "2024-03-19",
+    "primary_completion_date": "2025-10-18",
+    "completion_date": "2026-07-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-04-07",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05757869",
+    "title": "A Study of Milvexian Versus Apixaban in Participants With Atrial Fibrillation",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Atrial Fibrillation"
+    ],
+    "interventions": [
+      "Milvexian",
+      "Apixaban",
+      "Placebo",
+      "Apixaban Placebo"
+    ],
+    "first_posted": "2023-03-07",
+    "start_date": "2023-04-11",
+    "primary_completion_date": "2026-10-31",
+    "completion_date": "2026-10-31",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-05",
+    "enrollment": null,
+    "sponsor": "Janssen Research & Development, LLC",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04586023",
+    "title": "Study to Evaluate the Efficacy and Safety of Fenebrutinib Compared With Teriflunomide in Relapsing Multiple Sclerosis (RMS)",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Relapsing Multiple Sclerosis"
+    ],
+    "interventions": [
+      "Fenebrutinib",
+      "Teriflunomide",
+      "Placebo"
+    ],
+    "first_posted": "2020-10-14",
+    "start_date": "2021-03-24",
+    "primary_completion_date": "2025-09-05",
+    "completion_date": "2027-07-09",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-23",
+    "enrollment": null,
+    "sponsor": "Hoffmann-La Roche",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01626378",
+    "title": "Safety and Efficacy Study Evaluating TRx0237 in Subjects With Behavioral Variant Frontotemporal Dementia (bvFTD)",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Behavioral Variant Frontotemporal Dementia (bvFTD)"
+    ],
+    "interventions": [
+      "TRx0237",
+      "Placebo"
+    ],
+    "first_posted": "2012-06-22",
+    "start_date": "2013-05-01",
+    "primary_completion_date": "2016-02-01",
+    "completion_date": "2016-02-01",
+    "results_first_posted": null,
+    "last_update_posted": "2018-03-14",
+    "enrollment": null,
+    "sponsor": "TauRx Therapeutics Ltd",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03289143",
+    "title": "A Study to Evaluate the Efficacy and Safety of Semorinemab in Patients With Prodromal to Mild Alzheimer's Disease",
+    "status": "TERMINATED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Semorinemab",
+      "Placebo",
+      "[18F]GTP1"
+    ],
+    "first_posted": "2017-09-20",
+    "start_date": "2017-10-04",
+    "primary_completion_date": "2021-01-15",
+    "completion_date": "2021-01-15",
+    "results_first_posted": "2022-03-16",
+    "last_update_posted": "2022-03-16",
+    "enrollment": null,
+    "sponsor": "Genentech, Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03730662",
+    "title": "A Study of Tirzepatide (LY3298176) Once a Week Versus Insulin Glargine Once a Day in Participants With Type 2 Diabetes and Increased Cardiovascular Risk",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Type 2 Diabetes Mellitus"
+    ],
+    "interventions": [
+      "Tirzepatide",
+      "Insulin Glargine"
+    ],
+    "first_posted": "2018-11-05",
+    "start_date": "2018-11-20",
+    "primary_completion_date": "2021-01-22",
+    "completion_date": "2021-04-22",
+    "results_first_posted": "2022-02-14",
+    "last_update_posted": "2022-02-14",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05202509",
+    "title": "Cardiovascular Outcome Study to Evaluate the Effect of Obicetrapib in Patients With Cardiovascular Disease",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Atherosclerotic Cardiovascular Disease"
+    ],
+    "interventions": [
+      "Obicetrapib",
+      "Placebo"
+    ],
+    "first_posted": "2022-01-21",
+    "start_date": "2022-02-07",
+    "primary_completion_date": "2026-11-01",
+    "completion_date": "2026-11-01",
+    "results_first_posted": null,
+    "last_update_posted": "2024-06-04",
+    "enrollment": null,
+    "sponsor": "NewAmsterdam Pharma",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06584266",
+    "title": "Multimodal Cardiac Imaging Registry in Patients with Atrial Fibrillation",
+    "status": "RECRUITING",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Atrial Fibrillation and Flutter",
+      "Heart Failure",
+      "Artificial Intelligence (AI)",
+      "Echocardiography"
+    ],
+    "interventions": [
+      "Transoesophageal echocardiography",
+      "Catheter ablation"
+    ],
+    "first_posted": "2024-09-04",
+    "start_date": "2024-01-01",
+    "primary_completion_date": "2026-09-01",
+    "completion_date": "2027-09-01",
+    "results_first_posted": null,
+    "last_update_posted": "2024-09-04",
+    "enrollment": null,
+    "sponsor": "University in Zielona G\u00f3ra",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04777396",
+    "title": "A Research Study Investigating Semaglutide in People With Early Alzheimer's Disease (EVOKE)",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Early Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Semagludtide",
+      "Placebo (semaglutide)"
+    ],
+    "first_posted": "2021-03-02",
+    "start_date": "2021-05-18",
+    "primary_completion_date": "2025-09-16",
+    "completion_date": "2026-01-30",
+    "results_first_posted": null,
+    "last_update_posted": "2026-04-09",
+    "enrollment": null,
+    "sponsor": "Novo Nordisk A/S",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT00998764",
+    "title": "A Long-Term Safety And Tolerability Extension Study Of Bapineuzumab In Alzheimer Disease Patients",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "Bapineuzumab 0.5 mg/kg"
+    ],
+    "first_posted": "2009-10-20",
+    "start_date": "2009-12-01",
+    "primary_completion_date": "2012-10-01",
+    "completion_date": "2012-11-01",
+    "results_first_posted": "2016-01-01",
+    "last_update_posted": "2016-01-01",
+    "enrollment": null,
+    "sponsor": "Pfizer",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02788513",
+    "title": "BI 425809 in Patients With Cognitive Impairment Due to Alzheimer's Disease.",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "BI 425809 dose 1",
+      "BI 425809 dose 2",
+      "BI 425809 dose 3",
+      "BI 425809 dose 4",
+      "Placebo"
+    ],
+    "first_posted": "2016-06-02",
+    "start_date": "2016-08-11",
+    "primary_completion_date": "2019-09-12",
+    "completion_date": "2019-10-11",
+    "results_first_posted": "2020-11-06",
+    "last_update_posted": "2020-11-06",
+    "enrollment": null,
+    "sponsor": "Boehringer Ingelheim",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03325556",
+    "title": "Relapse Prevention Study of Pimavanserin in Dementia-related Psychosis",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Dementia-related Psychosis"
+    ],
+    "interventions": [
+      "Placebo",
+      "Pimavanserin 34 mg",
+      "Pimavanserin 20 mg"
+    ],
+    "first_posted": "2017-10-30",
+    "start_date": "2017-09-27",
+    "primary_completion_date": "2019-07-31",
+    "completion_date": "2019-10-30",
+    "results_first_posted": "2021-06-21",
+    "last_update_posted": "2021-06-21",
+    "enrollment": null,
+    "sponsor": "ACADIA Pharmaceuticals Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01475669",
+    "title": "Study of Fibrinogen Concentrate (Human) (FCH) to Control Bleeding During Complex Cardiovascular Surgery",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Surgical Blood Loss",
+      "Postoperative Blood Loss"
+    ],
+    "interventions": [
+      "Fibrinogen Concentrate (Human) (FCH)",
+      "Placebo"
+    ],
+    "first_posted": "2011-11-21",
+    "start_date": "2012-01-01",
+    "primary_completion_date": "2014-07-01",
+    "completion_date": "2014-09-01",
+    "results_first_posted": null,
+    "last_update_posted": "2014-09-18",
+    "enrollment": null,
+    "sponsor": "CSL Behring",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06662383",
+    "title": "A Study of Retatrutide (LY3437943) Compared to Tirzepatide (LY3298176) in Adults Who Have Obesity",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Obesity"
+    ],
+    "interventions": [
+      "Retatrutide",
+      "Tirzepatide"
+    ],
+    "first_posted": "2024-10-28",
+    "start_date": "2024-11-01",
+    "primary_completion_date": "2026-12-01",
+    "completion_date": "2026-12-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-04-13",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05201638",
+    "title": "Study to Evaluate the Efficacy, Safety and Tolerability of IMU-838 in Patients With Relapsing Multiple Sclerosis",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Sclerosis, Relapsing-Remitting"
+    ],
+    "interventions": [
+      "IMU-838 tablets",
+      "Placebo matching IMU-838 tablets"
+    ],
+    "first_posted": "2022-01-21",
+    "start_date": "2022-01-12",
+    "primary_completion_date": "2026-11-01",
+    "completion_date": "2033-10-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-02-23",
+    "enrollment": null,
+    "sponsor": "Immunic AG",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02670083",
+    "title": "A Study Evaluating the Efficacy and Safety of Crenezumab Versus Placebo in Participants With Prodromal to Mild Alzheimer's Disease (AD).",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Crenezumab",
+      "Placebo"
+    ],
+    "first_posted": "2016-02-01",
+    "start_date": "2016-03-22",
+    "primary_completion_date": "2019-05-31",
+    "completion_date": "2019-05-31",
+    "results_first_posted": "2020-07-16",
+    "last_update_posted": "2020-07-16",
+    "enrollment": null,
+    "sponsor": "Hoffmann-La Roche",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT00988429",
+    "title": "Efficacy and Safety of Eslicarbazepine Acetate (BIA 2-093) as Adjunctive Therapy for Refractory Partial Seizures",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Partial Epilepsy"
+    ],
+    "interventions": [
+      "800 mg QD Eslicarbazepine acetate",
+      "1200 mg QD Eslicarbazepine acetate",
+      "Placebo"
+    ],
+    "first_posted": "2009-10-02",
+    "start_date": "2008-12-02",
+    "primary_completion_date": "2012-01-12",
+    "completion_date": "2012-01-12",
+    "results_first_posted": "2014-04-15",
+    "last_update_posted": "2021-05-19",
+    "enrollment": null,
+    "sponsor": "Bial - Portela C S.A.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03828747",
+    "title": "A Study of Semorinemab in Patients With Moderate Alzheimer's Disease",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "Semorinemab",
+      "Placebo",
+      "[18F]GTP1"
+    ],
+    "first_posted": "2019-02-04",
+    "start_date": "2019-01-25",
+    "primary_completion_date": "2021-07-20",
+    "completion_date": "2023-08-30",
+    "results_first_posted": "2022-10-03",
+    "last_update_posted": "2024-09-24",
+    "enrollment": null,
+    "sponsor": "Genentech, Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT00676143",
+    "title": "Study Evaluating the Safety and Efficacy of Bapineuzumab in Alzheimer Disease Patients",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "bapineuzumab",
+      "placebo"
+    ],
+    "first_posted": "2008-05-12",
+    "start_date": "2008-01-01",
+    "primary_completion_date": "2012-10-01",
+    "completion_date": "2012-11-01",
+    "results_first_posted": "2016-06-10",
+    "last_update_posted": "2016-06-10",
+    "enrollment": null,
+    "sponsor": "Pfizer",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT03232073",
+    "title": "Long-term Extension to Study AC-058B301 to Investigate Safety, Tolerability and Disease Control of Ponesimod 20 mg in Patients With Relapsing Multiple Sclerosis",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Sclerosis"
+    ],
+    "interventions": [
+      "Ponesimod"
+    ],
+    "first_posted": "2017-07-27",
+    "start_date": "2017-07-05",
+    "primary_completion_date": "2024-01-16",
+    "completion_date": "2024-01-16",
+    "results_first_posted": "2025-02-21",
+    "last_update_posted": "2025-06-22",
+    "enrollment": null,
+    "sponsor": "Actelion",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04777409",
+    "title": "A Research Study Investigating Semaglutide in People With Early Alzheimer's Disease (EVOKE Plus)",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Early Alzheimer\u00b4s Disease"
+    ],
+    "interventions": [
+      "Semaglutide",
+      "Placebo (semaglutide)"
+    ],
+    "first_posted": "2021-03-02",
+    "start_date": "2021-05-18",
+    "primary_completion_date": "2025-09-15",
+    "completion_date": "2026-01-30",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-26",
+    "enrollment": null,
+    "sponsor": "Novo Nordisk A/S",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02240693",
+    "title": "Alzheimer Disease Proof of Concept Study With BI 409306 Versus Placebo",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "BI 409306",
+      "Placebo",
+      "BI 409306",
+      "Placebo",
+      "Placebo",
+      "BI 409306",
+      "BI 409306",
+      "Placebo",
+      "Placebo"
+    ],
+    "first_posted": "2014-09-16",
+    "start_date": "2015-01-15",
+    "primary_completion_date": "2017-09-18",
+    "completion_date": "2017-10-09",
+    "results_first_posted": "2018-11-28",
+    "last_update_posted": "2018-11-28",
+    "enrollment": null,
+    "sponsor": "Boehringer Ingelheim",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06456580",
+    "title": "A Study of Telitacicept for the Treatment of Generalized Myasthenia Gravis (UPSTREAM MG)",
+    "status": "RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Generalized Myasthenia Gravis"
+    ],
+    "interventions": [
+      "Telitacicept",
+      "Placebo"
+    ],
+    "first_posted": "2024-06-13",
+    "start_date": "2024-07-17",
+    "primary_completion_date": "2027-05-01",
+    "completion_date": "2029-01-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-18",
+    "enrollment": null,
+    "sponsor": "Vor Biopharma",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04437511",
+    "title": "A Study of Donanemab (LY3002813) in Participants With Early Alzheimer's Disease (TRAILBLAZER-ALZ 2)",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "Donanemab",
+      "Placebo"
+    ],
+    "first_posted": "2020-06-18",
+    "start_date": "2020-06-19",
+    "primary_completion_date": "2023-04-14",
+    "completion_date": "2028-11-01",
+    "results_first_posted": "2024-05-20",
+    "last_update_posted": "2025-08-29",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01677754",
+    "title": "A Study of RO4602522 in Participants With Moderate Severity Alzheimer Disease on Background Alzheimer Disease Therapy",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "RO4602522",
+      "Placebo",
+      "Donepezil",
+      "Memantine",
+      "Rivastigmine",
+      "Galantamine"
+    ],
+    "first_posted": "2012-09-03",
+    "start_date": "2012-10-24",
+    "primary_completion_date": "2015-06-12",
+    "completion_date": "2015-06-12",
+    "results_first_posted": null,
+    "last_update_posted": "2017-05-30",
+    "enrollment": null,
+    "sponsor": "Hoffmann-La Roche",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04836559",
+    "title": "A Study to Investigate JNJ-40411813 in Combination With Levetiracetam or Brivaracetam in Epilepsy",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Focal Onset Seizures"
+    ],
+    "interventions": [
+      "JNJ-40411813",
+      "Placebo"
+    ],
+    "first_posted": "2021-04-08",
+    "start_date": "2021-05-18",
+    "primary_completion_date": "2024-02-08",
+    "completion_date": "2024-02-08",
+    "results_first_posted": "2025-07-03",
+    "last_update_posted": "2025-07-03",
+    "enrollment": null,
+    "sponsor": "Janssen Research & Development, LLC",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT07580625",
+    "title": "Reducing Disparities in Knee Arthroscopy for Adolescents",
+    "status": "NOT_YET_RECRUITING",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Knee Injury",
+      "ACL Injury",
+      "Meniscus Tear",
+      "Hispanic or Latino",
+      "Adolescent"
+    ],
+    "interventions": [
+      "Educational program and patient navigator"
+    ],
+    "first_posted": "2026-05-12",
+    "start_date": "2027-10-01",
+    "primary_completion_date": "2029-06-01",
+    "completion_date": "2029-07-01",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-18",
+    "enrollment": null,
+    "sponsor": "Ann & Robert H Lurie Children's Hospital of Chicago",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT01324232",
+    "title": "Safety and Efficacy of AVP-923 in the Treatment of Central Neuropathic Pain in Multiple Sclerosis",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Central Neuropathic Pain",
+      "Multiple Sclerosis"
+    ],
+    "interventions": [
+      "AVP-923-45",
+      "AVP-923-30",
+      "AVP-923-20",
+      "Placebo"
+    ],
+    "first_posted": "2011-03-28",
+    "start_date": "2011-09-08",
+    "primary_completion_date": "2013-09-26",
+    "completion_date": "2013-09-26",
+    "results_first_posted": "2021-11-22",
+    "last_update_posted": "2021-11-22",
+    "enrollment": null,
+    "sponsor": "Avanir Pharmaceuticals",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02579252",
+    "title": "24 Months Safety and Efficacy Study of AADvac1 in Patients With Mild Alzheimer's Disease",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer's Disease"
+    ],
+    "interventions": [
+      "AADvac1",
+      "Placebo"
+    ],
+    "first_posted": "2015-10-19",
+    "start_date": "2016-03-01",
+    "primary_completion_date": "2019-06-01",
+    "completion_date": "2019-06-01",
+    "results_first_posted": null,
+    "last_update_posted": "2019-11-14",
+    "enrollment": null,
+    "sponsor": "Axon Neuroscience SE",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04203498",
+    "title": "Safety and Effectiveness of Nabiximols Oromucosal Spray as Add-on Therapy in Participants With Spasticity Due to Multiple Sclerosis",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Sclerosis (MS)"
+    ],
+    "interventions": [
+      "Nabiximols",
+      "Placebo"
+    ],
+    "first_posted": "2019-12-18",
+    "start_date": "2020-10-01",
+    "primary_completion_date": "2023-02-10",
+    "completion_date": "2023-02-28",
+    "results_first_posted": "2024-05-08",
+    "last_update_posted": "2024-05-08",
+    "enrollment": null,
+    "sponsor": "Jazz Pharmaceuticals",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05054140",
+    "title": "Study to Evaluate Efficacy, Safety, and Tolerability of IMU-838 in Patients With Progressive Multiple Sclerosis",
+    "status": "UNKNOWN",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Sclerosis"
+    ],
+    "interventions": [
+      "IMU-838",
+      "Placebo matching IMU-838"
+    ],
+    "first_posted": "2021-09-23",
+    "start_date": "2021-09-30",
+    "primary_completion_date": "2025-01-07",
+    "completion_date": "2025-01-07",
+    "results_first_posted": null,
+    "last_update_posted": "2024-04-29",
+    "enrollment": null,
+    "sponsor": "Immunic AG",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT04115293",
+    "title": "Safety, Tolerability, and Efficacy of Zilucoplan in Subjects With Generalized Myasthenia Gravis",
+    "status": "COMPLETED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Myasthenia Gravis, Generalized"
+    ],
+    "interventions": [
+      "zilucoplan (RA101495)",
+      "Placebo"
+    ],
+    "first_posted": "2019-10-04",
+    "start_date": "2019-09-17",
+    "primary_completion_date": "2021-12-30",
+    "completion_date": "2021-12-30",
+    "results_first_posted": "2023-01-17",
+    "last_update_posted": "2025-07-16",
+    "enrollment": null,
+    "sponsor": "Ra Pharmaceuticals, Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06424288",
+    "title": "A Study to Test Whether Vicadrostat in Combination With Empagliflozin Helps People With Heart Failure",
+    "status": "RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Heart Failure"
+    ],
+    "interventions": [
+      "vicadrostat",
+      "empagliflozin",
+      "placebo"
+    ],
+    "first_posted": "2024-05-22",
+    "start_date": "2024-06-17",
+    "primary_completion_date": "2028-05-22",
+    "completion_date": "2028-05-22",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-15",
+    "enrollment": null,
+    "sponsor": "Boehringer Ingelheim",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06083675",
+    "title": "Research Study to Compare Semaglutide Tablets With Empagliflozin or Metformin Tablets in People With Type 2 Diabetes",
+    "status": "WITHDRAWN",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Diabetes Mellitus, Type 2"
+    ],
+    "interventions": [
+      "Semaglutide",
+      "Empagliflozin",
+      "Metformin"
+    ],
+    "first_posted": "2023-10-16",
+    "start_date": "2024-01-26",
+    "primary_completion_date": "2025-01-24",
+    "completion_date": "2027-05-28",
+    "results_first_posted": null,
+    "last_update_posted": "2024-02-26",
+    "enrollment": null,
+    "sponsor": "Novo Nordisk A/S",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT02019264",
+    "title": "A Study to Evaluate the Effect of Long-term Treatment With BELVIQ (Lorcaserin HCl) on the Incidence of Major Adverse Cardiovascular Events and Conversion to Type 2 Diabetes Mellitus in Obese and Overweight Subjects With Cardiovascular Disease or Multiple Cardiovascular Risk Factors",
+    "status": "COMPLETED",
+    "phase": "PHASE4",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Cardiovascular Disease",
+      "High Cardiovascular Risk",
+      "Obesity",
+      "Overweight",
+      "Type 2 Diabetes"
+    ],
+    "interventions": [
+      "Lorcaserin hydrochloride",
+      "Placebo"
+    ],
+    "first_posted": "2013-12-24",
+    "start_date": "2014-01-24",
+    "primary_completion_date": "2018-05-14",
+    "completion_date": "2018-05-14",
+    "results_first_posted": "2019-07-16",
+    "last_update_posted": "2019-07-16",
+    "enrollment": null,
+    "sponsor": "Eisai Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05063539",
+    "title": "A Study of LY3372689 to Assess the Safety, Tolerability, and Efficacy in Participants With Alzheimer's Disease",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Disease"
+    ],
+    "interventions": [
+      "LY3372689",
+      "LY3372689",
+      "Placebo"
+    ],
+    "first_posted": "2021-10-01",
+    "start_date": "2021-09-16",
+    "primary_completion_date": "2024-07-09",
+    "completion_date": "2025-05-22",
+    "results_first_posted": "2025-07-28",
+    "last_update_posted": "2026-06-12",
+    "enrollment": null,
+    "sponsor": "Eli Lilly and Company",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT05256134",
+    "title": "A Study to Evaluate the Efficacy and Safety of Gantenerumab in Participants at Risk for or at the Earliest Stages of Alzheimer's Disease (AD)",
+    "status": "TERMINATED",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimers Disease"
+    ],
+    "interventions": [
+      "Gantenerumab",
+      "Placebo"
+    ],
+    "first_posted": "2022-02-25",
+    "start_date": "2022-04-19",
+    "primary_completion_date": "2023-03-13",
+    "completion_date": "2023-03-13",
+    "results_first_posted": "2024-07-09",
+    "last_update_posted": "2025-06-12",
+    "enrollment": null,
+    "sponsor": "Hoffmann-La Roche",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "KARD",
+    "nct_id": "NCT06700343",
+    "title": "Comparison Between ABP 692 and Ocrevus\u00ae (Ocrelizumab)",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Relapsing-remitting Multiple Sclerosis (RRMS)"
+    ],
+    "interventions": [
+      "Ocrelizumab (US)",
+      "Ocrelizumab (EU)",
+      "ABP 692"
+    ],
+    "first_posted": "2024-11-22",
+    "start_date": "2025-01-13",
+    "primary_completion_date": "2027-01-15",
+    "completion_date": "2027-12-17",
+    "results_first_posted": null,
+    "last_update_posted": "2026-06-09",
+    "enrollment": null,
+    "sponsor": "Amgen",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT02981433",
+    "title": "Vulvodynia: Identification of Potential Relevant Biomarkers",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Vulvodynia"
+    ],
+    "interventions": [],
+    "first_posted": "2016-12-05",
+    "start_date": "2019-03-13",
+    "primary_completion_date": "2020-06-10",
+    "completion_date": "2020-06-10",
+    "results_first_posted": null,
+    "last_update_posted": "2020-08-27",
+    "enrollment": null,
+    "sponsor": "St. Louis University",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT00900302",
+    "title": "OX-40 Protein Expression in the Sentinel Lymph Nodes of Patients With Cancer",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Cancer"
+    ],
+    "interventions": [
+      "protein expression analysis",
+      "immunohistochemistry staining method",
+      "laboratory biomarker analysis",
+      "biopsy"
+    ],
+    "first_posted": "2009-05-12",
+    "start_date": "2005-04-01",
+    "primary_completion_date": "2011-03-01",
+    "completion_date": "2011-03-01",
+    "results_first_posted": null,
+    "last_update_posted": "2016-02-10",
+    "enrollment": null,
+    "sponsor": "OHSU Knight Cancer Institute",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT01570439",
+    "title": "To Identify HLA-A1101-restricted Peptide Epitopes Derived From Novel Oncoantigens (URLC10, KIF20A, and CDCA1) Applicable for Cancer Vaccine in Singapore",
+    "status": "UNKNOWN",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Anonymous Donors at Blood Donation Center (NUH)"
+    ],
+    "interventions": [],
+    "first_posted": "2012-04-04",
+    "start_date": "2012-01-01",
+    "primary_completion_date": "2014-12-01",
+    "completion_date": null,
+    "results_first_posted": null,
+    "last_update_posted": "2013-12-11",
+    "enrollment": null,
+    "sponsor": "National University Hospital, Singapore",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT01045460",
+    "title": "Trial of Activated Marrow Infiltrating Lymphocytes Alone or in Conjunction With an Allogeneic Granulocyte Macrophage Colony-stimulating Factor (GM-CSF)-Based Myeloma Cellular Vaccine in the Autologous Transplant Setting in Multiple Myeloma",
+    "status": "COMPLETED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Myeloma"
+    ],
+    "interventions": [
+      "Activated marrow infiltrating lymphocytes",
+      "Allogeneic Myeloma Vaccine",
+      "Cyclophosphamide",
+      "Filgrastim",
+      "Leukapheresis",
+      "Melphalan",
+      "Autologous stem cell transplant"
+    ],
+    "first_posted": "2010-01-11",
+    "start_date": "2010-01-15",
+    "primary_completion_date": "2014-12-01",
+    "completion_date": "2020-06-01",
+    "results_first_posted": "2019-10-08",
+    "last_update_posted": "2021-04-09",
+    "enrollment": null,
+    "sponsor": "Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT00371397",
+    "title": "Yoga, Immune Function, and Health",
+    "status": "COMPLETED",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Healthy"
+    ],
+    "interventions": [
+      "Hatha Yoga Classes",
+      "Movement Control"
+    ],
+    "first_posted": "2006-09-04",
+    "start_date": "2005-09-01",
+    "primary_completion_date": "2008-09-01",
+    "completion_date": "2008-09-01",
+    "results_first_posted": "2011-07-06",
+    "last_update_posted": "2016-07-06",
+    "enrollment": null,
+    "sponsor": "Ohio State University",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT02973854",
+    "title": "Activation of the Sphingosine-1-phosphate (S1P) to S1P1 Receptor Subtype (S1PR1) Axis in Patients With Endometriosis: Identification of Potential Relevant Biomarkers to Diagnose and Treat",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Endometriosis"
+    ],
+    "interventions": [],
+    "first_posted": "2016-11-25",
+    "start_date": "2016-09-01",
+    "primary_completion_date": "2020-09-10",
+    "completion_date": "2020-09-10",
+    "results_first_posted": null,
+    "last_update_posted": "2020-09-10",
+    "enrollment": null,
+    "sponsor": "St. Louis University",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT03003845",
+    "title": "S1P1 Receptor Subtype (S1PR1) Axis in Patients With Interstitial Cystitis (IC) Pain",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Interstitial Cystitis"
+    ],
+    "interventions": [
+      "Questionnaires",
+      "Collection of Blood samples"
+    ],
+    "first_posted": "2016-12-28",
+    "start_date": "2019-02-26",
+    "primary_completion_date": "2020-02-27",
+    "completion_date": "2020-02-27",
+    "results_first_posted": null,
+    "last_update_posted": "2021-07-23",
+    "enrollment": null,
+    "sponsor": "St. Louis University",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT04313868",
+    "title": "GEN2 Directed Cancer Immunotherapy Trial",
+    "status": "COMPLETED",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Hepatocellular Carcinoma",
+      "Metastatic Cancer"
+    ],
+    "interventions": [
+      "GEN2 (HSV-Thymidine Kinase-m2 and hGM-CSF Genes)"
+    ],
+    "first_posted": "2020-03-18",
+    "start_date": "2014-06-13",
+    "primary_completion_date": "2023-12-12",
+    "completion_date": "2023-12-12",
+    "results_first_posted": null,
+    "last_update_posted": "2024-11-06",
+    "enrollment": null,
+    "sponsor": "GenVivo, Inc.",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT02923180",
+    "title": "Neoadjuvant Enoblituzumab (MGA271) in Men With Localized Intermediate and High-Risk Prostate Cancer",
+    "status": "ACTIVE_NOT_RECRUITING",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Prostate Cancer"
+    ],
+    "interventions": [
+      "Enoblituzumab"
+    ],
+    "first_posted": "2016-10-04",
+    "start_date": "2017-02-14",
+    "primary_completion_date": "2020-08-11",
+    "completion_date": "2026-07-01",
+    "results_first_posted": "2021-08-24",
+    "last_update_posted": "2025-07-22",
+    "enrollment": null,
+    "sponsor": "Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT01840527",
+    "title": "Utility of Novel BRAF Test for Melanoma",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Melanoma"
+    ],
+    "interventions": [],
+    "first_posted": "2013-04-25",
+    "start_date": "2013-05-01",
+    "primary_completion_date": "2017-03-29",
+    "completion_date": "2022-09-01",
+    "results_first_posted": "2024-09-04",
+    "last_update_posted": "2024-09-04",
+    "enrollment": null,
+    "sponsor": "Massachusetts General Hospital",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT04323202",
+    "title": "Neoadjuvant-Adjuvant Pembrolizumab in Resectable Advanced Basal Cell Carcinoma of H&N",
+    "status": "COMPLETED",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Basal Cell Carcinoma of the Head and Neck"
+    ],
+    "interventions": [
+      "Pembrolizumab",
+      "Tissue collection"
+    ],
+    "first_posted": "2020-03-26",
+    "start_date": "2020-08-04",
+    "primary_completion_date": "2024-07-23",
+    "completion_date": "2025-06-25",
+    "results_first_posted": null,
+    "last_update_posted": "2025-10-24",
+    "enrollment": null,
+    "sponsor": "Case Comprehensive Cancer Center",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT00000721",
+    "title": "An Escalating Dose Tolerance Trial of BG8962 (rCD4) in Patients Who Are HIV Antibody Positive",
+    "status": "COMPLETED",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "HIV Infections"
+    ],
+    "interventions": [
+      "CD4 Antigens"
+    ],
+    "first_posted": "2001-08-31",
+    "start_date": null,
+    "primary_completion_date": null,
+    "completion_date": "1991-03-01",
+    "results_first_posted": null,
+    "last_update_posted": "2021-10-28",
+    "enrollment": null,
+    "sponsor": "National Institute of Allergy and Infectious Diseases (NIAID)",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT01062035",
+    "title": "Study of a Screening Blood Test to Determine Patients' Potential Risk of Adenomatous or Advanced Colon Polyps (ACPs)",
+    "status": "COMPLETED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Colonic Polyp"
+    ],
+    "interventions": [],
+    "first_posted": "2010-02-04",
+    "start_date": "2010-01-01",
+    "primary_completion_date": "2013-09-01",
+    "completion_date": "2013-09-01",
+    "results_first_posted": null,
+    "last_update_posted": "2014-06-26",
+    "enrollment": null,
+    "sponsor": "Mayo Clinic",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT00908843",
+    "title": "Prevention of Contrast Induced Nephropathy (NIC) by Intravenous Versus Oral Rehydration",
+    "status": "COMPLETED",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "KIDNEY FAILURE, ACUTE"
+    ],
+    "interventions": [
+      "Intravenous hydration with bicarbonate",
+      "Oral hydration with Sodium solution"
+    ],
+    "first_posted": "2009-05-27",
+    "start_date": "2008-09-01",
+    "primary_completion_date": "2012-06-01",
+    "completion_date": "2012-06-01",
+    "results_first_posted": null,
+    "last_update_posted": "2012-06-08",
+    "enrollment": null,
+    "sponsor": "Clinica Universidad de Navarra, Universidad de Navarra",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT00706992",
+    "title": "Anti-MART-1 F5 Lymphocytes to Treat High-Risk Melanoma Patients",
+    "status": "TERMINATED",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Melanoma"
+    ],
+    "interventions": [
+      "ALVAC-MART-1 vaccine",
+      "MART-1:26-35(27L) peptide vaccine",
+      "Aldesleukin",
+      "autologous anti-MART-1 F5 T-cell receptor gene-engineered peripheral blood lymphocytes",
+      "incomplete Freund's adjuvant"
+    ],
+    "first_posted": "2008-06-30",
+    "start_date": "2008-06-01",
+    "primary_completion_date": "2012-11-01",
+    "completion_date": "2012-11-01",
+    "results_first_posted": "2013-03-19",
+    "last_update_posted": "2015-10-28",
+    "enrollment": null,
+    "sponsor": "National Cancer Institute (NCI)",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT02716805",
+    "title": "Phase 1 Study of Tremelimumab, Durvalumab, High-dose Chemotherapy, + Autologous Stem Cell Transplant",
+    "status": "TERMINATED",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Multiple Myeloma"
+    ],
+    "interventions": [
+      "Tremelimumab",
+      "Durvalumab",
+      "Prevnar-13",
+      "Melphalan"
+    ],
+    "first_posted": "2016-03-23",
+    "start_date": "2016-12-13",
+    "primary_completion_date": "2018-02-16",
+    "completion_date": "2018-02-16",
+    "results_first_posted": "2019-03-26",
+    "last_update_posted": "2022-10-12",
+    "enrollment": null,
+    "sponsor": "Ludwig Institute for Cancer Research",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT01532362",
+    "title": "Evaluation of Apricoxib (Selective Cyclooxygenase 2 Inhibition) in Modulating T Regulatory Cells of Patients With Early Stage Non-small Cell Lung Cancer",
+    "status": "TERMINATED",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Non Small Cell Lung Cancer"
+    ],
+    "interventions": [
+      "Apricoxib"
+    ],
+    "first_posted": "2012-02-14",
+    "start_date": "2011-11-01",
+    "primary_completion_date": "2012-05-01",
+    "completion_date": "2012-05-01",
+    "results_first_posted": "2016-02-11",
+    "last_update_posted": "2020-09-22",
+    "enrollment": null,
+    "sponsor": "Jonsson Comprehensive Cancer Center",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT05527418",
+    "title": "Safety, Tolerance and Antiretroviral Activity of Dasatinib: a Pilot Clinical Trial in Patients With Recent HIV-1 Infection",
+    "status": "RECRUITING",
+    "phase": "PHASE2",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Recent HIV-1 Infection"
+    ],
+    "interventions": [
+      "Dasatinib",
+      "Placebo"
+    ],
+    "first_posted": "2022-09-02",
+    "start_date": "2024-01-26",
+    "primary_completion_date": "2026-06-01",
+    "completion_date": "2026-06-01",
+    "results_first_posted": null,
+    "last_update_posted": "2025-05-01",
+    "enrollment": null,
+    "sponsor": "Eva Bonfill",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT04999059",
+    "title": "Long-Term Follow-up Study of Subjects With Fabry Disease Who Received Lentiviral Gene Therapy in Study AVRO-RD-01-201",
+    "status": "TERMINATED",
+    "phase": "N/A",
+    "study_type": "OBSERVATIONAL",
+    "conditions": [
+      "Fabry Disease"
+    ],
+    "interventions": [
+      "Safety and Efficacy Assessments"
+    ],
+    "first_posted": "2021-08-10",
+    "start_date": "2019-05-08",
+    "primary_completion_date": "2023-08-16",
+    "completion_date": "2023-08-16",
+    "results_first_posted": null,
+    "last_update_posted": "2023-08-31",
+    "enrollment": null,
+    "sponsor": "AVROBIO",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT06818071",
+    "title": "Using Gamified Elements to Increase Daily Step Count in University Students in Taiwan A RCT",
+    "status": "COMPLETED",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Physical Activity",
+      "Gamification",
+      "Daily Step Count"
+    ],
+    "interventions": [
+      "Points and Leaderboards",
+      "Social Aspects",
+      "Health Messages",
+      "Pikmin Bloom"
+    ],
+    "first_posted": "2025-02-10",
+    "start_date": "2024-04-01",
+    "primary_completion_date": "2025-02-28",
+    "completion_date": "2025-02-28",
+    "results_first_posted": null,
+    "last_update_posted": "2025-11-18",
+    "enrollment": null,
+    "sponsor": "Taipei Medical University",
+    "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "PBLS",
+    "nct_id": "NCT03454893",
+    "title": "Open Label, Study Of Efficacy and Safety Of AVR-RD-01 for Treatment-Naive Subjects With Classic Fabry Disease",
+    "status": "TERMINATED",
+    "phase": "PHASE1",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Fabry Disease"
+    ],
+    "interventions": [
+      "AVR-RD-01"
+    ],
+    "first_posted": "2018-03-06",
+    "start_date": "2018-02-21",
+    "primary_completion_date": "2022-03-14",
+    "completion_date": "2022-03-14",
+    "results_first_posted": "2024-01-05",
+    "last_update_posted": "2024-01-05",
+    "enrollment": null,
+    "sponsor": "AVROBIO",
+    "collected_at": "2026-06-29"
   }
 ]
