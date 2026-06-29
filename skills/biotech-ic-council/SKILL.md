@@ -52,6 +52,71 @@ Separate recursive improvements into three classes:
 
 Do not recommend self-modifying models, automatic promotion, automatic trading, or autonomous production rewrites. Recursive improvement means disciplined feedback loops, not uncontrolled agent mutation.
 
+## Post-review LRN protocol (mechanical wiring)
+
+After every review, write 1-3 LRN entries to `.learnings/LEARNINGS.md`. This is the concrete step that closes the recursive loop — the Recursive Improvement Register (Section 7) is the source; the LRN entry is the durable encoding.
+
+### LRN entry format
+
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: IC_<DOMAIN>_<description>   # snake_case, ≤6 words
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | spec | none
+Recurrence-Count: 1                      # increment if Pattern-Key already exists
+Skill-Path: skills/biotech-ic-council/SKILL.md   # only if lane=skill
+Context: <one line — what the review found>
+Rule: <one line — what should change in the process>
+Suggested-Action: <one line — test, checklist item, runbook step, or spec proposal>
+```
+
+### Pattern-Key namespace for IC reviews
+
+| Prefix | Domain |
+|--------|--------|
+| `IC_CORP_ACTION_` | Reverse splits, spinouts, M&A, delistings, ticker changes |
+| `IC_PIT_LEAK_` | Source-date contamination, future knowledge entering features |
+| `IC_CATALYST_` | CT.gov/FDA dating, trial status, effective-date discipline |
+| `IC_EXPECTATION_` | Expectation-layer vs selector/ranker confusion |
+| `IC_BACKTEST_` | Contamination, regime mix, cherry-pick, sample-size issues |
+| `IC_PRODUCTION_` | Determinism, replay, schema, cron, rollback |
+| `IC_PORTFOLIO_` | Liquidity, crowding, sizing, drawdown, concentration |
+| `IC_PROCESS_` | Review checklist gaps, rubric sharpening, promotion-gate improvements |
+
+### Promotion path for IC's own skill
+
+When a Pattern-Key in this namespace reaches recurrence ≥ 3 (7-day window for behavioral patterns; all-time for failure modes):
+
+1. Propose a patch to `skills/biotech-ic-council/SKILL.md` — add a new checklist item, a sharper cross-examination probe, a domain anchor, or an example to `references/recursive-improvement.md`.
+2. Apply Rule 11 FENCE: `SELFIMPROVE_GATES_MET=1 python3 tools/pattern_to_skillpatch.py --min-recurrence 3 --out artifacts/skill_patch_drafts` (writes drafts only).
+3. Operator reviews and hand-edits `skills/biotech-ic-council/SKILL.md`.
+4. Sync and verify:
+   ```bash
+   python3 tools/sync_hermes_skills.py
+   python3 tools/audit_hermes_skills.py
+   ```
+5. Append to `docs/hermes_skills/harvest_log.md` and commit.
+
+**What may become an IC skill patch:**
+
+| Eligible | Ineligible (needs Spec) |
+|----------|-------------------------|
+| New cross-examination probe | Ranker/selector/weight changes |
+| Sharper checklist item | event EV math or gate thresholds |
+| New domain anchor or example | Production cron or sizing policy |
+| Updated rubric severity | Forward-return / alpha threshold |
+| PIT/provenance assertion template | Snapshot promotion semantics |
+
+### Session-end trigger
+
+At the end of each significant IC review session:
+
+1. One-line reflection: did the council surface a non-obvious issue? Is the pattern repeatable?
+2. Write LRN entries for items in the Recursive Improvement Register with class `safe process improvement` or `safe deterministic guardrail`. Skip `model-affecting` — those go to a separate spec.
+3. Check: does any existing Pattern-Key now reach recurrence ≥ 3? If so, propose a patch.
+4. If patch proposed → follow promotion path above.
+5. If no recurrence ≥ 3 → leave LRN in place; the loop continues in future sessions.
+
 ## Hard safety boundaries
 
 - Stay read-only unless the user explicitly asks for a separate implementation task.
@@ -261,6 +326,19 @@ Use this structure:
 **Alpha thesis:** ...
 **Risk thesis:** ...
 **Decision-owner note:** ...
+
+### LRN entries (post-review, 1-3)
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: IC_<DOMAIN>_<description>
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | spec | none
+Recurrence-Count: N
+Skill-Path: skills/biotech-ic-council/SKILL.md   (if lane=skill)
+Context: ...
+Rule: ...
+Suggested-Action: ...
+```
 ```
 
 ## Supporting references
