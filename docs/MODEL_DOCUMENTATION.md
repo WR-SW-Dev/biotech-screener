@@ -1,7 +1,7 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-06-28 (YTD backtest data integrity audit — split-adjusted price fix + Jun 26 endpoint correction; corrected YTD DEM +38.52% vs XBI +27.43% (+11.09pp); regime diagnostic corrected; weekly validation vs S&P 500 added — DEM +31.79% vs SPY +12.32% (+19.5pp), Sharpe 2.49 vs 1.93; **no production change**)
+**Last updated:** 2026-06-28 (IC health check — `score_rank_pct` mean_ic +0.049 HEALTHY, hit_rate 61.8%, N=34; regime monitor gate met 118/20 windows, avg XS +0.268%; EES advisory 5/30 flagged; **no production change**. Earlier same day: YTD backtest data integrity audit — corrected YTD DEM +38.52% vs XBI +27.43% (+11.09pp); weekly validation DEM +31.79% vs SPY +12.32%, Sharpe 2.49)
 **Prior update:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
 **Earlier update:** 2026-06-21 (ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
 **Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
@@ -12,6 +12,61 @@ weights. See `production_data/ranker_v2_model.json` → `provenance` block for t
 stale selector/ranker prose with the already-active v1.14.0 configuration. The
 selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW Top-30
 construction remain frozen; this document does not authorize behavior changes.
+
+---
+
+## Recent Updates — 2026-06-28 (IC Health Check)
+
+Classification: `VALIDATION_MONITORING / NO_MODEL_CHANGE`. Source: `artifacts/ic_dashboard/2026-06-26_dashboard.json`, `artifacts/forward_validation/dem_regime_monitor_2026-06-28.json`.
+
+### IC Dashboard (as of 2026-06-26, 20d horizon, 60d lookback)
+
+| Signal | mean_ic | hit_rate | N dates | Health |
+|--------|---------|----------|---------|--------|
+| `score_rank_pct` (primary selector) | **+0.049** | **61.8%** | 34 | **HEALTHY ✓** |
+| `inst_delta_z` (diagnostic only, 0% weight) | +0.028 | 83.9% | 31 | WEAK (non-blocking) |
+
+Overall attention: **LOW**
+
+### IC Trend — score_rank_pct (Apr 8 → Jun 25)
+
+Three phases:
+
+| Phase | Dates | IC range | Driver |
+|-------|-------|----------|--------|
+| **Inversion** | Apr 8–22 | −0.18 to −0.01 | Tariff-shock macro sell-off; model rankings went backwards during peak panic (worst: −0.182 Apr 15) |
+| **Crossover** | Apr 23 | 0 → positive | Signal recovered as XBI found its floor |
+| **Strong run** | Apr 23 – May 14 | +0.01 → **+0.276** | Seven weeks of increasingly accurate cross-sectional ranking |
+| **Normalization** | May 15 – Jun 25 | +0.276 → **+0.030** | Mean-reversion to baseline after exceptional run; still positive |
+
+The Jun 25 reading (+0.030) is the lowest post-crossover value. Still positive but approaching noise floor. Watch next week's reading for stabilization vs continued fade.
+
+### DEM Regime Monitor (2026-06-28)
+
+| Metric | Value |
+|--------|-------|
+| Gate progress | **118 / 20 — GATE MET ✓** |
+| Avg 5d excess vs XBI | +0.268% |
+| % windows positive | 50.8% |
+| Rally regime (N=23) | +0.34% avg, 52.2% positive |
+| Non-rally (N=95) | +0.25% avg, 50.5% positive |
+| Top-20 monotonicity avg | 0.435 (rank ordering holding) |
+| Concentration flagged | 1.7% ✓ |
+
+### EES Advisory
+
+5 of current Top-30 have the EES v3 `raw_veto_core` flag active (snap 2026-06-26). EES is shadow-only — no automatic veto. Advisory: review these 5 names for financing/overpricing risk before sizing up. EES gate: 20d MET (35/20), 5d MET (35/20).
+
+### Model Gate Verdict
+
+```
+IC gate (score_rank_pct):    PASS — mean_ic +0.049 > +0.030 threshold
+Regime monitor gate:          PASS — 118/20 windows MET
+Attention level:              LOW
+Overall:                      PASS — trading permitted
+```
+
+`VALIDATION_MONITORING / NO_MODEL_CHANGE / NO_SELECTOR_CHANGE / NO_SIZING_CHANGE / NO_TRADING_CHANGE`
 
 ---
 
