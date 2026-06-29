@@ -337,22 +337,22 @@ ZVRA,"Zevra Therapeutics, Inc.",active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VA
 ZYME,Zymeworks Inc.,active,NASDAQ,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
 _XBI_BENCHMARK_,,benchmark,,,,False,,ACTIVE_BUT_STALE_PRICE,,,
 KYNB,"Kyntra Bio, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
-ABBV,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+ABBV,AbbVie Inc.,active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
 ACLX,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-04-29
-AKBA,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-CAPR,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-CPRX,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+AKBA,"Akebia Therapeutics, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
+CAPR,"Capricor Therapeutics, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
+CPRX,"Catalyst Pharmaceuticals, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
 DAWN,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-04-24
-DMRA,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+DMRA,"Damora Therapeutics, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
 FOLD,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-04-27
-IMNM,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-MDXG,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-RNAC,,pending_data_collection,,Biotechnology,IBB,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-SLS,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
+IMNM,"Immunome, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
+MDXG,"MiMedx Group, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
+RNAC,"Cartesian Therapeutics, Inc.",active,,Biotechnology,IBB,False,,ACTIVE_VALID,False,True,2026-06-26
+SLS,"SELLAS Life Sciences Group, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
 TERN,,delisted,,Biotechnology,IBB,True,status=delisted,DELISTED_OR_INACTIVE,True,True,2026-05-07
-TRAX,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-VSTM,,pending_data_collection,,Biotechnology,XBI,False,status=pending_data_collection,NEEDS_REVIEW,False,True,2026-06-26
-KLRA,"Kailera Therapeutics, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+TRAX,"First Tracks Biotherapeutics, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
+VSTM,"Verastem, Inc.",active,,Biotechnology,XBI,False,,ACTIVE_VALID,False,True,2026-06-26
+KLRA,"Kailera Therapeutics, Inc.",pending_coverage,NASDAQ,Biotechnology,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
 PBLS,"Parabilis Medicines, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
-GENB,"Generate Biomedicines, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
+GENB,"Generate Biomedicines, Inc.",pending_coverage,NASDAQ,Biotechnology,,False,status=pending_coverage,NEEDS_REVIEW,False,True,2026-06-26
 KARD,"Kardigan, Inc.",active,NASDAQ,Biotechnology,,False,,ACTIVE_VALID,False,True,2026-06-26
