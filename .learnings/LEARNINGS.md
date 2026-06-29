@@ -480,3 +480,94 @@ Treat DEM as a forward-shadow candidate, NOT investable production. Gate any pro
 - Pattern-Key: dem_is_current_ranker_not_baseline
 - Recurrence-Count: 1
 - Skill-Path: decision-audit-trail (D-2026-008), failure-patterns (F-2026-010), selector-ranker, ic-evaluation
+
+## [LRN-20260628-001] production_runner_is_run_daily_production
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: high
+**Status**: promoted
+**Area**: hermes_ops
+
+### Summary
+The daily production runner is `tools/run_daily_production.py`, NOT `scripts/run_batch.py`. The biotech-run-pipeline skill referenced the wrong file for the entire session history.
+
+### Details
+`scripts/run_batch.py` is old/deprecated. Production entrypoint is `tools/run_daily_production.py`. The pipeline has evolved to include Steps 1.45 (tastytrade options snapshot), 1.46 (options enrichment), 1.47 (options shadow IC update). Snapshot dir is `data/snapshots/`; `run_manifest.json` is the primary completion artifact.
+
+### Suggested Action
+Always verify runner entrypoint from crontab or `tools/` first, not from memory or old skill text. biotech-run-pipeline SKILL.md updated.
+
+### Metadata
+- Source: biotech_pipeline_session_2026-06-28
+- Pattern-Key: production_runner_is_run_daily_production
+- Recurrence-Count: 1
+- Promotion-lane: skill
+- Skill-Path: biotech-run-pipeline
+
+## [LRN-20260628-002] run_screen_inputs_manifest_valid_choices
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: medium
+**Status**: logged
+**Area**: hermes_ops
+
+### Summary
+`run_screen.py --inputs-manifest` only accepts `off`, `write`, `verify`. Using `skip` causes argparse to print help and exit (1.6s silent failure).
+
+### Details
+During timing test, used `--inputs-manifest skip` → argparse error → help printed → 1.6s exit. Valid choices confirmed at `run_screen.py:12301`. Production uses `write`; `off` disables the sidecar.
+
+### Suggested Action
+When scripting run_screen.py in isolation (timing tests, debugging), use `--inputs-manifest off` to skip sidecar I/O.
+
+### Metadata
+- Source: run_screen_timing_test_2026-06-28
+- Pattern-Key: run_screen_inputs_manifest_valid_choices
+- Recurrence-Count: 1
+- Promotion-lane: skill
+- Skill-Path: biotech-run-pipeline
+
+## [LRN-20260628-003] pipeline_perf_delisted_filter_ctgov_parallel
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: medium
+**Status**: logged
+**Area**: data_pipeline
+
+### Summary
+Three production bottlenecks cut pipeline from 22 min → ~6 min on 2026-06-28. Each fix was independent.
+
+### Details
+1. **Delisted tickers in yfinance refresh**: universe.json contains `status=delisted` entries; old code retried all tickers 3× including delisted ones → 9.3 min. Fix: filter `e.get("status") == "delisted"` before building ticker list.
+2. **tastytrade batch_size 100→200**: API accepts 200 per batch; halved round-trips → 4 min → <2s.
+3. **ctgov serial→parallel**: `ThreadPoolExecutor(max_workers=8)` with `threading.Lock()` for shared state; `time.sleep(0.2)` per-thread preserved; 6.4× speedup (3.3 min → 31s). Commit: `412d97f6`.
+
+### Suggested Action
+When diagnosing slow pipeline steps: (1) check for delisted tickers in universe, (2) check batch sizes against API limits, (3) look for serial loops over network calls.
+
+### Metadata
+- Source: pipeline_perf_session_2026-06-28
+- Tags: yfinance, tastytrade, ctgov, parallelization, delisted
+- Pattern-Key: pipeline_perf_delisted_filter_ctgov_parallel
+- Recurrence-Count: 1
+- Promotion-lane: none
+- Skill-Path: none (implementation detail, not skill-worthy pattern)
+
+## [LRN-20260628-004] options_ic_5bday_forward_window
+
+**Logged**: 2026-06-28T00:00:00Z
+**Priority**: low
+**Status**: logged
+**Area**: research
+
+### Summary
+Step 1.47 (options shadow IC) requires 5 business days of forward price data before any IC value is available. First snapshot was June 26; first IC data available July 3.
+
+### Details
+`options_shadow_analysis.run()` looks back 5 business days from `as_of_date` for a snapshot. Each daily run accumulates one more cross-section until enough forward price data exists. Logs "insufficient forward data (accumulating)" until data is ready. `fast_mode=True` skips the slow RV IC (~30s) and runs only market-implied XS + autopsy cross-reference.
+
+### Metadata
+- Source: options_ic_framework_2026-06-28
+- Pattern-Key: options_ic_5bday_forward_window
+- Recurrence-Count: 1
+- Promotion-lane: none

@@ -143,6 +143,10 @@ Cross-sectional regression with Newey-West corrected standard errors.
 
 The ONLY true out-of-sample evidence. Accumulates daily from production.
 
+> **Related forward test — DEM Top-30 candidate (RATIFIED + WIRED 2026-06-28):** `docs/FORWARD_VALIDATION_PROTOCOL.md` pre-registers a separate forward out-of-sample test for the **DEM Top-30 candidate** (v1.4 / ruleset `8887576e`; candidate `model_hash=a9983a67c6954813`): weekly non-overlapping 5-day excess vs XBI as the primary gate, 20-window minimum, adversarial controls (bootstrap percentile + bottom-30), confirmation eligibility ≈ 2026-10-31. The protocol's §2 test is locked and must not be re-specified after forward data is seen.
+>
+> **NOW WIRED (commit `a90297f8`, 2026-06-28):** the tooling exists and runs in the daily pipeline — `tools/run_forward_validation.py` (immutable daily truth-card capture + 8-point DQ gate), `tools/fill_forward_returns.py` (1d/5d/20d return fill on observability), `tools/weekly_validation_summary.py` (non-overlapping window stats + gate progress), wired via `tools/cron_daily_production.sh`. Initial ledger: 10 captures (2026-06-12 → 2026-06-26); 1 completed 5d window (2026-W25 / Jun 15: basket +9.76%, XBI +8.31%, excess +1.45%, boot-pct 98%). This is distinct from coinvest\_shadow\_tracker v2 (which remains the live signal-level shadow). NO_MODEL_CHANGE — the candidate is observed, not promoted; clearing the gate only makes it *eligible* for an operator promotion decision.
+
 ### Arms
 
 7 shadow arms tracking different signal combinations and construction variants.
@@ -211,6 +215,7 @@ The ONLY true out-of-sample evidence. Accumulates daily from production.
 | Checklist v2 Rerun | `scripts/research/checklist_v2_rerun.py` |
 | Statistical QA Package | `common/stats/` (6 modules) |
 | Forward Shadow Tracker | Part of `run_daily.py` |
+| Forward Validation (DEM Top-30) | `tools/run_forward_validation.py`, `tools/fill_forward_returns.py`, `tools/weekly_validation_summary.py` (commit `a90297f8`) |
 | Signal Evidence Runner | `scripts/run_signal_evidence.py` |
 
 ---
@@ -288,6 +293,14 @@ Any IC research on expectation-gap features against historical snapshots must ve
 *Accumulating since: 2026-04-03. As of 2026-05-17, approximately 30+ trading days accumulated.*
 
 Should be at or past the 30-day evaluation threshold. Architecture freeze in effect until post-h20d checkpoint (2026-05-26). Evaluate per the rules in Section 1 once confirmed >= 30 trading days of true-PIT daily production data.
+
+## DEM Top-30 Forward Validation Status (2026-06-28)
+
+*Tooling wired via commit `a90297f8`; candidate `model_hash=a9983a67c6954813` / ruleset `8887576e`, registered 2026-06-26.*
+
+- Ledger: 10 daily captures (2026-06-12 → 2026-06-26); 1 completed non-overlapping 5d window (2026-W25 / Jun 15: basket +9.76%, XBI +8.31%, excess +1.45%, bootstrap-pct 98%).
+- Gate progress: 1/20 completed windows toward the minimum-sample gate. Confirmation eligibility ≈ 2026-10-31.
+- Status: OBSERVE — candidate is being measured, not promoted. Per `docs/FORWARD_VALIDATION_PROTOCOL.md`, clearing the gate only makes the candidate *eligible* for an operator promotion decision; promotion/unfreeze remain explicit operator actions.
 
 ---
 

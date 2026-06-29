@@ -899,3 +899,13 @@ Tier 0 observability/plumbing only. No ranker, selector, sizing, or `final_score
 - screener-ops: added "Size Confound In Raw Event Counts" under Signal Quality Pitfalls — LRN-20260329-001 (3× recurrence), residualize count features against n_total_trials before IC testing
 ### New skills created: none
 ### Pending drafts applied: 1 of 2 (skipped f_string_no_placeholder — trivial lint)
+
+## 2026-06-28
+### Git activity (past 1d)
+- biotech-screener: options IV snapshot pipeline (Steps 1.45/1.46/1.47), ctgov parallelization, delisted ticker filter, tastytrade batch_size 200, pipeline timing tests
+### Sessions reviewed: 1 (2026-06-28 pipeline performance + options IC session)
+### Skill patches
+- **biotech-run-pipeline**: Complete rewrite — replaced deprecated `scripts/run_batch.py` with `tools/run_daily_production.py`; documented Steps 1.45/1.46/1.47; updated timing (~6 min, was ~22 min); added `ALLOW_AGENT_PUSH=1` note; documented `--inputs-manifest` valid choices (`off`/`write`/`verify`, NOT `skip`); delisted-filter and ctgov parallel notes added
+### New skills created: none
+### LEARNINGS.md entries added: LRN-20260628-001 through LRN-20260628-004
+### Sync: 3 updated (biotech-run-pipeline → biotech-run-pipeline.md; side effect synced selector_ranker + ic_evaluation); 0 drift
