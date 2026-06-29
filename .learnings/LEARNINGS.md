@@ -669,3 +669,35 @@ When checking model health, read `ic_dashboard` first (`sort -r` for latest file
 - Recurrence-Count: 1
 - Promotion-lane: skill
 - Skill-Path: biotech-ic-check
+
+## [LRN-20260629-001] financial_data_json_vs_financial_records_json
+
+**Logged**: 2026-06-29T00:00:00Z
+**Priority**: high
+**Status**: logged
+**Area**: universe_maintenance
+
+### Summary
+`production_data/financial_data.json` and `production_data/financial_records.json` are two different files. `run_screen.py` reads `financial_records.json`. Stubs enriched by `fetch_pending_biotech_data.py` land in `financial_data.json` only and will show `financials_missing` ineligibility until manually merged.
+
+### Details
+`fetch_pending_biotech_data.py` writes enriched financial data into `universe.json[ticker].financial_data` (nested) and also to `production_data/financial_data.json` (flat list, 360 records as of 2026-06-29). `run_screen.py` (line 9824) reads `production_data/financial_records.json` (341 records pre-fix) for survivability scoring via `module_5_composite_v3.py → compute_survivability_score()`. The `financial_records.json` file is what `module_2_financial.py` also uses for runway/burn scoring.
+
+When 11 stubs were enriched on 2026-06-28, they appeared in `financial_data.json` but not `financial_records.json`. The decision engine saw no `Cash` or `CFO`, computed `missing_cash + missing_burn_data` coverage flags, and marked all 11 as `financials_missing` ineligible — despite them having valid Cash (ranging from $105M to $9.4B) and CFO data.
+
+Fix: merge missing ticker records from `financial_data.json` into `financial_records.json` using the canonical field set (`ticker, cik, Assets, Cash, CFO, ShortTermInvestments, R&D, NetIncome, OperatingExpenses, CashAndSecurities, collected_at` + date companions). The schemas are compatible; `financial_data.json` has extra fields (LongTermDebt, Revenue, InterestExpense) and `financial_records.json` has `R&D`/`R&D_date` not in the enrichment output.
+
+### Suggested Action
+After any run of `fetch_pending_biotech_data.py --apply`, check for newly promoted tickers absent from `financial_records.json` and merge them in. Integrate this into `cron_universe_weekly_refresh.sh` Step 2 or add a Step 2.5 merge. Command pattern:
+```python
+missing = set(fin_dat_map.keys()) - set(fin_rec_map.keys())
+# For each: copy record conforming to RECORD_KEYS, append to financial_records.json
+```
+Until this is automated, the gap will silently re-appear for every new stub batch.
+
+### Metadata
+- Source: ineligible_validation_2026-06-29
+- Pattern-Key: financial_data_json_vs_financial_records_json
+- Recurrence-Count: 1
+- Promotion-lane: skill
+- Skill-Path: biotech-snapshot-qa
