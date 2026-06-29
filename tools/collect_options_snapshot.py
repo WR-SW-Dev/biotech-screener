@@ -321,7 +321,7 @@ def run(as_of_date: str, batch_size: int, dry_run: bool, verbose: bool) -> dict:
 def main():
     parser = argparse.ArgumentParser(description="Daily options IV snapshot — tastytrade")
     parser.add_argument("--date", default=date.today().isoformat(), help="As-of date (YYYY-MM-DD)")
-    parser.add_argument("--batch-size", type=int, default=100)
+    parser.add_argument("--batch-size", type=int, default=200)
     parser.add_argument("--dry-run", action="store_true", help="Fetch but do not write files")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()

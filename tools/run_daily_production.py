@@ -4986,7 +4986,7 @@ def run_daily(
 
         _opt_result = _collect_options(
             as_of_date=as_of_date,
-            batch_size=100,
+            batch_size=200,
             dry_run=False,
             verbose=False,
         )
