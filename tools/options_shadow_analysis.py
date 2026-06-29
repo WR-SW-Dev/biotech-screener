@@ -361,7 +361,12 @@ def build_report(rv_ic: dict, xs: dict, autopsy: list[dict], snap_date: str) -> 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 
-def run(snap_date: str, output_dir: Path, verbose: bool) -> dict:
+def run(snap_date: str, output_dir: Path, verbose: bool, fast_mode: bool = False) -> dict:
+    """Run the options shadow analysis.
+
+    fast_mode=True skips the expensive RV IC computation (static between daily runs).
+    Use fast_mode for the production pipeline step; run full mode weekly or on-demand.
+    """
     if verbose:
         print("Loading price history...", flush=True)
     price_df = pd.read_csv(PRICE_CSV)
@@ -383,34 +388,35 @@ def run(snap_date: str, output_dir: Path, verbose: bool) -> dict:
     if verbose:
         print(f"Enrichment: {len(enrich_df)} tickers from {enrich_path.parent.name}", flush=True)
 
-    # 1. RV IC from price history (subsampled for speed — every 5 trading days)
-    if verbose:
-        print("Computing RV IC from price history (this takes ~30s)...", flush=True)
-    wide = price_df.pivot(index="date", columns="ticker", values="close").sort_index()
-    log_ret = np.log(wide / wide.shift(1))
+    # 1. RV IC from price history — skipped in fast_mode (static, run weekly/on-demand)
     rv_ic: dict = {}
-    for fwd in [5, 20]:
-        fwd_ret = wide.shift(-fwd) / wide - 1
-        ic_rv20, ic_rv60 = [], []
-        dates = wide.index[120:-fwd]
-        step = 5  # sample every 5 days to keep it fast
-        for dt in dates[::step]:
-            rv20 = log_ret.loc[:dt].tail(20).std() * np.sqrt(252)
-            rv60 = log_ret.loc[:dt].tail(60).std() * np.sqrt(252)
-            fwd_x = fwd_ret.loc[dt]
-            ic20 = _ic(rv20, fwd_x)
-            ic60 = _ic(rv60, fwd_x)
-            if ic20 is not None:
-                ic_rv20.append(ic20)
-            if ic60 is not None:
-                ic_rv60.append(ic60)
-        rv_ic[f"rv20d_fwd{fwd}d"] = _ic_series_summary(ic_rv20) if ic_rv20 else None
-        rv_ic[f"rv60d_fwd{fwd}d"] = _ic_series_summary(ic_rv60) if ic_rv60 else None
+    if not fast_mode:
         if verbose:
-            for k in [f"rv20d_fwd{fwd}d", f"rv60d_fwd{fwd}d"]:
-                v = rv_ic[k]
-                if v:
-                    print(f"  {k}: mean_ic={v['mean_ic']:+.4f} t={v['t_stat']:+.3f} n={v['n_obs']}", flush=True)
+            print("Computing RV IC from price history (this takes ~30s)...", flush=True)
+        wide = price_df.pivot(index="date", columns="ticker", values="close").sort_index()
+        log_ret = np.log(wide / wide.shift(1))
+        for fwd in [5, 20]:
+            fwd_ret = wide.shift(-fwd) / wide - 1
+            ic_rv20, ic_rv60 = [], []
+            dates = wide.index[120:-fwd]
+            step = 5  # sample every 5 days to keep it fast
+            for dt in dates[::step]:
+                rv20 = log_ret.loc[:dt].tail(20).std() * np.sqrt(252)
+                rv60 = log_ret.loc[:dt].tail(60).std() * np.sqrt(252)
+                fwd_x = fwd_ret.loc[dt]
+                ic20 = _ic(rv20, fwd_x)
+                ic60 = _ic(rv60, fwd_x)
+                if ic20 is not None:
+                    ic_rv20.append(ic20)
+                if ic60 is not None:
+                    ic_rv60.append(ic60)
+            rv_ic[f"rv20d_fwd{fwd}d"] = _ic_series_summary(ic_rv20) if ic_rv20 else None
+            rv_ic[f"rv60d_fwd{fwd}d"] = _ic_series_summary(ic_rv60) if ic_rv60 else None
+            if verbose:
+                for k in [f"rv20d_fwd{fwd}d", f"rv60d_fwd{fwd}d"]:
+                    v = rv_ic[k]
+                    if v:
+                        print(f"  {k}: mean_ic={v['mean_ic']:+.4f} t={v['t_stat']:+.3f} n={v['n_obs']}", flush=True)
 
     # 2. Market-implied cross-section
     if verbose:
@@ -455,6 +461,7 @@ def main():
     parser = argparse.ArgumentParser(description="Options shadow layer analysis")
     parser.add_argument("--snap-date", default=date.today().isoformat())
     parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--fast", action="store_true", help="Skip RV IC (static); run market-implied XS + autopsy only")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
 
@@ -463,7 +470,7 @@ def main():
         if args.output_dir
         else (REPO / "artifacts" / "options_shadow_analysis" / args.snap_date.replace("-", "_"))
     )
-    run(args.snap_date, out, verbose=not args.quiet)
+    run(args.snap_date, out, verbose=not args.quiet, fast_mode=args.fast)
 
 
 if __name__ == "__main__":

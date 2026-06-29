@@ -5025,6 +5025,40 @@ def run_daily(
     except Exception as _enrich_err:
         _logger.warning(f"Options enrichment failed (non-blocking): {_enrich_err}")
 
+    # --- Step 1.47: Options shadow IC update (non-blocking, fast mode — market-implied XS + autopsy) ---
+    # OPTIONS_IC_SHADOW / NO_MODEL_CHANGE / NO_RANKER_CHANGE
+    # Looks back 5 business days to find a snapshot with available forward price data.
+    # RV IC skipped (static; run options_shadow_analysis.py --full weekly or on-demand).
+    try:
+        import pandas as _pd_bday
+
+        from tools.options_shadow_analysis import run as _shadow_ic
+
+        _bday5 = (_pd_bday.Timestamp(as_of_date) - 5 * _pd_bday.offsets.BDay()).strftime("%Y-%m-%d")
+        _shadow_out = REPO_ROOT / "artifacts" / "options_shadow_analysis" / _bday5.replace("-", "_")
+        _shadow_result = _shadow_ic(
+            snap_date=_bday5,
+            output_dir=_shadow_out,
+            verbose=False,
+            fast_mode=True,
+        )
+        _xs = _shadow_result.get("market_implied_xs", {})
+        _xs_ready = {h: v for h, v in _xs.items() if "status" not in v}
+        if _xs_ready:
+            _fwd5 = _xs_ready.get("fwd5d", {})
+            _corrs = _fwd5.get("correlations", {})
+            _logger.info(
+                f"Options IC (snap {_bday5}) → "
+                f"iv_rank_ρ={_corrs.get('observed_iv_rank_tw', 'N/A')} "
+                f"vrp_ρ={_corrs.get('variance_risk_premium_20d', 'N/A')} "
+                f"rv20_ρ={_corrs.get('rv_20d', 'N/A')} "
+                f"n={_fwd5.get('n_pairs', 0)}"
+            )
+        else:
+            _logger.info(f"Options IC (snap {_bday5}) → insufficient forward data (accumulating)")
+    except Exception as _ic_err:
+        _logger.warning(f"Options IC update failed (non-blocking): {_ic_err}")
+
     # --- Step 1.5: Pre-warm caches (sec_8k, ctgov, sec_13f) ---
     # Must run BEFORE the ctgov gate so the gate sees the freshly-warmed cache.
     # All three sources are idempotent (short-circuit if cache already exists).
