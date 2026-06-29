@@ -145,6 +145,40 @@ When relevant, explicitly check these domains:
 
 ## Review workflow
 
+### 0. Triage gate (run first — determines full council vs fast exit)
+
+Classify the proposal in ≤5 lines before any deliberation. Answer each signal in order and stop at the first YES.
+
+| Signal | Question | If YES |
+|--------|----------|--------|
+| **alpha/model** | Does it change `final_score`, ranker, selector, event EV math, or gate thresholds? | → Full council |
+| **PIT/provenance** | Does it touch source dates, effective dates, snapshot promotion, or input hashes? | → Full council |
+| **clinical/catalyst** | Does it change CT.gov fetch logic, FDA event dating, or severity bands? | → Full council |
+| **production/cron** | Does it change cron, pipeline orchestration, schema, or snapshot output? | → Full council |
+| **portfolio/trading** | Does it affect sizing, drawdown policy, exits, or order routing? | → Full council |
+| **backtest claim** | Does it cite forward returns, IC, hit rate, or alpha as evidence? | → Full council |
+| **unknown blast radius** | Can you not confidently answer "no" to all of the above? | → Full council |
+| **none of the above** | Proposal is documentation, governance-text, plumbing with no-production-impact, or review-process only | → Fast exit |
+
+**Fast exit** — use when all seven signals above are NO:
+
+- Emit the **fast-exit output** (see Required output format) instead of Steps 1–8.
+- Fast exit still produces one LRN entry.
+- Fast exit is not available if the user explicitly requests a full council review.
+
+**Seat activation for full council** — skip seats whose domain is clearly not implicated:
+
+| Proposal class | Required seats |
+|----------------|----------------|
+| alpha/model only | 1 (alpha skeptic), 2 (PIT auditor), 5 (portfolio) |
+| PIT/provenance only | 2 (PIT auditor), 4 (production) |
+| clinical/catalyst only | 2 (PIT auditor), 3 (clinical), 4 (production) |
+| production/cron only | 4 (production), 5 (portfolio) |
+| portfolio/risk only | 1 (alpha skeptic), 5 (portfolio) |
+| multi-class or unknown | All 5 seats |
+
+When skipping a seat, note it explicitly: `[seat N not required — <reason>]`.
+
 ### 1. Restatement gate
 
 Begin by restating the proposed change in one paragraph and classify it as one or more of:
@@ -284,10 +318,36 @@ Include:
 
 ## Required output format
 
+### Fast-exit format (triage gate returned NO on all seven signals)
+
+```markdown
+## Biotech IC Council — Fast Exit
+
+**Triage:** [one sentence — why all seven signals are NO]
+**Blast radius:** no production impact
+**Required checks:** [≤3 bullets]
+**Recommendation:** [one of the six standard verdicts]
+
+### LRN entry
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: IC_PROCESS_<description>
+Area: hermes_ops
+Promotion-lane: skill | none
+Recurrence-Count: N
+Context: ...
+Rule: ...
+Suggested-Action: ...
+```
+
+### Full council format (any triage signal was YES)
+
 Use this structure:
 
 ```markdown
 ## Biotech IC Council Review
+
+### 0. Triage Gate
+[Signal table with YES/NO for each signal; which seats are active]
 
 ### 1. Restatement Gate
 ...
@@ -328,17 +388,7 @@ Use this structure:
 **Decision-owner note:** ...
 
 ### LRN entries (post-review, 1-3)
-```
-[LRN-YYYYMMDD-NNN]
-Pattern-Key: IC_<DOMAIN>_<description>
-Area: hermes_ops | data_pipeline | research | portfolio
-Promotion-lane: skill | spec | none
-Recurrence-Count: N
-Skill-Path: skills/biotech-ic-council/SKILL.md   (if lane=skill)
-Context: ...
-Rule: ...
-Suggested-Action: ...
-```
+[follow LRN entry format in Post-review LRN protocol section]
 ```
 
 ## Supporting references
