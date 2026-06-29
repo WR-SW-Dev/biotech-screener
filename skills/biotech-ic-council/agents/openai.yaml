@@ -1,0 +1,5 @@
+interface:
+  display_name: "Biotech IC Council"
+  short_description: "Read-only biotech promotion gate with recursive improvement loops."
+  icon: "🧬"
+  brand_color: "#2563EB"
