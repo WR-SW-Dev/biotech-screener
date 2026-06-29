@@ -34,7 +34,9 @@ import argparse
 import json
 import logging
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
@@ -400,21 +402,41 @@ def poll_ctgov_daily(
 
     logger.info("Will poll %d tickers", len(poll_tickers))
 
-    # Fetch current state (dedup by NCT ID)
+    # Fetch current state (dedup by NCT ID) — parallel with 8 workers
     all_current: List[Dict] = []
     seen_ncts: Set[str] = set()
     if not cached_only:
         sponsor_map = load_sponsor_map()
-        for i, ticker in enumerate(poll_tickers):
+        _lock = threading.Lock()
+        _done_count = 0
+
+        def _fetch_one(ticker: str) -> int:
             trials = fetch_trials_for_ticker(ticker, sponsor_map)
-            for t in trials:
-                nct = t.get("nct_id", "")
-                if nct and nct not in seen_ncts:
-                    seen_ncts.add(nct)
-                    all_current.append(t)
-            if (i + 1) % 50 == 0:
-                logger.info("  Fetched %d/%d tickers (%d unique trials)", i + 1, len(poll_tickers), len(all_current))
-            time.sleep(0.2)  # Rate limit
+            time.sleep(0.2)  # per-thread rate limit — 8 workers ≈ 40 req/s max
+            added = 0
+            with _lock:
+                for t in trials:
+                    nct = t.get("nct_id", "")
+                    if nct and nct not in seen_ncts:
+                        seen_ncts.add(nct)
+                        all_current.append(t)
+                        added += 1
+            return added
+
+        with ThreadPoolExecutor(max_workers=8) as _pool:
+            futures = {_pool.submit(_fetch_one, t): t for t in poll_tickers}
+            for future in as_completed(futures):
+                future.result()  # re-raise any exceptions
+                with _lock:
+                    _done_count += 1
+                    if _done_count % 50 == 0:
+                        logger.info(
+                            "  Fetched %d/%d tickers (%d unique trials)",
+                            _done_count,
+                            len(poll_tickers),
+                            len(all_current),
+                        )
+
         logger.info("Fetched %d unique trials for %d tickers", len(all_current), len(poll_tickers))
     else:
         # In cached-only mode, just compare two cache files
