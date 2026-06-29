@@ -325,3 +325,20 @@ Should be at or past the 30-day evaluation threshold. Architecture freeze in eff
 - **Post-May 26**: Spec 100 corrected final_score IC evaluation + Checklist v2 battery
 
 **Interpretation**: All IC evaluation and ranker promotion decisions are deferred until post-freeze when full validation battery can be applied. Current Spec 100 baseline is ready but explicitly labeled for deferred interpretation.
+
+## Session-end learning
+
+After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:
+
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: SKILL_IC_EVALUATION_{description}
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | none
+Recurrence-Count: 1
+Context: <one line — what happened>
+Rule: <one line — what to do differently>
+Suggested-Action: <patch to this SKILL.md, or none>
+```
+
+Recurrence ≥ 3 in 7 days → propose a patch to this `SKILL.md` via `tools/pattern_to_skillpatch.py`. Full protocol: see `self-improving` skill.

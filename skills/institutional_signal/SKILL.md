@@ -272,3 +272,20 @@ Also monitor BioPharm IQ Twitter \([https://twitter.com/BioPharmIQ](https://twit
 **Logos**: TENX and AVLO confirmed. CNTA massive add (+963%) was NOT signaled pre-filing.
 
 **Lesson**: 13D/13G pre-signals capture ~60-70% of major moves but systematically miss sub-5% positions and non-reporting-threshold changes. The largest surprises (DAMORA for Fairmount, CNTA for Logos) were invisible until 13F-HR.
+
+## Session-end learning
+
+After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:
+
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: SKILL_INSTITUTIONAL_SIGNAL_{description}
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | none
+Recurrence-Count: 1
+Context: <one line — what happened>
+Rule: <one line — what to do differently>
+Suggested-Action: <patch to this SKILL.md, or none>
+```
+
+Recurrence ≥ 3 in 7 days → propose a patch to this `SKILL.md` via `tools/pattern_to_skillpatch.py`. Full protocol: see `self-improving` skill.

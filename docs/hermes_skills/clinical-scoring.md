@@ -479,3 +479,20 @@ Before scoring, verify:
 | Indication Mapper | `indication_mapper.py` (v2.0.0) |
 | PoS Benchmarks | `data/pos_benchmarks_bio_2011_2020_v1.json` |
 | Catalyst Scoring | `module_3_scoring_v2.py` (v2.0.0) |
+
+## Session-end learning
+
+After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:
+
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: SKILL_CLINICAL_SCORING_{description}
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | none
+Recurrence-Count: 1
+Context: <one line — what happened>
+Rule: <one line — what to do differently>
+Suggested-Action: <patch to this SKILL.md, or none>
+```
+
+Recurrence ≥ 3 in 7 days → propose a patch to this `SKILL.md` via `tools/pattern_to_skillpatch.py`. Full protocol: see `self-improving` skill.

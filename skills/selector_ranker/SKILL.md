@@ -284,3 +284,20 @@ size_multiplier = max(0.40, 1.0 - 0.60 * ev_severity_score)
 - **~May 23**: 13F refresh validation rerun — trigger MET
 - **~May 26**: Architecture freeze lift + cohort clearance decision; h20d Decision Memo Draft ready (2026-05-21)
 - **Post-May 26**: Spec 100 ranker IC evaluation + Checklist v2 battery (if cohort clears)
+
+## Session-end learning
+
+After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:
+
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: SKILL_SELECTOR_RANKER_{description}
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | none
+Recurrence-Count: 1
+Context: <one line — what happened>
+Rule: <one line — what to do differently>
+Suggested-Action: <patch to this SKILL.md, or none>
+```
+
+Recurrence ≥ 3 in 7 days → propose a patch to this `SKILL.md` via `tools/pattern_to_skillpatch.py`. Full protocol: see `self-improving` skill.

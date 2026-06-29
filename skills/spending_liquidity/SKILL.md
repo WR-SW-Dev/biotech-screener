@@ -159,3 +159,20 @@ Canonical position universe with per-position metadata:
 | Manager Terms | `src/aa_model/liquidity/manager_terms_diagnostics.py` |
 | Spending Config | `configs/spending.yaml` |
 | Base Config | `configs/base.yaml` |
+
+## Session-end learning
+
+After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:
+
+```
+[LRN-YYYYMMDD-NNN]
+Pattern-Key: SKILL_SPENDING_LIQUIDITY_{description}
+Area: hermes_ops | data_pipeline | research | portfolio
+Promotion-lane: skill | none
+Recurrence-Count: 1
+Context: <one line — what happened>
+Rule: <one line — what to do differently>
+Suggested-Action: <patch to this SKILL.md, or none>
+```
+
+Recurrence ≥ 3 in 7 days → propose a patch to this `SKILL.md` via `tools/pattern_to_skillpatch.py`. Full protocol: see `self-improving` skill.
