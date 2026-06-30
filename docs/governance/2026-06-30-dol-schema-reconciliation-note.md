@@ -1,4 +1,4 @@
-# DOL Schema Reconciliation Note — 2026-06-30
+# DOL Schema Reconciliation Note - 2026-06-30
 
 **Class:** governance documentation / no model change / no production wiring.
 
