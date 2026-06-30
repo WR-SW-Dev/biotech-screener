@@ -195,6 +195,17 @@ Classify the proposal in ≤5 lines before any deliberation. Answer each signal 
 - Fast exit still produces one LRN entry.
 - Fast exit is not available if the user explicitly requests a full council review.
 
+**Hard blocking gates (check before opening deliberation — these override any seat vote):**
+
+| Condition | Block | Required action |
+|-----------|-------|-----------------|
+| An open shadow mandate for this signal exists AND the gate is unmet (e.g., <20 windows completed) | APPROVE is **forbidden** | Return HOLD; note gate status and estimated clear date; do not proceed to full recommendation |
+| Cited IC or backtest evidence is LATE-period only and t_nw < 2.0 | APPROVE requires explicit justification from Seat 1 | Flag sub-threshold late-period decay in decision matrix; cannot silently pass alpha validity |
+| Cited evidence is in-sample only (no forward shadow, no OOS window) | APPROVE is **forbidden** | Return FORWARD_SHADOW_MANDATE or HOLD |
+| The proposal's blast radius cannot be determined from the provided information | Cannot fast-exit | Escalate to full council, Seat 4 must assess blast radius |
+
+If any hard blocking gate fires: state which gate fired, why, and what is required to clear it. Do not continue to Steps 3–8 with an APPROVE recommendation — return HOLD or FORWARD_SHADOW_MANDATE immediately.
+
 **Seat activation for full council** — skip seats whose domain is clearly not implicated:
 
 | Proposal class | Required seats |
@@ -348,9 +359,16 @@ Bias toward small, testable, reversible improvements. Do not create broad automa
 
 ### 8. Final IC recommendation
 
+**Before selecting APPROVE — verify all hard blocking gates are clear:**
+- No open shadow mandate with unmet gate for this signal (if unmet → HOLD, not APPROVE)
+- LATE-period IC is ≥ t_nw 2.0, or Seat 1 has explicitly justified the decay
+- OOS or forward evidence exists (not in-sample only)
+
+If any blocking gate is unmet, the recommendation must be HOLD or FORWARD_SHADOW_MANDATE regardless of seat votes.
+
 Choose exactly one final recommendation:
 
-- **APPROVE** — evidence is sufficient and blast radius is controlled.
+- **APPROVE** — evidence is sufficient, blast radius is controlled, and all hard blocking gates above are clear.
 - **RESEARCH_ONLY** — useful diagnostic, not production-approved.
 - **PLUMBING_ONLY** — improves coverage, export, observability, or expectation estimation; does not yet prove alpha.
 - **HOLD** — promising but missing required proof.
