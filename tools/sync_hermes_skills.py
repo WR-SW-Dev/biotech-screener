@@ -229,10 +229,11 @@ def register_meta(dry_run: bool) -> list[str]:
             merged = {**skills.get(key, {}), **entry}
             skills[key] = merged
 
-    for key, fname in {**SKILL_MAP, **REFERENCE_MAP}.items():
+    reference_targets = set(REFERENCE_MAP.values())
+    for key, fname in all_sync_pairs():
         meta_key = Path(fname).stem
         name = DISPLAY_NAMES.get(key, meta_key.replace("-", " ").title())
-        src = "cursor_reference" if key in REFERENCE_MAP else "cursor_skill"
+        src = "cursor_reference" if fname in reference_targets else "cursor_skill"
         if (HERMES / fname).exists():
             add(meta_key, fname, name, src)
 
@@ -268,9 +269,16 @@ def register_meta(dry_run: bool) -> list[str]:
     return lines
 
 
-def all_sync_keys() -> dict[str, str]:
-    merged = {**SKILL_MAP, **REFERENCE_MAP}
-    return merged
+def all_sync_pairs() -> list[tuple[str, str]]:
+    """All (skill_key, hermes_name) sync pairs.
+
+    A skill key may appear in both SKILL_MAP and REFERENCE_MAP (e.g.
+    ``self-improving`` has a SKILL.md mirror *and* a REFERENCE.md mirror). Those
+    are distinct pairs, so they must be listed separately — merging into a
+    single ``{**SKILL_MAP, **REFERENCE_MAP}`` dict silently drops the SKILL_MAP
+    entry whenever a key collides, leaving that mirror un-synced.
+    """
+    return list(SKILL_MAP.items()) + list(REFERENCE_MAP.items())
 
 
 def main() -> int:
@@ -285,11 +293,11 @@ def main() -> int:
             print(line)
         print()
 
-    mapping = all_sync_keys()
-    keys = list(mapping.keys())
+    pairs = all_sync_pairs()
     if args.only:
-        keys = [k.strip() for k in args.only.split(",") if k.strip()]
-    results = [sync_pair(k, mapping[k], args.dry_run) for k in keys if k in mapping]
+        only = {k.strip() for k in args.only.split(",") if k.strip()}
+        pairs = [(k, n) for (k, n) in pairs if k in only]
+    results = [sync_pair(k, n, args.dry_run) for (k, n) in pairs]
     if not args.register_meta:
         register_meta(args.dry_run)  # still bump last_updated
     elif not args.dry_run:
