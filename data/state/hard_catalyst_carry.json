@@ -356,13 +356,6 @@
     "first_seen_date": "2026-04-15",
     "estimated_event_date": "2026-12-01"
   },
-  "WVE": {
-    "catalyst_event_type": "DATA_READOUT",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 73,
-    "first_seen_date": "2026-04-15",
-    "estimated_event_date": "2026-06-27"
-  },
   "PEPG": {
     "catalyst_event_type": "DATA_READOUT",
     "catalyst_source": "SEC_8K_FILING",
@@ -734,13 +727,6 @@
     "first_seen_date": "2026-06-17",
     "estimated_event_date": "2026-07-01"
   },
-  "ARQT": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 12,
-    "first_seen_date": "2026-06-17",
-    "estimated_event_date": "2026-06-29"
-  },
   "VNDA": {
     "catalyst_event_type": "FDA_PDUFA_DATE",
     "catalyst_source": "SEC_8K_FILING",
@@ -789,5 +775,26 @@
     "catalyst_days_at_first_seen": 5,
     "first_seen_date": "2026-06-25",
     "estimated_event_date": "2026-06-30"
+  },
+  "VSTM": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 0,
+    "first_seen_date": "2026-06-30",
+    "estimated_event_date": "2026-06-30"
+  },
+  "ARQT": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 0,
+    "first_seen_date": "2026-06-30",
+    "estimated_event_date": "2026-06-30"
+  },
+  "AKBA": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 184,
+    "first_seen_date": "2026-06-30",
+    "estimated_event_date": "2026-12-31"
   }
 }
