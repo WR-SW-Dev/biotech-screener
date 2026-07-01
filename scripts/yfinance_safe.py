@@ -25,9 +25,31 @@ import logging
 import random
 import time
 
+import os
+
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
+
+# curl_cffi's Chrome impersonation uses BoringSSL which cannot trust a TLS-intercepting
+# proxy's CA bundle. When running behind HTTPS_PROXY (cloud/CI environments), patch
+# yfinance's TickerBase to use a plain curl_cffi session without impersonation so that
+# the proxy CA bundle (REQUESTS_CA_BUNDLE / SSL_CERT_FILE) is respected.
+if os.environ.get("HTTPS_PROXY"):
+    try:
+        import yfinance.base as _yfbase
+        from curl_cffi import requests as _cffi_requests
+
+        _orig_ticker_init = _yfbase.TickerBase.__init__
+
+        def _proxy_safe_ticker_init(self, ticker, session=None, proxy=None):
+            if session is None:
+                session = _cffi_requests.Session()
+            _orig_ticker_init(self, ticker, session=session, proxy=proxy)
+
+        _yfbase.TickerBase.__init__ = _proxy_safe_ticker_init
+    except Exception:
+        pass  # non-fatal — fall back to default behaviour
 
 
 def safe_download(
