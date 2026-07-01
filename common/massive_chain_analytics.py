@@ -16,6 +16,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from common.options_quality import MAX_SPREAD_PCT, MIN_OI_THRESHOLD
+
 logger = logging.getLogger(__name__)
 
 
@@ -180,9 +182,16 @@ def compute_oi_concentration(
 ) -> Dict[str, Any]:
     """Compute open interest concentration metrics.
 
+    Distinguishes contracts with missing (None) open_interest from
+    contracts with confirmed-zero open_interest: a missing OI means the
+    vendor did not report a value (unknown), while a confirmed 0 means the
+    contract genuinely has no open positions. Missing-OI contracts are
+    excluded from all OI sums/ratios below (not coerced to 0), and their
+    count is reported separately so callers can gate on data completeness.
+
     Returns:
         total_oi, max_oi_strike, oi_concentration (max/total),
-        put_oi, call_oi, put_call_oi_ratio.
+        put_oi, call_oi, put_call_oi_ratio, n_contracts, n_oi_missing.
     """
     filtered = contracts
     if expiry:
@@ -193,9 +202,14 @@ def compute_oi_concentration(
     max_oi_strike = None
     put_oi = 0
     call_oi = 0
+    n_oi_missing = 0
 
     for c in filtered:
-        oi = c.get("open_interest") or 0
+        oi_raw = c.get("open_interest")
+        if oi_raw is None:
+            n_oi_missing += 1
+            continue
+        oi = oi_raw
         total_oi += oi
         if oi > max_oi:
             max_oi = oi
@@ -213,6 +227,8 @@ def compute_oi_concentration(
         "put_oi": put_oi,
         "call_oi": call_oi,
         "put_call_oi_ratio": round(put_oi / call_oi, 4) if call_oi > 0 else None,
+        "n_contracts": len(filtered),
+        "n_oi_missing": n_oi_missing,
     }
 
 
@@ -222,7 +238,14 @@ def compute_volume_by_expiry_bucket(
 ) -> Dict[str, int]:
     """Aggregate volume by expiry time bucket.
 
-    Returns: {near_0_30d: vol, mid_31_90d: vol, far_91_180d: vol, core_180d_plus: vol}
+    Contracts with a missing (None) day_volume are excluded from the bucket
+    sums (same numeric contribution as confirmed-zero-volume contracts,
+    since both add 0 to the sum), but are counted separately in
+    "n_volume_missing" so callers can distinguish "no reported volume" from
+    "reported volume of exactly zero" when assessing data completeness.
+
+    Returns: {near_0_30d: vol, mid_31_90d: vol, far_91_180d: vol,
+    core_180d_plus: vol, n_volume_missing: int}
     """
     from datetime import date
 
@@ -237,9 +260,14 @@ def compute_volume_by_expiry_bucket(
         "far_91_180d": 0,
         "core_180d_plus": 0,
     }
+    n_volume_missing = 0
 
     for c in contracts:
-        vol = c.get("day_volume") or 0
+        vol_raw = c.get("day_volume")
+        if vol_raw is None:
+            n_volume_missing += 1
+            continue
+        vol = vol_raw
         if vol <= 0:
             continue
         exp_str = c.get("expiration_date", "")
@@ -257,6 +285,7 @@ def compute_volume_by_expiry_bucket(
         else:
             buckets["core_180d_plus"] += vol
 
+    buckets["n_volume_missing"] = n_volume_missing
     return buckets
 
 
@@ -360,12 +389,66 @@ def compute_chain_analytics(
             }
 
     # OI
-    oi = compute_oi_concentration(chain_snapshot, expiry)
+    # compute_oi_concentration() also returns "n_contracts" (OI-scope contract
+    # count) and "n_oi_missing" (contracts with no reported open_interest).
+    # "n_contracts" would collide with this function's own "n_contracts" key
+    # (per-expiry contract count, set below) if unpacked directly, so rename
+    # it distinctly before merging into `result`.
+    oi_raw = compute_oi_concentration(chain_snapshot, expiry)
+    oi = {k: v for k, v in oi_raw.items() if k != "n_contracts"}
+    oi["n_oi_contracts"] = oi_raw["n_contracts"]
 
     # Volume by bucket
-    vol_buckets = compute_volume_by_expiry_bucket(chain_snapshot, as_of_date) if as_of_date else {}
+    # compute_volume_by_expiry_bucket() includes "n_volume_missing" alongside
+    # the bucket sums; split it out so total_chain_volume (a sum of actual
+    # volume) and volume_by_bucket (pure bucket data) aren't polluted by it.
+    vol_buckets_raw = compute_volume_by_expiry_bucket(chain_snapshot, as_of_date) if as_of_date else {}
+    n_volume_missing = vol_buckets_raw.pop("n_volume_missing", 0)
+    vol_buckets = vol_buckets_raw
     total_vol = sum(vol_buckets.values())
     near_share = round(vol_buckets.get("near_0_30d", 0) / total_vol, 4) if total_vol > 0 else None
+
+    # Spread quality (Stage 2, Spec 045 repair): assess bid/ask spread on the
+    # ATM contracts used for the straddle, since that's the pair whose
+    # tradability actually matters for the diagnostics this module feeds.
+    # MAX_SPREAD_PCT gates "is this chain liquid enough to trust", separate
+    # from the OI-based liquidity signal above -- a chain can have healthy OI
+    # but a blown-out spread (stale market, no active MM), or vice versa.
+    atm_call, atm_put = find_atm_contracts(chain_snapshot, underlying_price, expiry)
+    spread_pcts = []
+    n_quote_missing = 0
+    for _c in (atm_call, atm_put):
+        if _c is None:
+            continue
+        _sp = _c.get("bid_ask_spread_pct")
+        if _sp is None:
+            # No spread could be computed for this contract: either bid/ask
+            # was never populated by the vendor, or was populated in a way
+            # that failed compute_bid_ask_spread_pct's sanity checks. Either
+            # way this is a MISSING quote, not a confirmed-tight (0%) spread.
+            n_quote_missing += 1
+        else:
+            spread_pcts.append(_sp)
+    max_atm_spread_pct = max(spread_pcts) if spread_pcts else None
+    spread_gate_pass = (max_atm_spread_pct is not None) and (max_atm_spread_pct <= MAX_SPREAD_PCT)
+
+    # OI floor on the specific ATM contracts used for the straddle (Stage 2,
+    # Spec 045 repair): a chain's total_oi can be healthy while the specific
+    # ATM call/put pair we quote here is itself thin (OI concentrated in
+    # far-OTM/ITM strikes). Missing OI on either ATM leg fails the gate
+    # (never treated as OI=0 passing or failing by coincidence).
+    atm_ois = []
+    n_atm_oi_missing = 0
+    for _c in (atm_call, atm_put):
+        if _c is None:
+            continue
+        _oi = _c.get("open_interest")
+        if _oi is None:
+            n_atm_oi_missing += 1
+        else:
+            atm_ois.append(_oi)
+    min_atm_oi = min(atm_ois) if len(atm_ois) == 2 else None
+    oi_gate_pass = (min_atm_oi is not None) and (min_atm_oi >= MIN_OI_THRESHOLD)
 
     # IV crush stress test
     crush: Dict[str, Any] = {}
@@ -410,6 +493,16 @@ def compute_chain_analytics(
         "volume_by_bucket": vol_buckets,
         "near_term_volume_share": near_share,
         "total_chain_volume": total_vol,
+        "n_volume_missing": n_volume_missing,
+        # Spread quality (ATM call/put; None = spread unknown, never fabricated)
+        "max_atm_spread_pct": max_atm_spread_pct,
+        "spread_gate_pass": spread_gate_pass,
+        "n_atm_quote_missing": n_quote_missing,
+        # OI floor on ATM call/put (Stage 2, Spec 045 repair; tightens, does
+        # not replace, the total-OI-based liquidity signal in `oi` above)
+        "min_atm_oi": min_atm_oi,
+        "oi_gate_pass": oi_gate_pass,
+        "n_atm_oi_missing": n_atm_oi_missing,
     }
     # Add crush metrics (prefixed to avoid key collision)
     if crush.get("confidence") == "ok":

@@ -184,6 +184,29 @@ def list_contracts(
 # ---------------------------------------------------------------------------
 
 
+def compute_bid_ask_spread_pct(bid: Optional[float], ask: Optional[float]) -> Optional[float]:
+    """Compute bid-ask spread as a fraction of the midpoint: (ask - bid) / mid.
+
+    Returns None if bid or ask is missing/non-positive, or if the midpoint
+    is non-positive (would produce a nonsensical or division-by-zero result).
+    Never fabricates a spread when the underlying quote data is absent --
+    callers must treat None as "spread unknown", not "spread is zero/tight".
+    """
+    if bid is None or ask is None:
+        return None
+    try:
+        bid_f = float(bid)
+        ask_f = float(ask)
+    except (ValueError, TypeError):
+        return None
+    if bid_f < 0 or ask_f < 0:
+        return None
+    mid = (bid_f + ask_f) / 2.0
+    if mid <= 0:
+        return None
+    return round((ask_f - bid_f) / mid, 4)
+
+
 def fetch_chain_snapshot(
     underlying_ticker: str,
     expiration_date: Optional[str] = None,
@@ -193,6 +216,18 @@ def fetch_chain_snapshot(
     """Fetch current option chain snapshot for an underlying.
 
     Returns list of dicts with greeks, IV, open interest, day OHLCV, quotes.
+
+    Quote fields (bid/ask/midpoint/spread_pct): the underlying massive/Polygon
+    ``OptionContractSnapshot.last_quote`` object DOES expose ``bid``, ``ask``,
+    and ``midpoint`` (confirmed against the installed ``massive`` package's
+    ``LastQuoteOptionContractSnapshot`` model: fields are
+    bid/bid_size/ask/ask_size/midpoint/last_updated/timeframe). Prior to this
+    change, ``last_quote`` was fetched from the snapshot object but never
+    read into the returned record -- bid/ask/spread were silently dropped.
+    This function now extracts them and computes ``bid_ask_spread_pct`` via
+    compute_bid_ask_spread_pct(). If the vendor did not populate last_quote
+    for a given contract (e.g. no NBBO available), these fields are None --
+    they are never fabricated or defaulted to a "tight" value.
     """
     client = _get_rest_client()
     query: Dict[str, Any] = {"limit": limit}
@@ -234,6 +269,14 @@ def fetch_chain_snapshot(
             rec["day_low"] = getattr(day, "low", None)
             rec["day_close"] = getattr(day, "close", None)
             rec["day_volume"] = getattr(day, "volume", None)
+
+        last_quote = getattr(snap, "last_quote", None)
+        bid = getattr(last_quote, "bid", None) if last_quote else None
+        ask = getattr(last_quote, "ask", None) if last_quote else None
+        rec["bid"] = bid
+        rec["ask"] = ask
+        rec["quote_midpoint"] = getattr(last_quote, "midpoint", None) if last_quote else None
+        rec["bid_ask_spread_pct"] = compute_bid_ask_spread_pct(bid, ask)
 
         results.append(rec)
     return results
