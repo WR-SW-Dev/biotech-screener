@@ -1564,7 +1564,9 @@ def extend_price_csv_safe(
             new_rows.append(
                 {
                     "date": dt,
-                    "ticker": str(row.get("ticker", idx.name if hasattr(idx, "name") else "")).strip().upper(),
+                    "ticker": str(_scalar_value(row.get("ticker")) or (idx.name if hasattr(idx, "name") else ""))
+                    .strip()
+                    .upper(),
                     "close": str(close),
                     "open": str(open_val) if open_val is not None and open_val == open_val else "",
                     "high": str(high_val) if high_val is not None and high_val == high_val else "",
