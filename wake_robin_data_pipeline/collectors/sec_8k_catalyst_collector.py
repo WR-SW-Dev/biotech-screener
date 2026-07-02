@@ -181,15 +181,26 @@ TIMING_PATTERNS = [
         None,
     ),
     # "expects to report topline results ... second half of 2026"
+    # Gaps are bounded to [^.]{0,60} so the anchor and the year stay within the
+    # same sentence — an unbounded .*? bridged across sentences and captured a
+    # far-away/dateline year (e.g. KYMR "late 2027" text grabbing "…2026").
     (
-        r"(?:expects?|anticipates?)\s+.*?(?:results?|data)\s+.*?(?:first|second)\s+half\s+(?:of\s+)?(\d{4})",
+        r"(?:expects?|anticipates?)\s+[^.]{0,60}?(?:results?|data)\s+[^.]{0,60}?(?:first|second)\s+half\s+(?:of\s+)?(\d{4})",
         "DATA_READOUT",
         "HALF_YEAR",
         None,
     ),
     # "data expected in mid-2026" / "results expected by year-end 2026"
     (
-        r"(?:data|results?)\s+expected\s+.*?(?:mid|year[- ]?end)[- ]?(\d{4})",
+        r"(?:data|results?)\s+expected\s+[^.]{0,60}?(?:mid|year[- ]?end)[- ]?(\d{4})",
+        "DATA_READOUT",
+        "HALF_YEAR",
+        None,
+    ),
+    # "data expected (to be reported) in late/early 2027" / "results ... end of 2027"
+    # HALF_YEAR: "late"/"end of" → second half, "early" → first half (see below).
+    (
+        r"(?:data|results?)\s+(?:are\s+|is\s+)?(?:expected|anticipated)\s+[^.]{0,60}?\b(?:late|early|end[- ]of)\s+(\d{4})",
         "DATA_READOUT",
         "HALF_YEAR",
         None,
@@ -714,7 +725,8 @@ def _extract_timing_events(
                 # Determine which half from surrounding context
                 context_start = max(0, match.start() - 100)
                 context = text[context_start : match.end()].lower()
-                half = "second" if "second" in context or "mid" in context or "year-end" in context else "first"
+                _second_markers = ("second", "mid", "year-end", "year end", "late", "end of", "end-of")
+                half = "second" if any(m in context for m in _second_markers) else "first"
                 try:
                     event_date, event_date_end = _half_year_to_date_range(captured, half)
                 except (ValueError, TypeError):
