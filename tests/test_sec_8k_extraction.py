@@ -190,3 +190,42 @@ class TestDiagnosticCounters:
         diag = get_extraction_diagnostics()
         assert all(v == 0 for v in diag["counters"].values())
         assert len(diag["dropped_examples"]) == 0
+
+
+class TestReadoutYearParsing:
+    """Regression: 'late/early <year>' readouts and no cross-sentence year bridge.
+
+    Reproduces the KYMR 2026-07-02 mis-parse: an 8-K said data was expected in
+    'late 2027' but an unbounded .*? bridged the 'data expected' anchor across
+    sentences to a distant year, producing spurious HALF_YEAR events dated 2026.
+    """
+
+    def setup_method(self):
+        reset_extraction_diagnostics()
+
+    def test_late_year_maps_to_second_half(self):
+        text = "Topline data expected to be reported in late 2027 for the pivotal study."
+        events = _extract_timing_events(text, "KYMR", FILING, AS_OF)
+        ro = [e for e in events if e["event_type"] == "DATA_READOUT"]
+        assert ro, "expected a DATA_READOUT for 'late 2027'"
+        assert ro[0]["event_date"] == "2027-07-01"
+        assert ro[0]["event_date_end"] == "2027-12-31"
+        assert ro[0]["date_precision"] == "HALF_YEAR"
+
+    def test_early_year_maps_to_first_half(self):
+        text = "Pivotal data are expected in early 2028 from the registrational trial."
+        events = _extract_timing_events(text, "ACME", FILING, AS_OF)
+        ro = [e for e in events if e["event_type"] == "DATA_READOUT"]
+        assert ro and ro[0]["event_date"] == "2028-01-01" and ro[0]["event_date_end"] == "2028-06-30"
+
+    def test_no_cross_sentence_year_bridge(self):
+        # Readout year lives in its own sentence (late 2027); an unrelated later
+        # sentence mentions "second half of 2026" (not a readout). The old
+        # unbounded pattern bridged across and captured 2026 — must not recur.
+        text = (
+            "The Company announced topline data expected to be reported in late 2027. "
+            "Separately, it expects to expand manufacturing capacity in the second half of 2026."
+        )
+        events = _extract_timing_events(text, "KYMR", FILING, AS_OF)
+        readout_years = {e["event_date"][:4] for e in events if e["event_type"] == "DATA_READOUT"}
+        assert readout_years == {"2027"}, f"unexpected readout years: {readout_years}"
