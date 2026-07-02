@@ -5427,6 +5427,7 @@ def save_validation_snapshot(
                 _x_mean = sum(_x_vals) / _n
                 _cov_xy = sum((_y_vals[i] - _y_mean) * (_x_vals[i] - _x_mean) for i in range(_n)) / _n
                 _var_x = sum((_x_vals[i] - _x_mean) ** 2 for i in range(_n)) / _n
+                _var_y = sum((_y_vals[i] - _y_mean) ** 2 for i in range(_n)) / _n
                 if _var_x > 1e-12:
                     _beta = _cov_xy / _var_x
                     _alpha = _y_mean - _beta * _x_mean
@@ -5444,11 +5445,7 @@ def save_validation_snapshot(
                     "  Coinvest size residualization: beta=%.3f (log_mcap), n=%d, " "R²=%.3f",
                     _beta,
                     _n,
-                    (
-                        (_cov_xy**2 / (_var_x * (sum((_y_vals[i] - _y_mean) ** 2 for i in range(_n)) / _n)))
-                        if _var_x > 1e-12
-                        else 0.0
-                    ),
+                    ((_cov_xy**2 / (_var_x * _var_y)) if (_var_x > 1e-12 and _var_y > 1e-12) else 0.0),
                 )
             else:
                 # Too few observations for OLS — fall back to raw demeaning
