@@ -20,9 +20,9 @@ from tools.sync_hermes_skills import (  # noqa: E402
     SKILL_MAP,
     SOURCE_AUTHORITY_HERMES_AUTHORITATIVE,
     SOURCE_AUTHORITY_HERMES_NATIVE,
-    all_sync_keys,
-    sync_pair,
+    all_sync_pairs,
     source_authority_for,
+    sync_pair,
 )
 
 SKIP_FILES = {"harvest_log.md", "SKILLS_REGISTRY.md"}
@@ -31,9 +31,7 @@ SKIP_PREFIXES = ("SKILLS_AUDIT_",)
 
 def should_skip_hermes_doc(path: Path) -> bool:
     """Exclude operational reports that live beside Hermes skill docs."""
-    return path.name in SKIP_FILES or (
-        path.suffix == ".md" and path.name.startswith(SKIP_PREFIXES)
-    )
+    return path.name in SKIP_FILES or (path.suffix == ".md" and path.name.startswith(SKIP_PREFIXES))
 
 
 def main() -> int:
@@ -79,9 +77,7 @@ def main() -> int:
         print(f"  {k}")
 
     print("\n## source_authority (_meta.json)")
-    missing_auth = [
-        key for key, entry in meta.get("skills", {}).items() if not entry.get("source_authority")
-    ]
+    missing_auth = [key for key, entry in meta.get("skills", {}).items() if not entry.get("source_authority")]
     if missing_auth:
         print("  MISSING source_authority:")
         for key in sorted(missing_auth):
@@ -91,7 +87,7 @@ def main() -> int:
 
     print("\n## Mirror drift (cursor-synced skills only)")
     drift: list[str] = []
-    reverse = {v: k for k, v in all_sync_keys().items()}
+    reverse = {n: k for k, n in all_sync_pairs()}
     for fname in sorted(synced_targets):
         skill_key = reverse.get(fname)
         if not skill_key or skill_key in HERMES_AUTHORITATIVE:
