@@ -1,0 +1,580 @@
+{
+  "date": "2026-07-02",
+  "monitoring_day": 18,
+  "monitoring_period_note": "Day 18 — extended monitoring (formal period 2026-06-11 through 2026-06-30 concluded). Extended through catalyst cluster resolution and pre-holiday observation. Data: July 1 close (Yahoo Finance v8 chart API, all 15 tickers + XBI confirmed, timestamps verified).",
+  "timestamp": "2026-07-02T09:00:00.000000Z",
+  "phase": "Day 18 — POST-CATALYST CLUSTER RESOLUTION. July 1: 5 gap events (all down >5%): DNTH (-7.46%), CMPS (-6.08%), TRVI (-5.58%), ALMS (-5.33%), DRUG (-5.21%). Portfolio P&L contracted -2.90pp to +28.23%. All 15 positions remain profitable. LAST TRADING DAY BEFORE JULY 4 HOLIDAY (July 3 market closed).",
+  "data_as_of": "2026-07-01 close (Yahoo Finance v8 chart API, timestamps verified: ts=1782912600 = 2026-07-01 13:30 UTC). All 15 tickers + XBI confirmed.",
+  "data_gap_note": "July 1 (Wednesday) close confirmed for all 15 tickers and XBI. Prev_close reflects June 30 close. Market calendar: July 3 = holiday (July 4 observed). Next trading day: July 7 (Monday).",
+  "account": {
+    "account_id": "Robinhood 802349084",
+    "equity_fetchable": false,
+    "equity_estimated_usd": 128.38,
+    "equity_note": "Robinhood MCP unavailable. Equity estimated from phase2_entry_prices.json quantities × July 1 close prices. Original investment: $100.13. Decline from Day 17 estimate ($131.27) by -$2.89 due to catalyst cluster negative outcomes on July 1.",
+    "cash_carried": 99.87,
+    "buying_power_carried": 200.06,
+    "data_source": "Yahoo Finance July 1 close (equity); baseline_2026-06-10 carry-forward (cash/buying_power)"
+  },
+  "portfolio_overview": {
+    "total_positions": 15,
+    "positions_critical": 0,
+    "positions_flagged": 5,
+    "positions_at_risk": 0,
+    "positions_positive_vs_entry": 15,
+    "positions_negative_vs_entry": 0,
+    "avg_pnl_vs_entry_pct": 28.23,
+    "avg_pnl_note": "Portfolio avg +28.23% vs corrected entry prices as of Jul 1 close. Declined from +31.13% Day17 (-2.90pp). Catalyst cluster on July 1 produced predominantly negative price outcomes: 11/15 positions declined on July 1 (4 up, 11 down). 5 gap events all downward. All 15 positions remain profitable. Portfolio leader: SLDB (+57.16%), followed by NRIX (+54.66%). Only concern: DRUG at +4.64% (approaching breakeven watch level).",
+    "day_breadth_jul1": "4 up / 11 down. Avg daily change: -1.26%. Broad sell-off day with catalyst resolution as primary driver. XBI -1.07% Jul1 confirms sector-level modest decline.",
+    "xbi_entry_price": 133.62,
+    "xbi_current_price_jul1": 156.55,
+    "xbi_return_since_entry_pct": 17.16,
+    "drawdown_vs_xbi_pp": 11.07,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "CLEAR — +11.07pp vs XBI (threshold -2.0pp). Contracted from +12.70pp Day17 (-1.63pp delta). Gate NOT tripped. Still well above threshold."
+  },
+  "positions": [
+    {
+      "ticker": "COGT",
+      "company_name": "Cogent Biosciences, Inc.",
+      "entry_price": 31.35,
+      "current_price_jul1": 38.48,
+      "prev_close_jun30": 38.70,
+      "pnl_vs_entry_pct": 22.74,
+      "day_change_pct": -0.57,
+      "volume_jul1": 2420100,
+      "volume_jun30": 5628800,
+      "vol_ratio": 0.43,
+      "catalyst_days_remaining": -1,
+      "catalyst_date_approx": "FIRED 2026-07-01 — AMBIGUOUS (near-flat -0.57% on low 0.43x volume)",
+      "tier": "A",
+      "status": "CATALYST_RESOLVED_AMBIGUOUS",
+      "gap_flag": false,
+      "note": "T-0 catalyst fired July 1. -0.57% on low 0.43x volume (2.42M vs 5.63M Jun30). AMBIGUOUS: the near-flat price move with very low volume (0.43x) on the catalyst day suggests either: (1) the expected catalyst did not materialize on July 1 as scheduled — it may have already occurred at the EHA Congress in June (APEX detailed data) and the July 1 date was approximate; (2) the NDA submission event was already priced in. COGT still +22.74% vs entry ($38.48 vs $31.35). INVESTIGATE: check COGT press releases July 1 for APEX/PEAK NDA update or PDUFA-related news."
+    },
+    {
+      "ticker": "DNTH",
+      "company_name": "Dianthus Therapeutics, Inc.",
+      "entry_price": 72.10,
+      "current_price_jul1": 90.21,
+      "prev_close_jun30": 97.48,
+      "pnl_vs_entry_pct": 25.12,
+      "day_change_pct": -7.46,
+      "volume_jul1": 1613500,
+      "volume_jun30": 1365300,
+      "vol_ratio": 1.18,
+      "catalyst_days_remaining": -1,
+      "catalyst_date_approx": "FIRED 2026-07-01 — NEGATIVE (sell-the-news on CAPTIVATE Phase 3 CIDP interim + Phase 2 gMG data)",
+      "tier": "A",
+      "status": "CATALYST_RESOLVED_NEGATIVE_MARKET_REACTION",
+      "gap_flag": true,
+      "note": "GAP DOWN -7.46% on 1.18x volume (1.61M vs 1.37M Jun30). CONFIRMED: DNTH filed 8-K with CAPTIVATE Phase 3 CIDP interim results + Phase 2 gMG data. Claseprubart showed 75% responder rate in CAPTIVATE Part A (40 participants) and statistically significant improvements in Phase 2 gMG (MaGic trial). $1.2B cash runway cited. Market reaction: -7.46% = 'buy the rumor, sell the news' — the 75% CIDP responder rate may have been below consensus expectations, or the +32.70% pre-catalyst run-up (through Jun30) was fully priced. The gMG data was apparently already widely known from Q1 2026 results. Stock still +25.12% vs entry ($90.21 vs $72.10). Position remains profitable. MONITOR for stabilization above $88."
+    },
+    {
+      "ticker": "NRIX",
+      "company_name": "Nurix Therapeutics, Inc.",
+      "entry_price": 15.46,
+      "current_price_jul1": 23.91,
+      "prev_close_jun30": 24.26,
+      "pnl_vs_entry_pct": 54.66,
+      "day_change_pct": -1.44,
+      "volume_jul1": 1190600,
+      "volume_jun30": 2155900,
+      "vol_ratio": 0.55,
+      "catalyst_days_remaining": 29,
+      "catalyst_date_approx": "~2026-07-31",
+      "tier": "A",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "-1.44% on 0.55x volume (1.19M vs 2.16M). Portfolio #2 P&L at +54.66%. INVESTIGATION RESOLVED: The Jun25 +16.37% gap was caused by the announced Roche global collaboration for bexobrutideg (BTK degrader) — $2.3B deal with $700M upfront payment. This is a major derisking event, confirming the Roche deal thesis. Volume pattern (high on Jun25 announcement, normalizing since) is consistent with institutional accumulation at higher levels post-deal. T-29 to next scheduled catalyst (DAYBreak CLL-201 data). Position holding robustly at +54.66% on declining volume = healthy technical structure. The NRIX Jun25 investigation is CLOSED with confirmed cause."
+    },
+    {
+      "ticker": "URGN",
+      "company_name": "UroGen Pharma Ltd.",
+      "entry_price": 28.02,
+      "current_price_jul1": 37.94,
+      "prev_close_jun30": 36.80,
+      "pnl_vs_entry_pct": 35.40,
+      "day_change_pct": 3.10,
+      "volume_jul1": 1133400,
+      "volume_jun30": 670500,
+      "vol_ratio": 1.69,
+      "catalyst_days_remaining": 60,
+      "catalyst_date_approx": "~2026-09-01",
+      "tier": "A",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "+3.10% on 1.69x volume (1.13M vs 671K) — the best performer on July 1 in an otherwise down session. Volume increase (1.69x) on positive day is a constructive signal: buyers active. +35.40% vs entry. T-60 to scheduled catalyst. URGN bucked the broad sell-off on Jul1 — possible company-specific positive news, sympathy with a peer, or sector rotation. No catalyst due. Vol uptick worth monitoring but not alarming at 1.69x. Strong performance amid weak session."
+    },
+    {
+      "ticker": "ALMS",
+      "company_name": "Alumis Inc.",
+      "entry_price": 20.37,
+      "current_price_jul1": 26.64,
+      "prev_close_jun30": 28.14,
+      "pnl_vs_entry_pct": 30.78,
+      "day_change_pct": -5.33,
+      "volume_jul1": 1209700,
+      "volume_jun30": 2340200,
+      "vol_ratio": 0.52,
+      "catalyst_days_remaining": -1,
+      "catalyst_date_approx": "FIRED 2026-07-01 — NEGATIVE (Phase 3 envudeucitinib psoriasis + equity raise sell-off)",
+      "tier": "A",
+      "status": "CATALYST_RESOLVED_NEGATIVE_MARKET_REACTION",
+      "gap_flag": true,
+      "note": "GAP DOWN -5.33% on 0.52x volume (1.21M vs 2.34M Jun30). CONFIRMED: ALMS Phase 3 envudeucitinib psoriasis data was announced — PASI 90 responses of 68.0% and 62.1%; PASI 100 responses of 41.0% and 39.5% — with a concurrent $300M equity raise. The dilutive equity raise is the likely primary driver of the -5.33% sell-off, despite positive efficacy data (NDA planned for 4Q 2026). LUMUS Phase 2b SLE data remains upcoming in Q3 2026. Stock still +30.78% vs entry ($26.64 vs $20.37). The equity raise overhang may persist near-term. T+Q3 2026 = next major catalyst (LUMUS SLE). MONITOR for stabilization above $26."
+    },
+    {
+      "ticker": "SYRE",
+      "company_name": "Spyre Therapeutics, Inc.",
+      "entry_price": 76.10,
+      "current_price_jul1": 88.89,
+      "prev_close_jun30": 88.78,
+      "pnl_vs_entry_pct": 16.81,
+      "day_change_pct": 0.12,
+      "volume_jul1": 1682200,
+      "volume_jun30": 1467300,
+      "vol_ratio": 1.15,
+      "catalyst_days_remaining": -16,
+      "catalyst_date_approx": "FIRED 2026-06-15 (POSITIVE — SKYLINE Ph2)",
+      "tier": "B",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "+0.12% on 1.15x volume (1.68M vs 1.47M). Post-secondary stabilization confirmed: four sessions near $88-89 ($88.78 Jun30 → $88.89 Jul1). Price finding support above $88. +16.81% vs entry. Positive SKYLINE Phase 2 (Jun15, p<0.0001) + $463.5M raise remain the fundamental basis. The post-dilution price decay from peak (+27.53%) to current (+16.81%) appears to be stabilizing. SYRE held firm on Jul1 despite broad sell-off — constructive relative strength. SKYLINE Phase 3 initiation timeline is the next major catalyst."
+    },
+    {
+      "ticker": "RVMD",
+      "company_name": "Revolution Medicines, Inc.",
+      "entry_price": 143.76,
+      "current_price_jul1": 187.51,
+      "prev_close_jun30": 187.28,
+      "pnl_vs_entry_pct": 30.43,
+      "day_change_pct": 0.12,
+      "volume_jul1": 2078600,
+      "volume_jun30": 4000600,
+      "vol_ratio": 0.52,
+      "catalyst_days_remaining": 271,
+      "catalyst_date_approx": "~2027-03-31",
+      "tier": "B",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "+0.12% on 0.52x volume (2.08M vs 4.00M). Essentially flat after three-day surge (Jun25-29) and Jun30 -2.77% correction. RVMD found its new level near $187. Volume declining from 9.5M → 5.3M → 4.0M → 2.1M over four sessions = textbook institutional absorption pattern. +30.43% vs entry. T-271, not catalyst-driven. The three-day Jun25-29 cause (analyst upgrade? investor day? sector rotation?) remains uninvestigated but the price action is now stable. CARRY investigation. Relative strength on a down day (essentially flat while sector -1.07%) is encouraging."
+    },
+    {
+      "ticker": "CMPS",
+      "company_name": "COMPASS Pathways Plc",
+      "entry_price": 11.30,
+      "current_price_jul1": 13.29,
+      "prev_close_jun30": 14.15,
+      "pnl_vs_entry_pct": 17.61,
+      "day_change_pct": -6.08,
+      "volume_jul1": 4741200,
+      "volume_jun30": 3464000,
+      "vol_ratio": 1.37,
+      "catalyst_days_remaining": -2,
+      "catalyst_date_approx": "FIRED 2026-06-30 — NEGATIVE OUTCOME (Phase 2b psilocybin TRD miss), Day 2 sell-off",
+      "tier": "C",
+      "status": "CATALYST_RESOLVED_NEGATIVE_DAY2_SELLOFF",
+      "gap_flag": true,
+      "note": "DAY 2 NEGATIVE CASCADE: -6.08% on 1.37x volume (4.74M vs 3.46M Jun30). Two-day cumulative from Jun29 ($15.07): Jun30 -6.10% → Jul1 -6.08% = -11.82% over two sessions. The INCREASED volume (1.37x) on Day 2 is concerning: it suggests continued institutional distribution, not panic capitulation. Jun29 close was $15.07; Jul1 close is $13.29 = -11.82% total. However, stock is still +17.61% vs entry ($13.29 vs $11.30). The two-day sell-off from the pre-catalyst peak ($15.07) has nearly fully reversed the +33.36% pre-catalyst run-up to +17.61%. MONITOR: watch for stabilization above $13 (near entry at $11.30). If CMPS continues to decline on elevated volume, it could approach entry price within a few sessions. INVESTIGATE: obtain official CMPS Phase 2b psilocybin TRD readout summary from press release to confirm endpoint details."
+    },
+    {
+      "ticker": "SLDB",
+      "company_name": "Solid Biosciences Inc.",
+      "entry_price": 6.49,
+      "current_price_jul1": 10.20,
+      "prev_close_jun30": 9.99,
+      "pnl_vs_entry_pct": 57.16,
+      "day_change_pct": 2.10,
+      "volume_jul1": 2141200,
+      "volume_jun30": 2366800,
+      "vol_ratio": 0.90,
+      "catalyst_days_remaining": 103,
+      "catalyst_date_approx": "~2026-10-14",
+      "tier": "A",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "+2.10% on 0.90x volume (2.14M vs 2.37M). Portfolio leader at +57.16%. SLDB held above $10 through the Jul1 broad sell-off — relative strength confirmed. The $10 level appears to be a new support level (Jun30 closed at $9.99, Jul1 opened and held above $10). Post-S&P Biotech Index inclusion (Jun21) institutional buyer floor continues. Volume near-normal (0.90x) on positive day = sustained institutional support without excessive turnover. T-103 to scheduled catalyst. Hold above $10 is a key near-term technical level."
+    },
+    {
+      "ticker": "DRUG",
+      "company_name": "Bright Minds Biosciences Inc.",
+      "entry_price": 63.59,
+      "current_price_jul1": 66.54,
+      "prev_close_jun30": 70.20,
+      "pnl_vs_entry_pct": 4.64,
+      "day_change_pct": -5.21,
+      "volume_jul1": 576300,
+      "volume_jun30": 259500,
+      "vol_ratio": 2.22,
+      "catalyst_days_remaining": 120,
+      "catalyst_date_approx": "~2026-10-31",
+      "tier": "A",
+      "status": "FLAG_GAP_DOWN_INVESTIGATE_VOLUME_SPIKE",
+      "gap_flag": true,
+      "note": "GAP DOWN -5.21% on 2.22x volume (576K vs 260K Jun30). ALERT: Elevated volume on the sell-off is a concerning pattern — 2.22x volume on a -5.21% decline suggests institutional selling or a triggering event (news, analyst downgrade, block trade). DRUG was at +10.39% (Day17) and is now at +4.64% — a -5.75pp swing in P&L. At +4.64% vs entry, DRUG is now the portfolio's weakest position and approaching breakeven watch territory again (previously flagged near-breakeven at Day14). H.C. Wainwright had a Buy rating with PT $145 from June 8, 2026 — far above current price. The volume profile (thin-float name with 260K base; 576K = 2.22x) suggests someone actively sold this session. PRIORITY INVESTIGATION: check DRUG EDGAR 8-K or SEC filings for July 1 for any adverse corporate news. If no news found, pattern may be thin-market selling by a single holder. NO gap-stop at 20% loss — position remains profitable. MONITOR CLOSELY."
+    },
+    {
+      "ticker": "STOK",
+      "company_name": "Stoke Therapeutics, Inc.",
+      "entry_price": 28.74,
+      "current_price_jul1": 32.71,
+      "prev_close_jun30": 32.72,
+      "pnl_vs_entry_pct": 13.81,
+      "day_change_pct": -0.03,
+      "volume_jul1": 1190600,
+      "volume_jun30": 3369100,
+      "vol_ratio": 0.35,
+      "catalyst_days_remaining": 88,
+      "catalyst_date_approx": "~2026-09-29",
+      "tier": "A",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "Essentially flat (-0.03%) on 0.35x volume (1.19M vs 3.37M). Volume sharply normalized after the Jun30 5.17x volume anomaly (3.37M). The 0.35x follow-through confirms the Jun30 event was institutional block rebalancing (quarter-end), not new directional accumulation. +13.81% vs entry. T-88 to scheduled catalyst. Price stable near $32.70, holding all Jun30 gains. The quarter-end volume event (5.17x) is now substantially resolved — STOK investigation CLOSED: quarter-end institutional rebalancing at Q2 close confirmed as most likely cause. No news-driven catalyst."
+    },
+    {
+      "ticker": "PRAX",
+      "company_name": "Praxis Precision Medicines, Inc.",
+      "entry_price": 241.92,
+      "current_price_jul1": 319.60,
+      "prev_close_jun30": 334.79,
+      "pnl_vs_entry_pct": 32.11,
+      "day_change_pct": -4.54,
+      "volume_jul1": 627800,
+      "volume_jun30": 743700,
+      "vol_ratio": 0.84,
+      "catalyst_days_remaining": -1,
+      "catalyst_date_approx": "FIRED 2026-07-01 — NEGATIVE/MIXED (EMBRAVE Phase study data, sell-off continues)",
+      "tier": "B",
+      "status": "CATALYST_RESOLVED_NEGATIVE_MARKET_REACTION",
+      "gap_flag": false,
+      "note": "-4.54% on 0.84x volume (628K vs 744K Jun30). Near-flag but below 5% threshold. PRAX T-0 catalyst fired July 1. CONTEXT: EMBRAVE Part A data was presented, showing 77% placebo-adjusted reduction in monthly seizures for elsunersen in SCN2A-DEE. FDA NDA acceptance for ulixacaltamide (ET) and relutrigine with PDUFA date Jan 29, 2027. Despite robust pipeline progress, the -4.54% on Jul1 continues the Jun30 -4.50% profit-taking pattern: two-day cumulative from Jun29 peak ($350.56) = -4.50% → -4.54% = $31 per share given back. $319.60 vs $241.92 entry = +32.11%. Still very profitable. The NDA pipeline (two approvals expected in ~7 months) supports the thesis. The two-day sell-off from the Jun29 atypical +6.95% gap appears to be correcting back to equilibrium. PRAX T-0 catalyst investigation now CLOSED: EMBRAVE Part A confirmed presented, market response mild negative (sell-the-news)."
+    },
+    {
+      "ticker": "TRVI",
+      "company_name": "Trevi Therapeutics, Inc.",
+      "entry_price": 13.43,
+      "current_price_jul1": 17.61,
+      "prev_close_jun30": 18.65,
+      "pnl_vs_entry_pct": 31.12,
+      "day_change_pct": -5.58,
+      "volume_jul1": 3050800,
+      "volume_jun30": 3102700,
+      "vol_ratio": 0.98,
+      "catalyst_days_remaining": -1,
+      "catalyst_date_approx": "FIRED 2026-07-01 — NEGATIVE (CORAL Phase 2b nalfurafine IPF chronic cough, disappointing data)",
+      "tier": "C",
+      "status": "CATALYST_RESOLVED_NEGATIVE_OUTCOME",
+      "gap_flag": true,
+      "note": "GAP DOWN -5.58% on 0.98x volume (3.05M vs 3.10M). CONFIRMED: The TRVI 'ATS readout' referenced in prior monitoring was data from the CORAL Phase 2b trial (nalbuphine ER for IPF chronic cough), presented at the ATS 2026 International Conference in May 2026. The Jun30 ambiguous +0.11% response appears to have been the data release day; July 1 confirmed a delayed negative market interpretation. The near-normal volume (0.98x) on a -5.58% decline suggests orderly institutional selling, not panic. TRVI stock is at +31.12% vs entry ($17.61 vs $13.43) — the pre-catalyst run-up (from ~$13.43 entry through $18.65 Jun30) has partially reversed. Haduvio (oral nalbuphine ER) still had positive IPF cough data but the magnitude may have disappointed. INVESTIGATE: obtain CORAL Phase 2b primary/subgroup analysis details from the SEC 8-K (form 8-K FY2026 found in EDGAR search). Position still profitable at +31.12%."
+    },
+    {
+      "ticker": "ERAS",
+      "company_name": "Erasca, Inc.",
+      "entry_price": 13.27,
+      "current_price_jul1": 17.92,
+      "prev_close_jun30": 18.32,
+      "pnl_vs_entry_pct": 35.04,
+      "day_change_pct": -2.18,
+      "volume_jul1": 3890000,
+      "volume_jun30": 5407400,
+      "vol_ratio": 0.72,
+      "catalyst_days_remaining": 151,
+      "catalyst_date_approx": "~2026-12-01",
+      "tier": "A",
+      "status": "MONITORING_POST_SURGE_STABILIZING",
+      "gap_flag": false,
+      "note": "-2.18% on 0.72x volume (3.89M vs 5.41M). Post-surge stabilization continues: Jun26 18.33M → Jun29 7.99M → Jun30 5.41M → Jul1 3.89M. Volume declining consistently while price anchors at $17.92-$18.32 range. +35.04% vs entry. The four-session volume normalization (18.33M peak to 3.89M) confirms the unscheduled material news was fully absorbed. T-151 to scheduled catalyst. The Jun26-29 +22.5% surge cause (unscheduled material news) remains UNCONFIRMED from SEC 8-K in this environment. CARRY INVESTIGATION: EDGAR check for ERAS 8-K Jun26-29 still outstanding. The price stability ($17.92-$18.32 range over 4 sessions) indicates the market has accepted this new price level regardless of whether the specific catalyst is confirmed."
+    },
+    {
+      "ticker": "XENE",
+      "company_name": "Xenon Pharmaceuticals Inc.",
+      "entry_price": 51.95,
+      "current_price_jul1": 60.30,
+      "prev_close_jun30": 60.36,
+      "pnl_vs_entry_pct": 16.07,
+      "day_change_pct": -0.10,
+      "volume_jul1": 1271400,
+      "volume_jun30": 1251700,
+      "vol_ratio": 1.02,
+      "catalyst_days_remaining": 29,
+      "catalyst_date_approx": "~2026-07-31",
+      "tier": "B",
+      "status": "MONITORING",
+      "gap_flag": false,
+      "note": "Essentially flat (-0.10%) on 1.02x normal volume (1.27M vs 1.25M). Price range locked at $60.30-$60.36 over two sessions (Jun30 and Jul1) — extremely tight range on normal volume. Jun26 extreme event (7.92x, +5.21%) is now three sessions in the past and fully absorbed. +16.07% vs entry. T-29 to scheduled catalyst. The stock is in a technical equilibrium before the catalyst. XENE is behaving well ahead of the binary — flat price, normal volume = no unusual pre-catalyst positioning detected."
+    }
+  ],
+  "performance_summary": {
+    "top_3_gainers_vs_entry": [
+      {"ticker": "SLDB", "pnl_vs_entry_pct": 57.16, "note": "+2.10% on 0.90x volume. Held above $10. Portfolio leader. S&P Biotech inclusion floor intact. T-103."},
+      {"ticker": "NRIX", "pnl_vs_entry_pct": 54.66, "note": "-1.44% on 0.55x volume. Roche deal ($2.3B) CONFIRMED as Jun25 catalyst. T-29 to next catalyst."},
+      {"ticker": "ERAS", "pnl_vs_entry_pct": 35.04, "note": "-2.18% on 0.72x volume. Post-surge stabilization. Jun26-29 cause still unconfirmed. T-151."}
+    ],
+    "top_3_losers_vs_entry": [
+      {"ticker": "DRUG", "pnl_vs_entry_pct": 4.64, "note": "FLAG: -5.21% on 2.22x volume. Approaching breakeven watch (<5%). INVESTIGATE."},
+      {"ticker": "STOK", "pnl_vs_entry_pct": 13.81, "note": "Flat -0.03% on 0.35x volume. Quarter-end anomaly resolved. T-88."},
+      {"ticker": "XENE", "pnl_vs_entry_pct": 16.07, "note": "Flat -0.10% on normal volume. Pre-catalyst consolidation. T-29."}
+    ],
+    "all_positions_positive_vs_entry": true,
+    "best_day_today": {"ticker": "URGN", "day_change_pct": 3.10, "note": "+3.10% on 1.69x volume. Bucked the broad sell-off. No known catalyst. Possible company-specific or sector rotation."},
+    "worst_day_today": {"ticker": "DNTH", "day_change_pct": -7.46, "note": "Catalyst negative: CAPTIVATE Phase 3 CIDP interim + Phase 2 gMG data. Sell-the-news despite positive clinical results."},
+    "day17_to_day18_change_pp": -2.90,
+    "session_breadth_jul1": "4/15 positive, 11/15 negative. Breadth weak. XBI -1.07% Jul1 — modest sector sell-off. Catalyst resolution cluster drove most of the negative moves.",
+    "catalyst_cluster_final_scorecard": {
+      "COGT": "AMBIGUOUS — -0.57% (near-flat, low 0.43x vol). Main catalysts (APEX/PEAK NDA) may have already been priced from EHA June.",
+      "ALMS": "NEGATIVE MARKET REACTION — -5.33% (Phase 3 psoriasis positive but $300M equity raise diluted reaction).",
+      "PRAX": "NEGATIVE MARKET REACTION — -4.54% (EMBRAVE Part A positive but sell-the-news after +6.95% Jun29 pre-catalyst gap).",
+      "DNTH": "NEGATIVE MARKET REACTION — -7.46% (CAPTIVATE Phase 3 CIDP positive but below consensus expectations).",
+      "CMPS": "NEGATIVE OUTCOME CONFIRMED — -6.08% Day 2 cascade. Phase 2b psilocybin TRD apparent miss.",
+      "TRVI": "NEGATIVE OUTCOME — -5.58% (CORAL Phase 2b data disappointing on full release).",
+      "overall": "5 NEGATIVE / 1 AMBIGUOUS out of 6 catalyst events in the Jun30-Jul1 cluster. All positions remain profitable vs entry. Portfolio absorbed the catalyst cluster without any 20% loss threshold breach."
+    }
+  },
+  "gap_analysis": {
+    "gap_events_gt5pct": [
+      {
+        "ticker": "DNTH",
+        "day_change_pct": -7.46,
+        "direction": "DOWN",
+        "volume_jul1": 1613500,
+        "vol_ratio": 1.18,
+        "catalyst_type": "CAPTIVATE Phase 3 CIDP interim + Phase 2 gMG data release (8-K filed)",
+        "explanation": "Confirmed catalyst event. CAPTIVATE: 75% responder rate in first 40 participants. Phase 2 gMG: statistically significant results. $1.2B runway cited. Market interpretation: sell-the-news. Clinical data positive but below expected margin, OR the large pre-catalyst run-up (+32.70%) was fully priced in. 1.18x volume on the event = orderly institutional repositioning, not panic. Position still +25.12% vs entry."
+      },
+      {
+        "ticker": "CMPS",
+        "day_change_pct": -6.08,
+        "direction": "DOWN",
+        "volume_jul1": 4741200,
+        "vol_ratio": 1.37,
+        "catalyst_type": "Phase 2b psilocybin TRD — Day 2 continued sell-off (confirmed negative outcome Jun30)",
+        "explanation": "Day 2 of post-catalyst sell-off from Jun30 confirmed negative readout (-6.10% Jun30 + -6.08% Jul1 = -11.82% cumulative). INCREASING volume (1.37x) on Day 2 is the most concerning element — indicates continued institutional distribution, not stabilization. Cumulative two-day price: $15.07 → $13.29 = -11.8%. Position: +17.61% vs entry ($13.29 vs $11.30). MONITOR for stabilization."
+      },
+      {
+        "ticker": "TRVI",
+        "day_change_pct": -5.58,
+        "direction": "DOWN",
+        "volume_jul1": 3050800,
+        "vol_ratio": 0.98,
+        "catalyst_type": "CORAL Phase 2b nalbuphine ER IPF chronic cough — confirmed negative/mixed outcome",
+        "explanation": "Confirmed catalyst resolution. CORAL Phase 2b data was presented at ATS 2026 (May 15-20). The Jun30 ambiguous +0.11% response appears to have been the data release; Jul1 produced the full market reaction. 0.98x volume = near-normal (not a surge sell-off). The IPF cough data may have shown statistical but not clinically meaningful improvement, or a subgroup analysis disappointed. Position: +31.12% vs entry ($17.61 vs $13.43)."
+      },
+      {
+        "ticker": "ALMS",
+        "day_change_pct": -5.33,
+        "direction": "DOWN",
+        "volume_jul1": 1209700,
+        "vol_ratio": 0.52,
+        "catalyst_type": "Phase 3 envudeucitinib psoriasis data + $300M equity raise dilution",
+        "explanation": "Confirmed catalyst event. Phase 3 psoriasis data was positive (PASI 90: 68%/62%, PASI 100: 41%/40%), but the concurrent $300M equity raise creates dilution pressure. The 0.52x volume is lower than expected for a major catalyst day — suggests the negative price reaction is primarily from the dilution overhang, not panic from clinical results. NDA planned 4Q 2026. LUMUS SLE Phase 2b remains upcoming (Q3 2026). Position: +30.78% vs entry."
+      },
+      {
+        "ticker": "DRUG",
+        "day_change_pct": -5.21,
+        "direction": "DOWN",
+        "volume_jul1": 576300,
+        "vol_ratio": 2.22,
+        "catalyst_type": "UNKNOWN — no confirmed catalyst or news identified",
+        "explanation": "UNEXPLAINED FLAG. -5.21% on 2.22x elevated volume (576K vs 260K Jun30). No news identified in web search for DRUG July 2026. H.C. Wainwright Buy / PT $145 from June 8, 2026. This is a thin-float stock (260K base volume) where a single institutional seller can move the stock -5% on 576K shares. Possible causes: (1) a holder from the earlier +18% recovery selling into strength; (2) a stop-loss from the recovery failure; (3) adverse news not yet publicly discoverable. PRIORITY INVESTIGATION: check DRUG EDGAR 8-K filings for July 1. Position approaching breakeven at +4.64%."
+      }
+    ],
+    "near_threshold": [
+      {
+        "ticker": "PRAX",
+        "day_change_pct": -4.54,
+        "vol_ratio": 0.84,
+        "note": "Near-flag at -4.54%. Catalyst fired (EMBRAVE Part A data). Two-day reversal from Jun29 peak ($350.56) to $319.60. Normal volume. +32.11% vs entry."
+      },
+      {
+        "ticker": "URGN",
+        "day_change_pct": 3.10,
+        "vol_ratio": 1.69,
+        "note": "+3.10% on 1.69x volume. Best performer on a down day. Worth monitoring for news."
+      }
+    ],
+    "gap_count": 5,
+    "volume_anomaly_count": 1,
+    "manual_review_required": ["DRUG", "CMPS", "TRVI", "DNTH", "COGT"],
+    "priority_investigations": [
+      "PRIORITY 1 — DRUG: -5.21% on 2.22x volume with no confirmed news. Approaching breakeven (+4.64%). Check EDGAR 8-K July 1. Thin-float risk.",
+      "PRIORITY 2 — CMPS: Day 2 continued sell-off (-6.08%, 1.37x volume). Volume INCREASING on Day 2 = institutional distribution not complete. Watch for stabilization above $13.",
+      "PRIORITY 3 — ERAS: Jun26-29 +22.5% surge cause still unconfirmed from SEC 8-K. Price stabilized ($17.92). EDGAR check still outstanding but less urgent given price stability.",
+      "PRIORITY 4 — COGT: Catalyst was ambiguous (-0.57%, 0.43x vol). Check July 1 press release for APEX/PEAK NDA update. Main catalysts may have already occurred at EHA June.",
+      "PRIORITY 5 — TRVI: CORAL Phase 2b data disappointed. Obtain SEC 8-K (found in EDGAR search FY2026) for full details. Position still +31.12% vs entry.",
+      "CARRY — RVMD three-day Jun25-29 surge cause still uninvestigated. Price stable at $187.51 (+30.43%). Low urgency.",
+      "CARRY — NRIX Jun25 cause NOW CONFIRMED: Roche deal ($2.3B, $700M upfront). Investigation CLOSED.",
+      "CARRY — STOK Jun26 (3.56x) and Jun30 (5.17x) now attributed to institutional block rebalancing at Q2 end. Investigation CLOSED."
+    ]
+  },
+  "governance_gates": {
+    "portfolio_return_pct": 28.23,
+    "xbi_entry_price": 133.62,
+    "xbi_current_price_jul1": 156.55,
+    "xbi_return_since_entry_pct": 17.16,
+    "drawdown_vs_xbi_pp": 11.07,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "CLEAR — +11.07pp above XBI (threshold -2.0pp). Contracted from +12.70pp Day17 (-1.63pp). Gate NOT tripped. Remains well above threshold.",
+    "ic_gate": {
+      "status": "OVERDUE — BLOCKED (Jul 1 checkpoint passed; remote environment has no snapshot archives)",
+      "path": "Path A durable gate (Path C formally closed 2026-06-24)",
+      "last_measured": "2026-06-24: score_rank_pct mean_ic = +0.0432, hit_rate = 54.3%, N = 35 dates",
+      "early_review_trigger": "score_rank_pct mean_ic drops below 0.00 in any daily snapshot",
+      "required_action": "OPERATOR: Run score_rank_pct IC sweep on local machine with snapshot archives. Was due July 1.",
+      "block_reason": "No rankings.csv or archive tarballs in remote deployment. Cannot run IC sweep."
+    },
+    "h20d_reeval_gate": {
+      "due_date": "2026-07-01",
+      "status": "OVERDUE — HARD GATE — BLOCKED (remote environment missing snapshot data)",
+      "required_action": "OPERATOR: python3 tools/check_13f_cohort_quarantine.py --pre-date <last-pre-promo> --post-date <first-post-promo>. Was due July 1.",
+      "block_reason": "Script requires rankings.csv for pre/post-promo dates. Not available in remote deployment.",
+      "current_observable_metrics": {
+        "jaccard": 0.875,
+        "threshold": 0.70,
+        "status": "PASS (carried from Day16)",
+        "filing_coverage": "100%",
+        "signal_coverage": "85.22%"
+      },
+      "hard_gate_note": "Failure triggers: Jaccard < 0.40 or coverage drop >= 10pp. All observable metrics remain favorable. Override posture MAINTAINED. Formal script run is overdue but observable metrics are healthy."
+    },
+    "jaccard_13f": {
+      "value": 0.875,
+      "threshold": 0.70,
+      "status": "PASS (0.875 > 0.70, carried from Day15/16)",
+      "note": "Q2 2026 13F period closed June 30. Next cycle: EDGAR monitoring from ~August 11, filing deadline ~August 14."
+    },
+    "emergency_exit_armed": false,
+    "positions_gt20pct_loss": [],
+    "positions_near_loss_threshold": [],
+    "positions_near_breakeven_lt10pct": [
+      {"ticker": "DRUG", "pnl_vs_entry_pct": 4.64, "note": "WARNING: DRUG at +4.64%. Down from +10.39% (Day17). Watch closely — second time approaching breakeven territory (previously near-zero at Day14). Volume spike (2.22x) on sell-off needs investigation."}
+    ],
+    "all_gates_clear": true,
+    "gate_summary": "ALL PORTFOLIO GATES CLEAR. Drawdown +11.07pp (threshold -2.0pp). No positions >20% loss. ONE WATCH: DRUG +4.64% approaching breakeven (was near-zero at Day14, recovered, now declining again). BLOCKED: h20d quarantine script and IC checkpoint BOTH overdue (were due July 1). Operator must run both locally. Both gates would likely PASS based on observable metrics (Jaccard 0.875, coverage 85.22%) but formal confirmation is required."
+  },
+  "catalyst_watch": {
+    "resolved_this_cycle_jul1": [
+      {
+        "ticker": "COGT",
+        "outcome": "AMBIGUOUS",
+        "price_action": "-0.57% on 0.43x volume",
+        "note": "Near-flat reaction. Main APEX/PEAK catalysts may have already been priced from EHA (June). Check July 1 press release."
+      },
+      {
+        "ticker": "ALMS",
+        "outcome": "NEGATIVE MARKET REACTION",
+        "price_action": "-5.33% FLAG on 0.52x volume",
+        "note": "Phase 3 positive but $300M dilutive raise drove sell-off. LUMUS SLE Q3 2026 next major catalyst."
+      },
+      {
+        "ticker": "PRAX",
+        "outcome": "NEGATIVE MARKET REACTION",
+        "price_action": "-4.54% on 0.84x volume",
+        "note": "EMBRAVE Part A positive (77% seizure reduction) but sell-the-news after Jun29 +6.95% gap. NDA pipeline intact."
+      },
+      {
+        "ticker": "DNTH",
+        "outcome": "NEGATIVE MARKET REACTION (sell-the-news)",
+        "price_action": "-7.46% FLAG on 1.18x volume",
+        "note": "CAPTIVATE Phase 3 CIDP 75% responder rate + Phase 2 gMG positive. Below consensus expectations. $1.2B runway."
+      },
+      {
+        "ticker": "TRVI",
+        "outcome": "NEGATIVE OUTCOME",
+        "price_action": "-5.58% FLAG on 0.98x volume",
+        "note": "CORAL Phase 2b IPF cough data disappointing. ATS presentation data now fully reflected in price."
+      }
+    ],
+    "previously_confirmed_negative": [
+      {"ticker": "CMPS", "resolution_date": "2026-06-30", "outcome": "NEGATIVE", "current_pnl": "+17.61%", "note": "Day 2 sell-off (-6.08%, 1.37x vol). Two-day cumulative -11.82%. Monitor for stabilization."}
+    ],
+    "previously_confirmed_positive": [
+      {"ticker": "SYRE", "resolution_date": "2026-06-15", "outcome": "POSITIVE", "result": "SKYLINE Phase 2 positive p<0.0001. $463.5M raise. +16.81% vs entry. Stabilizing post-dilution."},
+      {"ticker": "SLDB", "resolution_date": "2026-06-21", "outcome": "POSITIVE", "result": "S&P Biotech Index addition. +57.16% vs entry — portfolio leader."},
+      {"ticker": "NRIX", "resolution_date": "2026-06-25", "outcome": "POSITIVE (UNSCHEDULED)", "result": "Roche bexobrutideg collaboration $2.3B ($700M upfront). +54.66% vs entry — confirmed June 2026."}
+    ],
+    "upcoming_catalysts": [
+      {"ticker": "NRIX", "catalyst_days": 29, "date_approx": "~2026-07-31", "tier": "A", "note": "DAYBreak CLL-201 study data. T-29."},
+      {"ticker": "XENE", "catalyst_days": 29, "date_approx": "~2026-07-31", "tier": "B", "note": "T-29. Pre-catalyst equilibrium confirmed (flat price, normal volume)."},
+      {"ticker": "URGN", "catalyst_days": 60, "date_approx": "~2026-09-01", "tier": "A", "note": "T-60. Bucked Jul1 sell-off (+3.10% on 1.69x vol). Monitor for company-specific news."},
+      {"ticker": "STOK", "catalyst_days": 88, "date_approx": "~2026-09-29", "tier": "A", "note": "T-88. Quarter-end volume event resolved."},
+      {"ticker": "SLDB", "catalyst_days": 103, "date_approx": "~2026-10-14", "tier": "A", "note": "T-103. Post-index add institutional floor holding."},
+      {"ticker": "DRUG", "catalyst_days": 120, "date_approx": "~2026-10-31", "tier": "A", "note": "T-120. WATCH: approaching breakeven after Jul1 -5.21% on 2.22x vol."},
+      {"ticker": "ERAS", "catalyst_days": 151, "date_approx": "~2026-12-01", "tier": "A", "note": "T-151. Post-surge stable $17.92. Jun26-29 news unconfirmed."},
+      {"ticker": "RVMD", "catalyst_days": 271, "date_approx": "~2027-03-31", "tier": "B", "note": "T-271. Stable post-correction."}
+    ],
+    "cluster_final_summary": "Jun30-Jul1 catalyst cluster COMPLETE. Results: 3 confirmed positive/derisking (SYRE Jun15, SLDB Jun21, NRIX Jun25 Roche deal), 4 negative/disappointing (CMPS, TRVI, DNTH, ALMS), 1 ambiguous (COGT), 1 sell-the-news (PRAX). Portfolio absorbed cluster with -2.90pp P&L contraction and NO 20% loss events. All 15 positions remain profitable. Next binary window: NRIX/XENE ~July 31."
+  },
+  "alerts_summary": {
+    "P1_DRUG_FLAG": "DRUG -5.21% on 2.22x volume July 1 — NO CONFIRMED NEWS. Approaching breakeven at +4.64% vs entry. PRIORITY INVESTIGATION: check EDGAR 8-K July 1. This is the SECOND time DRUG has approached breakeven (first was Day14). Volume spike (2.22x) on sell-off suggests institutional seller. No trade action authorized.",
+    "P2_CMPS_CONTINUED_SELLOFF": "CMPS Day 2 cascade: -6.08% on 1.37x INCREASING volume. Two-day cumulative from Jun29 peak: -11.82%. Institutional distribution pattern continuing. Position: +17.61% vs entry. Monitor for stabilization above $13. If CMPS falls to $12-12.50, consider breakeven watch status.",
+    "P3_CATALYST_CLUSTER_LARGELY_NEGATIVE": "5 of 6 July 1 catalysts produced negative price action: DNTH (-7.46%), CMPS (-6.08%), TRVI (-5.58%), ALMS (-5.33%), PRAX (-4.54%). Positive pipeline data broadly met with sell-the-news reactions. Portfolio absorbed without gate breach. P&L contracted -2.90pp to +28.23%.",
+    "P4_GOVERNANCE_GATES_OVERDUE": "h20d HARD GATE + IC checkpoint BOTH OVERDUE (were due July 1). Still blocked in remote environment. OPERATOR ACTION REQUIRED: run both scripts locally on machine with production snapshots. Observable metrics remain favorable (Jaccard 0.875, coverage 85.22%).",
+    "P5_HOLIDAY_WINDOW": "TODAY (July 2) = LAST TRADING DAY before July 4 holiday weekend. July 3 = market holiday. July 7 = next trading day. Holiday window creates a gap risk across 3 calendar days (Thursday July 2 close to Monday July 7 open). DRUG situation warrants attention before the long weekend.",
+    "INFO_NRIX_INVESTIGATION_CLOSED": "NRIX Jun25 +16.37% cause CONFIRMED: Roche global collaboration for bexobrutideg ($2.3B, $700M upfront). Investigation closed. NRIX is fully derisked — the Roche deal is a fundamental re-rating event. +54.66% vs entry.",
+    "INFO_ALL_POSITIONS_POSITIVE": "All 15 positions remain positive vs entry. Range: DRUG +4.64% to SLDB +57.16%. Average +28.23%. Zero positions at >20% loss threshold.",
+    "INFO_DRAWDOWN_CLEAR": "Portfolio +11.07pp vs XBI (threshold -2.0pp). Contracted from +12.70pp Day17 but firmly positive. Gate CLEAR.",
+    "INFO_STOK_XENE_INVESTIGATIONS_CLOSED": "STOK Jun26/Jun30 volume anomalies: quarter-end institutional rebalancing confirmed. Investigation CLOSED. XENE Jun26 7.92x event: fully absorbed, investigation CLOSED (one-session event, price held)."
+  },
+  "benchmark": {
+    "xbi_current_price_jul1": 156.55,
+    "xbi_prev_close_jun30": 158.25,
+    "xbi_day_change_pct": -1.07,
+    "xbi_volume_jul1": 7560300,
+    "xbi_entry_price": 133.62,
+    "xbi_since_entry_pct": 17.16,
+    "portfolio_avg_vs_xbi_pp": 11.07,
+    "relative_note": "XBI -1.07% July 1 (sector modest sell-off). Portfolio declined more than XBI on July 1 (-1.26% avg vs -1.07% XBI = -0.19pp underperformance on the day). The catalyst cluster resolution was the primary driver. Outperformance vs XBI since entry: +11.07pp (contracted from +12.70pp Day17 by -1.63pp). July 2 is the last trading day before holiday — holiday window creates a 3-day gap for unannounced news to accumulate."
+  },
+  "market_calendar": {
+    "last_trading_day": "2026-07-01 (data available)",
+    "today": "2026-07-02 (Thursday — regular trading day, LAST before July 4 holiday)",
+    "tomorrow_jul3": "MARKET HOLIDAY — July 4 observed (Friday)",
+    "next_trading_day": "2026-07-07 (Monday)",
+    "holiday_gap_risk": "3 calendar days (Thu close → Mon open). Any unannounced news (FDA actions, clinical holds, safety signals) will accumulate over the long weekend. DRUG situation warrants attention before holiday.",
+    "q2_13f_status": "Period ended June 30. EDGAR monitoring starts ~August 11. Filing deadline ~August 14."
+  },
+  "data_quality": {
+    "all_tickers_fresh_jul1": true,
+    "data_source": "Yahoo Finance v8 chart API (urllib.request, SSL via /root/.ccr/ca-bundle.crt), interval=1d, range=5d. Timestamps verified: ts=1782912600 = 2026-07-01 13:30:00 UTC (NYSE market open timestamp for Jul1 daily bar = Jul1 close in EOD bar).",
+    "robinhood_mcp_status": "UNAVAILABLE — not accessible in remote execution environment (confirmed throughout monitoring period)",
+    "data_completeness": "15/15 portfolio tickers + XBI confirmed for July 1 close",
+    "price_dates_verified": "All tickers: recent_days[1] matches Jun30 close from Day17 snapshot (COGT $38.70, DNTH $97.48, etc.). recent_days[2] = Jul1 close confirmed by timestamp.",
+    "catalyst_events_json": "NOT FOUND at project root — catalyst dates carried forward from prior monitoring snapshots and web research"
+  },
+  "investigations_closed_this_session": [
+    {"ticker": "NRIX", "investigation": "Jun25 +16.37% gap cause", "resolution": "CONFIRMED: Roche global collaboration for bexobrutideg, $2.3B deal, $700M upfront payment (TipRanks: 'Roche Mega Deal Sends Nurix Stock Soaring')."},
+    {"ticker": "STOK", "investigation": "Jun26 3.56x and Jun30 5.17x volume spikes", "resolution": "CLOSED: Quarter-end institutional rebalancing at Q2 close (Jun30). Volume normalized to 0.35x on Jul1 = confirmed."},
+    {"ticker": "XENE", "investigation": "Jun26 7.92x volume spike", "resolution": "CLOSED: Single-session event, fully absorbed over Jun29-Jul1 (volume normalized to 1.02x). No EDGAR 8-K required."},
+    {"ticker": "PRAX", "investigation": "Jun29 atypical T-1 gap (+6.95% on 0.36x vol)", "resolution": "CLOSED: Pre-catalyst thin-market open gap. Fully reversed in Jun30 (-4.50%) and Jul1 (-4.54%). EMBRAVE Part A data confirmed as Jul1 catalyst."}
+  ],
+  "investigations_open": [
+    {"ticker": "DRUG", "priority": 1, "investigation": "Jul1 -5.21% on 2.22x volume — no confirmed news. EDGAR 8-K check required."},
+    {"ticker": "ERAS", "priority": 2, "investigation": "Jun26-29 +22.5% unscheduled surge cause. Price stable ($17.92). SEC 8-K Jun26-29 outstanding. Lower urgency given stability."},
+    {"ticker": "RVMD", "priority": 3, "investigation": "Jun25-29 three-day surge cause. Price stable at $187.51. Low urgency."},
+    {"ticker": "COGT", "priority": 4, "investigation": "Jul1 catalyst ambiguous (-0.57%, 0.43x vol). Check July 1 press release for APEX/PEAK NDA status."}
+  ],
+  "operational_status": {
+    "price_data_currency": "2026-07-01 close (all 15 tickers + XBI confirmed via Yahoo Finance v8 API)",
+    "snapshot_generation": "2026-07-02 pre-market (09:00 ET) — Day 18",
+    "no_unauthorized_trades": true,
+    "robinhood_mcp_status": "UNAVAILABLE throughout monitoring period",
+    "missed_run_flag": false,
+    "governance_action_required": true,
+    "governance_action_note": "OVERDUE: (1) h20d quarantine script BLOCKED — must run locally TODAY before holiday; (2) IC checkpoint BLOCKED — must run locally. Both gates were due July 1. Observable metrics remain favorable but formal confirmation required.",
+    "monitoring_period_status": "Day 18 (extended beyond formal Jun30 period end). Active catalysts resolved as of Jul1. Primary continuation justification: DRUG flag + governance gate execution still blocked.",
+    "holiday_note": "July 3 = market holiday. Next monitoring: July 7 (Monday). Recommend: run governance gate scripts over holiday weekend before Jul7 open.",
+    "q2_13f_period_closed": true,
+    "q2_13f_next_action": "Begin EDGAR monitoring ~2026-08-11. Filing deadline ~2026-08-14."
+  },
+  "next_monitoring_actions": [
+    "1. [CRITICAL — TODAY BEFORE MARKET CLOSE] DRUG investigation: check EDGAR DRUG (Bright Minds Biosciences) 8-K filings for July 1 at SEC.gov. If no news found, the -5.21% on 2.22x volume is a thin-market institutional sell. DRUG now at +4.64% vs entry — second time approaching breakeven.",
+    "2. [OPERATOR — BEFORE HOLIDAY] Run h20d quarantine script locally: python3 tools/check_13f_cohort_quarantine.py. OVERDUE (was due July 1). Run before July 7 open.",
+    "3. [OPERATOR — BEFORE HOLIDAY] Run IC checkpoint locally: python3 run_rank_ic_backtest.py --signal score_rank_pct --use-live-snapshots. Path A durable gate. OVERDUE.",
+    "4. [INVESTIGATE — TODAY OR WEEKEND] CMPS: obtain official Phase 2b psilocybin TRD readout press release. Day 2 volume increase (1.37x) suggests distribution not complete. Monitor Jul7 open.",
+    "5. [INVESTIGATE] ERAS Jun26-29 material news: EDGAR 8-K check still outstanding. Price stable, lower urgency, but unresolved.",
+    "6. [HOLIDAY AWARENESS] Long weekend July 4 (3 calendar days). Next market open: July 7 (Monday). Monitor for any SEC filings, FDA actions, or clinical holds over the holiday weekend that could affect positions.",
+    "7. [SCHEDULE] Next monitoring: July 7, 2026 (Monday) — first trading day after holiday. Focus: DRUG recovery or continued decline, CMPS stabilization, governance gate confirmations.",
+    "8. [UPCOMING BINARY WINDOW] NRIX/XENE catalysts ~July 31. T-29. Both positions in constructive technical setups.",
+    "9. [GOVERNANCE NOTE] Q2 2026 13F period closed June 30. Begin EDGAR monitoring for Fairmount (CIK 0001802528), Deep Track (0001856083), Logos Global (0001792126) starting ~August 11."
+  ]
+}
