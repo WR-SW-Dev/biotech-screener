@@ -44,6 +44,8 @@ import os
 from datetime import date as _date
 from typing import Any, Dict, List, Optional, Tuple
 
+from common.options_quality import MAX_SPREAD_PCT, MIN_OI_THRESHOLD
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -891,11 +893,15 @@ def _massive_fallback_batch(
 
             expiry_contracts: Dict[str, List[float]] = _ddict(list)
             total_oi = 0
+            n_oi_missing = 0  # contracts where open_interest is None (no data), not confirmed 0
             for contract in chain:
                 exp = contract.get("expiration_date", "")
                 iv = contract.get("implied_volatility")
-                oi = contract.get("open_interest", 0) or 0
-                total_oi += oi
+                oi_raw = contract.get("open_interest")
+                if oi_raw is None:
+                    n_oi_missing += 1
+                else:
+                    total_oi += oi_raw
                 if exp and iv is not None and 0.01 < float(iv) < 10.0:
                     expiry_contracts[exp].append(float(iv))
 
@@ -911,6 +917,14 @@ def _massive_fallback_batch(
                 results[symbol] = empty_diagnostics("no_chain_any_source")
                 continue
 
+            # If open_interest was missing (None) on every contract in the chain,
+            # we cannot assess liquidity at all -- this is distinct from a chain
+            # with confirmed-zero OI (e.g. a brand-new or abandoned contract).
+            n_contracts_total = len(chain)
+            if n_contracts_total > 0 and n_oi_missing == n_contracts_total:
+                results[symbol] = empty_diagnostics("bad_quote")
+                continue
+
             # Compute ATM IV from front expiry
             front_iv = front["implied_volatility"]
             back_iv = back["implied_volatility"] if back else None
@@ -918,11 +932,21 @@ def _massive_fallback_batch(
             if back_iv and front_iv and front_iv > 0:
                 term_slope = round((back_iv - front_iv) / front_iv, 4)
 
-            # Synthetic liquidity from total OI
-            if total_oi > 5000:
+            # Synthetic liquidity from total OI (Stage 2, Spec 045 repair):
+            # tighten the existing total-OI thresholds with an additional
+            # MIN_OI_THRESHOLD-derived floor on OI per contract actually
+            # observed (contracts with missing OI are excluded from the
+            # denominator, not treated as 0-OI contracts). This can only
+            # make the gate stricter (move liquid/thin -> thin/absent),
+            # never looser.
+            n_contracts_with_oi = n_contracts_total - n_oi_missing
+            avg_oi_per_contract = (total_oi / n_contracts_with_oi) if n_contracts_with_oi > 0 else 0.0
+            meets_min_oi_floor = avg_oi_per_contract >= MIN_OI_THRESHOLD
+
+            if total_oi > 5000 and meets_min_oi_floor:
                 liq_state = "liquid"
                 liq_ok = "1"
-            elif total_oi > 500:
+            elif total_oi > 500 and meets_min_oi_floor:
                 liq_state = "thin"
                 liq_ok = "0"
             else:

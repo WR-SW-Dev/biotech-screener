@@ -130,7 +130,20 @@ def _build_summary(
                     "catalyst_days": r.get("catalyst_days", ""),
                 }
             )
-    backwardation.sort(key=lambda x: float(x.get("opt_term_slope") or 0))
+    def _term_slope_sort_key(row: Dict[str, Any]) -> float:
+        # A missing/empty opt_term_slope is NOT the same as a confirmed slope
+        # of 0.0 (flat term structure) -- treat missing as "sort last" (most
+        # positive) rather than silently coercing to 0, which would rank an
+        # unknown-slope row alongside a genuinely flat one.
+        raw = row.get("opt_term_slope", "")
+        try:
+            if raw is None or raw == "":
+                return float("inf")
+            return float(raw)
+        except (ValueError, TypeError):
+            return float("inf")
+
+    backwardation.sort(key=_term_slope_sort_key)
     top_backwardation = backwardation[:10]
 
     # Top IV names
