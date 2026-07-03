@@ -185,9 +185,9 @@ class TestDeathQueries:
         assert "TEST" not in dead
 
     def test_production_cnta_dead(self, production_registry):
-        """CNTA was acquired by Lilly in March 2026."""
-        assert is_dead("CNTA", "2026-04-01", production_registry)
-        assert not is_dead("CNTA", "2026-03-01", production_registry)
+        """CNTA (Centessa) acquired by Eli Lilly; scheme effective 2026-06-24."""
+        assert is_dead("CNTA", "2026-06-25", production_registry)
+        assert not is_dead("CNTA", "2026-06-01", production_registry)
 
 
 # ---------------------------------------------------------------------------
