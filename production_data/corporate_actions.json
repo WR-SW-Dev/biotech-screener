@@ -40,7 +40,7 @@
     {"ticker": "TECX",  "action": "reverse_split", "effective_date": "2024-06-24", "ratio": "1:12", "factor": 11.50, "notes": "Second action (net effect ~1:1)"},
     {"ticker": "VTYX",  "action": "forward_split",  "effective_date": "2023-11-07", "ratio": "5:1",  "factor": 0.194, "notes": "Ventyx Biosciences; later acquired"},
 
-    {"ticker": "CNTA",  "action": "acquisition", "effective_date": "2026-03-31", "acquirer": "Eli Lilly", "deal_price": 39.72, "notes": "Centessa Pharmaceuticals acquired by Lilly. Price frozen at deal value."},
+    {"ticker": "CNTA",  "action": "acquisition", "effective_date": "2026-06-24", "acquirer": "Eli Lilly", "deal_price": 38.00, "notes": "Centessa Pharmaceuticals acquired by Eli Lilly (via LDH XV Corp). Scheme of Arrangement effective 2026-06-24; ADSs delisted from Nasdaq. Consideration $38.00 cash/share plus up to $9.00 CVR. Frozen price series carries to 2026-06-29. Removed from universe."},
     {"ticker": "IMVT",  "action": "acquisition", "effective_date": "2024-02-12", "acquirer": "Roche",    "deal_price": 24.50, "notes": "Immunovant acquired by Roche. Trades as CVR/stub."},
     {"ticker": "BHVN",  "action": "acquisition", "effective_date": "2024-10-15", "acquirer": "AbbVie",   "deal_price": 44.00, "notes": "Cerevel Therapeutics acquired by AbbVie. CVR structure."},
     {"ticker": "ACLX",  "action": "acquisition", "effective_date": "2025-12-15", "acquirer": "Gilead",   "deal_price": 114.50, "notes": "Arcellx acquired by Gilead Sciences."},
