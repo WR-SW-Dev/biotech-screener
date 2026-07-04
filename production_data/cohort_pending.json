@@ -1,19 +1,12 @@
 {
   "schema_version": "cohort_pending.v1",
-  "pending_since": "2026-04-25",
-  "new_manager_ciks": [
-    "0001802528",
-    "0001974915",
-    "0001907884",
-    "0001802630"
-  ],
-  "new_manager_names": [
-    "Fairmount Funds Management",
-    "Vestal Point Capital",
-    "Kynam Capital Management",
-    "Soleus Capital Management"
-  ],
+  "pending_since": null,
+  "new_manager_ciks": [],
+  "new_manager_names": [],
   "last_addition": "2026-04-25",
-  "consume_on_next_snapshot_after": "2026-04-25",
+  "consume_on_next_snapshot_after": null,
+  "consumed_at": "2026-07-04",
+  "consumed_by_snapshot": "2026-04-27",
+  "note": "April 2026 cohort change (Fairmount Funds, Vestal Point, Kynam, Soleus) was consumed by the 2026-04-27 snapshot (valid_from_snapshot 2026-04-27) per artifacts/manager_cohort_expansion_2026-04-27.md and tools/onboard_manager.py. This pending marker was stale and is cleared as part of the Q1 2026 holdings ratification (artifacts/audit/q1_2026_holdings_ratification_2026_07_04.md).",
   "instructions": "Production screen runs producing snapshots dated >= consume_on_next_snapshot_after should: (1) write data/snapshots/<date>/cohort_state.json marking inst_delta_z_valid=false and rank_delta_valid=false for THAT snapshot only, (2) clear this file. The SECOND snapshot after a cohort change is decision-grade again because it compares like-for-like cohorts."
 }

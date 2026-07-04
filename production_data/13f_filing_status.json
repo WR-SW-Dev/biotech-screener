@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-06-16T11:08:52.161129",
+  "last_check": "2026-07-04T17:48:00-04:00",
   "filed": {
     "0001493215": {
       "name": "RTW Investments",
@@ -265,16 +265,17 @@
       "name": "Paradigm Biocapital Advisors",
       "filed_date": "2026-05-15",
       "accession": "000185565526000011"
+    },
+    "0000909661": {
+      "name": "Farallon Capital",
+      "filed_date": "2026-05-15",
+      "accession": "0000908834-26-000240"
     }
   },
   "pending": {
     "0001601692": {
       "name": "Broadfin Capital (Kotler)",
       "checked_at": "2026-06-16T11:08:52.673614"
-    },
-    "0000909661": {
-      "name": "Farallon Capital",
-      "checked_at": "2026-06-16T11:08:54.606961"
     }
   },
   "started_at": "2026-05-15T00:00:00",
