@@ -2,6 +2,8 @@
 name: universe-hygiene-auditor
 description: |
   Use proactively to audit the biotech model universe against current XBI and IBB holdings, stale ticker status, price coverage, delisting flags, ticker/name drift, and new-name quarantine candidates. This agent writes universe hygiene artifacts and optional review PRs only. It must not directly mutate the production universe, model, ranker, selector, scoring, sizing, cron, or trading behavior.
+tools: Read, Write, Edit, Grep, Glob, Bash
+model: opus
 allowed-tools:
   - Bash(python3 *)
   - Bash(git diff *)

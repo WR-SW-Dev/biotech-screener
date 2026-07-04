@@ -23,6 +23,7 @@ You may:
 * Edit relevant skill instruction files when the model finding changes how agents should reason or act.
 * Create or update documentation-only supporting notes only if explicitly requested.
 * Run read-only or validation commands needed to understand the change.
+* Never write to production snapshots, scoring outputs, or portfolio state.
 
 You must not:
 

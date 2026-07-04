@@ -44,7 +44,7 @@ def find_latest_snapshot_date():
 def run_scheduled_review(
     as_of_date: str,
     strict: bool = False,
-    auto_approve: bool = True,
+    auto_approve: bool = False,
     decision_reason: str | None = None,
 ) -> int:
     """Run the LG1 review orchestrator for the given date.
@@ -196,14 +196,14 @@ def main():
     parser.add_argument(
         "--auto-approve",
         action="store_true",
-        default=True,
-        help="Auto-approve review with scheduled-review-automation actor (default)",
+        default=False,
+        help="Auto-approve review with scheduled-review-automation actor",
     )
     parser.add_argument(
         "--no-auto-approve",
         action="store_false",
         dest="auto_approve",
-        help="Do not auto-approve; require manual decision",
+        help="Do not auto-approve; require manual decision (default)",
     )
     parser.add_argument(
         "--decision-reason",

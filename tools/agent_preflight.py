@@ -202,6 +202,38 @@ def get_allowed_action():
     return "Follow Phase 2 roadmap: finish preflight tool, audit evening cron, wait for 13F clearance (~May 23)"
 
 
+def get_shell_health():
+    """Verify the local shell can execute basic commands."""
+    try:
+        result = subprocess.run(["true"], capture_output=True, text=True, timeout=5, check=False)
+        if result.returncode == 0:
+            return {"status": "ok", "message": "Shell probe succeeded"}
+    except Exception as exc:
+        return {"status": "unknown", "message": f"Shell probe failed: {exc}"}
+    return {"status": "unknown", "message": "Shell probe failed"}
+
+
+def get_codegraph_hint():
+    """Report whether the CodeGraph index appears present in the repo."""
+    codegraph_dir = Path(".codegraph")
+    if codegraph_dir.is_dir():
+        return {"status": "present", "message": "CodeGraph index directory found"}
+    return {"status": "missing", "message": ".codegraph directory not found"}
+
+
+def build_session_preflight_checklist():
+    """Return the session checklist agents must complete before edits."""
+    codegraph = get_codegraph_hint()
+    return {
+        "governance_tier_classified": False,
+        "codegraph_current": codegraph["status"] == "present",
+        "production_boundary_stated": False,
+        "affected_symbols_identified": False,
+        "affected_tests_identified": False,
+        "pit_timestamp_confirmed": False,
+    }
+
+
 def get_not_allowed():
     """List explicitly forbidden work."""
     forbidden = [
@@ -242,6 +274,9 @@ def build_preflight_report(
         "active_quarantine_freeze": quarantine,
         "allowed_next_action": allowed,
         "not_allowed": not_allowed,
+        "session_preflight_checklist": build_session_preflight_checklist(),
+        "shell_health": get_shell_health(),
+        "codegraph_hint": get_codegraph_hint(),
     }
 
     # Add agent metadata if requested
