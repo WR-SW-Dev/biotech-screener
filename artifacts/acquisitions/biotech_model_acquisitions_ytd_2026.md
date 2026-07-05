@@ -20,13 +20,16 @@
 
 1. **ACLX — PIT correction.** Registry had `effective_date 2025-12-15` @ `114.50` with no CVR. Primary sources (Gilead completion press release + SEC 8-K, acc `0001104659-26-049874`) confirm the deal **closed 2026-04-28** at **$115.00 + $5.00 CVR** (~$7.8B). Corrected — same class of PIT error as the CNTA fix (would otherwise mark ACLX dead ~4.5 months early, corrupting any Dec 2025–Apr 2026 backtest/PIT context). ACLX is correctly a 2026 YTD deal.
 2. **NUVL — added.** Was entirely absent from `corporate_actions.json`. Added as `pending_acquisition` (GSK, $124.00, tender commenced 2026-06-24, expires 2026-07-14). Verified vs GSK tender-offer PR + SEC Schedule TO / SC 14D-9.
+3. **APLS — deal_price backfill.** Registry had `deal_price: null`. Primary sources (Biogen completion PR + SEC 8-K, acc `000119312526222923`) confirm **$41.00 cash/share + up to $4.00 CVR** at close 2026-05-14 (~$5.6B).
+4. **KALV — deal_price backfill.** Registry had `deal_price: null`. Primary sources (Chiesi completion PR + SEC 8-K, acc `000114036126024949`) confirm **$27.00 cash/share** at close 2026-06-11 (~$1.9B).
 
-## Open data-quality flags (not changed — flagged for review)
+## Open data-quality flags
 
-- **APLS** and **KALV** carry `deal_price: null` in the registry. Suggested backfill (pending your confirmation): APLS $41.00 + $4.00 CVR; KALV ~$27.00. Left unchanged here to avoid writing unverified figures into production data.
 - **CNTA / APGE** entries are accurate — no change.
 
 ## Sources
 - Gilead / Arcellx: Gilead completion PR (2026-04-28) + SEC 8-K acc `0001104659-26-049874`.
 - GSK / Nuvalent: GSK tender-offer commencement PR (2026-06-24) + SEC Schedule TO / SC 14D-9 (expiration 2026-07-14).
-- CNTA, APGE, APLS, KALV: `production_data/corporate_actions.json` + Biotech M&A YTD Master List (Town doc `nx769bbmevpht8t6axkxbjhem189v0xj`).
+- Biogen / Apellis: Biogen completion PR (2026-05-14) + SEC 8-K acc `000119312526222923`.
+- Chiesi / KalVista: Chiesi completion PR (2026-06-11) + SEC 8-K acc `000114036126024949`.
+- CNTA, APGE: `production_data/corporate_actions.json` + Biotech M&A YTD Master List (Town doc `nx769bbmevpht8t6axkxbjhem189v0xj`).
