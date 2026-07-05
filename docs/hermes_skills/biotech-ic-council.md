@@ -374,8 +374,8 @@ Choose exactly one final recommendation:
 - **HOLD** — promising but missing required proof.
 - **REJECT** — likely harmful, misleading, leaky, or outside mandate.
 - **NO_CONSENSUS** — irreducible disagreement; escalate to human operator.
-- **FORWARD_SHADOW_MANDATE** — evidence is promising but insufficient; no production change; a structured measurable forward test is required. Must be accompanied by a shadow mandate artifact.
-- **CONDITIONAL_EDGE_TRACKING** — signal appears real only under specific conditions (regime, horizon, catalyst bucket, liquidity, risk wrapper state); track under those conditions with explicit labels and forward validation.
+- **FORWARD_SHADOW_MANDATE** — evidence is promising but insufficient; no production change; a structured measurable forward test is required. Must be accompanied by a shadow mandate artifact (see Shadow mandate output below).
+- **CONDITIONAL_EDGE_TRACKING** — signal appears real only under specific conditions (regime, horizon, catalyst bucket, liquidity, risk wrapper state); track under those conditions with explicit labels and forward validation. Must specify the conditions and the tracking artifact.
 
 Neither `FORWARD_SHADOW_MANDATE` nor `CONDITIONAL_EDGE_TRACKING` may change production behavior.
 
@@ -389,7 +389,29 @@ Include:
 - one-sentence risk thesis
 - decision-owner note: what the human operator must decide
 
-**If recommendation is FORWARD_SHADOW_MANDATE or CONDITIONAL_EDGE_TRACKING — also emit a shadow mandate and a DOL row stub.** See `skills/biotech-ic-council/SKILL.md` for the required fields.
+**If recommendation is FORWARD_SHADOW_MANDATE or CONDITIONAL_EDGE_TRACKING — also emit a shadow mandate:**
+
+```
+shadow_mandate_id:       SM-YYYYMMDD-NNN
+signal_or_claim:         [one-line statement]
+why_not_approved:        [specific reason]
+why_not_rejected:        [specific reason]
+hypothesis:              [falsifiable claim]
+primary_metric:          [the one number that decides success/failure]
+secondary_metrics:       [supporting metrics]
+comparison_group:        [what it is measured against]
+evaluation_window_type:  EVENT_ANCHORED | MODEL_EVALUATION | OPEN_ENDED | OPERATIONAL
+evaluation_window_due:   [date or condition]
+success_threshold:       [explicit pass condition]
+failure_threshold:       [explicit fail condition]
+data_required:           [what needs to be logged/observable]
+artifact_location:       [where results are stored]
+operator_owner:          [who runs the resolution pass]
+```
+
+**After every full-council review — emit a DOL row stub:**
+
+Record the decision in `artifacts/ic_council/decision_outcome_ledger.jsonl`. Set all outcome fields to `null`. Set `evaluation_window_type`, `evaluation_window_start`, `evaluation_window_due`, and `evaluation_window_basis`. Mark `operator_confirmed = false` until the operator confirms the window.
 
 ## Required output format
 
@@ -423,6 +445,7 @@ Use this structure:
 
 ### 0. Triage Gate
 [Signal table with YES/NO for each signal; which seats are active]
+[Edge advocate: seat N — <seat name> | not applicable]
 
 ### 1. Restatement Gate
 ...
@@ -435,8 +458,15 @@ Use this structure:
 |---|---|---|---|---|---|
 ...
 
+<!-- If edge advocate assigned, add after the normal row for that seat: -->
+| Seat N [edge advocate] | advocate position | strongest good-faith case | forward-shadow test identified | conditional edge framing | false-negative risk flag |
+|---|---|---|---|---|---|
+
 ### 4. Cross-Examination
 ...
+<!-- If edge advocate active, include the required pair:
+     Skeptic → advocate: [challenge]
+     Advocate → skeptic: [challenge] -->
 
 ### 5. Dissent and Novelty Gate
 ...
@@ -445,6 +475,8 @@ Use this structure:
 | Dimension | Status | Rationale |
 |---|---|---|
 ...
+| false-negative risk | pass/watch/fail/unobserved | [advocate's read] |
+| evaluator-integrity | pass/watch/fail | [could this change degrade the evaluator rather than improve the signal?] |
 
 ### 7. Recursive Improvement Register
 | Improvement | Class | Owner | Trigger | Alpha relevance |
@@ -452,7 +484,7 @@ Use this structure:
 ...
 
 ### 8. Final IC Recommendation
-**Recommendation:** ...
+**Recommendation:** [APPROVE | RESEARCH_ONLY | PLUMBING_ONLY | HOLD | REJECT | NO_CONSENSUS | FORWARD_SHADOW_MANDATE | CONDITIONAL_EDGE_TRACKING]
 
 **Required pre-merge checks:** ...
 **Post-merge monitoring:** ...
@@ -461,6 +493,26 @@ Use this structure:
 **Alpha thesis:** ...
 **Risk thesis:** ...
 **Decision-owner note:** ...
+
+<!-- If FORWARD_SHADOW_MANDATE or CONDITIONAL_EDGE_TRACKING: -->
+### Shadow Mandate
+shadow_mandate_id: SM-YYYYMMDD-NNN
+signal_or_claim: ...
+[remaining fields per shadow mandate format]
+
+### DOL row stub
+decision_id: ICD-YYYYMMDD-NNN
+recommendation: ...
+edge_advocate_assigned: true/false
+edge_advocate_seat: N | null
+edge_advocate_position: support/partial/oppose/not_applicable
+edge_advocate_false_negative_risk_flag: true/false
+evaluation_window_type: EVENT_ANCHORED | MODEL_EVALUATION | OPEN_ENDED | OPERATIONAL
+evaluation_window_start: YYYY-MM-DD
+evaluation_window_due: YYYY-MM-DD
+evaluation_window_basis: ...
+[all outcome fields: null]
+operator_confirmed: false
 
 ### LRN entries (post-review, 1-3)
 [follow LRN entry format in Post-review LRN protocol section]
@@ -471,6 +523,4 @@ Use this structure:
 - Use `references/review-rubric.md` for strict severity levels, merge gates, blocker classification, and recursive improvement gates.
 - Use `references/biotech-domain-checks.md` when the review involves event EV, CT.gov/FDA catalyst logic, corporate actions, expectation-layer fields, Hermes/Wake Robin artifacts, or backtest validity.
 - Use `references/recursive-improvement.md` when the review asks how the system should learn from failures, postmortems, repeated manual checks, or promotion-gate debates.
-- Use `references/decision-outcome-ledger.md` for the full DOL schema, evaluation window taxonomy, resolution authority rules, outcome field constraints, and calibration metrics. See also `docs/COUNCIL_DOL_ALPHA_SENSITIVITY_SPEC.md` for design rationale.
-
-> **Town mirror note:** This file mirrors `skills/biotech-ic-council/SKILL.md`. Canonical source is the skills file; update both together.
+- Use `references/decision-outcome-ledger.md` for the full DOL schema, evaluation window taxonomy, resolution authority rules, outcome field constraints, and calibration metrics. See also `docs/COUNCIL_DOL_ALPHA_SENSITIVITY_SPEC.md` for the overarching design rationale.

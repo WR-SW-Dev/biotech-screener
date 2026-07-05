@@ -360,14 +360,6 @@ Agent AGENTS.md docs updated with Llama-specific procedures:
 | Post-snapshot | `tools/run_post_snapshot_supervisor.py` | Post-pipeline task orchestration |
 | Sentinel | `tools/agent_supervisor_sentinel.py` | Final watchdog |
 
-### Robinhood MCP status field (monitoring output)
-
-When emitting `robinhood_mcp_status` in daily monitoring JSON:
-
-- The Robinhood MCP is a **hosted remote OAuth server** at `https://agent.robinhood.com/mcp/trading` — there is **nothing to install**. Do NOT emit "install mcp-server-robinhood" (or reference `pip install robinhood-mcp`); those are unofficial third-party packages that harvest username/password.
-- If the MCP is not reachable, emit: `UNAVAILABLE — connect via 'claude mcp add robinhood-trading --transport http https://agent.robinhood.com/mcp/trading' (hosted OAuth, desktop browser; not a local install)`.
-- Read access spans ALL accounts (IRAs, Individual, Agentic); trade placement is Agentic-only. See `docs/ops/hermes_mcp_registry.md` and `docs/ROBINHOOD_TRADING_GUIDE.md`.
-
 ### Anomaly Classification
 
 | Classification | Severity | Meaning |
@@ -589,6 +581,9 @@ Research-enablement tooling for backfilling expectation fields into historical s
 | Ops Digest Builder | `tools/build_ops_digest.py` |
 | Readiness Scorecard | `tools/weekly_readiness_scorecard.py` |
 | Cron Wrapper | `tools/cron_daily_production.sh` |
+| Corporate Actions Registry | `production_data/corporate_actions.json` |
+| Corporate Actions Loader | `common/corporate_actions.py` |
+| YTD Acquisitions Log | `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md` |
 
 ---
 
@@ -624,6 +619,62 @@ Use plain strings for static markdown table headers and other static text; f-str
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
 - **Manifest**: 36+ entries, no duplicate IDs
 - **Architecture freeze**: In effect until post-h20d checkpoint (\~2026-05-26)
+
+## Corporate Actions & M&A Registry
+
+*Last reviewed: 2026-07-05*
+
+**Authoritative sources**
+
+| Artifact | Path |
+| --- | --- |
+| Registry | `production_data/corporate_actions.json` |
+| Loader / queries | `common/corporate_actions.py` (`load_actions`, `is_dead`, `death_date`, `resolve_ticker`) |
+| YTD model-relevant log | `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md` |
+
+**2026 YTD model-relevant acquisitions** (as of 2026-07-05)
+
+| Ticker | Status | Close / pending | Model relevance |
+| --- | --- | --- | --- |
+| ACLX | Closed | 2026-04-28 | Registry holder: Paradigm |
+| APLS | Closed | 2026-05-14 | Registry holder: Deep Track (Tier 1) |
+| KALV | Closed | 2026-06-11 | Universe name (HAE); no Tier-1 holder |
+| CNTA | Closed | 2026-06-24 | Logos / Farallon; coinvest watchlist removed 06-24 |
+| NUVL | Pending | tender exp 2026-07-14 | Deerfield + Paradigm |
+| APGE | Pending | Q3 2026 expected | Fairmount / RTW / Affinity; Robinhood |
+
+**Closed YTD:** ACLX, APLS, KALV, CNTA. **Pending:** NUVL, APGE.
+
+### Interpretation — do not overclaim
+
+> Six model-relevant biotech takeouts YTD validates the monitored universe and elite-manager registry as an M&A-rich hunting ground; the right takeaway is **corporate-action/PIT integrity and surveillance coverage**, not yet proof that the ranker predicts acquisitions.
+
+| Evidence lane | Verdict |
+| --- | --- |
+| Universe construction | Positive |
+| Registry relevance | Positive |
+| Surveillance value | Moderate |
+| Ranker alpha (pre-announcement) | Insufficient — needs pre-announcement score/event study |
+
+- Validates registry/coinvest **surveillance** more than any single alpha score. Acquirers are tier-1 strategics (Gilead, Biogen, Lilly, GSK, AbbVie, Chiesi), not random microcap wins.
+- **Do not claim model causality:** KALV was a universe name without Tier-1 holder flag; APGE was a personal holding — neither proves systematic selection skill. Clean claim: the monitored opportunity set is producing takeouts.
+- **PIT hygiene is the immediate alpha protection:** ACLX wrong death date and NUVL absence corrupt backtests and pending-status handling. Full framing: `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md` § Interpretation.
+
+### Logging workflow
+
+When a model-relevant name announces or closes M&A:
+
+1. Verify terms vs issuer press release + SEC filing (Schedule TO, 8-K, etc.)
+2. Update `production_data/corporate_actions.json` — closed deals → `acquisition` with `effective_date` + `deal_price`; pre-close → `pending_acquisition`
+3. Append or update `artifacts/acquisitions/biotech_model_acquisitions_ytd_YYYY.md`
+4. Run `pytest tests/test_corporate_actions_registry.py`
+5. If coinvest watchlist affected, update `production_data/event_alert_watchlist.json`
+
+### Registry gotchas
+
+- **`pending_acquisition`** is documented in JSON but **not loaded** by `common/corporate_actions.py` (`ACTION_TYPES` omits it). Pending deals do not trigger `is_dead()` until promoted to `acquisition` at close.
+- **PIT death dates:** `effective_date` must be the **close** date, not announcement or agreement date. ACLX had a bad date (2025-12-15 vs actual close 2026-04-28) — same class of error as CNTA; corrupts Dec 2025–Apr 2026 backtest context.
+- **`deal_price`:** store cash component; put CVR terms in `notes`. Backfill null prices only after primary-source verification.
 
 ## BioShort Research (Spec 092)
 

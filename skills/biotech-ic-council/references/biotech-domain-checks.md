@@ -25,11 +25,13 @@ The expectation layer estimates how much of a catalyst is already priced. It is 
 
 Every biotech price series must be checked for corporate-action contamination before any return is trusted:
 
+- **Authoritative registry:** `production_data/corporate_actions.json` (loader: `common/corporate_actions.py`). YTD model-relevant M&A log: `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md`.
 - reverse splits and forward splits (split-adjusted vs raw price)
 - spinouts and special distributions
-- M&A (cash, stock, CVR) — confirm the terminal date and whether the name is mid-deal
+- M&A (cash, stock, CVR) — confirm the **close** date (not announcement date) and whether the name is mid-deal. `deal_price` = cash component; CVR terms go in `notes`.
 - delistings and ticker changes — confirm the last valid candle and `DATA_STALE` handling
 - survivorship bias — confirm delisted names are retained in historical universes, not silently dropped
+- **`pending_acquisition`:** documented in JSON but not loaded by `ACTION_TYPES`; does not trigger `is_dead()` until promoted to `acquisition` at close
 
 If raw (unadjusted) prices could have entered a feature, that is a BLOCKER (`IC_CORP_ACTION_*`).
 

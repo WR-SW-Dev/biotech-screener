@@ -5,6 +5,16 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-07-05
+### Skill patches applied (canonical source)
+- **screener-ops**: added "Corporate Actions & M&A Registry" section — YTD 2026 acquisitions table (ACLX/APLS/KALV/CNTA/NUVL/APGE), logging workflow, registry gotchas (`pending_acquisition` loader gap, PIT close-date discipline, `deal_price` + CVR notes). Source files table extended.
+- **institutional-signal**: added "2026 YTD Model-Relevant Acquisitions" section — holder/watchlist impact table, CNTA watchlist removal note, pending-deal gating rule, Robinhood overlap.
+- **biotech-ic-council** (`references/biotech-domain-checks.md`): corporate-actions checks now point to `corporate_actions.json`, acquisitions YTD log, close-date vs announcement-date, `pending_acquisition` loader caveat.
+- Mirror synced via `sync_hermes_skills.py` (4 updated: screener-ops, institutional-signal, biotech-ic-council, self-improving); audit clean (no drift).
+- Context: PRs #467–#468 — YTD acquisitions log + ACLX PIT fix + NUVL add + APLS/KALV deal_price backfill.
+
+---
+
 ---
 
 ---
