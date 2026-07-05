@@ -1,10 +1,10 @@
 """Reporting writers for Scientific Cartography review workflow."""
 
 import json
-from datetime import datetime
 from pathlib import Path
 
 from scientific_cartography.langgraph_review.state import CartographyReviewState
+from scientific_cartography.langgraph_review.timestamps import generated_at_from_state
 
 
 def write_review_summary_json(review_dir: Path, state: CartographyReviewState) -> Path:
@@ -14,7 +14,7 @@ def write_review_summary_json(review_dir: Path, state: CartographyReviewState) -
 
     output = {
         "artifact_type": "scientific_cartography_langgraph_review_summary",
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": generated_at_from_state(state),
         "governance": governance,
         **summary,
     }
@@ -49,7 +49,7 @@ def write_review_summary_md(review_dir: Path, state: CartographyReviewState) -> 
 
     lines.append("# Scientific Cartography LangGraph Review")
     lines.append("")
-    lines.append(f"Generated: {datetime.utcnow().isoformat()}Z")
+    lines.append(f"Generated: {generated_at_from_state(state)}")
     lines.append("")
 
     lines.append("## Governance")
@@ -173,7 +173,7 @@ def write_review_state_json(review_dir: Path, state: CartographyReviewState) -> 
 
     output = {
         "artifact_type": "scientific_cartography_langgraph_review_state",
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": generated_at_from_state(state),
         "state": serializable_state,
     }
 

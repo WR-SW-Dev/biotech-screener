@@ -21,6 +21,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -265,7 +266,7 @@ def build_preflight_report(
 ):
     """Assemble preflight report."""
     report = {
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "timestamp": datetime.fromtimestamp(time.time(), tz=timezone.utc).isoformat().replace("+00:00", "Z"),
         "current_branch_state": git_state["state"],
         "latest_snapshot": snapshot["description"],
         "git_head": f"{git_state['head']} {git_state['message']}",

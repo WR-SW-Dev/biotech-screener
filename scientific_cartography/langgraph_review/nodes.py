@@ -1,10 +1,10 @@
 """Deterministic nodes for Scientific Cartography review workflow."""
 
 import json
-from datetime import datetime
 from pathlib import Path
 
 from scientific_cartography.langgraph_review.state import CartographyReviewState
+from scientific_cartography.langgraph_review.timestamps import generated_at_from_state
 
 FORBIDDEN_TERMS = {
     "score",
@@ -344,7 +344,7 @@ def capture_human_decision(state: CartographyReviewState) -> CartographyReviewSt
             raise ValueError("--hold-review requires --decision-reason")
         decision_state = "HOLD_PENDING_MORE_REVIEW"
 
-    created_at = datetime.utcnow().isoformat() + "Z"
+    created_at = generated_at_from_state(state)
 
     decision_artifact = {
         "artifact_type": "scientific_cartography_langgraph_human_decision",
