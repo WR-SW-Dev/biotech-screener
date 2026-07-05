@@ -22,13 +22,16 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools.data_integrity_audit import (
+from tools.data_integrity_audit import (  # noqa: E402
     _safe_float,
+    _split_adjust_prices,
     _verdict,
     _violation_severity,
     check_invariants,
     check_universe_coverage,
+    recompute_price_fields,
 )
+from common.corporate_actions import load_actions  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -311,3 +314,106 @@ class TestUniverseCoverage:
         violations = check_universe_coverage(df, uni_path)
         assert len(violations) == 1
         assert violations[0]["ticker"] == "GOOG"
+
+
+# ---------------------------------------------------------------------------
+# F) Split-adjusted price recompute (MLTX 10:1 forward split false-positive)
+# ---------------------------------------------------------------------------
+
+
+AS_OF = "2026-07-02"
+SPLIT_DATE = "2026-03-16"  # a business day partway through the window
+
+
+def _split_registry(tmp_path):
+    """Registry with a single 10:1 forward split (factor 0.1) for SPLT."""
+    payload = {
+        "actions": [
+            {
+                "ticker": "SPLT",
+                "action": "forward_split",
+                "effective_date": SPLIT_DATE,
+                "ratio": "10:1",
+                "factor": 0.1,
+                "notes": "test fixture (mirrors MLTX 2025-09-29)",
+            }
+        ]
+    }
+    p = tmp_path / "corporate_actions.json"
+    p.write_text(json.dumps(payload), encoding="utf-8")
+    return load_actions(p)
+
+
+def _split_prices():
+    """Raw (unadjusted) price history for a ticker with a 10:1 forward split.
+
+    Pre-split: flat 60.0 (raw). On the split date the raw price divides by 10.
+    Post-split: 6.0 -> peak 6.6 -> ends 5.0. 140 business days total (> MIN_BARS_DD).
+    Split-adjusted-to-as_of drawdown = 5.0/6.6 - 1 = -0.2424.
+    Raw (buggy) drawdown = 5.0/60.0 - 1 = -0.9167.
+    """
+    dates = pd.bdate_range(end=AS_OF, periods=140).strftime("%Y-%m-%d").tolist()
+    split_idx = next(i for i, d in enumerate(dates) if d >= SPLIT_DATE)
+    rows = []
+    for i, d in enumerate(dates):
+        if i < split_idx:
+            close = 60.0  # pre-split raw
+        else:
+            # post-split raw: 6.0 rising to 6.6 then falling to 5.0
+            n_post = len(dates) - split_idx
+            j = i - split_idx
+            if j <= n_post // 2:
+                close = 6.0 + 0.6 * (j / max(1, n_post // 2))
+            else:
+                close = 6.6 - 1.6 * ((j - n_post // 2) / max(1, n_post - n_post // 2))
+        rows.append({"ticker": "SPLT", "date": d, "close": round(close, 4)})
+    df = pd.DataFrame(rows)
+    df["date"] = df["date"].astype(str)
+    return df
+
+
+class TestSplitAdjustedRecompute:
+    def test_raw_prices_falsely_flag_split_ticker(self, tmp_path):
+        """Without split adjustment, a split ticker's stored (adjusted) drawdown
+        diverges wildly from the raw recompute — the false-positive we're fixing."""
+        prices = _split_prices()
+        rankings = pd.DataFrame([{"ticker": "SPLT", "de_drawdown": "-0.2424"}])
+        diffs = recompute_price_fields(rankings, prices, AS_OF)
+        entry = diffs[0]
+        assert entry["dd_verdict"] == "FAIL"
+        assert abs(entry["dd_recomputed"] - (-0.9167)) < 0.01
+
+    def test_split_adjust_prices_fixes_recompute(self, tmp_path):
+        """After applying corporate_actions split factors, the recompute matches
+        the stored split-adjusted value (OK, no false positive)."""
+        registry = _split_registry(tmp_path)
+        prices = _split_adjust_prices(_split_prices(), AS_OF, registry)
+        rankings = pd.DataFrame([{"ticker": "SPLT", "de_drawdown": "-0.2424"}])
+        diffs = recompute_price_fields(rankings, prices, AS_OF)
+        entry = diffs[0]
+        assert entry["dd_verdict"] == "OK", entry
+        assert abs(entry["dd_recomputed"] - (-0.2424)) < 0.02
+
+    def test_split_adjust_leaves_unsplit_ticker_untouched(self, tmp_path):
+        """A ticker with no corporate action must be returned byte-identical."""
+        registry = _split_registry(tmp_path)
+        prices = pd.DataFrame(
+            [
+                {"ticker": "NOSP", "date": "2026-01-05", "close": 10.0},
+                {"ticker": "NOSP", "date": "2026-06-30", "close": 12.0},
+            ]
+        )
+        out = _split_adjust_prices(prices.copy(), AS_OF, registry)
+        pd.testing.assert_frame_equal(
+            out.reset_index(drop=True), prices.reset_index(drop=True)
+        )
+
+    def test_split_adjust_empty_registry_is_noop(self):
+        """No registry / no actions -> prices returned unchanged."""
+        from common.corporate_actions import CorporateActionRegistry
+
+        prices = _split_prices()
+        out = _split_adjust_prices(prices.copy(), AS_OF, CorporateActionRegistry())
+        pd.testing.assert_frame_equal(
+            out.reset_index(drop=True), prices.reset_index(drop=True)
+        )
