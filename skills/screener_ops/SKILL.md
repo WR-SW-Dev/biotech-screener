@@ -581,6 +581,9 @@ Research-enablement tooling for backfilling expectation fields into historical s
 | Ops Digest Builder | `tools/build_ops_digest.py` |
 | Readiness Scorecard | `tools/weekly_readiness_scorecard.py` |
 | Cron Wrapper | `tools/cron_daily_production.sh` |
+| Corporate Actions Registry | `production_data/corporate_actions.json` |
+| Corporate Actions Loader | `common/corporate_actions.py` |
+| YTD Acquisitions Log | `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md` |
 
 ---
 
@@ -616,6 +619,47 @@ Use plain strings for static markdown table headers and other static text; f-str
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` \(must stay in sync\)
 - **Manifest**: 36+ entries, no duplicate IDs
 - **Architecture freeze**: In effect until post-h20d checkpoint \(\~2026-05-26\)
+
+## Corporate Actions & M&A Registry
+
+*Last reviewed: 2026-07-05*
+
+**Authoritative sources**
+
+| Artifact | Path |
+| --- | --- |
+| Registry | `production_data/corporate_actions.json` |
+| Loader / queries | `common/corporate_actions.py` \(`load_actions`, `is_dead`, `death_date`, `resolve_ticker`\) |
+| YTD model-relevant log | `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md` |
+
+**2026 YTD model-relevant acquisitions** \(as of 2026-07-05\)
+
+| Ticker | Status | Close / pending | Model relevance |
+| --- | --- | --- | --- |
+| ACLX | Closed | 2026-04-28 | Registry holder: Paradigm |
+| APLS | Closed | 2026-05-14 | Registry holder: Deep Track \(Tier 1\) |
+| KALV | Closed | 2026-06-11 | Universe name \(HAE\); no Tier-1 holder |
+| CNTA | Closed | 2026-06-24 | Logos / Farallon; coinvest watchlist removed 06-24 |
+| NUVL | Pending | tender exp 2026-07-14 | Deerfield + Paradigm |
+| APGE | Pending | Q3 2026 expected | Fairmount / RTW / Affinity; Robinhood |
+
+**Closed YTD:** ACLX, APLS, KALV, CNTA. **Pending:** NUVL, APGE.
+
+### Logging workflow
+
+When a model-relevant name announces or closes M&A:
+
+1. Verify terms vs issuer press release + SEC filing \(Schedule TO, 8-K, etc.\)
+2. Update `production_data/corporate_actions.json` — closed deals → `acquisition` with `effective_date` + `deal_price`; pre-close → `pending_acquisition`
+3. Append or update `artifacts/acquisitions/biotech_model_acquisitions_ytd_YYYY.md`
+4. Run `pytest tests/test_corporate_actions_registry.py`
+5. If coinvest watchlist affected, update `production_data/event_alert_watchlist.json`
+
+### Registry gotchas
+
+- **`pending_acquisition`** is documented in JSON but **not loaded** by `common/corporate_actions.py` \(`ACTION_TYPES` omits it\). Pending deals do not trigger `is_dead()` until promoted to `acquisition` at close.
+- **PIT death dates:** `effective_date` must be the **close** date, not announcement or agreement date. ACLX had a bad date \(2025-12-15 vs actual close 2026-04-28\) — same class of error as CNTA; corrupts Dec 2025–Apr 2026 backtest context.
+- **`deal_price`:** store cash component; put CVR terms in `notes`. Backfill null prices only after primary-source verification.
 
 ## BioShort Research \(Spec 092\)
 

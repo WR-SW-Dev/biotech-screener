@@ -288,6 +288,25 @@ Also monitor BioPharm IQ Twitter ([https://twitter.com/BioPharmIQ](https://twitt
 
 **Lesson**: 13D/13G pre-signals capture ~60-70% of major moves but systematically miss sub-5% positions and non-reporting-threshold changes. The largest surprises (DAMORA for Fairmount, CNTA for Logos) were invisible until 13F-HR.
 
+## 2026 YTD Model-Relevant Acquisitions
+
+*Last reviewed: 2026-07-05. Full terms + sources: `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md`. Registry: `production_data/corporate_actions.json`.*
+
+| Ticker | Acquirer | Consideration | Status | Holder / watchlist impact |
+| --- | --- | --- | --- | --- |
+| ACLX | Gilead | $115.00 + $5.00 CVR | Closed 2026-04-28 | Paradigm |
+| APLS | Biogen | $41.00 + $4.00 CVR | Closed 2026-05-14 | Deep Track (Tier 1) |
+| KALV | Chiesi | $27.00 cash | Closed 2026-06-11 | Universe (HAE); no Tier-1 holder |
+| CNTA | Eli Lilly | $38.00 + up to $9.00 CVR | Closed 2026-06-24 | Logos (Tier 1) / Farallon; **watchlist removed 06-24** (17→16) |
+| NUVL | GSK | $124.00 cash | Pending — tender exp 2026-07-14 | Deerfield (#1 position) + Paradigm |
+| APGE | AbbVie | $135.11 cash | Pending — Q3 2026 | Fairmount (Tier 1) / RTW / Affinity; Robinhood |
+
+**CNTA watchlist note (Jun 24):** Eli Lilly acquisition of Centessa Pharmaceuticals closed June 24. CNTA ADS delisted. Watchlist reduced from 17 to 16 tickers effective Jun 24. Logos $84M position converts to deal consideration at $38/share + up to $9 CVR.
+
+**Pending-deal rule:** `pending_acquisition` entries in `corporate_actions.json` are documentation-only until close — the loader does not gate NUVL/APGE from ranker/selector via `is_dead()` yet. Promote to `acquisition` with close `effective_date` when deals complete.
+
+**Personal-holding overlap YTD:** APGE only (Robinhood). ORKA held but not acquired — excluded from log.
+
 ## Session-end learning
 
 After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:
