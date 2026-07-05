@@ -307,6 +307,14 @@ Also monitor BioPharm IQ Twitter ([https://twitter.com/BioPharmIQ](https://twitt
 
 **Personal-holding overlap YTD:** APGE only (Robinhood). ORKA held but not acquired — excluded from log.
 
+### Interpretation — do not overclaim
+
+Six takeouts YTD (4 closed, 2 pending) is **positive evidence for universe construction and registry relevance**, **moderate evidence for surveillance value**, and **not sufficient evidence for ranker alpha** without a pre-announcement score/event study.
+
+- The count validates where sophisticated capital clusters before pharma acts — not that the model predicted the deals.
+- KALV: universe coverage, not Tier-1 holder signal. APGE: personal holding, not systematic pick proof.
+- ACLX/NUVL registry fixes protect IC and event-return validity more than they prove selection skill. See full operator framing in the acquisitions log § Interpretation.
+
 ## Session-end learning
 
 After completing this skill's task, if you encountered an unexpected behavior, constraint, API response, or workflow edge case, log it:

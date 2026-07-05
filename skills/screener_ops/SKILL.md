@@ -645,6 +645,21 @@ Use plain strings for static markdown table headers and other static text; f-str
 
 **Closed YTD:** ACLX, APLS, KALV, CNTA. **Pending:** NUVL, APGE.
 
+### Interpretation — do not overclaim
+
+> Six model-relevant biotech takeouts YTD validates the monitored universe and elite-manager registry as an M&A-rich hunting ground; the right takeaway is **corporate-action/PIT integrity and surveillance coverage**, not yet proof that the ranker predicts acquisitions.
+
+| Evidence lane | Verdict |
+| --- | --- |
+| Universe construction | Positive |
+| Registry relevance | Positive |
+| Surveillance value | Moderate |
+| Ranker alpha \(pre-announcement\) | Insufficient — needs pre-announcement score/event study |
+
+- Validates registry/coinvest **surveillance** more than any single alpha score. Acquirers are tier-1 strategics \(Gilead, Biogen, Lilly, GSK, AbbVie, Chiesi\), not random microcap wins.
+- **Do not claim model causality:** KALV was a universe name without Tier-1 holder flag; APGE was a personal holding — neither proves systematic selection skill. Clean claim: the monitored opportunity set is producing takeouts.
+- **PIT hygiene is the immediate alpha protection:** ACLX wrong death date and NUVL absence corrupt backtests and pending-status handling. Full framing: `artifacts/acquisitions/biotech_model_acquisitions_ytd_2026.md` § Interpretation.
+
 ### Logging workflow
 
 When a model-relevant name announces or closes M&A:
