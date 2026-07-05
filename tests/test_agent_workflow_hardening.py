@@ -123,6 +123,7 @@ def test_artifact_schema_registry_requires_governance(tmp_path: Path):
         """
 {
   "artifacts": {
+    "hermes_recursive_self_improvement_queue": {"required_fields": ["artifact_type", "schema_version", "governance"]},
     "scientific_cartography_langgraph_review_summary": {"required_fields": ["artifact_type", "schema_version"]},
     "scientific_cartography_langgraph_human_decision": {"required_fields": ["artifact_type", "schema_version", "governance"]},
     "scientific_cartography_lg3_scheduled_review_cron_execution": {"required_fields": ["artifact_type", "schema_version", "governance"]}

@@ -9,13 +9,16 @@ import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+import time
+from datetime import datetime
 from pathlib import Path
 
 # Add repo root to sys.path so imports work from any directory
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+from scientific_cartography.langgraph_review.timestamps import generated_at_from_as_of_date
 
 
 def find_latest_snapshot_date():
@@ -44,7 +47,7 @@ def find_latest_snapshot_date():
 def run_scheduled_review(
     as_of_date: str,
     strict: bool = False,
-    auto_approve: bool = True,
+    auto_approve: bool = False,
     decision_reason: str | None = None,
 ) -> int:
     """Run the LG1 review orchestrator for the given date.
@@ -88,10 +91,10 @@ def run_scheduled_review(
         )
 
     # Execute
-    start_time = datetime.now(timezone.utc)
+    start_time = time.monotonic()
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+        duration = time.monotonic() - start_time
 
         if result.returncode == 0:
             log_execution_success(as_of_date, duration)
@@ -100,11 +103,11 @@ def run_scheduled_review(
             log_execution_error(as_of_date, error_msg, duration)
 
     except subprocess.TimeoutExpired:
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+        duration = time.monotonic() - start_time
         error_msg = "Review orchestrator timeout (>1 hour)"
         log_execution_error(as_of_date, error_msg, duration)
     except Exception as e:
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
+        duration = time.monotonic() - start_time
         error_msg = f"Execution error: {str(e)}"
         log_execution_error(as_of_date, error_msg, duration)
 
@@ -120,7 +123,7 @@ def log_execution_success(as_of_date: str, duration: float) -> None:
     log_entry = {
         "artifact_type": "scientific_cartography_lg3_scheduled_review_cron_execution",
         "schema_version": "1.0",
-        "executed_at_utc": datetime.now(timezone.utc).isoformat() + "Z",
+        "executed_at_utc": generated_at_from_as_of_date(as_of_date),
         "as_of_date": as_of_date,
         "outcome": "success",
         "duration_seconds": duration,
@@ -153,7 +156,7 @@ def log_execution_error(as_of_date: str, error_msg: str, duration: float = 0) ->
     log_entry = {
         "artifact_type": "scientific_cartography_lg3_scheduled_review_cron_execution",
         "schema_version": "1.0",
-        "executed_at_utc": datetime.now(timezone.utc).isoformat() + "Z",
+        "executed_at_utc": generated_at_from_as_of_date(as_of_date),
         "as_of_date": as_of_date,
         "outcome": "failure",
         "duration_seconds": duration,
@@ -196,14 +199,14 @@ def main():
     parser.add_argument(
         "--auto-approve",
         action="store_true",
-        default=True,
-        help="Auto-approve review with scheduled-review-automation actor (default)",
+        default=False,
+        help="Auto-approve review with scheduled-review-automation actor",
     )
     parser.add_argument(
         "--no-auto-approve",
         action="store_false",
         dest="auto_approve",
-        help="Do not auto-approve; require manual decision",
+        help="Do not auto-approve; require manual decision (default)",
     )
     parser.add_argument(
         "--decision-reason",
@@ -230,7 +233,7 @@ def main():
             log_entry = {
                 "artifact_type": "scientific_cartography_lg3_scheduled_review_cron_execution",
                 "schema_version": "1.0",
-                "executed_at_utc": datetime.now(timezone.utc).isoformat() + "Z",
+                "executed_at_utc": generated_at_from_as_of_date(as_of_date),
                 "as_of_date": None,
                 "outcome": "failure",
                 "duration_seconds": 0,

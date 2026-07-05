@@ -58,6 +58,11 @@ data/archives_secadcom/
 
 # Generated analysis artifacts (heavy outputs)
 artifacts/*
+# Allow committed agent heartbeat snapshots for fleet health checks
+!artifacts/governance/
+artifacts/governance/**
+!artifacts/governance/**/
+!artifacts/governance/**/latest_heartbeat.json
 # Allow forward validation immutable ledger (captures, fills, candidate declaration)
 !artifacts/forward_validation/CANDIDATE.json
 !artifacts/forward_validation/captures.jsonl
