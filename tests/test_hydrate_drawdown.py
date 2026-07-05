@@ -22,6 +22,10 @@ from run_screen import (
     _hydrate_beta_rsi,
     _hydrate_drawdown,
 )
+from common.corporate_actions import (  # noqa: E402
+    CorporateAction,
+    CorporateActionRegistry,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -921,6 +925,86 @@ class TestBetaAlphaOverwrite:
         # With ticker +0.5%/bar and XBI +0.3%/bar, ticker outperforms
         # Alpha should be positive (ticker grows faster than beta * XBI)
         assert alpha > -0.5  # sanity bound
+
+
+class TestRecentSplitDrawdown:
+    """Recent forward splits (< MIN_BARS_FOR_ESTIMATE post-split bars) must not
+    produce a phantom deep drawdown.
+
+    Bug: the split-filter truncates history to the post-split regime, but when
+    that regime has < MIN_BARS_FOR_ESTIMATE bars the fallback restores the full
+    RAW series — whose 252-bar peak still spans the pre-split high, yielding a
+    false deep drawdown (e.g. IMMP 10:1 fwd split, true −31.7% reported as
+    −86.8%, wrongly gated as deep_drawdown).
+
+    Fix: when a real split is confirmed in corporate_actions.json, scale the
+    restored series instead of using raw. Genuine crashes (no registry entry)
+    keep the raw fallback.
+    """
+
+    SPLIT_AT = 140
+    TOTAL = 200
+
+    def _recent_split_prices(self, ticker, factor=0.1):
+        """Pre-split flat 100; on split-day drop by `factor` (to 10); post-split
+        rise to 11 (peak) then fall to 8. 60 post-split bars (< MIN_BARS)."""
+        from datetime import date, timedelta
+
+        base = date(2025, 1, 1)
+        rows = []
+        n_post = self.TOTAL - self.SPLIT_AT
+        for i in range(self.TOTAL):
+            d = (base + timedelta(days=i)).isoformat()
+            if i < self.SPLIT_AT:
+                close = 100.0
+            else:
+                j = i - self.SPLIT_AT
+                post0 = 100.0 * factor  # 10.0
+                half = n_post // 2
+                if j <= half:
+                    close = post0 + (11.0 - post0) * (j / max(1, half))  # 10 -> 11
+                else:
+                    close = 11.0 - (11.0 - 8.0) * ((j - half) / max(1, n_post - half))  # 11 -> 8
+            rows.append({"ticker": ticker, "date": d, "close": round(close, 4)})
+        split_date = rows[self.SPLIT_AT]["date"]
+        return rows, rows[-1]["date"], split_date
+
+    def _registry(self, ticker, split_date, factor=0.1):
+        reg = CorporateActionRegistry(
+            actions=[
+                CorporateAction(
+                    ticker=ticker, action="forward_split", effective_date=split_date, factor=factor
+                )
+            ]
+        )
+        reg._build_indices()
+        return reg
+
+    def test_recent_split_with_registry_is_adjusted(self):
+        """With a confirmed split, drawdown uses the split-adjusted series (~−0.27),
+        not the raw pre-split peak (~−0.92)."""
+        recs = {"SPLT": _make_rec("SPLT")}
+        prices, last_date, split_date = self._recent_split_prices("SPLT")
+        reg = self._registry("SPLT", split_date)
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = Path(tmp) / "price_history.csv"
+            _write_price_csv(csv_path, prices)
+            _hydrate_drawdown(recs, csv_path, last_date, corporate_actions=reg)
+        dd = recs["SPLT"]["defensive_features"]["drawdown"]
+        assert abs(dd - (-0.2727)) < 0.02, dd
+
+    def test_recent_crash_without_registry_stays_deep(self):
+        """No corporate action (a real crash the −75% heuristic caught) → raw
+        fallback preserved, drawdown stays deep (~−0.92)."""
+        recs = {"CRSH": _make_rec("CRSH")}
+        prices, last_date, _ = self._recent_split_prices("CRSH")
+        empty = CorporateActionRegistry()
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = Path(tmp) / "price_history.csv"
+            _write_price_csv(csv_path, prices)
+            _hydrate_drawdown(recs, csv_path, last_date, corporate_actions=empty)
+        dd = recs["CRSH"]["defensive_features"]["drawdown"]
+        assert dd < -0.85, dd
 
 
 class TestVol60dHydration:
