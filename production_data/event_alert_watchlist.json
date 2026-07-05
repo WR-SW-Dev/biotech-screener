@@ -8,16 +8,6 @@
       ]
     },
     {
-      "ticker": "CNTA",
-      "company": "Centessa Pharmaceuticals plc",
-      "aliases": [
-        "Centessa",
-        "ORX142",
-        "ORX750",
-        "cleminorexton"
-      ]
-    },
-    {
       "ticker": "FDMT",
       "company": "4D Molecular Therapeutics, Inc.",
       "aliases": [
@@ -269,13 +259,6 @@
       "company": "Alumis Inc.",
       "aliases": [
         "Alumis"
-      ]
-    },
-    {
-      "ticker": "KALV",
-      "company": "KalVista Pharmaceuticals, Inc.",
-      "aliases": [
-        "KalVista"
       ]
     },
     {
