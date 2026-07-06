@@ -1,0 +1,462 @@
+{
+  "date": "2026-07-06",
+  "monitoring_day": 20,
+  "monitoring_period_note": "Day 20 — PRE-MARKET snapshot (09:00 ET). Extended monitoring beyond formal 2026-06-11 through 2026-06-30 period. Data: July 2 close (most recent available — market closed July 3 holiday, July 4-5 weekend, July 6 pre-open). Today is FIRST TRADING DAY since July 2.",
+  "timestamp": "2026-07-06T09:00:00.000000Z",
+  "phase": "Day 20 — HOLIDAY STASIS / FIRST TRADING DAY OPEN. Four-calendar-day gap (Jul 2 close → Jul 6 open). Portfolio P&L unchanged at +29.99% avg vs entry (July 2 close = last close). XBI +20.09% vs entry. Outperformance: +9.90pp. Key open: watch SYRE ($85 floor), SLDB ($10.50 support), NRIX/XENE (T-25 binary window). GOVERNANCE ALERT: h20d hard gate + IC checkpoint FIVE DAYS OVERDUE — must run today.",
+  "data_as_of": "2026-07-02 close (Yahoo Finance v8 chart API, ts=1782999000, all 15 tickers + XBI confirmed). No new trading since July 2 — July 3 = market holiday, July 4-5 = weekend, July 6 = pre-open as of 09:00 ET.",
+  "data_gap_note": "4-calendar-day gap: July 2 close → July 6 open. No price change expected in snapshot vs Day 19. Potential for holiday-period news: unannounced FDA actions, clinical holds, safety signals, M&A, or pre-market announcements before 09:30 ET open.",
+  "account": {
+    "account_id": "Robinhood 802349084",
+    "equity_fetchable": false,
+    "equity_estimated_usd": 130.14,
+    "equity_note": "Robinhood MCP unavailable throughout monitoring period. Equity computed from phase2_entry_prices.json quantities × July 2 close prices. Total gain: $30.01 on $100.13 invested. UNCHANGED from Day 19 (same prices — holiday stasis).",
+    "cash_carried": 99.87,
+    "buying_power_carried": 200.06,
+    "data_source": "Yahoo Finance July 2 close (equity); baseline_2026-06-10 carry-forward (cash/buying_power)"
+  },
+  "portfolio_overview": {
+    "total_positions": 15,
+    "positions_critical": 0,
+    "positions_flagged": 1,
+    "positions_at_risk": 0,
+    "positions_positive_vs_entry": 15,
+    "positions_negative_vs_entry": 0,
+    "avg_pnl_vs_entry_pct": 29.99,
+    "avg_pnl_note": "Portfolio avg +29.99% vs corrected entry prices as of Jul 2 close. UNCHANGED from Day 19 (holiday stasis — no trading Jul 3-5). All 15 positions profitable. Range: DRUG +6.31% to SLDB +67.03%. Portfolio enters July 6 session with full P&L from Day 19 intact. Market opens 09:30 ET.",
+    "session_entering": "July 6, 2026 — first trading day since July 2. Holiday gap risk period completed. No known adverse news over 4-day gap as of pre-market check.",
+    "xbi_entry_price": 133.62,
+    "xbi_current_price_jul2": 160.46,
+    "xbi_return_since_entry_pct": 20.09,
+    "drawdown_vs_xbi_pp": 9.90,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "CLEAR — +9.90pp vs XBI (threshold -2.0pp). UNCHANGED from Day 19 (+9.91pp). Entering July 6 session well above threshold."
+  },
+  "positions": [
+    {
+      "ticker": "COGT",
+      "company_name": "Cogent Biosciences, Inc.",
+      "entry_price": 31.35,
+      "price_jul2": 38.69,
+      "prev_close_jul1": 38.48,
+      "pnl_vs_entry_pct": 23.41,
+      "day_change_jul2_pct": 0.55,
+      "volume_jul2": 1858800,
+      "vol_ratio_vs_jul1": 0.77,
+      "equity_position_usd": 8.23,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 (AMBIGUOUS/PRICED). Investigation CLOSED.",
+      "gap_flag": false,
+      "watch_jul6": "Stabilizing post-catalyst. Hold above $38 = constructive. No specific watch.",
+      "tier": "A"
+    },
+    {
+      "ticker": "DNTH",
+      "company_name": "Dianthus Therapeutics, Inc.",
+      "entry_price": 72.10,
+      "price_jul2": 94.34,
+      "prev_close_jul1": 90.21,
+      "pnl_vs_entry_pct": 30.85,
+      "day_change_jul2_pct": 4.58,
+      "volume_jul2": 753200,
+      "vol_ratio_vs_jul1": 0.47,
+      "equity_position_usd": 8.77,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 (CAPTIVATE sell-the-news, 75% responder below consensus). Recovery: +4.58% Jul2 on 0.47x vol. $94.34.",
+      "gap_flag": false,
+      "watch_jul6": "Hold above $90. Recovery momentum on low volume = constructive. Watch for continued stabilization or re-test of $90.",
+      "tier": "A"
+    },
+    {
+      "ticker": "NRIX",
+      "company_name": "Nurix Therapeutics, Inc.",
+      "entry_price": 15.46,
+      "price_jul2": 23.97,
+      "prev_close_jul1": 23.91,
+      "pnl_vs_entry_pct": 55.05,
+      "day_change_jul2_pct": 0.25,
+      "volume_jul2": 1427500,
+      "vol_ratio_vs_jul1": 1.20,
+      "equity_position_usd": 10.31,
+      "catalyst_status": "MONITORING_PRE_CATALYST — DAYBreak CLL-201 T-25 (~2026-07-31). Roche bexobrutideg $2.3B deal (Jun25) derisked thesis.",
+      "gap_flag": false,
+      "watch_jul6": "T-25 binary window beginning. Monitor for pre-catalyst positioning (elevated volume above 1.5M). +55.05% vs entry — second highest.",
+      "tier": "A"
+    },
+    {
+      "ticker": "URGN",
+      "company_name": "UroGen Pharma Ltd.",
+      "entry_price": 28.02,
+      "price_jul2": 38.02,
+      "prev_close_jul1": 37.94,
+      "pnl_vs_entry_pct": 35.69,
+      "day_change_jul2_pct": 0.21,
+      "volume_jul2": 821800,
+      "vol_ratio_vs_jul1": 0.73,
+      "equity_position_usd": 9.04,
+      "catalyst_status": "MONITORING — T-56 (~2026-09-01). Essentially flat post-Jul1 +3.10% anomaly.",
+      "gap_flag": false,
+      "watch_jul6": "No specific catalyst. Hold above $38. T-56 approaching moderately. No anomaly expected.",
+      "tier": "A"
+    },
+    {
+      "ticker": "ALMS",
+      "company_name": "Alumis Inc.",
+      "entry_price": 20.37,
+      "price_jul2": 26.50,
+      "prev_close_jul1": 26.64,
+      "pnl_vs_entry_pct": 30.09,
+      "day_change_jul2_pct": -0.53,
+      "volume_jul2": 1819200,
+      "vol_ratio_vs_jul1": 1.50,
+      "equity_position_usd": 8.64,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 ($300M equity raise dilution). LUMUS SLE Q3 2026 next catalyst.",
+      "gap_flag": false,
+      "watch_jul6": "Dilution overhang: watch for continued elevated volume. Jul2 1.50x on -0.53% suggests ongoing distribution. Monitor for volume normalization below 1.0x. Hold above $26 = stable.",
+      "tier": "A"
+    },
+    {
+      "ticker": "SYRE",
+      "company_name": "Spyre Therapeutics, Inc.",
+      "entry_price": 76.10,
+      "price_jul2": 86.63,
+      "prev_close_jul1": 88.89,
+      "pnl_vs_entry_pct": 13.84,
+      "day_change_jul2_pct": -2.54,
+      "volume_jul2": 973900,
+      "vol_ratio_vs_jul1": 0.58,
+      "equity_position_usd": 7.63,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-06-15 (SKYLINE Ph2 positive, $463.5M raise). Post-secondary dilution pressure. Broke $88 support Jul2.",
+      "gap_flag": false,
+      "watch_jul6": "PRIORITY WATCH: Monitor $85 floor at open. Jul2 -2.54% broke $88. If SYRE opens below $85, note for manual review. Second weakest P&L at +13.84%.",
+      "tier": "B"
+    },
+    {
+      "ticker": "RVMD",
+      "company_name": "Revolution Medicines, Inc.",
+      "entry_price": 143.76,
+      "price_jul2": 189.24,
+      "prev_close_jul1": 187.51,
+      "pnl_vs_entry_pct": 31.64,
+      "day_change_jul2_pct": 0.92,
+      "volume_jul2": 3189200,
+      "vol_ratio_vs_jul1": 1.53,
+      "equity_position_usd": 8.79,
+      "catalyst_status": "MONITORING — T-267 (~2027-03-31). Large-cap biotech. Jun25-29 surge cause unconfirmed but price stable.",
+      "gap_flag": false,
+      "watch_jul6": "Holding above $189. 1.53x volume Jul2 on +0.92% = constructive. No specific watch.",
+      "tier": "B"
+    },
+    {
+      "ticker": "CMPS",
+      "company_name": "COMPASS Pathways Plc",
+      "entry_price": 11.30,
+      "price_jul2": 13.62,
+      "prev_close_jul1": 13.29,
+      "pnl_vs_entry_pct": 20.53,
+      "day_change_jul2_pct": 2.48,
+      "volume_jul2": 4101500,
+      "vol_ratio_vs_jul1": 0.86,
+      "equity_position_usd": 8.04,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-06-30 (Phase 2b psilocybin TRD miss). Two-day cascade (-6.10% + -6.08%) stabilizing. +2.48% Jul2 on declining 0.86x vol = constructive.",
+      "gap_flag": false,
+      "watch_jul6": "Stabilization trend. Watch for continued volume normalization below 3M/day. Hold above $13 = intact recovery.",
+      "tier": "C"
+    },
+    {
+      "ticker": "SLDB",
+      "company_name": "Solid Biosciences Inc.",
+      "entry_price": 6.49,
+      "price_jul2": 10.84,
+      "prev_close_jul1": 10.20,
+      "pnl_vs_entry_pct": 67.03,
+      "day_change_jul2_pct": 6.27,
+      "volume_jul2": 2631900,
+      "vol_ratio_vs_jul1": 1.23,
+      "equity_position_usd": 11.15,
+      "catalyst_status": "MONITORING — T-99 (~2026-10-14). S&P Biotech Index addition effective Jun21. Jul2 +6.27% gap (benign — post-index momentum). Portfolio leader +67.03%.",
+      "gap_flag": true,
+      "gap_note": "Jul2 +6.27% gap ALREADY ASSESSED: BENIGN (post-S&P Biotech Index inclusion momentum). Vol 1.23x = modestly elevated, not panic. New high $10.84. Gap is FLAGGED for completeness per task instructions but requires NO action. Day 20 gap check: same data as Day 19.",
+      "watch_jul6": "PRIORITY WATCH: Hold above $10.50 at open. $10 level held through Jul1 broad sell-off. Jul6 open above $10.50 confirms new support floor post-index addition.",
+      "tier": "A"
+    },
+    {
+      "ticker": "DRUG",
+      "company_name": "Bright Minds Biosciences Inc.",
+      "entry_price": 63.59,
+      "price_jul2": 67.60,
+      "prev_close_jul1": 66.54,
+      "pnl_vs_entry_pct": 6.31,
+      "day_change_jul2_pct": 1.59,
+      "volume_jul2": 234700,
+      "vol_ratio_vs_jul1": 0.41,
+      "equity_position_usd": 7.15,
+      "catalyst_status": "MONITORING — T-116 (~2026-10-31). Recovering from Jul1 -5.21% on 2.22x vol. Jul2 +1.59% on 0.41x very low vol = recovery.",
+      "gap_flag": false,
+      "watch_jul6": "Near-breakeven watch IMPROVING: +6.31% (was +4.64% Day18). Thin float — small volume moves price materially. Hold above $65 = stable. H.C. Wainwright PT $145.",
+      "tier": "A"
+    },
+    {
+      "ticker": "STOK",
+      "company_name": "Stoke Therapeutics, Inc.",
+      "entry_price": 28.74,
+      "price_jul2": 32.70,
+      "prev_close_jul1": 32.71,
+      "pnl_vs_entry_pct": 13.78,
+      "day_change_jul2_pct": -0.03,
+      "volume_jul2": 1013200,
+      "vol_ratio_vs_jul1": 0.85,
+      "equity_position_usd": 7.57,
+      "catalyst_status": "MONITORING — T-84 (~2026-09-29). Three-session equilibrium at $32.70. Q2 rebalancing fully resolved. Investigation CLOSED.",
+      "gap_flag": false,
+      "watch_jul6": "Tight equilibrium. No specific watch. Hold above $32.",
+      "tier": "A"
+    },
+    {
+      "ticker": "PRAX",
+      "company_name": "Praxis Precision Medicines, Inc.",
+      "entry_price": 241.92,
+      "price_jul2": 318.52,
+      "prev_close_jul1": 319.60,
+      "pnl_vs_entry_pct": 31.66,
+      "day_change_jul2_pct": -0.34,
+      "volume_jul2": 358300,
+      "vol_ratio_vs_jul1": 0.57,
+      "equity_position_usd": 8.77,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 (EMBRAVE Part A, sell-the-news). NDA pipeline intact (ulixacaltamide ET + relutrigine PDUFA Jan 2027). Correction decelerating.",
+      "gap_flag": false,
+      "watch_jul6": "Selling pressure dissipating (358K vol Jul2). Hold above $315. NDA thesis intact.",
+      "tier": "B"
+    },
+    {
+      "ticker": "TRVI",
+      "company_name": "Trevi Therapeutics, Inc.",
+      "entry_price": 13.43,
+      "price_jul2": 17.93,
+      "prev_close_jul1": 17.61,
+      "pnl_vs_entry_pct": 33.51,
+      "day_change_jul2_pct": 1.82,
+      "volume_jul2": 2206600,
+      "vol_ratio_vs_jul1": 0.72,
+      "equity_position_usd": 8.90,
+      "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 (CORAL Phase 2b disappointing, IPF cough). Recovery: +1.82% Jul2 on 0.72x declining vol. Investigation CLOSED.",
+      "gap_flag": false,
+      "watch_jul6": "Post-catalyst cascade absorbed. Hold above $17. Recovery trend intact.",
+      "tier": "C"
+    },
+    {
+      "ticker": "ERAS",
+      "company_name": "Erasca, Inc.",
+      "entry_price": 13.27,
+      "price_jul2": 18.47,
+      "prev_close_jul1": 17.92,
+      "pnl_vs_entry_pct": 39.19,
+      "day_change_jul2_pct": 3.07,
+      "volume_jul2": 4095200,
+      "vol_ratio_vs_jul1": 1.05,
+      "equity_position_usd": 9.30,
+      "catalyst_status": "MONITORING_POST_SURGE — T-147 (~2026-12-01). New monitoring high $18.47. Jun26-29 surge (+22.5% two-session) cause still unconfirmed (EDGAR 8-K). Third highest P&L at +39.19%.",
+      "gap_flag": false,
+      "watch_jul6": "Hold above $18. Any reversal toward $17 on elevated volume warrants attention. Low urgency given positive structure.",
+      "tier": "A"
+    },
+    {
+      "ticker": "XENE",
+      "company_name": "Xenon Pharmaceuticals Inc.",
+      "entry_price": 51.95,
+      "price_jul2": 60.96,
+      "prev_close_jul1": 60.30,
+      "pnl_vs_entry_pct": 17.34,
+      "day_change_jul2_pct": 1.09,
+      "volume_jul2": 1462600,
+      "vol_ratio_vs_jul1": 1.15,
+      "equity_position_usd": 7.84,
+      "catalyst_status": "MONITORING_PRE_CATALYST — T-25 (~2026-07-31). Simultaneous with NRIX in binary window. Pre-catalyst equilibrium with slight upward tilt.",
+      "gap_flag": false,
+      "watch_jul6": "T-25 binary window beginning. Monitor for pre-catalyst volume positioning above 2M/day. Hold above $60.",
+      "tier": "B"
+    }
+  ],
+  "performance_summary": {
+    "top_3_gainers_vs_entry": [
+      {"ticker": "SLDB", "pnl_vs_entry_pct": 67.03, "note": "Jul2 +6.27% (benign gap, post-S&P Biotech inclusion). Portfolio leader. Hold $10.50 at Jul6 open."},
+      {"ticker": "NRIX", "pnl_vs_entry_pct": 55.05, "note": "+0.25% on 1.20x vol. T-25 binary window. Roche deal ($2.3B) derisked."},
+      {"ticker": "ERAS", "pnl_vs_entry_pct": 39.19, "note": "+3.07% on 1.05x vol. Monitoring high $18.47. Jun26-29 news unconfirmed (carry)."}
+    ],
+    "top_3_lowest_vs_entry": [
+      {"ticker": "DRUG", "pnl_vs_entry_pct": 6.31, "note": "Near-breakeven watch IMPROVING. +1.59% on 0.41x very low vol. T-116."},
+      {"ticker": "SYRE", "pnl_vs_entry_pct": 13.84, "note": "POST-SECONDARY PRESSURE. -2.54% Jul2, broke $88. Watch $85 floor Jul6."},
+      {"ticker": "STOK", "pnl_vs_entry_pct": 13.78, "note": "Flat equilibrium at $32.70. Q2 rebalancing resolved. T-84."}
+    ],
+    "all_positions_positive_vs_entry": true,
+    "day_breadth_jul2": "12 up / 3 down (ALMS -0.53%, SYRE -2.54%, STOK -0.03%). Portfolio avg day change: +1.29%. XBI Jul2: +2.50%.",
+    "day20_data_note": "UNCHANGED from Day 19 — holiday stasis (Jul 3 holiday + Jul 4-5 weekend). Today (Jul 6) = first new price data since Jul 2."
+  },
+  "gap_analysis": {
+    "gap_check_note": "Day 20 pre-market gap analysis uses July 2 close vs July 1 close (same data as Day 19). Holiday gap for July 6 open will be observable at 09:30 ET. No pre-market quotes available via Yahoo Finance before open.",
+    "gap_events_gt5pct": [
+      {
+        "ticker": "SLDB",
+        "day_change_jul2_pct": 6.27,
+        "direction": "UP",
+        "volume_jul2": 2631900,
+        "vol_ratio": 1.23,
+        "assessment": "BENIGN — assessed Day 19. Post-S&P Biotech Index inclusion momentum (effective Jun21). New high $10.84. Monitor Jul6 open for $10.50+ hold. No action required.",
+        "manual_review_required": false
+      }
+    ],
+    "near_threshold_gt5pct_abs": [
+      {
+        "ticker": "DNTH",
+        "day_change_jul2_pct": 4.58,
+        "vol_ratio": 0.47,
+        "note": "Recovery from Jul1 -7.46% sell-the-news. +4.58% on 0.47x declining vol = constructive. Below 5% threshold."
+      }
+    ],
+    "gap_count_jul2": 1,
+    "manual_review_required": [],
+    "holiday_gap_risk_jul6_open": "ACTIVE UNTIL 09:30 ET. 4-calendar-day window (Jul 2 close → Jul 6 open) creates risk of unannounced FDA actions, clinical holds, safety signals, or pre-market news. All positions profitable — no critical vulnerability at entry.",
+    "priority_carries": [
+      "CARRY — ERAS Jun26-29 +22.5% surge cause: EDGAR 8-K unconfirmed. Price at new high $18.47 — lower urgency given positive structure.",
+      "CARRY — DRUG Jul1 -5.21% on 2.22x vol: EDGAR 8-K check outstanding. Jul2 recovery (+1.59%, 0.41x) = seller appears exited.",
+      "CARRY — RVMD Jun25-29 three-day surge cause: Price stable $189.24. Low urgency."
+    ]
+  },
+  "governance_gates": {
+    "portfolio_return_pct": 29.99,
+    "xbi_entry_price": 133.62,
+    "xbi_current_price_jul2": 160.46,
+    "xbi_return_since_entry_pct": 20.09,
+    "drawdown_vs_xbi_pp": 9.90,
+    "drawdown_threshold_pp": -2.0,
+    "drawdown_status": "CLEAR — +9.90pp above XBI (threshold -2.0pp). UNCHANGED from Day 19. Entering Jul 6 session well above threshold.",
+    "ic_gate": {
+      "status": "CRITICALLY OVERDUE — 5 DAYS PAST DUE (was due July 1)",
+      "path": "Path A durable gate (Path C formally closed 2026-06-24)",
+      "last_measured": "2026-06-24: score_rank_pct mean_ic = +0.0432, hit_rate = 54.3%, N = 35 dates",
+      "overdue_days": 5,
+      "early_review_trigger": "score_rank_pct mean_ic drops below 0.00 in any daily snapshot",
+      "required_action": "OPERATOR: Run score_rank_pct IC sweep on local machine. Was due July 1. Now 5 days overdue (Jul 1→2→3→4→5→6)."
+    },
+    "h20d_reeval_gate": {
+      "due_date": "2026-07-01",
+      "status": "CRITICALLY OVERDUE — 5 DAYS PAST DUE — HARD GATE",
+      "overdue_days": 5,
+      "required_action": "OPERATOR: python3 tools/check_13f_cohort_quarantine.py --pre-date <last-pre-promo> --post-date <first-post-promo>. Was due July 1. Now 5 days overdue.",
+      "current_observable_metrics": {
+        "jaccard": 0.875,
+        "threshold": 0.70,
+        "status": "PASS (carried from Day 16)",
+        "filing_coverage": "100%",
+        "signal_coverage": "85.22%"
+      },
+      "hard_gate_note": "Failure triggers: Jaccard < 0.40 or coverage drop >= 10pp. All observable metrics remain favorable. Override posture MAINTAINED. Formal script must run TODAY (July 6). Remote env cannot run — local execution required."
+    },
+    "jaccard_13f": {
+      "value": 0.875,
+      "threshold": 0.70,
+      "status": "PASS (0.875 > 0.70, carried from Day 15/16)",
+      "note": "Q2 2026 13F period closed June 30. Q2 13F monitoring starts ~August 11."
+    },
+    "emergency_exit_armed": false,
+    "positions_gt20pct_loss": [],
+    "positions_near_loss_threshold": [],
+    "positions_near_breakeven_lt10pct": [
+      {"ticker": "DRUG", "pnl_vs_entry_pct": 6.31, "note": "IMPROVING — two consecutive recovery sessions. Jul2 +1.59% on 0.41x very low vol. Near-breakeven watch status: IMPROVING."}
+    ],
+    "all_portfolio_gates_clear": true,
+    "governance_scripts_blocked": true,
+    "gate_summary": "ALL PORTFOLIO GATES CLEAR. Drawdown +9.90pp (threshold -2.0pp). No positions >20% loss. DRUG near-breakeven improving (+6.31%). CRITICAL GOVERNANCE BLOCK: h20d quarantine script AND IC checkpoint BOTH 5 DAYS OVERDUE (due July 1, now July 6). Must run both scripts TODAY on local machine before end of day. Remote environment cannot execute — operator action required. Observable metrics remain favorable (Jaccard 0.875, coverage 85.22%) but formal confirmation is urgently required."
+  },
+  "catalyst_watch": {
+    "binary_window_active": [
+      {
+        "ticker": "NRIX",
+        "catalyst_days_remaining": 25,
+        "date_approx": "~2026-07-31",
+        "tier": "A",
+        "current_price": 23.97,
+        "pnl_vs_entry": "+55.05%",
+        "note": "T-25 BINARY WINDOW. DAYBreak CLL-201. Roche bexobrutideg $2.3B deal (Jun25) has already derisked fundamental thesis. Holding at $23.97. Monitor for volume uptick above 2M/day as catalyst approaches."
+      },
+      {
+        "ticker": "XENE",
+        "catalyst_days_remaining": 25,
+        "date_approx": "~2026-07-31",
+        "tier": "B",
+        "current_price": 60.96,
+        "pnl_vs_entry": "+17.34%",
+        "note": "T-25 BINARY WINDOW. Simultaneous with NRIX. +1.09% on 1.15x vol Jul2 — gentle pre-catalyst accumulation. Monitor for volume above 2M/day. $60.96 new monitoring high."
+      }
+    ],
+    "monitoring_positions": [
+      {"ticker": "URGN", "catalyst_days": 56, "approx": "~2026-09-01", "pnl": "+35.69%", "note": "T-56. Stable."},
+      {"ticker": "STOK", "catalyst_days": 84, "approx": "~2026-09-29", "pnl": "+13.78%", "note": "T-84. Tight equilibrium."},
+      {"ticker": "SLDB", "catalyst_days": 99, "approx": "~2026-10-14", "pnl": "+67.03%", "note": "T-99. Post-index inclusion. New high $10.84. Monitor $10.50 support at open."},
+      {"ticker": "DRUG", "catalyst_days": 116, "approx": "~2026-10-31", "pnl": "+6.31%", "note": "T-116. Recovering."},
+      {"ticker": "ERAS", "catalyst_days": 147, "approx": "~2026-12-01", "pnl": "+39.19%", "note": "T-147. New high. Jun26-29 news unconfirmed."},
+      {"ticker": "RVMD", "catalyst_days": 267, "approx": "~2027-03-31", "pnl": "+31.64%", "note": "T-267. Large-cap stable."}
+    ],
+    "post_catalyst_positions": [
+      {"ticker": "SYRE", "fired": "2026-06-15", "outcome": "POSITIVE (SKYLINE Ph2)", "pnl": "+13.84%", "watch": "WATCH $85 FLOOR at Jul6 open"},
+      {"ticker": "CMPS", "fired": "2026-06-30", "outcome": "NEGATIVE (Phase 2b TRD miss)", "pnl": "+20.53%", "watch": "Stabilizing, watch $13 floor"},
+      {"ticker": "TRVI", "fired": "2026-07-01", "outcome": "NEGATIVE (CORAL Phase 2b disappointing)", "pnl": "+33.51%", "watch": "Recovery intact"},
+      {"ticker": "DNTH", "fired": "2026-07-01", "outcome": "NEGATIVE MARKET REACTION (CAPTIVATE sell-the-news)", "pnl": "+30.85%", "watch": "Hold above $90"},
+      {"ticker": "ALMS", "fired": "2026-07-01", "outcome": "NEGATIVE MARKET REACTION ($300M raise)", "pnl": "+30.09%", "watch": "Vol overhang — monitor for normalization"},
+      {"ticker": "COGT", "fired": "2026-07-01", "outcome": "AMBIGUOUS (pre-priced)", "pnl": "+23.41%", "watch": "Stabilizing"},
+      {"ticker": "PRAX", "fired": "2026-07-01", "outcome": "NEGATIVE MARKET REACTION (sell-the-news)", "pnl": "+31.66%", "watch": "Hold above $315, NDA intact"}
+    ],
+    "binary_window_alert": "NRIX and XENE BOTH at T-25. Combined current P&L: NRIX +55.05%, XENE +17.34%. July 31 is the dual binary window — monitor daily for pre-catalyst positioning starting July 6."
+  },
+  "alerts_summary": {
+    "P1_GOVERNANCE_GATES_CRITICALLY_OVERDUE": "h20d HARD GATE + IC checkpoint BOTH 5 DAYS OVERDUE (due July 1 — today is July 6). Run on LOCAL machine before market close today: (1) python3 tools/check_13f_cohort_quarantine.py --pre-date <last-pre-promo> --post-date <first-post-promo>; (2) score_rank_pct IC sweep. Observable metrics favorable (Jaccard 0.875) but formal confirmation is critically required.",
+    "P2_FIRST_TRADING_DAY_SINCE_JUL2": "July 6 = first trading session since July 2 close (4-day holiday gap). All positions profitable entering session. Portfolio equity $130.14. Holiday gap risk window closes at 09:30 ET open. No adverse news detected in pre-market check.",
+    "P3_SYRE_FLOOR_WATCH": "SYRE -2.54% Jul2, broke $88 support. Monitor $85 floor at Jul6 open. Post-SKYLINE Phase 2 + $463.5M raise secondary dilution pressure. +13.84% vs entry — second weakest. If opens below $85, flag for review.",
+    "P4_SLDB_SUPPORT_WATCH": "SLDB +6.27% gap Jul2 (benign, post-S&P Biotech inclusion). Portfolio leader +67.03%. Monitor $10.50 support at Jul6 open. $10 held through Jul1 sell-off. Hold above $10.50 = new support floor confirmed.",
+    "P5_NRIX_XENE_BINARY_WINDOW_T25": "NRIX (T-25) and XENE (T-25) SIMULTANEOUSLY entering final pre-catalyst binary window. Both target ~July 31. NRIX derisked by Roche deal (+55.05%). XENE pre-catalyst equilibrium (+17.34%). Monitor daily for volume above 2M (NRIX) or 2.5M (XENE) as positioning signal.",
+    "P6_ALMS_DILUTION_OVERHANG": "ALMS Jul2 1.50x volume on -0.53% = ongoing distribution from $300M equity raise. Monitor for volume normalization below 1.0x before declaring stabilization. LUMUS SLE Q3 2026 next catalyst.",
+    "INFO_HOLIDAY_STASIS": "Portfolio P&L UNCHANGED at +29.99% avg (Jul 2 close baseline). $130.14 equity estimate. All 15 positions profitable. Range: DRUG +6.31% to SLDB +67.03%. Entering Jul 6 session with full Day 19 P&L intact.",
+    "INFO_DRAWDOWN_CLEAR": "Portfolio +9.90pp vs XBI (threshold -2.0pp). Well above threshold entering new session.",
+    "INFO_DRUG_IMPROVING": "DRUG near-breakeven watch continues to improve: +6.31% (was +4.64% Day 18, before Jul1 sell-off). Two recovery sessions. Thin float — monitor for sustained hold above $65."
+  },
+  "benchmark": {
+    "xbi_entry_price": 133.62,
+    "xbi_current_price_jul2": 160.46,
+    "xbi_day_change_jul2_pct": 2.50,
+    "xbi_return_since_entry_pct": 20.09,
+    "portfolio_avg_vs_xbi_pp": 9.90,
+    "relative_note": "Portfolio +9.90pp vs XBI entering Jul 6. XBI was +2.50% Jul2 (strong sector recovery day) vs portfolio +1.29% avg. Cumulative outperformance contracted slightly from Day 18 (+11.07pp) to Day 19/20 (+9.90pp) as XBI rallied strongly. Q2 13F period ended Jun 30 — EDGAR monitoring starts ~Aug 11."
+  },
+  "data_quality": {
+    "all_tickers_confirmed_jul2": true,
+    "data_source": "Yahoo Finance v8 chart API (urllib.request, SSL via /root/.ccr/ca-bundle.crt), interval=1d, range=5d. ts=1782999000 confirmed Jul2 close bar. All 15 tickers + XBI confirmed.",
+    "robinhood_mcp_status": "UNAVAILABLE — not accessible in remote execution environment (confirmed throughout monitoring period)",
+    "data_completeness": "15/15 portfolio tickers + XBI confirmed July 2 close. No new price data available — July 6 pre-market (09:00 ET, market opens 09:30 ET).",
+    "pre_market_status": "No pre-market quotes available via Yahoo Finance before 09:30 ET open. Holiday gap risk window active until open."
+  },
+  "operational_status": {
+    "price_data_currency": "2026-07-02 close (most recent — holiday stasis Jul 3-5)",
+    "snapshot_generation": "2026-07-06 pre-market (09:00 ET) — Day 20 (extended monitoring)",
+    "no_unauthorized_trades": true,
+    "robinhood_mcp_status": "UNAVAILABLE throughout monitoring period",
+    "missed_run_flag": false,
+    "governance_action_required": true,
+    "governance_action_note": "CRITICAL — TODAY July 6: (1) h20d quarantine script — 5 days overdue, hard gate; (2) IC checkpoint — 5 days overdue. Both require local machine execution. Remote env cannot run.",
+    "monitoring_period_status": "Day 20 (extended). Formal period Jun11-Jun30 concluded. Extended monitoring: active post-catalyst stabilization, overdue governance gate execution, NRIX/XENE binary window active.",
+    "first_trading_day": "July 6, 2026 — first trading session since July 2 close.",
+    "q2_13f_period_closed": true,
+    "q2_13f_next_action": "Begin EDGAR monitoring ~2026-08-11. Filing deadline ~2026-08-14.",
+    "holiday_gap_window_closes": "09:30 ET today (market open)"
+  },
+  "next_monitoring_actions": [
+    "1. [CRITICAL — TODAY] Run h20d quarantine script on local machine: python3 tools/check_13f_cohort_quarantine.py --pre-date <last-pre-promo> --post-date <first-post-promo>. HARD GATE — 5 days overdue. Failure triggers: Jaccard < 0.40 or coverage drop >= 10pp.",
+    "2. [CRITICAL — TODAY] Run IC checkpoint on local machine: score_rank_pct IC sweep. Path A durable gate — 5 days overdue. Last measured Jun24: mean_ic +0.0432.",
+    "3. [WATCH — 09:30 ET OPEN] SLDB: monitor $10.50 support at open. Portfolio leader +67.03%. Jul2 +6.27% gap (benign). Hold above $10.50 = new support confirmed.",
+    "4. [WATCH — 09:30 ET OPEN] SYRE: monitor $85 floor at open. -2.54% Jul2 broke $88. Post-secondary dilution. If opens below $85, flag.",
+    "5. [BINARY WINDOW] NRIX (T-25) and XENE (T-25): both target ~July 31. Monitor daily for volume above 2M (NRIX) or 2.5M (XENE). Start of serious pre-catalyst window.",
+    "6. [MONITOR] ALMS: dilution overhang from $300M raise. Watch for volume normalization below 1.0x. LUMUS SLE Q3 2026 is next major catalyst.",
+    "7. [MONITOR] CMPS: stabilization trend. Watch for continued volume below 3M/day. Hold above $13.",
+    "8. [MONITOR] DRUG: near-breakeven improving. Hold above $65. Thin float — small moves meaningful.",
+    "9. [CARRY] ERAS: Jun26-29 news unconfirmed (EDGAR 8-K). Price at new high — low urgency.",
+    "10. [GOVERNANCE] Q2 2026 13F period ended June 30. Begin EDGAR monitoring ~Aug 11 for Fairmount (0001802528), Deep Track (0001856083), Logos Global (0001792126). Filing deadline ~Aug 14.",
+    "11. [POST-OPEN] Run Day 20 end-of-day update after July 6 close to capture first new price data since holiday gap."
+  ]
+}
