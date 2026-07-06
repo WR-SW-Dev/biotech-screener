@@ -26,31 +26,42 @@ import os
 import random
 import time
 
-import pandas as pd
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
 
 # curl_cffi's Chrome impersonation uses BoringSSL which cannot trust a TLS-intercepting
 # proxy's CA bundle. When running behind HTTPS_PROXY (cloud/CI environments), patch
-# yfinance's TickerBase to use a plain curl_cffi session without impersonation so that
-# the proxy CA bundle (REQUESTS_CA_BUNDLE / SSL_CERT_FILE) is respected.
+# yfinance's YfData (primary session owner in 0.2.66+) and TickerBase to use a plain
+# curl_cffi session without impersonation so the proxy CA bundle is respected.
 if os.environ.get("HTTPS_PROXY"):
     try:
         import yfinance.base as _yfbase
+        import yfinance.data as _yfdata
         from curl_cffi import requests as _cffi_requests
 
-        _orig_ticker_init = _yfbase.TickerBase.__init__
+        # In yfinance 0.2.66+, YfData.__init__ creates requests.Session(impersonate="chrome").
+        # Patch it to use a plain session that trusts REQUESTS_CA_BUNDLE / SSL_CERT_FILE.
+        _orig_yfdata_init = _yfdata.YfData.__init__
 
-        def _proxy_safe_ticker_init(self, ticker, session=None, proxy=None):
+        def _proxy_safe_yfdata_init(self, session=None, proxy=None):
             if session is None:
                 session = _cffi_requests.Session()
-            _orig_ticker_init(self, ticker, session=session, proxy=proxy)
+            _orig_yfdata_init(self, session=session, proxy=proxy)
+
+        _yfdata.YfData.__init__ = _proxy_safe_yfdata_init
+
+        # Also patch TickerBase so its self.session attribute is non-impersonating.
+        _orig_ticker_init = _yfbase.TickerBase.__init__
+
+        def _proxy_safe_ticker_init(self, ticker, session=None, **kwargs):
+            if session is None:
+                session = _cffi_requests.Session()
+            _orig_ticker_init(self, ticker, session=session, **kwargs)
 
         _yfbase.TickerBase.__init__ = _proxy_safe_ticker_init
     except Exception:
         pass  # non-fatal — fall back to default behaviour
-
 
 def safe_download(
     tickers: list[str],
@@ -217,14 +228,6 @@ def safe_download_per_ticker(
                 )
 
                 if data is not None and not data.empty:
-                    # Modern yfinance returns MultiIndex columns even for a
-                    # single ticker, e.g. ('Close', 'AARD'). Flatten to the
-                    # field level so downstream row.get('Close')/row.get('ticker')
-                    # yield scalars, not Series (whose repr would otherwise be
-                    # written as the ticker value — see extend_price_csv_safe).
-                    if isinstance(data.columns, pd.MultiIndex):
-                        data = data.copy()
-                        data.columns = data.columns.get_level_values(0)
                     # Add ticker column if missing
                     if "ticker" not in data.columns:
                         data["ticker"] = ticker
@@ -257,6 +260,8 @@ def safe_download_per_ticker(
 
     # Combine all data
     if all_data:
+        import pandas as pd
+
         results["data"] = pd.concat(all_data, ignore_index=False)
         logger.info(f"Combined data: {len(all_data)} tickers, " f"{len(results['data'])} total rows")
 
