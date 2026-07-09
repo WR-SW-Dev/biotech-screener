@@ -436,6 +436,9 @@ git push to main fails from agent/cron context?
   → Class J. Pre-push guard blocking non-interactive pushes.
   → Set ALLOW_AGENT_PUSH=1 or use interactive terminal.
 
+A merged PR's fix keeps recurring in daily production output?
+  → Class M. Check checkout drift before re-debugging: `git rev-list --count HEAD..origin/main`.
+
 OpenClaw agents show 5+ days dormant, no cron active?
   → OpenClaw is FENCED (LEGACY_READ_ONLY_DORMANT) as of 2026-06-22.
   → See Class I in openclaw-agent-scope-audit. Hermes is primary orchestrator.
@@ -775,6 +778,46 @@ Do not use write_file to create helper scripts. If data filtering is needed, do 
 ```
 
 **Also add idempotency guard** (Class G) so a spike run doesn't trigger additional catch-up runs.
+
+---
+
+## Class M — Production checkout drift behind origin/main (merged fixes silently inert)
+
+**Signature:** A PR merges a fix to `main`, but the production cron's local checkout
+does not auto-pull. The fix does not take effect until the checkout is fast-forwarded.
+No error is thrown — cron runs green using stale code, and the bug the PR fixed keeps
+reproducing in daily runs as if the fix never landed.
+
+**Confirmed instance (2026-07-08, commit `b79d1940`, issue #484):** The `forward_eval`
+IC-scoping fix (PRs #474/#475) and other merged fixes did not take effect in production
+runs because `tools/cron_daily_production.sh` checks out a fixed local clone that is
+never fast-forwarded automatically. Diagnosed after repeated recurrence of already-"fixed"
+bugs in daily monitoring output.
+
+**Fix applied:** Added a non-blocking drift guard to `cron_daily_production.sh` — fetches
+`origin/main` (30s timeout, tolerates offline) at run start, computes commits-behind via
+`git rev-list --count HEAD..origin/main`, and logs INFO (1-5 behind) or WARN (>5 behind,
+`DRIFT_WARN_THRESHOLD=5`) with the local HEAD short-hash. Logs only — never aborts the run.
+
+**Diagnostic recipe:**
+
+```bash
+cd /mnt/c/Projects/biotech_screener/biotech-screener
+git fetch --quiet origin main
+git rev-list --count HEAD..origin/main   # commits behind — nonzero means drift
+git rev-parse --short HEAD               # what the checkout is actually running
+grep -A3 "Drift guard" logs/cron.log | tail -10   # confirm guard is firing
+```
+
+**Pattern to watch for:** If a bug that was supposedly fixed in a merged PR keeps
+recurring in production output, check checkout drift BEFORE re-debugging the fix itself —
+the fix may be correct but simply not live. This is a distinct failure mode from Class A
+(crontab REPLACE) and Class C (Hermes scheduler stall): the scheduler is firing correctly,
+the job is running correctly, but on stale code.
+
+**Resolution:** `git pull --ff-only` (or equivalent fast-forward) on the production
+checkout. The drift guard added in `b79d1940` surfaces this at every run start going
+forward so it can't recur silently again.
 
 ---
 

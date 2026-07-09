@@ -5,6 +5,36 @@ Each entry records git activity reviewed, sessions searched, and skill patches a
 
 ---
 
+## 2026-07-09
+### Git activity (past 7d)
+- **biotech-screener**: ~50 commits reviewed. Key items:
+  - Day 19-23 pre-market monitoring snapshots (`ebc48d7c`, `01fd8bcd`, `96055b5e`, `d65a2e86`, `0c7875d1`) — routine daily production evidence
+  - `b79d1940` fix(cron): drift guard warning production checkout behind origin/main (issue #484) — see skill patch below
+  - `892b2672` fix(forward_eval): scope IC to tradeable set + de-overlap window (#487) — signal/model fix
+  - `b12addd0` fix(mypy): green the type-check CI job (63→0 errors, #485/#488) — housekeeping
+  - `b9ace5f7` fix(daily): backfill matured PIT forward returns by default (#483) — pipeline fix
+  - `5dbb3680`/`30412bc2` fix(screen/audit): split-adjust recent-split drawdown fallback + audit recompute — signal fix
+  - `ce57d3aa` fix(corp-actions): correct CNTA acquisition effective date to deal close — governance/data fix
+  - `5c55c1f4` Spec 113 (DRAFT): PIT snapshotting of construction output + coinvest signal — governance, not yet actionable
+  - `4854f67a`/`8778ea98` docs(specs): JPM Ask David Patterns #1/#2/#4 — DRAFT, not-for-production
+  - `31ebb017`/`1b15fac1` Q1 2026 full-cohort holdings ratification (observation-only)
+  - CI unblock chain (`88fb34f3`→`977ae024`→`b4c01722`→`4ba37bf0`→`2c85751f`) — dependency lock hash fixes
+- **asset-allocation**: 19 commits reviewed. Phase 24 entity-dimension feature build-out (fixture, policy-class normalizer, CLI renderer, xlsx/markdown study lenses, custodian reconciliation, burn-rate/runway lens) via `0b0f2c5`, `59809e4`, `58e2de1`, `1adfed2`, `755d2a3`, `47464b1`, `ac80dfa`, `6f8f291`; Morningstar Direct index-return ingestion + empirical CMA calibration (`df033ef`, `d2e3da1`, `cbff447`); Monte Carlo correctness fixes — closed-form required-reserves solve + cross-process-stable per-path seed (`580521f`, `98295ca`); CI/lint hardening (`1aa3b75`, `f2f2d31`, `c7b1419`).
+### Sessions reviewed: 5 (targeted session_search sweeps: pipeline/cron failure debug, ruleset/selector/governance, asset-allocation phase tracker, hermes token cost, EES veto/gate)
+- No new findings beyond what prior harvest entries (2026-06-22/25/28) and skill classes A-L already capture. Surfaced two 2026-06-30 IC council reviews of the EES v3 raw_veto_core shadow-promotion proposal (HOLD verdict, gate 0/20 windows at review time) — superseded by this week's live findings below (gate now MET).
+### EES v3 veto-monitor findings (2026-06-26 to 2026-07-07, 10 runs)
+- All runs: `script_exit: 0`, `gate_20d.met: true`, `anomalies: []`. Trend: obs 35→43, n_vetoed 5-9/day, veto_alpha_20d 7.40→7.89→8.14→8.05 (stable). No patchable finding — clean-health week.
+### Skill patches
+- **openclaw-cron-scheduler-debug**: added **Class M — Production checkout drift behind origin/main**. Confirmed instance: `b79d1940` (2026-07-08, issue #484) — merged fixes (incl. the forward_eval scoping fix #474/#475) were silently inert in production because the cron checkout never auto-pulls. Documents the new drift guard in `cron_daily_production.sh` (WARN threshold = 5 commits behind) and the diagnostic recipe: check checkout drift BEFORE re-debugging a bug that keeps recurring after its fix merged. Quick-reference triage table updated with routing entry.
+### New skills created: none
+### Sync: 1 updated (openclaw-cron-scheduler-debug → docs/hermes_skills/openclaw-cron-scheduler-debug.md)
+### Legibility gate
+- External-legibility artifacts this week: Spec 113 (draft), Q1 2026 holdings ratification (observation-only), JPM Ask David Patterns #1/#2/#4 (draft), asset-allocation Phase 24 entity study renderers.
+- Internal-machinery artifacts: checkout drift guard, forward_eval IC scoping, mypy CI green, PIT forward-return backfill, split-adjustment fixes, corp-actions date correction, dependency-lock CI chain, Monte Carlo reserve/seed fixes, entity fixture plumbing.
+- Verdict: MACHINERY_HEAVY — governance/research artifacts present but in draft/observation-only state; the week's shipped work is dominated by CI/pipeline/data-correctness fixes and routine snapshots.
+
+---
+
 ## 2026-07-05
 ### Skill patches applied (canonical source)
 - **screener-ops**: added "Corporate Actions & M&A Registry" section — YTD 2026 acquisitions table (ACLX/APLS/KALV/CNTA/NUVL/APGE), logging workflow, registry gotchas (`pending_acquisition` loader gap, PIT close-date discipline, `deal_price` + CVR notes). Source files table extended.
