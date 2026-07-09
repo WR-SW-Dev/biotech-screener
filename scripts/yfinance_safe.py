@@ -44,10 +44,10 @@ if os.environ.get("HTTPS_PROXY"):
         # Patch it to use a plain session that trusts REQUESTS_CA_BUNDLE / SSL_CERT_FILE.
         _orig_yfdata_init = _yfdata.YfData.__init__
 
-        def _proxy_safe_yfdata_init(self, session=None, proxy=None):
+        def _proxy_safe_yfdata_init(self, session=None, **kwargs):
             if session is None:
                 session = _cffi_requests.Session()
-            _orig_yfdata_init(self, session=session, proxy=proxy)
+            _orig_yfdata_init(self, session=session)
 
         _yfdata.YfData.__init__ = _proxy_safe_yfdata_init
 
