@@ -265,12 +265,23 @@ def capture_is_eligible_for_mandate(capture: dict, fill: dict | None) -> bool:
     mandate counter cannot silently count replay data, drifted models, missing
     benchmarks, or unrealized windows.
     """
+    return capture_is_live_and_clean(capture) and forward_return_realized(fill)
+
+
+def capture_is_live_and_clean(capture: dict) -> bool:
+    """Capture-time liveness/quality check (no forward return required).
+
+    True when the capture is a genuine LIVE observation of the frozen candidate
+    with a usable benchmark — everything :func:`capture_is_eligible_for_mandate`
+    requires EXCEPT the realized 5d return. Used by the liveness monitor, which
+    must judge whether the capture *step* is healthy on the day of capture,
+    before the forward window has closed.
+    """
     return (
         capture.get("capture_mode") == "LIVE"
         and capture.get("quality_status") == "PASS"
         and bool(capture.get("model_hash_match"))
         and bool(capture.get("benchmark_available"))
-        and forward_return_realized(fill)
     )
 
 
