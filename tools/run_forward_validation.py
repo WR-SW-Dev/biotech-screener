@@ -193,6 +193,45 @@ def load_snapshot_manifest(snap_dir: Path) -> dict:
     return {}
 
 
+def load_full_manifest(snap_dir: Path) -> dict:
+    path = snap_dir / "run_manifest.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def validate_run_freshness(date: str, snap_dir: Path, expect_commit: str | None = None) -> list[str]:
+    """Hard provenance gate. Returns the reasons the snapshot is NOT a fresh,
+    complete production run for ``date``. A non-empty list means DO NOT write a
+    capture: the snapshot is missing its manifest, belongs to a different date
+    (a leftover/stale directory), came from a hard-failed run, or was not
+    produced by the current invocation.
+
+    This is distinct from the soft data-quality checks (:func:`run_dq_checks`),
+    which record a capture with ``quality=WARN/FAIL``. The freshness gate exists
+    to prevent a *stale-output false positive* — a capture that looks live but
+    was built from an earlier run's artifacts — from ever entering the ledger.
+    """
+    reasons: list[str] = []
+    manifest = load_full_manifest(snap_dir)
+    if not manifest:
+        reasons.append("run_manifest.json missing — snapshot has no provenance")
+        return reasons  # nothing else is trustworthy without a manifest
+    man_date = manifest.get("as_of_date") or manifest.get("requested_as_of_date")
+    if man_date != date:
+        reasons.append(f"manifest as_of_date={man_date!r} != requested {date!r} (stale/leftover snapshot)")
+    if manifest.get("overall_status") == "FAIL":
+        reasons.append("production overall_status=FAIL — refusing to capture from a hard-failed run")
+    if expect_commit:
+        man_commit = (manifest.get("git") or {}).get("commit_sha", "") or ""
+        if man_commit and not (man_commit.startswith(expect_commit) or expect_commit.startswith(man_commit)):
+            reasons.append(f"snapshot commit={man_commit[:12]} != invocation commit={expect_commit[:12]}")
+    return reasons
+
+
 def load_rankings(snap_dir: Path) -> list[dict]:
     path = snap_dir / "rankings.csv"
     if not path.exists():
@@ -583,6 +622,12 @@ def main() -> int:
         "--register-candidate", action="store_true", help="Register current model as the active candidate"
     )
     parser.add_argument("--force", action="store_true", help="Overwrite existing capture for this date")
+    parser.add_argument(
+        "--expect-commit",
+        default=None,
+        help="Require the snapshot manifest's git commit_sha to match this "
+        "(invocation provenance). The daily wrapper passes its HEAD sha.",
+    )
     args = parser.parse_args()
 
     date = args.as_of_date
@@ -591,6 +636,18 @@ def main() -> int:
     if not snap_dir.exists():
         print(f"ERROR: snapshot not found at {snap_dir}", file=sys.stderr)
         return 1
+
+    # --- Freshness / provenance gate (hard block; --force bypasses for audited backfill) ---
+    freshness_failures = validate_run_freshness(date, snap_dir, expect_commit=args.expect_commit)
+    if freshness_failures:
+        stream = sys.stderr
+        print(f"REFUSING to capture {date}: snapshot failed the freshness/provenance gate:", file=stream)
+        for r in freshness_failures:
+            print(f"  - {r}", file=stream)
+        if not args.force:
+            print("  Not writing a capture. Use --force only for an audited manual backfill.", file=stream)
+            return 1
+        print("  --force set: proceeding anyway (manual backfill — NOT a live window).", file=stream)
 
     # --- Already captured? ---
     existing = load_existing_captures()

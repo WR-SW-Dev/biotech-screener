@@ -266,9 +266,18 @@ fi
 # Immutable daily capture appended to artifacts/forward_validation/captures.jsonl.
 # Fill script updates returns for any pending capture whose forward window is now observable.
 # Both are read-only with respect to the model; no scoring or selection logic changes.
-if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
+#
+# Capture ONLY when production completed (exit 0 = clean, exit 2 = completed with
+# governance warnings). On a hard failure (exit 1), timeout (124), SIGKILL (137),
+# or any other code, the snapshot may be partial or stale — capturing then would
+# feed a stale-output false positive into the forward mandate. The capture script
+# applies its own freshness/provenance gate as defense-in-depth, and is passed the
+# wrapper's HEAD commit so it can confirm the snapshot came from this invocation.
+INVOCATION_COMMIT="$(git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo "")"
+if { [ "${EXIT_CODE}" -eq 0 ] || [ "${EXIT_CODE}" -eq 2 ]; } && [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
     ${PYTHON} tools/run_forward_validation.py \
         --as-of-date "${AS_OF_DATE}" \
+        --expect-commit "${INVOCATION_COMMIT}" \
         2>&1 | tee -a "${LOG_FILE}" || \
         echo "[$(date -Iseconds)] WARN: run_forward_validation exited non-zero" | tee -a "${LOG_FILE}"
 
@@ -279,6 +288,8 @@ if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
     ${PYTHON} tools/weekly_validation_summary.py \
         2>&1 | tee -a "${LOG_FILE}" || \
         echo "[$(date -Iseconds)] WARN: weekly_validation_summary exited non-zero" | tee -a "${LOG_FILE}"
+else
+    echo "[$(date -Iseconds)] SKIP: forward-validation capture — pipeline exit=${EXIT_CODE} or rankings.csv absent (capture only on exit 0/2 with a fresh snapshot)" | tee -a "${LOG_FILE}"
 fi
 
 # --- Housekeeping: prune pre-staging, old logs, and old caches ---
