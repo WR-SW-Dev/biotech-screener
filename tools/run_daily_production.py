@@ -827,6 +827,62 @@ def check_xbi_staleness(
     )
 
 
+def check_price_append_health(
+    price_stats: Dict[str, Any],
+    min_tickers: int = 20,
+    min_ratio: float = 0.5,
+) -> GateResult:
+    """Hard gate: detect a silently-broken price append.
+
+    On an incremental daily run every ticker that needs fetching should append at
+    least one row, so ``n_rows_appended`` should be on the order of
+    ``n_extended``. When a meaningful number of tickers needed fetching but almost
+    no rows were appended, the feed is broken (e.g. yfinance MultiIndex columns
+    causing every ``row.get("Close")`` to miss and drop the row — the 2026-07-08
+    'only AARD appends' failure). The XBI-staleness gate does NOT catch this while
+    XBI is still within its staleness window, so this is a distinct guardrail.
+
+    PASS when little fetch was needed (already-current re-run / weekend) so the
+    ratio is not meaningful.
+    """
+    n_extended = price_stats.get("n_extended") or 0
+    n_appended = price_stats.get("n_rows_appended") or 0
+    n_already = price_stats.get("n_already_current") or 0
+
+    if n_extended < min_tickers:
+        return GateResult(
+            name="price_append_health",
+            status="PASS",
+            detail=(
+                f"append-health n/a: only {n_extended} tickers needed fetch "
+                f"(<{min_tickers}); n_already_current={n_already}"
+            ),
+            value=n_appended,
+            threshold=min_tickers,
+        )
+
+    if n_appended < n_extended * min_ratio:
+        return GateResult(
+            name="price_append_health",
+            status="FAIL",
+            detail=(
+                f"price append broken: {n_extended} tickers needed fetch but only "
+                f"{n_appended} rows appended (<{min_ratio:.0%}). Silent price-feed "
+                f"failure (e.g. yfinance MultiIndex column drop)."
+            ),
+            value=n_appended,
+            threshold=int(n_extended * min_ratio),
+        )
+
+    return GateResult(
+        name="price_append_health",
+        status="PASS",
+        detail=f"price append OK: {n_appended} rows for {n_extended} extended tickers",
+        value=n_appended,
+        threshold=int(n_extended * min_ratio),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Source-specific freshness policy (item #4)
 # ---------------------------------------------------------------------------
@@ -4944,6 +5000,12 @@ def run_daily(
                 f"XBI validation required targeted re-fetch (gap={xbi_validation.get('trading_days_gap', '?')} days). "
                 f"Re-fetch {'successful' if xbi_validation['revalidation_stats'] else 'failed'}."
             )
+
+    # --- Gate: price-append health (hard) — catches a silently broken feed ---
+    if not skip_price_refresh:
+        append_gate = check_price_append_health(price_stats)
+        gate_results.append(append_gate)
+        _logger.info(f"Price-append gate: {append_gate.status} — {append_gate.detail}")
 
     # --- Gate: XBI staleness (check early, before expensive screen run) ---
     xbi_gate = check_xbi_staleness(price_csv, as_of_date, config.xbi_stale_days)

@@ -1533,14 +1533,18 @@ def extend_price_csv_safe(
     # yfinance end is exclusive — add 1 day to include through_date
     end_yf = (_date_cls.fromisoformat(through_date) + timedelta(days=1)).isoformat()
 
-    # Use safe_download_per_ticker with exponential backoff + jitter
+    # Use safe_download_per_ticker with exponential backoff + jitter.
+    # Pass per-ticker incremental start dates (needs_fetch); the scalar `start`
+    # is only a fallback. Previously a single start (the alphabetically-first
+    # ticker's) was used for the whole batch, which mis-fetched every other name.
     ticker_list = sorted(needs_fetch.keys())
     safe_result = safe_download_per_ticker(
         ticker_list,
-        start=needs_fetch[ticker_list[0]],  # Use earliest start date for batch
+        start=min(needs_fetch.values()),
         end=end_yf,
         delay_sec=delay_sec,
         max_retries=max_retries,
+        starts=needs_fetch,
     )
 
     def _scalar_value(val):

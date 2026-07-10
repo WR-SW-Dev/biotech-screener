@@ -63,6 +63,7 @@ if os.environ.get("HTTPS_PROXY"):
     except Exception:
         pass  # non-fatal — fall back to default behaviour
 
+
 def safe_download(
     tickers: list[str],
     start: str,
@@ -168,12 +169,32 @@ def safe_download(
     return results
 
 
+def _flatten_yf_columns(df):
+    """Flatten yfinance MultiIndex columns to field level.
+
+    ``yf.download`` returns MultiIndex columns like ``('Close', 'AARD')`` even for
+    a single ticker. Downstream long-format parsers expect flat columns
+    (``Close``/``Open``/…). Collapse to the field level regardless of level order.
+    A no-op on already-flat frames.
+    """
+    import pandas as pd
+
+    if isinstance(df.columns, pd.MultiIndex):
+        fields = {"Open", "High", "Low", "Close", "Adj Close", "Volume"}
+        if fields & set(df.columns.get_level_values(0)):
+            df.columns = df.columns.get_level_values(0)
+        else:
+            df.columns = df.columns.get_level_values(-1)
+    return df
+
+
 def safe_download_per_ticker(
     tickers: list[str],
     start: str,
     end: str,
     delay_sec: float = 1.5,
     max_retries: int = 3,
+    starts: dict | None = None,
 ) -> dict:
     """Download price data one ticker at a time with per-ticker delays.
 
@@ -182,14 +203,19 @@ def safe_download_per_ticker(
 
     Args:
         tickers: List of ticker symbols
-        start: Start date (YYYY-MM-DD)
+        start: Fallback start date (YYYY-MM-DD) for tickers not in ``starts``
         end: End date (YYYY-MM-DD)
         delay_sec: Seconds to wait between ticker requests
         max_retries: Max retry attempts per ticker
+        starts: Optional per-ticker start dates {ticker: YYYY-MM-DD}. Each ticker
+            is fetched from its own incremental window; ``start`` is the fallback.
+            Prevents the previous bug where one shared start date (the
+            alphabetically-first ticker's) was used for the whole batch.
 
     Returns:
         Dict with keys:
-            'data': Combined DataFrame from all successful tickers
+            'data': Combined DataFrame (flat columns + 'ticker' col) from all
+                    successful tickers
             'failed_tickers': List of tickers that failed
             'successful_tickers': Count of successfully fetched tickers
             'rate_limit_hits': Total 429 errors encountered
@@ -220,15 +246,18 @@ def safe_download_per_ticker(
             try:
                 logger.debug(f"Fetching {ticker} (attempt {retry_count + 1})")
 
+                t_start = starts.get(ticker, start) if starts else start
                 data = yf.download(
                     ticker,
-                    start=start,
+                    start=t_start,
                     end=end,
                     progress=False,
                 )
 
                 if data is not None and not data.empty:
-                    # Add ticker column if missing
+                    # Flatten yfinance MultiIndex columns BEFORE adding the ticker
+                    # column, so downstream flat-column parsers read Close/Open/etc.
+                    data = _flatten_yf_columns(data)
                     if "ticker" not in data.columns:
                         data["ticker"] = ticker
                     all_data.append(data)
