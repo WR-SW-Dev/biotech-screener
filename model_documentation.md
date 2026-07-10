@@ -1,98 +1,422 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-06-05 (Phase 2 governance state, YTD backtest validation, classifier audit, Path C extension)
-**Status:** Production — Phase 2 paper tracking AUTHORIZED (baseline locked 2026-06-04) | Forward catalyst actions BLOCKED | Phase 3 gating BLOCKED | **FROZEN** until classifier remediation clears
+**Last updated:** 2026-06-28 (IC health check — `score_rank_pct` mean_ic +0.049 HEALTHY, hit_rate 61.8%, N=34; regime monitor gate met 118/20 windows, avg XS +0.268%; EES advisory 5/30 flagged; **no production change**. Earlier same day: YTD backtest data integrity audit — corrected YTD DEM +38.52% vs XBI +27.43% (+11.09pp); weekly validation DEM +31.79% vs SPY +12.32%, Sharpe 2.49)
+**Prior update:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
+**Earlier update:** 2026-06-21 (ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
+**Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
+Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
+weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
+
+**Model identity unchanged in 1.7.2.** This documentation update reconciles
+stale selector/ranker prose with the already-active v1.14.0 configuration. The
+selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW Top-30
+construction remain frozen; this document does not authorize behavior changes.
 
 ---
 
-## Governance & Performance Status (2026-06-05)
+## Recent Updates — 2026-06-28 (IC Health Check)
 
-### Phase 2 Paper Trading (Locked 2026-06-04)
+Classification: `VALIDATION_MONITORING / NO_MODEL_CHANGE`. Source: `artifacts/ic_dashboard/2026-06-26_dashboard.json`, `artifacts/forward_validation/dem_regime_monitor_2026-06-28.json`.
 
-**Portfolio:** 30 names from locked snapshot (COGT, DNTH, NRIX, URGN, ALMS, SYRE, RVMD, CMPS, DRUG, STOK, etc.)  
-**Baseline:** Immutable through ~2026-06-17 decision gate  
-**Status:** ✓ AUTHORIZED for paper tracking; attribution measurement live  
+### IC Dashboard (as of 2026-06-26, 20d horizon, 60d lookback)
 
-**YTD Performance (2026-01-01 to 2026-06-05):**
+| Signal | mean_ic | hit_rate | N dates | Health |
+|--------|---------|----------|---------|--------|
+| `score_rank_pct` (primary selector) | **+0.049** | **61.8%** | 34 | **HEALTHY ✓** |
+| `inst_delta_z` (diagnostic only, 0% weight) | +0.028 | 83.9% | 31 | WEAK (non-blocking) |
+
+Overall attention: **LOW**
+
+### IC Trend — score_rank_pct (Apr 8 → Jun 25)
+
+Three phases:
+
+| Phase | Dates | IC range | Driver |
+|-------|-------|----------|--------|
+| **Inversion** | Apr 8–22 | −0.18 to −0.01 | Tariff-shock macro sell-off; model rankings went backwards during peak panic (worst: −0.182 Apr 15) |
+| **Crossover** | Apr 23 | 0 → positive | Signal recovered as XBI found its floor |
+| **Strong run** | Apr 23 – May 14 | +0.01 → **+0.276** | Seven weeks of increasingly accurate cross-sectional ranking |
+| **Normalization** | May 15 – Jun 25 | +0.276 → **+0.030** | Mean-reversion to baseline after exceptional run; still positive |
+
+The Jun 25 reading (+0.030) is the lowest post-crossover value. Still positive but approaching noise floor. Watch next week's reading for stabilization vs continued fade.
+
+### DEM Regime Monitor (2026-06-28)
+
+| Metric | Value |
+|--------|-------|
+| Gate progress | **118 / 20 — GATE MET ✓** |
+| Avg 5d excess vs XBI | +0.268% |
+| % windows positive | 50.8% |
+| Rally regime (N=23) | +0.34% avg, 52.2% positive |
+| Non-rally (N=95) | +0.25% avg, 50.5% positive |
+| Top-20 monotonicity avg | 0.435 (rank ordering holding) |
+| Concentration flagged | 1.7% ✓ |
+
+### EES Advisory
+
+5 of current Top-30 have the EES v3 `raw_veto_core` flag active (snap 2026-06-26). EES is shadow-only — no automatic veto. Advisory: review these 5 names for financing/overpricing risk before sizing up. EES gate: 20d MET (35/20), 5d MET (35/20).
+
+### Model Gate Verdict
+
 ```
-Top-30:      +37.85%
-XBI:          +8.79%
-Alpha:       +29.06pp  (2.33 Sharpe vs 0.81 Sharpe for XBI)
-Hit Rate:     59.4% daily outperformance
-Max Drawdown: -2.87% (in line with volatility profile)
+IC gate (score_rank_pct):    PASS — mean_ic +0.049 > +0.030 threshold
+Regime monitor gate:          PASS — 118/20 windows MET
+Attention level:              LOW
+Overall:                      PASS — trading permitted
 ```
 
-The locked portfolio has generated exceptional risk-adjusted returns YTD, validating the screener's clinical module and catalyst timing signals through the June 5 measurement date.
-
-### Classifier Remediation Status (2026-06-05)
-
-**Audit:** `artifacts/readiness/CORRECTED_CLASSIFIER_FINANCIAL_AUDIT_2026_06_05.md`
-
-**5 Flagged Tickers in Locked Top-30:**
-- **COGT (Rank 1):** Priority verification required (all-flagged in broader scan)
-- **RVMD (Rank 7):** RASolute 302 Phase 3 misclassified as informational-only → manual review / freeze / caveat
-- **DRUG (Rank 9):** 67% Herald event collision-contamination → manual review / freeze / caveat
-- **ALKS (Rank 14):** 100% Herald event collision-noise → manual review / freeze / caveat
-- **CELC (Rank 25):** VIKTORIA-1 Phase 3 misclassified as informational-only → manual review / freeze / caveat
-
-**Remediation Classification:** NOT "suppress" — all issues classified as "manual review / freeze / caveat-required" to preserve signal optionality while blocking forward catalyst expansion until Herald/classifier cleanup completes.
-
-### Forward Gates (2026-06-05)
-
-| Gate | Status | Condition |
-|------|--------|-----------|
-| Phase 2 paper tracking | ✓ AUTHORIZED | Baseline locked, attribution safe |
-| Forward catalyst actions | 🔴 BLOCKED | Classifier remediation pending |
-| Phase 3 implementation | 🔴 BLOCKED | Classifier gating unresolved |
-| Path C window extension | ✓ EXTENDED | Through ~2026-06-17 (IC observable) |
-
-### Path C Governance Decision (2026-06-03, EXTENDED 2026-06-05)
-
-**Window:** 2026-05-28 to ~2026-06-17  
-**Decision:** ✓ EXTENDED (Option A from memo)  
-**Rationale:**
-- IC unobservability is expected cold-start (designed scenario, not failure)
-- All 4 monitoring gates operational (drawdown, 13F Jaccard, IC, emergency exits)
-- 13F cohort stable at Jaccard 0.875 (≥0.70 threshold)
-- Portfolio drawdown +0.36pp vs XBI (hard exit at -2.00pp not triggered)
-- No emergency exits fired
-
-**Next Decision:** ~2026-06-17 (once IC observable)
-- If mean_ic ≥ 0.0200 → Path C valid
-- If mean_ic < 0.0200 → Revert to HOLD
-- If 13F Jaccard < 0.70 → Escalate immediately
-- If drawdown ≤ -2.00pp → Escalate immediately
+`VALIDATION_MONITORING / NO_MODEL_CHANGE / NO_SELECTOR_CHANGE / NO_SIZING_CHANGE / NO_TRADING_CHANGE`
 
 ---
 
-## Recent Corrections & Governance Status (2026-05-17)
+## Recent Updates — 2026-06-28 (Regime Reconciliation — interpretation-only)
 
-**Spec 100 IC Tooling Correction (Commit 2faa88e6)**
-- **Change:** `run_rank_ic_backtest.py` now measures `final_score` (production ranker) instead of `composite_score`
-- **Reason:** Prior IC claims using `composite_score` were measuring the wrong signal; ranker IC was unmeasurable
-- **Status:** ✓ Corrected. Prior composite_score IC claims invalidated; final_score baseline established
-- **Interpretation:** Deferred until post-freeze Checklist v2 battery
+2026-06-28 regime reconciliation: the claim "model strongest when XBI bearish" is **unresolved / mixed**, not confirmed. Full-history HAC regime analysis (`dem_regime_conditional_alpha.json`, 69 monthly periods, trailing-20d-XBI definition, Newey-West) shows **bear is the THINNEST edge** (mean +1.94pp, t=1.95, hit 62%) vs neutral best (+6.76pp) and bull solid (+3.05pp); the model's alpha is classified `RALLY_PARTICIPATION_ALPHA`. A narrower weekly/YTD stress cut (XBI<−3%) suggested stress windows may show better relative performance, but uses a different definition/sample. **Conclusion: regime is interpretation-only — it must NOT drive ranking, selection, sizing, or stress-wrapper activation without forward validation.** Stress-wrapper activation is driven by realized drawdown / repeat-offenders / EES-false / replacement-bench behavior, not by a regime label. Canonical stress wrapper = `tools/stress_wrapper_monitor.py` (PR #441); a concurrent parallel build (commit e9a94bc2) was **not merged** and archived. Artifact: `artifacts/backtests/regime_reconciliation/`. `RESEARCH_RECONCILIATION / NO_MODEL_CHANGE / NO_SELECTOR_CHANGE / NO_SIZING_CHANGE / NO_TRADING_CHANGE`.
 
-**Module 4 Clinical Score Denominator Fix (Commit 3ad7b904)**
-- **Change:** Clinical normalization denominator corrected from 120 → 117
-- **Reason:** Execution_score max is 22 (not 25); total raw max = 117, not 120
-- **Effect:** clinical_score increases by factor 120/117 (~+2.56%); hard ceiling now 100.0 (was 97.5)
-- **Tests:** 27/27 clinical tests pass; synthetic max case validates 100.0
-- **Status:** ✓ Verified and merged (PR #288, awaiting review)
+---
 
-**13F Q1 2026 Cohort Quarantine (Active)**
-- **Status:** Quarantine ACTIVE — 6/48 managers filed (as of 2026-05-15)
-- **Trigger for clearance:** ≥34 managers filed + all 6 validation gates pass
-- **Expected:** ~2026-05-23 (fuller filing coverage) → validation rerun → ~2026-05-26 clearance decision or extension
-- **Enforcement:** No selector/ranker/sizing changes authorized until cohort Jaccard ≥0.70 and distortion clears
-- **Monitoring:** Cron active weekdays 6:22 PM ET through 2026-06-20
+## Recent Updates — 2026-06-28 (YTD Top-30 Bootstrap Control)
 
-**Architecture Freeze (Active)**
-- **Period:** ~2026-04-25 through h20d checkpoint ~2026-05-26
-- **Scope:** No model logic changes, no feature promotions, no ranking modifications
-- **Exceptions:** Deterministic tooling (preflight, monitoring, verification) permitted; no alpha changes
-- **Unblock:** Post-h20d checkpoint, pending 13F cohort clearance + Checklist v2 validation
+2026-06-28 YTD Top-30 bootstrap control: monthly-rebalanced PIT Top-30 was compared against **2,000 random Top-30 equal-weight baskets** from the same eligible biotech universe. Model excess vs XBI was about **+9.9%**, while the random-basket mean excess was about **−10.3%**; the model landed around the **99th percentile** with empirical **p ≈ 0.009**. This materially strengthens the selection-skill evidence versus random biotech exposure (and explains the sub-50% raw batting average — random picks fare far worse), but remains **YTD/in-sample and gross of costs**. Forward bootstrap validation remains required. Artifact: `artifacts/backtests/ytd_top30_bootstrap_control/`. `RESEARCH_BOOTSTRAP_CONTROL / SELECTION_VALIDATION / NO_MODEL_CHANGE`.
+
+---
+
+## Recent Updates — 2026-06-28 (YTD Top-30 Risk Attribution)
+
+2026-06-28 YTD Top-30 risk attribution: monthly-rebalanced PIT Top-30 returned **+26.22% vs XBI +15.80%** through 2026-06-18 (+10.42pp excess). Beta was **1.07**; roughly **+8–9pp of the +10.42% excess was selection rather than beta tilt** (~87% selection / ~13% beta in the annualized decomposition) — correcting the prior "higher-beta tilt" narrative. However alpha t-stat was only **~0.85 OLS / ~1.03 Newey-West**, so the result is directionally supportive but **not investability proof**. Gross of costs, single ~5.5-month window. Artifact: `artifacts/backtests/ytd_top30_risk_attribution/`. `RESEARCH_ATTRIBUTION / NO_MODEL_CHANGE`.
+
+---
+
+## Recent Updates — 2026-06-28 (Rank-Depth Shadow Tracking)
+
+Classification: `VALIDATION_INFRASTRUCTURE / RANK_DEPTH_SHADOW_TRACKING / NO_MODEL_CHANGE`
+
+**Summary:**
+- Added shadow tracking for the **Top-60** ranked names and the **ranks 31–60** band, alongside the existing Top-30 forward-validation basket.
+- **Top-30 remains the primary validation basket / selected model** — unchanged.
+- **Ranks 31–60** are now monitored as a reserve-candidate ("shadow bench") cohort.
+- **Top-60** is tracked as a depth-of-rank validation cohort (does alpha persist beyond rank 30?).
+- Diagnostic/measurement only. Not tradable by default.
+
+**Governance verdict:**
+- `NO_MODEL_CHANGE`. No ranker, selector, scoring, eligibility, sizing, production-default, cron, or trading change.
+- Frozen status: **2026-06-20 scoped architecture freeze remains in effect** (DEM FROZEN / BLOCKED_LEVEL_0). This change does not promote or clear any gate.
+- Operator action required: none. Optionally decide later whether to (a) commit the docs, (b) record a ratification entry in `docs/FORWARD_VALIDATION_PROTOCOL.md`, and (c) promote daily rank-depth reporting to cron — see "Cron boundary" below.
+
+**Evidence:**
+- Commit `10cae69e` on branch `feat/rank-depth-shadow` (pushed to origin; not merged).
+- `run_screen.py` — `add_rank_depth_cohorts()` + `export_rank_depth_top60_sidecar()`.
+- `tools/run_forward_validation.py` — captures record `cohorts {top30, rank31_60, top60}`.
+- `tools/fill_forward_returns.py` — `compute_cohort_returns()` (per-cohort EW/XBI/XS at 1d/5d/20d).
+- `tools/run_daily_production.py` — `top60` price-refresh scope + opt-in `--validation-rank-depth {30,60}`.
+- `tools/rank_depth_validation_summary.py` (new) → `artifacts/validation/rank_depth/RANK_DEPTH_VALIDATION.md`.
+- `tests/test_rank_depth_validation.py` — 9/9 pass; ~770 regression tests touching the modified tools pass (0 failures); real-snapshot smoke test produced exactly 60 sidecar rows.
+
+**Impact on alpha interpretation:**
+- Provides a cleaner read on whether the ranker has a real **slope** beyond the Top-30 cutoff. A genuine slope would look like `Top-30 XS > Top-60 XS > Ranks 31–60 XS > 0`; a positive 31–60 band would indicate a viable substitute pool rather than a fragile top basket.
+- **No alpha is claimed.** Cohort returns are pending forward data and are diagnostic only; the Top-30 forward-validation gate remains the primary proof path and is still unmet.
+
+**What changed:**
+- A new **non-blocking production sidecar artifact** `snapshots/<date>/rank_depth_top60.csv` is now written on every snapshot (try/except-guarded — cannot affect the frozen production snapshot). This is validation infrastructure, not model behavior.
+- Forward-validation captures/fills now carry rank-depth cohorts; a new rank-depth summary card tool exists (run manually).
+
+**What did not change:**
+- Ranker: unchanged.
+- Selector: unchanged.
+- Scoring: unchanged.
+- Eligibility: unchanged.
+- Sizing: unchanged.
+- Production wiring / cron / default behavior: unchanged. `daily-production` still defaults to `full` price scope; Top-60 refresh is opt-in only.
+- Trading / actionability: unchanged.
+
+**Cron boundary (explicit):** `docs/FORWARD_VALIDATION_PROTOCOL.md` (ratified 2026-06-28) defers pipeline/cron scheduling of validation artifacts to a separate operator authorization. This change respects that: the opt-in flags and the always-on sidecar were operator-instructed, but **daily rank-depth reporting was NOT wired into cron**. Promotion to cron remains a separate, explicit operator decision.
+
+**Skill synchronization:**
+- Skills reviewed: repo-scoped skills/agents referencing forward validation, Top-30 framing, weekly sweep, roster/IC. No repo-scoped skill asserted a claim made stale by this change (Top-30 remains primary; rank-depth is additive shadow-only).
+- Skills updated: none required.
+- Skills not updated: global `~/.claude/skills/*` left untouched by policy (out of repo scope; no behavior change warranted).
+
+**Open questions / next validation:**
+- Accrue ≥20 non-overlapping weekly 5d windows per cohort, then read the rank-depth slope.
+- Operator decision pending on whether to promote daily rank-depth reporting to cron and/or record a protocol ratification entry.
+
+---
+
+## Recent Updates — 2026-06-28
+
+Diagnostic and documentation only. **No selector, ranker, weight, formula, eligibility, sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
+
+### YTD Backtest Data Integrity Audit — Two Bugs Found and Corrected
+
+A full data-integrity sweep of the YTD monthly-rebalanced DEM Top-30 backtest (Dec 31, 2025 → Jun 26, 2026) identified and corrected two independent data errors. Corrected artifacts in `artifacts/backtests/dem_current_ranker_ytd/` (v2) and `artifacts/backtests/dem_regime_conditional_alpha/` (v2).
+
+#### Bug 1 — Wrong price file (PIT backtest)
+
+`scripts/research/pit_backtest_a4.py` was previously using `production_data/price_history.csv` (raw, unadjusted closes). When a stock in the basket split within the 63-business-day measurement window, the script compared a pre-split start price to a post-split end price, producing a large spurious negative return. Three tickers had confirmed mid-window splits:
+
+| Ticker | Split date | Ratio | Periods affected |
+|---|---|---|---|
+| REPL | 2025-07-22 | ~4.39:1 | 2025-04-30 |
+| RNA | 2026-02-27 | ~4.93:1 | 2025-11-28, 2025-12-31, 2026-01-30 |
+| GOSS | 2026-02-23 | ~5.03:1 | 2025-12-31, 2026-01-30 |
+
+Fix: switched to `production_data/price_history_split_adj.csv` (commit `4c8280dfa`). Four-period provenance investigation confirmed the delta (96.7%–100% explained by split mechanics). Corrected values:
+
+| Period | Raw (wrong) | Adj (correct) | Error |
+|---|---|---|---|
+| 2025-04-30 | +1.35 pp | **+9.485 pp** | +8.14 pp |
+| 2025-11-28 | +7.12 pp | **+9.989 pp** | +2.87 pp |
+| 2025-12-31 | −5.10 pp | **−1.052 pp** | +4.05 pp |
+| 2026-01-30 | −5.05 pp | **−0.283 pp** | +4.77 pp |
+
+#### Bug 2 — Stale endpoints in June period (YTD monthly-rebalanced)
+
+The raw and split-adjusted price files both end Jun 23, 2026 for all 30 basket tickers; the raw file's XBI series ends Jun 24. The May29→Jun26 period was therefore measuring DEM returns to Jun 23 and XBI to Jun 24 — a 3-day asymmetric lag that artificially showed DEM +1.42% vs XBI +9.39% (−7.97pp gap). Fixed by sourcing Jun 26 close prices for all 30 basket tickers from the Robinhood historicals API.
+
+#### Corrected YTD Results (Dec 31, 2025 → Jun 26, 2026, monthly-rebalanced EW)
+
+| Period | Basket | DEM EW | XBI | Excess | Notes |
+|---|---|---|---|---|---|
+| Dec31→Jan30 | 2025-12-31 | +1.85% | +2.31% | −0.47pp | clean |
+| Jan30→Feb28 | 2026-01-30 | +1.63% | +2.10% | −0.47pp | Feb28=Sat; adj prices handle RNA/GOSS splits |
+| Feb28→Mar31 | 2026-02-28 | +4.54% | +0.28% | +4.26pp | clean |
+| Mar31→Apr30 | 2026-03-31 | +7.00% | +2.82% | +4.18pp | clean |
+| Apr30→May29 | 2026-04-30 | +4.26% | +4.08% | +0.18pp | clean |
+| May29→Jun26 | 2026-05-29 | **+14.76%** | +13.67% | +1.08pp | **corrected** (was +1.42% stale) |
+| **YTD chain-linked** | | **+38.52%** | **+27.43%** | **+11.09pp** | XBI cross-check: 121.93→155.38=+27.43% ✓ |
+
+#### Regime Diagnostic — Prior "Adverse" Claim Retracted
+
+The prior regime conditional alpha artifact (v1, raw prices) showed 2026 YTD as adverse in both Jan and Feb. With corrected split-adjusted prices, DEM is positive in all three regime states:
+
+| Regime | n | Mean (pp/mo) | t (NW, L=2) | Hit% |
+|---|---|---|---|---|
+| Bull | 30 | +3.049 | 2.055 | 66.7% |
+| Bear | 26 | +1.943 | 1.954 | 61.5% |
+| Neutral | 13 | +6.755 | 2.688 | 76.9% |
+
+**Prior claim "current regime (bull) adverse" is RETRACTED.** Root cause: corrupted 2026 YTD data from split artifacts. 2026 YTD corrected: Jan=−0.283pp, Feb=+9.084pp, mean=+4.40pp.
+
+Alpha type: `RALLY_PARTICIPATION_ALPHA_WITH_CROSS_SECTIONAL_RESIDUAL`. Corrected artifacts: `artifacts/backtests/dem_current_ranker_ytd/` (v2), `artifacts/backtests/dem_regime_conditional_alpha/` (v2). Governance unchanged: NO_MODEL_CHANGE / NO_PRODUCTION_WIRING / EES_SHADOW_GATE (20+20 still unmet).
+
+#### Beta Correction — Prior Artifacts Reported Wrong Series
+
+Prior backtest artifacts reported `beta(bl_hedged, XBI)` — the beta of the *excess* return against XBI — as if it were the portfolio beta. This is always exactly 1 less than the true portfolio beta:
+
+```
+beta(DEM_raw, XBI) = beta(bl_hedged, XBI) + 1
+```
+
+because `DEM_raw = bl_hedged + XBI` by construction (bl_hedged is XBI-hedged excess return).
+
+| Window | Portfolio β (DEM_raw vs XBI) | Alpha-stream β (excess vs XBI) |
+|---|---|---|
+| Full 69p | **1.1745** | 0.1745 |
+| Pre-2025 (55p) | **1.0507** | 0.0507 |
+| 2025+ (14p) | **1.5202** | 0.5202 |
+
+The DEM portfolio runs at approximately market-level XBI beta pre-2025 (~1.05), rising to ~1.52 in 2025+ as the model selected high-beta names during the biotech rally. It is not a low-beta strategy.
+
+The **alpha-stream beta** (excess vs XBI) remains the correct diagnostic for selection quality: 0.05 pre-2025 means the excess return was nearly uncorrelated with XBI movements over 55 periods — alpha came from cross-sectional stock picking, not sector-timing. The 2025+ alpha-stream beta of 0.52 reflects that the excess return itself became partly driven by the rally (model picked names that surged with the sector), consistent with the "rally participation" alpha label.
+
+### Weekly Validation vs S&P 500 — YTD 2026
+
+Source: `artifacts/autopsy/top30_ytd_validation/2026_ytd_top30_validation.json`  
+Method: **equal-weight weekly-rebalanced Top-30** (25 non-overlapping 5-day windows, 2026-01-02 → 2026-06-22). Note: this is a different methodology than the monthly-rebalanced figures above (+31.79% here vs +38.52% monthly chain).
+
+#### Cumulative Returns
+
+| Series | YTD Return | XS vs DEM |
+|---|---|---|
+| **DEM Top-30** | **+31.79%** | — |
+| XBI | +17.97% | −13.82pp |
+| S&P 500 (SPY) | +12.32% | −19.47pp |
+
+#### Weekly Statistics
+
+| Metric | DEM Top-30 | XBI | S&P 500 (SPY) |
+|---|---|---|---|
+| Mean wkly return | +1.22% | +0.74% | +0.49% |
+| Std wkly return | 4.92% | 3.97% | 2.06% |
+| Hit rate (abs > 0) | **64%** | 52% | 52% |
+| Ann return (×52) | +88% | +47% | +29% |
+| Ann volatility | 35.5% | 28.6% | 14.9% |
+| Sharpe (ann) | **2.49** | 1.63 | 1.93 |
+| Max drawdown | −18.3% | −10.3% | −9.1% |
+| t-stat (abs) | 1.25 | 0.93 | 1.18 |
+
+#### Excess vs Benchmarks (weekly)
+
+| | vs XBI | vs SPY |
+|---|---|---|
+| Mean XS/week | +0.49% | +0.74% |
+| XS t-stat | **1.09** | 0.84 |
+| XS hit rate | 52% | 52% |
+| Cumulative XS | +13.82pp | +19.47pp |
+
+#### Monthly XS vs XBI
+
+| Month | Mean XS/week |
+|---|---|
+| Jan 2026 | +0.33% |
+| Feb 2026 | +1.61% |
+| Mar 2026 | +0.14% |
+| Apr 2026 | +0.32% |
+| May 2026 | −1.25% ← weak month |
+| Jun 2026 | +0.08% |
+
+#### Failure Windows (XS ≤ −1.50pp vs XBI)
+
+| Window | Port | XBI | XS | Flag |
+|---|---|---|---|---|
+| 2026-03-16 → 2026-03-23 | −4.73% | −1.81% | −2.92pp | *** HARD FAIL |
+| 2026-05-04 → 2026-05-11 | −1.01% | +0.94% | −1.95pp | HARD FAIL |
+| 2026-05-19 → 2026-05-26 | +3.50% | +5.17% | −1.67pp | |
+| 2026-05-26 → 2026-06-02 | −6.64% | −4.19% | −2.45pp | *** HARD FAIL |
+| 2026-06-01 → 2026-06-08 | −5.53% | −3.88% | −1.64pp | |
+
+**Key interpretation notes:**
+- t-stat of 1.09 (XS vs XBI) over 25 weeks is directionally encouraging but below the 2.0 threshold for statistical significance. ~40+ weeks needed to clear.
+- DEM Sharpe of 2.49 vs SPY 1.93 is strong on a risk-adjusted basis despite higher absolute vol (35.5% vs 14.9%) — the ann return differential (+88% vs +29%) more than compensates.
+- Higher DEM drawdown (−18.3% vs −10.3% XBI) reflects the higher-beta biotech portfolio concentration, not model failure.
+- May was the weakest month (2 hard-fail windows); Jun is recovering. Five failure windows over 25 weeks = 80% clean-window rate.
+
+`VALIDATION_DIAGNOSTIC / NO_MODEL_CHANGE / NO_SELECTOR_CHANGE / NO_TRADING_CHANGE`
+
+---
+
+## Recent Updates — 2026-06-25
+
+Diagnostic and documentation only. **No selector, ranker, weight, formula, eligibility, sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
+
+### EES v3 raw_veto_core — Shadow Gate MET, Freeze-Lift Review Ready
+
+Five commits (`149c8f56` / `6123739c` / `0d47544f` / `c56b2c2a` / `22e7312b`) completed
+the EES v3 research-to-shadow-gate pipeline:
+
+- **Promotion simulator** (149c8f56): 9-policy PIT backtest across 76 snapshots. `raw_veto_core`
+  selected as lead integration candidate: IC 0.064, NW t=2.36, LATE excess +7.1% at 63d.
+  All blend/confirmation/conditional variants rejected (lower t-stat or too rare to fire).
+- **Veto autopsy** (6123739c): 533 HL observations. Overall 55.6% true-negative rate (LATE 60.5%).
+  Dominant failure mode `no_options_coverage` (67.4%, near-random); theoretically grounded modes
+  `dilution_overhang` (67.0% tn, −7.4% excess) and `market_already_priced` (62.5% tn, −6.0% excess)
+  are the high-accuracy vetoes. False-negative trap: `catalyst_too_far` (26.7% tn, +22.7% excess).
+- **Conditional veto simulator** (0d47544f): `RAW_VETO_REMAINS_BEST` — conditioning the veto
+  on high-accuracy modes reduces veto frequency (7.0 → 1.8/snap) and collapses t-stat (2.36 → 2.14).
+  Correct upgrade path: expand options coverage, not condition on current evidence.
+- **Shadow card Day 1** (c56b2c2a): 8 vetoed from 43 top-Q names. **0× `no_options_coverage`**
+  at 87% production-regime `priced_move_pct` coverage — veto firing correctly.
+- **Backfill + gate fix** (22e7312b): 202 snapshots processed; 56 have EES v3 data (2026-04-14+);
+  146 zero-veto rows excluded from gate denominator. **20d gate: 35/20 MET.** Cumulative 20d
+  alpha +7.4%, 81.2% alpha-positive.
+
+**Freeze-lift review memo** (`a42d3396`): All provenance checks pass. PIT score integrity confirmed
+(backfill reads stored scores, no recomputation). No-lookahead verified in code. No production
+wiring. Verdict: `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`. Active veto NOT authorized — requires
+explicit operator approval. Full memo: `artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md`.
+
+---
+
+## Recent Updates — 2026-06-20 / 2026-06-21
+
+Diagnosis- and documentation-only. **No selector, ranker, weight, formula, eligibility,
+sizing, or production-output changes.** DEM remains **FROZEN (BLOCKED_LEVEL_0)**.
+Detailed evidence in `artifacts/audit/*_2026_06_20.md`; governance record in
+`docs/dem_ranker_phase_c_decision_memo_2026_06_20.md`; gate procedure in
+`docs/dem_ranker_july8_ic_remeasurement_runbook.md`.
+
+### A. DEM Ranker Robustness Audit (Phases 1–2d) — read-only
+
+- **Phase 1:** Confirmed the live ranker is `minimal_v2` = **2 features** (`coinvest_score_z` +0.02,
+  `financial_score` −0.0533), deployed capped Family C vector. Architecture as expected.
+- **Phase 2a / 2a-ext:** `financial_score` is PIT-safe by design (Module 2 filters `source_date <= as_of_date`)
+  but **snapshot auditability is partial** — `rankings.csv` exports the score without provenance
+  (no `source_date`/staleness). Data-quality fields live only in `screen_output.json`. No defect.
+- **Phase 2b:** Corrected Spec 100 `final_score` IC (eligible cohort, actionable_rank ≤ 60) is
+  **insufficient / unobservable** on then-available forward data → IC blocker remains OPEN.
+- **Phase 2c:** `coinvest_score_z` PIT-safe by `as_of_date`; **13F contamination monitored
+  externally only** (`inst_delta_regime` flag present, not enforced in ranker). No defect.
+- **Phase 2d:** Z-score clamping [−3, 3] is **infrequent** — `coinvest_score_z` ~1.7% overall / 5% top-20;
+  `financial_score` 0%. Stable across 10 snapshots. `CLAMPING_FREQUENCY_PASS`. No distortion.
+
+### B. Ranking-Tightening Track (Phases A–C) — read-only
+
+- **Phase A:** IC observability + top-30 stability. Top-30 churn is **EXPLAINABLE_LOW_CHURN**;
+  top-5 identical across 17 days. Forward-return snapshot gaps identified.
+- **Phase B:** Historical IC rerun (Apr/May 2026, 100+ pairs). `final_score` **FAILS** the 0.0200
+  gate at the primary T+20 horizon (Apr −0.0955, May −0.0188). `HISTORICAL_IC_FAIL`.
+- **Phase C:** Decision record. DEM weight/feature/redesign changes **BLOCKED** until either
+  real-time IC passes (July 8) or an explicit operator Phase-3 override.
+
+### C. Key diagnostic finding — institutional circularity (CONFIRMED)
+
+Selector cohort entry is **65% institutionally weighted** (clinical 0%); `selector_institutional_block`
+is the sole rank discriminator (Spearman ~0.98 vs rank) and is **identical to `coinvest_score_z`**
+(corr ≈ 1.00). Segment-split IC (Feb–May, T+20):
+
+```
+coinvest_score_z IC:  full eligible universe +0.053   →  within cohort +0.020   (power spent on SELECTION)
+catalyst_decay_w IC:  full eligible universe +0.023   →  within cohort +0.086   (STRONGER within cohort)
+final_score (output): within cohort NEGATIVE at T+20/T+60                          (anti-predictive)
+```
+
+**Interpretation:** the ranker re-ranks the cohort on the same institutional axis that already
+selected it — near-circular. This is a candidate explanation for the `final_score` IC failure.
+Confirmed structural (holds in-sample and look-back out-of-sample).
+
+### D. catalyst_decay_w — orthogonal candidate, **PROMISING_BUT_UNPROVEN**
+
+- Genuinely orthogonal to institutional (+0.249 universe, −0.107 within cohort) and predictive
+  **in-sample** (Feb–May within-cohort T+20 +0.086; non-overlapping t+3.3; block-bootstrap 95% CI
+  excludes 0). But it **fails look-back out-of-sample** (Oct 2025–Jan 2026 T+20 ≈ flat/negative,
+  CI includes 0). Not yet a justified Phase-3 lane. Decisive test = forward OOS on/after July 8.
+- `event_ev_score` / `event_ev_score_z` are **schema fields with no data** (empty in all snapshots) —
+  cannot be IC-tested until populated.
+
+### E. financial_score weight — correction
+
+Earlier "negative weight is questionable" concern is **RETIRED**. `financial_score` has robustly
+*negative* IC out-of-sample (T+20 −0.074, T+60 −0.130, CIs exclude 0); a *negative* ranker weight
+on a *negatively*-predictive feature is **directionally coherent**. (Does not unblock DEM — `final_score`
+still fails.)
+
+### F. Tooling
+
+- `tools/measure_final_score_ic_spec100.py` gained a read-only **`--score-field`** argument
+  (default `final_score`, byte-identical when unspecified; non-default fields write field-suffixed
+  outputs). Regression test: `tools/test_measure_signal_ic_score_field.py`. **No model/ranker change.**
+
+### G. Governance state (unchanged by this work)
+
+```
+DEM_MINIMAL_V2:            BLOCKED_LEVEL_0 (frozen)
+final_score IC:            FAILS / unobservable (Spec 100 gate)
+INSTITUTIONAL_CIRCULARITY: CONFIRMED
+CATALYST_DECAY_W:          PROMISING_BUT_UNPROVEN (pending forward OOS)
+NEXT_GATE:                 2026-07-08 forward-OOS confirmation (final_score + catalyst_decay_w + baselines)
+```
+
+### H. Repo-integrity incident (2026-06-20 / 06-21)
+
+A **second, autonomous Claude session** (PID 297912, pts/5) committed and **pushed** unapproved
+work to `main`/`origin/main` during this session — `feat: score optimization`, `webhook receiver`,
+`multi-agent ensemble`, `reusable ensemble runner` — re-contaminating `main` after a clean
+docs-only commit was made. Timeline and forensics in conversation record.
+
+- **Frozen-code check:** the published commits touched **no** production ranker/selector/source
+  files (`run_screen`, `ranker_v2_pairwise`, `selector_engine`, `module_2_financial_v2`,
+  `production_data`, `rankings.csv`, `final_score`, `run_daily_production` source). They added
+  experiment/ops code (`analyze.py`, `analysis_pipeline.py`, `mcp_server.py`, ensemble/scripts,
+  `output/snapshot_optimized_*.json`), `.pyc` junk, plus this track's audit docs/tool. **The DEM
+  code freeze was not breached.**
+- **Containment:** writer process stopped (SIGTERM); quiescence confirmed across two polls.
+  Pre-incident state preserved on branch `incident/writer-commits-2026-06-20` and tag
+  `incident/pre-cleanup-2026-06-20` (→ `07ac134f`).
+- **Remediation (in progress):** Option A — `git revert` the writer commits (collaborator-safe,
+  no published-history rewrite), keeping the legitimate DEM docs/audit artifacts. **Pending explicit
+  operator sign-off before any push.**
+- **Follow-up control recommended:** branch protection / disallow direct autonomous-agent pushes to `main`.
 
 ---
 
@@ -403,7 +727,7 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 | **inst_delta_z** | Diagnostic/export only | 0% | Demoted 2026-05-04 after two-frame ALERT: mean IC = -0.097 over 36 dates, hit rate = 0.111. Reinstatement requires governance review. |
 | **Prior B6 bundle** | Historical selector evidence | retired 65/35 blend | Checklist v2 bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. Historical evidence only; not the live v1.14.0 selector. |
 
-**Ranker (pairwise_minimal) — 2 features, ordinal-only (ECE=0.129):**
+**Ranker (pairwise `minimal_v2`) — 2 features, ordinal-only (ECE=0.129):**
 
 | Signal | Role | Trained Weight | Deployed Weight | Walk-Forward | Interpretation |
 |--------|------|----------------|-----------------|-------------|----------------|
@@ -412,6 +736,85 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 
 Deployed weights are read live from `production_data/ranker_v2_model.json`; the `provenance`
 block is authoritative. Trained weights are retained here for audit-trail comparison only.
+
+### Ranker v2 — Feature Interpretation
+
+#### `coinvest_score_z` (deployed weight: +0.02)
+
+Captures institutional co-investment endorsement. Acts as a quality filter: names held by multiple specialist managers simultaneously carry an implicit consensus that the risk/reward is attractive. The weight is positive by construction. Deployed at +0.02, conservatively capped below the trained +0.0613 (Family C live-pilot decision); the cap reflects deployment caution, not evidence the full weight is harmful.
+
+#### `financial_score` (deployed weight: −0.0533)
+
+The negative coefficient means: all else equal, a ticker with a **better** (higher) financial score ranks *lower* in pairwise comparisons. This is counterintuitive and is documented here as the authoritative causal record.
+
+**Causal hypothesis:** `financial_score` captures financial strength (cash runway, burn rate, balance sheet quality). In the biotech universe, financially stronger companies tend to have lower near-term catalyst optionality because: (a) their funding risk is already resolved, removing a conditional re-rating catalyst; (b) they are more likely to be large-cap or commercial-stage names where market expectations are already well-calibrated; and (c) `coinvest_score_z` already captures manager endorsement of names that survive the financial screen. The ranker learned to modestly prefer financially constrained names within the manager-endorsed set — not because distress is good, but because the market over-discounts financing risk for catalyst-stage biotechs that managers are actively holding.
+
+This is distinct from a "distress factor" and distinct from "financial_score is bad data." The mechanism is conditional: it applies within the subset already passing the institutional filter.
+
+**Clarifications:**
+- `financial_score` in the ranker is the **Module 5 rank-normalized score** (stage×size cohort), NOT the raw Module 2 cash/burn output. Rank-normalization reduces outlier sensitivity — a very strong and a merely adequate balance sheet score closer together than raw values suggest.
+- `financial_score` appears in the **ranker only**, not in the selector. The selector's Module 5 uses `financial_score` as a penalty gate, not a gradient.
+- The cap on `coinvest_score_z` (+0.02 deployed vs. +0.0613 trained) was a deliberate conservative decision. `financial_score` was NOT capped — deployed at full trained strength.
+
+**Falsification criteria** (rolling 90-day window; triggers human flag, not automatic retrain):
+
+| Criterion | Threshold |
+|---|---|
+| Names ranked UP by ranker (vs. coinvest-only order) due to lower `financial_score` have worse 20d returns | Consistent negative differential < −1pp median, n ≥ 20 pairs |
+| Top-30 includes names with `financial_score` in bottom quartile AND negative catalyst outcomes at above-base rate | > 2× base MISS rate for bottom-quartile financial names in top-30, n ≥ 10 |
+| `financial_score` distribution in top-30 shifts materially below universe median | Median top-30 `financial_score` < P25 universe for ≥ 3 consecutive snapshots |
+
+These criteria do NOT trigger automatic retrain. They trigger a flag in the forward shadow log and a human review at the next scheduled verdict date. A future retrain that changes `financial_score`'s sign requires either (a) falsification evidence per the above, or (b) an explicit override decision with a competing causal explanation.
+
+#### Evidence assessment and status (2026-05-06)
+
+**Evidence that exists:**
+
+| Evidence type | What it shows |
+|---|---|
+| Training sample (36 dates, 12,400 pairs, L2 0.01) | Negative weight emerged and was stable across L2 regularization strengths |
+| Robustness check (walk-forward, all cohorts/regimes) | "TRUE PENALTY — persists all cohorts, all regimes" per ranker attribution table |
+| Pairwise ECE = 0.129 | Model is ordinal-only (calibrated rank ordering, not probability); negative weight is meaningful in rank space |
+| Falsification criteria (rolling 90d) | Not triggered as of 2026-05-06 |
+| Theoretical prior | Financing-risk repricing hypothesis is internally consistent and structurally distinct from a distress/junk-quality bet |
+
+**Evidence that is currently insufficient:**
+
+| Gap | Why it matters |
+|---|---|
+| Clean attribution of ranker IC to `financial_score` alone | Training IC (+0.143) reflects the 2-feature bundle; individual contribution of the negative weight is not separable without an ablation (coinvest-only vs 2-feature) run |
+| Per-name forward return split | Do names ranked UP by the financial_score penalty actually outperform same-rank coinvest-only names? ~30 live snapshots; need ≥ 60 for meaningful comparison |
+| Catalyst-outcome slice | Do bottom-quartile `financial_score` names in top-30 have better catalyst HIT rates? CRT n=7 post-PIT; need ≥ 30 resolved HIT/MISS |
+| Stage/size interaction | Is the negative weight driven by pre-revenue (where funding risk repricing is most plausible) or leaking into commercial names? Not yet decomposed |
+
+**Risks and counterarguments:**
+
+- *Selection-bias in training data:* The 36-date walk-forward period may coincide with a biotech regime where small-cap, cash-constrained names outperformed for macro reasons unrelated to the causal story. If the macro regime shifts (rising rates, tightening credit, mREIT-driven sector rotation), the negative weight could reverse.
+- *Survivorship in top-60:* `coinvest_score_z` pre-filters the ranker universe to names managers are actively holding. Within that filtered set, financially weak names may simply be the highest-conviction asymmetric bets managers are willing to hold — a quality proxy for manager intent, not a financial-weakness signal. This makes the weight harder to falsify cleanly.
+- *Rank-normalization compresses extremes:* Module 5 rank-normalization within stage×size cohorts means a "low financial_score" name and a "moderate financial_score" name land closer together than raw values suggest. The weight is operating on a compressed signal — small enough that a regime shift could flip the pairwise advantage.
+- *Commercial/revenue names:* If financially strong names are systematically commercial-stage (already generating revenue), the signal may be a stage proxy rather than a financing-risk proxy. Stage is controlled for in normalization cohorts, but not in the pairwise training pairs.
+
+**Recommended status: KEEP AS FROZEN**
+
+The weight has theoretical support, passed training robustness checks, has not triggered any falsification criterion, and cannot be changed without a dedicated retrain + Checklist v2 re-run. The evidence gap is not evidence of failure — it reflects the immaturity of the forward sample (live since ~2026-04-03). Re-evaluate at the 90-day forward mark (~2026-07-01) using the falsification criteria above. Do not retrain the weight sign based on prior evidence alone.
+
+**What future retrain / audit must test before preserving or changing:**
+
+1. Ablation IC: `coinvest_score_z`-only ranker vs. 2-feature ranker (coinvest + financial) on the same walk-forward window — is the incremental lift from `financial_score` statistically positive?
+2. Forward return split: names ranked UP vs. DOWN by financial_score within top-60 — median 20d return differential, n ≥ 20 resolved pairs.
+3. Stage interaction: does the negative weight perform across all stage_buckets or concentrate in pre-revenue names? If it only works pre-revenue, scope the ranker to that cohort.
+4. Regime robustness: test the walk-forward window across the 2022 biotech draw-down and 2023 recovery (PIT-corrected). If the weight sign flips in the down-regime, flag for conditional deployment.
+5. If changing the weight sign: requires a competing causal explanation that accounts for why financially strong names inside manager-endorsed lists should rank higher — the burden of proof is on the challenger.
+
+#### Deployment delta: trained vs. deployed weights
+
+| Feature | Trained (`minimal_v2`) | Deployed (live pilot) | Delta |
+|---|---|---|---|
+| `coinvest_score_z` | +0.0613 | +0.02 | Capped (conservative deployment) |
+| `financial_score` | −0.0533 | −0.0533 | Unchanged |
+| `bias` | — | +0.5019 | Unchanged |
+
+The trained weights come from the `minimal_v2` variant in `production_data/ranker_v2_model.json`. The deployed weights are read from `deployed_live_pilot` variant in the same artifact. The provenance block is the single source of truth — this table is a snapshot for audit reference only.
 
 **Overlay signals (not in selector/ranker weights):**
 
@@ -723,12 +1126,49 @@ catalyst_events.json    ──►  CTgov fallback PIT safety net (posting_date <
 
 | PIT Component | Status | Notes |
 |---------------|--------|-------|
-| Survivorship filter (ipo_dates.json) | **Shipped** | 8,556 violations fixed |
+| Survivorship filter (ipo_dates.json) | **Shipped** | 355/342 universe tickers covered; active under `pit_mode=degrade` in `run_screen.py` |
 | EDGAR PIT financials (filing-date gated) | **Shipped** | 339 tickers, all historical filings |
-| CTgov PIT safety net | **Shipped** | Runtime filter on posting dates |
+| CTgov PIT safety net | **Shipped** | Runtime filter on posting dates + per-date cache `cache/ctgov/trial_records_{date}.json` |
 | Production data archiver | **Shipped** | SHA-256 manifests in `data/pit_archives/` |
-| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py` |
+| Snapshot input archive | **Shipped (2026-04-17)** | `tools/run_daily_production.py` copies universe/trial_records/holdings/short_interest/ipo_dates into `data/snapshots/{date}/inputs/` after promotion; PIT v2 regen and backtest prefer archived inputs over current `production_data/` |
+| 13F historical cache backfill | **Shipped (2026-04-17)** | `tools/backfill_13f_history.py --lookback-filings 40` ran over 2020-Q1 through 2024-Q1; cache coverage 82-93% per quarter (was 0-8% before) |
+| PIT coinvest staging (quarter-end) | **Shipped, default-on (`cebb66f1`, 2026-04-17)** | `regenerate_pit_v2_snapshots.py --stage-pit-institutional` default True. 19/19 quarter-end validation passed with 312/312 schema match. |
+| PIT institutional_summary staging (non-QE) | **Shipped (`12e7ba0f`, 2026-04-17)** | `build_institutional_summary()` gains `nearest_prior_days=95`. Non-quarter-end monthly dates produce institutional_summary and inst_delta_z from nearest prior PIT cache. |
+| PIT coinvest staging (non-QE) | **Shipped (`a7ec93f4`, 2026-04-17)** | Shared `common/pit_cache.resolve_pit_cache_dir()` used by both institutional_summary and coinvest builders. Coinvest path is now symmetric with institutional_summary for non-QE monthly dates. |
+| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py`; data-dir resolves to archived inputs when available; institutional paths PIT-staged |
 | Catalyst look-ahead audit | Inconclusive | Retroactive generation makes this hard to clean |
+
+**PIT evidence policy (post-Phase-5, 2026-04-17):**
+
+Institutional leakage has been materially reduced across monthly regen:
+- Both `coinvest_score_z` and `inst_delta_z` now derive from PIT 13F cache
+  for quarter-end AND non-quarter-end dates (backward-only nearest-prior
+  resolver), under the same 50% coverage gate applied to the resolved source.
+- Weekend-only quarter-ends resolve to the most recent prior trading-day
+  cache, which is PIT-correct.
+- The 92.7%-of-selector-variance institutional block is the only major
+  contamination path that has been closed end-to-end in regen.
+
+Historical backtests **remain pseudo-PIT** because several non-institutional
+leaks are still present:
+- **Snapshot-input archive is forward-only** from 2026-04-17 — dates before
+  that still read current `production_data/` for universe, trial records,
+  holdings sidecars, etc.
+- **Universe membership is current-state** — present/absent in `universe.json`
+  is the current list, not the as-of-date list. `ipo_dates.json` filters pre-IPO
+  and delisted tickers but does not reconstruct historical membership.
+- **Clinical state is partially retroactive** — PIT-filtered trial records
+  go forward, but clinical-to-p_hit transmission and some derived features
+  are current-state.
+- **Manager registry is current-state** — a manager added in 2024 is treated
+  as "elite" in 2020 backfill. Second-order PIT violation inside the
+  institutional block itself.
+- **Current ruleset + current code are applied to historical data** — this
+  is the fundamental pseudo-PIT constraint.
+
+Live forward monitoring remains the **only credible basis for promotion
+decisions**. No historical regen result is decision-grade alpha evidence.
+See "Intellectual Honesty" above.
 
 ### Data Refresh Pipeline
 
@@ -1086,6 +1526,7 @@ Regime detector auto-switches to conservative mode (Q20/T30) when: correlation >
 ### EES v3 — Conditional Mispricing Model (diagnostic overlay)
 
 **Status:** Production-emitting since 2026-04-14. Checklist v2: **4/5 PASS** (WS4 pending forward data). Does NOT affect ranking or selection yet.
+**Shadow gate:** 20d gate **MET** (35/20 veto-active settled observations, 2026-04-14 onward). **`READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`** — active production veto NOT authorized pending explicit operator approval. See `artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md`.
 
 A two-factor model replacing the v2 trap/quality overlay with PIT-validated signals:
 
@@ -1110,19 +1551,37 @@ ees_v3_score = 0.70 × z(conditional_misprice_score)
 
 **Execution capacity** (`event_ev/execution_capacity.py`): post-sizing guardrail. Checklist: 6/6 PASS at $3M NAV. Participation limits: scale down >5% ADV, skip >20% ADV.
 
+### raw_veto_core Shadow Gate (2026-06-25)
+
+Integration candidate: **`raw_veto_core`** — exclude EES v3 bottom-quintile names from ranker top-Q selection.
+
+**PIT backtest (76 monthly snapshots, 2020–2026):**
+
+| Metric | Value |
+|--------|-------|
+| IC | 0.064 |
+| Newey-West t-stat | 2.36 |
+| Mean excess 63d | +3.53% |
+| LATE regime excess (2024–2026) | +7.1% |
+| Avg vetoes per snapshot | 7.0 |
+
+**Shadow ledger (veto-active observations only, 2026-04-14 onward):**
+
+| Horizon | N Settled | Veto Alpha | Selected Excess | Vetoed Excess | Alpha+ Rate |
+|---------|-----------|-----------|-----------------|---------------|-------------|
+| 5d | 50 | +2.3% | +0.2% | −2.1% | 61.7% |
+| 10d | 45 | +4.2% | +0.2% | −4.0% | 78.6% |
+| 20d | **35** | **+7.4%** | +0.0% | **−7.4%** | **81.2%** |
+
+**Day-1 veto card (2026-06-25):** 8 vetoed from 43 top-Q names. Failure mode distribution: 6× `market_already_priced`, 1× `catalyst_too_far`, 2× other, **0× `no_options_coverage`** — veto firing on theoretically grounded signal at 87% `priced_move_pct` coverage.
+
+**Freeze-lift review verdict:** `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW` — full provenance memo at `artifacts/readiness/EES_V3_FREEZE_LIFT_REVIEW_MEMO_2026_06_25.md`. Active production veto requires explicit operator approval. Proposed staged path: artifact-only → decision preview → paper overlay → operator-approved active veto.
+
+Scripts: `scripts/research/ees_v3_raw_veto_shadow_card.py` (daily card), `scripts/research/ees_v3_veto_backfill.py` (one-shot backfill). Ledger: `artifacts/shadow/ees_v3_raw_veto_shadow_ledger.jsonl` (gitignored).
+
 ### Forward Monitor
 
-`tools/ees_v3_forward_monitor.py` tracks rolling evidence toward WS4 clearance (dependence-adjusted t ≥ 1.65). Re-scores historical snapshots on-the-fly for pre-v3 dates, reads native v3 columns from 2026-04-14+.
-
-Current forward state (re-scored, 433 snapshots):
-
-| Signal | Mean IC | rho1 | n_eff | t_adj | Status |
-|--------|---------|------|-------|-------|--------|
-| conditional_expected_move | +0.025 | 0.75 | 54 | +0.99 | Leading candidate — only positive signal |
-| ees_v3_score | -0.023 | 0.62 | 93 | -1.23 | Negative (misprice saturation in pre-v3 data) |
-| conditional_misprice_score | -0.077 | 0.34 | 32 | -4.12 | Contaminated by pre-fix unit mismatch |
-
-Native v3 snapshots begin 2026-04-14. Clean forward evidence requires ~21 trading days (h20 returns). WS4 clearance expected after accumulation in production archives.
+`tools/ees_v3_forward_monitor.py` tracks rolling evidence toward WS4 clearance (dependence-adjusted t ≥ 1.65). Native v3 snapshots begin 2026-04-14. Pre-2026-04-14 signal table is stale (contaminated by pre-fix unit mismatch); monitor state superseded by raw_veto_core shadow gate evidence above.
 
 ### Runway-to-Catalyst Severity (risk-control overlay)
 
@@ -1491,7 +1950,17 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 
 ## 10. OpenClaw Agent Fleet
 
-26 agents on gateway ws://127.0.0.1:18789 (6 Sonnet 4.6, 15 Haiku 4.5, 1 main).
+31 agents on gateway ws://127.0.0.1:18789. OpenClaw version 2026.5.3-1.
+
+**Auth note:** Per-agent OAuth (anthropic:claude-cli profile) does not auto-refresh.
+Workaround: ~/.local/bin/openclaw-auth-sync (Hermes cron 4cfe9fb5d466, every 6h).
+If Hermes scheduler stalls (WSL2 sleep), run manually and kick the cron job.
+
+**Delivery note (2026-05-05):** 7 jobs had 20-21 consecutive delivery errors due to
+`announce/webchat` channel not resolving in isolated cron sessions. Fixed by adding
+`bestEffort:true` — jobs now succeed even when dashboard WebSocket is absent.
+Affected: ops-daily, sentinel-daily, daily-production-brief, ops-digest-summary,
+dashboard-validation-ping, calibration-weekly, weekly-policy-review.
 
 ### Production Monitors (cron-scheduled)
 
@@ -1514,7 +1983,7 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 | herald | Herald | Press release collector and news summarizer | Live — 3 daily digests |
 | ctgov_poller | Registry | ClinicalTrials.gov delta polling | Live, daily |
 | earnings_calendar_sync | Bellringer | Earnings calendar maintenance | Live, 2x daily |
-| grok_biotech_watch | Scout | Web sentinel for biotech signals | 1x daily weekdays (16:00 ET; reduced from 4×/day on 2026-05-06 — ROI audit; see RULESET_CHANGELOG / agent fleet audit P1 #3) |
+| grok_biotech_watch | Scout | Web sentinel for biotech signals | 1x daily weekdays (16:00 ET; reduced from 4×/day on 2026-05-06 — ROI audit; see agent fleet audit P1 #3) |
 | universe_maintenance | Gardener | Universe steward | Weekly (Mon) |
 | data_auditor | Auditor | Pipeline integrity checks | Daily + weekly deep |
 | biotech_news_digest | Herald Digest | News digest builder/formatter | 3x daily |
@@ -1543,7 +2012,45 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 
 ---
 
-## 11. Dashboard
+## 10b. Hermes Agent Roster
+
+19 Hermes-scheduled jobs (17 recurring, 2 one-shot) as of 2026-05-05.
+Full roster: docs/hermes_agents/agent_roster.md
+
+### Daily / Intraday
+
+| Job | ID | Schedule | Purpose |
+|-----|----|----------|---------|
+| hermes-run-ledger-supervisor | eaea558faaf1 | Mon-Fri 08:00 ET | Verifies all scheduled jobs ran within expected window |
+| pdufa-proximity-alert | e84535b22a2a | Mon-Fri 08:15 ET | PDUFA/action date proximity check vs portfolio |
+| morning-briefing | a955f533907b | Mon-Fri 12:00 ET | Wake Robin daily briefing from live screener artifacts |
+| pr-review-daily | 51537fae7635 | Mon-Fri 14:00 ET | PR governance review for production-touching PRs |
+| openclaw fleet triage | 4f360d005436 | daily 18:00 ET | Read-only OpenClaw fleet health + memory watchdog |
+| aa-model daily tracker | 3d1e09988873 | daily 18:30 ET | Asset-allocation model repo health + run status |
+| biotech-output-contract-check | 90fd1ba6606f | Mon-Fri 19:00 ET | Production snapshot contract validation |
+| llm-token-usage-monitor | 2a37afd91266 | daily 21:30 ET | LLM token accounting + anomaly detection |
+| openclaw auth sync | 4cfe9fb5d466 | every 6h | OAuth token propagation to all 31 agents |
+
+### Weekly
+
+| Job | ID | Schedule | Purpose |
+|-----|----|----------|---------|
+| biotech-screener weekly audit | ccb9b8e16844 | Mon 07:00 ET | Full read-only screener audit |
+| 91-180d-bucket-watch | d653cbc61a15 | Mon 08:30 ET | 91-180d bucket % vs 55% policy target |
+| event-outcome-binder-watch | f7635b487132 | Mon 10:00 ET | CRT outcome binder coverage check |
+| inst-delta-z-recovery-watcher | 4013ddd98c6d | Sun 14:30 ET | inst_delta_z reinstatement condition monitor |
+| weekly-signal-regime-sweep | 7e79501afb6e | Sun 14:00 ET | IC regime check across all load-bearing signals |
+| forward-shadow-weekly-digest | 120e89e8edbb | Fri 19:00 ET | Shadow portfolio performance digest |
+| alpha-verdict-ledger | 131d000821c2 | Fri 20:00 ET | Signal arm status ledger (ACTIVE/SHADOW/RETIRED) |
+| llm-token-usage-weekly | 4bb8509d2d8f | Sun 18:30 ET | Weekly LLM token usage rollup |
+
+### One-shot
+
+| Job | ID | Fires | Purpose |
+|-----|----|-------|---------|
+| 13f-q1-cycle-inst-delta-check | aee119860782 | 2026-05-19 17:00 ET | Q1 13F filing inst_delta_z IC recovery check |
+
+
 
 React + Vite 6 + Tailwind v3 + Recharts frontend with FastAPI backend.
 
@@ -1721,6 +2228,9 @@ currently untestable on the available historical data. Readiness gate at
 | `production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json` | Active ruleset |
 | `scripts/research/checklist_v2_rerun.py` | Promotion Checklist v2 battery runner |
 | `scripts/research/pairwise_feature_audit.py` | Within-cohort feature diagnostic |
+| `tools/build_pdufa_dates_extracted.py` | Phase 1 extracted PDUFA sidecar (review-only) |
+| `scripts/research/diff_sec_pdufa_review_window.py` | SEC review-window-pattern dry-run diff |
+| `tools/cron_data_refresh.sh` | Daily 14:00 ET cron — CTgov + SEC 8-K + FDA AdCom + FDA regulatory + sidecar + status |
 
 ---
 
@@ -1781,6 +2291,441 @@ is no longer a production discriminator in v1.14.0.
 | `scripts/research/pairwise_feature_audit.py` | 6 diagnostic tests for within-cohort feature behavior |
 | `scripts/research/statistical_methods_upgrade.py` | Full Spec 055 battery (broad, all signals) |
 | `scripts/research/herald_precision_study.py` | Spec 056 — first Checklist v2 pass (event_type_score) |
+
+---
+
+## 14.5 — 2026-04-26 Display & Diagnostic Layer Additions
+
+**No model change. No selector / ranker / eligibility / decision-ruleset code
+modified.** All work in this section is additive: new display columns,
+monitoring artifacts, scheduled data ingest, and one spec-only document.
+Alpha-stack-frozen policy (2026-04-04) and architecture-frozen policy
+(2026-04-19) honored throughout.
+
+### 14.5.1 SEC EDGAR review-window pattern expansion
+
+Extended `wake_robin_data_pipeline/collectors/sec_8k_catalyst_collector.py`
+`TIMING_PATTERNS` to 31 entries (was 23). New patterns capture review-window
+changes the prior set missed:
+
+- `(new|revised) PDUFA (date|target action date|goal date|action date) of …`
+- `(three|3|six|6)-month extension …`
+- `review period (has been|was) extended …` / `extended the review period …`
+- `extended the (PDUFA )?(target )?(action )?date … to …` (verb-first)
+- `major amendment … PDUFA date of …`
+- `Class 2 resubmission …` / `six-month review period … PDUFA …`
+- `PDUFA goal date of …`, `FDA goal date of …`, `target action date of …`
+
+Each pattern is tagged with `event_status` (`extended` /
+`resubmission_accepted` / `upcoming`) and tags_extra (`review_window_change` /
+`major_amendment` / `class_2_resubmission` / `six_month_review`). Extension
+events also attempt `prior_date` extraction from "from {old} to {new}" /
+"previously {old}" / "originally {old}" / "prior PDUFA date of {old}" wording
+within ±200 chars. **`PATTERN_VERSION` bumped `b2bdaf75` → `937b38db`**;
+existing event caches under the prior version are not loaded by the new code
+(filename includes pattern version).
+
+**EDGAR full-text search query list** also extended with the 5 new keyword
+phrases so the discovery layer surfaces these filings. Ten unit tests added;
+the `Lantheus three-month extension`, `Capricor review period extended`,
+`Arvinas Class 2 resubmission`, and `Praxis target action date` phrasings
+all parse correctly with HIGH confidence and DAY precision.
+
+### 14.5.2 Cron data-refresh wiring (canonical layer)
+
+Pre-2026-04-26: `cron_data_refresh.sh` ran ctgov + herald + iv + universe
+daily at 14:00 ET. SEC 8-K, FDA AdCom, FDA regulatory, and the inferred
+regulatory calendar were collector code with **no scheduled invocation**.
+Caches were 2 days stale by the time `module_3_catalyst.py` read them in
+`cache_only` mode at production runtime.
+
+Added stages: `sec_8k`, `fda_adcom`, `fda_regulatory`, `pdufa_extracted`,
+`status`. New `all` mode order: ctgov → sec_8k → fda_adcom →
+fda_regulatory → pdufa_extracted → herald → iv → universe → status.
+
+`stage_status` writes `logs/data_refresh_status_{date}.json` with cache
+existence + event counts for every source plus an `overall_pass` boolean.
+Pattern-version-agnostic (globs `8k_catalysts_{date}_*.json`). Smoke-tested
+on 2026-04-26: FDA AdCom (10 events) and FDA regulatory (3 notices) caches
+populate end-to-end.
+
+### 14.5.3 Phase 1 extracted PDUFA sidecar (review-only)
+
+New `tools/build_pdufa_dates_extracted.py` runs daily after `sec_8k`,
+reads the latest `cache/sec/8k_catalysts/8k_catalysts_{date}_*.json`,
+filters/dedupes, and writes:
+
+- `production_data/pdufa_dates_extracted.json` — latest snapshot (overwritten daily)
+- `artifacts/regulatory/pdufa_dates_extracted_{date}.json` — dated audit snapshot
+- `artifacts/regulatory/pdufa_extracted_vs_canonical_{date}.csv` and `.md` —
+  daily diff vs `production_data/pdufa_dates.json` with classifications
+  `NEW_CANDIDATE` / `MATCHES_CANONICAL` / `CONFLICTS_CANONICAL` /
+  `EXTENDED_*`.
+
+Filter rules: `event_type=FDA_PDUFA_DATE`, `date_precision=DAY`, confidence in
+{HIGH, MED}, drop events older than today − 30d, dedupe per (ticker, event_date)
+preferring extended > resubmission_accepted > upcoming, cap 3 per ticker.
+
+**Phase 1 contract — explicitly does not:**
+
+- Modify `production_data/pdufa_dates.json` (canonical store stays hand-curated)
+- Modify `run_screen.py`, scoring, selectors, ranker, or event ledger consumers
+- Auto-promote anything
+
+Phase 2 (auto-promotion gate) is deferred — this is the 30-day observation
+sidecar. Validated against the 2026-04-24 cache: 16 records emerged from
+443 cached events; 4 MATCHES_CANONICAL, 2 CONFLICTS_CANONICAL (multi-mention
+companies — expected manual-review pile), 10 NEW_CANDIDATE.
+
+### 14.5.4 `development_stage` display column on rankings.csv
+
+Added three new columns near `stage_bucket` in SNAPSHOT_COLUMNS:
+
+- `development_stage`: enum of `preclinical / phase_1 / phase_1_2 / phase_2 /
+  phase_2_3 / phase_3 / nda_bla / approved / commercial / unknown`
+- `development_stage_source`: `archetype / tier_commercial /
+  module_4_lead_phase / lead_program_phase / unknown`
+- `lead_program_phase_raw`: pass-through of the underlying phase string for
+  operator audit trail
+
+Derivation precedence (`run_screen.py:_derive_development_stage`):
+
+1. `archetype` starts with `commercial_` → `commercial / archetype`
+2. `tier_commercial` non-empty → `commercial / tier_commercial`
+3. Module 4 `lead_phase` populated → normalize / `module_4_lead_phase`
+4. `lead_program_phase` populated → normalize / `lead_program_phase`
+5. otherwise → `unknown / unknown`
+
+Normalizer accepts both string forms (`"phase 2"`, `"phase 2/3"`, etc.) and
+the **numeric encoding** that rankings.csv actually stores
+(`"0.0"`/`"1.0"`/`"2.0"`/`"3.0"`/`"4.0"`). The numeric path was added in a
+follow-up patch after the initial wire returned `unknown` for ~90% of rows.
+
+`development_stage` and `development_stage_source` also added to
+`PHASE2_PORTFOLIO_COLUMNS` and the `decision_portfolio.json` payload for
+parity. **Display only — never reads or writes any scoring field.** Mutation
+invariance enforced by a dedicated test.
+
+#### Eligible-universe distribution (2026-04-25, 221 of 297 eligible)
+
+```
+phase_3       109  (49.3%)
+phase_2        47  (21.3%)
+commercial     47  (21.3%)
+phase_1        17  ( 7.7%)
+preclinical     1  ( 0.5%)
+```
+
+Source attribution: 174 lead_program_phase, 28 archetype (commercial_pharma),
+19 tier_commercial (platforms).
+
+### 14.5.5 Ranker v2 cohort stability audit + diagnostics
+
+Triggered by ERAS dropping from `actionable_rank=16` (2026-04-24) to `63`
+(2026-04-25) overnight with composite_score / tier_any / catalyst_days
+unchanged. Audit at `artifacts/ranker_v2_cohort_audit_2026-04-26.md`.
+
+**Root cause:** `ranker_v2_pairwise.filter_cohort` selects top-60 by
+selector_score (`cohort_top_n=60`). ERAS sat on the boundary all week
+(ranks 49-60); a 5.2% selector_score dip on 04-25 (0.7578 → 0.7182) crossed
+the cut at 0.7318. Once outside the cohort, `final_score = selector_score ×
+0.0001 ≈ 7.18e-5` → final AR=63. Five other names dislocated the same day
+(ABSI, BIIB, SLN, TARS, XNCR); six joined (KNSA, MBX, NRIX, PCVX, SNDX,
+ZYME). Net cohort size unchanged at 60.
+
+**Verdict: expected boundary noise, not a regression.** ERAS has flapped
+in/out of the cohort three times in 13 days; typical daily churn is 0-3
+names; 04-15 and 04-25 are the two outlier days at 6 names (10%). DEM
+top-30 is unaffected — boundary noise lives at AR=50-65.
+
+Three follow-ups landed:
+
+| # | Item | Type |
+|---|------|------|
+| 1 | `cohort_membership` + `cohort_membership_streak` columns | display-only |
+| 2 | `cohort_churn_alert.json` per snapshot (severity=warn at ≥10%) | monitoring |
+| 3 | Spec 066 — soft-cohort hysteresis | spec only, no code |
+
+**(1)** New columns walk back through plain `YYYY-MM-DD` sibling snapshot dirs
+(skips `__pre_*` / `__stale_*` suffixed variants) up to a 30-day cap.
+Validated on 2026-04-25: ERAS correctly tagged `out`/`streak=1`; 37 names
+show streak ≥ 19 (long-tenured cohort core).
+
+**(2)** `cohort_churn_alert.json` written per snapshot with `churn_n`,
+`churn_pct`, `names_left`, `names_joined`, `severity`. Validated on
+2026-04-25 vs 2026-04-24: `churn_pct=10.0%` trips warn — matches the audit
+threshold exactly.
+
+**(3)** `specs/changes/spec_066_v2_cohort_hysteresis.md` defines the
+proposed soft-cohort hysteresis (carry forward yesterday's status for names
+within ±2-5% of cut, exit-only). **Spec only — no code change.** Section 3
+of the spec lists the five Checklist v2 gates that must pass before any
+implementation; Section 6 defines the pre-registered evaluation experiment.
+
+### 14.5.6 Test coverage delta
+
+| Suite | New tests |
+|-------|----------:|
+| `tests/test_fda_pattern_expansion.py` | +14 (TestReviewWindowPatterns + numeric phase variants) |
+| `tests/test_build_pdufa_dates_extracted.py` | +34 (filter, dedup, schema, classify, cache lookup) |
+| `tests/test_development_stage.py` | +40 (normalization, precedence, schema, mutation invariance) |
+| `tests/test_cohort_membership_streak.py` | +19 (streak math, severity classifier, alert writer) |
+| **Total new** | **+107** |
+
+Pre-existing SEC and contract suites unchanged: 78 SEC pattern + 148
+contract/output regression tests continue to pass under the new code.
+
+### 14.5.7 Commit ledger (2026-04-26)
+
+```
+20062c58  feat: ranker v2 cohort_membership_streak column + churn alert + spec 066
+8f06d217  audit: ranker v2 cohort stability — ERAS dropout is boundary noise
+aaca0517  fix: development_stage normalizer accepts numeric phase encoding
+0e7affb3  feat: display-only development_stage column on rankings.csv + decision_portfolio
+e4f318ff  chore: bta_submit reads API key from env, drop unused locals
+16c390b3  chore: sync untracked artifacts (PIT financials, dossiers, purple book, shadow_watch)
+806c5ff9  feat: SEC review-window patterns + Phase 1 extracted PDUFA sidecar
+```
+
+Plus `dd32082a` (runtime log snapshot, no code) at end of session.
+
+### 14.5.8 What is NOT in 1.7.1
+
+To be explicit: this version does **not** include any of the following.
+They remain on the roadmap with their existing constraints:
+
+- Auto-write to `production_data/pdufa_dates.json` (Phase 2 promotion gate)
+- Soft-cohort hysteresis code (Spec 066 — Checklist v2 pre-registration required)
+- Drug name / indication NER on the extracted sidecar
+- Aggregator (Benzinga / RTTNews / TheraRadar / PDUFA.bio) recall-audit feed
+- Any change to ranker_v2 weights, eligibility rules, or decision rulesets
+- Any change to selector / Module 5 composite / financial penalty / clinical filter
+
+---
+
+## 14.6 — May 2026 Production Specs & Ranker Research Roadmap
+
+### 14.6.1 Recent Production Work (2026-05-01 through 2026-05-14)
+
+Four production specs completed. All work is additive; no scoring, ranker, selector,
+or eligibility changes.
+
+**Spec 101: Runway Severity Export**
+- `ev_severity_score` now exported to rankings.csv
+- Registered in `run_screen_columns.py` under Runway Severity block
+- QA check validates formula bounds:
+  - `dilution_haircut ≈ 0.35 × ev_severity_score ±0.001`
+  - `size_multiplier ≈ max(0.40, 1 - 0.60 × ev_severity_score) ±0.001`
+- **Status: CLOSED**
+
+**Spec 102: Historical Backfill**
+- Backfill script (`tools/backfill_expectation_fields.py`) and tests shipped
+- Expectation fields backfilled to 19 snapshots (2026-04-20 through 2026-05-13)
+- Coverage improvements per FEATURE_COVERAGE_REQUIREMENTS thresholds:
+  - `short_interest_pct`: improved to ≥90%
+  - `close_price`: ≥99% (already at floor)
+  - `market_cap_mm`: ≥95% (already at floor)
+  - `priced_move_pct`: ≥80% (left as-is; no historical options source available)
+  - `insider_net_buy_value_90d`: diagnostic-only / tracked-nonblocking; early snapshots may lack the column and it is not required for Spec 102 closure
+- Data sources: PIT price cache, per-snapshot inputs/short_interest.json, market_data.json
+- Committed `18cd13b1`
+- **Status: CLOSED**
+
+**Spec 104: Insider Diagnostic Coverage**
+- Coverage measurement executed on 4 trading days (2026-05-11 through 2026-05-14)
+- Results: 100% nonblank, 0.00% variance
+- Phase A shipped + hardened. Phase B (5-day insider stabilization closure) pending 2026-05-15 snapshot
+- Committed `b98ffbac`
+
+**Spec 105: Expectation Coverage Verification**
+- Harness completed; verifies FEATURE_COVERAGE_REQUIREMENTS thresholds exact match
+- Insider explicitly NOT consumed by ExpectationErrorModel (verified via code inspection and tests)
+- Code-closed. Live QA pending 2026-05-15 snapshot
+- Committed `0ddbb509`
+
+**Next operational gate: 2026-05-15 snapshot.** Run Spec 105 live QA and Spec 104 5-day
+insider stabilization closure before treating the May 14 production-spec block as fully closed.
+
+### 14.6.2 Current Production Ranker Status (Frozen)
+
+The production model continues unchanged per alpha-freeze policy (2026-04-04):
+
+- **Selector (gate):** 0.65 × `coinvest_score_z` + 0.35 × `inst_delta_z`
+  - Gate-only function; does NOT rank survivors, only selects/excludes
+- **Ranker:** 2-feature pairwise (`financial_score_z`, `coinvest_score_z`)
+  - Ordinal-only (no rank-weighting; ECE=0.19)
+  - Deployed as capped Family C live-pilot vector
+  - See `production_data/ranker_v2_model.json` → `provenance` block for deployed vs trained delta
+- **Construction:** Top-30 equal-weight from eligible post-gate universe
+- **Promotion path blocked:** No changes authorized until Specs 094/095/100 close and Checklist v2 passes
+
+**Known Distortion (Cohort Expansion):**
+- Event: 2026-04-25, four new institutional managers added to coinvest universe
+- Effect: `inst_delta_z` locked at mean=0.743 through ~2026-05-15
+- Self-healing: Expected post-13F-Q1-refresh (expected ~2026-05-15)
+- Implication: Spec 072 verification (D7/D8/D9) gates must re-run post-13F-refresh on clean data
+
+### 14.6.3 Active Research Pipeline (2026-05-22 Review + Beyond)
+
+Three active specs under governance. All are research-only; no production code changes.
+
+**Spec 072 — vNext Ranker Candidate (clinical_score_v2_z)**
+- Frozen candidate set: PRIMARY=`clinical_score_v2_z`, BACKUP=`endpoint_strength_score`
+- Verification gates (D7/D8/D9):
+  - **D7 (Orthogonality):** |r| < 0.40 with coinvest_score_z; residualized IC ≥ +0.04
+  - **D8 (Within-Quintile IC):** T+5 ≥ +0.06, T+20 ≥ +0.04, n ≥ 30 in top-coinvest quintile
+  - **D9 (Bin-Residualized IC):** T+5 ≥ +0.04, T+20 ≥ +0.03, sign consistent post-residualization
+- Critical constraint: D7/D8/D9 must re-run **post-13F-refresh** (pre-refresh D-quintile membership corrupted by cohort distortion)
+- Full assessment: D1–D6 diagnostics (composition, block delta, forward-return, stability, trap pass-through,
+  self-dominance) **if and only if** D7/D8/D9 all pass
+- Review date: **2026-05-22** (post-13F-refresh, cohort-distortion cleared)
+- Expected outcomes: PASS (proceed to D1–D6) / FAIL PRIMARY (eval BACKUP or close research)
+
+**Spec 091 — WARN Governance (score_rank_pct)**
+- Assessment: Is `score_rank_pct` WARN streak cohort-driven or true degradation?
+- Cohort-Rejection Test (CRT): Compares WARN onset vs 2026-04-25 cohort expansion; determines root cause
+- Fallback: If CRT=FAIL (true degradation), run Multi-Horizon IC test
+  - Horizons: T+5, T+20, T+60
+  - Threshold: at least 2 horizons with IC ≥ +0.04 (t > 1.5)
+- Contingency: If Multi-Horizon=PASS, run PIT Integrity Audit + prepare Checklist v2
+- Review date: **2026-05-22** (verdict same-day or 2026-05-24 for Multi-Horizon if needed)
+
+**Spec 096 — Gate/Ranker Separation Doctrine (Enforced)**
+- Non-negotiable requirements:
+  - Requirement 1: Selector gates exclude names; ranker orders survivors only
+  - Requirement 2: Risk controls are post-ranking overlays only (no in-ranker gating)
+  - Requirement 3: Marginal value proof required (satisfied via D8 test for Spec 072)
+  - Requirement 4: Correct IC scope (ranker IC on eligible universe only, not full universe)
+- Blockers: Specs 094/095/100 must close before any production ranker change
+  - Spec 094: Marginal value test (satisfied by D8 diagnostic)
+  - Spec 095: Correct IC scope (composite_score IC ≠ ranker IC on eligible universe)
+  - Spec 100: Ranker IC tooling (see below)
+
+**Spec 100 — True Ranker IC Measurement Tooling (Research-Only)**
+- Design + scaffold shipped; implementation pending
+- Current state:
+  - `load_forward_returns()` returns empty dict (stub)
+  - `measure_ranker_ic()` returns placeholder zeros for all horizons
+  - **NOT YET USABLE** for promotion evidence
+- Required for completion: forward-return loading + real IC computation + tests + closure memo
+- Expected completion: narrow commit post-2026-05-15 snapshot (when forward returns available)
+- Purpose: Measure ranker IC on eligible universe only (distinct from composite_score IC on full universe)
+
+### 14.6.4 2026-05-22 Review Readiness
+
+**Pre-Gates (must all clear before 2026-05-22):**
+```
+[ ] 13F Q1 2026 refresh published (~2026-05-15)
+[ ] Cohort distortion clearance verified (inst_delta_z normalization check)
+[ ] Forward-return window ≥5 snapshots (research data sufficiency)
+```
+
+**2026-05-22 Review Agenda (4-hour session):**
+
+| Section | Duration | Topic |
+|---------|----------|-------|
+| A | 90 min | Spec 072 D7/D8/D9 verdict (5 steps: pre-validation, D7, D8, D9 thresholds, go/BACKUP/close) |
+| B | 60 min | Spec 091 WARN status (CRT result, Multi-Horizon IC if needed, PIT audit if passing) |
+| C | 30 min | Spec 096 doctrine enforcement (gate/ranker/risk separation; blocker acknowledgment) |
+| D | 30 min | Forward-return test (production vs coinvest-eligible baseline; data sufficiency) |
+
+**Post-Verdict Timeline (2026-05-23 through 2026-06-01):**
+
+If **Spec 072 D7/D8/D9 PASS:**
+- D1–D6 diagnostics: 2026-05-24/25
+- Expected D1–D6 verdict: 2026-05-27
+- Checklist v2 prep: 3–5 days
+- Target: Spec 072 shadow-ready by 2026-06-01
+
+If **Spec 091 CRT FAIL** (true degradation):
+- Multi-Horizon IC test: 2026-05-24/25
+- If Multi-Horizon=PASS: PIT Integrity Audit → Checklist v2 prep
+- If Multi-Horizon=FAIL: Retire signal; no further action
+
+Post-review (2026-05-28 onward):
+- Spec 100 forward-return completion
+- Candidate IC measurement on correct universe
+- Promotion eligibility determination (Checklist v2 readiness)
+
+### 14.6.5 Governance and Constraints
+
+- **Alpha Freeze Enforced:** No selector/ranker/sizing changes without Checklist v2
+  (FM + bootstrap + FDR + LOSO + year stab + domain audit)
+
+- **Composite_score IC ≠ Ranker IC:** Prior IC claims on full universe INVALIDATED
+  - Reason: Composite_score measures selection quality (full 299-ticker universe)
+  - Ranker IC measures ranking quality (eligible post-gate ~60-ticker universe)
+  - Spec 100 tool required for correct ranker IC measurement on eligible universe only
+
+- **Cohort Distortion Window:** 2026-04-25 through ~2026-05-15
+  - `inst_delta_z` contaminated during this period
+  - D7/D8/D9 re-run post-13F-refresh on clean data (non-negotiable)
+  - Top-30 changes (RVMD-in/ERAS-out) treated as cohort artifact; attribution lane only
+
+- **Spec 072 Frozen Candidates:** Only clinical_score_v2_z (PRIMARY) and endpoint_strength_score (BACKUP)
+  - No new candidates without explicit operator approval
+  - No promotions without evidence + Checklist v2
+
+- **Spec 072 Prohibited Actions:**
+  - No feature additions to candidate set
+  - No tuning / hyperparameter search
+  - No composite construction (that's how EES v3 failed)
+  - No shadow-ship before verification gates pass
+
+### 14.6.6 Commits Referenced
+
+- `18cd13b1` — Spec 102 backfill script + tests
+- `b98ffbac` — Spec 104 insider diagnostic measurement
+- `0ddbb509` — Spec 105 expectation coverage harness
+- `9d6c33c8` — Ranker Research Prep Pack (4 memos)
+- `1e41e539` — 13F Q1 2026 cohort distortion preflight
+- `d2d1a207` — 2026-05-22 review pack (pre-agenda + post-verdict roadmap)
+- `baf514b9` — Spec 100 design + scaffold (forward-return wiring pending)
+- `41f2987f` — Status clarification memos (Spec 100 + Markov transition model)
+
+### 14.6.7 PIT Trim Shadow Study (Research-Only, June 2026)
+
+**Study Status:** INCONCLUSIVE — Forward-window maturity blocker (temporal, not data freshness)
+
+**Hypothesis:** Can the Top-30 equal-weight portfolio be improved by removing bottom performers identified via `de_alpha_60d` field?
+
+**Governance Status: LOCKED (Research-Only)**
+- No production portfolio changes
+- No selector/ranker/sizing modifications
+- Artifact-only output under `/artifacts/research/`
+- No promotion path until multi-horizon forward windows mature
+
+**Verification Completed (✓ PASS):**
+1. **PIT Safety of `de_alpha_60d`:** Field uses only T-61 to T-1 historical prices; no forward-looking data
+2. **Trim Rules Defined Ex Ante (before looking at outcomes):**
+   - **No-Trim:** Full 30-position baseline
+   - **Trim-3:** Drop bottom 3 tickers by `de_alpha_60d`
+   - **Trim-6:** Drop bottom 6 tickers by `de_alpha_60d`
+   - **Trim-10:** Drop bottom 10 tickers by `de_alpha_60d`
+3. **Field Coverage:** 178 snapshots with 100% `de_alpha_60d` field coverage
+
+**Forward-Window Maturity Blocker (✗ BLOCKED):**
+- **20-day window:** 23 snapshots eligible (sample too small, exploratory only)
+- **40-day window:** 0 snapshots eligible (requires prices through 2026-07-22)
+- **60-day window:** 0 snapshots eligible (requires prices through 2026-08-19)
+- **Root cause:** Maturity constraint, not data staleness. Future realized returns cannot exist until time elapses.
+
+**Key Governance Distinction:**
+- Price history ends 2026-05-29 (data freshness)
+- 60-day forward returns require outcomes through 2026-08-19 (temporal maturity)
+- **These are not equivalent problems.** Data team cannot create future prices. Only time can.
+
+**Next Valid Action:**
+- Maintain research-artifact-only status
+- Schedule re-run after 2026-08-19 when 60-day forward windows are observable
+- Alternative: Apply to older snapshots only if `de_alpha_60d` is available PIT on pre-2026-04-01 holdings
+- Do NOT run 20-day fallback as evidence; if exploratory only, label explicitly "not decision-suitable"
+
+**Artifacts:**
+- `/artifacts/research/PIT_TRIM_SHADOW_BACKTEST_FINAL_2026_06_02.json` — Study results + blockers
+- `/artifacts/research/PIT_TRIM_BACKTEST_BLOCKER_2026_06_02.md` — Detailed blocker explanation
+- `/artifacts/research/PIT_TRIM_SHADOW_METHODOLOGY.md` — Full methodology document
+- `/artifacts/research/INDEX_PIT_TRIM_STUDY_2026_06_02.md` — Quick reference guide
 
 ---
 
@@ -1854,4 +2799,76 @@ is no longer a production discriminator in v1.14.0.
 
 ---
 
-*Document updated 2026-04-14 (ruleset reference refreshed 2026-05-06). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
+## Production execution hygiene (2026-06-28) — infrastructure only
+
+`PRODUCTION_OPTIMIZATION / NO_MODEL_CHANGE / NO_RANKER_CHANGE / NO_SELECTOR_CHANGE / NO_RULESET_CHANGE`
+
+A set of additive, behavior-preserving changes sharpen `run_screen.py` /
+`tools/run_daily_production.py` production execution **without touching the
+frozen model**. Ranker, selector, scoring formulas, feature weights, ruleset,
+eligibility, sizing, actionability, and PIT semantics are unchanged. Verified
+byte-identical via the golden-baseline regression suite
+(`tests/test_golden_baseline.py` + composite/clinical/catalyst/financial/IC
+golden suites — all pass).
+
+- **Stage timing** — `run_screen.py` prints `[timing] <stage>: N.NNs` for load
+  and each module (1–5); a `_timed()` context manager is available. Observability
+  only.
+- **Price-history parse-once cache** — `price_history.csv` (28MB+) was re-parsed
+  by momentum, beta/alpha, and drawdown/beta-rsi hydration. A run-scoped
+  `_read_price_history_rows()` cache (keyed by path/mtime/size; one file retained)
+  serves the exact `csv.DictReader` rows to all consumers, which each still
+  rebuild their own filtered view → identical output. Saves redundant 28MB parses.
+- **Cheap-exclusion prune log** — a `[prune] universe: loaded N → M` line is
+  emitted before expensive modules. Existing delisted + PIT-survivorship filters
+  already run before any live fetch/enrichment; no new pruning was added (no
+  ranking change).
+- **Source-freshness gate** (`run_daily_production.py`) — per-source TTLs
+  (prices/ctgov daily … 13F quarterly, euctr/ctis/isrctn weekly). Stale **non-core**
+  sources emit WARN; core staleness (prices/XBI) stays blocking via the existing
+  dedicated FAIL gates. Visibility, not new blocking.
+- **Manifest provenance + health categories** — `run_manifest.json` carries a
+  `hashes` block (model/universe/price/clinical/ruleset/rankings) and a
+  `health_summary` (blocking_failures vs warnings).
+- **No-op detection (logging-only)** — `NO_MATERIAL_INPUT_CHANGE` is logged when
+  current input hashes match the prior snapshot's manifest. **Never skips work or
+  snapshot creation.**
+- **Run modes / scoped price refresh** — `--mode {daily-validation,daily-production,
+  full-refresh,research}` and `--price-refresh-scope {full,top30}`. Default mode
+  `daily-production` resolves to the prior defaults, so **cron and existing callers
+  are unaffected**.
+
+**Operator action required:** none. Defaults preserve current cron behavior. The
+new `--mode daily-validation` / `--price-refresh-scope top30` are opt-in for fast
+forward-evidence runs.
+
+---
+
+## Options Features Stage 1 — shadow quality/gap fields (2026-06-28)
+
+`NO_MODEL_CHANGE / NO_RANKER_CHANGE / NO_SELECTOR_CHANGE`
+
+Production output schema expanded with **shadow columns only**. No rank / order /
+selector / sizing / trading impact.
+
+`common/options_features.py::enrich_csv_rows()` adds the following diagnostic
+columns to `rankings.csv` (wired into `SNAPSHOT_COLUMNS`; safety defaults applied):
+
+- `options_quality_score`, `options_quality_status` — surface/liquidity quality of
+  the listed-options signal (usable / thin / stale / unusable / missing).
+- `event_premium_iv_pp`, `event_premium_ratio` — event-implied move premium.
+- `expectation_gap_score` — z-scored gap between model opportunity (`score_rank_pct`)
+  and the options-priced move (`priced_move_pct`); positive = model sees more
+  opportunity than already priced.
+- `options_shadow_verdict` — categorical shadow verdict (no model impact).
+
+These fields are **read/observe only**: they are emitted for downstream analysis and
+do not feed the ranker, selector, sizing, eligibility, or decision engine. Coverage
+of the broader expectation layer (e.g. `short_interest_pct`, `close_price`,
+`market_cap_mm`, `priced_move_pct`) is improved by this surfacing; insider remains
+the unwired gap. Tests: `tests/test_options_features_stage1.py`. Schema consumers
+that pin column sets should add the new columns.
+
+---
+
+*Document updated 2026-06-28 (added § Production execution hygiene [infrastructure-only, no model/ranker/selector/ruleset change, cron defaults preserved] and § Options Features Stage 1 [shadow-only production output-schema expansion, no model/ranker/selector change]). Prior: 2026-06-02 (added § 14.6.7 PIT trim shadow study documentation; research-only artifact with forward-window maturity blocker). Prior updates: 2026-05-24 (v1.14.0 sync), 2026-05-06 (ruleset reference), 2026-04-27 (baseline). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively).*
