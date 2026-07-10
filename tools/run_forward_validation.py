@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import hashlib
 import json
@@ -55,7 +56,91 @@ def sha256_file(path: Path) -> str | None:
     return h.hexdigest()[:16]
 
 
+# Behavioral fingerprint scheme. Bump this string whenever the normalization
+# rules below change (it is mixed into the hash so schemes never collide).
+HASH_SCHEME = "ast-v1"
+
+
+class _BehaviorNeutralStripper(ast.NodeTransformer):
+    """Remove AST nodes that carry no runtime behavior so cosmetic edits do not
+    change the model fingerprint.
+
+    Stripped: type annotations (argument, return, and variable), and docstrings.
+    Comments, whitespace, and formatting are already absent from the AST. The
+    runtime effect of annotated assignments is preserved (``x: int = 5`` becomes
+    ``x = 5``); a bare ``x: int`` declaration is dropped (it does nothing at
+    runtime).
+    """
+
+    @staticmethod
+    def _strip_docstring(node: ast.AST) -> ast.AST:
+        body = getattr(node, "body", None)
+        if (
+            body
+            and isinstance(body[0], ast.Expr)
+            and isinstance(getattr(body[0], "value", None), ast.Constant)
+            and isinstance(body[0].value.value, str)
+        ):
+            node.body = body[1:] or [ast.Pass()]
+        return node
+
+    def visit_Module(self, node: ast.Module) -> ast.AST:
+        self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        node.returns = None
+        a = node.args
+        for arg in [*a.posonlyargs, *a.args, *a.kwonlyargs, a.vararg, a.kwarg]:
+            if arg is not None:
+                arg.annotation = None
+        self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    visit_AsyncFunctionDef = visit_FunctionDef  # type: ignore[assignment]
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
+        self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign):
+        self.generic_visit(node)
+        if node.value is None:
+            return None  # bare declaration `x: int` — no runtime effect
+        return ast.Assign(targets=[node.target], value=node.value)
+
+
+def _behavioral_fingerprint(path: Path) -> str:
+    """AST-normalized source fingerprint (annotations/docstrings/formatting removed)."""
+    tree = ast.parse(path.read_bytes())
+    tree = _BehaviorNeutralStripper().visit(tree)
+    ast.fix_missing_locations(tree)
+    return ast.dump(tree, annotate_fields=True, include_attributes=False)
+
+
 def compute_model_hash() -> str:
+    """Behavioral fingerprint of the scoring-model files (``HASH_SCHEME``).
+
+    Uses an AST-normalized fingerprint so behavior-neutral edits — type
+    annotations, docstrings, comments, whitespace, formatting — do NOT change
+    the hash; only runtime-logic changes move it. This replaces the original
+    raw-bytes scheme, under which a one-line type-hint edit flipped the frozen
+    candidate hash (a9983a67 -> a7a80e85) despite byte-for-byte identical
+    behavior. See docs/governance/2026-07-10-dem-candidate-hash-equivalence.md.
+    """
+    h = hashlib.sha256()
+    h.update(HASH_SCHEME.encode())
+    for p in MODEL_FILES:
+        if p.exists():
+            h.update(p.name.encode())
+            h.update(_behavioral_fingerprint(p).encode())
+    return h.hexdigest()[:16]
+
+
+def compute_model_hash_legacy() -> str:
+    """Original raw-bytes fingerprint. Retained for audit and one-time migration
+    only — sensitive to annotations/comments/whitespace. Do not use for new
+    freeze decisions."""
     h = hashlib.sha256()
     for p in MODEL_FILES:
         if p.exists():
