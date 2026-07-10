@@ -139,20 +139,26 @@ fi
 # budget was killing the python child mid-AACT before the wrapper could reach
 # its own PASS/FAIL summary block.
 PIPELINE_TIMEOUT=6000
+# NOTE: the pipeline invocation MUST be guarded (|| EXIT_CODE=$?). Under
+# `set -euo pipefail` a bare non-zero exit aborts the wrapper before it can
+# reach its post-pipeline tail (diagnostics + forward-validation capture).
+# run_daily_production.py exits 2 on WARN-status runs, which is routine, so an
+# unguarded call silently skips the tail on every warning day. Capturing the
+# code here keeps the tail running while still recording the true exit status.
 if command -v timeout >/dev/null 2>&1; then
+    EXIT_CODE=0
     timeout --signal=TERM --kill-after=60 ${PIPELINE_TIMEOUT} \
         ${PYTHON} tools/run_daily_production.py \
         --as-of-date "${AS_OF_DATE}" \
-        >> "${LOG_FILE}" 2>&1
-    EXIT_CODE=$?
+        >> "${LOG_FILE}" 2>&1 || EXIT_CODE=$?
     if [ ${EXIT_CODE} -eq 124 ]; then
         echo "[$(date -Iseconds)] TIMEOUT: pipeline exceeded ${PIPELINE_TIMEOUT}s — killed" | tee -a "${LOG_FILE}"
     fi
 else
+    EXIT_CODE=0
     ${PYTHON} tools/run_daily_production.py \
         --as-of-date "${AS_OF_DATE}" \
-        >> "${LOG_FILE}" 2>&1
-    EXIT_CODE=$?
+        >> "${LOG_FILE}" 2>&1 || EXIT_CODE=$?
 fi
 
 if [ ${EXIT_CODE} -eq 0 ]; then
