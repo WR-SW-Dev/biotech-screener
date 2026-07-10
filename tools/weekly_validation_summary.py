@@ -26,6 +26,9 @@ FILLS_LEDGER = ARTIFACTS / "fills.jsonl"
 SUMMARY_PATH = ARTIFACTS / "WEEKLY_SUMMARY.md"
 CANDIDATE_FILE = ARTIFACTS / "CANDIDATE.json"
 
+sys.path.insert(0, str(REPO_ROOT))
+from tools.run_forward_validation import capture_is_eligible_for_mandate  # noqa: E402
+
 
 def week_key(date_str: str) -> str:
     d = ddate.fromisoformat(date_str)
@@ -69,8 +72,11 @@ def main() -> int:
     if CANDIDATE_FILE.exists():
         candidate = json.loads(CANDIDATE_FILE.read_text())
 
-    # Non-overlapping weekly 5d windows: earliest capture per ISO week with completed 5d fill
+    # Non-overlapping weekly 5d windows: earliest capture per ISO week with completed 5d fill.
+    # `eligible_weeks` tracks weeks with >=1 mandate-eligible capture (the gate driver);
+    # a week counts even if its earliest capture is a replay but a later one is live-eligible.
     by_week: dict[str, dict] = {}
+    eligible_weeks: set[str] = set()
     for cap in sorted(captures, key=lambda c: c["date"]):
         date = cap["date"]
         if args.since and date < args.since:
@@ -80,6 +86,8 @@ def main() -> int:
         if xs5 is None:
             continue
         wk = week_key(date)
+        if capture_is_eligible_for_mandate(cap, fill):
+            eligible_weeks.add(wk)
         if wk not in by_week:
             by_week[wk] = {
                 "week": wk,
@@ -88,13 +96,18 @@ def main() -> int:
                 "xbi_5d": fill.get("xbi_5d"),
                 "xs_5d": xs5,
                 "end_date": fill.get("end_date_5d"),
-                "quality": cap.get("data_quality", "?"),
+                "quality": cap.get("quality_status", cap.get("data_quality", "?")),
+                "mode": cap.get("capture_mode", "?"),
                 "control_b30": fill.get("control_bottom30_5d"),
                 "control_boot_pct": fill.get("control_bootstrap_pct_5d"),
             }
 
+    for wk, row in by_week.items():
+        row["eligible"] = wk in eligible_weeks
+
     rows = list(by_week.values())
     n = len(rows)
+    n_eligible = len(eligible_weeks)
 
     if n == 0:
         print("No completed 5d windows yet.")
@@ -121,10 +134,11 @@ def main() -> int:
             return f"[CLEARED] {label}"
         return f"[{n_windows}/{required}] {label}"
 
+    # Mandate gates count ONLY mandate-eligible live windows (not replay/degraded).
     gates = [
-        gate_status(n, 20, "Directional proof (XS>0, hit>50%)"),
-        gate_status(n, 40, "Strong evidence (t>1.5)"),
-        gate_status(n, 52, "Investable evidence (t near 2.0)"),
+        gate_status(n_eligible, 20, "Directional proof (XS>0, hit>50%)"),
+        gate_status(n_eligible, 40, "Strong evidence (t>1.5)"),
+        gate_status(n_eligible, 52, "Investable evidence (t near 2.0)"),
     ]
 
     # Build markdown
@@ -144,7 +158,8 @@ def main() -> int:
         "",
         "| Metric | Value |",
         "|--------|-------|",
-        f"| Non-overlapping 5d windows | **{n}** |",
+        f"| Non-overlapping 5d windows (all captured) | **{n}** |",
+        f"| **Mandate-eligible live windows** | **{n_eligible}** |",
         f"| Mean weekly excess (basket − XBI) | **{mean_xs:+.3%}** |",
         f"| Std weekly excess | {std_xs:.3%} |",
         f"| t-stat | **{t_stat_display}** |",
@@ -153,7 +168,11 @@ def main() -> int:
         f"| Cumulative basket | {cum_basket:+.2%} |",
         f"| Cumulative XBI | {cum_xbi:+.2%} |",
         "",
-        "## Gate Progress",
+        "> Statistics above are **descriptive over all captured windows (incl. replay)** and are "
+        "not mandate evidence. The mandate gate below counts only mandate-eligible live windows "
+        "(capture_mode=LIVE, quality=PASS, model_hash_match, benchmark_available, 5d return realized).",
+        "",
+        "## Gate Progress (mandate-eligible windows only)",
         "",
     ]
     for g in gates:
@@ -165,8 +184,8 @@ def main() -> int:
         "",
         "## Weekly Detail",
         "",
-        "| Week | Capture Date | Basket | XBI | Excess | Hit | Boot% | B30 | Quality |",
-        "|------|-------------|--------|-----|--------|-----|-------|-----|---------|",
+        "| Week | Capture Date | Mode | Elig | Basket | XBI | Excess | Hit | Boot% | B30 | Quality |",
+        "|------|-------------|------|------|--------|-----|--------|-----|-------|-----|---------|",
     ]
 
     cum = 0.0
@@ -175,8 +194,10 @@ def main() -> int:
         hit_sym = "+" if r["xs_5d"] > 0 else "-"
         boot_s = f"{r['control_boot_pct']:.0%}" if r["control_boot_pct"] is not None else "—"
         b30_s = f"{r['control_b30']:+.2%}" if r["control_b30"] is not None else "—"
+        elig_s = "✓" if r.get("eligible") else "—"
         lines.append(
-            f"| {r['week']} | {r['date']} | {r['basket_5d']:+.2%} | {r['xbi_5d']:+.2%} | "
+            f"| {r['week']} | {r['date']} | {r.get('mode', '?')} | {elig_s} | "
+            f"{r['basket_5d']:+.2%} | {r['xbi_5d']:+.2%} | "
             f"{r['xs_5d']:+.2%} | {hit_sym} | {boot_s} | {b30_s} | {r['quality']} |"
         )
 

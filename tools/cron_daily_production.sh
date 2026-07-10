@@ -278,6 +278,7 @@ if { [ "${EXIT_CODE}" -eq 0 ] || [ "${EXIT_CODE}" -eq 2 ]; } && [ -f "${SNAPSHOT
     ${PYTHON} tools/run_forward_validation.py \
         --as-of-date "${AS_OF_DATE}" \
         --expect-commit "${INVOCATION_COMMIT}" \
+        --capture-mode LIVE \
         2>&1 | tee -a "${LOG_FILE}" || \
         echo "[$(date -Iseconds)] WARN: run_forward_validation exited non-zero" | tee -a "${LOG_FILE}"
 

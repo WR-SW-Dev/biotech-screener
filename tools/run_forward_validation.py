@@ -33,7 +33,10 @@ CAPTURES_LEDGER = ARTIFACTS / "captures.jsonl"
 CANDIDATE_FILE = ARTIFACTS / "CANDIDATE.json"
 
 TOP_N = 30
-SCHEMA_VERSION = "fv_capture.v1"
+# v2 adds the mandate-quarantine fields: capture_mode, captured_at_utc,
+# snapshot_as_of_date, candidate_model_hash, quality_status, model_hash_match,
+# benchmark_available, eligible_for_mandate.
+SCHEMA_VERSION = "fv_capture.v2"
 
 # Core model files that define candidate identity
 MODEL_FILES = [
@@ -230,6 +233,45 @@ def validate_run_freshness(date: str, snap_dir: Path, expect_commit: str | None 
         if man_commit and not (man_commit.startswith(expect_commit) or expect_commit.startswith(man_commit)):
             reasons.append(f"snapshot commit={man_commit[:12]} != invocation commit={expect_commit[:12]}")
     return reasons
+
+
+# ---------------------------------------------------------------------------
+# Mandate eligibility (SM-20260629-001) — authoritative, single source of truth
+# ---------------------------------------------------------------------------
+
+# The forward-shadow mandate's primary metric is the 5d forward excess vs XBI.
+_MANDATE_RETURN_KEY = "xs_5d"
+
+
+def forward_return_realized(fill: dict | None) -> bool:
+    """True once the capture's primary (5d) forward window has been observed/filled."""
+    return bool(fill) and fill.get(_MANDATE_RETURN_KEY) is not None
+
+
+def capture_is_eligible_for_mandate(capture: dict, fill: dict | None) -> bool:
+    """Authoritative eligibility rule for SM-20260629-001.
+
+    A capture counts toward the 20-window gate ONLY if it is a genuine, complete,
+    LIVE forward observation of the frozen candidate:
+
+      * ``capture_mode == "LIVE"``      — not a replay/backfill
+      * ``quality_status == "PASS"``     — no hard DQ failure
+      * ``model_hash_match`` is True      — the frozen candidate, not drift
+      * ``benchmark_available`` is True    — XBI present for excess-vs-benchmark
+      * ``forward_return_realized(fill)``  — the 5d window has been observed
+
+    Legacy / pre-schema captures lack these fields, so ``.get`` returns falsy and
+    they are correctly excluded. This rule lives in code (not prose) so the
+    mandate counter cannot silently count replay data, drifted models, missing
+    benchmarks, or unrealized windows.
+    """
+    return (
+        capture.get("capture_mode") == "LIVE"
+        and capture.get("quality_status") == "PASS"
+        and bool(capture.get("model_hash_match"))
+        and bool(capture.get("benchmark_available"))
+        and forward_return_realized(fill)
+    )
 
 
 def load_rankings(snap_dir: Path) -> list[dict]:
@@ -628,6 +670,15 @@ def main() -> int:
         help="Require the snapshot manifest's git commit_sha to match this "
         "(invocation provenance). The daily wrapper passes its HEAD sha.",
     )
+    parser.add_argument(
+        "--capture-mode",
+        choices=["LIVE", "REPLAY"],
+        default="REPLAY",
+        help="LIVE is asserted only by the production wrapper for a fresh, "
+        "same-invocation snapshot; anything else is REPLAY (backfill/manual) and "
+        "is never counted toward the mandate. A LIVE claim is downgraded to "
+        "REPLAY if the freshness gate is bypassed or --force is used.",
+    )
     args = parser.parse_args()
 
     date = args.as_of_date
@@ -684,6 +735,25 @@ def main() -> int:
     # --- Data quality ---
     quality, dq_checks = run_dq_checks(date, top30, snap_dir, model_hash, candidate)
 
+    def _check_pass(name: str) -> bool:
+        return next((c["pass"] for c in dq_checks if c["check"] == name), False)
+
+    model_hash_match = _check_pass("model_hash_match")
+    benchmark_available = _check_pass("xbi_price_available")
+
+    # --- Capture mode (LIVE only for a fresh, same-invocation production run) ---
+    capture_mode = args.capture_mode
+    if capture_mode == "LIVE" and (freshness_failures or args.force):
+        print(
+            "  Note: downgrading capture_mode LIVE -> REPLAY (freshness gate bypassed or --force).",
+            file=sys.stderr,
+        )
+        capture_mode = "REPLAY"
+
+    # Capture-time eligibility (the mandate counter additionally requires the 5d
+    # forward return to be realized — see capture_is_eligible_for_mandate()).
+    eligible_at_capture = capture_mode == "LIVE" and quality == "PASS" and model_hash_match and benchmark_available
+
     # --- Prices ---
     effective_price_date = nearest_price_date_before(date)
     xbi_price = load_xbi_price(effective_price_date) if effective_price_date else None
@@ -692,11 +762,23 @@ def main() -> int:
     seed = int(hashlib.sha256(date.encode()).hexdigest(), 16) % (2**31)
     adversarial = build_adversarial_seeds(rows, top30, bottom30, seed)
 
+    captured_at = datetime.now(timezone.utc).isoformat()
+
     # --- Build capture record ---
     capture = {
         "schema": SCHEMA_VERSION,
         "date": date,
-        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "captured_at": captured_at,
+        # --- Mandate-quarantine fields (schema v2) ---
+        "capture_mode": capture_mode,
+        "captured_at_utc": captured_at,
+        "snapshot_as_of_date": date,
+        "candidate_model_hash": candidate.get("model_hash") if candidate else None,
+        "quality_status": quality,
+        "model_hash_match": model_hash_match,
+        "benchmark_available": benchmark_available,
+        "eligible_for_mandate": eligible_at_capture,
+        # --- Existing fields ---
         "model_hash": model_hash,
         "ruleset_hash": ruleset_hash,
         "data_quality": quality,
