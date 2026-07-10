@@ -139,20 +139,26 @@ fi
 # budget was killing the python child mid-AACT before the wrapper could reach
 # its own PASS/FAIL summary block.
 PIPELINE_TIMEOUT=6000
+# NOTE: the pipeline invocation MUST be guarded (|| EXIT_CODE=$?). Under
+# `set -euo pipefail` a bare non-zero exit aborts the wrapper before it can
+# reach its post-pipeline tail (diagnostics + forward-validation capture).
+# run_daily_production.py exits 2 on WARN-status runs, which is routine, so an
+# unguarded call silently skips the tail on every warning day. Capturing the
+# code here keeps the tail running while still recording the true exit status.
 if command -v timeout >/dev/null 2>&1; then
+    EXIT_CODE=0
     timeout --signal=TERM --kill-after=60 ${PIPELINE_TIMEOUT} \
         ${PYTHON} tools/run_daily_production.py \
         --as-of-date "${AS_OF_DATE}" \
-        >> "${LOG_FILE}" 2>&1
-    EXIT_CODE=$?
+        >> "${LOG_FILE}" 2>&1 || EXIT_CODE=$?
     if [ ${EXIT_CODE} -eq 124 ]; then
         echo "[$(date -Iseconds)] TIMEOUT: pipeline exceeded ${PIPELINE_TIMEOUT}s — killed" | tee -a "${LOG_FILE}"
     fi
 else
+    EXIT_CODE=0
     ${PYTHON} tools/run_daily_production.py \
         --as-of-date "${AS_OF_DATE}" \
-        >> "${LOG_FILE}" 2>&1
-    EXIT_CODE=$?
+        >> "${LOG_FILE}" 2>&1 || EXIT_CODE=$?
 fi
 
 if [ ${EXIT_CODE} -eq 0 ]; then
@@ -260,9 +266,19 @@ fi
 # Immutable daily capture appended to artifacts/forward_validation/captures.jsonl.
 # Fill script updates returns for any pending capture whose forward window is now observable.
 # Both are read-only with respect to the model; no scoring or selection logic changes.
-if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
+#
+# Capture ONLY when production completed (exit 0 = clean, exit 2 = completed with
+# governance warnings). On a hard failure (exit 1), timeout (124), SIGKILL (137),
+# or any other code, the snapshot may be partial or stale — capturing then would
+# feed a stale-output false positive into the forward mandate. The capture script
+# applies its own freshness/provenance gate as defense-in-depth, and is passed the
+# wrapper's HEAD commit so it can confirm the snapshot came from this invocation.
+INVOCATION_COMMIT="$(git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo "")"
+if { [ "${EXIT_CODE}" -eq 0 ] || [ "${EXIT_CODE}" -eq 2 ]; } && [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
     ${PYTHON} tools/run_forward_validation.py \
         --as-of-date "${AS_OF_DATE}" \
+        --expect-commit "${INVOCATION_COMMIT}" \
+        --capture-mode LIVE \
         2>&1 | tee -a "${LOG_FILE}" || \
         echo "[$(date -Iseconds)] WARN: run_forward_validation exited non-zero" | tee -a "${LOG_FILE}"
 
@@ -273,6 +289,8 @@ if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
     ${PYTHON} tools/weekly_validation_summary.py \
         2>&1 | tee -a "${LOG_FILE}" || \
         echo "[$(date -Iseconds)] WARN: weekly_validation_summary exited non-zero" | tee -a "${LOG_FILE}"
+else
+    echo "[$(date -Iseconds)] SKIP: forward-validation capture — pipeline exit=${EXIT_CODE} or rankings.csv absent (capture only on exit 0/2 with a fresh snapshot)" | tee -a "${LOG_FILE}"
 fi
 
 # --- Housekeeping: prune pre-staging, old logs, and old caches ---

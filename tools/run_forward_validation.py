@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import hashlib
 import json
@@ -32,7 +33,10 @@ CAPTURES_LEDGER = ARTIFACTS / "captures.jsonl"
 CANDIDATE_FILE = ARTIFACTS / "CANDIDATE.json"
 
 TOP_N = 30
-SCHEMA_VERSION = "fv_capture.v1"
+# v2 adds the mandate-quarantine fields: capture_mode, captured_at_utc,
+# snapshot_as_of_date, candidate_model_hash, quality_status, model_hash_match,
+# benchmark_available, eligible_for_mandate.
+SCHEMA_VERSION = "fv_capture.v2"
 
 # Core model files that define candidate identity
 MODEL_FILES = [
@@ -55,7 +59,91 @@ def sha256_file(path: Path) -> str | None:
     return h.hexdigest()[:16]
 
 
+# Behavioral fingerprint scheme. Bump this string whenever the normalization
+# rules below change (it is mixed into the hash so schemes never collide).
+HASH_SCHEME = "ast-v1"
+
+
+class _BehaviorNeutralStripper(ast.NodeTransformer):
+    """Remove AST nodes that carry no runtime behavior so cosmetic edits do not
+    change the model fingerprint.
+
+    Stripped: type annotations (argument, return, and variable), and docstrings.
+    Comments, whitespace, and formatting are already absent from the AST. The
+    runtime effect of annotated assignments is preserved (``x: int = 5`` becomes
+    ``x = 5``); a bare ``x: int`` declaration is dropped (it does nothing at
+    runtime).
+    """
+
+    @staticmethod
+    def _strip_docstring(node: ast.AST) -> ast.AST:
+        body = getattr(node, "body", None)
+        if (
+            body
+            and isinstance(body[0], ast.Expr)
+            and isinstance(getattr(body[0], "value", None), ast.Constant)
+            and isinstance(body[0].value.value, str)
+        ):
+            node.body = body[1:] or [ast.Pass()]
+        return node
+
+    def visit_Module(self, node: ast.Module) -> ast.AST:
+        self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        node.returns = None
+        a = node.args
+        for arg in [*a.posonlyargs, *a.args, *a.kwonlyargs, a.vararg, a.kwarg]:
+            if arg is not None:
+                arg.annotation = None
+        self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    visit_AsyncFunctionDef = visit_FunctionDef  # type: ignore[assignment]
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
+        self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign):
+        self.generic_visit(node)
+        if node.value is None:
+            return None  # bare declaration `x: int` — no runtime effect
+        return ast.Assign(targets=[node.target], value=node.value)
+
+
+def _behavioral_fingerprint(path: Path) -> str:
+    """AST-normalized source fingerprint (annotations/docstrings/formatting removed)."""
+    tree = ast.parse(path.read_bytes())
+    tree = _BehaviorNeutralStripper().visit(tree)
+    ast.fix_missing_locations(tree)
+    return ast.dump(tree, annotate_fields=True, include_attributes=False)
+
+
 def compute_model_hash() -> str:
+    """Behavioral fingerprint of the scoring-model files (``HASH_SCHEME``).
+
+    Uses an AST-normalized fingerprint so behavior-neutral edits — type
+    annotations, docstrings, comments, whitespace, formatting — do NOT change
+    the hash; only runtime-logic changes move it. This replaces the original
+    raw-bytes scheme, under which a one-line type-hint edit flipped the frozen
+    candidate hash (a9983a67 -> a7a80e85) despite byte-for-byte identical
+    behavior. See docs/governance/2026-07-10-dem-candidate-hash-equivalence.md.
+    """
+    h = hashlib.sha256()
+    h.update(HASH_SCHEME.encode())
+    for p in MODEL_FILES:
+        if p.exists():
+            h.update(p.name.encode())
+            h.update(_behavioral_fingerprint(p).encode())
+    return h.hexdigest()[:16]
+
+
+def compute_model_hash_legacy() -> str:
+    """Original raw-bytes fingerprint. Retained for audit and one-time migration
+    only — sensitive to annotations/comments/whitespace. Do not use for new
+    freeze decisions."""
     h = hashlib.sha256()
     for p in MODEL_FILES:
         if p.exists():
@@ -106,6 +194,95 @@ def load_snapshot_manifest(snap_dir: Path) -> dict:
         d = json.loads(path.read_text())
         return d.get("ruleset") or {}
     return {}
+
+
+def load_full_manifest(snap_dir: Path) -> dict:
+    path = snap_dir / "run_manifest.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def validate_run_freshness(date: str, snap_dir: Path, expect_commit: str | None = None) -> list[str]:
+    """Hard provenance gate. Returns the reasons the snapshot is NOT a fresh,
+    complete production run for ``date``. A non-empty list means DO NOT write a
+    capture: the snapshot is missing its manifest, belongs to a different date
+    (a leftover/stale directory), came from a hard-failed run, or was not
+    produced by the current invocation.
+
+    This is distinct from the soft data-quality checks (:func:`run_dq_checks`),
+    which record a capture with ``quality=WARN/FAIL``. The freshness gate exists
+    to prevent a *stale-output false positive* — a capture that looks live but
+    was built from an earlier run's artifacts — from ever entering the ledger.
+    """
+    reasons: list[str] = []
+    manifest = load_full_manifest(snap_dir)
+    if not manifest:
+        reasons.append("run_manifest.json missing — snapshot has no provenance")
+        return reasons  # nothing else is trustworthy without a manifest
+    man_date = manifest.get("as_of_date") or manifest.get("requested_as_of_date")
+    if man_date != date:
+        reasons.append(f"manifest as_of_date={man_date!r} != requested {date!r} (stale/leftover snapshot)")
+    if manifest.get("overall_status") == "FAIL":
+        reasons.append("production overall_status=FAIL — refusing to capture from a hard-failed run")
+    if expect_commit:
+        man_commit = (manifest.get("git") or {}).get("commit_sha", "") or ""
+        if man_commit and not (man_commit.startswith(expect_commit) or expect_commit.startswith(man_commit)):
+            reasons.append(f"snapshot commit={man_commit[:12]} != invocation commit={expect_commit[:12]}")
+    return reasons
+
+
+# ---------------------------------------------------------------------------
+# Mandate eligibility (SM-20260629-001) — authoritative, single source of truth
+# ---------------------------------------------------------------------------
+
+# The forward-shadow mandate's primary metric is the 5d forward excess vs XBI.
+_MANDATE_RETURN_KEY = "xs_5d"
+
+
+def forward_return_realized(fill: dict | None) -> bool:
+    """True once the capture's primary (5d) forward window has been observed/filled."""
+    return bool(fill) and fill.get(_MANDATE_RETURN_KEY) is not None
+
+
+def capture_is_eligible_for_mandate(capture: dict, fill: dict | None) -> bool:
+    """Authoritative eligibility rule for SM-20260629-001.
+
+    A capture counts toward the 20-window gate ONLY if it is a genuine, complete,
+    LIVE forward observation of the frozen candidate:
+
+      * ``capture_mode == "LIVE"``      — not a replay/backfill
+      * ``quality_status == "PASS"``     — no hard DQ failure
+      * ``model_hash_match`` is True      — the frozen candidate, not drift
+      * ``benchmark_available`` is True    — XBI present for excess-vs-benchmark
+      * ``forward_return_realized(fill)``  — the 5d window has been observed
+
+    Legacy / pre-schema captures lack these fields, so ``.get`` returns falsy and
+    they are correctly excluded. This rule lives in code (not prose) so the
+    mandate counter cannot silently count replay data, drifted models, missing
+    benchmarks, or unrealized windows.
+    """
+    return capture_is_live_and_clean(capture) and forward_return_realized(fill)
+
+
+def capture_is_live_and_clean(capture: dict) -> bool:
+    """Capture-time liveness/quality check (no forward return required).
+
+    True when the capture is a genuine LIVE observation of the frozen candidate
+    with a usable benchmark — everything :func:`capture_is_eligible_for_mandate`
+    requires EXCEPT the realized 5d return. Used by the liveness monitor, which
+    must judge whether the capture *step* is healthy on the day of capture,
+    before the forward window has closed.
+    """
+    return (
+        capture.get("capture_mode") == "LIVE"
+        and capture.get("quality_status") == "PASS"
+        and bool(capture.get("model_hash_match"))
+        and bool(capture.get("benchmark_available"))
+    )
 
 
 def load_rankings(snap_dir: Path) -> list[dict]:
@@ -498,6 +675,21 @@ def main() -> int:
         "--register-candidate", action="store_true", help="Register current model as the active candidate"
     )
     parser.add_argument("--force", action="store_true", help="Overwrite existing capture for this date")
+    parser.add_argument(
+        "--expect-commit",
+        default=None,
+        help="Require the snapshot manifest's git commit_sha to match this "
+        "(invocation provenance). The daily wrapper passes its HEAD sha.",
+    )
+    parser.add_argument(
+        "--capture-mode",
+        choices=["LIVE", "REPLAY"],
+        default="REPLAY",
+        help="LIVE is asserted only by the production wrapper for a fresh, "
+        "same-invocation snapshot; anything else is REPLAY (backfill/manual) and "
+        "is never counted toward the mandate. A LIVE claim is downgraded to "
+        "REPLAY if the freshness gate is bypassed or --force is used.",
+    )
     args = parser.parse_args()
 
     date = args.as_of_date
@@ -506,6 +698,18 @@ def main() -> int:
     if not snap_dir.exists():
         print(f"ERROR: snapshot not found at {snap_dir}", file=sys.stderr)
         return 1
+
+    # --- Freshness / provenance gate (hard block; --force bypasses for audited backfill) ---
+    freshness_failures = validate_run_freshness(date, snap_dir, expect_commit=args.expect_commit)
+    if freshness_failures:
+        stream = sys.stderr
+        print(f"REFUSING to capture {date}: snapshot failed the freshness/provenance gate:", file=stream)
+        for r in freshness_failures:
+            print(f"  - {r}", file=stream)
+        if not args.force:
+            print("  Not writing a capture. Use --force only for an audited manual backfill.", file=stream)
+            return 1
+        print("  --force set: proceeding anyway (manual backfill — NOT a live window).", file=stream)
 
     # --- Already captured? ---
     existing = load_existing_captures()
@@ -542,6 +746,25 @@ def main() -> int:
     # --- Data quality ---
     quality, dq_checks = run_dq_checks(date, top30, snap_dir, model_hash, candidate)
 
+    def _check_pass(name: str) -> bool:
+        return next((c["pass"] for c in dq_checks if c["check"] == name), False)
+
+    model_hash_match = _check_pass("model_hash_match")
+    benchmark_available = _check_pass("xbi_price_available")
+
+    # --- Capture mode (LIVE only for a fresh, same-invocation production run) ---
+    capture_mode = args.capture_mode
+    if capture_mode == "LIVE" and (freshness_failures or args.force):
+        print(
+            "  Note: downgrading capture_mode LIVE -> REPLAY (freshness gate bypassed or --force).",
+            file=sys.stderr,
+        )
+        capture_mode = "REPLAY"
+
+    # Capture-time eligibility (the mandate counter additionally requires the 5d
+    # forward return to be realized — see capture_is_eligible_for_mandate()).
+    eligible_at_capture = capture_mode == "LIVE" and quality == "PASS" and model_hash_match and benchmark_available
+
     # --- Prices ---
     effective_price_date = nearest_price_date_before(date)
     xbi_price = load_xbi_price(effective_price_date) if effective_price_date else None
@@ -550,11 +773,23 @@ def main() -> int:
     seed = int(hashlib.sha256(date.encode()).hexdigest(), 16) % (2**31)
     adversarial = build_adversarial_seeds(rows, top30, bottom30, seed)
 
+    captured_at = datetime.now(timezone.utc).isoformat()
+
     # --- Build capture record ---
     capture = {
         "schema": SCHEMA_VERSION,
         "date": date,
-        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "captured_at": captured_at,
+        # --- Mandate-quarantine fields (schema v2) ---
+        "capture_mode": capture_mode,
+        "captured_at_utc": captured_at,
+        "snapshot_as_of_date": date,
+        "candidate_model_hash": candidate.get("model_hash") if candidate else None,
+        "quality_status": quality,
+        "model_hash_match": model_hash_match,
+        "benchmark_available": benchmark_available,
+        "eligible_for_mandate": eligible_at_capture,
+        # --- Existing fields ---
         "model_hash": model_hash,
         "ruleset_hash": ruleset_hash,
         "data_quality": quality,
