@@ -163,10 +163,27 @@ def bootstrap_window(
     }
 
 
+def filter_forward_windows(windows, since):
+    """Keep only windows whose snap_date is on/after *since* (YYYY-MM-DD).
+
+    Implements the mandate's documented resolution command
+    (--forward-only-from 2026-06-29): backfilled pre-mandate windows must not
+    count toward the 20-window gate.
+    """
+    if not since:
+        return windows
+    return [w for w in windows if str(w.get("snap_date", "")) >= since]
+
+
 def run_all_windows(args):
     print("Loading regime windows...")
     windows = load_regime_windows()
-    print(f"  {len(windows)} windows")
+    since = getattr(args, "forward_only_from", None)
+    if since:
+        windows = filter_forward_windows(windows, since)
+        print(f"  forward-only from {since}: {len(windows)} post-mandate windows")
+    else:
+        print(f"  {len(windows)} windows")
 
     print("Loading prices (may take a moment)...")
     prices_df = pd.read_csv(PRICE_FILE, usecols=["ticker", "date", "close"])
@@ -345,11 +362,23 @@ def main():
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    parser.add_argument(
+        "--forward-only-from",
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="Only include windows with snap_date >= this date (post-mandate live "
+        "windows only, e.g. 2026-06-29). Backfilled windows do not count toward the "
+        "20-window gate.",
+    )
     args = parser.parse_args()
 
-    print("\n=== Backfilled Current-Model Bootstrap Baseline — SM-20260629-001 ===")
-    print("⚠️  BACKFILL: TRUTH_CARDs generated 2026-06-28 by replaying current model on historical snapshots.")
-    print("   These are NOT live forward selections. Use as baseline only.")
+    if args.forward_only_from:
+        print("\n=== Forward Bootstrap (post-mandate live windows) — SM-20260629-001 ===")
+        print(f"   Windows restricted to snap_date >= {args.forward_only_from} (backfill excluded).")
+    else:
+        print("\n=== Backfilled Current-Model Bootstrap Baseline — SM-20260629-001 ===")
+        print("⚠️  BACKFILL: TRUTH_CARDs generated 2026-06-28 by replaying current model on historical snapshots.")
+        print("   These are NOT live forward selections. Use as baseline only.")
     print(f"n_bootstrap={args.n_bootstrap}, cost_bps={args.cost_bps}, seed={args.seed}")
     print(f"Output: {args.output_dir}\n")
 
