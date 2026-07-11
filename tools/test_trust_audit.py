@@ -539,44 +539,44 @@ def detect_t7_silent_skip(rel_path: str, test_name: str, fn: ast.AST) -> list[Fi
     findings: list[Finding] = []
     decorators = getattr(fn, "decorator_list", [])
     for dec in decorators:
-        if isinstance(dec, ast.Call):
-            dname = dotted_name(dec.func)
-            if dname.endswith(".skip") or dname.endswith(".xfail"):
+        dec_name = dotted_name(dec.func) if isinstance(dec, ast.Call) else dotted_name(dec)
+        dec_line = getattr(dec, "lineno", getattr(fn, "lineno", 1))
+        if dec_name.endswith(".skip") or dec_name.endswith(".xfail"):
+            findings.append(
+                Finding(
+                    finding_id="",
+                    file=rel_path,
+                    line=dec_line,
+                    test=test_name,
+                    detector="T7",
+                    severity="MEDIUM",
+                    claimed_behavior=claim_from_test_name(test_name),
+                    why_hollow="Unconditional skip/xfail decorator suppresses behavioral execution.",
+                    model_path=False,
+                    report_only=False,
+                    suggested_remedy="Gate skip/xfail with explicit temporary condition and expiry ticket.",
+                    source_layer="L1",
+                )
+            )
+        if isinstance(dec, ast.Call) and dec_name.endswith(".skipif") and dec.args:
+            cond = dec.args[0]
+            if isinstance(cond, ast.Constant) and cond.value is True:
                 findings.append(
                     Finding(
                         finding_id="",
                         file=rel_path,
-                        line=dec.lineno,
+                        line=dec_line,
                         test=test_name,
                         detector="T7",
                         severity="MEDIUM",
                         claimed_behavior=claim_from_test_name(test_name),
-                        why_hollow="Unconditional skip/xfail decorator suppresses behavioral execution.",
+                        why_hollow="skipif(True) unconditionally suppresses test execution.",
                         model_path=False,
                         report_only=False,
-                        suggested_remedy="Gate skip/xfail with explicit temporary condition and expiry ticket.",
+                        suggested_remedy="Use a concrete, temporary condition and annotate removal criteria.",
                         source_layer="L1",
                     )
                 )
-            if dname.endswith(".skipif") and dec.args:
-                cond = dec.args[0]
-                if isinstance(cond, ast.Constant) and cond.value is True:
-                    findings.append(
-                        Finding(
-                            finding_id="",
-                            file=rel_path,
-                            line=dec.lineno,
-                            test=test_name,
-                            detector="T7",
-                            severity="MEDIUM",
-                            claimed_behavior=claim_from_test_name(test_name),
-                            why_hollow="skipif(True) unconditionally suppresses test execution.",
-                            model_path=False,
-                            report_only=False,
-                            suggested_remedy="Use a concrete, temporary condition and annotate removal criteria.",
-                            source_layer="L1",
-                        )
-                    )
     return findings
 
 

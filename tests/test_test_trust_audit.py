@@ -17,26 +17,22 @@ def _detectors(findings):
 
 
 def test_t2_no_effective_assert():
-    findings, test_count = _analyze(
-        """
+    findings, test_count = _analyze("""
         def test_no_assertions():
             x = 1 + 1
             y = x * 2
-        """
-    )
+        """)
     assert test_count == 1
     assert "T2" in _detectors(findings)
 
 
 def test_t3_tautological_assertion():
-    findings, _ = _analyze(
-        """
+    findings, _ = _analyze("""
         def test_tautology():
             lhs = compute()
             rhs = compute()
             assert lhs == lhs
-        """
-    )
+        """)
     assert "T3" in _detectors(findings)
 
 
@@ -59,68 +55,58 @@ def test_t4_mock_of_subject_is_critical_and_model_path():
 
 
 def test_t5_swallowed_failure():
-    findings, _ = _analyze(
-        """
+    findings, _ = _analyze("""
         def test_swallowed():
             try:
                 assert False
             except Exception:
                 pass
-        """
-    )
+        """)
     assert "T5" in _detectors(findings)
 
 
 def test_t6_vacuous_parametrize():
-    findings, _ = _analyze(
-        """
+    findings, _ = _analyze("""
         import pytest
 
         @pytest.mark.parametrize("x", [])
         def test_empty_parametrize(x):
             assert x
-        """
-    )
+        """)
     assert "T6" in _detectors(findings)
 
 
 def test_t7_silent_skip():
-    findings, _ = _analyze(
-        """
+    findings, _ = _analyze("""
         import pytest
 
         @pytest.mark.skip
         def test_skipped():
             assert False
-        """
-    )
+        """)
     assert "T7" in _detectors(findings)
 
 
 def test_t12_over_broad_snapshot_only_shape_assertions():
-    findings, _ = _analyze(
-        """
+    findings, _ = _analyze("""
         def test_snapshot_shape_only():
             payload = {"a": 1, "b": 2}
             assert payload is not None
             assert len(payload) > 0
             assert isinstance(payload, dict)
-        """
-    )
+        """)
     assert "T12" in _detectors(findings)
 
 
 def test_l0_warning_parser_finds_t1_and_grouped_t11():
-    warning_text = textwrap.dedent(
-        """
+    warning_text = textwrap.dedent("""
         tests/test_pos_model_v2.py::test_enum_parsing
           /home/x/_pytest/python.py:170: PytestReturnNotNoneWarning: Test functions should return None, but tests/test_pos_model_v2.py::test_enum_parsing returned <class 'tests.test_pos_model_v2.TestResults'>.
 
         tests/test_options_diagnostics.py::TestFetchWithMock::test_basic_fetch
         tests/test_options_diagnostics.py::TestFetchWithMock::test_term_slope_computed
           /home/x/tastytrade/streamer.py:397: RuntimeWarning: coroutine 'AsyncMockMixin._execute_mock_call' was never awaited
-        """
-    )
+        """)
     test_index = {
         "tests/test_pos_model_v2.py::test_enum_parsing": 44,
         "tests/test_options_diagnostics.py::TestFetchWithMock::test_basic_fetch": 1,
