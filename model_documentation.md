@@ -1,9 +1,9 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.2 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
-**Last updated:** 2026-06-28 (IC health check — `score_rank_pct` mean_ic +0.049 HEALTHY, hit_rate 61.8%, N=34; regime monitor gate met 118/20 windows, avg XS +0.268%; EES advisory 5/30 flagged; **no production change**. Earlier same day: YTD backtest data integrity audit — corrected YTD DEM +38.52% vs XBI +27.43% (+11.09pp); weekly validation DEM +31.79% vs SPY +12.32%, Sharpe 2.49)
-**Prior update:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
-**Earlier update:** 2026-06-21 (ranking-tightening audit track [robustness Phases 1–2d, A–C], institutional-circularity finding, catalyst_decay_w PROMISING_BUT_UNPROVEN, IC tooling `--score-field`, and the 2026-06-20/21 repo-integrity incident; **diagnosis/docs-only, no behavior change**)
+**Last updated:** 2026-07-10 (forward-validation feed hardening — PR #489 merged & deployed to `main` @ `4d8623e5`: `set -e` wrapper fix, behavioral model-hash `ast-v1`, capture freshness gate + mandate quarantine schema, price-feed MultiIndex fix + `price_append_health` hard gate, liveness monitor; `CANDIDATE.json` re-registered to `827c35a9` [annotation-only equivalent to frozen `a9983a67`; freeze date 2026-06-26 unchanged]; **NO_MODEL_CHANGE**. Diagnostic perf as-of 7/9 [gross, research-only]: DEM Top-30 EW YTD +43.52% vs XBI +35.19%)
+**Prior update:** 2026-06-28 (IC health check — `score_rank_pct` mean_ic +0.049 HEALTHY, hit_rate 61.8%, N=34; regime monitor gate met 118/20 windows, avg XS +0.268%; EES advisory 5/30 flagged; **no production change**. Earlier same day: YTD backtest data integrity audit — corrected YTD DEM +38.52% vs XBI +27.43% (+11.09pp); weekly validation DEM +31.79% vs SPY +12.32%, Sharpe 2.49)
+**Earlier update:** 2026-06-25 (EES v3 raw_veto_core shadow gate MET; freeze-lift review memo prepared; `READY_FOR_OPERATOR_FREEZE_LIFT_REVIEW`; **no production change**)
 **Status:** Production — coinvest-only selector (`coinvest_score_z` 100%, `inst_delta_z` 0%) + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30. **FROZEN** until governance gates clear.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
@@ -12,6 +12,43 @@ weights. See `production_data/ranker_v2_model.json` → `provenance` block for t
 stale selector/ranker prose with the already-active v1.14.0 configuration. The
 selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW Top-30
 construction remain frozen; this document does not authorize behavior changes.
+
+---
+
+## Recent Updates — 2026-07-10 (Forward-Validation Feed Hardening — PR #489)
+
+Classification: `INFRASTRUCTURE / GOVERNANCE / NO_MODEL_CHANGE`. Source: PR #489 (merged, deployed to `main` @ `4d8623e5`), `docs/governance/2026-07-10-dem-candidate-hash-equivalence.md`. **No scoring, selector, ranker, gate, or sizing change.**
+
+### What was found
+The DEM forward-shadow mandate (`SM-20260629-001`) had accrued **0 of 20** required live windows because the forward-validation feed was doubly broken:
+- **Capture never ran in production.** `cron_daily_production.sh` runs under `set -euo pipefail` with an unguarded pipeline call; `run_daily_production.py` exits 2 on WARN-status runs (routine), so `set -e` aborted the wrapper before its tail — no wrapper outcome line since **2026-04-17**. All prior capture history was a one-time 2026-06-28 backfill ending 06-26.
+- **Price feed silently broken since 2026-07-08.** `extend_price_csv_safe` → `safe_download_per_ticker` read `yf.download` MultiIndex columns via `row.get("Close")` (a tuple key), dropping ~every row (only the alphabetically-first ticker appended). The XBI-staleness gate did not catch it.
+
+### Fixes (7 commits, 49 tests)
+1. Guard the pipeline invocation so `set -e` cannot skip the capture tail.
+2. **Behavioral model-hash (`HASH_SCHEME = "ast-v1"`)** — `compute_model_hash` now fingerprints an AST-normalized form (type annotations/docstrings/comments/whitespace stripped) so behavior-neutral edits don't move the hash. The prior raw-bytes scheme had flipped the frozen candidate (`a9983a67`→`a7a80e85`) on a one-line return-type-annotation edit (`b12addd0`, #485 mypy). Proven equivalent — both hash to `827c35a9ed3ee6e1` under ast-v1; a real logic edit still moves it.
+3. Capture only on pipeline exit 0/2 + a freshness/provenance gate (manifest present, `as_of_date` match, `overall_status != FAIL`, `--expect-commit` provenance).
+4. Quarantine schema (capture v2: `capture_mode` LIVE|REPLAY, `quality_status`, `model_hash_match`, `benchmark_available`, `eligible_for_mandate`) + a single authoritative `capture_is_eligible_for_mandate()` driving the weekly gates. Replay/backfill/drifted/benchmark-less/unrealized captures never count.
+5. Price-feed fix — `_flatten_yf_columns()` collapses MultiIndex to field level + per-ticker start dates — and a hard-gate `check_price_append_health()` that FAILs the run when many tickers need fetching but almost none append.
+6. Read-only liveness monitor `tools/forward_validation_liveness_monitor.py` (alerts: stale live capture, candidate hash mismatch, XBI freshness, rankings mismatch, duplicate capture, hard-fail-skipped capture).
+7. `run_forward_bootstrap.py --forward-only-from` resolution flag + `tools/cron_forward_validation_liveness.sh` (not yet installed in crontab).
+
+### Candidate re-registration (governance)
+`CANDIDATE.json` re-registered 2026-07-10: `model_hash=827c35a9ed3ee6e1`, `hash_scheme=ast-v1`, `legacy_model_hash=a9983a67c6954813`, **`registered=2026-06-26` unchanged**. This records the *same* behavioral identity — the hash drift was annotation-only and proven equivalent — **not** a new freeze. **Model behavior is unchanged.**
+
+### Mandate status
+`SM-20260629-001` remains **0 eligible windows** (now code-enforced, not prose). The clock starts from the first clean live capture (expected on the next full production run that rebuilds the 07-10 manifest at the deployed commit; the 16:30 run on 07-10 correctly skipped the capture because that manifest still carried the pre-deploy commit). **2026-09-30 = status checkpoint** (not a resolution deadline); ~mid-November = 20-window gate. DEM thesis stays **HOLD / unresolved**.
+
+### Diagnostic performance snapshot (as of 2026-07-09) — RESEARCH ONLY, gross
+**Not** the frozen forward-validation series and not a validated result. Hand-computed this session for an operator readout. Methodology: PIT-rebalanced weekly EW Top-30 (roster = each week's snapshot `actionable_rank`), split-adjusted buy-and-hold chained across 28 weekly rebalances, vs XBI buy-and-hold. **Gross** of costs/turnover; source `price_history_split_adj.csv` (universe + XBI healed through 7/9 this session; 30/30 names priced, no split artifacts). Methodology/asof differ from the 2026-06-28 audit above, so figures are not directly comparable.
+
+| Window | Period | DEM Top-30 EW | XBI | Excess |
+|--------|--------|--------------:|----:|-------:|
+| 1M  | 6/9 → 7/9 | +31.35% | +25.99% | +5.36% |
+| 3M  | 4/9 → 7/9 | +23.77% | +24.88% | −1.11% |
+| YTD | 1/2 → 7/9 | +43.52% | +35.19% | +8.33% |
+
+Negative 3M excess is consistent with the documented Apr–May failure windows; net of weekly turnover the short-horizon excess compresses materially (the mandate's own finding — costs nearly erase the 5-day edge).
 
 ---
 
