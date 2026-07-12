@@ -1,7 +1,12 @@
 {
   "registered": "2026-06-26",
   "registered_at": "2026-06-28T14:53:26.269583+00:00",
-  "model_hash": "a9983a67c6954813",
+  "rehashed_at": "2026-07-10T19:52:38.671168+00:00",
+  "model_hash": "827c35a9ed3ee6e1",
+  "hash_scheme": "ast-v1",
+  "legacy_model_hash": "a9983a67c6954813",
+  "legacy_hash_scheme": "raw-bytes",
+  "equivalence_note": "a7a80e85 (legacy raw-bytes) proven annotation-only-equivalent to the frozen candidate a9983a67; adopted behavioral hash 827c35a9ed3ee6e1 records the SAME behavioral identity, not a new freeze. See docs/governance/2026-07-10-dem-candidate-hash-equivalence.md.",
   "ruleset_hash": "8887576e",
   "top_n": 30,
   "weighting": "equal-weight",
