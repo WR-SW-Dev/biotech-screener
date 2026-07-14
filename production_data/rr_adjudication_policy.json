@@ -28,11 +28,11 @@
     "current_status": {
       "CELC": {"prediction": "bearish", "outcome": "HIT", "result": "INCORRECT"},
       "TBPH": {"prediction": "bullish_extreme", "outcome": "MISS", "result": "INCORRECT"},
-      "BIIB": {"prediction": "bearish", "outcome": "EXOGENOUS", "result": "EXCLUDED", "note": "Apellis M&A, not PDUFA. PDUFA May 24 is the clean observation."},
+      "BIIB": {"prediction": "bearish", "outcome": "DROPPED", "result": "EXCLUDED", "note": "Apr-3 EXOGENOUS (Apellis M&A). May 24 PDUFA observation window expired 2026-07-14 — no clean resolution record after 51 days; dropped per operator instruction."},
       "PVLA": {"prediction": "bullish", "outcome": "HIT", "result": "CORRECT"}
     },
-    "score": "1 correct (PVLA) / 2 incorrect (CELC, TBPH) / 1 excluded (BIIB M&A) / BIIB PDUFA May 24 pending",
-    "verdict": "PENDING — 1/3 scorable so far. If BIIB PDUFA bearish=CORRECT → 2/3 (67%) provisional pass. If INCORRECT → 1/3 signal not ready."
+    "score": "1 correct (PVLA) / 2 incorrect (CELC, TBPH) / 1 excluded (BIIB — dropped 2026-07-14)",
+    "verdict": "INCOMPLETE — 1/3 scorable. BIIB dropped; gate requires 4 clean observations. Extend to next 4-6 predictions before re-evaluating."
   },
 
   "fallback_rules": {
