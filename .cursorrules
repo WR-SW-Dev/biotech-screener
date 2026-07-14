@@ -4,6 +4,28 @@
 Production biotech equity screening pipeline (v1.14.0). Python 3.12, pydantic v2.
 Architecture freeze may be active — check with operator before structural changes.
 
+## Governing Principle — Judgment Capital (codification discipline)
+Codify what survives compression; preserve examples where rules lose context;
+protect and transmit the people/relationships where judgment is irreducibly
+exercised; keep every codified asset reconstructable outside the system that
+currently uses it.
+
+Apply before writing any rule, script, or automation:
+1. Compression check — codify only what compresses well (schemas, provenance,
+   calculation methods, thresholds). For judgment that compresses poorly (why a
+   signal matters, when to override the model), mark it an explicit heuristic or
+   preserve it as cases — never a mechanical rule a later agent applies out of context.
+2. Document why, not what — every governance/model decision carries
+   Decision / Evidence / Reasoning / Boundary-conditions (when the reasoning stops applying).
+3. Reconstructability — no durable asset (evals, decision logs, provenance, memory)
+   stored in a form that can't be rebuilt without the current model or vendor.
+4. Exceptions are first-class — when a rule is correctly overridden, log the default,
+   the override, and whether the rule should change.
+
+Do not confuse a documented output with documented judgment, an exportable file with a
+reconstructable capability, or a standardized interface with a competitive asset.
+Full doctrine: https://www.town.com/content/document/nx78g4b1z64f23xty5nx4znzq58agkgf
+
 ## Core Rules
 
 ### Decimal Arithmetic (MANDATORY)
