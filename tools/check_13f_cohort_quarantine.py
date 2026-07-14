@@ -100,10 +100,30 @@ def _load_delta_json(snap_date: str) -> Optional[dict]:
         return None
 
 
-def _load_summary() -> Optional[dict]:
+def _load_summary(snap_date: Optional[str] = None) -> Optional[dict]:
+    """Load institutional_summary.json.
+
+    Prefers the dated per-snapshot copy under data/snapshots/<snap_date>/,
+    which run_daily_production.py actually refreshes every day. Falls back
+    to the standalone production_data/institutional_summary.json, which is
+    NOT written by the daily pipeline and can silently go stale for weeks
+    (observed orphaned since 2026-06-22 as of this fix) — relying on it
+    alone makes the G2 cache_as_of_date check fail regardless of whether a
+    real refresh landed.
+    """
+    if snap_date:
+        p = SNAP_ROOT / snap_date / "institutional_summary.json"
+        if p.exists():
+            try:
+                return json.loads(p.read_text())
+            except (json.JSONDecodeError, OSError):
+                pass
     if not INST_SUMMARY.exists():
         return None
-    return json.loads(INST_SUMMARY.read_text())
+    try:
+        return json.loads(INST_SUMMARY.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 def _load_registry() -> Optional[dict]:
@@ -179,7 +199,7 @@ def guardrails_g2_producer_freshness(pre_date: str, post_date: str) -> Tuple[boo
                 f"prior_date in delta JSON did not advance: pre={pre_prior} post={post_prior} "
                 f"(refresh hasn't landed yet)"
             )
-    summary = _load_summary()
+    summary = _load_summary(post_date)
     if summary:
         cache_date = summary.get("cache_as_of_date", "")
         # Pre-refresh cache_as_of_date should be < post_date
@@ -195,7 +215,7 @@ def guardrails_g3_attribution_check(pre_date: str, post_date: str) -> Tuple[bool
     notes = []
     # This guardrail is informational, not blocking. It just notes whether the
     # caller should expect manager-driven vs window-driven changes.
-    summary = _load_summary()
+    summary = _load_summary(post_date)
     if summary:
         notes.append(f"institutional_summary.elite_managers_total = {summary.get('elite_managers_total')}")
         notes.append(f"institutional_summary.cache_as_of_date = {summary.get('cache_as_of_date')}")
