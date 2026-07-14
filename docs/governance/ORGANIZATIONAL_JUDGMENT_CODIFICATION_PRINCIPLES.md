@@ -2,7 +2,8 @@
 
 **Status:** Governing workflow doctrine  
 **Scope:** Research, model governance, agent/skill design, vendor selection, institutional memory, and investment-process documentation  
-**Production impact:** None. This document changes how work is documented and evaluated; it does not alter ranking, selection, sizing, scoring, or portfolio decisions.
+**Production impact:** None. This document changes how work is documented and evaluated; it does not alter ranking, selection, sizing, scoring, or portfolio decisions.  
+**Provenance:** Source material, verbatim origin (Nadella, "Reverse Information Paradox," 2026-07-12), and the full development of this framework are recorded in `REVERSE_INFORMATION_PARADOX_JUDGMENT_CAPITAL_2026_07_14.md`.
 
 ## Governing idea
 
@@ -139,6 +140,8 @@ Classify each important component as:
 
 Model independence is a design constraint, not a competitive asset. Prefer open standards and portable stores over bespoke orchestration. Do not build wrappers merely to demonstrate optionality.
 
+Single-model-removal test: if any one model currently in use were taken away, could the firm still operate and optimize against its own evals using other models? If not, "veteran" capability has coupled to a "generalist" vendor and the coupling must be named and justified.
+
 ## Exception library
 
 Correct overrides are high-value evidence. When a human overrides a model, rule, or workflow, capture:
@@ -160,6 +163,17 @@ For every strong principle, process, or model change, answer:
 3. What failure mode remains even if it is followed perfectly?
 
 This is a mandatory defense against confident-but-subtly-wrong doctrine.
+
+## Durable-capability audit (four questions)
+
+For any capability intended to compound — a dataset, skill, eval suite, workflow, relationship, or expertise — answer:
+
+1. **What is the asset?** — what actually compounds?
+2. **How compressible is it?** — what is lost when it is codified?
+3. **How extractable is the compressed form?** — can it survive vendors, tools, and people?
+4. **What remains irreducibly exercised?** — what only exists in competent human practice?
+
+Question 4 is the safeguard against treating compressed knowledge as equivalent to lived judgment.
 
 ## Biotech-specific interpretation
 
