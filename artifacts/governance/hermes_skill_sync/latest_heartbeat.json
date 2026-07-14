@@ -1,10 +1,14 @@
 {
   "agent_id": "hermes-skill-sync-agent",
-  "as_of_date": "2026-06-26",
+  "run_ts": "2026-07-12T18:24:40.353441+00:00",
+  "as_of_date": "2026-07-12",
+  "status": "OK",
   "n_critical": 0,
-  "n_info": 0,
   "n_warning": 0,
-  "run_ts": "2026-06-26T08:00:00+00:00",
-  "schema": "hermes_skill_sync_audit.v1",
-  "status": "OK"
+  "n_info": 1,
+  "skills_scanned": 18,
+  "mirrors_scanned": 32,
+  "sync_ran": false,
+  "sync_files_changed": [],
+  "schema": "hermes_skill_sync_audit.v1"
 }

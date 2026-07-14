@@ -1,6 +1,6 @@
 # Universe Hygiene Audit Report
 
-**Audit timestamp:** 2026-06-29T12:31:09.020719+00:00
+**Audit timestamp:** 2026-07-13T12:31:02.062114+00:00
 **Reference date:** 2026-06-28
 **Stale price cutoff:** 2026-06-15 (10 trading days before 2026-06-28)
 
@@ -23,11 +23,11 @@ NO_TRADING_CHANGE
 ## Executive Verdict
 
 Model universe: **357 tickers**.
-- Active/valid: **324**
+- Active/valid: **325**
 - Already flagged delisted/inactive: **7** (APLS, GLPG, KALV, ACLX, DAWN, FOLD, TERN)
 - Stale price (>10 trading days): **1** (no price since before 2026-06-15)
 - Price data missing entirely: **0** (placeholder `_XBI_BENCHMARK_` entry)
-- Pending / needs review: **25**
+- Pending / needs review: **24**
 
 XBI ETF: **150 holdings** (source: SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/pr...)
 IBB ETF: **242 holdings** (source: BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20...)
@@ -44,8 +44,8 @@ High-priority new candidates (XBI small/mid pure-play): **5**
 - **Model universe:** `production_data/universe.json` — 357 entries
 - **Split-adjusted prices:** `production_data/price_history_split_adj.csv` — clean ticker count varies
 - **Raw prices:** `production_data/price_history.csv`
-- **XBI holdings:** SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-06-29T12:31:11.326117+00:00
-- **IBB holdings:** BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-06-29T12:31:12.416099+00:00
+- **XBI holdings:** SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-07-13T12:31:04.869851+00:00
+- **IBB holdings:** BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-07-13T12:31:06.155215+00:00
 
 ---
 
@@ -54,11 +54,11 @@ High-priority new candidates (XBI small/mid pure-play): **5**
 | Metric | Value |
 | --- | --- |
 | Total tickers | 357 |
-| Active (valid price) | 324 |
+| Active (valid price) | 325 |
 | Delisted / inactive | 7 |
 | Active but stale price | 1 |
 | Price data missing | 0 |
-| Pending / needs review | 25 |
+| Pending / needs review | 24 |
 
 ---
 
@@ -156,9 +156,9 @@ _No identifier conflicts detected._
 
 | Ticker | Status |
 | --- | --- |
-| RNA | ACTIVE_VALID | status=active | last_price=2026-06-26 | name=Atrium Therapeutics, Inc. |
-| GOSS | ACTIVE_VALID | status=active | last_price=2026-06-26 | name=Gossamer Bio, Inc. |
-| REPL | ACTIVE_VALID | status=active | last_price=2026-06-26 | name=Replimune Group, Inc. |
+| RNA | ACTIVE_VALID | status=active | last_price=2026-07-09 | name=Atrium Therapeutics, Inc. |
+| GOSS | ACTIVE_VALID | status=active | last_price=2026-07-09 | name=Gossamer Bio, Inc. |
+| REPL | ACTIVE_VALID | status=active | last_price=2026-07-09 | name=Replimune Group, Inc. |
 | ACLX | DELISTED_OR_INACTIVE | status=delisted | last_price=2026-04-29 | name= |
 | APLS | DELISTED_OR_INACTIVE | status=delisted | last_price=2026-05-15 | name=Apellis Pharmaceuticals, Inc. |
 | DAWN | DELISTED_OR_INACTIVE | status=delisted | last_price=2026-04-24 | name= |

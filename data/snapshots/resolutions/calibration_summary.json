@@ -1,57 +1,64 @@
 {
   "schema": "calibration_summary.v1",
-  "period": "2026-04",
-  "total_resolutions": 55,
+  "period": "2026-06",
+  "total_resolutions": 29,
   "outcome_distribution": {
-    "DELAYED": 22,
-    "NEEDS_REVIEW": 12,
-    "HIT": 13,
-    "MISS": 8
+    "NEEDS_REVIEW": 15,
+    "DELAYED": 2,
+    "HIT": 8,
+    "MISS": 4
   },
   "by_catalyst_type": {
-    "PHASE_3_READOUT": {
-      "n": 13,
-      "hit": 3,
-      "miss": 0,
-      "mixed": 0,
-      "hit_rate": 1.0
-    },
     "CORPORATE_UPDATE": {
-      "n": 9,
+      "n": 8,
       "hit": 0,
-      "miss": 7,
+      "miss": 4,
       "mixed": 0,
       "hit_rate": 0.0
     },
     "PDUFA_ACTION": {
-      "n": 25,
-      "hit": 2,
-      "miss": 1,
-      "mixed": 0,
-      "hit_rate": 0.667
-    },
-    "PHASE_1_DATA": {
-      "n": 4,
-      "hit": 4,
+      "n": 13,
+      "hit": 0,
       "miss": 0,
       "mixed": 0,
-      "hit_rate": 1.0
+      "hit_rate": null
     },
-    "PHASE_2_READOUT": {
+    "REGULATORY_DESIGNATION": {
       "n": 2,
       "hit": 2,
       "miss": 0,
       "mixed": 0,
       "hit_rate": 1.0
     },
-    "IND_CLEARANCE": {
+    "PHASE_3_READOUT": {
       "n": 1,
       "hit": 1,
       "miss": 0,
       "mixed": 0,
       "hit_rate": 1.0
     },
-    "REGULATORY_DESIGNATION": {
+    "PHASE_1_DATA": {
+      "n": 2,
+      "hit": 2,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    },
+    "PHASE_2_READOUT": {
+      "n": 1,
+      "hit": 1,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    },
+    "NDA_BLA_FILING": {
+      "n": 1,
+      "hit": 1,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    },
+    "NDA_ACCEPTANCE": {
       "n": 1,
       "hit": 1,
       "miss": 0,
@@ -61,28 +68,28 @@
   },
   "by_dem_decile": {
     "top_10": {
-      "n": 1,
-      "hit": 0,
+      "n": 4,
+      "hit": 3,
       "miss": 1,
-      "hit_rate": 0.0
+      "hit_rate": 0.75
     },
     "top_20": {
-      "n": 1,
-      "hit": 0,
+      "n": 4,
+      "hit": 3,
       "miss": 1,
-      "hit_rate": 0.0
+      "hit_rate": 0.75
     },
     "top_60": {
-      "n": 10,
-      "hit": 0,
+      "n": 11,
+      "hit": 4,
       "miss": 2,
-      "hit_rate": 0.0
+      "hit_rate": 0.667
     },
     "bottom_50": {
-      "n": 12,
-      "hit": 0,
-      "miss": 1,
-      "hit_rate": 0.0
+      "n": 6,
+      "hit": 2,
+      "miss": 0,
+      "hit_rate": 1.0
     }
   }
 }

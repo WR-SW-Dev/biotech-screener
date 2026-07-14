@@ -23,3 +23,33 @@ Runbook had codegraph `v0.9.4`; installed binary is `v0.9.6`. Index counts (1,66
 ## 2026-03-29: Snapshot double nesting
 --snapshot-dir data/snapshots/2026-03-28 created data/snapshots/2026-03-28/2026-03-28/.
 Lesson: Pass parent dir without date suffix. Promoted to HOT memory.
+
+## [2026-07-02 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 2 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-01_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-04 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 2 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-02_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-04 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 2 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-03_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-07 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 3 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-06_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-08 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 2 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-07_supervisor.json
+- Promotion-lane: skill

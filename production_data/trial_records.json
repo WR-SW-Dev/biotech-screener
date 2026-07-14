@@ -532450,5 +532450,29 @@
     "enrollment": null,
     "sponsor": "AVROBIO",
     "collected_at": "2026-06-29"
+  },
+  {
+    "ticker": "QTRX",
+    "nct_id": "NCT07680335",
+    "title": "The BRidge Towards Implementation of Blood-based Biomarkers to Enable Early and Accurate Diagnosis of Alzheimer's Disease",
+    "status": "RECRUITING",
+    "phase": "NA",
+    "study_type": "INTERVENTIONAL",
+    "conditions": [
+      "Alzheimer Blood Biomarkers",
+      "Alzheimer's Disease (AD)"
+    ],
+    "interventions": [
+      "Plasma p-tau217 and neurofilament light chain results"
+    ],
+    "first_posted": "2026-07-02",
+    "start_date": "2025-09-17",
+    "primary_completion_date": "2026-12-31",
+    "completion_date": "2027-06-30",
+    "results_first_posted": null,
+    "last_update_posted": "2026-07-02",
+    "enrollment": null,
+    "sponsor": "Alzheimercentrum Amsterdam",
+    "collected_at": "2026-07-06"
   }
 ]
