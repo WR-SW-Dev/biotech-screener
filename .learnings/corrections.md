@@ -53,3 +53,33 @@ Lesson: Pass parent dir without date suffix. Promoted to HOT memory.
 - summary: ORANGE — 2 new or expired-window anomalies; investigate.
 - artifact: artifacts/ops_supervisor/2026-07-07_supervisor.json
 - Promotion-lane: skill
+
+## [2026-07-15 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 2 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-08_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-15 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 2 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-09_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-15 00:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 4 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-10_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-15 00:30 UTC] ops_supervisor RED
+- action: fix_now
+- summary: RED — rankings.csv missing for 2026-07-13 past production-due-time (18:00 ET).
+- artifact: artifacts/ops_supervisor/2026-07-13_supervisor.json
+- Promotion-lane: skill
+
+## [2026-07-15 00:30 UTC] ops_supervisor RED
+- action: fix_now
+- summary: RED — rankings.csv missing for 2026-07-14 past production-due-time (18:00 ET).
+- artifact: artifacts/ops_supervisor/2026-07-14_supervisor.json
+- Promotion-lane: skill
