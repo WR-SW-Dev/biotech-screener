@@ -60,6 +60,7 @@ repos:
             cache/.*|
             production_data/.*|
             output/.*|
+            artifacts/forward_validation/.*\.jsonl|
             .*\.csv|
             .*\.tar\.gz
           )$
