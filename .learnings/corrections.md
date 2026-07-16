@@ -83,3 +83,9 @@ Lesson: Pass parent dir without date suffix. Promoted to HOT memory.
 - summary: RED — rankings.csv missing for 2026-07-14 past production-due-time (18:00 ET).
 - artifact: artifacts/ops_supervisor/2026-07-14_supervisor.json
 - Promotion-lane: skill
+
+## [2026-07-16 21:30 UTC] ops_supervisor ORANGE
+- action: investigate
+- summary: ORANGE — 3 new or expired-window anomalies; investigate.
+- artifact: artifacts/ops_supervisor/2026-07-16_supervisor.json
+- Promotion-lane: skill
