@@ -1,5 +1,13 @@
 [
   {
+    "ticker": "BIIB",
+    "catalyst_date": "2026-04-03",
+    "outcome": "HIT",
+    "outcome_detail": "FDA approved SPINRAZA (nusinersen) high-dose regimen for Spinal Muscular Atrophy; PDUFA date met",
+    "resolution_date": "2026-04-03",
+    "source": "FDA_APPROVAL"
+  },
+  {
     "ticker": "PVLA",
     "catalyst_date": "2026-03-31",
     "outcome": "HIT",
