@@ -1,5 +1,13 @@
 [
   {
+    "ticker": "VRDN",
+    "catalyst_date": "2026-04-01",
+    "outcome": "HIT",
+    "outcome_detail": "Phase 3 chronic TED met primary endpoint; topline data released Q2 2026 as guided",
+    "resolution_date": "2026-04-01",
+    "source": "PHASE_3_TOPLINE"
+  },
+  {
     "ticker": "BIIB",
     "catalyst_date": "2026-04-03",
     "outcome": "HIT",
