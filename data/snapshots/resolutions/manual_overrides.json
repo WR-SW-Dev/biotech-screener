@@ -1,5 +1,21 @@
 [
   {
+    "ticker": "CATX",
+    "catalyst_date": "2026-03-16",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description and outcome_detail both verbatim 'serious adverse event' with no further detail, no price data, days_from_expected=16. Auto-resolved as MISS by parser; no real binary catalyst. Exclude from calibration.",
+    "resolution_date": "2026-03-16",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "CRVS",
+    "catalyst_date": "2026-03-12",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description and outcome_detail both verbatim 'serious adverse event' with no further detail, no price data, no DEM rank, days_from_expected=20. Auto-resolved as MISS by parser; no real binary catalyst. Exclude from calibration.",
+    "resolution_date": "2026-03-12",
+    "source": "MANUAL_REVIEW"
+  },
+  {
     "ticker": "AMLX",
     "catalyst_date": "2026-03-03",
     "outcome": "DUPLICATE",

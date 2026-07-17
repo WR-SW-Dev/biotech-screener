@@ -2,11 +2,11 @@
   "schema": "calibration_summary.v1",
   "period": "2026-07",
   "generated_date": "2026-07-17",
-  "total_resolutions": 66,
-  "duplicates_excluded": 9,
-  "overrides_applied": 23,
+  "total_resolutions": 64,
+  "duplicates_excluded": 11,
+  "overrides_applied": 25,
   "outcome_distribution": {
-    "MISS": 12,
+    "MISS": 10,
     "HIT": 54
   },
   "by_catalyst_type": {
@@ -30,13 +30,6 @@
       "miss": 1,
       "mixed": 0,
       "hit_rate": 0.889
-    },
-    "CORPORATE_UPDATE": {
-      "n": 2,
-      "hit": 0,
-      "miss": 2,
-      "mixed": 0,
-      "hit_rate": 0.0
     },
     "NDA_ACCEPTANCE": {
       "n": 2,
@@ -94,10 +87,10 @@
       "hit_rate": 0.862
     },
     "bottom_50": {
-      "n": 15,
+      "n": 14,
       "hit": 14,
-      "miss": 1,
-      "hit_rate": 0.933
+      "miss": 0,
+      "hit_rate": 1.0
     }
   },
   "governance_triggers": [
@@ -105,22 +98,22 @@
       "trigger": "pos_v2_calibration_ready",
       "condition": ">=10 binary resolutions with definitive outcome",
       "status": "MET",
-      "current_count": 66,
+      "current_count": 64,
       "threshold": 10
     },
     {
       "trigger": "clinical_bucket_decomp_ready",
       "condition": ">=15 resolutions across >=3 catalyst types (each >=2)",
       "status": "MET",
-      "current_count": 66,
-      "n_types_with_2plus": 8
+      "current_count": 64,
+      "n_types_with_2plus": 7
     },
     {
       "trigger": "catalyst_taxonomy_empirical",
       "condition": ">=20 resolutions across >=4 catalyst types",
       "status": "MET",
-      "current_count": 66,
-      "n_types_with_2plus": 8
+      "current_count": 64,
+      "n_types_with_2plus": 7
     },
     {
       "trigger": "postmortem_coverage_threshold",
