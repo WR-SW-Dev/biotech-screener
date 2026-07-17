@@ -38,19 +38,16 @@ def test_auth_preflight_detects_missing_credentials():
     from tools.run_agent_direct import auth_preflight_check
 
     # Save and remove credentials
-    orig_together = os.environ.pop("TOGETHER_API_KEY", None)
     orig_anthropic = os.environ.pop("ANTHROPIC_API_KEY", None)
 
     try:
         success, error = auth_preflight_check("ops")
-        # Should fail when both credentials missing
+        # Should fail when ANTHROPIC_API_KEY is missing
         assert not success, "Auth preflight should detect missing credentials"
         assert error is not None
         assert "missing credentials" in error.lower()
     finally:
         # Restore
-        if orig_together:
-            os.environ["TOGETHER_API_KEY"] = orig_together
         if orig_anthropic:
             os.environ["ANTHROPIC_API_KEY"] = orig_anthropic
 
