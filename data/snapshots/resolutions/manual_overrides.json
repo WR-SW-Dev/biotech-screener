@@ -1,5 +1,45 @@
 [
   {
+    "ticker": "AMLX",
+    "catalyst_date": "2026-03-03",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K (8K_2026-03-24_AMLX) is a pipeline/enrollment update for Phase 3 LUCIDITY. Date mismatch (Mar-03 vs Mar-24 source). No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-24",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "GLUE",
+    "catalyst_date": "2026-03-17",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K is a Phase 2 MRT-8102 pipeline update with H2 data expected. No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-17",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "RAPP",
+    "catalyst_date": "2026-03-10",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'clinical hold' may be a default label; actual 8-K content is Phase 2 Bipolar Mania progress update with results expected 2027. No price data to validate. No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-10",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "SGMT",
+    "catalyst_date": "2026-03-11",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K is Phase 3 long-term safety topline update (+2.3% price on date). No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-11",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "TARA",
+    "catalyst_date": "2026-03-10",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K is BCG-Unresponsive cohort enrollment update. No binary catalyst resolved. Separate Mar-31 PHASE_3_READOUT HIT already exists. Exclude from calibration.",
+    "resolution_date": "2026-03-10",
+    "source": "MANUAL_REVIEW"
+  },
+  {
     "ticker": "OCGN",
     "catalyst_date": "2026-03-04",
     "outcome": "DUPLICATE",
