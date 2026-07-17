@@ -1,5 +1,13 @@
 [
   {
+    "ticker": "PVLA",
+    "catalyst_date": "2026-04-01",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Misclassified as PDUFA_ACTION; 8-K was a Phase 3 pipeline update announcing NDA submission planned H2 2026, not a PDUFA decision. True catalyst (Phase 3 SELVA HIT) captured in 2026-03-31 record. Exclude from hit-rate calibration.",
+    "resolution_date": "2026-04-01",
+    "source": "MANUAL_REVIEW"
+  },
+  {
     "ticker": "VRDN",
     "catalyst_date": "2026-04-01",
     "outcome": "HIT",
