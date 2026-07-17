@@ -79,8 +79,9 @@ _MISS_KEYWORDS = [
     "negative topline",
     "clinical hold",
     "partial clinical hold",
-    "serious adverse event",
-    "safety signal",
+    # "serious adverse event" and "safety signal" removed (issue #514):
+    # bare mentions appear in boilerplate and pipeline-update 8-Ks and are
+    # not sufficient evidence of a binary MISS. Route to NEEDS_REVIEW instead.
     "dose-limiting toxicit",
     "voluntary pause",
     "fatal",
@@ -659,6 +660,11 @@ def build_catalyst_calendar(
         key = (ticker, ev_date[:10])
         if key in seen:
             continue
+        # Issue #514: SAFETY_SIGNAL events at non-HIGH confidence are parser
+        # artifacts (SAE boilerplate). Skip rather than fall through to
+        # CORPORATE_UPDATE, which pollutes the watchlist calendar.
+        if ev_type == "SAFETY_SIGNAL" and ev.get("confidence", "") != "HIGH":
+            continue
         cat_type = type_map.get(ev_type, "CORPORATE_UPDATE")
         if cat_type not in CATALYST_TYPES:
             cat_type = "CORPORATE_UPDATE"
@@ -698,6 +704,10 @@ def check_8k_for_resolution(
         except ValueError:
             continue
         if window_start <= ev_date <= window_end:
+            # Issue #514: skip low-confidence SAFETY_SIGNAL events — they are
+            # boilerplate matches, not binary catalyst resolutions.
+            if ev.get("event_type") == "SAFETY_SIGNAL" and ev.get("confidence", "") != "HIGH":
+                continue
             return {
                 "headline": ev.get("event_name", ""),
                 "source_type": "SEC_8K",
