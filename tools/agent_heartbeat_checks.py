@@ -1621,6 +1621,53 @@ def _find_previous_snapshot(dt: date) -> str | None:
     return dates[-1] if dates else None
 
 
+# Agents whose direct-LLM heartbeat cron entries (run_agent_direct.py --agent
+# <name> --write-memory) were retired 2026-07-17: run_agent_direct.py has no
+# tool-execution capability, so those agents were fabricating plausible-looking
+# "checks" (fake <tool_call> transcripts, confidently wrong conclusions such as
+# a false "price_coverage=0.0% -- Do not trade"). check_ops()/check_sentinel()
+# above already compute the same facts deterministically and already feed the
+# fleet receipt; this just also writes their per-agent memory note so anything
+# reading agents/<name>/memory/ directly sees real data instead of a stale or
+# fabricated file.
+DETERMINISTIC_MEMORY_AGENTS = ("ops", "sentinel")
+
+
+def write_agent_daily_memory(agent: str, result: CheckResult, dt: date) -> Path:
+    """Write a deterministic daily memory note for a single agent.
+
+    Replaces the former LLM-narrated heartbeat for `agent` (see
+    DETERMINISTIC_MEMORY_AGENTS docstring above) with the real CheckResult
+    already computed by this module -- no LLM involved, nothing fabricated.
+    """
+    ds = as_of_date(dt)
+    memory_dir = REPO_ROOT / "agents" / agent / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    out_path = memory_dir / f"{ds}.md"
+
+    lines: list[str] = [f"# {agent} — {ds}\n"]
+    lines.append(f"\n**Status: {result.status}**")
+    if result.detail:
+        lines.append(f" — {result.detail}")
+    lines.append("\n")
+    if result.anomalies:
+        lines.append("\n## Anomalies\n")
+        for a in result.anomalies:
+            lines.append(f"- {a}\n")
+    else:
+        lines.append("\nNo anomalies.\n")
+    lines.append(
+        "\n---\n"
+        f"_Deterministic check via `tools/agent_heartbeat_checks.py::check_{agent}()` "
+        f"at {datetime.now().isoformat(timespec='seconds')}. No LLM narration -- this "
+        "agent's previous heartbeat ran via run_agent_direct.py, which has no real "
+        "tool-execution capability and was fabricating its checks. Replaced 2026-07-17._\n"
+    )
+    content = "".join(lines)
+    out_path.write_text(content)
+    return out_path
+
+
 def write_fleet_receipt(results: list[CheckResult], counts: dict, dt: date) -> Path:
     """Write a deterministic daily fleet receipt.
 
@@ -1917,6 +1964,13 @@ def main():
         # Restore the daily fleet_steward receipt (Fix #3). Registry-mode only.
         receipt_path = write_fleet_receipt(results, counts, dt)
         print(f"  Fleet receipt: {receipt_path.relative_to(REPO_ROOT)}")
+
+        # Deterministic per-agent memory for agents whose LLM heartbeat was
+        # retired (2026-07-17) -- see DETERMINISTIC_MEMORY_AGENTS docstring.
+        for r in results:
+            if r.agent in DETERMINISTIC_MEMORY_AGENTS:
+                note_path = write_agent_daily_memory(r.agent, r, dt)
+                print(f"  {r.agent} memory: {note_path.relative_to(REPO_ROOT)}")
 
     if args.json:
         out: dict = {
