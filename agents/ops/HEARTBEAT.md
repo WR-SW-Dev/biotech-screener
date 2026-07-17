@@ -1,8 +1,20 @@
 # HEARTBEAT.md — Ops Agent
 
-On heartbeat, run this checklist. If everything is CLEAR, reply HEARTBEAT_OK.
+**Retired 2026-07-17.** This checklist described steps for a live LLM agent
+(`run_agent_direct.py --agent ops`), but that runner has no real
+tool-execution capability — it was fabricating plausible-looking check
+transcripts rather than actually performing them (including a false
+"price_coverage=0.0%... Do not trade" claim while real price data was fresh).
+The real, deterministic version of this checklist is `check_ops()` in
+`tools/agent_heartbeat_checks.py`, which runs daily via the registry-mode
+heartbeat cron and writes real results to `agents/ops/memory/YYYY-MM-DD.md`
+(via `write_agent_daily_memory()`). Invoke that rather than re-running this
+agent through `run_agent_direct.py` for routine checks. The checklist below is
+retained for historical/design context only.
 
-## Checklist
+## Checklist (historical — see retirement note above)
+
+On heartbeat, run this checklist. If everything is CLEAR, reply HEARTBEAT_OK.
 
 1. Check if today's snapshot exists: `ls data/snapshots/$(date +%Y-%m-%d)/`
    - If missing and it's a weekday after 5:30 PM ET → flag as MISSED RUN
