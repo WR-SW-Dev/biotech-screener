@@ -4,20 +4,23 @@
   "institutional_cohort_changed": true,
   "coinvest_score_z_valid": true,
   "coinvest_score_z_note": "coinvest_score_z is a within-snapshot renormalization and remains usable.",
-  "inst_delta_z_valid": false,
-  "inst_delta_z_note": "55-manager cohort quarantine unresolved (Jaccard 0.463 < 0.70; mean |inst_delta_z| 1.0285 > 0.50 per artifacts/audit/h20d_decision_memo_55manager_override_2026_05_26.md). inst_delta vs the prior snapshot compares unlike cohorts and is not decision-grade.",
-  "rank_delta_valid": false,
-  "rank_delta_note": "selector_score weights inst_delta_z, so rank deltas vs the prior snapshot are not decision-grade. Observation / attribution lane only.",
-  "decision_grade": false,
-  "usage": "observation_and_attribution_only",
-  "valid_from_snapshot": null,
+  "inst_delta_z_valid": true,
+  "inst_delta_z_note": "55-manager cohort quarantine formally cleared 2026-07-17 per artifacts/readiness/H20D_JACCARD_FINAL_2026_07_17.md: Top-30 Jaccard 0.935 (>= 0.70 threshold), coverage delta -1.01pp (< 10pp trigger), manager count delta 0 (42/42 both sides). Supersedes the prior 0.463 figure, which was a wrong-cohort measurement per H20D_REEVAL_VERDICT_2026_07_04.md Part 1 item 4. Caveat carried forward: this is a first-pass Q4-2025-vs-Q1-2026 comparison across a cohort-size change (pre-expansion Q4 vs full 55-manager Q1 registry), not yet the fully like-for-like same-cohort test; treated as decision-grade per the gate's own PASS criteria, with the genuinely like-for-like confirmation arriving with the Q2 2026 snapshot (~2026-08-14).",
+  "rank_delta_valid": true,
+  "rank_delta_note": "inst_delta_z is now decision-grade (see above), so selector_score rank deltas vs the prior snapshot are usable outside the observation/attribution lane.",
+  "decision_grade": true,
+  "usage": "decision_grade",
+  "valid_from_snapshot": "2026-07-17",
   "provenance": {
-    "reason": "Q1 2026 (2026-03-31) full-cohort holdings were promoted to production via PR #429 (merged 2026-06-28), reintroducing the data reverted on 2026-06-24 (b502c17). Ratified for retention but constrained to observation-only pending a formal quarantine-lift verdict.",
+    "reason": "Q1 2026 (2026-03-31) full-cohort holdings were promoted to production via PR #429 (merged 2026-06-28), reintroducing the data reverted on 2026-06-24 (b502c17). Ratified for retention, held observation-only pending a formal quarantine-lift verdict, then cleared 2026-07-17 after running the deferred tools/check_13f_cohort_quarantine.py against the correct Q4->Q1 boundary (pre=2026-05-15, post=2026-05-18).",
     "ratification_memo": "artifacts/audit/q1_2026_holdings_ratification_2026_07_04.md",
     "h20d_reeval_gate_due": "2026-07-01",
+    "h20d_reeval_gate_cleared": "2026-07-17",
+    "h20d_clearance_verdict": "artifacts/readiness/H20D_JACCARD_FINAL_2026_07_17.md",
     "manager_count": 54,
     "tickers": 332,
     "positions": 996,
-    "extract_run_id": "49369a31e98e0231"
+    "extract_run_id": "49369a31e98e0231",
+    "cleared_by": "Darren Schulz (approved via operator sign-off, 2026-07-17)"
   }
 }
