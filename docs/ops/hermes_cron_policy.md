@@ -95,6 +95,7 @@ Hermes cron wrapper scripts must:
 | Job name | Schedule | Agent ID | Script |
 |---|---|---|---|
 | `hermes-skill-sync-guard` | Sun 08:00 ET | `hermes-skill-sync-agent` | `run_hermes_skill_sync_agent.sh` |
+| `calibration-weekly` | Fri 18:00 ET | `calibration` | none — agent-mode job, prompt only (`hermes cron create` without `--no-agent`); `--workdir agents/calibration` injects `AGENTS.md`. Job ID `0d7200711fbf`. Migrated 2026-07-17 from legacy OpenClaw cron of the same name (OpenClaw fully retired same day: `openclaw-gateway.service` stopped+disabled). |
 
 ---
 

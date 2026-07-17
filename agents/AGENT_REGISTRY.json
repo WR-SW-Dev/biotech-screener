@@ -83,7 +83,8 @@
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "research_lead",
-      "notes": "",
+      "notes": "Hermes cron job ID: 0d7200711fbf (calibration-weekly, Fri 18:00 ET). Migrated 2026-07-17 from legacy OpenClaw cron (same job name/schedule), which is now retired (openclaw-gateway.service stopped+disabled).",
+      "cron_enabled": true,
       "llm_policy": "direct_llama_on_anomaly",
       "requires_preflight": true
     },
