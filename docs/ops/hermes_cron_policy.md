@@ -96,6 +96,7 @@ Hermes cron wrapper scripts must:
 |---|---|---|---|
 | `hermes-skill-sync-guard` | Sun 08:00 ET | `hermes-skill-sync-agent` | `run_hermes_skill_sync_agent.sh` |
 | `calibration-weekly` | Fri 18:00 ET | `calibration` | none — agent-mode job, prompt only (`hermes cron create` without `--no-agent`); `--workdir agents/calibration` injects `AGENTS.md`. Job ID `0d7200711fbf`. Migrated 2026-07-17 from legacy OpenClaw cron of the same name (OpenClaw fully retired same day: `openclaw-gateway.service` stopped+disabled). |
+| `weekly-bioshort-brief` | Sat 18:13 ET | `bioshort_watch` | none — agent-mode job, self-contained prompt (read-only verdict template, built-in staleness guard); `--workdir` repo root injects `CLAUDE.md`. Job ID `9b7546acf514`. Reactivated + migrated 2026-07-18 from legacy OpenClaw cron of the same name; `bioshort_watch` was `suppressed` in `AGENT_REGISTRY.json` 2026-05-06 to 2026-07-18 (operator-approved reactivation, separate written spec waived). |
 
 ---
 

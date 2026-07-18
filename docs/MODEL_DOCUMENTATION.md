@@ -2044,7 +2044,7 @@ dashboard-validation-ping, calibration-weekly, weekly-policy-review.
 | shadow_monitor | Mirror | Shadow portfolio observer | Live — deterministic build daily via run_daily_production.py + Tier 2 heartbeat check; LLM cron retired 2026-05-06 (P1 #6) |
 | shadow_watch | Mirror | Portfolio pattern monitor | Live |
 | policy_shadow_watch | Shadow | Policy change comparator | Live |
-| bioshort_watch | Hedge | Hedge fund governance monitor | SUPPRESSED 2026-05-06 (bioshort P2) — upstream `output/hedge_report/` unscheduled and 41-day stale; producer `tools/biotech_hedge_report.py` preserved; reactivation requires separate spec |
+| bioshort_watch | Hedge | Hedge fund governance monitor | REACTIVATED 2026-07-18 by operator decision (separate written spec waived); suppressed 2026-05-06 to 2026-07-18 (bioshort P2, upstream `output/hedge_report/` unscheduled/41-day stale at the time). Producer `tools/biotech_hedge_report.py` cron (Fri 18:00) still runs irregularly; consumer migrated to real Hermes cron (`weekly-bioshort-brief`, job `9b7546acf514`, Sat 18:13 ET) with a built-in staleness guard |
 | calibration_evidence | Evidence | Calibration evidence builder | Weekly (Fri)
 
 ---

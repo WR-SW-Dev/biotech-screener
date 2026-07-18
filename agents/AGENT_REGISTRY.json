@@ -55,10 +55,10 @@
       "notes": ""
     },
     "bioshort_watch": {
-      "role": "suppressed LLM hedge-governance consumer; B2 dashboard covers use case",
+      "role": "LLM hedge-governance consumer (read-only verdict); B2 dashboard remains the deterministic freshness source",
       "category": "signal_monitor",
-      "cadence": "unknown",
-      "status": "suppressed",
+      "cadence": "weekly",
+      "status": "active",
       "artifact_paths": [
         "artifacts/bioshort_watch/",
         "output/hedge_report/"
@@ -66,9 +66,10 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
       "owner": "ops",
-      "notes": "LLM agent suppressed 2026-05-06 (bioshort upstream P2). B2 dashboard freshness badge (3d/7d thresholds) provides equivalent visibility. Reactivation requires operator decision and separate spec. Deterministic producer/status tooling remains outside OpenClaw workspace. Sunset review scheduled 2026-09-30.",
+      "notes": "Reactivated 2026-07-18 by explicit operator decision (separate written spec waived by operator). Previously suppressed 2026-05-06 (bioshort upstream P2, output/hedge_report/ unscheduled and 41-day stale); producer cron (tools/biotech_hedge_report.py, Fri 18:00) has run since but cadence remains irregular (gaps observed up to ~24 days). Migrated from legacy OpenClaw cron of the same name/schedule to a real Hermes cron job (ID 9b7546acf514, Sat 18:13 ET), agent-mode with real tool-calling, workdir repo root. Prompt carries its own staleness guard (hedge_report >9 days old forces WATCH not HEDGE NOW, caps confidence <=50; no hedge_report at all returns NO DATA). Read-only: does not run producer scripts, write data files, or escalate to other agents. Sunset review scheduled 2026-09-30 still applies.",
       "merged_into": "build_bioshort_watch",
       "llm_policy": "none",
+      "cron_enabled": true,
       "requires_preflight": true,
       "sunset_review_date": "2026-09-30"
     },

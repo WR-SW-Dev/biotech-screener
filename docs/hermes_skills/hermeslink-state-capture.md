@@ -170,7 +170,7 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 | `active_job_count` | 55–65 | Alert if <50 (jobs may have been removed) |
 | `suppressed_job_count` | 0–2 | Alert if >3 (too many suppressed) |
 
-**Action:** Check which jobs are suppressed; verify they're intentional (e.g., bioshort_watch LLM suppressed since May 6).
+**Action:** Check which jobs are suppressed; verify they're intentional. (Note: `bioshort_watch` LLM was suppressed 2026-05-06 through 2026-07-18, then reactivated by operator decision — no longer a live example of this.)
 
 ### Agents
 
@@ -183,6 +183,9 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 
 **Action:** If `active` drops significantly, check for failed deployments. Lint: `pytest tests/test_agent_registry.py`.
 
+_Note: the `suppressed` row above reflects the 2026-06-19 snapshot. `bioshort_watch` was
+reactivated 2026-07-18 (moved to `active`) — see C1 above._
+
 ### Held Specs (6 Items)
 
 | Spec | Status | Blocker | Action |
@@ -191,8 +194,12 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 | spec_087_b2 | HELD | B1b must pass first | Wait for B1b closure |
 | spec_087c | HELD | ≥4 fresh weekly hedge reports required | Monitor report count |
 | spec_088_phase_b | HELD | Spec 087 active branch must close | Wait for 087 decision |
-| bioshort_watch_llm | HELD_SUPPRESSED | Separate reactivation decision required | Do NOT reactivate without approval |
 | score_rank_pct | SPEC_REQUIRED | Streak monitor fires nightly 22:00 ET | Write spec if streak continues |
+
+**bioshort_watch_llm** was `HELD_SUPPRESSED` 2026-05-06 to 2026-07-18; reactivated by explicit
+operator decision 2026-07-18 (separate written spec waived). No longer a held item — see
+`AGENT_REGISTRY.json` (`status: active`, `cron_enabled: true`) and `docs/ops/hermes_cron_policy.md`
+(`weekly-bioshort-brief`, job `9b7546acf514`).
 
 **Action:** Verify no unexpected holds have been added.
 
@@ -200,14 +207,16 @@ On operator WSL with crontab + hedge artifacts, expect `crontab surface: OPERATO
 
 | Check | Expected Status | Details |
 |-------|---|---|
-| **C1** | OK | bioshort_watch suppressed in registry, no active cron line |
+| **C1** | OK | bioshort_watch active in registry (reactivated 2026-07-18), Hermes cron `9b7546acf514` present (Sat 18:13 ET) |
 | **C2** | OK | watchlist_current.json fresh (≤3d old) |
 | **C3** | OK | biotech_hedge_report.py cron line active (Spec 087 B1b) |
 | **C4** | OK | Working tree clean (0 uncommitted files) |
 | **C5** | WARN or OK | BIOSHORT_VERDICT as_of_date vs first-fire date (may be pre-fire) |
 
 **Action checklist:**
-- ✓ If C1 status = HARD_CONTRADICTION: escalate (suppressed but cron active)
+- ✓ If C1 status = HARD_CONTRADICTION: escalate (registry says `suppressed` but a cron
+  line still exists, OR registry says `active` with no matching cron — as of 2026-07-18,
+  `active` + cron `9b7546acf514` present is the expected OK state, not a contradiction)
 - ✓ If C2 status = NEEDS_OPERATOR_DECISION: rerun catalyst_resolution_tracker
 - ✓ If C3 status = HARD_CONTRADICTION: verify cron install for Spec 087 B1b
 - ✓ If C4 status = POSSIBLE_DRIFT: review `git status` before committing
@@ -311,7 +320,8 @@ Status: READY / NOT_READY_ISSUES: __________
 
 ### If Contradictions Spike
 
-- C1 HARD_CONTRADICTION → bioshort_watch cron active despite suppression
+- C1 HARD_CONTRADICTION → registry `suppressed` but a cron line exists, or registry `active`
+  with no matching cron (as of 2026-07-18, `active` + Hermes cron `9b7546acf514` is expected OK)
 - C2 NEEDS_OPERATOR_DECISION → watchlist_current.json missing or stale
 - C3 HARD_CONTRADICTION → biotech_hedge_report cron missing
 - C4 POSSIBLE_DRIFT → uncommitted changes (review before commit)
