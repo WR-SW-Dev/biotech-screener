@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.catalyst_resolution_tracker import (
     ResolutionRecord,
     build_watchlist,
+    check_8k_for_resolution,
     classify_outcome,
     compute_record_hash,
     get_prediction_snapshot,
@@ -317,16 +318,29 @@ class TestClassifyInformational:
 
 
 class TestClassifySafetyMiss:
-    def test_serious_adverse_event(self):
+    def test_serious_adverse_event_is_needs_review(self):
+        # Bug fix (issue #514): bare SAE mention is not sufficient evidence
+        # of a binary MISS — route to NEEDS_REVIEW for human adjudication.
         assert (
             classify_outcome(
                 "PHASE_2_READOUT",
                 headline="Company reports serious adverse event in Phase 2 trial",
             )
-            == "MISS"
+            == "NEEDS_REVIEW"
         )
 
-    def test_clinical_hold(self):
+    def test_safety_signal_headline_is_needs_review(self):
+        # Bug fix (issue #514): bare safety signal headline is not a MISS.
+        assert (
+            classify_outcome(
+                "PHASE_3_READOUT",
+                headline="Safety signal observed in ongoing trial",
+            )
+            == "NEEDS_REVIEW"
+        )
+
+    def test_clinical_hold_remains_miss(self):
+        # Clinical hold is actionable and definitive — remains MISS.
         assert (
             classify_outcome(
                 "PHASE_3_READOUT",
@@ -334,6 +348,66 @@ class TestClassifySafetyMiss:
             )
             == "MISS"
         )
+
+
+class TestCheck8kSkipsSafetySignal:
+    def _make_8k_event(self, ticker, event_date, event_type="DATA_READOUT", confidence="HIGH", name="Positive topline data"):
+        return {
+            "ticker": ticker,
+            "event_date": event_date,
+            "disclosed_at": event_date,
+            "event_type": event_type,
+            "confidence": confidence,
+            "event_name": name,
+        }
+
+    def test_safety_signal_low_confidence_skipped(self):
+        # Bug fix (issue #514): low-confidence SAFETY_SIGNAL 8-Ks must not
+        # be treated as resolution signals.
+        events = [
+            self._make_8k_event("CATX", "2026-03-16", event_type="SAFETY_SIGNAL",
+                                 confidence="MED", name="8-K: serious adverse event"),
+        ]
+        result = check_8k_for_resolution("CATX", events, date(2026, 3, 16), date(2026, 3, 31))
+        assert result is None
+
+    def test_safety_signal_high_confidence_accepted(self):
+        # HIGH-confidence SAFETY_SIGNAL (e.g. DSMB halt) should still resolve.
+        events = [
+            self._make_8k_event("XENE", "2026-03-09", event_type="SAFETY_SIGNAL",
+                                 confidence="HIGH", name="DSMB recommended halt due to safety"),
+        ]
+        result = check_8k_for_resolution("XENE", events, date(2026, 3, 9), date(2026, 3, 31))
+        assert result is not None
+
+    def test_non_safety_signal_unaffected(self):
+        # Normal DATA_READOUT events should still be returned as before.
+        events = [
+            self._make_8k_event("PVLA", "2026-03-31", event_type="DATA_READOUT",
+                                 confidence="HIGH", name="Phase 3 SELVA met primary endpoint"),
+        ]
+        result = check_8k_for_resolution("PVLA", events, date(2026, 3, 31), date(2026, 4, 15))
+        assert result is not None
+        assert "SELVA" in result["headline"]
+
+
+class TestSafetySignalTypeMap:
+    def test_safety_signal_not_in_watchlist_as_corporate_update(self):
+        # Bug fix (issue #514): SAFETY_SIGNAL events must not appear in the
+        # watchlist calendar as CORPORATE_UPDATE.
+        events = [
+            {
+                "ticker": "CATX",
+                "event_date": "2026-03-16",
+                "catalyst_date": "2026-03-16",
+                "catalyst_type": "SAFETY_SIGNAL",
+                "description": "8-K: serious adverse event",
+            }
+        ]
+        wl = build_watchlist(events, date(2026, 3, 31), existing_resolutions=set())
+        corporate_update_entries = [w for w in wl if w.get("catalyst_type") == "CORPORATE_UPDATE"
+                                    and w["ticker"] == "CATX"]
+        assert corporate_update_entries == []
 
 
 # --- get_prediction_snapshot tests (Spec 073) ---

@@ -1,5 +1,109 @@
 [
   {
+    "ticker": "CATX",
+    "catalyst_date": "2026-03-16",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description and outcome_detail both verbatim 'serious adverse event' with no further detail, no price data, days_from_expected=16. Auto-resolved as MISS by parser; no real binary catalyst. Exclude from calibration.",
+    "resolution_date": "2026-03-16",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "CRVS",
+    "catalyst_date": "2026-03-12",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description and outcome_detail both verbatim 'serious adverse event' with no further detail, no price data, no DEM rank, days_from_expected=20. Auto-resolved as MISS by parser; no real binary catalyst. Exclude from calibration.",
+    "resolution_date": "2026-03-12",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "AMLX",
+    "catalyst_date": "2026-03-03",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K (8K_2026-03-24_AMLX) is a pipeline/enrollment update for Phase 3 LUCIDITY. Date mismatch (Mar-03 vs Mar-24 source). No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-24",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "GLUE",
+    "catalyst_date": "2026-03-17",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K is a Phase 2 MRT-8102 pipeline update with H2 data expected. No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-17",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "RAPP",
+    "catalyst_date": "2026-03-10",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'clinical hold' may be a default label; actual 8-K content is Phase 2 Bipolar Mania progress update with results expected 2027. No price data to validate. No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-10",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "SGMT",
+    "catalyst_date": "2026-03-11",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K is Phase 3 long-term safety topline update (+2.3% price on date). No binary catalyst resolved. Exclude from calibration.",
+    "resolution_date": "2026-03-11",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "TARA",
+    "catalyst_date": "2026-03-10",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Parser artifact: catalyst_description 'serious adverse event' is a default label; actual 8-K is BCG-Unresponsive cohort enrollment update. No binary catalyst resolved. Separate Mar-31 PHASE_3_READOUT HIT already exists. Exclude from calibration.",
+    "resolution_date": "2026-03-10",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "OCGN",
+    "catalyst_date": "2026-03-04",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "All three OCGN Mar-2026 entries sourced from same 8-K (8K_2026-03-27_OCGN); parser generated phantom entries across three dates. Mar-04 catalyst_description was 'serious adverse event' but detail contains BLA submission content — garbled parse. Exclude from calibration.",
+    "resolution_date": "2026-03-27",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "OCGN",
+    "catalyst_date": "2026-03-24",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Duplicate of 8K_2026-03-27_OCGN; same filing as Mar-04 and Mar-26 entries. Misclassified as PDUFA_ACTION. Exclude from calibration.",
+    "resolution_date": "2026-03-27",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "OCGN",
+    "catalyst_date": "2026-03-26",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Duplicate of 8K_2026-03-27_OCGN; same filing as Mar-04 and Mar-24 entries. Misclassified as PDUFA_ACTION. Exclude from calibration.",
+    "resolution_date": "2026-03-27",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "PVLA",
+    "catalyst_date": "2026-04-01",
+    "outcome": "DUPLICATE",
+    "outcome_detail": "Misclassified as PDUFA_ACTION; 8-K was a Phase 3 pipeline update announcing NDA submission planned H2 2026, not a PDUFA decision. True catalyst (Phase 3 SELVA HIT) captured in 2026-03-31 record. Exclude from hit-rate calibration.",
+    "resolution_date": "2026-04-01",
+    "source": "MANUAL_REVIEW"
+  },
+  {
+    "ticker": "VRDN",
+    "catalyst_date": "2026-04-01",
+    "outcome": "HIT",
+    "outcome_detail": "Phase 3 chronic TED met primary endpoint; topline data released Q2 2026 as guided",
+    "resolution_date": "2026-04-01",
+    "source": "PHASE_3_TOPLINE"
+  },
+  {
+    "ticker": "BIIB",
+    "catalyst_date": "2026-04-03",
+    "outcome": "HIT",
+    "outcome_detail": "FDA approved SPINRAZA (nusinersen) high-dose regimen for Spinal Muscular Atrophy; PDUFA date met",
+    "resolution_date": "2026-04-03",
+    "source": "FDA_APPROVAL"
+  },
+  {
     "ticker": "PVLA",
     "catalyst_date": "2026-03-31",
     "outcome": "HIT",
