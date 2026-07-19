@@ -209,16 +209,24 @@ HELD_ITEMS_SEED = [
     {
         "id": "spec_087_b1b",
         "title": "Spec 087 B1b — bioshort weekly producer first-fire",
-        "status": "AWAITING_FIRST_FIRE",
-        "last_evidence": "crontab installed 2026-05-07, env-readiness cleared (07259611)",
-        "blocker": "Friday 2026-05-08 18:00 EDT cron must fire; hedge_report_2026-05-08.json must exist",
-        "next_allowed_action": "Read first-fire validation outputs after 2026-05-08 18:00 ET",
-        "not_allowed": [
-            "manual extra producer run",
-            "bioshort_watch LLM reactivation",
-            "any B2/B3 work before first-fire passes",
-        ],
-        "requires_operator_approval": True,
+        "status": "CLEARED",
+        "last_evidence": "First-fire confirmed: output/hedge_report/hedge_report_2026-05-08.json exists "
+        "(crontab installed 2026-05-07, env-readiness cleared 07259611). This entry was authored "
+        "2026-05-07 expecting the 2026-05-08 18:00 ET fire and was never updated afterward — verified "
+        "resolved 2026-07-18 during a held-spec-ledger staleness audit, over two months after the "
+        "blocking artifact first appeared.",
+        "blocker": None,
+        "next_allowed_action": "None — B1b closed. spec_087_b2's blocker ('B1b first-fire validation "
+        "must pass') is satisfied; spec_087_b2 itself is a separate entry with its own remaining scope "
+        "and was not otherwise re-evaluated here.",
+        "not_allowed": [],
+        "resolution_note": "Previously listed 'bioshort_watch LLM reactivation' as not_allowed pending "
+        "this gate. That condition cleared 2026-05-08, but bioshort_watch was independently reactivated "
+        "2026-07-18 via a separate real governance decision (AGENT_REGISTRY.json status change to "
+        "active, operator sign-off, migrated to Hermes cron job 9b7546acf514) without anyone checking "
+        "this static ledger first. No actual conflict — the underlying B1b condition had already been "
+        "met for over two months by then.",
+        "requires_operator_approval": False,
         "related_artifacts": [
             "output/hedge_report/hedge_report_2026-05-08.json",
             "output/hedge_report/BIOSHORT_VERDICT.json",
@@ -226,7 +234,7 @@ HELD_ITEMS_SEED = [
             "artifacts/audit/spec_087_b1b_env_readiness_2026_05_07.md",
         ],
         "related_cron": "0 18 * * 5  # biotech_hedge_report.py --portfolio-csv",
-        "alert_condition": "artifact missing by 2026-05-09 09:00 ET → NEEDS_OPERATOR_DECISION",
+        "alert_condition": None,
     },
     {
         "id": "spec_087_b2",
@@ -265,19 +273,20 @@ HELD_ITEMS_SEED = [
     {
         "id": "bioshort_watch_llm",
         "title": "bioshort_watch LLM reactivation",
-        "status": "HELD_SUPPRESSED",
-        "last_evidence": "crontab comment: # SUPPRESSED 2026-05-06 (bioshort upstream P2)",
-        "blocker": "Separate reactivation decision required; watcher stability unconfirmed",
-        "next_allowed_action": "none",
-        "not_allowed": [
-            "cron reactivation",
-            "run_agent_direct.py invocation",
-            "any LLM call against bioshort artifacts",
-        ],
-        "requires_operator_approval": True,
-        "related_artifacts": ["artifacts/bioshort_watch/"],
-        "related_cron": "# SUPPRESSED: 10 18 * * 5 ... bioshort_watch HEARTBEAT",
-        "alert_condition": "any cron/log entry for bioshort_watch LLM → escalate immediately",
+        "status": "CLEARED",
+        "last_evidence": "Reactivated 2026-07-18 by explicit operator decision (separate written spec "
+        "waived by operator). AGENT_REGISTRY.json status changed suppressed → active, cron_enabled: "
+        "true. Migrated from the legacy OpenClaw cron of the same name to a real Hermes cron job "
+        "(weekly-bioshort-brief, job 9b7546acf514, Sat 18:13 ET, agent-mode with real tool-calling). "
+        "See docs/ops/hermes_cron_policy.md and docs/MODEL_DOCUMENTATION.md for the full record.",
+        "blocker": None,
+        "next_allowed_action": "None — reactivation complete and verified live (first real Saturday "
+        "fire 2026-07-18 confirmed genuine, non-fabricated tool calls and a grounded verdict).",
+        "not_allowed": [],
+        "requires_operator_approval": False,
+        "related_artifacts": ["artifacts/bioshort_watch/", "agents/AGENT_REGISTRY.json"],
+        "related_cron": "13 18 * * 6  # Hermes cron 9b7546acf514, weekly-bioshort-brief",
+        "alert_condition": None,
     },
     {
         "id": "spec_088_phase_b",
@@ -767,11 +776,7 @@ def write_first_fire_md(ff_items):
 def write_contradiction_md(contradictions):
     hard = [c for c in contradictions if c["severity"] == "HARD_CONTRADICTION"]
     cloud_env = [c for c in contradictions if c["severity"] == "UNKNOWN_CLOUD_ENV"]
-    possible = [
-        c
-        for c in contradictions
-        if c["severity"] in ("POSSIBLE_DRIFT", "WARN", "NEEDS_OPERATOR_DECISION")
-    ]
+    possible = [c for c in contradictions if c["severity"] in ("POSSIBLE_DRIFT", "WARN", "NEEDS_OPERATOR_DECISION")]
     ok = [c for c in contradictions if c["severity"] == "OK"]
 
     lines = [
@@ -900,9 +905,7 @@ def main():
     hard_count = sum(1 for c in contradictions if c["severity"] == "HARD_CONTRADICTION")
     cloud_count = sum(1 for c in contradictions if c["severity"] == "UNKNOWN_CLOUD_ENV")
     warn_count = sum(
-        1
-        for c in contradictions
-        if c["severity"] in ("POSSIBLE_DRIFT", "WARN", "NEEDS_OPERATOR_DECISION")
+        1 for c in contradictions if c["severity"] in ("POSSIBLE_DRIFT", "WARN", "NEEDS_OPERATOR_DECISION")
     )
     ff_status = ff_items[0].get("eval", ff_items[0]["status"]) if ff_items else "N/A"
     cron_availability = cron_info.get("availability", "OPERATOR_HOST")
