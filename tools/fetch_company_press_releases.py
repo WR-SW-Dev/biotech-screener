@@ -398,9 +398,11 @@ def fetch_ticker_releases(
 
     # Source 1: Company IR page
     ir_url = source.get("company_ir_url", "")
+    ir_fetch_succeeded = False
     if ir_url:
         html = _fetch_url(ir_url)
         if html:
+            ir_fetch_succeeded = True
             prs = _extract_generic_ir_releases(html, ticker, ir_url)
             new_prs = [p for p in prs if p.compute_hash() not in last_hashes]
             releases.extend(new_prs)
@@ -426,37 +428,49 @@ def fetch_ticker_releases(
                 )
             )
 
-    # Source 2: Backup sources (GlobeNewswire etc)
-    for backup_url in source.get("backup_sources", []):
-        html = _fetch_url(backup_url)
-        if html:
-            if "globenewswire" in backup_url.lower():
-                prs = _extract_globenewswire_releases(html, ticker)
+    # Source 2: Backup sources (GlobeNewswire etc) — fallback only.
+    # Only queried when there is no configured IR URL, or the IR page fetch
+    # itself failed outright. A *successful* IR fetch (even with zero new
+    # releases, which is the normal day-to-day state for most tickers) must
+    # not also trigger the backup fetch: GlobeNewswire's keyword/company-name
+    # search returns far higher volume than a real company IR page and would
+    # dominate the merged pool by sheer count, silently defeating a correctly
+    # configured company_ir_url (confirmed 2026-07-18: word-collision tickers
+    # fixed in commit 35e662f8 stayed at ~82% "other" post-fix because the
+    # backup GlobeNewswire fetch kept running unconditionally alongside the
+    # now-working IR fetch — 223 of 224 post-fix releases still came from the
+    # backup source, not the configured IR page).
+    if not ir_fetch_succeeded:
+        for backup_url in source.get("backup_sources", []):
+            html = _fetch_url(backup_url)
+            if html:
+                if "globenewswire" in backup_url.lower():
+                    prs = _extract_globenewswire_releases(html, ticker)
+                else:
+                    prs = _extract_generic_ir_releases(html, ticker, backup_url)
+                new_prs = [p for p in prs if p.compute_hash() not in last_hashes]
+                releases.extend(new_prs)
+                results.append(
+                    FetchResult(
+                        ticker=ticker,
+                        source_type="backup",
+                        source_url=backup_url,
+                        success=True,
+                        releases_found=len(new_prs),
+                        fetched_at=datetime.now(timezone.utc).isoformat(),
+                    )
+                )
             else:
-                prs = _extract_generic_ir_releases(html, ticker, backup_url)
-            new_prs = [p for p in prs if p.compute_hash() not in last_hashes]
-            releases.extend(new_prs)
-            results.append(
-                FetchResult(
-                    ticker=ticker,
-                    source_type="backup",
-                    source_url=backup_url,
-                    success=True,
-                    releases_found=len(new_prs),
-                    fetched_at=datetime.now(timezone.utc).isoformat(),
+                results.append(
+                    FetchResult(
+                        ticker=ticker,
+                        source_type="backup",
+                        source_url=backup_url,
+                        success=False,
+                        error="fetch_failed",
+                        fetched_at=datetime.now(timezone.utc).isoformat(),
+                    )
                 )
-            )
-        else:
-            results.append(
-                FetchResult(
-                    ticker=ticker,
-                    source_type="backup",
-                    source_url=backup_url,
-                    success=False,
-                    error="fetch_failed",
-                    fetched_at=datetime.now(timezone.utc).isoformat(),
-                )
-            )
 
     # Dedupe by content hash
     deduped = []
