@@ -1,5 +1,5 @@
 {
-  "audit_timestamp": "2026-07-13T12:31:02.062114+00:00",
+  "audit_timestamp": "2026-07-20T12:31:11.074272+00:00",
   "reference_date": "2026-06-28",
   "stale_cutoff": "2026-06-15",
   "governance": [
@@ -21,8 +21,8 @@
     }
   },
   "xbi": {
-    "holdings_count": 150,
-    "source": "SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-07-13T12:31:04.869851+00:00",
+    "holdings_count": 147,
+    "source": "SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-07-20T12:31:13.497245+00:00",
     "missing_from_model": 6,
     "missing_by_classification": {
       "MISSING_CORE_BIOTECH_CANDIDATE": 5,
@@ -31,7 +31,7 @@
   },
   "ibb": {
     "holdings_count": 242,
-    "source": "BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-07-13T12:31:06.155215+00:00",
+    "source": "BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-07-20T12:31:14.703433+00:00",
     "missing_from_model": 5,
     "missing_by_classification": {
       "MISSING_CORE_BIOTECH_CANDIDATE": 2,
@@ -48,21 +48,21 @@
       "model_classification": "ACTIVE_VALID",
       "status": "active",
       "company_name": "Atrium Therapeutics, Inc.",
-      "last_price_date": "2026-07-09"
+      "last_price_date": "2026-07-17"
     },
     "GOSS": {
       "in_model": true,
       "model_classification": "ACTIVE_VALID",
       "status": "active",
       "company_name": "Gossamer Bio, Inc.",
-      "last_price_date": "2026-07-09"
+      "last_price_date": "2026-07-17"
     },
     "REPL": {
       "in_model": true,
       "model_classification": "ACTIVE_VALID",
       "status": "active",
       "company_name": "Replimune Group, Inc.",
-      "last_price_date": "2026-07-09"
+      "last_price_date": "2026-07-17"
     },
     "ACLX": {
       "in_model": true,

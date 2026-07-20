@@ -1,6 +1,6 @@
 # Universe Hygiene Audit Report
 
-**Audit timestamp:** 2026-07-13T12:31:02.062114+00:00
+**Audit timestamp:** 2026-07-20T12:31:11.074272+00:00
 **Reference date:** 2026-06-28
 **Stale price cutoff:** 2026-06-15 (10 trading days before 2026-06-28)
 
@@ -29,7 +29,7 @@ Model universe: **357 tickers**.
 - Price data missing entirely: **0** (placeholder `_XBI_BENCHMARK_` entry)
 - Pending / needs review: **24**
 
-XBI ETF: **150 holdings** (source: SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/pr...)
+XBI ETF: **147 holdings** (source: SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/pr...)
 IBB ETF: **242 holdings** (source: BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20...)
 
 Missing from model: **6 XBI** / **5 IBB** candidates
@@ -44,8 +44,8 @@ High-priority new candidates (XBI small/mid pure-play): **5**
 - **Model universe:** `production_data/universe.json` — 357 entries
 - **Split-adjusted prices:** `production_data/price_history_split_adj.csv` — clean ticker count varies
 - **Raw prices:** `production_data/price_history.csv`
-- **XBI holdings:** SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-07-13T12:31:04.869851+00:00
-- **IBB holdings:** BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-07-13T12:31:06.155215+00:00
+- **XBI holdings:** SPDR_LIVE_XLSX (https://www.ssga.com/us/en/institutional/etfs/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xbi.xlsx) @ 2026-07-20T12:31:13.497245+00:00
+- **IBB holdings:** BLACKROCK_VARNISH_API_portfolioId=239699 (iShares Biotechnology ETF, asOfDate=20260626) @ 2026-07-20T12:31:14.703433+00:00
 
 ---
 
@@ -64,7 +64,7 @@ High-priority new candidates (XBI small/mid pure-play): **5**
 
 ## XBI Coverage Section
 
-XBI ETF (150 holdings) vs model (357 tickers).
+XBI ETF (147 holdings) vs model (357 tickers).
 
 - Tickers in XBI not in model: **6**
 - Core biotech candidates (XBI small/mid): **5**
@@ -156,9 +156,9 @@ _No identifier conflicts detected._
 
 | Ticker | Status |
 | --- | --- |
-| RNA | ACTIVE_VALID | status=active | last_price=2026-07-09 | name=Atrium Therapeutics, Inc. |
-| GOSS | ACTIVE_VALID | status=active | last_price=2026-07-09 | name=Gossamer Bio, Inc. |
-| REPL | ACTIVE_VALID | status=active | last_price=2026-07-09 | name=Replimune Group, Inc. |
+| RNA | ACTIVE_VALID | status=active | last_price=2026-07-17 | name=Atrium Therapeutics, Inc. |
+| GOSS | ACTIVE_VALID | status=active | last_price=2026-07-17 | name=Gossamer Bio, Inc. |
+| REPL | ACTIVE_VALID | status=active | last_price=2026-07-17 | name=Replimune Group, Inc. |
 | ACLX | DELISTED_OR_INACTIVE | status=delisted | last_price=2026-04-29 | name= |
 | APLS | DELISTED_OR_INACTIVE | status=delisted | last_price=2026-05-15 | name=Apellis Pharmaceuticals, Inc. |
 | DAWN | DELISTED_OR_INACTIVE | status=delisted | last_price=2026-04-24 | name= |
