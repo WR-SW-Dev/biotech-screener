@@ -2,7 +2,7 @@
 
 **Status:** DRAFT / NOT ACTIVE
 **Created:** 2026-05-18
-**Last updated:** 2026-05-25
+**Last updated:** 2026-07-20
 **Scope:** Reference documentation only
 
 ---
@@ -163,15 +163,15 @@ related_findings: [G6]
 failure_id: F-2026-006
 category: IF
 first_seen: 2026-05-08
-recurrence_count: 1
-severity: HIGH
-summary: CI pipeline extended red state — CI red ~17 days as of May 25. PR #285 open/unmerged. phase2-daily-production cron dark.
-root_cause: Budget exhaustion (GitHub Actions). CI Diagnostic Report and CI Fix Checklist produced May 14-16; remediation not confirmed complete.
-affected_systems: [All merge gates, production deployment confidence, Herald Digest restore]
-resolution: OPEN (2026-06-24). GitHub Actions failing in ~3–4s on main (budget exhaustion pattern). Host must restore budget and confirm green CI. Blocks Herald restore verification. Target 2026-07-01.
-prevention_rule: CI red > 5 days should trigger merge block and operator escalation. See operational-health-baselines skill.
+recurrence_count: 2
+severity: CRITICAL
+summary: CI pipeline extended red state — two phases. May–Jun 2026: near-immediate (~3–4s) job aborts on main from GitHub Actions budget exhaustion. 2026-07-19 onward: workflows run to completion and expose GENUINE failures in lint, pytest (3.10 + 3.12), and replay. All merge gates down; model/production-logic merges and PKOS work frozen.
+root_cause: Two distinct phases. (1) May–Jun 2026 — GitHub Actions budget/minutes exhaustion caused near-immediate (~3–4s) job aborts before real work ran. (2) 2026-07-19 onward (verified on merge commit eb0d73c) — jobs run to completion (pytest 3.10 ~10 min) and return real failures: genuine lint/test/replay breakage, NOT a billing wall. The earlier expectation that a budget/minutes reset (~Jul 1 / Aug 1) would restore green is SUPERSEDED.
+affected_systems: [All merge gates, production deployment confidence, Herald Digest restore, PKOS M4 + Stage 1]
+resolution: OPEN (2026-07-20). Single incident record: GitHub issue #521 (CI_RED_2026). Per-job classification (all pending host reproduction): LINT REAL_FAILURE; PYTEST_3_10 REAL_FAILURE (test/coverage split pending); PYTEST_3_12 REAL_FAILURE (likely version-specific delta); REPLAY REAL_FAILURE (baseline availability or ranking drift pending); MERGE_ENFORCEMENT FAILED (PR #515 merged 2026-07-19 with required checks red). Remediation runbook sent to operator 2026-07-20. A budget reset will NOT fix this — do not wait on it.
+prevention_rule: CI red > 5 days should trigger merge block and operator escalation. Required status checks (lint, pytest 3.10/3.12, replay) must be enforced on main so a PR cannot merge red (PR #515 bypassed this). When a red state persists, re-verify whether jobs abort fast (budget) or run-and-fail (real breakage) before assuming a documented cause still holds. See operational-health-baselines skill and issue #521.
 related_specs: []
-related_findings: [C4]
+related_findings: [C4, CI_RED_2026 (issue #521)]
 ```
 
 ### F-2026-007
@@ -234,3 +234,4 @@ related_findings: [N1]
 | 2026-05-18 | Initial catalog created (F-2026-001 through F-2026-008) |
 | 2026-06-24 | F-2026-005/F-2026-006 stalled-loop verdicts filled OPEN (cloud evidence); targets 2026-07-01 pending host confirm. Checklist v2 vs final_score blocked in cloud — see `docs/research/CHECKLIST_V2_FINAL_SCORE_BLOCKER_2026_06_24.md`. |
 | 2026-05-25 | F-2026-009 added. F-2026-005 recurrence updated to 6+ weeks. F-2026-006 CI red updated to ~17 days. Normalized to strict YAML schema. |
+| 2026-07-20 | F-2026-006 corrected: root cause split into two phases (May–Jun budget-exhaustion aborts vs. 2026-07-19-onward genuine lint/test/replay failures); budget-reset-restores-green expectation superseded; severity raised to CRITICAL, recurrence 2; linked to incident issue #521 (CI_RED_2026). |
