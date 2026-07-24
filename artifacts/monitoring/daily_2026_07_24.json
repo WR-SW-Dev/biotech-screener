@@ -1,0 +1,519 @@
+{
+    "date": "2026-07-24",
+    "monitoring_day": 34,
+    "monitoring_period_note": "Day 34 — PRE-MARKET snapshot (09:00 ET). Extended monitoring beyond formal 2026-06-11 through 2026-06-30 period. Data: July 23 (Thursday) close. TWO ALERTS: (1) DRUG -5.52% GAP FLAG — manual review required; (2) SLDB $7.98 — $8.00 ESCALATION LEVEL BREACHED. NRIX T-7 checkpoint: price met ($23.74), volume FAILED (966K < 1.2M). STOK near-breakeven CLEARED (+3.17%). XBI confirmed close $152.23 (+0.08%) — portfolio essentially matched XBI today.",
+    "timestamp": "2026-07-24T09:00:00.000000Z",
+    "phase": "Day 34 — MIXED SESSION: 8 up / 7 down. Portfolio avg +0.09% vs XBI +0.08% — essentially matched. Avg P&L vs entry: +30.35% (up from Day 33 +30.20%, +0.15pp). TWO ALERTS: (1) DRUG -5.52% GAP FLAG on elevated volume — manual review; (2) SLDB $7.98, escalation triggered ($8.00 level breached). NRIX T-7: price OK ($23.74 ≥ $23.50) but volume WEAK (966K < 1.2M threshold) — binary window accumulation NOT confirmed. STANDOUT: RVMD +3.13% ($188.75), PRAX +3.30% ($322.40). STOK near-breakeven resolved (+3.17%, $29.65). CMPS declining toward entry (+3.63% remaining cushion).",
+    "data_as_of": "2026-07-23 close (Yahoo Finance v8/chart API, all 15 tickers + XBI confirmed via timestamps: 1784640600=Jul21, 1784727000=Jul22, 1784813400=Jul23). Prev data: 2026-07-22 close (Day 33 snapshot). XBI Jul 23 close confirmed $152.23 via OHLCV cross-check.",
+    "missed_run_note": null,
+    "account": {
+        "account_id": "Robinhood 802349084",
+        "equity_fetchable": false,
+        "equity_estimated_usd": 130.51,
+        "equity_note": "Robinhood MCP unavailable throughout monitoring period (Days 1-34). Equity computed from phase2_entry_prices.json quantities × July 23 close prices. Total gain: $30.38 on $100.13 invested. Up from Day 33 ($130.36) by +$0.15, reflecting the near-flat session (+0.09% portfolio vs +0.08% XBI).",
+        "cash_carried": 99.87,
+        "buying_power_carried": 200.06,
+        "total_estimated_account_value": 230.38,
+        "data_source": "Yahoo Finance July 23 close (equity); baseline_2026-06-10 carry-forward (cash/buying_power)"
+    },
+    "portfolio_overview": {
+        "total_positions": 15,
+        "positions_negative_vs_entry": 0,
+        "positions_near_breakeven_lt10pct": 2,
+        "positions_positive_vs_entry": 15,
+        "avg_pnl_vs_entry_pct": 30.35,
+        "avg_pnl_note": "Portfolio avg +30.35% vs entry (Jul 23 close). All 15 positions profitable. Day 33 +30.20% → Day 34 +30.35% (+0.15pp improvement). Range: STOK +3.17% (near-breakeven improving, $29.65 vs $28.74 entry) to NRIX +53.56%. Session breadth Jul 23: 8 up / 7 down (recovery from Day 33's 3 up/12 down). Portfolio avg day change: +0.09% vs XBI +0.08% — essentially matched index. NOTE: DRUG -5.52% was the session's main drag; ex-DRUG portfolio avg day change ≈ +0.47%.",
+        "session_breadth_jul23": "8 up / 7 down. Up leaders: PRAX +3.30%, RVMD +3.13%, STOK +2.38%, DNTH +1.97%, COGT +1.77%. Down leaders: DRUG -5.52% (GAP FLAG), CMPS -1.84%, ALMS -1.77%, XENE -1.15%, TRVI -1.04%.",
+        "xbi_entry_price": 133.62,
+        "xbi_prev_close_jul22": 152.11,
+        "xbi_current_price_jul23": 152.23,
+        "xbi_day_change_jul23_pct": 0.08,
+        "xbi_return_since_entry_pct": 13.93,
+        "drawdown_vs_xbi_pp": 16.42,
+        "drawdown_threshold_pp": -2.0,
+        "drawdown_status": "CLEAR — +16.42pp above XBI (threshold -2.0pp). Day 33 +16.36pp → Day 34 +16.42pp (+0.06pp). Essentially flat day; drawdown gate comfortable.",
+        "portfolio_avg_day_change_pct": 0.09,
+        "relative_performance_vs_xbi_pp": 0.01
+    },
+    "gap_flags": [
+        {
+            "ticker": "DRUG",
+            "day_change_pct": -5.52,
+            "price_prev": 75.46,
+            "price_curr": 71.29,
+            "volume_jul23": 248000,
+            "prev_volume_jul22": 172300,
+            "vol_ratio": 1.44,
+            "open_jul23": 74.56,
+            "high_jul23": 75.31,
+            "low_jul23": 70.67,
+            "pnl_vs_entry_pct": 12.11,
+            "priority": "GAP FLAG — >5% move on elevated volume. Manual review required.",
+            "note": "DRUG -5.52% to $71.29 on 1.44x elevated volume (248K vs 172K). Open $74.56 (vs prior close $75.46 = -1.19% gap at open), then intraday selling to $71.29 close — most of the -5.52% move was intraday, not overnight. High $75.31 reached early before consistent selling. Low $70.67 near close. This is an INTRADAY DISTRIBUTION pattern, not a gap-down open. Volume elevated at 1.44x. P&L: +21.54% (Day33) → +12.11% (Day34, -9.43pp decline). DRUG remains +12.11% above entry ($63.59). Manual review recommended: check for DRUG-specific news, trial readout, or SEC filing. Zentalis often moves on clinical data updates."
+        }
+    ],
+    "escalation_flags": [
+        {
+            "ticker": "SLDB",
+            "escalation_type": "SUPPORT_LEVEL_BREACH",
+            "escalation_level": 8.00,
+            "close_jul23": 7.98,
+            "close_jul22": 8.10,
+            "volume_jul23": 957300,
+            "pnl_vs_entry_pct": 22.96,
+            "priority": "ESCALATION TRIGGERED — $8.00 support broken. Close $7.98.",
+            "note": "SLDB closed at $7.98 on 957K volume, breaking the $8.00 escalation level set in Day 33. The broken-support pattern continues: $9.00 broke Jul17, $8.50 broke Jul20, $8.45-$8.46 became resistance, $8.00 was the escalation level (now broken). Day 33 explicitly flagged: 'If $8.00 breaks, ESCALATE.' Volume 957K is essentially flat vs prior (964K) — not a panic sell, but a steady grind lower. P&L: +24.81% (Day33) → +22.96% (Day34). SLDB shows persistent relative weakness. Next support: $7.50. Entry is $6.49; position remains profitable but the declining pattern is concerning. Manual review recommended for SLDB thesis integrity."
+        }
+    ],
+    "notable_events": [
+        {
+            "ticker": "NRIX",
+            "event": "T-7 CHECKPOINT — Price MET, Volume FAILED",
+            "price_jul23": 23.74,
+            "price_jul22": 23.60,
+            "day_change_pct": 0.59,
+            "volume_jul23": 965900,
+            "volume_jul22": 1130600,
+            "vol_ratio_vs_prev": 0.85,
+            "pnl_vs_entry_pct": 53.56,
+            "priority": "MONITOR — T-7 checkpoint INCONCLUSIVE. Binary window thesis weakened.",
+            "note": "NRIX T-7 checkpoint from July 24 pre-market: Price $23.74 ✓ (≥$23.50 threshold met). Volume 965,900 ✗ (< 1,200,000 threshold — FAILED). Binary window volume pattern: T-9 (Jul21) 961K (0.77x) → T-8 (Jul22) 1,130K (1.18x, building) → T-7 (Jul23) 966K (0.85x vs T-8, declining). The T-8 volume build did NOT sustain into T-7. Binary window accumulation thesis is NOT confirmed by volume. Price action is constructive (+0.59% to $23.74, above $22 support, holding gains) but volume tells a different story. Implication: if smart money were accumulating ahead of ~Jul31 DAYBreak CLL-201 data, we'd expect steady volume elevation — that pattern is absent. NRIX remains the highest P&L position (+53.56%) and $23.74 is above $22 support. T-6 checkpoint: tomorrow July 25. Watch for volume >1.2M to re-establish the accumulation thesis."
+        },
+        {
+            "ticker": "STOK",
+            "event": "NEAR-BREAKEVEN CLEARING — Real Cushion Established",
+            "price_jul23": 29.65,
+            "price_jul22": 28.96,
+            "day_change_pct": 2.38,
+            "pnl_vs_entry_pct": 3.17,
+            "entry_price": 28.74,
+            "gap_above_entry_usd": 0.91,
+            "priority": "POSITIVE — Near-breakeven watch improving. Cushion $0.91 above entry.",
+            "note": "STOK +2.38% to $29.65. Cushion trajectory: Day31 -3.69% → Day32 +0.24% ($0.07) → Day33 +0.77% ($0.22) → Day34 +3.17% ($0.91). The pattern of consecutive improvements is sustained. $29.65 is the highest close since the monitoring high period. With $0.91 above entry, STOK has now established a more meaningful cushion (compared to the $0.22 cushion in Day33). However, still <10% above entry, so near-breakeven watch category is maintained until $31.60+ ($28.74 × 1.10). Next level: $30.00 psychological resistance."
+        },
+        {
+            "ticker": "RVMD",
+            "event": "STRONG RECOVERY +3.13%",
+            "price_jul23": 188.75,
+            "price_jul22": 183.03,
+            "day_change_pct": 3.13,
+            "pnl_vs_entry_pct": 31.29,
+            "priority": "POSITIVE — Strongest session performer (ex-PRAX). New monitoring high.",
+            "note": "RVMD +3.13% to $188.75 — the most meaningful single-day gain for RVMD during the monitoring period. After trading range-bound near $183, this push to $188.75 sets a new monitoring high. Day33 RVMD was flat (-0.14% on 0.39x very low volume). The contrast today (meaningful gain) suggests accumulation after the consolidation phase. P&L: +27.32% (Day33) → +31.29% (Day34, +3.97pp). $190 is the next psychological level. Hold above $183."
+        },
+        {
+            "ticker": "PRAX",
+            "event": "NEW MONITORING HIGH — $322.40",
+            "price_jul23": 322.40,
+            "price_jul22": 312.10,
+            "day_change_pct": 3.30,
+            "pnl_vs_entry_pct": 33.27,
+            "priority": "POSITIVE — Session leader +3.30%. New monitoring high.",
+            "note": "PRAX +3.30% to $322.40 — new monitoring high. Jul21 $317.87 (prev high) → Jul22 $312.10 (pullback) → Jul23 $322.40 (new high). PRAX has recovered the entire Jul22 pullback and then some. P&L: +29.01% (Day33) → +33.27% (Day34, +4.26pp). Strong continued performance. No catalyst due imminently (T-252, ~2027-03-31). $330 is the next round number target."
+        },
+        {
+            "ticker": "SYRE",
+            "event": "APPROACHING $100 AGAIN — 6TH ATTEMPT SETUP",
+            "price_jul23": 99.99,
+            "price_jul22": 99.17,
+            "day_change_pct": 0.83,
+            "pnl_vs_entry_pct": 31.39,
+            "priority": "MONITOR — $100 structural resistance. SYRE approaching for 6th test.",
+            "note": "SYRE +0.83% to $99.99 — within $0.01 of the confirmed $100 structural resistance. After the 5th failed cross (Day33: $99.17 after failing from $102.70), SYRE has recovered to $99.99 in one session. Day33 expected SYRE to hold $95-99 as a new base — instead $99.99 was reached immediately. The 6th $100 test is effectively at the door. Volume data not available for this fetch; critical to monitor whether this test is supported by volume >1M. P&L: +30.32% (Day33) → +31.39% (Day34, +1.07pp). Key watch: close ABOVE $100 on volume would be a meaningful breakout signal."
+        },
+        {
+            "ticker": "CMPS",
+            "event": "DECLINING TOWARD ENTRY — Near-Breakeven Risk Elevated",
+            "price_jul23": 11.71,
+            "price_jul22": 11.93,
+            "day_change_pct": -1.84,
+            "pnl_vs_entry_pct": 3.63,
+            "entry_price": 11.30,
+            "gap_above_entry_usd": 0.41,
+            "priority": "WATCH — Cushion shrinking. $11.30 entry only $0.41 below current.",
+            "note": "CMPS -1.84% to $11.71. Cushion trajectory: Day32 +7.79% → Day33 +5.58% → Day34 +3.63% — three consecutive declines. Only $0.41 above entry ($11.30). Volume data not available but the decline trend since the June 30 Phase 2b TRD miss continues. The institutional exit deceleration noted in Day33 (volume: 11.93M → 1.73M over 5 days) may have stabilized the sell pressure, but beta-driven XBI correlation means any market pullback could push CMPS toward entry. $11.30 = critical support. $11.00 = escalation. If XBI pulls back 1%, CMPS likely tests $11.57-11.65 range — very thin margin."
+        },
+        {
+            "ticker": "DNTH",
+            "event": "$100 SUPPORT CONFIRMED — Bounce from $100 Distribution Zone",
+            "price_jul23": 104.79,
+            "price_jul22": 102.76,
+            "day_change_pct": 1.97,
+            "pnl_vs_entry_pct": 45.34,
+            "priority": "POSITIVE — $100 held as support, recovery from Jul22 distribution sell-off.",
+            "note": "DNTH +1.97% to $104.79. After the Jul22 distribution signal (-2.80% on 1.66x elevated volume from $105.72 to $102.76), DNTH recovered to $104.79 on Jul23. The $100 support level held ($102.76 was the low of that distribution sell-off). P&L: +42.52% (Day33) → +45.34% (Day34, +2.82pp). The $105 resistance is still intact, but $100 as support is confirmed. Next test: whether DNTH can make a sustained push above $105 with elevated volume. Pattern remains: $100 support / $105 resistance."
+        }
+    ],
+    "binary_window": {
+        "NRIX": {
+            "catalyst_date": "~2026-07-31",
+            "calendar_days_to_catalyst": 7,
+            "binary_window_day": "T-7 (from July 24 pre-market)",
+            "price_jul22": 23.60,
+            "price_jul23": 23.74,
+            "day_change_pct": 0.59,
+            "volume_jul23": 965900,
+            "volume_jul22": 1130600,
+            "vol_ratio_t7_vs_t8": 0.85,
+            "vol_threshold_required": 1200000,
+            "t7_price_met": true,
+            "t7_volume_met": false,
+            "pnl_vs_entry_pct": 53.56,
+            "support_level": 22.00,
+            "t6_checkpoint": "2026-07-25",
+            "binary_window_status": "INCONCLUSIVE — price positive, volume declining from T-8 peak",
+            "volume_pattern": {
+                "T9_Jul21": 961300,
+                "T8_Jul22": 1130600,
+                "T7_Jul23": 965900,
+                "note": "Volume peaked at T-8 (1.13M) then returned to baseline T-9 levels (~960K). This is NOT a sustained accumulation pattern. Smart money accumulation would show steady or increasing volume as the catalyst approaches."
+            },
+            "note": "T-7 BINARY CHECKPOINT: Price $23.74 ✓ (≥$23.50). Volume 965,900 ✗ (< 1,200,000). Binary window accumulation thesis WEAKENED. Volume pattern does not support pre-catalyst institutional positioning. Price action still constructive: +0.59% to $23.74 on a mixed market day, above $22 support, P&L +53.56%. The DAYBreak CLL-201 data (~Jul31) remains the key event. T-6 checkpoint July 25: need >1.2M volume to revive accumulation thesis. If T-6 also fails volume threshold, treat as standard position monitoring without binary window alpha signal."
+        },
+        "XENE": {
+            "catalyst_date": "~2026-09-21",
+            "calendar_days_to_catalyst": 59,
+            "note": "T-59. Not in active binary window. XENE -1.15% to $65.42 on Jul23. Normal monitoring. P&L: +25.95%.",
+            "pnl_vs_entry_pct": 25.95
+        }
+    },
+    "near_breakeven_watch": [
+        {
+            "ticker": "STOK",
+            "pnl_vs_entry_pct": 3.17,
+            "entry_price": 28.74,
+            "curr_price": 29.65,
+            "gap_above_entry_usd": 0.91,
+            "day_change_pct": 2.38,
+            "priority": "IMPROVING — Cushion building. $0.91 above entry. Trajectory: -3.69% → +0.24% → +0.77% → +3.17%.",
+            "note": "STOK +2.38% to $29.65. Four consecutive sessions of improvement. $0.91 cushion above $28.74 entry is the largest since monitoring began. Near-breakeven watch maintained (<10% threshold = $31.60), but trend is clearly positive. Need $30.00+ to establish psychological support; $31.60+ to exit near-breakeven watch category."
+        },
+        {
+            "ticker": "CMPS",
+            "pnl_vs_entry_pct": 3.63,
+            "entry_price": 11.30,
+            "curr_price": 11.71,
+            "gap_above_entry_usd": 0.41,
+            "day_change_pct": -1.84,
+            "priority": "WATCH — Three consecutive declines. $0.41 above entry. Risk of testing $11.30.",
+            "note": "CMPS -1.84% to $11.71. Consecutive decline: +7.79% → +5.58% → +3.63% (Day32→Day33→Day34). Cushion narrowed from $0.88 to $0.63 to $0.41 over three sessions. At this rate, CMPS could test $11.30 entry in 2-3 more sessions if the decline continues. $11.30 = critical support. $11.00 = escalation. Institutional exit has decelerated but beta exposure remains the primary risk. A 1% XBI pullback would put CMPS within $0.05-0.10 of entry."
+        }
+    ],
+    "governance_gates": {
+        "drawdown_gate": {
+            "status": "CLEAR",
+            "current_pp": 16.42,
+            "threshold_pp": -2.0,
+            "detail": "+16.42pp vs XBI (threshold -2.0pp). Day 33: +16.36pp → Day 34: +16.42pp (+0.06pp). Well clear of threshold. XBI Jul23 close: $152.23."
+        },
+        "ic_gate": {
+            "status": "OVERDUE — 23 days",
+            "last_measured": "2026-06-24",
+            "last_ic": 0.0432,
+            "gate_was_due": "2026-07-01",
+            "days_overdue": 23,
+            "next_review": "Requires explicit operator freeze lift. DEM candidate freeze + NO_MODEL_CHANGE forward-validation window active (0/20 eligible LIVE windows per FORWARD_VALIDATION_PROTOCOL.md §1).",
+            "note": "IC gate remains overdue 23 days. No new measurement possible without freeze lift. Model behavior frozen per 2026-06-28 ratification (SM-20260629-001). This is a governance constraint, not a data problem."
+        },
+        "h20d_gate": {
+            "status": "OVERDUE — 23 days",
+            "gate_date": "2026-07-01",
+            "days_overdue": 23,
+            "override_posture": "MAINTAINED (OPTION_B_OVERRIDE_2026_05_26)",
+            "note": "h20d gate due 2026-07-01. Q1 2026 13F data not yet promoted to production. Quarantine script deferred. Sequential gate requires explicit operator freeze lift → quarantine script → Q2 13F warmup."
+        },
+        "jaccard_gate": {
+            "status": "MAINTAINED",
+            "last_measured": "2026-06-23",
+            "top30_jaccard": 0.875,
+            "threshold": 0.40,
+            "note": "Jaccard 0.875 as of June 23. Override maintained. Well above 0.40 threshold."
+        },
+        "emergency_gate": {
+            "status": "CLEAR",
+            "detail": "No emergency conditions. Drawdown +16.42pp vs XBI. All 15 positions open and profitable. No position >20% loss vs entry."
+        },
+        "positions_20pct_loss": {
+            "status": "CLEAR",
+            "count": 0,
+            "detail": "No positions >20% below entry. Minimum P&L: STOK +3.17% ($29.65 vs $28.74 entry)."
+        }
+    },
+    "positions": [
+        {
+            "ticker": "COGT",
+            "company_name": "Cogent Biosciences, Inc.",
+            "entry_price": 31.35,
+            "price_jul22": 39.54,
+            "price_jul23": 40.24,
+            "pnl_vs_entry_pct": 28.36,
+            "day_change_jul23_pct": 1.77,
+            "equity_position_usd": 8.563,
+            "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 (AMBIGUOUS/PRICED). Normal post-catalyst monitoring.",
+            "gap_flag": false,
+            "notes": "+1.77% to $40.24. Recovering from Day33 pullback. $40+ territory restored. P&L: +26.12% (Day33) → +28.36% (Day34, +2.24pp). Normal monitoring. Hold above $38.",
+            "tier": "A"
+        },
+        {
+            "ticker": "DNTH",
+            "company_name": "Dianthus Therapeutics, Inc.",
+            "entry_price": 72.10,
+            "price_jul22": 102.76,
+            "price_jul23": 104.79,
+            "pnl_vs_entry_pct": 45.34,
+            "day_change_jul23_pct": 1.97,
+            "equity_position_usd": 9.738,
+            "catalyst_status": "POST_CATALYST — $100 support confirmed, $105 resistance intact.",
+            "gap_flag": false,
+            "notes": "+1.97% to $104.79. $100 held as support after Jul22 distribution sell-off. Range: $100 support / $105 resistance. P&L: +42.52% (Day33) → +45.34% (Day34, +2.82pp). Need elevated-volume push above $105 to confirm next leg up.",
+            "tier": "A"
+        },
+        {
+            "ticker": "NRIX",
+            "company_name": "Nurix Therapeutics, Inc.",
+            "entry_price": 15.46,
+            "price_jul22": 23.60,
+            "price_jul23": 23.74,
+            "pnl_vs_entry_pct": 53.56,
+            "day_change_jul23_pct": 0.59,
+            "volume_jul23": 965900,
+            "equity_position_usd": 10.214,
+            "catalyst_status": "BINARY WINDOW — T-7 (~2026-07-31). Price OK, volume WEAK. T-6 checkpoint Jul 25.",
+            "gap_flag": false,
+            "binary_window": true,
+            "notes": "T-7 BINARY: +0.59% to $23.74 on 966K volume (< 1.2M threshold). Price condition met, volume condition FAILED. Binary accumulation thesis inconclusive. $23.74 above $22 support. P&L: +52.65% (Day33) → +53.56% (Day34, +0.91pp). T-6 checkpoint: July 25.",
+            "watch_priority": "T-6 CHECKPOINT TOMORROW July 25. Need >1.2M volume to revive accumulation thesis. DAYBreak CLL-201 data ~July 31 (7 calendar days).",
+            "tier": "A"
+        },
+        {
+            "ticker": "URGN",
+            "company_name": "UroGen Pharma Ltd.",
+            "entry_price": 28.02,
+            "price_jul22": 42.06,
+            "price_jul23": 42.50,
+            "pnl_vs_entry_pct": 51.64,
+            "day_change_jul23_pct": 1.05,
+            "equity_position_usd": 10.101,
+            "catalyst_status": "MONITORING. T-38 (~2026-09-01). Post-gap consolidation continuing.",
+            "gap_flag": false,
+            "notes": "+1.05% to $42.50. Low-volume pullback (Day33, -3.93%, 0.42x) confirmed as healthy consolidation after July 21 gap-up. $42.50 is recovering toward $43.78 high. P&L: +50.11% (Day33) → +51.64% (Day34, +1.53pp). Manual news check for July 21 elevated-volume event still outstanding.",
+            "watch_priority": "Manual news check for July 21 elevated volume event (2.09x) still outstanding. $43.78 is next resistance.",
+            "tier": "A"
+        },
+        {
+            "ticker": "ALMS",
+            "company_name": "Alumis Inc.",
+            "entry_price": 20.37,
+            "price_jul22": 28.81,
+            "price_jul23": 28.30,
+            "pnl_vs_entry_pct": 38.93,
+            "day_change_jul23_pct": -1.77,
+            "equity_position_usd": 9.226,
+            "catalyst_status": "LUMUS SLE Phase 3 Q3 2026. Pulling back from $30 high.",
+            "gap_flag": false,
+            "notes": "-1.77% to $28.30 on declining volume (est). $28.30 is approaching $27.98 (Jul20 low) support zone. P&L: +41.43% (Day33) → +38.93% (Day34, -2.50pp). Pullback from $30.05 new high continuing. Normal post-breakout consolidation. Hold above $27.50. LUMUS Phase 3 Q3 2026 thesis intact.",
+            "tier": "A"
+        },
+        {
+            "ticker": "SYRE",
+            "company_name": "Spyre Therapeutics, Inc.",
+            "entry_price": 76.10,
+            "price_jul22": 99.17,
+            "price_jul23": 99.99,
+            "pnl_vs_entry_pct": 31.39,
+            "day_change_jul23_pct": 0.83,
+            "equity_position_usd": 8.803,
+            "catalyst_status": "$100 RESISTANCE IMMINENT — 6th test approaching. POST_CATALYST (SKYLINE Ph2 2026-06-15).",
+            "gap_flag": false,
+            "notes": "+0.83% to $99.99 — within $0.01 of $100 resistance. After 5th failed cross (Day33, $99.17 pullback from $102.70), SYRE recovered immediately to $99.99. 6th $100 test is effectively at the door. P&L: +30.32% (Day33) → +31.39% (Day34, +1.07pp). Volume data needed to assess credibility of this test. A close above $100 on volume >1M would be a meaningful breakout signal.",
+            "watch_priority": "6TH $100 TEST: Monitor close above/below $100 with volume confirmation. Volume >1M needed for valid breakout.",
+            "tier": "B"
+        },
+        {
+            "ticker": "RVMD",
+            "company_name": "Revolution Medicines, Inc.",
+            "entry_price": 143.76,
+            "price_jul22": 183.03,
+            "price_jul23": 188.75,
+            "pnl_vs_entry_pct": 31.29,
+            "day_change_jul23_pct": 3.13,
+            "equity_position_usd": 8.770,
+            "catalyst_status": "NEW MONITORING HIGH $188.75. T-249 (~2027-03-31). Strong recovery session.",
+            "gap_flag": false,
+            "notes": "+3.13% to $188.75 — new monitoring high. After range-bound period near $183, this is a meaningful breakout. P&L: +27.32% (Day33) → +31.29% (Day34, +3.97pp). $190 is next level. Strong; hold above $183.",
+            "tier": "B"
+        },
+        {
+            "ticker": "CMPS",
+            "company_name": "COMPASS Pathways Plc",
+            "entry_price": 11.30,
+            "price_jul22": 11.93,
+            "price_jul23": 11.71,
+            "pnl_vs_entry_pct": 3.63,
+            "day_change_jul23_pct": -1.84,
+            "equity_position_usd": 6.912,
+            "catalyst_status": "NEAR-BREAKEVEN — Three consecutive declines. Entry approach risk elevated.",
+            "gap_flag": false,
+            "near_breakeven_alert": true,
+            "notes": "-1.84% to $11.71. Three consecutive declines post Phase 2b TRD miss: +7.79% → +5.58% → +3.63%. Cushion $0.41 above $11.30 entry. Institutional exit decelerated (volume: 11.93M → ~1.7M over 5 days) but beta exposure makes CMPS vulnerable to XBI pullbacks. $11.30 = critical support. $11.00 = escalation.",
+            "watch_priority": "CRITICAL: Cushion shrinking to $0.41 above entry. Three consecutive declines. $11.30 support must hold.",
+            "tier": "C"
+        },
+        {
+            "ticker": "SLDB",
+            "company_name": "Solid Biosciences Inc.",
+            "entry_price": 6.49,
+            "price_jul22": 8.10,
+            "price_jul23": 7.98,
+            "pnl_vs_entry_pct": 22.96,
+            "day_change_jul23_pct": -1.48,
+            "volume_jul23": 957300,
+            "prev_volume_jul22": 963600,
+            "vol_ratio": 0.99,
+            "equity_position_usd": 8.208,
+            "catalyst_status": "ESCALATION TRIGGERED — $8.00 broken. T-79 (~2026-10-14). Persistent relative weakness.",
+            "gap_flag": false,
+            "escalation_flag": true,
+            "notes": "-1.48% to $7.98 on 957K flat volume — ESCALATION TRIGGERED. $8.00 support broken. Broken support pattern: $9.00 → $8.50 → $8.45 → $8.00 (now broken). Volume flat at 957K (vs 964K) = not a panic sell, steady grind. P&L: +24.81% (Day33) → +22.96% (Day34). Next support: $7.50. Entry $6.49 intact (+22.96% cushion). Thesis review: SLDB held up well during June-July rally but now breaking support levels sequentially. Catalyst (T-79, ~Oct 14) remains far out.",
+            "watch_priority": "ESCALATION: $8.00 broken. Next support $7.50. Manual review of SLDB position thesis recommended.",
+            "tier": "A"
+        },
+        {
+            "ticker": "DRUG",
+            "company_name": "Zentalis Pharmaceuticals, Inc.",
+            "entry_price": 63.59,
+            "price_jul22": 75.46,
+            "price_jul23": 71.29,
+            "pnl_vs_entry_pct": 12.11,
+            "day_change_jul23_pct": -5.52,
+            "volume_jul23": 248000,
+            "prev_volume_jul22": 172300,
+            "vol_ratio": 1.44,
+            "open_jul23": 74.56,
+            "high_jul23": 75.31,
+            "low_jul23": 70.67,
+            "equity_position_usd": 7.545,
+            "catalyst_status": "GAP FLAG — Intraday distribution -5.52% on 1.44x elevated volume. Manual review required.",
+            "gap_flag": true,
+            "notes": "-5.52% to $71.29 on 248K (1.44x elevated). Open $74.56 (near prior close), high $75.31 (early), then consistent intraday selling to $71.29 close near the $70.67 low. INTRADAY DISTRIBUTION pattern. P&L: +18.67% (Day33) → +12.11% (Day34, -6.56pp). Still +12.11% above $63.59 entry. Possible catalysts to check: trial data, Zentalis SEC filing, sector rotation. Next support: $70 round number. If $70 breaks on volume, further review warranted.",
+            "watch_priority": "GAP FLAG: -5.52% intraday sell-off on elevated volume. Check for DRUG-specific news. $70 = next support.",
+            "tier": "B"
+        },
+        {
+            "ticker": "STOK",
+            "company_name": "Stoke Therapeutics, Inc.",
+            "entry_price": 28.74,
+            "price_jul22": 28.96,
+            "price_jul23": 29.65,
+            "pnl_vs_entry_pct": 3.17,
+            "day_change_jul23_pct": 2.38,
+            "equity_position_usd": 6.872,
+            "catalyst_status": "NEAR-BREAKEVEN IMPROVING — $0.91 above entry. Trajectory consistently positive.",
+            "gap_flag": false,
+            "near_breakeven_alert": true,
+            "notes": "+2.38% to $29.65. Four consecutive improvements: -3.69% → +0.24% → +0.77% → +3.17%. $0.91 cushion above $28.74 entry. Still <10% for near-breakeven watch. $30.00 is next psychological level. $28.74 remains critical support.",
+            "watch_priority": "IMPROVING: Need $30.00 for psychological support; $31.60+ to exit near-breakeven watch.",
+            "tier": "C"
+        },
+        {
+            "ticker": "PRAX",
+            "company_name": "Praxis Precision Medicine, Inc.",
+            "entry_price": 241.92,
+            "price_jul22": 312.10,
+            "price_jul23": 322.40,
+            "pnl_vs_entry_pct": 33.27,
+            "day_change_jul23_pct": 3.30,
+            "equity_position_usd": 8.876,
+            "catalyst_status": "NEW MONITORING HIGH $322.40. Session leader +3.30%. Normal monitoring.",
+            "gap_flag": false,
+            "notes": "+3.30% to $322.40 — new monitoring high. Recovered the full Jul22 pullback ($312.10) and set new high. P&L: +29.01% (Day33) → +33.27% (Day34, +4.26pp). Strong continued performance. Hold above $305.",
+            "tier": "A"
+        },
+        {
+            "ticker": "TRVI",
+            "company_name": "Travere Therapeutics, Inc.",
+            "entry_price": 13.43,
+            "price_jul22": 17.36,
+            "price_jul23": 17.18,
+            "pnl_vs_entry_pct": 27.92,
+            "day_change_jul23_pct": -1.04,
+            "equity_position_usd": 8.532,
+            "catalyst_status": "MONITORING. High-volatility range. $17 support zone.",
+            "gap_flag": false,
+            "notes": "-1.04% to $17.18. Volatile pattern continues. $17 support held (low was $17.18 itself). P&L: +29.26% (Day33) → +27.92% (Day34). Hold above $17. Range history: $13.43 entry → $19.07 high → $16.77 → $18.18 → $17.36 → $17.18.",
+            "tier": "B"
+        },
+        {
+            "ticker": "ERAS",
+            "company_name": "Erasca, Inc.",
+            "entry_price": 13.27,
+            "price_jul22": 19.51,
+            "price_jul23": 19.34,
+            "pnl_vs_entry_pct": 45.74,
+            "day_change_jul23_pct": -0.87,
+            "equity_position_usd": 9.736,
+            "catalyst_status": "MONITORING — Orderly pullback from $19.51. $20 target intact.",
+            "gap_flag": false,
+            "notes": "-0.87% to $19.34 after Day33's relative strength session (+0.67% on elevated vol). Normal pullback. P&L: +47.02% (Day33) → +45.74% (Day34). $20 psychological level remains the next target. Day33 elevated volume accumulation thesis still intact.",
+            "tier": "A"
+        },
+        {
+            "ticker": "XENE",
+            "company_name": "Xenon Pharmaceuticals Inc.",
+            "entry_price": 51.95,
+            "price_jul22": 66.18,
+            "price_jul23": 65.42,
+            "pnl_vs_entry_pct": 25.95,
+            "day_change_jul23_pct": -1.15,
+            "equity_position_usd": 8.413,
+            "catalyst_status": "MONITORING — T-59 (~2026-09-21). Orderly pullback.",
+            "gap_flag": false,
+            "notes": "-1.15% to $65.42 on declining volume (est). Orderly pullback from $66.18. $64-66 consolidation range. P&L: +27.39% (Day33) → +25.95% (Day34). T-59, not in active binary window.",
+            "tier": "A"
+        }
+    ],
+    "session_summary": {
+        "date": "2026-07-23",
+        "event": "MIXED SESSION — 8 up / 7 down, portfolio matched XBI",
+        "breadth": "8 up / 7 down",
+        "portfolio_avg_day_change_pct": 0.09,
+        "xbi_day_change_pct": 0.08,
+        "xbi_close_jul23": 152.23,
+        "relative_performance_pp": 0.01,
+        "up_positions": ["PRAX +3.30%", "RVMD +3.13%", "STOK +2.38%", "DNTH +1.97%", "COGT +1.77%", "URGN +1.05%", "SYRE +0.83%", "NRIX +0.59%"],
+        "down_positions": ["DRUG -5.52% (GAP FLAG)", "CMPS -1.84%", "ALMS -1.77%", "SLDB -1.48%", "XENE -1.15%", "TRVI -1.04%", "ERAS -0.87%"],
+        "key_events": [
+            "DRUG -5.52% GAP FLAG — intraday distribution on 1.44x elevated volume; manual review required",
+            "SLDB $7.98 — ESCALATION TRIGGERED: $8.00 support broken",
+            "NRIX T-7 INCONCLUSIVE: price $23.74 met threshold, but volume 966K < 1.2M — binary accumulation NOT confirmed",
+            "RVMD +3.13% to $188.75 — new monitoring high after range-bound period",
+            "PRAX +3.30% to $322.40 — new monitoring high, session leader",
+            "SYRE $99.99 — approaching $100 resistance for 6th time",
+            "STOK +2.38% to $29.65 — near-breakeven cushion expanding ($0.91 above entry)",
+            "CMPS third consecutive decline to $11.71 — cushion narrowing to $0.41 above $11.30 entry"
+        ]
+    },
+    "watchlist_priorities": {
+        "today_jul24": [
+            "DRUG: manual news check — what caused -5.52% intraday sell-off? Check Zentalis press releases, SEC filings, clinical trial updates",
+            "SLDB: escalation triggered at $7.98. Monitor $7.50 as next support. Review SLDB position thesis",
+            "NRIX T-6: final binary window accumulation checkpoint. Need >1.2M volume with price ≥$23.50. Catalyst ~Jul31",
+            "SYRE: 6th $100 test — monitor close above/below $100 with volume. >1M volume needed for breakout signal",
+            "CMPS: $11.30 entry at risk if market pulls back. Watch intraday for support at $11.40-11.50"
+        ],
+        "ongoing": [
+            "IC gate overdue 23 days — requires operator freeze lift",
+            "h20d gate overdue 23 days — requires operator freeze lift",
+            "URGN manual news check for July 21 elevated-volume event (2.09x) still outstanding",
+            "STOK: need $30.00+ psychological support; $31.60+ to exit near-breakeven watch"
+        ]
+    },
+    "monitoring_status": {
+        "period_extended": true,
+        "original_end": "2026-06-30",
+        "extension_rationale": "NRIX binary window (~Jul31 DAYBreak CLL-201), SLDB escalation monitoring, DRUG gap flag review, CMPS entry risk, STOK near-breakeven, governance gates overdue",
+        "governance_gates_overdue_days": 23,
+        "alerts_active": ["DRUG_GAP_FLAG", "SLDB_ESCALATION"],
+        "next_governance_action": "h20d quarantine script + IC refresh requires explicit operator freeze lift"
+    }
+}
