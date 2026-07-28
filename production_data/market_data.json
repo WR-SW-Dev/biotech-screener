@@ -1,7 +1,7 @@
 [
   {
     "ticker": "AARD",
-    "price": 5.974999904632568,
+    "price": 6.295000076293945,
     "market_cap": 85520224,
     "enterprise_value": -9707048,
     "shares_outstanding": 21816385,
@@ -21,11 +21,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ABCL",
-    "price": 5.909999847412109,
+    "price": 5.566800117492676,
     "market_cap": 1650554112,
     "enterprise_value": 1189806720,
     "shares_outstanding": 305375393,
@@ -45,11 +45,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ABEO",
-    "price": 6.445000171661377,
+    "price": 6.224999904632568,
     "market_cap": 325157280,
     "enterprise_value": 176924560,
     "shares_outstanding": 56995144,
@@ -69,11 +69,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ABOS",
-    "price": 2.2149999141693115,
+    "price": 2.140000104904175,
     "market_cap": 163956608,
     "enterprise_value": 68164160,
     "shares_outstanding": 72227580,
@@ -93,11 +93,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ABSI",
-    "price": 8.239999771118164,
+    "price": 7.994999885559082,
     "market_cap": 1120957312,
     "enterprise_value": 970045376,
     "shares_outstanding": 155905056,
@@ -117,11 +117,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ABUS",
-    "price": 4.414999961853027,
+    "price": 4.400000095367432,
     "market_cap": 901957184,
     "enterprise_value": 775873536,
     "shares_outstanding": 197537710,
@@ -141,11 +141,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ABVX",
-    "price": 131.8300018310547,
+    "price": 131.3000030517578,
     "market_cap": 7871722496,
     "enterprise_value": 7273549824,
     "shares_outstanding": 79770191,
@@ -165,11 +165,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ACAD",
-    "price": 25.030000686645508,
+    "price": 24.850000381469727,
     "market_cap": 3684996096,
     "enterprise_value": 2785015040,
     "shares_outstanding": 171235870,
@@ -189,11 +189,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ACIU",
-    "price": 2.2300000190734863,
+    "price": 2.259999990463257,
     "market_cap": 242729984,
     "enterprise_value": 163362800,
     "shares_outstanding": 101773573,
@@ -213,11 +213,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ACRS",
-    "price": 5.585000038146973,
+    "price": 5.350200176239014,
     "market_cap": 616615168,
     "enterprise_value": 502709376,
     "shares_outstanding": 139663680,
@@ -237,11 +237,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ACRV",
-    "price": 1.7350000143051147,
+    "price": 1.6699999570846558,
     "market_cap": 65914660,
     "enterprise_value": -31547424,
     "shares_outstanding": 42801729,
@@ -261,11 +261,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ADCT",
-    "price": 1.2350000143051147,
+    "price": 1.215000033378601,
     "market_cap": 139274320,
     "enterprise_value": 331972544,
     "shares_outstanding": 127191158,
@@ -285,11 +285,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ADMA",
-    "price": 8.494999885559082,
+    "price": 8.295000076293945,
     "market_cap": 1930666752,
     "enterprise_value": 43736158208,
     "shares_outstanding": 231772715,
@@ -309,11 +309,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ADPT",
-    "price": 21.895000457763672,
+    "price": 22.260000228881836,
     "market_cap": 2759965440,
     "enterprise_value": 2753712384,
     "shares_outstanding": 160044392,
@@ -333,11 +333,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AGIO",
-    "price": 36.45000076293945,
+    "price": 35.92499923706055,
     "market_cap": 2012519168,
     "enterprise_value": 1192283008,
     "shares_outstanding": 59471609,
@@ -357,11 +357,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AKTX",
-    "price": 9.600000381469727,
+    "price": 8.880000114440918,
     "market_cap": 17947498,
     "enterprise_value": 12843644,
     "shares_outstanding": 1574342,
@@ -381,11 +381,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALDX",
-    "price": 1.7200000286102295,
+    "price": 1.524999976158142,
     "market_cap": 114308424,
     "enterprise_value": 57881964,
     "shares_outstanding": 60321068,
@@ -405,11 +405,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALGS",
-    "price": 5.324999809265137,
+    "price": 4.739999771118164,
     "market_cap": 32859464,
     "enterprise_value": -19676768,
     "shares_outstanding": 5388223,
@@ -429,11 +429,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALKS",
-    "price": 52.70000076293945,
+    "price": 53.26499938964844,
     "market_cap": 7417073664,
     "enterprise_value": 8418534400,
     "shares_outstanding": 166675807,
@@ -453,11 +453,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALLO",
-    "price": 1.8550000190734863,
+    "price": 1.7999999523162842,
     "market_cap": 695486464,
     "enterprise_value": 469958656,
     "shares_outstanding": 345154561,
@@ -477,11 +477,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALMS",
-    "price": 28.985000610351562,
+    "price": 27.84000015258789,
     "market_cap": 2948889600,
     "enterprise_value": 2358341888,
     "shares_outstanding": 123432072,
@@ -501,11 +501,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALNY",
-    "price": 267.2300109863281,
+    "price": 267.6400146484375,
     "market_cap": 36845465600,
     "enterprise_value": 37598199808,
     "shares_outstanding": 133512573,
@@ -525,11 +525,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALT",
-    "price": 2.805000066757202,
+    "price": 2.7899999618530273,
     "market_cap": 530914464,
     "enterprise_value": 213829280,
     "shares_outstanding": 194474154,
@@ -549,11 +549,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ALVO",
-    "price": 3.4549999237060547,
+    "price": 3.180000066757202,
     "market_cap": 1214275840,
     "enterprise_value": 2601481728,
     "shares_outstanding": 312153164,
@@ -573,11 +573,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AMGN",
-    "price": 368.5799865722656,
+    "price": 376.68499755859375,
     "market_cap": 181163884544,
     "enterprise_value": 233017131008,
     "shares_outstanding": 539708274,
@@ -597,11 +597,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AMLX",
-    "price": 17.854999542236328,
+    "price": 17.489999771118164,
     "market_cap": 1733394688,
     "enterprise_value": 1399217024,
     "shares_outstanding": 111186317,
@@ -621,11 +621,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AMPH",
-    "price": 19.3799991607666,
+    "price": 18.875,
     "market_cap": 847024960,
     "enterprise_value": 1274521600,
     "shares_outstanding": 44092919,
@@ -645,11 +645,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AMRX",
-    "price": 17.93000030517578,
+    "price": 18.145000457763672,
     "market_cap": 5157003776,
     "enterprise_value": 7765344256,
     "shares_outstanding": 319022792,
@@ -669,11 +669,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ANAB",
-    "price": 53.54999923706055,
+    "price": 53.61000061035156,
     "market_cap": 1666608640,
     "enterprise_value": 1667403008,
     "shares_outstanding": 29100902,
@@ -693,11 +693,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ANIP",
-    "price": 78.87000274658203,
+    "price": 78.8499984741211,
     "market_cap": 1810698624,
     "enterprise_value": 2064132352,
     "shares_outstanding": 22734618,
@@ -717,11 +717,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ANNX",
-    "price": 5.215000152587891,
+    "price": 5.570000171661377,
     "market_cap": 805286080,
     "enterprise_value": 540977280,
     "shares_outstanding": 163842538,
@@ -741,11 +741,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ANRO",
-    "price": 26.575000762939453,
+    "price": 25.719999313354492,
     "market_cap": 790315520,
     "enterprise_value": 496425728,
     "shares_outstanding": 35093940,
@@ -765,11 +765,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "APGE",
-    "price": 134.17999267578125,
+    "price": 134.22999572753906,
     "market_cap": 6828769792,
     "enterprise_value": 5336733184,
     "shares_outstanding": 61902733,
@@ -789,7 +789,7 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "APLS",
@@ -817,7 +817,7 @@
   },
   {
     "ticker": "AQST",
-    "price": 3.9649999141693115,
+    "price": 3.748500108718872,
     "market_cap": 585224832,
     "enterprise_value": 467264512,
     "shares_outstanding": 125450119,
@@ -837,11 +837,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARCT",
-    "price": 5.960000038146973,
+    "price": 5.670000076293945,
     "market_cap": 212604544,
     "enterprise_value": 15552713,
     "shares_outstanding": 28423069,
@@ -861,11 +861,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARDX",
-    "price": 5.005000114440918,
+    "price": 5.090000152587891,
     "market_cap": 1456238208,
     "enterprise_value": 1396710656,
     "shares_outstanding": 247029387,
@@ -885,11 +885,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARGX",
-    "price": 864.030029296875,
+    "price": 923.844970703125,
     "market_cap": 55089000448,
     "enterprise_value": 1358647787520,
     "shares_outstanding": 62187771,
@@ -909,11 +909,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARQT",
-    "price": 27.860000610351562,
+    "price": 27.1200008392334,
     "market_cap": 3230903552,
     "enterprise_value": 3101561088,
     "shares_outstanding": 125083374,
@@ -933,11 +933,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARTV",
-    "price": 9.732500076293945,
+    "price": 10.220000267028809,
     "market_cap": 463774368,
     "enterprise_value": 143706544,
     "shares_outstanding": 48588198,
@@ -957,11 +957,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARVN",
-    "price": 8.260000228881836,
+    "price": 8.149999618530273,
     "market_cap": 490361120,
     "enterprise_value": -127752712,
     "shares_outstanding": 64521198,
@@ -981,11 +981,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ARWR",
-    "price": 91.54000091552734,
+    "price": 86.25689697265625,
     "market_cap": 11472100352,
     "enterprise_value": 10369140736,
     "shares_outstanding": 140857021,
@@ -1005,11 +1005,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ASMB",
-    "price": 25.604999542236328,
+    "price": 25.36750030517578,
     "market_cap": 488396128,
     "enterprise_value": 146664544,
     "shares_outstanding": 19817250,
@@ -1029,11 +1029,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ASND",
-    "price": 253.60000610351562,
+    "price": 253.5,
     "market_cap": 15133986816,
     "enterprise_value": 14684044288,
     "shares_outstanding": 65576126,
@@ -1053,11 +1053,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ATAI",
-    "price": 7.150000095367432,
+    "price": 7.175000190734863,
     "market_cap": 1498438528,
     "enterprise_value": 1298676992,
     "shares_outstanding": 368166674,
@@ -1077,11 +1077,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AUPH",
-    "price": 15.399999618530273,
+    "price": 15.199999809265137,
     "market_cap": 2100708224,
     "enterprise_value": 1776035072,
     "shares_outstanding": 128601671,
@@ -1101,11 +1101,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AURA",
-    "price": 6.949999809265137,
+    "price": 7.099999904632568,
     "market_cap": 639445888,
     "enterprise_value": 551525568,
     "shares_outstanding": 103386558,
@@ -1125,11 +1125,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AUTL",
-    "price": 1.4492000341415405,
+    "price": 1.5,
     "market_cap": 407199200,
     "enterprise_value": -158793712,
     "shares_outstanding": 266143286,
@@ -1149,11 +1149,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AVBP",
-    "price": 29.145000457763672,
+    "price": 31.079999923706055,
     "market_cap": 1471069056,
     "enterprise_value": 1086656512,
     "shares_outstanding": 46574928,
@@ -1173,11 +1173,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AVIR",
-    "price": 4.829999923706055,
+    "price": 4.710000038146973,
     "market_cap": 347717728,
     "enterprise_value": 85543440,
     "shares_outstanding": 80027099,
@@ -1197,11 +1197,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AVTR",
-    "price": 10.854999542236328,
+    "price": 11.420000076293945,
     "market_cap": 6530554880,
     "enterprise_value": 10070969344,
     "shares_outstanding": 682755402,
@@ -1221,11 +1221,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Medical Instruments & Supplies",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AVXL",
-    "price": 2.5799999237060547,
+    "price": 2.444999933242798,
     "market_cap": 246043520,
     "enterprise_value": 101783832,
     "shares_outstanding": 92671758,
@@ -1245,11 +1245,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AXSM",
-    "price": 237.89999389648438,
+    "price": 240.78500366210938,
     "market_cap": 12895302656,
     "enterprise_value": 12878023680,
     "shares_outstanding": 51459766,
@@ -1269,11 +1269,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AZN",
-    "price": 169.69000244140625,
+    "price": 169.86000061035156,
     "market_cap": 271873884160,
     "enterprise_value": 303226781696,
     "shares_outstanding": 1550862203,
@@ -1293,11 +1293,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BBIO",
-    "price": 81.80000305175781,
+    "price": 82.875,
     "market_cap": 13114868736,
     "enterprise_value": 14613710848,
     "shares_outstanding": 195861242,
@@ -1317,11 +1317,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BBOT",
-    "price": 8.899999618530273,
+    "price": 8.6899995803833,
     "market_cap": 614421504,
     "enterprise_value": 369596928,
     "shares_outstanding": 80107104,
@@ -1341,11 +1341,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BCAX",
-    "price": 27.68000030517578,
+    "price": 27.18000030517578,
     "market_cap": 1521701504,
     "enterprise_value": 903887872,
     "shares_outstanding": 65703866,
@@ -1365,11 +1365,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BCRX",
-    "price": 9.609999656677246,
+    "price": 9.3149995803833,
     "market_cap": 2319234304,
     "enterprise_value": 2886813952,
     "shares_outstanding": 254162660,
@@ -1389,11 +1389,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BCYC",
-    "price": 4.164999961853027,
+    "price": 4.059999942779541,
     "market_cap": 278895840,
     "enterprise_value": -263495872,
     "shares_outstanding": 50373281,
@@ -1413,11 +1413,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BDTX",
-    "price": 1.840000033378601,
+    "price": 1.7949999570846558,
     "market_cap": 93688400,
     "enterprise_value": -4109019,
     "shares_outstanding": 57301774,
@@ -1437,11 +1437,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BEAM",
-    "price": 26.81999969482422,
+    "price": 25.549999237060547,
     "market_cap": 3446453760,
     "enterprise_value": 2123810944,
     "shares_outstanding": 102879214,
@@ -1461,11 +1461,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BHVN",
-    "price": 14.895000457763672,
+    "price": 14.3149995803833,
     "market_cap": 2030314880,
     "enterprise_value": 1758640384,
     "shares_outstanding": 150560990,
@@ -1485,11 +1485,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BIIB",
-    "price": 200.99000549316406,
+    "price": 202.0399932861328,
     "market_cap": 28832317440,
     "enterprise_value": 31158497280,
     "shares_outstanding": 147637117,
@@ -1509,11 +1509,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BIOA",
-    "price": 22.09000015258789,
+    "price": 21.924999237060547,
     "market_cap": 913503680,
     "enterprise_value": 531676512,
     "shares_outstanding": 44452734,
@@ -1533,11 +1533,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BLTE",
-    "price": 159.36000061035156,
+    "price": 155.1699981689453,
     "market_cap": 5864849920,
     "enterprise_value": null,
     "shares_outstanding": 40085091,
@@ -1557,11 +1557,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BMEA",
-    "price": 1.2699999809265137,
+    "price": 1.2300000190734863,
     "market_cap": 84228848,
     "enterprise_value": 40413352,
     "shares_outstanding": 72299440,
@@ -1581,11 +1581,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BMRN",
-    "price": 59.130001068115234,
+    "price": 58.900001525878906,
     "market_cap": 10666401792,
     "enterprise_value": 9871004672,
     "shares_outstanding": 193284438,
@@ -1605,11 +1605,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BNTX",
-    "price": 92.51000213623047,
+    "price": 91.68000030517578,
     "market_cap": 23030169600,
     "enterprise_value": 9229341696,
     "shares_outstanding": 252884261,
@@ -1629,11 +1629,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "BRKR",
-    "price": 59.46500015258789,
+    "price": 61.66999816894531,
     "market_cap": 8655549440,
     "enterprise_value": 10119489536,
     "shares_outstanding": 152225624,
@@ -1653,11 +1653,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CABA",
-    "price": 2.7325000762939453,
+    "price": 2.684000015258789,
     "market_cap": 470413088,
     "enterprise_value": 366368416,
     "shares_outstanding": 163054796,
@@ -1677,11 +1677,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CADL",
-    "price": 10.079899787902832,
+    "price": 9.809900283813477,
     "market_cap": 598617856,
     "enterprise_value": 438400800,
     "shares_outstanding": 73270239,
@@ -1701,11 +1701,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CAI",
-    "price": 15.399999618530273,
+    "price": 15.5600004196167,
     "market_cap": 5178710528,
     "enterprise_value": 4690095104,
     "shares_outstanding": 282680695,
@@ -1725,11 +1725,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CATX",
-    "price": 2.984999895095825,
+    "price": 2.940000057220459,
     "market_cap": 341568352,
     "enterprise_value": 67457360,
     "shares_outstanding": 114046197,
@@ -1749,11 +1749,11 @@
     "exchange": "ASE",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CCCC",
-    "price": 3.7249999046325684,
+    "price": 3.559999942779541,
     "market_cap": 447244416,
     "enterprise_value": 247354128,
     "shares_outstanding": 110567222,
@@ -1773,11 +1773,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CDNA",
-    "price": 37.5,
+    "price": 37.727500915527344,
     "market_cap": 1316800128,
     "enterprise_value": 1038404928,
     "shares_outstanding": 51659481,
@@ -1797,11 +1797,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CDXS",
-    "price": 2.0999999046325684,
+    "price": 1.5149999856948853,
     "market_cap": 226786928,
     "enterprise_value": 233186480,
     "shares_outstanding": 90896567,
@@ -1821,11 +1821,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CELC",
-    "price": 91.48999786376953,
+    "price": 86.47000122070312,
     "market_cap": 4266806528,
     "enterprise_value": 4194649344,
     "shares_outstanding": 48766288,
@@ -1845,11 +1845,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CERS",
-    "price": 3.125,
+    "price": 2.859999895095825,
     "market_cap": 533983328,
     "enterprise_value": 512577376,
     "shares_outstanding": 200368974,
@@ -1869,11 +1869,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CGEM",
-    "price": 17.920000076293945,
+    "price": 17.299999237060547,
     "market_cap": 941537280,
     "enterprise_value": 483254528,
     "shares_outstanding": 61458046,
@@ -1893,11 +1893,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CGON",
-    "price": 70.56500244140625,
+    "price": 69.77249908447266,
     "market_cap": 5327429632,
     "enterprise_value": 4248178176,
     "shares_outstanding": 88202473,
@@ -1917,11 +1917,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CHRS",
-    "price": 1.4450000524520874,
+    "price": 1.4285000562667847,
     "market_cap": 217492352,
     "enterprise_value": 100188864,
     "shares_outstanding": 154249900,
@@ -1941,11 +1941,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CLDX",
-    "price": 34.0,
+    "price": 35.150001525878906,
     "market_cap": 2564335872,
     "enterprise_value": 2087313792,
     "shares_outstanding": 78492072,
@@ -1965,11 +1965,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CLLS",
-    "price": 2.924999952316284,
+    "price": 2.799999952316284,
     "market_cap": 312056544,
     "enterprise_value": 118346704,
     "shares_outstanding": 72611481,
@@ -1989,11 +1989,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-23"
   },
   {
     "ticker": "CLYM",
-    "price": 12.819999694824219,
+    "price": 12.609999656677246,
     "market_cap": 655661632,
     "enterprise_value": 504175200,
     "shares_outstanding": 57263023,
@@ -2013,11 +2013,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CMPS",
-    "price": 11.949999809265137,
+    "price": 11.399999618530273,
     "market_cap": 1673371392,
     "enterprise_value": 1137866624,
     "shares_outstanding": 134949320,
@@ -2037,11 +2037,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Care Facilities",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CMPX",
-    "price": 2.049999952316284,
+    "price": 2.0999999046325684,
     "market_cap": 368279808,
     "enterprise_value": 169877200,
     "shares_outstanding": 180087915,
@@ -2061,7 +2061,7 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CNTA",
@@ -2089,7 +2089,7 @@
   },
   {
     "ticker": "CNTX",
-    "price": 0.6385999917984009,
+    "price": 0.5888000130653381,
     "market_cap": 56707828,
     "enterprise_value": 5502857,
     "shares_outstanding": 91879177,
@@ -2109,11 +2109,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "COGT",
-    "price": 38.904998779296875,
+    "price": 39.900001525878906,
     "market_cap": 5865899008,
     "enterprise_value": 5089085440,
     "shares_outstanding": 170868004,
@@ -2133,11 +2133,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "COLL",
-    "price": 35.28499984741211,
+    "price": 35.63999938964844,
     "market_cap": 1089126400,
     "enterprise_value": 1631767424,
     "shares_outstanding": 32433779,
@@ -2157,11 +2157,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CRBU",
-    "price": 1.6549999713897705,
+    "price": 1.6150000095367432,
     "market_cap": 160176624,
     "enterprise_value": 76935168,
     "shares_outstanding": 99180575,
@@ -2181,11 +2181,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CRL",
-    "price": 219.11000061035156,
+    "price": 231.06500244140625,
     "market_cap": 8921626624,
     "enterprise_value": 11821335552,
     "shares_outstanding": 48167730,
@@ -2205,11 +2205,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CRMD",
-    "price": 7.940000057220459,
+    "price": 8.050000190734863,
     "market_cap": 688415296,
     "enterprise_value": 648721408,
     "shares_outstanding": 78451891,
@@ -2229,11 +2229,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CRNX",
-    "price": 83.875,
+    "price": 83.69999694824219,
     "market_cap": 3733637632,
     "enterprise_value": 2446956288,
     "shares_outstanding": 105440208,
@@ -2253,11 +2253,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CRSP",
-    "price": 47.56999969482422,
+    "price": 47.45000076293945,
     "market_cap": 5254128128,
     "enterprise_value": 3363123200,
     "shares_outstanding": 98484128,
@@ -2277,11 +2277,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CRVS",
-    "price": 14.039999961853027,
+    "price": 13.3641996383667,
     "market_cap": 993948800,
     "enterprise_value": 751341568,
     "shares_outstanding": 84090424,
@@ -2301,11 +2301,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CSTL",
-    "price": 24.3700008392334,
+    "price": 25.415000915527344,
     "market_cap": 626920128,
     "enterprise_value": 395589824,
     "shares_outstanding": 30329952,
@@ -2325,11 +2325,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CTKB",
-    "price": 4.519999980926514,
+    "price": 4.505000114440918,
     "market_cap": 501718944,
     "enterprise_value": 293450176,
     "shares_outstanding": 129142587,
@@ -2349,11 +2349,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CTMX",
-    "price": 3.390000104904175,
+    "price": 3.2750000953674316,
     "market_cap": 649843200,
     "enterprise_value": 294018560,
     "shares_outstanding": 217702919,
@@ -2373,11 +2373,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CTNM",
-    "price": 14.4399995803833,
+    "price": 14.220000267028809,
     "market_cap": 444150144,
     "enterprise_value": 224217072,
     "shares_outstanding": 32723877,
@@ -2397,11 +2397,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CYTK",
-    "price": 82.51499938964844,
+    "price": 81.39099884033203,
     "market_cap": 10600968192,
     "enterprise_value": 9983646720,
     "shares_outstanding": 135770593,
@@ -2421,11 +2421,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DFTX",
-    "price": 43.92499923706055,
+    "price": 43.20000076293945,
     "market_cap": 2652962304,
     "enterprise_value": 2302404352,
     "shares_outstanding": 109066783,
@@ -2445,11 +2445,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DNA",
-    "price": 7.949999809265137,
+    "price": 7.64300012588501,
     "market_cap": 578774976,
     "enterprise_value": 573558080,
     "shares_outstanding": 53361141,
@@ -2469,11 +2469,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DNLI",
-    "price": 23.670000076293945,
+    "price": 23.1200008392334,
     "market_cap": 3740788736,
     "enterprise_value": 2532867584,
     "shares_outstanding": 158709737,
@@ -2493,11 +2493,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DNTH",
-    "price": 103.91000366210938,
+    "price": 104.4800033569336,
     "market_cap": 4478257664,
     "enterprise_value": 3202177536,
     "shares_outstanding": 54666233,
@@ -2517,11 +2517,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DRMA",
-    "price": 1.2799999713897705,
+    "price": 1.274999976158142,
     "market_cap": 4927125,
     "enterprise_value": -2158931,
     "shares_outstanding": 4022143,
@@ -2541,11 +2541,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DRUG",
-    "price": 75.58000183105469,
+    "price": 70.70500183105469,
     "market_cap": 586466880,
     "enterprise_value": 277347744,
     "shares_outstanding": 9812061,
@@ -2565,11 +2565,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DSGN",
-    "price": 11.854999542236328,
+    "price": 11.59000015258789,
     "market_cap": 770094528,
     "enterprise_value": 449449760,
     "shares_outstanding": 62456974,
@@ -2589,11 +2589,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "DYN",
-    "price": 22.200700759887695,
+    "price": 23.989999771118164,
     "market_cap": 3200475136,
     "enterprise_value": 2183743232,
     "shares_outstanding": 165313796,
@@ -2613,11 +2613,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EBS",
-    "price": 7.590000152587891,
+    "price": 7.465000152587891,
     "market_cap": 412770368,
     "enterprise_value": 824171264,
     "shares_outstanding": 51596296,
@@ -2637,11 +2637,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EDIT",
-    "price": 2.7600998878479004,
+    "price": 2.690000057220459,
     "market_cap": 404371936,
     "enterprise_value": 124707824,
     "shares_outstanding": 153461838,
@@ -2661,11 +2661,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ELDN",
-    "price": 3.8450000286102295,
+    "price": 3.674999952316284,
     "market_cap": 296401248,
     "enterprise_value": 158079632,
     "shares_outstanding": 77187823,
@@ -2685,11 +2685,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ELVN",
-    "price": 53.779998779296875,
+    "price": 52.79999923706055,
     "market_cap": 3138532096,
     "enterprise_value": 2139406464,
     "shares_outstanding": 69838280,
@@ -2709,11 +2709,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ENGN",
-    "price": 1.8899999856948853,
+    "price": 1.840000033378601,
     "market_cap": 114886936,
     "enterprise_value": -107882432,
     "shares_outstanding": 66989466,
@@ -2733,11 +2733,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ENTA",
-    "price": 13.399999618530273,
+    "price": 12.59000015258789,
     "market_cap": 367507104,
     "enterprise_value": 373819040,
     "shares_outstanding": 29078380,
@@ -2757,11 +2757,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EOLS",
-    "price": 5.755000114440918,
+    "price": 5.980000019073486,
     "market_cap": 434970624,
     "enterprise_value": 551728000,
     "shares_outstanding": 65854751,
@@ -2781,11 +2781,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EPRX",
-    "price": 6.730000019073486,
+    "price": 6.070000171661377,
     "market_cap": 412539680,
     "enterprise_value": 285191040,
     "shares_outstanding": 65326947,
@@ -2805,11 +2805,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ERAS",
-    "price": 19.174999237060547,
+    "price": 19.165000915527344,
     "market_cap": 4305581056,
     "enterprise_value": 3963138048,
     "shares_outstanding": 310984542,
@@ -2829,7 +2829,7 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ESPR",
@@ -2857,7 +2857,7 @@
   },
   {
     "ticker": "ETON",
-    "price": 43.025001525878906,
+    "price": 43.96500015258789,
     "market_cap": 889703744,
     "enterprise_value": 897743808,
     "shares_outstanding": 27392358,
@@ -2877,11 +2877,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EWTX",
-    "price": 39.02000045776367,
+    "price": 39.150001525878906,
     "market_cap": 3942207744,
     "enterprise_value": 3157013504,
     "shares_outstanding": 107593006,
@@ -2901,11 +2901,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EXEL",
-    "price": 55.5099983215332,
+    "price": 55.82500076293945,
     "market_cap": 13095600128,
     "enterprise_value": 12487933952,
     "shares_outstanding": 251355083,
@@ -2925,11 +2925,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "EYPT",
-    "price": 12.8100004196167,
+    "price": 12.1850004196167,
     "market_cap": 1123054208,
     "enterprise_value": 1195238656,
     "shares_outstanding": 83841298,
@@ -2949,11 +2949,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "FATE",
-    "price": 2.680000066757202,
+    "price": 2.4649999141693115,
     "market_cap": 233118368,
     "enterprise_value": 123428456,
     "shares_outstanding": 116559186,
@@ -2973,11 +2973,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "FDMT",
-    "price": 11.329000473022461,
+    "price": 10.0600004196167,
     "market_cap": 504988640,
     "enterprise_value": 82878120,
     "shares_outstanding": 52276254,
@@ -2997,11 +2997,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "FHTX",
-    "price": 5.070000171661377,
+    "price": 4.960000038146973,
     "market_cap": 242488496,
     "enterprise_value": 93805824,
     "shares_outstanding": 58713922,
@@ -3021,11 +3021,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "FLGT",
-    "price": 19.450000762939453,
+    "price": 19.979999542236328,
     "market_cap": 512063264,
     "enterprise_value": 239139200,
     "shares_outstanding": 28400623,
@@ -3045,11 +3045,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "FTRE",
-    "price": 17.815000534057617,
+    "price": 19.575000762939453,
     "market_cap": 1436742016,
     "enterprise_value": 2482808064,
     "shares_outstanding": 94584730,
@@ -3069,11 +3069,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "FULC",
-    "price": 3.640000104904175,
+    "price": 3.7200000286102295,
     "market_cap": 238214128,
     "enterprise_value": -96897712,
     "shares_outstanding": 66633321,
@@ -3093,11 +3093,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GERN",
-    "price": 1.4249999523162842,
+    "price": 1.4299999475479126,
     "market_cap": 817939200,
     "enterprise_value": 566659776,
     "shares_outstanding": 641520974,
@@ -3117,11 +3117,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GH",
-    "price": 149.0500946044922,
+    "price": 147.1300048828125,
     "market_cap": 17454129152,
     "enterprise_value": 17487071232,
     "shares_outstanding": 132599929,
@@ -3141,11 +3141,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GHRS",
-    "price": 28.0,
+    "price": 26.889999389648438,
     "market_cap": 1576632960,
     "enterprise_value": 972454336,
     "shares_outstanding": 68608919,
@@ -3165,11 +3165,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GILD",
-    "price": 131.27999877929688,
+    "price": 130.90499877929688,
     "market_cap": 152638603264,
     "enterprise_value": 170237935616,
     "shares_outstanding": 1241569874,
@@ -3189,7 +3189,7 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GLPG",
@@ -3217,7 +3217,7 @@
   },
   {
     "ticker": "GLUE",
-    "price": 23.489999771118164,
+    "price": 22.6200008392334,
     "market_cap": 1520629504,
     "enterprise_value": 873198464,
     "shares_outstanding": 84479418,
@@ -3237,11 +3237,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GMAB",
-    "price": 29.149999618530273,
+    "price": 28.860000610351562,
     "market_cap": 15520251904,
     "enterprise_value": 19012319232,
     "shares_outstanding": 613934040,
@@ -3261,11 +3261,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GOSS",
-    "price": 0.14329999685287476,
+    "price": 0.1386999934911728,
     "market_cap": 81930712,
     "enterprise_value": 143076560,
     "shares_outstanding": 488846722,
@@ -3285,11 +3285,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GPCR",
-    "price": 49.29999923706055,
+    "price": 50.4275016784668,
     "market_cap": 3200485120,
     "enterprise_value": 1597095424,
     "shares_outstanding": 71074516,
@@ -3309,11 +3309,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GRAL",
-    "price": 71.38999938964844,
+    "price": 69.66000366210938,
     "market_cap": 2663408128,
     "enterprise_value": 1729533184,
     "shares_outstanding": 42916593,
@@ -3333,11 +3333,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GRFS",
-    "price": 7.903299808502197,
+    "price": 7.599999904632568,
     "market_cap": 5039660032,
     "enterprise_value": 21687134208,
     "shares_outstanding": 680575312,
@@ -3357,11 +3357,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "HALO",
-    "price": 78.79000091552734,
+    "price": 81.7699966430664,
     "market_cap": 8065683968,
     "enterprise_value": 10118643712,
     "shares_outstanding": 118613000,
@@ -3381,11 +3381,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "HOWL",
-    "price": 0.3799999952316284,
+    "price": 0.3833000063896179,
     "market_cap": 17266450,
     "enterprise_value": 8695854,
     "shares_outstanding": 48596817,
@@ -3405,11 +3405,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "HRMY",
-    "price": 36.154998779296875,
+    "price": 35.755001068115234,
     "market_cap": 1942299264,
     "enterprise_value": 1482200192,
     "shares_outstanding": 57892676,
@@ -3429,11 +3429,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "HROW",
-    "price": 43.130001068115234,
+    "price": 41.60499954223633,
     "market_cap": 1590901632,
     "enterprise_value": 1635704064,
     "shares_outstanding": 37275107,
@@ -3453,11 +3453,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "HRTX",
-    "price": 0.48739999532699585,
+    "price": 0.4607999920845032,
     "market_cap": 75389976,
     "enterprise_value": 170204720,
     "shares_outstanding": 189279369,
@@ -3477,11 +3477,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "HUMA",
-    "price": 0.6559000015258789,
+    "price": 0.6316999793052673,
     "market_cap": 248714224,
     "enterprise_value": 246641680,
     "shares_outstanding": 269638156,
@@ -3501,11 +3501,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IBRX",
-    "price": 7.744999885559082,
+    "price": 7.264999866485596,
     "market_cap": 7458312192,
     "enterprise_value": 7782827520,
     "shares_outstanding": 1047353977,
@@ -3525,11 +3525,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IDYA",
-    "price": 35.380001068115234,
+    "price": 36.369998931884766,
     "market_cap": 2946097408,
     "enterprise_value": 2043307264,
     "shares_outstanding": 94608133,
@@ -3549,11 +3549,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IKT",
-    "price": 2.184999942779541,
+    "price": 2.352400064468384,
     "market_cap": 230396960,
     "enterprise_value": 114236488,
     "shares_outstanding": 132032636,
@@ -3573,11 +3573,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ILMN",
-    "price": 192.85000610351562,
+    "price": 194.02000427246094,
     "market_cap": 24533293056,
     "enterprise_value": 26244564992,
     "shares_outstanding": 151300000,
@@ -3597,11 +3597,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IMCR",
-    "price": 34.28499984741211,
+    "price": 35.209999084472656,
     "market_cap": 1456790016,
     "enterprise_value": 1023670208,
     "shares_outstanding": 50865574,
@@ -3621,11 +3621,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IMMP",
-    "price": 0.4000999927520752,
+    "price": 0.3950999975204468,
     "market_cap": 55456132,
     "enterprise_value": -45425940,
     "shares_outstanding": 147372131,
@@ -3645,11 +3645,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IMRX",
-    "price": 4.454999923706055,
+    "price": 4.309999942779541,
     "market_cap": 285639008,
     "enterprise_value": 112295928,
     "shares_outstanding": 64697402,
@@ -3669,11 +3669,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IMTX",
-    "price": 9.34000015258789,
+    "price": 9.175000190734863,
     "market_cap": 1328463232,
     "enterprise_value": 803870016,
     "shares_outstanding": 136673161,
@@ -3693,11 +3693,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IMVT",
-    "price": 39.0099983215332,
+    "price": 39.21500015258789,
     "market_cap": 7157068800,
     "enterprise_value": 5998394880,
     "shares_outstanding": 205308917,
@@ -3717,11 +3717,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "INBX",
-    "price": 86.90499877929688,
+    "price": 83.68000030517578,
     "market_cap": 1342413568,
     "enterprise_value": 1385275136,
     "shares_outstanding": 14671186,
@@ -3741,11 +3741,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "INCY",
-    "price": 117.31999969482422,
+    "price": 118.19999694824219,
     "market_cap": 19488749568,
     "enterprise_value": 15951875072,
     "shares_outstanding": 199782155,
@@ -3765,11 +3765,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "INDV",
-    "price": 40.20500183105469,
+    "price": 40.65999984741211,
     "market_cap": 4542602240,
     "enterprise_value": 4968257536,
     "shares_outstanding": 118204585,
@@ -3789,11 +3789,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "INSM",
-    "price": 107.80999755859375,
+    "price": 106.74500274658203,
     "market_cap": 20655423488,
     "enterprise_value": 20223141888,
     "shares_outstanding": 216752451,
@@ -3813,11 +3813,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "INVA",
-    "price": 21.450000762939453,
+    "price": 21.420000076293945,
     "market_cap": 1666601600,
     "enterprise_value": 1388302848,
     "shares_outstanding": 73808749,
@@ -3837,11 +3837,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IONS",
-    "price": 52.9900016784668,
+    "price": 56.345001220703125,
     "market_cap": 12340155392,
     "enterprise_value": 12711621632,
     "shares_outstanding": 165262556,
@@ -3861,11 +3861,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IOVA",
-    "price": 5.224999904632568,
+    "price": 4.965000152587891,
     "market_cap": 1756986880,
     "enterprise_value": 1439974144,
     "shares_outstanding": 446502396,
@@ -3885,11 +3885,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IRON",
-    "price": 74.06500244140625,
+    "price": 75.11000061035156,
     "market_cap": 2668588288,
     "enterprise_value": 1968345344,
     "shares_outstanding": 38199089,
@@ -3909,11 +3909,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IRWD",
-    "price": 3.869800090789795,
+    "price": 3.805000066757202,
     "market_cap": 583554560,
     "enterprise_value": 979370048,
     "shares_outstanding": 164613406,
@@ -3933,11 +3933,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IVVD",
-    "price": 0.6434999704360962,
+    "price": 0.6100000143051147,
     "market_cap": 285533536,
     "enterprise_value": 87203928,
     "shares_outstanding": 294607452,
@@ -3957,11 +3957,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "JANX",
-    "price": 15.765000343322754,
+    "price": 15.430000305175781,
     "market_cap": 860489216,
     "enterprise_value": -99329352,
     "shares_outstanding": 60984354,
@@ -3981,11 +3981,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "JAZZ",
-    "price": 254.72000122070312,
+    "price": 254.39999389648438,
     "market_cap": 14075546624,
     "enterprise_value": 16777691136,
     "shares_outstanding": 62817628,
@@ -4005,11 +4005,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "JBIO",
-    "price": 20.020000457763672,
+    "price": 19.1299991607666,
     "market_cap": 1028227648,
     "enterprise_value": 456114848,
     "shares_outstanding": 60859875,
@@ -4029,11 +4029,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KALA",
-    "price": 0.7253000140190125,
+    "price": 0.6499999761581421,
     "market_cap": 63205280,
     "enterprise_value": 49609072,
     "shares_outstanding": 18589787,
@@ -4053,7 +4053,7 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KALV",
@@ -4081,7 +4081,7 @@
   },
   {
     "ticker": "KMDA",
-    "price": 7.119999885559082,
+    "price": 7.024199962615967,
     "market_cap": 421189632,
     "enterprise_value": 368831968,
     "shares_outstanding": 57686056,
@@ -4101,11 +4101,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KNSA",
-    "price": 62.27000045776367,
+    "price": 62.388999938964844,
     "market_cap": 4238899968,
     "enterprise_value": 3564790272,
     "shares_outstanding": 46303276,
@@ -4125,11 +4125,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KOD",
-    "price": 42.380001068115234,
+    "price": 41.540000915527344,
     "market_cap": 2217467136,
     "enterprise_value": 1943235328,
     "shares_outstanding": 62578441,
@@ -4149,11 +4149,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KROS",
-    "price": 10.140000343322754,
+    "price": 10.1899995803833,
     "market_cap": 210585136,
     "enterprise_value": -66673876,
     "shares_outstanding": 19791837,
@@ -4173,11 +4173,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KRYS",
-    "price": 338.3900146484375,
+    "price": 329.2806091308594,
     "market_cap": 10255712256,
     "enterprise_value": 8718575616,
     "shares_outstanding": 29479756,
@@ -4197,11 +4197,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KURA",
-    "price": 10.710000038146973,
+    "price": 10.369999885559082,
     "market_cap": 869101056,
     "enterprise_value": 277929024,
     "shares_outstanding": 88774365,
@@ -4221,11 +4221,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KYMR",
-    "price": 111.7699966430664,
+    "price": 109.9000015258789,
     "market_cap": 7391666688,
     "enterprise_value": 6622143488,
     "shares_outstanding": 82257588,
@@ -4245,11 +4245,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KYTX",
-    "price": 7.375,
+    "price": 7.260000228881836,
     "market_cap": 484537824,
     "enterprise_value": 278807072,
     "shares_outstanding": 60795212,
@@ -4269,11 +4269,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LAB",
-    "price": 0.8452000021934509,
+    "price": 0.8540999889373779,
     "market_cap": 325305664,
     "enterprise_value": -101015832,
     "shares_outstanding": 391462923,
@@ -4293,11 +4293,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LBRX",
-    "price": 34.20000076293945,
+    "price": 34.994998931884766,
     "market_cap": 852843648,
     "enterprise_value": 431030208,
     "shares_outstanding": 28676652,
@@ -4317,11 +4317,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LCTX",
-    "price": 1.100000023841858,
+    "price": 1.065000057220459,
     "market_cap": 304143904,
     "enterprise_value": 246990960,
     "shares_outstanding": 249298295,
@@ -4341,11 +4341,11 @@
     "exchange": "ASE",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LEGN",
-    "price": 23.44499969482422,
+    "price": 22.780000686645508,
     "market_cap": 5158922752,
     "enterprise_value": 5754694144,
     "shares_outstanding": 185739792,
@@ -4365,11 +4365,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LENZ",
-    "price": 5.195000171661377,
+    "price": 5.119999885559082,
     "market_cap": 184990928,
     "enterprise_value": -53281352,
     "shares_outstanding": 31354394,
@@ -4389,11 +4389,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LFCR",
-    "price": 4.619999885559082,
+    "price": 4.489999771118164,
     "market_cap": 208552304,
     "enterprise_value": 379237312,
     "shares_outstanding": 37509407,
@@ -4413,11 +4413,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LGND",
-    "price": 304.7699890136719,
+    "price": 300.54998779296875,
     "market_cap": 5450366464,
     "enterprise_value": 4788052992,
     "shares_outstanding": 20041061,
@@ -4437,11 +4437,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LQDA",
-    "price": 79.6050033569336,
+    "price": 89.02989959716797,
     "market_cap": 6160938496,
     "enterprise_value": 6010037760,
     "shares_outstanding": 88928099,
@@ -4461,11 +4461,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LRMR",
-    "price": 4.059999942779541,
+    "price": 4.0,
     "market_cap": 370862080,
     "enterprise_value": 158296992,
     "shares_outstanding": 103882937,
@@ -4485,11 +4485,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LXEO",
-    "price": 4.800000190734863,
+    "price": 4.554999828338623,
     "market_cap": 391822912,
     "enterprise_value": 187299760,
     "shares_outstanding": 78521634,
@@ -4509,11 +4509,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "LYEL",
-    "price": 12.970000267028809,
+    "price": 12.869999885559082,
     "market_cap": 293309472,
     "enterprise_value": 85104040,
     "shares_outstanding": 23334087,
@@ -4533,11 +4533,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MAZE",
-    "price": 28.670000076293945,
+    "price": 27.459999084472656,
     "market_cap": 1403832448,
     "enterprise_value": 1029378944,
     "shares_outstanding": 55345261,
@@ -4557,11 +4557,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MBX",
-    "price": 58.02000045776367,
+    "price": 61.70500183105469,
     "market_cap": 1981961344,
     "enterprise_value": 1468763264,
     "shares_outstanding": 47597536,
@@ -4581,11 +4581,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MCRB",
-    "price": 5.260000228881836,
+    "price": 5.440000057220459,
     "market_cap": 62751892,
     "enterprise_value": 108478088,
     "shares_outstanding": 9683934,
@@ -4605,11 +4605,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MDGL",
-    "price": 547.8599853515625,
+    "price": 539.6300048828125,
     "market_cap": 11700286464,
     "enterprise_value": 11089805312,
     "shares_outstanding": 23055659,
@@ -4629,11 +4629,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MEDP",
-    "price": 532.8150024414062,
+    "price": 601.7000122070312,
     "market_cap": 13054490624,
     "enterprise_value": 12676564992,
     "shares_outstanding": 28559689,
@@ -4653,11 +4653,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MENS",
-    "price": 2.568000078201294,
+    "price": 2.75,
     "market_cap": 120503848,
     "enterprise_value": 136147456,
     "shares_outstanding": 74233667,
@@ -4677,11 +4677,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MESO",
-    "price": 16.459999084472656,
+    "price": 15.479999542236328,
     "market_cap": 1838397952,
     "enterprise_value": 1776877056,
     "shares_outstanding": 129282554,
@@ -4701,11 +4701,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MGTX",
-    "price": 12.194999694824219,
+    "price": 11.944999694824219,
     "market_cap": 1067324672,
     "enterprise_value": 915230400,
     "shares_outstanding": 92609516,
@@ -4725,11 +4725,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MIRM",
-    "price": 115.11499786376953,
+    "price": 112.38999938964844,
     "market_cap": 6512185344,
     "enterprise_value": 6130163712,
     "shares_outstanding": 60981227,
@@ -4749,11 +4749,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MLTX",
-    "price": 19.065000534057617,
+    "price": 19.079999923706055,
     "market_cap": 1562118528,
     "enterprise_value": 1374199168,
     "shares_outstanding": 73615396,
@@ -4773,11 +4773,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MLYS",
-    "price": 26.915000915527344,
+    "price": 26.81999969482422,
     "market_cap": 2192501504,
     "enterprise_value": 1333069440,
     "shares_outstanding": 88158479,
@@ -4797,11 +4797,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MNKD",
-    "price": 3.939500093460083,
+    "price": 4.074999809265137,
     "market_cap": 1194092416,
     "enterprise_value": 1495927168,
     "shares_outstanding": 308950166,
@@ -4821,11 +4821,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MRNA",
-    "price": 59.27000045776367,
+    "price": 55.22010040283203,
     "market_cap": 25404241920,
     "enterprise_value": 18074957824,
     "shares_outstanding": 396786259,
@@ -4845,11 +4845,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MRVI",
-    "price": 7.050000190734863,
+    "price": 7.0,
     "market_cap": 1901547264,
     "enterprise_value": 1045635904,
     "shares_outstanding": 147506164,
@@ -4869,11 +4869,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MYGN",
-    "price": 5.664999961853027,
+    "price": 5.635000228881836,
     "market_cap": 424544672,
     "enterprise_value": 250704896,
     "shares_outstanding": 94448210,
@@ -4893,11 +4893,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NAMS",
-    "price": 31.80500030517578,
+    "price": 30.389999389648438,
     "market_cap": 3500689408,
     "enterprise_value": 2893249024,
     "shares_outstanding": 116903979,
@@ -4917,11 +4917,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NAUT",
-    "price": 1.7050000429153442,
+    "price": 1.7649999856948853,
     "market_cap": 278938080,
     "enterprise_value": 208765120,
     "shares_outstanding": 127078855,
@@ -4941,11 +4941,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NBIX",
-    "price": 178.0850067138672,
+    "price": 174.99000549316406,
     "market_cap": 15816512512,
     "enterprise_value": 14875328512,
     "shares_outstanding": 100549983,
@@ -4965,11 +4965,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NBP",
-    "price": 1.7649999856948853,
+    "price": 1.7100000381469727,
     "market_cap": 171159792,
     "enterprise_value": -33145758,
     "shares_outstanding": 115648505,
@@ -4989,11 +4989,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-21"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NGNE",
-    "price": 35.79999923706055,
+    "price": 34.08000183105469,
     "market_cap": 498866016,
     "enterprise_value": 229733792,
     "shares_outstanding": 15801901,
@@ -5013,11 +5013,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NKTX",
-    "price": 2.549999952316284,
+    "price": 2.25,
     "market_cap": 194961104,
     "enterprise_value": 32020838,
     "shares_outstanding": 71545358,
@@ -5037,11 +5037,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NMRA",
-    "price": 1.534999966621399,
+    "price": 1.488700032234192,
     "market_cap": 275147104,
     "enterprise_value": 195344416,
     "shares_outstanding": 185284244,
@@ -5061,11 +5061,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NRIX",
-    "price": 23.315000534057617,
+    "price": 23.360000610351562,
     "market_cap": 1770307712,
     "enterprise_value": 1283060224,
     "shares_outstanding": 103405813,
@@ -5085,11 +5085,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NTLA",
-    "price": 11.279999732971191,
+    "price": 10.920000076293945,
     "market_cap": 2140545152,
     "enterprise_value": 1737463168,
     "shares_outstanding": 139722277,
@@ -5109,11 +5109,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NTRA",
-    "price": 263.4800109863281,
+    "price": 262.7300109863281,
     "market_cap": 32737601536,
     "enterprise_value": 30675286016,
     "shares_outstanding": 143215382,
@@ -5133,11 +5133,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NUVB",
-    "price": 6.244999885559082,
+    "price": 6.355000019073486,
     "market_cap": 1927297920,
     "enterprise_value": 1466049152,
     "shares_outstanding": 347201971,
@@ -5157,7 +5157,7 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NUVL",
@@ -5185,7 +5185,7 @@
   },
   {
     "ticker": "NVAX",
-    "price": 8.074999809265137,
+    "price": 7.659999847412109,
     "market_cap": 1522696960,
     "enterprise_value": 1017556672,
     "shares_outstanding": 164438119,
@@ -5205,11 +5205,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "NVCR",
-    "price": 15.510000228881836,
+    "price": 19.885000228881836,
     "market_cap": 1690985856,
     "enterprise_value": 1828644224,
     "shares_outstanding": 115820940,
@@ -5229,11 +5229,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OABI",
-    "price": 2.065000057220459,
+    "price": 2.059999942779541,
     "market_cap": 316765056,
     "enterprise_value": 263442608,
     "shares_outstanding": 144972579,
@@ -5253,11 +5253,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OBIO",
-    "price": 3.6198999881744385,
+    "price": 3.6700000762939453,
     "market_cap": 233534800,
     "enterprise_value": 161761760,
     "shares_outstanding": 59880715,
@@ -5277,11 +5277,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OCGN",
-    "price": 1.3049999475479126,
+    "price": 1.2400000095367432,
     "market_cap": 424844928,
     "enterprise_value": 400896800,
     "shares_outstanding": 338521856,
@@ -5301,11 +5301,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OCS",
-    "price": 11.680000305175781,
+    "price": 11.21500015258789,
     "market_cap": 666986240,
     "enterprise_value": 471657440,
     "shares_outstanding": 60388073,
@@ -5325,11 +5325,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OCUL",
-    "price": 8.712200164794922,
+    "price": 8.555000305175781,
     "market_cap": 2060416896,
     "enterprise_value": 1370268544,
     "shares_outstanding": 218960358,
@@ -5349,11 +5349,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OLMA",
-    "price": 11.425000190734863,
+    "price": 11.595000267028809,
     "market_cap": 809274368,
     "enterprise_value": 301332256,
     "shares_outstanding": 87347471,
@@ -5373,11 +5373,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OMER",
-    "price": 9.680000305175781,
+    "price": 10.0,
     "market_cap": 741123584,
     "enterprise_value": 777409344,
     "shares_outstanding": 72375355,
@@ -5397,11 +5397,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ONC",
-    "price": 322.6199951171875,
+    "price": 325.81500244140625,
     "market_cap": 27977553920,
     "enterprise_value": 25698281472,
     "shares_outstanding": 94900812,
@@ -5421,11 +5421,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OPCH",
-    "price": 21.389999389648438,
+    "price": 21.350000381469727,
     "market_cap": 3482084864,
     "enterprise_value": 4483254784,
     "shares_outstanding": 157027504,
@@ -5445,11 +5445,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Care Facilities",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "OPK",
-    "price": 1.1950000524520874,
+    "price": 1.190000057220459,
     "market_cap": 1079781888,
     "enterprise_value": 1114643200,
     "shares_outstanding": 755092256,
@@ -5469,11 +5469,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ORIC",
-    "price": 10.614999771118164,
+    "price": 10.960000038146973,
     "market_cap": 894909376,
     "enterprise_value": 585028928,
     "shares_outstanding": 103517562,
@@ -5493,11 +5493,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ORKA",
-    "price": 94.16999816894531,
+    "price": 90.98999786376953,
     "market_cap": 4394339840,
     "enterprise_value": 3699641344,
     "shares_outstanding": 60312101,
@@ -5517,11 +5517,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PACB",
-    "price": 1.3899999856948853,
+    "price": 1.36080002784729,
     "market_cap": 434842368,
     "enterprise_value": 849738304,
     "shares_outstanding": 310601688,
@@ -5541,11 +5541,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PAHC",
-    "price": 33.810001373291016,
+    "price": 34.099998474121094,
     "market_cap": 1280222464,
     "enterprise_value": 2003338496,
     "shares_outstanding": 21068682,
@@ -5565,11 +5565,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PBYI",
-    "price": 8.390000343322754,
+    "price": 7.960000038146973,
     "market_cap": 377673952,
     "enterprise_value": 279358112,
     "shares_outstanding": 50899456,
@@ -5589,11 +5589,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PCRX",
-    "price": 25.549999237060547,
+    "price": 25.764999389648438,
     "market_cap": 881196800,
     "enterprise_value": 1106918656,
     "shares_outstanding": 39347924,
@@ -5613,11 +5613,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PCVX",
-    "price": 57.099998474121094,
+    "price": 55.189998626708984,
     "market_cap": 7409766912,
     "enterprise_value": 5499368448,
     "shares_outstanding": 144397682,
@@ -5637,11 +5637,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PEPG",
-    "price": 1.9700000286102295,
+    "price": 2.0299999713897705,
     "market_cap": 124504584,
     "enterprise_value": -5762948,
     "shares_outstanding": 69169215,
@@ -5661,11 +5661,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PGEN",
-    "price": 5.315000057220459,
+    "price": 5.390900135040283,
     "market_cap": 1691644544,
     "enterprise_value": 1735431168,
     "shares_outstanding": 356510980,
@@ -5685,11 +5685,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PHAT",
-    "price": 11.539999961853027,
+    "price": 11.390000343322754,
     "market_cap": 875720320,
     "enterprise_value": 1198167424,
     "shares_outstanding": 79755953,
@@ -5709,11 +5709,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PHVS",
-    "price": 34.56999969482422,
+    "price": 33.68000030517578,
     "market_cap": 2286464768,
     "enterprise_value": 1812015616,
     "shares_outstanding": 69879726,
@@ -5733,11 +5733,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PRAX",
-    "price": 310.8999938964844,
+    "price": 317.25,
     "market_cap": 7885232128,
     "enterprise_value": 6386384384,
     "shares_outstanding": 27878774,
@@ -5757,11 +5757,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PRLD",
-    "price": 3.9500999450683594,
+    "price": 3.799999952316284,
     "market_cap": 334510272,
     "enterprise_value": 352712480,
     "shares_outstanding": 64917172,
@@ -5781,11 +5781,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PRME",
-    "price": 3.140000104904175,
+    "price": 2.875,
     "market_cap": 580685120,
     "enterprise_value": 497387072,
     "shares_outstanding": 180617451,
@@ -5805,11 +5805,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PRQR",
-    "price": 1.815000057220459,
+    "price": 1.725000023841858,
     "market_cap": 200188848,
     "enterprise_value": 94796080,
     "shares_outstanding": 105362551,
@@ -5829,11 +5829,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PRTA",
-    "price": 8.609999656677246,
+    "price": 8.529999732971191,
     "market_cap": 467776192,
     "enterprise_value": 112200336,
     "shares_outstanding": 52353237,
@@ -5853,11 +5853,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PRVA",
-    "price": 25.655000686645508,
+    "price": 25.440000534057617,
     "market_cap": 2975152384,
     "enterprise_value": 2607413248,
     "shares_outstanding": 126012374,
@@ -5877,11 +5877,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Health Information Services",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PSNL",
-    "price": 13.0,
+    "price": 12.319999694824219,
     "market_cap": 1052447040,
     "enterprise_value": 820310464,
     "shares_outstanding": 104721098,
@@ -5901,11 +5901,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PTCT",
-    "price": 78.36000061035156,
+    "price": 78.22989654541016,
     "market_cap": 6546361344,
     "enterprise_value": 6907551744,
     "shares_outstanding": 82949338,
@@ -5925,11 +5925,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PTGX",
-    "price": 136.5399932861328,
+    "price": 134.72999572753906,
     "market_cap": 7294838784,
     "enterprise_value": 6577400320,
     "shares_outstanding": 64311373,
@@ -5949,11 +5949,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PVLA",
-    "price": 140.34500122070312,
+    "price": 139.125,
     "market_cap": 1613139712,
     "enterprise_value": 1337964032,
     "shares_outstanding": 14342844,
@@ -5973,11 +5973,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PYXS",
-    "price": 2.174999952316284,
+    "price": 2.676500082015991,
     "market_cap": 127027744,
     "enterprise_value": 88111096,
     "shares_outstanding": 63355482,
@@ -5997,11 +5997,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "QSI",
-    "price": 0.8238999843597412,
+    "price": 0.7645999789237976,
     "market_cap": 215887424,
     "enterprise_value": 84116192,
     "shares_outstanding": 197822663,
@@ -6021,11 +6021,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "QTRX",
-    "price": 3.8450000286102295,
+    "price": 3.7850000858306885,
     "market_cap": 156862912,
     "enterprise_value": 80215304,
     "shares_outstanding": 47105981,
@@ -6045,11 +6045,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "QURE",
-    "price": 39.52000045776367,
+    "price": 38.07500076293945,
     "market_cap": 2957234176,
     "enterprise_value": 1661297408,
     "shares_outstanding": 63067485,
@@ -6069,11 +6069,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RANI",
-    "price": 0.7095999717712402,
+    "price": 0.8820000290870667,
     "market_cap": 106481136,
     "enterprise_value": 43579536,
     "shares_outstanding": 112389152,
@@ -6093,11 +6093,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RAPP",
-    "price": 41.279998779296875,
+    "price": 40.724998474121094,
     "market_cap": 1783944320,
     "enterprise_value": 1374879488,
     "shares_outstanding": 47826929,
@@ -6117,11 +6117,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RARE",
-    "price": 28.010000228881836,
+    "price": 26.709999084472656,
     "market_cap": 2731106048,
     "enterprise_value": 3234002176,
     "shares_outstanding": 98489224,
@@ -6141,11 +6141,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RCKT",
-    "price": 3.375,
+    "price": 3.2149999141693115,
     "market_cap": 354879040,
     "enterprise_value": 186126944,
     "shares_outstanding": 109193549,
@@ -6165,11 +6165,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RCUS",
-    "price": 29.489999771118164,
+    "price": 28.700000762939453,
     "market_cap": 3042452736,
     "enterprise_value": 2252957952,
     "shares_outstanding": 125773162,
@@ -6189,11 +6189,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "REGN",
-    "price": 668.6799926757812,
+    "price": 660.0,
     "market_cap": 62885072896,
     "enterprise_value": 56494534656,
     "shares_outstanding": 103021886,
@@ -6213,11 +6213,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "REPL",
-    "price": 11.09000015258789,
+    "price": 10.005999565124512,
     "market_cap": 836460608,
     "enterprise_value": 532196608,
     "shares_outstanding": 82572619,
@@ -6237,11 +6237,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RGEN",
-    "price": 136.88999938964844,
+    "price": 134.97999572753906,
     "market_cap": 7423828480,
     "enterprise_value": 7331424256,
     "shares_outstanding": 56407740,
@@ -6261,11 +6261,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Medical Instruments & Supplies",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RGNX",
-    "price": 10.4399995803833,
+    "price": 9.710000038146973,
     "market_cap": 420787584,
     "enterprise_value": 456169504,
     "shares_outstanding": 51697621,
@@ -6285,11 +6285,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RIGL",
-    "price": 37.84000015258789,
+    "price": 35.435001373291016,
     "market_cap": 610106048,
     "enterprise_value": 499613504,
     "shares_outstanding": 18502080,
@@ -6309,11 +6309,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RLAY",
-    "price": 19.100000381469727,
+    "price": 18.514999389648438,
     "market_cap": 3480507136,
     "enterprise_value": 2272873728,
     "shares_outstanding": 217940332,
@@ -6333,11 +6333,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RNA",
-    "price": 12.170000076293945,
+    "price": 11.899999618530273,
     "market_cap": 217583792,
     "enterprise_value": -49466840,
     "shares_outstanding": 17105643,
@@ -6357,11 +6357,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ROIV",
-    "price": 34.65999984741211,
+    "price": 34.85499954223633,
     "market_cap": 22434043904,
     "enterprise_value": 18453659648,
     "shares_outstanding": 719270385,
@@ -6381,11 +6381,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-21"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RPRX",
-    "price": 58.30500030517578,
+    "price": 59.14500045776367,
     "market_cap": 30254223360,
     "enterprise_value": 35444817920,
     "shares_outstanding": 443274104,
@@ -6405,11 +6405,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RVMD",
-    "price": 184.42999267578125,
+    "price": 186.11500549316406,
     "market_cap": 34376847360,
     "enterprise_value": 31817541632,
     "shares_outstanding": 212596462,
@@ -6429,11 +6429,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RXRX",
-    "price": 3.0199999809265137,
+    "price": 2.940000057220459,
     "market_cap": 1685170048,
     "enterprise_value": 1103000576,
     "shares_outstanding": 524677865,
@@ -6453,11 +6453,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RYTM",
-    "price": 104.9000015258789,
+    "price": 101.55000305175781,
     "market_cap": 6710509568,
     "enterprise_value": 6035138560,
     "shares_outstanding": 68593574,
@@ -6477,11 +6477,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SABS",
-    "price": 3.549999952316284,
+    "price": 3.5399999618530273,
     "market_cap": 303180128,
     "enterprise_value": 178640192,
     "shares_outstanding": 76464094,
@@ -6501,11 +6501,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SANA",
-    "price": 3.1600000858306885,
+    "price": 3.1649999618530273,
     "market_cap": 866878272,
     "enterprise_value": 769057216,
     "shares_outstanding": 278291590,
@@ -6525,11 +6525,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SEPN",
-    "price": 33.45000076293945,
+    "price": 32.63999938964844,
     "market_cap": 1593194752,
     "enterprise_value": 1260995456,
     "shares_outstanding": 45075533,
@@ -6549,11 +6549,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SERA",
-    "price": 2.2200000286102295,
+    "price": 1.9941999912261963,
     "market_cap": 72052056,
     "enterprise_value": 27939228,
     "shares_outstanding": 38190966,
@@ -6573,7 +6573,7 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Medical Devices",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SGMO",
@@ -6601,7 +6601,7 @@
   },
   {
     "ticker": "SGMT",
-    "price": 7.09499979019165,
+    "price": 6.960000038146973,
     "market_cap": 411267040,
     "enterprise_value": 284536384,
     "shares_outstanding": 61184313,
@@ -6621,11 +6621,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SIGA",
-    "price": 3.4700000286102295,
+    "price": 3.0994999408721924,
     "market_cap": 308055008,
     "enterprise_value": 163452496,
     "shares_outstanding": 71724097,
@@ -6645,11 +6645,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SION",
-    "price": 44.7599983215332,
+    "price": 44.39500045776367,
     "market_cap": 1694266112,
     "enterprise_value": 1361201024,
     "shares_outstanding": 45150330,
@@ -6669,11 +6669,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SKYE",
-    "price": 0.6625000238418579,
+    "price": 0.6825000047683716,
     "market_cap": 25029356,
     "enterprise_value": 8449939,
     "shares_outstanding": 35143722,
@@ -6693,11 +6693,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SLDB",
-    "price": 8.244999885559082,
+    "price": 7.869999885559082,
     "market_cap": 791534848,
     "enterprise_value": 336024704,
     "shares_outstanding": 98449606,
@@ -6717,11 +6717,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SLN",
-    "price": 10.899999618530273,
+    "price": 10.920000076293945,
     "market_cap": 321195360,
     "enterprise_value": 246997792,
     "shares_outstanding": 47234613,
@@ -6741,11 +6741,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SMMT",
-    "price": 15.039999961853027,
+    "price": 13.880000114440918,
     "market_cap": 10687759360,
     "enterprise_value": 10194444288,
     "shares_outstanding": 776162645,
@@ -6765,11 +6765,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SNDX",
-    "price": 22.170000076293945,
+    "price": 20.940000534057617,
     "market_cap": 1726123264,
     "enterprise_value": 1627837056,
     "shares_outstanding": 88610027,
@@ -6789,11 +6789,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SNY",
-    "price": 44.025001525878906,
+    "price": 43.22999954223633,
     "market_cap": 101160673280,
     "enterprise_value": 120902017024,
     "shares_outstanding": 2393769026,
@@ -6813,11 +6813,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SPRY",
-    "price": 6.244800090789795,
+    "price": 5.789999961853027,
     "market_cap": 959269504,
     "enterprise_value": 933467648,
     "shares_outstanding": 99303262,
@@ -6837,11 +6837,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SRPT",
-    "price": 16.25,
+    "price": 15.619999885559082,
     "market_cap": 1882424064,
     "enterprise_value": 2059849728,
     "shares_outstanding": 105576222,
@@ -6861,11 +6861,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SRRK",
-    "price": 49.61000061035156,
+    "price": 48.56999969482422,
     "market_cap": 5628337152,
     "enterprise_value": 5185108992,
     "shares_outstanding": 119828338,
@@ -6885,11 +6885,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SRZN",
-    "price": 22.290000915527344,
+    "price": 20.8700008392334,
     "market_cap": 262626608,
     "enterprise_value": 164003936,
     "shares_outstanding": 11610371,
@@ -6909,11 +6909,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "STOK",
-    "price": 28.28499984741211,
+    "price": 29.100000381469727,
     "market_cap": 1918586496,
     "enterprise_value": 1475388288,
     "shares_outstanding": 62281655,
@@ -6933,11 +6933,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "STRO",
-    "price": 24.510000228881836,
+    "price": 22.510000228881836,
     "market_cap": 488496544,
     "enterprise_value": 277863264,
     "shares_outstanding": 16570439,
@@ -6957,11 +6957,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "STVN",
-    "price": 19.170000076293945,
+    "price": 19.395000457763672,
     "market_cap": 4757088768,
     "enterprise_value": 4845635072,
     "shares_outstanding": 49709718,
@@ -6981,11 +6981,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Medical Instruments & Supplies",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SUPN",
-    "price": 47.61000061035156,
+    "price": 46.970001220703125,
     "market_cap": 2561292800,
     "enterprise_value": 2186033152,
     "shares_outstanding": 58039721,
@@ -7005,11 +7005,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SVRA",
-    "price": 5.739999771118164,
+    "price": 5.675000190734863,
     "market_cap": 1109680896,
     "enterprise_value": 1169635456,
     "shares_outstanding": 204927212,
@@ -7029,11 +7029,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SYRE",
-    "price": 100.47000122070312,
+    "price": 100.4000015258789,
     "market_cap": 7630741504,
     "enterprise_value": 6657781760,
     "shares_outstanding": 86841253,
@@ -7053,11 +7053,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TARA",
-    "price": 4.085000038146973,
+    "price": 3.9600000381469727,
     "market_cap": 225097968,
     "enterprise_value": 81409144,
     "shares_outstanding": 56204237,
@@ -7077,11 +7077,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TARS",
-    "price": 58.2400016784668,
+    "price": 58.04999923706055,
     "market_cap": 2726858752,
     "enterprise_value": 2315800832,
     "shares_outstanding": 43023959,
@@ -7101,11 +7101,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TBPH",
-    "price": 16.8700008392334,
+    "price": 16.90999984741211,
     "market_cap": 859646272,
     "enterprise_value": 506257664,
     "shares_outstanding": 51553005,
@@ -7125,11 +7125,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TCRX",
-    "price": 0.9491000175476074,
+    "price": 0.8278999924659729,
     "market_cap": 59560736,
     "enterprise_value": 19904028,
     "shares_outstanding": 61074229,
@@ -7149,11 +7149,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TECH",
-    "price": 71.56999969482422,
+    "price": 71.77999877929688,
     "market_cap": 8969824256,
     "enterprise_value": 8848754688,
     "shares_outstanding": 156568751,
@@ -7173,11 +7173,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TECX",
-    "price": 32.0099983215332,
+    "price": 30.5,
     "market_cap": 560980864,
     "enterprise_value": 334003264,
     "shares_outstanding": 18869186,
@@ -7197,11 +7197,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TEM",
-    "price": 47.15999984741211,
+    "price": 44.47999954223633,
     "market_cap": 8881272832,
     "enterprise_value": 9758255104,
     "shares_outstanding": 174520978,
@@ -7221,11 +7221,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Health Information Services",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TENX",
-    "price": 15.21500015258789,
+    "price": 14.509900093078613,
     "market_cap": 320158688,
     "enterprise_value": 156286416,
     "shares_outstanding": 26525159,
@@ -7245,11 +7245,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TEVA",
-    "price": 30.81999969482422,
+    "price": 31.239999771118164,
     "market_cap": 36434923520,
     "enterprise_value": 51509293056,
     "shares_outstanding": 1164426972,
@@ -7269,11 +7269,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TGTX",
-    "price": 53.220001220703125,
+    "price": 54.37699890136719,
     "market_cap": 8064443392,
     "enterprise_value": 7401807872,
     "shares_outstanding": 153083580,
@@ -7293,11 +7293,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TKNO",
-    "price": 5.210000038146973,
+    "price": 5.105000019073486,
     "market_cap": 276112256,
     "enterprise_value": 257203664,
     "shares_outstanding": 53614028,
@@ -7317,11 +7317,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TNGX",
-    "price": 28.479999542236328,
+    "price": 26.661699295043945,
     "market_cap": 4566950912,
     "enterprise_value": 4304827904,
     "shares_outstanding": 162814649,
@@ -7341,11 +7341,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TNYA",
-    "price": 0.7994999885559082,
+    "price": 0.7669000029563904,
     "market_cap": 153787104,
     "enterprise_value": 76789232,
     "shares_outstanding": 216998876,
@@ -7365,11 +7365,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TRDA",
-    "price": 6.320000171661377,
+    "price": 5.960000038146973,
     "market_cap": 270385600,
     "enterprise_value": 29109062,
     "shares_outstanding": 38820616,
@@ -7389,11 +7389,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TRVI",
-    "price": 17.43000030517578,
+    "price": 17.079999923706055,
     "market_cap": 2399457024,
     "enterprise_value": 2015386496,
     "shares_outstanding": 141979708,
@@ -7413,11 +7413,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TSHA",
-    "price": 5.59499979019165,
+    "price": 5.699999809265137,
     "market_cap": 1820432128,
     "enterprise_value": 1473036928,
     "shares_outstanding": 287361020,
@@ -7437,11 +7437,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TVTX",
-    "price": 55.970001220703125,
+    "price": 56.66999816894531,
     "market_cap": 5058349056,
     "enterprise_value": 5026947072,
     "shares_outstanding": 92992905,
@@ -7461,11 +7461,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TWST",
-    "price": 94.52999877929688,
+    "price": 91.16999816894531,
     "market_cap": 5294618624,
     "enterprise_value": 5229117952,
     "shares_outstanding": 62271314,
@@ -7485,11 +7485,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TXG",
-    "price": 47.29499816894531,
+    "price": 46.58000183105469,
     "market_cap": 4458701312,
     "enterprise_value": 3572400128,
     "shares_outstanding": 116877317,
@@ -7509,11 +7509,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Health Information Services",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TYRA",
-    "price": 31.295000076293945,
+    "price": 30.280000686645508,
     "market_cap": 1681524992,
     "enterprise_value": 1299890432,
     "shares_outstanding": 59470381,
@@ -7533,11 +7533,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "UPB",
-    "price": 6.900000095367432,
+    "price": 6.324999809265137,
     "market_cap": 353185696,
     "enterprise_value": 28701318,
     "shares_outstanding": 54419986,
@@ -7557,11 +7557,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "URGN",
-    "price": 43.290000915527344,
+    "price": 41.630001068115234,
     "market_cap": 1596366464,
     "enterprise_value": 1613477376,
     "shares_outstanding": 48721701,
@@ -7581,11 +7581,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "UTHR",
-    "price": 536.7550048828125,
+    "price": 533.6500244140625,
     "market_cap": 22975989760,
     "enterprise_value": 21118570496,
     "shares_outstanding": 42446733,
@@ -7605,11 +7605,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VCEL",
-    "price": 45.025001525878906,
+    "price": 45.20000076293945,
     "market_cap": 2029962112,
     "enterprise_value": 1913786112,
     "shares_outstanding": 51068228,
@@ -7629,11 +7629,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VCYT",
-    "price": 57.90999984741211,
+    "price": 56.79999923706055,
     "market_cap": 4230606336,
     "enterprise_value": 3663314688,
     "shares_outstanding": 79792647,
@@ -7653,11 +7653,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Diagnostics & Research",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VERA",
-    "price": 36.34000015258789,
+    "price": 35.84000015258789,
     "market_cap": 2554753536,
     "enterprise_value": 1897063424,
     "shares_outstanding": 71782904,
@@ -7677,11 +7677,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VIR",
-    "price": 9.520000457763672,
+    "price": 8.859999656677246,
     "market_cap": 1555814528,
     "enterprise_value": 1071373504,
     "shares_outstanding": 168651974,
@@ -7701,11 +7701,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VKTX",
-    "price": 37.779998779296875,
+    "price": 35.04999923706055,
     "market_cap": 3566765056,
     "enterprise_value": 2839568384,
     "shares_outstanding": 116105643,
@@ -7725,11 +7725,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VNDA",
-    "price": 5.449999809265137,
+    "price": 5.224999904632568,
     "market_cap": 351492320,
     "enterprise_value": 155339776,
     "shares_outstanding": 60135562,
@@ -7749,11 +7749,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VOR",
-    "price": 19.040000915527344,
+    "price": 18.479999542236328,
     "market_cap": 792739392,
     "enterprise_value": 275976736,
     "shares_outstanding": 54185877,
@@ -7773,11 +7773,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VRDN",
-    "price": 18.84000015258789,
+    "price": 19.18000030517578,
     "market_cap": 1833099520,
     "enterprise_value": 1070359360,
     "shares_outstanding": 110427682,
@@ -7797,11 +7797,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VRTX",
-    "price": 475.510009765625,
+    "price": 478.875,
     "market_cap": 115241623552,
     "enterprise_value": 109756801024,
     "shares_outstanding": 253805417,
@@ -7821,11 +7821,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VTRS",
-    "price": 17.274999618530273,
+    "price": 17.385000228881836,
     "market_cap": 17829302272,
     "enterprise_value": 30889224192,
     "shares_outstanding": 1164552654,
@@ -7845,11 +7845,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VYGR",
-    "price": 3.0850000381469727,
+    "price": 3.0199999809265137,
     "market_cap": 224465072,
     "enterprise_value": 106374144,
     "shares_outstanding": 60421287,
@@ -7869,11 +7869,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "WVE",
-    "price": 5.78000020980835,
+    "price": 5.809999942779541,
     "market_cap": 1174615424,
     "enterprise_value": 575385088,
     "shares_outstanding": 192402202,
@@ -7893,11 +7893,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "XENE",
-    "price": 66.2249984741211,
+    "price": 64.47000122070312,
     "market_cap": 5174507008,
     "enterprise_value": 3938385920,
     "shares_outstanding": 96665550,
@@ -7917,11 +7917,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "XERS",
-    "price": 8.489999771118164,
+    "price": 8.420000076293945,
     "market_cap": 1205041536,
     "enterprise_value": 1338033152,
     "shares_outstanding": 172642055,
@@ -7941,11 +7941,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "XNCR",
-    "price": 19.520000457763672,
+    "price": 19.200000762939453,
     "market_cap": 951236736,
     "enterprise_value": 634741440,
     "shares_outstanding": 74141596,
@@ -7965,11 +7965,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ZBIO",
-    "price": 31.68000030517578,
+    "price": 30.8799991607666,
     "market_cap": 1210898176,
     "enterprise_value": 698020096,
     "shares_outstanding": 63133377,
@@ -7989,11 +7989,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ZLAB",
-    "price": 20.690000534057617,
+    "price": 18.975000381469727,
     "market_cap": 2076160384,
     "enterprise_value": 1562644608,
     "shares_outstanding": 112354858,
@@ -8013,11 +8013,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ZVRA",
-    "price": 12.130000114440918,
+    "price": 9.739999771118164,
     "market_cap": 761993472,
     "enterprise_value": 548336832,
     "shares_outstanding": 59115084,
@@ -8037,11 +8037,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ZYME",
-    "price": 23.739999771118164,
+    "price": 23.020000457763672,
     "market_cap": 1704340480,
     "enterprise_value": 1294603648,
     "shares_outstanding": 73023061,
@@ -8061,11 +8061,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KYNB",
-    "price": 7.159999847412109,
+    "price": 7.070000171661377,
     "market_cap": 27365238,
     "enterprise_value": -5502546,
     "shares_outstanding": 4048112,
@@ -8085,11 +8085,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-23"
   },
   {
     "ticker": "ABBV",
-    "price": 256.1889953613281,
+    "price": 258.5400085449219,
     "market_cap": 405205090304,
     "enterprise_value": 446057971712,
     "shares_outstanding": 1766792821,
@@ -8109,11 +8109,11 @@
     "exchange": "NYQ",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - General",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "AKBA",
-    "price": 1.274999976158142,
+    "price": 1.2187000513076782,
     "market_cap": 297766656,
     "enterprise_value": 321916320,
     "shares_outstanding": 268258243,
@@ -8133,11 +8133,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Drug Manufacturers - Specialty & Generic",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CAPR",
-    "price": 19.727500915527344,
+    "price": 19.635000228881836,
     "market_cap": 1708979968,
     "enterprise_value": 1379714304,
     "shares_outstanding": 57911893,
@@ -8157,7 +8157,7 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "CPRX",
@@ -8185,7 +8185,7 @@
   },
   {
     "ticker": "DMRA",
-    "price": 30.540000915527344,
+    "price": 29.454999923706055,
     "market_cap": 1465735424,
     "enterprise_value": 906327296,
     "shares_outstanding": 61553194,
@@ -8205,11 +8205,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "IMNM",
-    "price": 22.799999237060547,
+    "price": 21.815000534057617,
     "market_cap": 2215177728,
     "enterprise_value": 1543313408,
     "shares_outstanding": 113250394,
@@ -8229,11 +8229,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "MDXG",
-    "price": 4.175000190734863,
+    "price": 4.179999828338623,
     "market_cap": 548865024,
     "enterprise_value": 404451840,
     "shares_outstanding": 148945731,
@@ -8253,11 +8253,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "RNAC",
-    "price": 8.130000114440918,
+    "price": 7.71999979019165,
     "market_cap": 297194016,
     "enterprise_value": 176157984,
     "shares_outstanding": 29381514,
@@ -8277,11 +8277,11 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "SLS",
-    "price": 12.079999923706055,
+    "price": 11.664999961853027,
     "market_cap": 1712669696,
     "enterprise_value": 1391336192,
     "shares_outstanding": 196632574,
@@ -8301,11 +8301,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "TRAX",
-    "price": 38.619998931884766,
+    "price": 35.98500061035156,
     "market_cap": 617944000,
     "enterprise_value": 321370272,
     "shares_outstanding": 34892381,
@@ -8325,11 +8325,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "VSTM",
-    "price": 5.784999847412109,
+    "price": 5.945000171661377,
     "market_cap": 366433088,
     "enterprise_value": 265836400,
     "shares_outstanding": 87873639,
@@ -8349,11 +8349,11 @@
     "exchange": "NCM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KLRA",
-    "price": 18.459999084472656,
+    "price": 17.25,
     "market_cap": 2775295232,
     "enterprise_value": null,
     "shares_outstanding": 129565608,
@@ -8373,11 +8373,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "PBLS",
-    "price": 29.84000015258789,
+    "price": 32.619998931884766,
     "market_cap": 3363592192,
     "enterprise_value": 623304320,
     "shares_outstanding": 120731236,
@@ -8397,11 +8397,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "GENB",
-    "price": 14.005000114440918,
+    "price": 13.640000343322754,
     "market_cap": 1991470208,
     "enterprise_value": 1406438144,
     "shares_outstanding": 128192484,
@@ -8421,11 +8421,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "KARD",
-    "price": 23.420000076293945,
+    "price": 21.0,
     "market_cap": 1856466944,
     "enterprise_value": 1739814656,
     "shares_outstanding": 89339121,
@@ -8445,7 +8445,7 @@
     "exchange": "NGM",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-22"
+    "collected_at": "2026-07-24"
   },
   {
     "ticker": "ACLX",
