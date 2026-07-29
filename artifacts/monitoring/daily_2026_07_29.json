@@ -1,0 +1,600 @@
+{
+    "date": "2026-07-29",
+    "monitoring_day": 37,
+    "monitoring_period_note": "Day 37 — PRE-MARKET snapshot (09:00 ET). Data: July 28 (Monday) close. FOUR ALERTS: (1) PRAX GAP FLAG -6.33% to $295.81 (>5% threshold) — EMERALD trial completing Sept 1, 2026; (2) CMPS broke $11.00 escalation level (close $10.85, P&L now -3.98% vs entry); (3) SYRE $100 broken on close ($99.96, intraday low $92.37, conditional breakout INVALIDATED; Wolfe downgrade July 24); (4) NRIX T-2 checkpoint — Price PASS for FIRST TIME ($24.15 > $23.50 ✓), Volume FAIL (1.11M < 1.2M ✗); BINARY EVENT TOMORROW July 31; Q2 data (July 9) already showed 92.9% ORR. Portfolio -1.00% vs XBI -0.54% (-0.46pp). 6 up / 9 down.",
+    "timestamp": "2026-07-29T09:00:00.000000Z",
+    "phase": "Day 37 — BROAD DECLINE: 6 up / 9 down. Portfolio avg -1.00% vs XBI -0.54% (-0.46pp underperformance). Avg P&L vs entry: +28.02% (down from Day 36 +29.29%, -1.27pp). FOUR ALERTS: (1) PRAX -6.33% GAP FLAG — $295.81, intraday low $290.09, T-248 thesis intact but EMERALD completes Sept 1; (2) CMPS -3.73% to $10.85 — BROKE $11.00 ESCALATION LEVEL, now -3.98% vs entry, escalation level breached; (3) SYRE -0.08% to $99.96 — $100 BROKEN on close, intraday low $92.37 (massive 2.26x volume), conditional breakout INVALIDATED; Wolfe downgrade July 24; EARNINGS AUG 4; (4) NRIX T-2: Price FIRST CLOSE-BASED PASS ($24.15), Volume FAIL (1.11M); binary event TOMORROW July 31; positive Q2 data already in market (July 9 ORR 92.9%). TRVI session leader +1.71% for 3rd consecutive gain. DNTH $100 support tested (low exactly $100.00).",
+    "data_as_of": "2026-07-28 close (Yahoo Finance v8/chart API, all 15 tickers + XBI confirmed via timestamp 1785245400=Jul28). Prev data: 2026-07-27 close (Day 36 snapshot). XBI Jul 28 close: $149.78.",
+    "missed_run_note": null,
+    "account": {
+        "account_id": "Robinhood 802349084",
+        "equity_fetchable": false,
+        "equity_estimated_usd": 128.18,
+        "equity_note": "Robinhood MCP unavailable (Days 1-37). Equity computed from Day 36 equity_position_usd values scaled by Jul28/Jul27 price ratios per-share. Total gain: $28.05 on $100.13 invested. Down from Day 36 ($129.45) by -$1.27, reflecting portfolio -1.00% session.",
+        "cash_carried": 99.87,
+        "buying_power_carried": 228.05,
+        "total_estimated_account_value": 228.05,
+        "data_source": "Yahoo Finance July 28 close (equity); baseline_2026-06-10 carry-forward (cash)"
+    },
+    "portfolio_overview": {
+        "total_positions": 15,
+        "positions_negative_vs_entry": 1,
+        "positions_near_breakeven_lt10pct": 2,
+        "positions_positive_vs_entry": 14,
+        "avg_pnl_vs_entry_pct": 28.02,
+        "avg_pnl_note": "Portfolio avg +28.02% vs entry (Jul 28 close). 14 of 15 positions profitable. Only position below entry: CMPS -3.98% ($10.85 vs $11.30 entry — escalation level $11.00 BROKEN, now deeper). Day 36 +29.29% → Day 37 +28.02% (-1.27pp). Range: CMPS -3.98% to NRIX +56.21%.",
+        "session_breadth_jul28": "6 up / 9 down. Up leaders: TRVI +1.71%, SLDB +1.01%, NRIX +3.07%, COGT +0.57%, STOK +0.27%, DRUG +0.07%. Down leaders: PRAX -6.33% (GAP FLAG), CMPS -3.73% (ESCALATION BROKEN), ERAS -3.76%, DNTH -2.76%, RVMD -2.24%.",
+        "xbi_entry_price": 133.62,
+        "xbi_prev_close_jul27": 150.59,
+        "xbi_current_price_jul28": 149.78,
+        "xbi_day_change_jul28_pct": -0.54,
+        "xbi_return_since_entry_pct": 12.09,
+        "drawdown_vs_xbi_pp": 15.93,
+        "drawdown_threshold_pp": -2.0,
+        "drawdown_status": "CLEAR — +15.93pp above XBI (threshold -2.0pp). Day 36 +16.59pp → Day 37 +15.93pp (-0.66pp). Minor deterioration; well clear of threshold.",
+        "portfolio_avg_day_change_pct": -1.004,
+        "relative_performance_vs_xbi_pp": -0.464
+    },
+    "gap_flags": [
+        {
+            "ticker": "PRAX",
+            "gap_type": "DECLINE",
+            "gap_pct": -6.33,
+            "prev_close": 315.80,
+            "current_close": 295.81,
+            "threshold_pct": 5.0,
+            "flag_status": "FLAGGED FOR MANUAL REVIEW",
+            "intraday_high": 316.96,
+            "intraday_low": 290.09,
+            "volume_jul28": 438600,
+            "vol_ratio": 1.48,
+            "note": "PRAX -6.33% to $295.81 — GAP FLAG. Opened near prior close ($316.96 intraday high suggests minimal gap-open, then immediate selling), closed at $295.81, low $290.09 tested $290 level. Volume 438,600 (1.48x Monday's 296,000 — elevated on the decline). No company-specific news identified for July 28. Context: PRAX Remagine Labs collaboration announced July 7; EMERALD trial completes Sept 1, 2026; data readout likely Q4 2026/Q1 2027. The decline appears technical after the failed $330 reversal on Day 36. P&L still +22.28% above entry ($241.92). Action: Manual review for any PRAX SEC filings or press releases July 28. Monitor $290 support."
+        }
+    ],
+    "gap_note": "One gap flag: PRAX -6.33% (>5% threshold). No positive gaps. Second-largest declines: ERAS -3.76%, CMPS -3.73%, DNTH -2.76%, RVMD -2.24%. All below 5% gap threshold.",
+    "escalation_flags": [
+        {
+            "ticker": "CMPS",
+            "escalation_type": "ESCALATION LEVEL BROKEN — $11.00 BREACHED",
+            "entry_price": 11.30,
+            "close_jul27": 11.27,
+            "close_jul28": 10.85,
+            "day_change_pct": -3.73,
+            "pnl_vs_entry_pct": -3.98,
+            "volume_jul28": 2651900,
+            "volume_jul27": 2983500,
+            "vol_ratio": 0.89,
+            "intraday_high": 11.336,
+            "intraday_low": 10.59,
+            "escalation_level_usd": 11.00,
+            "close_vs_escalation": "BELOW — $0.15 below escalation level",
+            "next_escalation_level_usd": 10.50,
+            "priority": "HIGH ALERT — ESCALATION LEVEL $11.00 BROKEN. Close $10.85, low $10.59. P&L -3.98% (deepening). Next escalation: $10.50.",
+            "note": "CMPS -3.73% to $10.85. Day 37 CRITICAL: The $11.00 escalation level (set in Day 36) has been BROKEN. Close $10.85 is $0.15 below the escalation level. Intraday: HIGH $11.336 (near prior close $11.27, showing sellers were waiting), LOW $10.59 (below $10.50 — very close to next escalation). Volume 2,651,900 (0.89x Monday's 2,983,500) — declining volume on the continued decline is a MIXED signal. Selling is persistent but not accelerating. P&L progression: Day35 -0.35% → Day36 -0.27% → Day37 -3.98% (sharp deterioration). Pattern: minor improvement in Day36 was not sustained; Day37 saw a significant -3.73% drop. June 30 Phase 2b TRD miss impact continuing. CMPS next escalation: $10.50. If $10.50 breaks, potential test of $10.00 (psychological support). Position is the only negative P&L in the portfolio at -3.98% — far from 20% loss threshold, but direction is unfavorable. Phase 2b TRD miss appears to have re-priced the stock downward."
+        },
+        {
+            "ticker": "ALMS",
+            "escalation_type": "ESCALATION CONTINUES — $26.50 BREACHED INTRADAY",
+            "entry_price": 20.37,
+            "close_jul27": 27.08,
+            "close_jul28": 27.03,
+            "day_change_pct": -0.18,
+            "pnl_vs_entry_pct": 32.69,
+            "volume_jul28": 780700,
+            "volume_jul27": 1048900,
+            "vol_ratio": 0.74,
+            "intraday_high": 27.37,
+            "intraday_low": 26.06,
+            "escalation_level_usd": 26.50,
+            "close_vs_escalation": "ABOVE — $0.53 above escalation level on close",
+            "next_escalation_level_usd": 26.00,
+            "priority": "ESCALATION — $26.50 support breached intraday (low $26.06). Close $27.03 recovered above escalation. Orderly decline continues (0.74x volume). LUMUS thesis intact.",
+            "note": "ALMS -0.18% to $27.03. Day 37: Near-flat session, but intraday low $26.06 BROKE the $26.50 escalation level intraday before recovering to close $27.03 (above escalation). Volume 780,700 (0.74x Monday's 1,048,900) — lower volume signals orderly, not panic, selling. Support ladder: $27.37 (intraday high = minor resistance) → CLOSE $27.03 → $26.50 (escalation, breached intraday) → $26.06 (new intraday low) → $26.00. P&L: Day36 +32.94% → Day37 +32.69% (-0.25pp, very minor). Two consecutive days of ~flat closes ($27.08 → $27.03) after the Day 36 $27.50 support break. The intraday breach of $26.50 without sustained close below it is marginally encouraging (buyers stepped in near $26). LUMUS SLE Phase 3 (Q3 2026) thesis intact. No company-specific news found. Escalation is ongoing; next trigger: close below $26.50."
+        },
+        {
+            "ticker": "SLDB",
+            "escalation_type": "ESCALATION ACTIVE — PARTIAL RECOVERY SIGNAL",
+            "entry_price": 6.49,
+            "close_jul27": 7.89,
+            "close_jul28": 7.97,
+            "day_change_pct": 1.01,
+            "pnl_vs_entry_pct": 22.80,
+            "volume_jul28": 1235100,
+            "volume_jul27": 1223000,
+            "vol_ratio": 1.01,
+            "intraday_high": 8.035,
+            "intraday_low": 7.65,
+            "escalation_level_usd": 8.00,
+            "close_vs_escalation": "BELOW — $0.03 below $8.00. Intraday HIGH $8.035 cleared $8.00 briefly.",
+            "priority": "WATCH — SLDB +1.01% recovery. Intraday high $8.035 cleared $8.00. Close $7.97 = $0.03 below target. Volume 1.01x = consistent. Partial signal.",
+            "note": "SLDB +1.01% to $7.97. Positive session: HIGH $8.035 — SLDB DID briefly trade above $8.00 intraday (the target for escalation signal rebuild), but closed at $7.97 ($0.03 below the line). Volume 1,235,100 (1.01x) — stable, consistent. P&L: Day36 +21.57% → Day37 +22.80% (+1.23pp). Two consecutive up days ($7.89 → $7.97 → $8.035 intraday). The intraday $8.035 test with a close $0.03 below $8.00 is ambiguous — the buy pressure is there but not yet sustained. Need a confirmed close above $8.00 to call the escalation resolved. Next session: watch for a clean close above $8.00."
+        }
+    ],
+    "notable_events": [
+        {
+            "ticker": "NRIX",
+            "event": "T-2 CHECKPOINT — Price FIRST CLOSE-BASED PASS ($24.15 > $23.50 ✓), Volume FAIL (1.11M < 1.2M ✗). BINARY EVENT TOMORROW July 31. Q2 DATA ALREADY POSITIVE (92.9% ORR, July 9).",
+            "price_jul27": 23.43,
+            "price_jul28": 24.15,
+            "day_change_pct": 3.07,
+            "volume_jul28": 1113398,
+            "volume_jul27": 1282800,
+            "vol_ratio_vs_prev": 0.87,
+            "intraday_high": 24.18,
+            "intraday_low": 22.585,
+            "pnl_vs_entry_pct": 56.21,
+            "catalyst_date": "~2026-07-31",
+            "calendar_days_to_catalyst": 2,
+            "priority": "CRITICAL — Binary event TOMORROW July 31. T-2 checkpoint: Price FIRST CLOSE-BASED PASS ($24.15), Volume FAIL (1.11M). Q2 update July 9 included positive ORR data (92.9%). High-P&L position at +56.21% with binary outcome risk.",
+            "note": "NRIX +3.07% to $24.15. T-2 CHECKPOINT (July 29 pre-market): PRICE PASS ✓ ($24.15 > $23.50 — FIRST CLOSE-BASED PRICE PASS in all 7 checkpoints). VOLUME FAIL ✗ (1,113,398 < 1,200,000). Intraday: LOW $22.585 (a significant dip that reversed to close at $24.15 = +$1.565 recovery from low), HIGH $24.18. IMPORTANT CONTEXT: Nurix Q2 2026 earnings (July 9) included a corporate update citing DAYBREAK CLL-201 Phase 1 data: ORR 92.9% (Cohort 5, BTKi-treated/BCL2i-naïve) and 84.2% (Cohort 15, BTKi-naïve). This positive data is likely already reflected in NRIX's price appreciation. The July 31 event may represent a separate conference presentation (ASH, EHA, or similar) or additional data cut. The price action ($24.15 close + recovery from $22.585 low) suggests buyers are active pre-event. Full checkpoint history: T-7 ✓price/✗vol → T-4 ✗/✗ → T-3 ✗close/✓vol/✓intraday → T-2 ✓price/✗vol. The binary window close-based protocol remains INVALIDATED (no checkpoint with BOTH metrics passing simultaneously), but the price action is encouraging. Position: +56.21% above entry ($15.46). P&L at risk on a negative binary: $8.69/share (~56% return). Treat July 31 as binary event regardless of prior data releases — conference presentations can move stocks independently of prior announcements."
+        },
+        {
+            "ticker": "SYRE",
+            "event": "$100 BROKEN ON CLOSE ($99.96). Intraday low $92.37. Volume 2.26x. Conditional breakout INVALIDATED. Wolfe Research downgrade July 24. Earnings August 4.",
+            "price_jul27": 100.04,
+            "price_jul28": 99.96,
+            "day_change_pct": -0.08,
+            "volume_jul28": 1512800,
+            "volume_jul27": 669300,
+            "vol_ratio_vs_prev": 2.26,
+            "intraday_high": 100.93,
+            "intraday_low": 92.37,
+            "pnl_vs_entry_pct": 31.35,
+            "priority": "HIGH ALERT — $100 BROKEN on close ($99.96). Intraday low $92.37 (massive 2.26x volume confirms institutional activity). Conditional breakout INVALIDATED. Watch $95 support. Earnings Aug 4.",
+            "note": "SYRE -0.08% to $99.96. Day 37 SIGNIFICANT EVENT: $100 support officially broken on close (close $99.96 = $0.04 below $100). Intraday data is striking: HIGH $100.93 (briefly above $100), LOW $92.37 (tested $92-93 range intraday), CLOSE $99.96 (substantial recovery from low). VOLUME 1,512,800 (2.26x Monday's 669,300) — the first time SYRE has exceeded 1.5M shares in this monitoring period. The high volume on the $100 breach confirms institutional participation (either distribution or capitulation-then-recovery). CATALYSTS: (1) Wolfe Research downgrade July 24 (Outperform → Peer Perform) — the downgrade has weighed on the stock since then; (2) SYRE Q2 Earnings due August 4 (Tuesday, before market open) — 6 days away, creates uncertainty. P&L: Day36 +31.46% → Day37 +31.35% (-0.11pp despite the volatility, thanks to end-of-day recovery). KEY LEVELS: $100.00 = now resistance (was support); $92.37 = intraday low and new critical support; $95 = intermediate support to watch; entry $76.10 provides substantial cushion. Conditional breakout is INVALIDATED (close below $100). The thesis now depends on: (1) Whether SYRE can reclaim $100 before earnings; (2) Q2 earnings results (Aug 4). Escalation level: $95.00."
+        },
+        {
+            "ticker": "PRAX",
+            "event": "GAP FLAG -6.33% to $295.81. Intraday low $290.09. Volume elevated 1.48x. No company news found. EMERALD completes Sept 1, 2026.",
+            "price_jul27": 315.80,
+            "price_jul28": 295.81,
+            "day_change_pct": -6.33,
+            "volume_jul28": 438600,
+            "volume_jul27": 296000,
+            "vol_ratio_vs_prev": 1.48,
+            "intraday_high": 316.96,
+            "intraday_low": 290.09,
+            "pnl_vs_entry_pct": 22.28,
+            "priority": "GAP FLAG — -6.33% (>5% threshold). $290 support tested. Manual review required. EMERALD trial completing Sept 1, 2026.",
+            "note": "PRAX -6.33% to $295.81. GAP FLAG TRIGGERED. Day 37: Second significant down day after the Day 36 $330 reversal (Day36 -2.92%, Day37 -6.33% — combined 2-day decline from $325.30 to $295.81 = -9.07%). Intraday: HIGH $316.96 (slight gap-up from prior $315.80 close, then immediate selling), LOW $290.09 (tested $290 support). Volume 438,600 (1.48x Monday's 296,000 — elevated on the decline). No company-specific news identified for July 28. CONTEXT: Praxis announced EMERALD trial completion date of September 1, 2026 — this is approximately 5 weeks away. The EMERALD completion is a Phase 3 trial completion (enrollment/treatment end); data analysis and readout typically follows 3-12 months after trial completion, suggesting data readout Q4 2026 or Q1 2027 (consistent with the T-248 catalyst from monitoring start). The -6.33% decline is technical: after failing at $330 on Day 36, the stock is repricing. P&L: Day36 +30.54% → Day37 +22.28% (-8.26pp over 2 days). $290 support held on Day 37 close ($295.81). Escalation: $290.00. Gap flag requires manual review: check PRAX SEC filings/PRs for July 28. Maintain position as thesis (EMERALD data readout) is intact."
+        },
+        {
+            "ticker": "ERAS",
+            "event": "-3.76% to $18.16. Elevated volume 1.08x. $18 tested and held.",
+            "price_jul27": 18.87,
+            "price_jul28": 18.16,
+            "day_change_pct": -3.76,
+            "volume_jul28": 3815936,
+            "volume_jul27": 3531800,
+            "vol_ratio_vs_prev": 1.08,
+            "intraday_high": 18.715,
+            "intraday_low": 17.71,
+            "pnl_vs_entry_pct": 36.85,
+            "priority": "WATCH — -3.76% significant single-day decline. Volume elevated 1.08x. Low $17.71 tested $17.71 level. P&L: +36.85%.",
+            "note": "ERAS -3.76% to $18.16 on 3.82M shares (1.08x). HIGH $18.715, LOW $17.71. Meaningful pullback from the $18.87 close (Day36). The LOW $17.71 tested the $17.71-$18.00 support zone. Close $18.16 = above $18.00 support, which is encouraging. P&L: Day36 +44.01% → Day37 +36.85% (-7.16pp, notable decline). This is the second-largest P&L reduction after PRAX today. No specific catalyst identified for ERAS. T-55 (catalyst ~Sept 21) unchanged. Watch $18.00 support; if breaks, next support $17.50."
+        },
+        {
+            "ticker": "RVMD",
+            "event": "-2.24% to $183.86 on elevated volume 1.68x. Potential distribution signal.",
+            "price_jul27": 188.07,
+            "price_jul28": 183.86,
+            "day_change_pct": -2.24,
+            "volume_jul28": 2401400,
+            "volume_jul27": 1425700,
+            "vol_ratio_vs_prev": 1.68,
+            "intraday_high": 188.68,
+            "intraday_low": 181.49,
+            "pnl_vs_entry_pct": 27.89,
+            "priority": "WATCH — -2.24% on 1.68x elevated volume. Elevated volume on decline = distribution signal. $180 support key.",
+            "note": "RVMD -2.24% to $183.86 on 2.40M shares (1.68x Monday's 1.43M). HIGH $188.68 (near prior close $188.07 — opened flat then declined), LOW $181.49. Elevated volume on a decline is a potential distribution signal — sellers took advantage of the prior strength. P&L: Day36 +30.82% → Day37 +27.89% (-2.93pp). $180 is the key support. T-248 thesis intact. The prior two sessions showed RVMD testing the $188-194 zone (Day35 $189.23, Day36 $188.07 with intraday high $194.56); the failure to break $190 convincingly appears to be triggering some unwinding."
+        },
+        {
+            "ticker": "DNTH",
+            "event": "-2.76% to $101.61. Intraday low exactly $100.00 — $100 support tested.",
+            "price_jul27": 104.49,
+            "price_jul28": 101.61,
+            "day_change_pct": -2.76,
+            "volume_jul28": 841000,
+            "volume_jul27": 610000,
+            "vol_ratio_vs_prev": 1.38,
+            "intraday_high": 105.86,
+            "intraday_low": 100.00,
+            "pnl_vs_entry_pct": 40.93,
+            "priority": "WATCH — DNTH $100 support tested intraday (low exactly $100.00). Close $101.61 = above $100. $100 is now critical support.",
+            "note": "DNTH -2.76% to $101.61 on 841,000 shares (1.38x). HIGH $105.86 (tested the $106 zone), LOW $100.00 (exactly at $100 support — NOT a coincidence, this is a key psychological level). Close $101.61 = held above $100, but the test was notable. Volume 841,000 (1.38x) — elevated on the decline. P&L: Day36 +44.92% → Day37 +40.93% (-3.99pp). The Day35/36 period showed DNTH in the $103-$107 range; the Day37 test of $100 suggests $100 is now the key support floor. If $100 breaks on close, escalation trigger. Entry $72.10 provides strong cushion."
+        },
+        {
+            "ticker": "TRVI",
+            "event": "SESSION LEADER +1.71% to $18.43 — Third consecutive strong session.",
+            "price_jul27": 18.12,
+            "price_jul28": 18.43,
+            "day_change_pct": 1.71,
+            "volume_jul28": 1667000,
+            "volume_jul27": 1741500,
+            "vol_ratio_vs_prev": 0.96,
+            "intraday_high": 18.59,
+            "intraday_low": 17.955,
+            "pnl_vs_entry_pct": 37.23,
+            "priority": "POSITIVE — Session leader +1.71%. Three consecutive strong sessions (Day35 +2.04%, Day36 +3.37%, Day37 +1.71%). $18.50 resistance approaching.",
+            "note": "TRVI +1.71% to $18.43. Session leader for Day 37. Pattern: Day34 $17.18 → Day35 $17.53 (+2.04%) → Day36 $18.12 (+3.37%) → Day37 $18.43 (+1.71%) — THREE consecutive up sessions with cumulative gain +7.3% from Day34 close. HIGH $18.59 (approaching $18.50 identified resistance; $19 is next round number). LOW $17.955 (strong floor established). Volume 1,667,000 (0.96x, stable). P&L: Day36 +34.92% → Day37 +37.23% (+2.31pp). Momentum remains strong. $18.50 breakout needed for next leg."
+        },
+        {
+            "ticker": "NRIX",
+            "event": "ALSO — Q2 Corporate Update (July 9) included positive DAYBREAK-CLL-201 Phase 1 data: 92.9% ORR (Cohort 5), 84.2% ORR (Cohort 15). Context for July 31 event.",
+            "note": "CONTEXT UPDATE: Web search confirms that Nurix Q2 2026 earnings (July 9) included a corporate update on DAYBREAK CLL-201 showing: ORR 92.9% in Cohort 5 (BTKi-treated/BCL2i-naïve, 18/19 patients on treatment); ORR 84.2% in Cohort 15 (BTKi-naïve, 19/20 patients on treatment). This positive data is likely reflected in NRIX's strong P&L (+56.21%). The July 31 event may be a medical conference presentation (separate from the earnings data) or additional data cut/update. The stock's continued upward trajectory (+3.07% on Day 37 to new intraday high $24.18) suggests the market is anticipating a positive July 31 event. Even if July 31 is a smaller event than originally modeled, the position is well-profitable. Binary risk remains: any negative surprise would re-price the stock."
+        }
+    ],
+    "binary_window": {
+        "NRIX": {
+            "catalyst_date": "~2026-07-31",
+            "calendar_days_to_catalyst": 2,
+            "binary_window_day": "T-2 (from July 29 pre-market)",
+            "price_jul28": 24.15,
+            "price_jul27": 23.43,
+            "day_change_pct": 3.07,
+            "volume_jul28": 1113398,
+            "volume_jul27": 1282800,
+            "vol_threshold_required": 1200000,
+            "price_threshold_required": 23.50,
+            "t2_price_close_met": true,
+            "t2_price_intraday_met": true,
+            "t2_volume_met": false,
+            "pnl_vs_entry_pct": 56.21,
+            "support_level": 22.00,
+            "binary_window_status": "INVALIDATED (no checkpoint with BOTH metrics simultaneously) — T-2: Price FIRST PASS (close $24.15 > $23.50), Volume FAIL (1.11M < 1.2M). Q2 positive data in market since July 9.",
+            "checkpoint_history": {
+                "T7_Jul23": {"price": 23.74, "vol": 965900, "price_ok": true, "vol_ok": false},
+                "T4_Jul24": {"price": 23.38, "vol": 833300, "price_ok": false, "vol_ok": false},
+                "T3_Jul27": {"price_close": 23.43, "vol": 1282800, "price_close_ok": false, "price_intraday_high": 24.29, "price_intraday_ok": true, "vol_ok": true},
+                "T2_Jul28": {"price_close": 24.15, "vol": 1113398, "price_close_ok": true, "price_intraday_high": 24.18, "price_intraday_ok": true, "vol_ok": false}
+            },
+            "note": "T-2 CHECKPOINT (July 29 pre-market): Price $24.15 ✓ (FIRST CLOSE-BASED PRICE PASS, >$23.50). Volume 1,113,398 ✗ (<1.2M). Intraday: Low $22.585 (sharp dip, perhaps stop run), then recovery to High $24.18 and close $24.15. The recovery from $22.585 to $24.15 close on below-threshold volume suggests retail/momentum buying is driving the stock rather than institutional accumulation (the binary confirmation model required). Binary window protocol remains INVALIDATED — no checkpoint where both price AND volume both passed simultaneously. However, the qualitative picture (first close-based price pass, positive Q2 data already in market, 3.07% gain, strong recovery from intraday low) is constructive for the position heading into the July 31 event. This is the FINAL scheduled checkpoint. Treat July 31 as a binary catalyst regardless of window status. Position: +56.21% above entry ($15.46). The high intraday low ($22.585) should now serve as support — if NRIX holds $22.50, thesis is intact through the event."
+        },
+        "XENE": {
+            "catalyst_date": "~2026-09-21",
+            "calendar_days_to_catalyst": 54,
+            "note": "T-54. Not in active binary window. XENE -1.28% to $64.94. P&L: +25.02%.",
+            "pnl_vs_entry_pct": 25.02
+        }
+    },
+    "near_breakeven_watch": [
+        {
+            "ticker": "CMPS",
+            "pnl_vs_entry_pct": -3.98,
+            "entry_price": 11.30,
+            "curr_price": 10.85,
+            "gap_above_entry_usd": -0.45,
+            "day_change_pct": -3.73,
+            "volume_jul28": 2651900,
+            "intraday_high": 11.336,
+            "intraday_low": 10.59,
+            "escalation_level_broken": true,
+            "next_escalation_level_usd": 10.50,
+            "priority": "HIGH ALERT — ESCALATION LEVEL $11.00 BROKEN. Close $10.85, Low $10.59. P&L -3.98%. Next escalation: $10.50. Phase 2b TRD miss pressure continuing.",
+            "note": "CMPS -3.98% vs entry ($11.30). Current $10.85. Escalation level $11.00 BROKEN (close $10.85, low $10.59 = $0.41 below escalation). This is a significant deterioration from Day 36's 'marginal improvement' thesis. Volume declining (2.98M Day36 → 2.65M Day37) — some comfort that selling is not accelerating, but the price action is clearly negative. Next escalation: $10.50. Below $10.50, psychological support at $10.00. No 20% loss risk: $11.30 * 0.80 = $9.04 = $1.81 below current. The Phase 2b TRD miss (June 30) has now dropped the stock from $11.30 entry to $10.85 (-3.98%). The stock needs a new catalyst or data update to reverse this trend."
+        },
+        {
+            "ticker": "STOK",
+            "pnl_vs_entry_pct": 2.26,
+            "entry_price": 28.74,
+            "curr_price": 29.39,
+            "gap_above_entry_usd": 0.65,
+            "day_change_pct": 0.27,
+            "volume_jul28": 598400,
+            "intraday_high": 29.875,
+            "intraday_low": 28.49,
+            "priority": "WATCH — Near-breakeven, +2.26%. Low $28.49 tested entry proximity. Volume stable.",
+            "note": "STOK +0.27% to $29.39 on 598,400 shares (1.01x). INTRADAY: LOW $28.49 (only $0.25 above entry $28.74 — very close to entry price). HIGH $29.875 (again tested but failed $30 range). Close $29.39 = modest gain. Cushion: $0.65 above entry. Near-breakeven watch continues. P&L: +2.26%. LOW of $28.49 being tested was concerning intraday; recovery to close $29.39 is constructive. Need close above $30 to exit near-breakeven watch."
+        }
+    ],
+    "governance_gates": {
+        "drawdown_gate": {
+            "status": "CLEAR",
+            "current_pp": 15.93,
+            "threshold_pp": -2.0,
+            "detail": "+15.93pp vs XBI (threshold -2.0pp). Day 36: +16.59pp → Day 37: +15.93pp (-0.66pp). Portfolio underperformed XBI on Tuesday (-1.00% vs -0.54%). Clear of threshold by 17.93pp."
+        },
+        "ic_gate": {
+            "status": "OVERDUE — 28 days",
+            "last_measured": "2026-06-24",
+            "last_ic": 0.0432,
+            "gate_was_due": "2026-07-01",
+            "days_overdue": 28,
+            "next_review": "Requires explicit operator freeze lift. DEM candidate freeze + NO_MODEL_CHANGE forward-validation window active (0/20 eligible LIVE windows). No new measurement possible without freeze lift.",
+            "note": "IC gate overdue 28 days. No change. Governance constraint."
+        },
+        "h20d_gate": {
+            "status": "OVERDUE — 28 days",
+            "gate_date": "2026-07-01",
+            "days_overdue": 28,
+            "override_posture": "MAINTAINED (OPTION_B_OVERRIDE_2026_05_26)",
+            "note": "h20d gate due 2026-07-01. Sequential gate requires explicit operator freeze lift. Q1 2026 13F data not yet promoted to production."
+        },
+        "jaccard_gate": {
+            "status": "MAINTAINED",
+            "last_measured": "2026-06-23",
+            "top30_jaccard": 0.875,
+            "threshold": 0.40,
+            "note": "Jaccard 0.875 as of June 23. Override maintained. Well above 0.40 threshold."
+        },
+        "emergency_gate": {
+            "status": "CLEAR",
+            "detail": "No emergency conditions. Drawdown +15.93pp vs XBI. 14 of 15 positions profitable. CMPS at -3.98% vs entry is the only negative position — far from >20% loss threshold ($9.04). No emergency gate action required."
+        },
+        "positions_20pct_loss": {
+            "status": "CLEAR",
+            "count": 0,
+            "detail": "No positions >20% below entry. CMPS at -3.98% vs entry ($10.85 vs $11.30) is the only negative position. 20% loss threshold = $9.04. Current $10.85 = $1.81 above threshold."
+        }
+    },
+    "positions": [
+        {
+            "ticker": "COGT", "company_name": "Cogent Biosciences, Inc.",
+            "entry_price": 31.35, "price_jul27": 40.44, "price_jul28": 40.67,
+            "pnl_vs_entry_pct": 29.73, "day_change_jul28_pct": 0.57,
+            "volume_jul28": 1133700, "vol_ratio": 0.82,
+            "intraday_high": 40.725, "intraday_low": 39.02,
+            "equity_position_usd": 8.66,
+            "catalyst_status": "POST_CATALYST — FIRED 2026-07-01 (AMBIGUOUS/PRICED). Normal monitoring.",
+            "gap_flag": false, "tier": "A",
+            "notes": "+0.57% to $40.67 on 0.82x volume. Solid session in a down tape. $39-41 range holding. P&L: +29.00% (Day36) → +29.73% (Day37, +0.73pp). Hold above $39."
+        },
+        {
+            "ticker": "DNTH", "company_name": "Dianthus Therapeutics, Inc.",
+            "entry_price": 72.10, "price_jul27": 104.49, "price_jul28": 101.61,
+            "pnl_vs_entry_pct": 40.93, "day_change_jul28_pct": -2.76,
+            "volume_jul28": 841000, "vol_ratio": 1.38,
+            "intraday_high": 105.86, "intraday_low": 100.00,
+            "equity_position_usd": 9.44,
+            "catalyst_status": "WATCH — $100 support TESTED intraday (low exactly $100.00). Close $101.61 = above $100. Critical support.",
+            "gap_flag": false, "tier": "A",
+            "notes": "-2.76% to $101.61 on 1.38x volume. Tested $105.86 then sold off to $100.00 intraday low (exactly $100 = key support). Recovered to $101.61 close. P&L: +44.92% (Day36) → +40.93% (Day37, -3.99pp). $100 is now the critical floor. Needs to hold $100."
+        },
+        {
+            "ticker": "NRIX", "company_name": "Nurix Therapeutics, Inc.",
+            "entry_price": 15.46, "price_jul27": 23.43, "price_jul28": 24.15,
+            "pnl_vs_entry_pct": 56.21, "day_change_jul28_pct": 3.07,
+            "volume_jul28": 1113398, "vol_ratio": 0.87,
+            "intraday_high": 24.18, "intraday_low": 22.585,
+            "equity_position_usd": 10.39,
+            "catalyst_status": "BINARY EVENT TOMORROW July 31. T-2: Price PASS ($24.15 > $23.50), Volume FAIL (1.11M). Q2 data (July 9) showed 92.9% ORR.",
+            "gap_flag": false, "binary_window": true,
+            "binary_window_status": "INVALIDATED (no dual-pass checkpoint) — but Price FIRST CLOSE PASS on T-2. Event TOMORROW.",
+            "watch_priority": "CRITICAL: Binary event TOMORROW July 31. Highest P&L position (+56.21%). Binary outcome risk. $22.50 support from intraday low.",
+            "tier": "A",
+            "notes": "+3.07% to $24.15. FIRST CLOSE-BASED PRICE PASS at T-2. Volume 1.11M (0.87x). Intraday low $22.585 (sharp dip then recovery). Catalyst TOMORROW July 31. Q2 data positive (92.9% ORR disclosed July 9). Position: +56.21% above entry."
+        },
+        {
+            "ticker": "URGN", "company_name": "UroGen Pharma Ltd.",
+            "entry_price": 28.02, "price_jul27": 41.46, "price_jul28": 40.88,
+            "pnl_vs_entry_pct": 45.89, "day_change_jul28_pct": -1.40,
+            "volume_jul28": 375937, "vol_ratio": 0.73,
+            "intraday_high": 42.15, "intraday_low": 40.21,
+            "equity_position_usd": 9.71,
+            "catalyst_status": "MONITORING — Pullback session. July 21 news check NOW 5 DAYS OVERDUE. FDA cleared UGN-501 IND July 8.",
+            "gap_flag": false, "tier": "A",
+            "watch_priority": "URGN manual news check for July 21 elevated-volume event — 5 DAYS OVERDUE. FDA IND clearance July 8 (UGN-501) may be related. Check.",
+            "notes": "-1.40% to $40.88. Pullback after Monday's recovery. Volume 375,937 (0.73x — low volume, orderly). P&L: +47.97% (Day36) → +45.89% (Day37, -2.08pp). July 21 news check: FDA cleared UGN-501 IND application July 8 (13 days before July 21 elevated volume) — may not be direct cause. Check UroGen IR for July 21 announcements."
+        },
+        {
+            "ticker": "ALMS", "company_name": "Alumis Inc.",
+            "entry_price": 20.37, "price_jul27": 27.08, "price_jul28": 27.03,
+            "pnl_vs_entry_pct": 32.69, "day_change_jul28_pct": -0.18,
+            "volume_jul28": 780700, "vol_ratio": 0.74,
+            "intraday_high": 27.37, "intraday_low": 26.06,
+            "equity_position_usd": 8.81,
+            "catalyst_status": "ESCALATION — $26.50 breached intraday (low $26.06). Close $27.03 = above escalation. Orderly. LUMUS Phase 3 (Q3 2026).",
+            "gap_flag": false, "escalation_flag": true,
+            "watch_priority": "ALMS escalation: intraday low $26.06 breached $26.50 support. Close $27.03 = recovered. Monitor for $26.50 on close basis.",
+            "tier": "A",
+            "notes": "-0.18% to $27.03. Near-flat session. Intraday LOW $26.06 (below $26.50 escalation). Close $27.03 = above escalation (constructive). Volume 780,700 (0.74x — declining volume on weakness = positive). P&L: +32.94% (Day36) → +32.69% (Day37, -0.25pp). Escalation active; need close above $27.50 to signal support rebuilding."
+        },
+        {
+            "ticker": "SYRE", "company_name": "Spyre Therapeutics, Inc.",
+            "entry_price": 76.10, "price_jul27": 100.04, "price_jul28": 99.96,
+            "pnl_vs_entry_pct": 31.35, "day_change_jul28_pct": -0.08,
+            "volume_jul28": 1512800, "vol_ratio": 2.26,
+            "intraday_high": 100.93, "intraday_low": 92.37,
+            "equity_position_usd": 8.80,
+            "catalyst_status": "HIGH ALERT — $100 BROKEN (close $99.96). Intraday low $92.37 (massive volatility). Conditional breakout INVALIDATED. Wolfe downgrade July 24. Earnings Aug 4.",
+            "gap_flag": false, "escalation_flag": true,
+            "watch_priority": "SYRE: $100 broken. Intraday low $92.37 on 2.26x volume — institutional activity. Earnings Aug 4 is now key event. $95 escalation level.",
+            "tier": "B",
+            "notes": "-0.08% to $99.96. MASSIVE SESSION: high $100.93, low $92.37, range $8.56 on 1.51M shares (2.26x). $100 broken on close ($0.04 below). Wolfe downgrade July 24 (Outperform → Peer Perform). Earnings Aug 4. P&L: +31.46% → +31.35% (-0.11pp). Escalation: $95.00."
+        },
+        {
+            "ticker": "RVMD", "company_name": "Revolution Medicines, Inc.",
+            "entry_price": 143.76, "price_jul27": 188.07, "price_jul28": 183.86,
+            "pnl_vs_entry_pct": 27.89, "day_change_jul28_pct": -2.24,
+            "volume_jul28": 2401400, "vol_ratio": 1.68,
+            "intraday_high": 188.68, "intraday_low": 181.49,
+            "equity_position_usd": 8.55,
+            "catalyst_status": "MONITORING — -2.24% on elevated 1.68x volume. Potential distribution at $188-194 zone. $180 support.",
+            "gap_flag": false, "tier": "B",
+            "notes": "-2.24% to $183.86 on 2.40M shares (1.68x). Opened flat, then declined. $188-194 resistance not cleared — potential distribution. $181.49 low. P&L: +30.82% → +27.89% (-2.93pp). $180 support. T-248."
+        },
+        {
+            "ticker": "CMPS", "company_name": "COMPASS Pathways Plc",
+            "entry_price": 11.30, "price_jul27": 11.27, "price_jul28": 10.85,
+            "pnl_vs_entry_pct": -3.98, "day_change_jul28_pct": -3.73,
+            "volume_jul28": 2651900, "vol_ratio": 0.89,
+            "intraday_high": 11.336, "intraday_low": 10.59,
+            "equity_position_usd": 6.40,
+            "catalyst_status": "ALERT — ESCALATION LEVEL $11.00 BROKEN (close $10.85, low $10.59). P&L -3.98%. Next escalation: $10.50.",
+            "gap_flag": false, "near_breakeven_alert": true, "below_entry_alert": true, "escalation_breached": true,
+            "watch_priority": "ESCALATION LEVEL BROKEN. CMPS -3.98% vs entry. Close $10.85 (escalation was $11.00). Low $10.59. Next: $10.50.",
+            "tier": "C",
+            "notes": "-3.73% to $10.85. Escalation level $11.00 BROKEN. Low $10.59. Volume 2.65M (0.89x — declining, some comfort). P&L: -0.27% (Day36) → -3.98% (Day37, sharp deterioration). Next escalation: $10.50. Phase 2b TRD miss pressure continuing."
+        },
+        {
+            "ticker": "SLDB", "company_name": "Solid Biosciences Inc.",
+            "entry_price": 6.49, "price_jul27": 7.89, "price_jul28": 7.97,
+            "pnl_vs_entry_pct": 22.80, "day_change_jul28_pct": 1.01,
+            "volume_jul28": 1235100, "vol_ratio": 1.01,
+            "intraday_high": 8.035, "intraday_low": 7.65,
+            "equity_position_usd": 8.20,
+            "catalyst_status": "ESCALATION ACTIVE — +1.01% recovery. Intraday high $8.035 briefly cleared $8.00 — partial signal.",
+            "gap_flag": false, "escalation_flag": true,
+            "notes": "+1.01% to $7.97. Positive session. HIGH $8.035 (briefly above $8.00 target). Close $7.97 = $0.03 below target. Volume 1.24M (1.01x, stable). P&L: +21.57% → +22.80% (+1.23pp). Need confirmed close above $8.00 to signal escalation resolved."
+        },
+        {
+            "ticker": "DRUG", "company_name": "Zentalis Pharmaceuticals, Inc.",
+            "entry_price": 63.59, "price_jul27": 71.91, "price_jul28": 71.96,
+            "pnl_vs_entry_pct": 13.16, "day_change_jul28_pct": 0.07,
+            "volume_jul28": 238519, "vol_ratio": 1.23,
+            "intraday_high": 73.01, "intraday_low": 70.20,
+            "equity_position_usd": 7.62,
+            "catalyst_status": "STABILIZING — Essentially flat +0.07%. Gap flag investigation from Day34 still outstanding.",
+            "gap_flag": false,
+            "watch_priority": "DRUG Gap flag investigation from Day34 (-5.52%) still outstanding. 3rd day of stabilization at $71-72. Check Zentalis SEC filings/PRs.",
+            "notes": "+0.07% to $71.96. Essentially unchanged. Volume 238,519 (1.23x). P&L: +13.08% → +13.16% (+0.08pp). Gap flag investigation (Day34) still unresolved. $71-$72 appears to be new base. $73 resistance."
+        },
+        {
+            "ticker": "STOK", "company_name": "Stoke Therapeutics, Inc.",
+            "entry_price": 28.74, "price_jul27": 29.31, "price_jul28": 29.39,
+            "pnl_vs_entry_pct": 2.26, "day_change_jul28_pct": 0.27,
+            "volume_jul28": 598400, "vol_ratio": 1.01,
+            "intraday_high": 29.875, "intraday_low": 28.49,
+            "equity_position_usd": 6.81,
+            "catalyst_status": "NEAR-BREAKEVEN — +2.26%. Low $28.49 tested entry proximity. Failed $30 again.",
+            "gap_flag": false, "near_breakeven_alert": true,
+            "notes": "+0.27% to $29.39. Near-breakeven watch continues. HIGH $29.875 (failed $30 again). LOW $28.49 ($0.25 above entry $28.74 — close call intraday). Volume 598,400 (1.01x). P&L: +1.98% → +2.26%. $28.74 = critical support."
+        },
+        {
+            "ticker": "PRAX", "company_name": "Praxis Precision Medicine, Inc.",
+            "entry_price": 241.92, "price_jul27": 315.80, "price_jul28": 295.81,
+            "pnl_vs_entry_pct": 22.28, "day_change_jul28_pct": -6.33,
+            "volume_jul28": 438600, "vol_ratio": 1.48,
+            "intraday_high": 316.96, "intraday_low": 290.09,
+            "equity_position_usd": 8.14,
+            "catalyst_status": "GAP FLAG — -6.33% (>5% threshold). $290 support tested and held. EMERALD completes Sept 1, 2026.",
+            "gap_flag": true, "gap_flag_manual_review": true,
+            "watch_priority": "GAP FLAG: -6.33%. Manual review required. EMERALD trial completing Sept 1, 2026 is key catalyst context. $290 support.",
+            "tier": "A",
+            "notes": "-6.33% to $295.81. GAP FLAG. HIGH $316.96, LOW $290.09. Volume 438,600 (1.48x). EMERALD completes Sept 1. P&L: +30.54% (Day36) → +22.28% (Day37, -8.26pp over 2 days). $290 support. Escalation: $290."
+        },
+        {
+            "ticker": "TRVI", "company_name": "Travere Therapeutics, Inc.",
+            "entry_price": 13.43, "price_jul27": 18.12, "price_jul28": 18.43,
+            "pnl_vs_entry_pct": 37.23, "day_change_jul28_pct": 1.71,
+            "volume_jul28": 1667000, "vol_ratio": 0.96,
+            "intraday_high": 18.59, "intraday_low": 17.955,
+            "equity_position_usd": 9.15,
+            "catalyst_status": "RECOVERY EXTENDING — Session leader +1.71%. Three consecutive strong sessions.",
+            "gap_flag": false,
+            "notes": "+1.71% to $18.43. SESSION LEADER. THREE consecutive up sessions (Day35 +2.04%, Day36 +3.37%, Day37 +1.71%). HIGH $18.59, approaching $18.50 resistance. Volume 1.67M (0.96x, stable). P&L: +34.92% → +37.23% (+2.31pp). $19 is next target."
+        },
+        {
+            "ticker": "ERAS", "company_name": "Erasca, Inc.",
+            "entry_price": 13.27, "price_jul27": 18.87, "price_jul28": 18.16,
+            "pnl_vs_entry_pct": 36.85, "day_change_jul28_pct": -3.76,
+            "volume_jul28": 3815936, "vol_ratio": 1.08,
+            "intraday_high": 18.715, "intraday_low": 17.71,
+            "equity_position_usd": 9.14,
+            "catalyst_status": "WATCH — -3.76% on elevated 1.08x volume. $18 support tested and held. T-54.",
+            "gap_flag": false,
+            "notes": "-3.76% to $18.16 on 3.82M shares (1.08x). HIGH $18.715, LOW $17.71. $18.00 support tested and held (close $18.16). P&L: +44.01% (Day35) → +42.20% (Day36) → +36.85% (Day37, -5.35pp over 2 days). $18 support. $20 target. T-54 (~Sept 21)."
+        },
+        {
+            "ticker": "XENE", "company_name": "Xenon Pharmaceuticals Inc.",
+            "entry_price": 51.95, "price_jul27": 65.78, "price_jul28": 64.94,
+            "pnl_vs_entry_pct": 25.02, "day_change_jul28_pct": -1.28,
+            "volume_jul28": 485000, "vol_ratio": 0.94,
+            "intraday_high": 66.713, "intraday_low": 64.15,
+            "equity_position_usd": 8.35,
+            "catalyst_status": "MONITORING — Pullback -1.28%. $64 support. T-54 (~2026-09-21).",
+            "gap_flag": false,
+            "notes": "-1.28% to $64.94 on 485,000 shares (0.94x). LOW $64.15 (above $64 support). P&L: +26.62% (Day36) → +25.02% (Day37, -1.60pp). Normal monitoring. $64-$67 range."
+        }
+    ],
+    "session_summary": {
+        "date": "2026-07-28",
+        "event": "BROAD DECLINE — 6 up / 9 down. Portfolio -1.00% vs XBI -0.54% (-0.46pp underperformance). Biotech tape weak.",
+        "breadth": "6 up / 9 down",
+        "portfolio_avg_day_change_pct": -1.004,
+        "xbi_day_change_pct": -0.54,
+        "xbi_close_jul28": 149.78,
+        "relative_performance_pp": -0.464,
+        "up_positions": ["NRIX +3.07% (T-2 price pass)", "TRVI +1.71% (3rd consecutive)", "SLDB +1.01% (escalation recovery)", "COGT +0.57%", "STOK +0.27%", "DRUG +0.07%"],
+        "down_positions": ["PRAX -6.33% (GAP FLAG)", "ERAS -3.76%", "CMPS -3.73% (escalation broken)", "DNTH -2.76% ($100 tested)", "RVMD -2.24% (1.68x vol)", "URGN -1.40%", "XENE -1.28%", "ALMS -0.18%", "SYRE -0.08% ($100 broken)"],
+        "flat_positions": [],
+        "key_events": [
+            "PRAX -6.33% to $295.81 — GAP FLAG triggered. Low $290.09. EMERALD trial completes Sept 1, 2026. Manual review required.",
+            "CMPS -3.73% to $10.85 — BROKE $11.00 escalation level (low $10.59). P&L now -3.98%. Next escalation $10.50.",
+            "SYRE -0.08% to $99.96 — $100 BROKEN on close. Intraday low $92.37 on 2.26x volume. Conditional breakout INVALIDATED. Wolfe downgrade July 24. Earnings Aug 4.",
+            "NRIX +3.07% to $24.15 — T-2 checkpoint: FIRST CLOSE-BASED PRICE PASS ($24.15 > $23.50), Volume FAIL (1.11M). Binary event TOMORROW July 31. Q2 data already positive (92.9% ORR, July 9).",
+            "TRVI +1.71% session co-leader — three consecutive up sessions (cumulative +7.3% from Day34).",
+            "DNTH -2.76% to $101.61 — tested $100 support exactly (intraday low $100.00). Held above $100.",
+            "RVMD -2.24% on 1.68x elevated volume — potential distribution at $188-194 resistance zone."
+        ]
+    },
+    "upcoming_catalysts": {
+        "NRIX_jul31": {
+            "event": "DAYBreak CLL-201 data/conference event",
+            "calendar_days": 2,
+            "note": "TOMORROW. Q2 positive data in market (July 9). July 31 may be conference presentation. Binary position risk +56.21% P&L."
+        },
+        "SYRE_aug4_earnings": {
+            "event": "Q2 2026 Earnings (before market open)",
+            "calendar_days": 6,
+            "note": "SYRE Q2 earnings Aug 4 (Tuesday). Key event given $100 breakout invalidation and Wolfe downgrade. Watch for pipeline updates and financial results."
+        },
+        "PRAX_emerald_sep1": {
+            "event": "EMERALD trial completion",
+            "calendar_days": 33,
+            "note": "EMERALD Phase 3 trial completes Sept 1, 2026. Data readout likely Q4 2026/Q1 2027. Approaching milestone."
+        },
+        "ERAS_xene_sep21": {
+            "event": "ERAS and XENE catalysts (~Sept 21)",
+            "calendar_days": 54,
+            "note": "T-54. Not in active window."
+        }
+    },
+    "watchlist_priorities": {
+        "today_jul29_tuesday": [
+            "NRIX: Binary event TOMORROW. Watch NRIX all day. Any halt, news release, or conference presentation announcement. Position +56.21%, high P&L at risk. $22.50 support from yesterday's intraday low.",
+            "PRAX: GAP FLAG -6.33%. Check for any PRAX press releases or SEC filings from July 28. Monitor $290 support. EMERALD completes Sept 1 = 33 days.",
+            "CMPS: Escalation level $11.00 broken. Watch for continuation selling toward $10.50. If $10.50 breaks, escalation moves to $10.00. No 20% loss risk, but trend is unfavorable.",
+            "SYRE: $100 broken. Q2 earnings due Aug 4 (6 days). Watch if $100 is reclaimed today or if $95 support is tested. Volume was 2.26x yesterday — institutional activity at $100.",
+            "DNTH: $100 support was tested exactly yesterday. Watch for confirmation hold above $100 today.",
+            "ALMS: Escalation close-based trigger is $26.50. Watch for any close below $26.50.",
+            "SLDB: Watch for confirmed close above $8.00 to resolve escalation.",
+            "URGN: July 21 news check now 5 DAYS OVERDUE. FDA cleared UGN-501 IND July 8 — check if any follow-up announcement around July 21."
+        ],
+        "binary_event_nrix_jul31_tomorrow": [
+            "NRIX DAYBreak CLL-201 event TOMORROW (July 31). T-2 (July 29 pre-market) was the FINAL scheduled checkpoint.",
+            "Pre-event position: $24.15 (Day37). Entry: $15.46. Gain at stake: $8.69/share (+56.21%).",
+            "Q2 positive data already in market: 92.9% ORR (Cohort 5), 84.2% ORR (Cohort 15) — disclosed July 9, 2026.",
+            "Binary window never achieved dual-pass, but price trajectory ($15.46 → $24.15, +56.2%) reflects strong market anticipation.",
+            "Treat July 31 as binary event regardless: any surprise (positive or negative) can move the stock significantly.",
+            "Intraday support established at $22.585 (yesterday's low). Hold above $22.50 heading into July 31."
+        ],
+        "ongoing": [
+            "IC gate overdue 28 days — requires operator freeze lift",
+            "h20d gate overdue 28 days — requires operator freeze lift",
+            "DRUG gap flag from Day34 still unresolved (3rd day of stabilization at $71-72)",
+            "URGN July 21 volume spike investigation 5 days overdue"
+        ]
+    },
+    "monitoring_status": {
+        "period_extended": true,
+        "original_end": "2026-06-30",
+        "extension_rationale": "NRIX binary event July 31 (TOMORROW), SYRE breakout invalidated/earnings Aug 4, PRAX gap flag, CMPS escalation level broken, ALMS escalation, SLDB escalation, DRUG gap flag, STOK near-breakeven, governance gates overdue 28 days",
+        "governance_gates_overdue_days": 28,
+        "alerts_active": [
+            "NRIX_BINARY_EVENT_JULY31_TOMORROW_T2",
+            "PRAX_GAP_FLAG_633PCT_MANUAL_REVIEW",
+            "CMPS_ESCALATION_LEVEL_1100_BROKEN",
+            "SYRE_100_BROKEN_CONDITIONAL_BREAKOUT_INVALIDATED",
+            "ALMS_ESCALATION_INTRADAY_2650_BREACH",
+            "SLDB_ESCALATION_ACTIVE_PARTIAL_RECOVERY",
+            "DRUG_GAP_FLAG_PENDING_INVESTIGATION_DAY3",
+            "URGN_NEWS_CHECK_5DAYS_OVERDUE"
+        ],
+        "new_upcoming_catalysts": [
+            "SYRE Q2 Earnings Aug 4 (before market open) — new catalyst identified",
+            "PRAX EMERALD trial completion Sept 1, 2026 — milestone approaching"
+        ],
+        "next_governance_action": "h20d quarantine script + IC refresh requires explicit operator freeze lift"
+    }
+}
