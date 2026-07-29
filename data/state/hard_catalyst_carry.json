@@ -412,13 +412,6 @@
     "first_seen_date": "2026-06-17",
     "estimated_event_date": "2026-09-01"
   },
-  "MNKD": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 39,
-    "first_seen_date": "2026-06-17",
-    "estimated_event_date": "2026-07-26"
-  },
   "ZLAB": {
     "catalyst_event_type": "DATA_READOUT",
     "catalyst_source": "SEC_8K_FILING",
