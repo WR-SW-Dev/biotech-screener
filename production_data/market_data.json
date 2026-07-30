@@ -1,7 +1,7 @@
 [
   {
     "ticker": "AARD",
-    "price": 6.474999904632568,
+    "price": 5.320000171661377,
     "market_cap": 85520224,
     "enterprise_value": -9707048,
     "shares_outstanding": 21816385,
@@ -25,7 +25,7 @@
   },
   {
     "ticker": "ABCL",
-    "price": 5.375,
+    "price": 5.389999866485596,
     "market_cap": 1650554112,
     "enterprise_value": 1189806720,
     "shares_outstanding": 305375393,
@@ -49,7 +49,7 @@
   },
   {
     "ticker": "ABEO",
-    "price": 6.164999961853027,
+    "price": 6.230000019073486,
     "market_cap": 325157280,
     "enterprise_value": 176924560,
     "shares_outstanding": 56995144,
@@ -73,7 +73,7 @@
   },
   {
     "ticker": "ABOS",
-    "price": 2.2899999618530273,
+    "price": 2.109999895095825,
     "market_cap": 163956608,
     "enterprise_value": 68164160,
     "shares_outstanding": 72227580,
@@ -97,7 +97,7 @@
   },
   {
     "ticker": "ABSI",
-    "price": 7.139999866485596,
+    "price": 6.900000095367432,
     "market_cap": 1120957312,
     "enterprise_value": 970045376,
     "shares_outstanding": 155905056,
@@ -121,7 +121,7 @@
   },
   {
     "ticker": "ABUS",
-    "price": 4.429999828338623,
+    "price": 4.289999961853027,
     "market_cap": 901957184,
     "enterprise_value": 775873536,
     "shares_outstanding": 197537710,
@@ -145,7 +145,7 @@
   },
   {
     "ticker": "ABVX",
-    "price": 124.12000274658203,
+    "price": 118.83999633789062,
     "market_cap": 7871722496,
     "enterprise_value": 7273549824,
     "shares_outstanding": 79770191,
@@ -169,7 +169,7 @@
   },
   {
     "ticker": "ACAD",
-    "price": 26.059999465942383,
+    "price": 26.34000015258789,
     "market_cap": 3684996096,
     "enterprise_value": 2785015040,
     "shares_outstanding": 171235870,
@@ -193,7 +193,7 @@
   },
   {
     "ticker": "ACIU",
-    "price": 2.309999942779541,
+    "price": 2.2699999809265137,
     "market_cap": 242729984,
     "enterprise_value": 163362800,
     "shares_outstanding": 101773573,
@@ -217,7 +217,7 @@
   },
   {
     "ticker": "ACRS",
-    "price": 5.28000020980835,
+    "price": 5.119999885559082,
     "market_cap": 616615168,
     "enterprise_value": 502709376,
     "shares_outstanding": 139663680,
@@ -241,7 +241,7 @@
   },
   {
     "ticker": "ACRV",
-    "price": 1.524999976158142,
+    "price": 1.4299999475479126,
     "market_cap": 65914660,
     "enterprise_value": -31547424,
     "shares_outstanding": 42801729,
@@ -265,7 +265,7 @@
   },
   {
     "ticker": "ADCT",
-    "price": 1.107200026512146,
+    "price": 1.100000023841858,
     "market_cap": 139274320,
     "enterprise_value": 331972544,
     "shares_outstanding": 127191158,
@@ -289,7 +289,7 @@
   },
   {
     "ticker": "ADMA",
-    "price": 8.760000228881836,
+    "price": 8.710000038146973,
     "market_cap": 1930666752,
     "enterprise_value": 43736158208,
     "shares_outstanding": 231772715,
@@ -313,7 +313,7 @@
   },
   {
     "ticker": "ADPT",
-    "price": 23.049999237060547,
+    "price": 22.559999465942383,
     "market_cap": 2759965440,
     "enterprise_value": 2753712384,
     "shares_outstanding": 160044392,
@@ -337,7 +337,7 @@
   },
   {
     "ticker": "AGIO",
-    "price": 35.59000015258789,
+    "price": 35.0099983215332,
     "market_cap": 2012519168,
     "enterprise_value": 1192283008,
     "shares_outstanding": 59471609,
@@ -361,7 +361,7 @@
   },
   {
     "ticker": "AKTX",
-    "price": 8.149999618530273,
+    "price": 8.25,
     "market_cap": 17947498,
     "enterprise_value": 12843644,
     "shares_outstanding": 1574342,
@@ -385,7 +385,7 @@
   },
   {
     "ticker": "ALDX",
-    "price": 1.590000033378601,
+    "price": 1.6100000143051147,
     "market_cap": 114308424,
     "enterprise_value": 57881964,
     "shares_outstanding": 60321068,
@@ -409,7 +409,7 @@
   },
   {
     "ticker": "ALGS",
-    "price": 4.264999866485596,
+    "price": 4.25,
     "market_cap": 32859464,
     "enterprise_value": -19676768,
     "shares_outstanding": 5388223,
@@ -433,7 +433,7 @@
   },
   {
     "ticker": "ALKS",
-    "price": 50.51499938964844,
+    "price": 48.34000015258789,
     "market_cap": 7417073664,
     "enterprise_value": 8418534400,
     "shares_outstanding": 166675807,
@@ -457,7 +457,7 @@
   },
   {
     "ticker": "ALLO",
-    "price": 1.6950000524520874,
+    "price": 1.809999942779541,
     "market_cap": 695486464,
     "enterprise_value": 469958656,
     "shares_outstanding": 345154561,
@@ -481,7 +481,7 @@
   },
   {
     "ticker": "ALMS",
-    "price": 27.3799991607666,
+    "price": 26.3799991607666,
     "market_cap": 2948889600,
     "enterprise_value": 2358341888,
     "shares_outstanding": 123432072,
@@ -505,7 +505,7 @@
   },
   {
     "ticker": "ALNY",
-    "price": 290.30999755859375,
+    "price": 286.6199951171875,
     "market_cap": 36845465600,
     "enterprise_value": 37598199808,
     "shares_outstanding": 133512573,
@@ -529,7 +529,7 @@
   },
   {
     "ticker": "ALT",
-    "price": 2.944999933242798,
+    "price": 2.9200000762939453,
     "market_cap": 530914464,
     "enterprise_value": 213829280,
     "shares_outstanding": 194474154,
@@ -553,7 +553,7 @@
   },
   {
     "ticker": "ALVO",
-    "price": 3.200000047683716,
+    "price": 3.5299999713897705,
     "market_cap": 1214275840,
     "enterprise_value": 2601481728,
     "shares_outstanding": 312153164,
@@ -577,7 +577,7 @@
   },
   {
     "ticker": "AMGN",
-    "price": 395.1700134277344,
+    "price": 387.6400146484375,
     "market_cap": 181163884544,
     "enterprise_value": 233017131008,
     "shares_outstanding": 539708274,
@@ -601,7 +601,7 @@
   },
   {
     "ticker": "AMLX",
-    "price": 19.405000686645508,
+    "price": 19.729999542236328,
     "market_cap": 1733394688,
     "enterprise_value": 1399217024,
     "shares_outstanding": 111186317,
@@ -625,7 +625,7 @@
   },
   {
     "ticker": "AMPH",
-    "price": 20.34000015258789,
+    "price": 20.579999923706055,
     "market_cap": 847024960,
     "enterprise_value": 1274521600,
     "shares_outstanding": 44092919,
@@ -649,7 +649,7 @@
   },
   {
     "ticker": "AMRX",
-    "price": 18.959999084472656,
+    "price": 19.100000381469727,
     "market_cap": 5157003776,
     "enterprise_value": 7765344256,
     "shares_outstanding": 319022792,
@@ -673,7 +673,7 @@
   },
   {
     "ticker": "ANAB",
-    "price": 52.564998626708984,
+    "price": 52.13999938964844,
     "market_cap": 1666608640,
     "enterprise_value": 1667403008,
     "shares_outstanding": 29100902,
@@ -697,7 +697,7 @@
   },
   {
     "ticker": "ANIP",
-    "price": 80.0999984741211,
+    "price": 81.77999877929688,
     "market_cap": 1810698624,
     "enterprise_value": 2064132352,
     "shares_outstanding": 22734618,
@@ -721,7 +721,7 @@
   },
   {
     "ticker": "ANNX",
-    "price": 4.901000022888184,
+    "price": 4.860000133514404,
     "market_cap": 805286080,
     "enterprise_value": 540977280,
     "shares_outstanding": 163842538,
@@ -745,7 +745,7 @@
   },
   {
     "ticker": "ANRO",
-    "price": 27.489999771118164,
+    "price": 26.719999313354492,
     "market_cap": 790315520,
     "enterprise_value": 496425728,
     "shares_outstanding": 35093940,
@@ -769,7 +769,7 @@
   },
   {
     "ticker": "APGE",
-    "price": 134.1699981689453,
+    "price": 134.1999969482422,
     "market_cap": 6828769792,
     "enterprise_value": 5336733184,
     "shares_outstanding": 61902733,
@@ -817,7 +817,7 @@
   },
   {
     "ticker": "AQST",
-    "price": 3.75,
+    "price": 3.5999999046325684,
     "market_cap": 585224832,
     "enterprise_value": 467264512,
     "shares_outstanding": 125450119,
@@ -841,7 +841,7 @@
   },
   {
     "ticker": "ARCT",
-    "price": 5.820000171661377,
+    "price": 5.789999961853027,
     "market_cap": 212604544,
     "enterprise_value": 15552713,
     "shares_outstanding": 28423069,
@@ -865,7 +865,7 @@
   },
   {
     "ticker": "ARDX",
-    "price": 5.070000171661377,
+    "price": 5.0,
     "market_cap": 1456238208,
     "enterprise_value": 1396710656,
     "shares_outstanding": 247029387,
@@ -889,7 +889,7 @@
   },
   {
     "ticker": "ARGX",
-    "price": 879.364990234375,
+    "price": 882.5599975585938,
     "market_cap": 55089000448,
     "enterprise_value": 1358647787520,
     "shares_outstanding": 62187771,
@@ -913,7 +913,7 @@
   },
   {
     "ticker": "ARQT",
-    "price": 27.86009979248047,
+    "price": 27.860000610351562,
     "market_cap": 3230903552,
     "enterprise_value": 3101561088,
     "shares_outstanding": 125083374,
@@ -937,7 +937,7 @@
   },
   {
     "ticker": "ARTV",
-    "price": 10.59000015258789,
+    "price": 10.020000457763672,
     "market_cap": 463774368,
     "enterprise_value": 143706544,
     "shares_outstanding": 48588198,
@@ -961,7 +961,7 @@
   },
   {
     "ticker": "ARVN",
-    "price": 8.260000228881836,
+    "price": 8.220000267028809,
     "market_cap": 490361120,
     "enterprise_value": -127752712,
     "shares_outstanding": 64521198,
@@ -985,7 +985,7 @@
   },
   {
     "ticker": "ARWR",
-    "price": 87.0199966430664,
+    "price": 86.22000122070312,
     "market_cap": 11472100352,
     "enterprise_value": 10369140736,
     "shares_outstanding": 140857021,
@@ -1009,7 +1009,7 @@
   },
   {
     "ticker": "ASMB",
-    "price": 25.75,
+    "price": 25.110000610351562,
     "market_cap": 488396128,
     "enterprise_value": 146664544,
     "shares_outstanding": 19817250,
@@ -1033,7 +1033,7 @@
   },
   {
     "ticker": "ASND",
-    "price": 257.4949951171875,
+    "price": 252.0500030517578,
     "market_cap": 15133986816,
     "enterprise_value": 14684044288,
     "shares_outstanding": 65576126,
@@ -1057,7 +1057,7 @@
   },
   {
     "ticker": "ATAI",
-    "price": 7.170000076293945,
+    "price": 7.179999828338623,
     "market_cap": 1498438528,
     "enterprise_value": 1298676992,
     "shares_outstanding": 368166674,
@@ -1081,7 +1081,7 @@
   },
   {
     "ticker": "AUPH",
-    "price": 15.086099624633789,
+    "price": 15.180000305175781,
     "market_cap": 2100708224,
     "enterprise_value": 1776035072,
     "shares_outstanding": 128601671,
@@ -1105,7 +1105,7 @@
   },
   {
     "ticker": "AURA",
-    "price": 7.03000020980835,
+    "price": 7.010000228881836,
     "market_cap": 639445888,
     "enterprise_value": 551525568,
     "shares_outstanding": 103386558,
@@ -1153,7 +1153,7 @@
   },
   {
     "ticker": "AVBP",
-    "price": 30.209999084472656,
+    "price": 30.040000915527344,
     "market_cap": 1471069056,
     "enterprise_value": 1086656512,
     "shares_outstanding": 46574928,
@@ -1177,7 +1177,7 @@
   },
   {
     "ticker": "AVIR",
-    "price": 4.614999771118164,
+    "price": 4.619999885559082,
     "market_cap": 347717728,
     "enterprise_value": 85543440,
     "shares_outstanding": 80027099,
@@ -1201,7 +1201,7 @@
   },
   {
     "ticker": "AVTR",
-    "price": 14.260000228881836,
+    "price": 14.380000114440918,
     "market_cap": 6530554880,
     "enterprise_value": 10070969344,
     "shares_outstanding": 682755402,
@@ -1225,7 +1225,7 @@
   },
   {
     "ticker": "AVXL",
-    "price": 2.555000066757202,
+    "price": 2.490000009536743,
     "market_cap": 246043520,
     "enterprise_value": 101783832,
     "shares_outstanding": 92671758,
@@ -1249,7 +1249,7 @@
   },
   {
     "ticker": "AXSM",
-    "price": 234.65499877929688,
+    "price": 227.4199981689453,
     "market_cap": 12895302656,
     "enterprise_value": 12878023680,
     "shares_outstanding": 51459766,
@@ -1273,7 +1273,7 @@
   },
   {
     "ticker": "AZN",
-    "price": 173.9600067138672,
+    "price": 173.3000030517578,
     "market_cap": 271873884160,
     "enterprise_value": 303226781696,
     "shares_outstanding": 1550862203,
@@ -1297,7 +1297,7 @@
   },
   {
     "ticker": "BBIO",
-    "price": 85.29499816894531,
+    "price": 83.54000091552734,
     "market_cap": 13114868736,
     "enterprise_value": 14613710848,
     "shares_outstanding": 195861242,
@@ -1321,7 +1321,7 @@
   },
   {
     "ticker": "BBOT",
-    "price": 8.619999885559082,
+    "price": 8.234999656677246,
     "market_cap": 614421504,
     "enterprise_value": 369596928,
     "shares_outstanding": 80107104,
@@ -1345,7 +1345,7 @@
   },
   {
     "ticker": "BCAX",
-    "price": 26.649999618530273,
+    "price": 25.889999389648438,
     "market_cap": 1521701504,
     "enterprise_value": 903887872,
     "shares_outstanding": 65703866,
@@ -1369,7 +1369,7 @@
   },
   {
     "ticker": "BCRX",
-    "price": 9.744999885559082,
+    "price": 9.529999732971191,
     "market_cap": 2319234304,
     "enterprise_value": 2886813952,
     "shares_outstanding": 254162660,
@@ -1393,7 +1393,7 @@
   },
   {
     "ticker": "BCYC",
-    "price": 4.010000228881836,
+    "price": 3.859999895095825,
     "market_cap": 278895840,
     "enterprise_value": -263495872,
     "shares_outstanding": 50373281,
@@ -1417,7 +1417,7 @@
   },
   {
     "ticker": "BDTX",
-    "price": 1.7450000047683716,
+    "price": 1.659999966621399,
     "market_cap": 93688400,
     "enterprise_value": -4109019,
     "shares_outstanding": 57301774,
@@ -1441,7 +1441,7 @@
   },
   {
     "ticker": "BEAM",
-    "price": 26.31999969482422,
+    "price": 26.020000457763672,
     "market_cap": 3446453760,
     "enterprise_value": 2123810944,
     "shares_outstanding": 102879214,
@@ -1465,7 +1465,7 @@
   },
   {
     "ticker": "BHVN",
-    "price": 14.005000114440918,
+    "price": 13.430000305175781,
     "market_cap": 2030314880,
     "enterprise_value": 1758640384,
     "shares_outstanding": 150560990,
@@ -1489,7 +1489,7 @@
   },
   {
     "ticker": "BIIB",
-    "price": 215.57000732421875,
+    "price": 209.22999572753906,
     "market_cap": 28832317440,
     "enterprise_value": 31158497280,
     "shares_outstanding": 147637117,
@@ -1513,7 +1513,7 @@
   },
   {
     "ticker": "BIOA",
-    "price": 21.752899169921875,
+    "price": 22.190000534057617,
     "market_cap": 913503680,
     "enterprise_value": 531676512,
     "shares_outstanding": 44452734,
@@ -1537,7 +1537,7 @@
   },
   {
     "ticker": "BLTE",
-    "price": 156.39999389648438,
+    "price": 152.44000244140625,
     "market_cap": 5864849920,
     "enterprise_value": null,
     "shares_outstanding": 40085091,
@@ -1561,7 +1561,7 @@
   },
   {
     "ticker": "BMEA",
-    "price": 1.2599999904632568,
+    "price": 1.2200000286102295,
     "market_cap": 84228848,
     "enterprise_value": 40413352,
     "shares_outstanding": 72299440,
@@ -1585,7 +1585,7 @@
   },
   {
     "ticker": "BMRN",
-    "price": 61.81999969482422,
+    "price": 61.369998931884766,
     "market_cap": 10666401792,
     "enterprise_value": 9871004672,
     "shares_outstanding": 193284438,
@@ -1609,7 +1609,7 @@
   },
   {
     "ticker": "BNTX",
-    "price": 92.8499984741211,
+    "price": 92.94999694824219,
     "market_cap": 23030169600,
     "enterprise_value": 9229341696,
     "shares_outstanding": 252884261,
@@ -1633,7 +1633,7 @@
   },
   {
     "ticker": "BRKR",
-    "price": 63.45000076293945,
+    "price": 61.7400016784668,
     "market_cap": 8655549440,
     "enterprise_value": 10119489536,
     "shares_outstanding": 152225624,
@@ -1657,7 +1657,7 @@
   },
   {
     "ticker": "CABA",
-    "price": 2.75,
+    "price": 2.619999885559082,
     "market_cap": 470413088,
     "enterprise_value": 366368416,
     "shares_outstanding": 163054796,
@@ -1681,7 +1681,7 @@
   },
   {
     "ticker": "CADL",
-    "price": 9.78499984741211,
+    "price": 9.399999618530273,
     "market_cap": 598617856,
     "enterprise_value": 438400800,
     "shares_outstanding": 73270239,
@@ -1705,7 +1705,7 @@
   },
   {
     "ticker": "CAI",
-    "price": 15.890000343322754,
+    "price": 15.59000015258789,
     "market_cap": 5178710528,
     "enterprise_value": 4690095104,
     "shares_outstanding": 282680695,
@@ -1729,7 +1729,7 @@
   },
   {
     "ticker": "CATX",
-    "price": 2.859999895095825,
+    "price": 2.869999885559082,
     "market_cap": 341568352,
     "enterprise_value": 67457360,
     "shares_outstanding": 114046197,
@@ -1753,7 +1753,7 @@
   },
   {
     "ticker": "CCCC",
-    "price": 3.6098999977111816,
+    "price": 3.5199999809265137,
     "market_cap": 447244416,
     "enterprise_value": 247354128,
     "shares_outstanding": 110567222,
@@ -1777,7 +1777,7 @@
   },
   {
     "ticker": "CDNA",
-    "price": 36.34000015258789,
+    "price": 35.40999984741211,
     "market_cap": 1316800128,
     "enterprise_value": 1038404928,
     "shares_outstanding": 51659481,
@@ -1801,7 +1801,7 @@
   },
   {
     "ticker": "CDXS",
-    "price": 1.5099999904632568,
+    "price": 1.4700000286102295,
     "market_cap": 226786928,
     "enterprise_value": 233186480,
     "shares_outstanding": 90896567,
@@ -1825,7 +1825,7 @@
   },
   {
     "ticker": "CELC",
-    "price": 82.62000274658203,
+    "price": 83.26000213623047,
     "market_cap": 4266806528,
     "enterprise_value": 4194649344,
     "shares_outstanding": 48766288,
@@ -1849,7 +1849,7 @@
   },
   {
     "ticker": "CERS",
-    "price": 2.9040000438690186,
+    "price": 2.869999885559082,
     "market_cap": 533983328,
     "enterprise_value": 512577376,
     "shares_outstanding": 200368974,
@@ -1873,7 +1873,7 @@
   },
   {
     "ticker": "CGEM",
-    "price": 17.8700008392334,
+    "price": 17.209999084472656,
     "market_cap": 941537280,
     "enterprise_value": 483254528,
     "shares_outstanding": 61458046,
@@ -1897,7 +1897,7 @@
   },
   {
     "ticker": "CGON",
-    "price": 72.75499725341797,
+    "price": 69.12000274658203,
     "market_cap": 5327429632,
     "enterprise_value": 4248178176,
     "shares_outstanding": 88202473,
@@ -1921,7 +1921,7 @@
   },
   {
     "ticker": "CHRS",
-    "price": 1.4700000286102295,
+    "price": 1.409999966621399,
     "market_cap": 217492352,
     "enterprise_value": 100188864,
     "shares_outstanding": 154249900,
@@ -1945,7 +1945,7 @@
   },
   {
     "ticker": "CLDX",
-    "price": 35.97999954223633,
+    "price": 37.5099983215332,
     "market_cap": 2564335872,
     "enterprise_value": 2087313792,
     "shares_outstanding": 78492072,
@@ -1969,7 +1969,7 @@
   },
   {
     "ticker": "CLLS",
-    "price": 2.809999942779541,
+    "price": 2.859999895095825,
     "market_cap": 312056544,
     "enterprise_value": 118346704,
     "shares_outstanding": 72611481,
@@ -1993,7 +1993,7 @@
   },
   {
     "ticker": "CLYM",
-    "price": 12.46500015258789,
+    "price": 12.109999656677246,
     "market_cap": 655661632,
     "enterprise_value": 504175200,
     "shares_outstanding": 57263023,
@@ -2017,7 +2017,7 @@
   },
   {
     "ticker": "CMPS",
-    "price": 10.805000305175781,
+    "price": 10.899999618530273,
     "market_cap": 1673371392,
     "enterprise_value": 1137866624,
     "shares_outstanding": 134949320,
@@ -2041,7 +2041,7 @@
   },
   {
     "ticker": "CMPX",
-    "price": 2.015000104904175,
+    "price": 1.940000057220459,
     "market_cap": 368279808,
     "enterprise_value": 169877200,
     "shares_outstanding": 180087915,
@@ -2089,7 +2089,7 @@
   },
   {
     "ticker": "CNTX",
-    "price": 0.599399983882904,
+    "price": 0.6169999837875366,
     "market_cap": 56707828,
     "enterprise_value": 5502857,
     "shares_outstanding": 91879177,
@@ -2113,7 +2113,7 @@
   },
   {
     "ticker": "COGT",
-    "price": 40.60499954223633,
+    "price": 39.56999969482422,
     "market_cap": 5865899008,
     "enterprise_value": 5089085440,
     "shares_outstanding": 170868004,
@@ -2137,7 +2137,7 @@
   },
   {
     "ticker": "COLL",
-    "price": 36.220001220703125,
+    "price": 36.290000915527344,
     "market_cap": 1089126400,
     "enterprise_value": 1631767424,
     "shares_outstanding": 32433779,
@@ -2161,7 +2161,7 @@
   },
   {
     "ticker": "CRBU",
-    "price": 1.5099999904632568,
+    "price": 1.4700000286102295,
     "market_cap": 160176624,
     "enterprise_value": 76935168,
     "shares_outstanding": 99180575,
@@ -2185,7 +2185,7 @@
   },
   {
     "ticker": "CRL",
-    "price": 241.7550048828125,
+    "price": 234.8000030517578,
     "market_cap": 8921626624,
     "enterprise_value": 11821335552,
     "shares_outstanding": 48167730,
@@ -2209,7 +2209,7 @@
   },
   {
     "ticker": "CRMD",
-    "price": 7.260000228881836,
+    "price": 7.190000057220459,
     "market_cap": 688415296,
     "enterprise_value": 648721408,
     "shares_outstanding": 78451891,
@@ -2233,7 +2233,7 @@
   },
   {
     "ticker": "CRNX",
-    "price": 83.86000061035156,
+    "price": 83.87999725341797,
     "market_cap": 3733637632,
     "enterprise_value": 2446956288,
     "shares_outstanding": 105440208,
@@ -2257,7 +2257,7 @@
   },
   {
     "ticker": "CRSP",
-    "price": 47.65999984741211,
+    "price": 47.63999938964844,
     "market_cap": 5254128128,
     "enterprise_value": 3363123200,
     "shares_outstanding": 98484128,
@@ -2281,7 +2281,7 @@
   },
   {
     "ticker": "CRVS",
-    "price": 13.235099792480469,
+    "price": 13.039999961853027,
     "market_cap": 993948800,
     "enterprise_value": 751341568,
     "shares_outstanding": 84090424,
@@ -2305,7 +2305,7 @@
   },
   {
     "ticker": "CSTL",
-    "price": 24.360000610351562,
+    "price": 24.459999084472656,
     "market_cap": 626920128,
     "enterprise_value": 395589824,
     "shares_outstanding": 30329952,
@@ -2329,7 +2329,7 @@
   },
   {
     "ticker": "CTKB",
-    "price": 4.510000228881836,
+    "price": 4.380000114440918,
     "market_cap": 501718944,
     "enterprise_value": 293450176,
     "shares_outstanding": 129142587,
@@ -2353,7 +2353,7 @@
   },
   {
     "ticker": "CTMX",
-    "price": 3.2360000610351562,
+    "price": 3.1700000762939453,
     "market_cap": 649843200,
     "enterprise_value": 294018560,
     "shares_outstanding": 217702919,
@@ -2377,7 +2377,7 @@
   },
   {
     "ticker": "CTNM",
-    "price": 14.170000076293945,
+    "price": 14.380000114440918,
     "market_cap": 444150144,
     "enterprise_value": 224217072,
     "shares_outstanding": 32723877,
@@ -2401,7 +2401,7 @@
   },
   {
     "ticker": "CYTK",
-    "price": 79.51000213623047,
+    "price": 78.38500213623047,
     "market_cap": 10600968192,
     "enterprise_value": 9983646720,
     "shares_outstanding": 135770593,
@@ -2425,7 +2425,7 @@
   },
   {
     "ticker": "DFTX",
-    "price": 41.7599983215332,
+    "price": 42.15999984741211,
     "market_cap": 2652962304,
     "enterprise_value": 2302404352,
     "shares_outstanding": 109066783,
@@ -2449,7 +2449,7 @@
   },
   {
     "ticker": "DNA",
-    "price": 7.906499862670898,
+    "price": 7.619999885559082,
     "market_cap": 578774976,
     "enterprise_value": 573558080,
     "shares_outstanding": 53361141,
@@ -2473,7 +2473,7 @@
   },
   {
     "ticker": "DNLI",
-    "price": 24.100000381469727,
+    "price": 23.850000381469727,
     "market_cap": 3740788736,
     "enterprise_value": 2532867584,
     "shares_outstanding": 158709737,
@@ -2497,7 +2497,7 @@
   },
   {
     "ticker": "DNTH",
-    "price": 103.30999755859375,
+    "price": 104.08999633789062,
     "market_cap": 4478257664,
     "enterprise_value": 3202177536,
     "shares_outstanding": 54666233,
@@ -2521,7 +2521,7 @@
   },
   {
     "ticker": "DRMA",
-    "price": 1.1700999736785889,
+    "price": 1.1799999475479126,
     "market_cap": 4927125,
     "enterprise_value": -2158931,
     "shares_outstanding": 4022143,
@@ -2545,7 +2545,7 @@
   },
   {
     "ticker": "DRUG",
-    "price": 72.87999725341797,
+    "price": 71.05999755859375,
     "market_cap": 586466880,
     "enterprise_value": 277347744,
     "shares_outstanding": 9812061,
@@ -2569,7 +2569,7 @@
   },
   {
     "ticker": "DSGN",
-    "price": 12.010000228881836,
+    "price": 12.020000457763672,
     "market_cap": 770094528,
     "enterprise_value": 449449760,
     "shares_outstanding": 62456974,
@@ -2593,7 +2593,7 @@
   },
   {
     "ticker": "DYN",
-    "price": 25.799999237060547,
+    "price": 25.100000381469727,
     "market_cap": 3200475136,
     "enterprise_value": 2183743232,
     "shares_outstanding": 165313796,
@@ -2617,7 +2617,7 @@
   },
   {
     "ticker": "EBS",
-    "price": 7.230000019073486,
+    "price": 7.349999904632568,
     "market_cap": 412770368,
     "enterprise_value": 824171264,
     "shares_outstanding": 51596296,
@@ -2641,7 +2641,7 @@
   },
   {
     "ticker": "EDIT",
-    "price": 2.615000009536743,
+    "price": 2.5999999046325684,
     "market_cap": 404371936,
     "enterprise_value": 124707824,
     "shares_outstanding": 153461838,
@@ -2665,7 +2665,7 @@
   },
   {
     "ticker": "ELDN",
-    "price": 3.450000047683716,
+    "price": 3.309999942779541,
     "market_cap": 296401248,
     "enterprise_value": 158079632,
     "shares_outstanding": 77187823,
@@ -2689,7 +2689,7 @@
   },
   {
     "ticker": "ELVN",
-    "price": 52.599998474121094,
+    "price": 52.970001220703125,
     "market_cap": 3138532096,
     "enterprise_value": 2139406464,
     "shares_outstanding": 69838280,
@@ -2713,7 +2713,7 @@
   },
   {
     "ticker": "ENGN",
-    "price": 1.7300000190734863,
+    "price": 1.7899999618530273,
     "market_cap": 114886936,
     "enterprise_value": -107882432,
     "shares_outstanding": 66989466,
@@ -2737,7 +2737,7 @@
   },
   {
     "ticker": "ENTA",
-    "price": 12.614999771118164,
+    "price": 12.449999809265137,
     "market_cap": 367507104,
     "enterprise_value": 373819040,
     "shares_outstanding": 29078380,
@@ -2761,7 +2761,7 @@
   },
   {
     "ticker": "EOLS",
-    "price": 6.170000076293945,
+    "price": 6.03000020980835,
     "market_cap": 434970624,
     "enterprise_value": 551728000,
     "shares_outstanding": 65854751,
@@ -2785,7 +2785,7 @@
   },
   {
     "ticker": "EPRX",
-    "price": 6.099999904632568,
+    "price": 5.96999979019165,
     "market_cap": 412539680,
     "enterprise_value": 285191040,
     "shares_outstanding": 65326947,
@@ -2809,7 +2809,7 @@
   },
   {
     "ticker": "ERAS",
-    "price": 17.729999542236328,
+    "price": 17.719999313354492,
     "market_cap": 4305581056,
     "enterprise_value": 3963138048,
     "shares_outstanding": 310984542,
@@ -2857,7 +2857,7 @@
   },
   {
     "ticker": "ETON",
-    "price": 47.255001068115234,
+    "price": 48.130001068115234,
     "market_cap": 889703744,
     "enterprise_value": 897743808,
     "shares_outstanding": 27392358,
@@ -2881,7 +2881,7 @@
   },
   {
     "ticker": "EWTX",
-    "price": 40.005001068115234,
+    "price": 39.75,
     "market_cap": 3942207744,
     "enterprise_value": 3157013504,
     "shares_outstanding": 107593006,
@@ -2905,7 +2905,7 @@
   },
   {
     "ticker": "EXEL",
-    "price": 56.0,
+    "price": 55.33000183105469,
     "market_cap": 13095600128,
     "enterprise_value": 12487933952,
     "shares_outstanding": 251355083,
@@ -2929,7 +2929,7 @@
   },
   {
     "ticker": "EYPT",
-    "price": 11.984999656677246,
+    "price": 11.920000076293945,
     "market_cap": 1123054208,
     "enterprise_value": 1195238656,
     "shares_outstanding": 83841298,
@@ -2953,7 +2953,7 @@
   },
   {
     "ticker": "FATE",
-    "price": 2.2899999618530273,
+    "price": 2.359999895095825,
     "market_cap": 233118368,
     "enterprise_value": 123428456,
     "shares_outstanding": 116559186,
@@ -2977,7 +2977,7 @@
   },
   {
     "ticker": "FDMT",
-    "price": 9.720000267028809,
+    "price": 9.609999656677246,
     "market_cap": 504988640,
     "enterprise_value": 82878120,
     "shares_outstanding": 52276254,
@@ -3001,7 +3001,7 @@
   },
   {
     "ticker": "FHTX",
-    "price": 5.130000114440918,
+    "price": 4.739999771118164,
     "market_cap": 242488496,
     "enterprise_value": 93805824,
     "shares_outstanding": 58713922,
@@ -3025,7 +3025,7 @@
   },
   {
     "ticker": "FLGT",
-    "price": 19.84000015258789,
+    "price": 19.639999389648438,
     "market_cap": 512063264,
     "enterprise_value": 239139200,
     "shares_outstanding": 28400623,
@@ -3049,7 +3049,7 @@
   },
   {
     "ticker": "FTRE",
-    "price": 20.530000686645508,
+    "price": 20.399999618530273,
     "market_cap": 1436742016,
     "enterprise_value": 2482808064,
     "shares_outstanding": 94584730,
@@ -3073,7 +3073,7 @@
   },
   {
     "ticker": "FULC",
-    "price": 3.7200000286102295,
+    "price": 3.619999885559082,
     "market_cap": 238214128,
     "enterprise_value": -96897712,
     "shares_outstanding": 66633321,
@@ -3097,7 +3097,7 @@
   },
   {
     "ticker": "GERN",
-    "price": 1.434999942779541,
+    "price": 1.399999976158142,
     "market_cap": 817939200,
     "enterprise_value": 566659776,
     "shares_outstanding": 641520974,
@@ -3121,7 +3121,7 @@
   },
   {
     "ticker": "GH",
-    "price": 145.1300048828125,
+    "price": 144.07000732421875,
     "market_cap": 17454129152,
     "enterprise_value": 17487071232,
     "shares_outstanding": 132599929,
@@ -3145,7 +3145,7 @@
   },
   {
     "ticker": "GHRS",
-    "price": 27.985000610351562,
+    "price": 27.979999542236328,
     "market_cap": 1576632960,
     "enterprise_value": 972454336,
     "shares_outstanding": 68608919,
@@ -3169,7 +3169,7 @@
   },
   {
     "ticker": "GILD",
-    "price": 134.06939697265625,
+    "price": 132.72999572753906,
     "market_cap": 152638603264,
     "enterprise_value": 170237935616,
     "shares_outstanding": 1241569874,
@@ -3217,7 +3217,7 @@
   },
   {
     "ticker": "GLUE",
-    "price": 21.979999542236328,
+    "price": 21.559999465942383,
     "market_cap": 1520629504,
     "enterprise_value": 873198464,
     "shares_outstanding": 84479418,
@@ -3241,7 +3241,7 @@
   },
   {
     "ticker": "GMAB",
-    "price": 28.81999969482422,
+    "price": 28.520000457763672,
     "market_cap": 15520251904,
     "enterprise_value": 19012319232,
     "shares_outstanding": 613934040,
@@ -3265,7 +3265,7 @@
   },
   {
     "ticker": "GOSS",
-    "price": 0.18559999763965607,
+    "price": 0.20669999718666077,
     "market_cap": 81930712,
     "enterprise_value": 143076560,
     "shares_outstanding": 488846722,
@@ -3289,7 +3289,7 @@
   },
   {
     "ticker": "GPCR",
-    "price": 47.834999084472656,
+    "price": 47.349998474121094,
     "market_cap": 3200485120,
     "enterprise_value": 1597095424,
     "shares_outstanding": 71074516,
@@ -3313,7 +3313,7 @@
   },
   {
     "ticker": "GRAL",
-    "price": 64.49500274658203,
+    "price": 63.439998626708984,
     "market_cap": 2663408128,
     "enterprise_value": 1729533184,
     "shares_outstanding": 42916593,
@@ -3337,7 +3337,7 @@
   },
   {
     "ticker": "GRFS",
-    "price": 8.239999771118164,
+    "price": 8.149999618530273,
     "market_cap": 5039660032,
     "enterprise_value": 21687134208,
     "shares_outstanding": 680575312,
@@ -3361,7 +3361,7 @@
   },
   {
     "ticker": "HALO",
-    "price": 83.8949966430664,
+    "price": 83.27999877929688,
     "market_cap": 8065683968,
     "enterprise_value": 10118643712,
     "shares_outstanding": 118613000,
@@ -3385,7 +3385,7 @@
   },
   {
     "ticker": "HOWL",
-    "price": 0.4650000035762787,
+    "price": 0.46000000834465027,
     "market_cap": 17266450,
     "enterprise_value": 8695854,
     "shares_outstanding": 48596817,
@@ -3409,7 +3409,7 @@
   },
   {
     "ticker": "HRMY",
-    "price": 35.880001068115234,
+    "price": 35.86000061035156,
     "market_cap": 1942299264,
     "enterprise_value": 1482200192,
     "shares_outstanding": 57892676,
@@ -3433,7 +3433,7 @@
   },
   {
     "ticker": "HROW",
-    "price": 38.91999816894531,
+    "price": 38.68000030517578,
     "market_cap": 1590901632,
     "enterprise_value": 1635704064,
     "shares_outstanding": 37275107,
@@ -3457,7 +3457,7 @@
   },
   {
     "ticker": "HRTX",
-    "price": 0.4991999864578247,
+    "price": 0.4934999942779541,
     "market_cap": 75389976,
     "enterprise_value": 170204720,
     "shares_outstanding": 189279369,
@@ -3481,7 +3481,7 @@
   },
   {
     "ticker": "HUMA",
-    "price": 0.6315000057220459,
+    "price": 0.6245999932289124,
     "market_cap": 248714224,
     "enterprise_value": 246641680,
     "shares_outstanding": 269638156,
@@ -3505,7 +3505,7 @@
   },
   {
     "ticker": "IBRX",
-    "price": 6.90500020980835,
+    "price": 6.829999923706055,
     "market_cap": 7458312192,
     "enterprise_value": 7782827520,
     "shares_outstanding": 1047353977,
@@ -3529,7 +3529,7 @@
   },
   {
     "ticker": "IDYA",
-    "price": 36.1150016784668,
+    "price": 35.59000015258789,
     "market_cap": 2946097408,
     "enterprise_value": 2043307264,
     "shares_outstanding": 94608133,
@@ -3553,7 +3553,7 @@
   },
   {
     "ticker": "IKT",
-    "price": 2.2799999713897705,
+    "price": 2.2100000381469727,
     "market_cap": 230396960,
     "enterprise_value": 114236488,
     "shares_outstanding": 132032636,
@@ -3577,7 +3577,7 @@
   },
   {
     "ticker": "ILMN",
-    "price": 196.35000610351562,
+    "price": 194.82000732421875,
     "market_cap": 24533293056,
     "enterprise_value": 26244564992,
     "shares_outstanding": 151300000,
@@ -3601,7 +3601,7 @@
   },
   {
     "ticker": "IMCR",
-    "price": 33.439998626708984,
+    "price": 33.41999816894531,
     "market_cap": 1456790016,
     "enterprise_value": 1023670208,
     "shares_outstanding": 50865574,
@@ -3625,7 +3625,7 @@
   },
   {
     "ticker": "IMMP",
-    "price": 0.3801000118255615,
+    "price": 0.3808000087738037,
     "market_cap": 55456132,
     "enterprise_value": -45425940,
     "shares_outstanding": 147372131,
@@ -3649,7 +3649,7 @@
   },
   {
     "ticker": "IMRX",
-    "price": 4.215000152587891,
+    "price": 4.054999828338623,
     "market_cap": 285639008,
     "enterprise_value": 112295928,
     "shares_outstanding": 64697402,
@@ -3673,7 +3673,7 @@
   },
   {
     "ticker": "IMTX",
-    "price": 8.670000076293945,
+    "price": 8.989999771118164,
     "market_cap": 1328463232,
     "enterprise_value": 803870016,
     "shares_outstanding": 136673161,
@@ -3697,7 +3697,7 @@
   },
   {
     "ticker": "IMVT",
-    "price": 38.58000183105469,
+    "price": 38.61000061035156,
     "market_cap": 7157068800,
     "enterprise_value": 5998394880,
     "shares_outstanding": 205308917,
@@ -3721,7 +3721,7 @@
   },
   {
     "ticker": "INBX",
-    "price": 79.04000091552734,
+    "price": 79.25,
     "market_cap": 1342413568,
     "enterprise_value": 1385275136,
     "shares_outstanding": 14671186,
@@ -3745,7 +3745,7 @@
   },
   {
     "ticker": "INCY",
-    "price": 128.66000366210938,
+    "price": 127.0999984741211,
     "market_cap": 19488749568,
     "enterprise_value": 15951875072,
     "shares_outstanding": 199782155,
@@ -3769,7 +3769,7 @@
   },
   {
     "ticker": "INDV",
-    "price": 40.685001373291016,
+    "price": 40.099998474121094,
     "market_cap": 4542602240,
     "enterprise_value": 4968257536,
     "shares_outstanding": 118204585,
@@ -3793,7 +3793,7 @@
   },
   {
     "ticker": "INSM",
-    "price": 104.51000213623047,
+    "price": 103.12000274658203,
     "market_cap": 20655423488,
     "enterprise_value": 20223141888,
     "shares_outstanding": 216752451,
@@ -3817,7 +3817,7 @@
   },
   {
     "ticker": "INVA",
-    "price": 21.770000457763672,
+    "price": 21.639999389648438,
     "market_cap": 1666601600,
     "enterprise_value": 1388302848,
     "shares_outstanding": 73808749,
@@ -3841,7 +3841,7 @@
   },
   {
     "ticker": "IONS",
-    "price": 53.95000076293945,
+    "price": 54.040000915527344,
     "market_cap": 12340155392,
     "enterprise_value": 12711621632,
     "shares_outstanding": 165262556,
@@ -3865,7 +3865,7 @@
   },
   {
     "ticker": "IOVA",
-    "price": 4.605000019073486,
+    "price": 4.559999942779541,
     "market_cap": 1756986880,
     "enterprise_value": 1439974144,
     "shares_outstanding": 446502396,
@@ -3889,7 +3889,7 @@
   },
   {
     "ticker": "IRON",
-    "price": 73.3499984741211,
+    "price": 73.66999816894531,
     "market_cap": 2668588288,
     "enterprise_value": 1968345344,
     "shares_outstanding": 38199089,
@@ -3913,7 +3913,7 @@
   },
   {
     "ticker": "IRWD",
-    "price": 3.7750000953674316,
+    "price": 3.559999942779541,
     "market_cap": 583554560,
     "enterprise_value": 979370048,
     "shares_outstanding": 164613406,
@@ -3937,7 +3937,7 @@
   },
   {
     "ticker": "IVVD",
-    "price": 0.5831000208854675,
+    "price": 0.5429999828338623,
     "market_cap": 285533536,
     "enterprise_value": 87203928,
     "shares_outstanding": 294607452,
@@ -3961,7 +3961,7 @@
   },
   {
     "ticker": "JANX",
-    "price": 14.70989990234375,
+    "price": 14.960000038146973,
     "market_cap": 860489216,
     "enterprise_value": -99329352,
     "shares_outstanding": 60984354,
@@ -3985,7 +3985,7 @@
   },
   {
     "ticker": "JAZZ",
-    "price": 257.5350036621094,
+    "price": 255.97000122070312,
     "market_cap": 14075546624,
     "enterprise_value": 16777691136,
     "shares_outstanding": 62817628,
@@ -4009,7 +4009,7 @@
   },
   {
     "ticker": "JBIO",
-    "price": 19.600000381469727,
+    "price": 19.350000381469727,
     "market_cap": 1028227648,
     "enterprise_value": 456114848,
     "shares_outstanding": 60859875,
@@ -4033,7 +4033,7 @@
   },
   {
     "ticker": "KALA",
-    "price": 0.6545000076293945,
+    "price": 0.6733999848365784,
     "market_cap": 63205280,
     "enterprise_value": 49609072,
     "shares_outstanding": 18589787,
@@ -4081,7 +4081,7 @@
   },
   {
     "ticker": "KMDA",
-    "price": 7.05620002746582,
+    "price": 7.010000228881836,
     "market_cap": 421189632,
     "enterprise_value": 368831968,
     "shares_outstanding": 57686056,
@@ -4105,7 +4105,7 @@
   },
   {
     "ticker": "KNSA",
-    "price": 78.70999908447266,
+    "price": 80.91999816894531,
     "market_cap": 4238899968,
     "enterprise_value": 3564790272,
     "shares_outstanding": 46303276,
@@ -4129,7 +4129,7 @@
   },
   {
     "ticker": "KOD",
-    "price": 38.56999969482422,
+    "price": 40.0099983215332,
     "market_cap": 2217467136,
     "enterprise_value": 1943235328,
     "shares_outstanding": 62578441,
@@ -4153,7 +4153,7 @@
   },
   {
     "ticker": "KROS",
-    "price": 10.020000457763672,
+    "price": 9.970000267028809,
     "market_cap": 210585136,
     "enterprise_value": -66673876,
     "shares_outstanding": 19791837,
@@ -4177,7 +4177,7 @@
   },
   {
     "ticker": "KRYS",
-    "price": 357.7699890136719,
+    "price": 363.2799987792969,
     "market_cap": 10255712256,
     "enterprise_value": 8718575616,
     "shares_outstanding": 29479756,
@@ -4201,7 +4201,7 @@
   },
   {
     "ticker": "KURA",
-    "price": 9.170000076293945,
+    "price": 8.930000305175781,
     "market_cap": 869101056,
     "enterprise_value": 277929024,
     "shares_outstanding": 88774365,
@@ -4225,7 +4225,7 @@
   },
   {
     "ticker": "KYMR",
-    "price": 105.1449966430664,
+    "price": 105.25,
     "market_cap": 7391666688,
     "enterprise_value": 6622143488,
     "shares_outstanding": 82257588,
@@ -4249,7 +4249,7 @@
   },
   {
     "ticker": "KYTX",
-    "price": 7.309999942779541,
+    "price": 7.070000171661377,
     "market_cap": 484537824,
     "enterprise_value": 278807072,
     "shares_outstanding": 60795212,
@@ -4273,7 +4273,7 @@
   },
   {
     "ticker": "LAB",
-    "price": 0.8001999855041504,
+    "price": 0.8738999962806702,
     "market_cap": 325305664,
     "enterprise_value": -101015832,
     "shares_outstanding": 391462923,
@@ -4297,7 +4297,7 @@
   },
   {
     "ticker": "LBRX",
-    "price": 36.20500183105469,
+    "price": 39.0,
     "market_cap": 852843648,
     "enterprise_value": 431030208,
     "shares_outstanding": 28676652,
@@ -4321,7 +4321,7 @@
   },
   {
     "ticker": "LCTX",
-    "price": 1.0549999475479126,
+    "price": 1.059999942779541,
     "market_cap": 304143904,
     "enterprise_value": 246990960,
     "shares_outstanding": 249298295,
@@ -4345,7 +4345,7 @@
   },
   {
     "ticker": "LEGN",
-    "price": 19.05500030517578,
+    "price": 18.850000381469727,
     "market_cap": 5158922752,
     "enterprise_value": 5754694144,
     "shares_outstanding": 185739792,
@@ -4369,7 +4369,7 @@
   },
   {
     "ticker": "LENZ",
-    "price": 5.880000114440918,
+    "price": 5.71999979019165,
     "market_cap": 184990928,
     "enterprise_value": -53281352,
     "shares_outstanding": 31354394,
@@ -4393,7 +4393,7 @@
   },
   {
     "ticker": "LFCR",
-    "price": 4.34499979019165,
+    "price": 4.320000171661377,
     "market_cap": 208552304,
     "enterprise_value": 379237312,
     "shares_outstanding": 37509407,
@@ -4417,7 +4417,7 @@
   },
   {
     "ticker": "LGND",
-    "price": 296.57000732421875,
+    "price": 288.010009765625,
     "market_cap": 5450366464,
     "enterprise_value": 4788052992,
     "shares_outstanding": 20041061,
@@ -4441,7 +4441,7 @@
   },
   {
     "ticker": "LQDA",
-    "price": 85.82499694824219,
+    "price": 86.81999969482422,
     "market_cap": 6160938496,
     "enterprise_value": 6010037760,
     "shares_outstanding": 88928099,
@@ -4465,7 +4465,7 @@
   },
   {
     "ticker": "LRMR",
-    "price": 3.7850000858306885,
+    "price": 3.630000114440918,
     "market_cap": 370862080,
     "enterprise_value": 158296992,
     "shares_outstanding": 103882937,
@@ -4489,7 +4489,7 @@
   },
   {
     "ticker": "LXEO",
-    "price": 4.289999961853027,
+    "price": 4.309999942779541,
     "market_cap": 391822912,
     "enterprise_value": 187299760,
     "shares_outstanding": 78521634,
@@ -4513,7 +4513,7 @@
   },
   {
     "ticker": "LYEL",
-    "price": 13.085000038146973,
+    "price": 12.970000267028809,
     "market_cap": 293309472,
     "enterprise_value": 85104040,
     "shares_outstanding": 23334087,
@@ -4537,7 +4537,7 @@
   },
   {
     "ticker": "MAZE",
-    "price": 27.040000915527344,
+    "price": 27.270000457763672,
     "market_cap": 1403832448,
     "enterprise_value": 1029378944,
     "shares_outstanding": 55345261,
@@ -4561,7 +4561,7 @@
   },
   {
     "ticker": "MBX",
-    "price": 60.58000183105469,
+    "price": 63.959999084472656,
     "market_cap": 1981961344,
     "enterprise_value": 1468763264,
     "shares_outstanding": 47597536,
@@ -4585,7 +4585,7 @@
   },
   {
     "ticker": "MCRB",
-    "price": 4.780399799346924,
+    "price": 4.650000095367432,
     "market_cap": 62751892,
     "enterprise_value": 108478088,
     "shares_outstanding": 9683934,
@@ -4609,7 +4609,7 @@
   },
   {
     "ticker": "MDGL",
-    "price": 542.8200073242188,
+    "price": 546.8800048828125,
     "market_cap": 11700286464,
     "enterprise_value": 11089805312,
     "shares_outstanding": 23055659,
@@ -4633,7 +4633,7 @@
   },
   {
     "ticker": "MEDP",
-    "price": 568.85498046875,
+    "price": 584.9299926757812,
     "market_cap": 13054490624,
     "enterprise_value": 12676564992,
     "shares_outstanding": 28559689,
@@ -4657,7 +4657,7 @@
   },
   {
     "ticker": "MENS",
-    "price": 2.4200000762939453,
+    "price": 2.240000009536743,
     "market_cap": 120503848,
     "enterprise_value": 136147456,
     "shares_outstanding": 74233667,
@@ -4681,7 +4681,7 @@
   },
   {
     "ticker": "MESO",
-    "price": 14.229999542236328,
+    "price": 14.130000114440918,
     "market_cap": 1838397952,
     "enterprise_value": 1776877056,
     "shares_outstanding": 129282554,
@@ -4705,7 +4705,7 @@
   },
   {
     "ticker": "MGTX",
-    "price": 11.550000190734863,
+    "price": 11.619999885559082,
     "market_cap": 1067324672,
     "enterprise_value": 915230400,
     "shares_outstanding": 92609516,
@@ -4729,7 +4729,7 @@
   },
   {
     "ticker": "MIRM",
-    "price": 109.83999633789062,
+    "price": 107.56999969482422,
     "market_cap": 6512185344,
     "enterprise_value": 6130163712,
     "shares_outstanding": 60981227,
@@ -4753,7 +4753,7 @@
   },
   {
     "ticker": "MLTX",
-    "price": 18.68000030517578,
+    "price": 18.3799991607666,
     "market_cap": 1562118528,
     "enterprise_value": 1374199168,
     "shares_outstanding": 73615396,
@@ -4777,7 +4777,7 @@
   },
   {
     "ticker": "MLYS",
-    "price": 26.860000610351562,
+    "price": 26.350000381469727,
     "market_cap": 2192501504,
     "enterprise_value": 1333069440,
     "shares_outstanding": 88158479,
@@ -4801,7 +4801,7 @@
   },
   {
     "ticker": "MNKD",
-    "price": 3.890000104904175,
+    "price": 3.8499999046325684,
     "market_cap": 1194092416,
     "enterprise_value": 1495927168,
     "shares_outstanding": 308950166,
@@ -4825,7 +4825,7 @@
   },
   {
     "ticker": "MRNA",
-    "price": 55.900001525878906,
+    "price": 54.4900016784668,
     "market_cap": 25404241920,
     "enterprise_value": 18074957824,
     "shares_outstanding": 396786259,
@@ -4849,7 +4849,7 @@
   },
   {
     "ticker": "MRVI",
-    "price": 6.795000076293945,
+    "price": 6.590000152587891,
     "market_cap": 1901547264,
     "enterprise_value": 1045635904,
     "shares_outstanding": 147506164,
@@ -4873,7 +4873,7 @@
   },
   {
     "ticker": "MYGN",
-    "price": 5.260000228881836,
+    "price": 5.039999961853027,
     "market_cap": 424544672,
     "enterprise_value": 250704896,
     "shares_outstanding": 94448210,
@@ -4897,7 +4897,7 @@
   },
   {
     "ticker": "NAMS",
-    "price": 27.950000762939453,
+    "price": 27.90999984741211,
     "market_cap": 3500689408,
     "enterprise_value": 2893249024,
     "shares_outstanding": 116903979,
@@ -4921,7 +4921,7 @@
   },
   {
     "ticker": "NAUT",
-    "price": 1.190000057220459,
+    "price": 1.0399999618530273,
     "market_cap": 278938080,
     "enterprise_value": 208765120,
     "shares_outstanding": 127078855,
@@ -4945,7 +4945,7 @@
   },
   {
     "ticker": "NBIX",
-    "price": 181.3300018310547,
+    "price": 180.7899932861328,
     "market_cap": 15816512512,
     "enterprise_value": 14875328512,
     "shares_outstanding": 100549983,
@@ -4969,7 +4969,7 @@
   },
   {
     "ticker": "NBP",
-    "price": 1.690000057220459,
+    "price": 1.6100000143051147,
     "market_cap": 171159792,
     "enterprise_value": -33145758,
     "shares_outstanding": 115648505,
@@ -4993,7 +4993,7 @@
   },
   {
     "ticker": "NGNE",
-    "price": 33.849998474121094,
+    "price": 33.65999984741211,
     "market_cap": 498866016,
     "enterprise_value": 229733792,
     "shares_outstanding": 15801901,
@@ -5017,7 +5017,7 @@
   },
   {
     "ticker": "NKTX",
-    "price": 2.2300000190734863,
+    "price": 2.130000114440918,
     "market_cap": 194961104,
     "enterprise_value": 32020838,
     "shares_outstanding": 71545358,
@@ -5041,7 +5041,7 @@
   },
   {
     "ticker": "NMRA",
-    "price": 1.6799999475479126,
+    "price": 1.649999976158142,
     "market_cap": 275147104,
     "enterprise_value": 195344416,
     "shares_outstanding": 185284244,
@@ -5065,7 +5065,7 @@
   },
   {
     "ticker": "NRIX",
-    "price": 23.799999237060547,
+    "price": 23.600000381469727,
     "market_cap": 1770307712,
     "enterprise_value": 1283060224,
     "shares_outstanding": 103405813,
@@ -5089,7 +5089,7 @@
   },
   {
     "ticker": "NTLA",
-    "price": 10.739999771118164,
+    "price": 10.800000190734863,
     "market_cap": 2140545152,
     "enterprise_value": 1737463168,
     "shares_outstanding": 139722277,
@@ -5113,7 +5113,7 @@
   },
   {
     "ticker": "NTRA",
-    "price": 251.90499877929688,
+    "price": 253.82000732421875,
     "market_cap": 32737601536,
     "enterprise_value": 30675286016,
     "shares_outstanding": 143215382,
@@ -5137,7 +5137,7 @@
   },
   {
     "ticker": "NUVB",
-    "price": 6.613500118255615,
+    "price": 6.590000152587891,
     "market_cap": 1927297920,
     "enterprise_value": 1466049152,
     "shares_outstanding": 347201971,
@@ -5209,7 +5209,7 @@
   },
   {
     "ticker": "NVCR",
-    "price": 15.949999809265137,
+    "price": 15.199999809265137,
     "market_cap": 1690985856,
     "enterprise_value": 1828644224,
     "shares_outstanding": 115820940,
@@ -5233,7 +5233,7 @@
   },
   {
     "ticker": "OABI",
-    "price": 1.965000033378601,
+    "price": 1.9500000476837158,
     "market_cap": 316765056,
     "enterprise_value": 263442608,
     "shares_outstanding": 144972579,
@@ -5257,7 +5257,7 @@
   },
   {
     "ticker": "OBIO",
-    "price": 3.927999973297119,
+    "price": 3.799999952316284,
     "market_cap": 233534800,
     "enterprise_value": 161761760,
     "shares_outstanding": 59880715,
@@ -5281,7 +5281,7 @@
   },
   {
     "ticker": "OCGN",
-    "price": 1.2300000190734863,
+    "price": 1.190000057220459,
     "market_cap": 424844928,
     "enterprise_value": 400896800,
     "shares_outstanding": 338521856,
@@ -5305,7 +5305,7 @@
   },
   {
     "ticker": "OCS",
-    "price": 11.130000114440918,
+    "price": 10.84000015258789,
     "market_cap": 666986240,
     "enterprise_value": 471657440,
     "shares_outstanding": 60388073,
@@ -5329,7 +5329,7 @@
   },
   {
     "ticker": "OCUL",
-    "price": 8.390000343322754,
+    "price": 8.359999656677246,
     "market_cap": 2060416896,
     "enterprise_value": 1370268544,
     "shares_outstanding": 218960358,
@@ -5353,7 +5353,7 @@
   },
   {
     "ticker": "OLMA",
-    "price": 11.180000305175781,
+    "price": 11.1899995803833,
     "market_cap": 809274368,
     "enterprise_value": 301332256,
     "shares_outstanding": 87347471,
@@ -5377,7 +5377,7 @@
   },
   {
     "ticker": "OMER",
-    "price": 11.260000228881836,
+    "price": 11.670000076293945,
     "market_cap": 741123584,
     "enterprise_value": 777409344,
     "shares_outstanding": 72375355,
@@ -5401,7 +5401,7 @@
   },
   {
     "ticker": "ONC",
-    "price": 326.6000061035156,
+    "price": 327.2099914550781,
     "market_cap": 27977553920,
     "enterprise_value": 25698281472,
     "shares_outstanding": 94900812,
@@ -5425,7 +5425,7 @@
   },
   {
     "ticker": "OPCH",
-    "price": 23.860000610351562,
+    "price": 23.93000030517578,
     "market_cap": 3482084864,
     "enterprise_value": 4483254784,
     "shares_outstanding": 157027504,
@@ -5449,7 +5449,7 @@
   },
   {
     "ticker": "OPK",
-    "price": 1.559999942779541,
+    "price": 1.3650000095367432,
     "market_cap": 1079781888,
     "enterprise_value": 1114643200,
     "shares_outstanding": 755092256,
@@ -5473,7 +5473,7 @@
   },
   {
     "ticker": "ORIC",
-    "price": 11.645000457763672,
+    "price": 11.279999732971191,
     "market_cap": 894909376,
     "enterprise_value": 585028928,
     "shares_outstanding": 103517562,
@@ -5497,7 +5497,7 @@
   },
   {
     "ticker": "ORKA",
-    "price": 89.2249984741211,
+    "price": 88.06999969482422,
     "market_cap": 4394339840,
     "enterprise_value": 3699641344,
     "shares_outstanding": 60312101,
@@ -5521,7 +5521,7 @@
   },
   {
     "ticker": "PACB",
-    "price": 1.434999942779541,
+    "price": 1.399999976158142,
     "market_cap": 434842368,
     "enterprise_value": 849738304,
     "shares_outstanding": 310601688,
@@ -5545,7 +5545,7 @@
   },
   {
     "ticker": "PAHC",
-    "price": 36.48500061035156,
+    "price": 36.95000076293945,
     "market_cap": 1280222464,
     "enterprise_value": 2003338496,
     "shares_outstanding": 21068682,
@@ -5569,7 +5569,7 @@
   },
   {
     "ticker": "PBYI",
-    "price": 7.909999847412109,
+    "price": 7.809999942779541,
     "market_cap": 377673952,
     "enterprise_value": 279358112,
     "shares_outstanding": 50899456,
@@ -5593,7 +5593,7 @@
   },
   {
     "ticker": "PCRX",
-    "price": 26.829999923706055,
+    "price": 26.399999618530273,
     "market_cap": 881196800,
     "enterprise_value": 1106918656,
     "shares_outstanding": 39347924,
@@ -5617,7 +5617,7 @@
   },
   {
     "ticker": "PCVX",
-    "price": 54.029998779296875,
+    "price": 52.97999954223633,
     "market_cap": 7409766912,
     "enterprise_value": 5499368448,
     "shares_outstanding": 144397682,
@@ -5641,7 +5641,7 @@
   },
   {
     "ticker": "PEPG",
-    "price": 1.7949999570846558,
+    "price": 1.7100000381469727,
     "market_cap": 124504584,
     "enterprise_value": -5762948,
     "shares_outstanding": 69169215,
@@ -5665,7 +5665,7 @@
   },
   {
     "ticker": "PGEN",
-    "price": 5.53000020980835,
+    "price": 5.449999809265137,
     "market_cap": 1691644544,
     "enterprise_value": 1735431168,
     "shares_outstanding": 356510980,
@@ -5689,7 +5689,7 @@
   },
   {
     "ticker": "PHAT",
-    "price": 11.770000457763672,
+    "price": 11.640000343322754,
     "market_cap": 875720320,
     "enterprise_value": 1198167424,
     "shares_outstanding": 79755953,
@@ -5713,7 +5713,7 @@
   },
   {
     "ticker": "PHVS",
-    "price": 33.36000061035156,
+    "price": 32.619998931884766,
     "market_cap": 2286464768,
     "enterprise_value": 1812015616,
     "shares_outstanding": 69879726,
@@ -5737,7 +5737,7 @@
   },
   {
     "ticker": "PRAX",
-    "price": 294.375,
+    "price": 291.0299987792969,
     "market_cap": 7885232128,
     "enterprise_value": 6386384384,
     "shares_outstanding": 27878774,
@@ -5761,7 +5761,7 @@
   },
   {
     "ticker": "PRLD",
-    "price": 4.659999847412109,
+    "price": 4.710000038146973,
     "market_cap": 334510272,
     "enterprise_value": 352712480,
     "shares_outstanding": 64917172,
@@ -5785,7 +5785,7 @@
   },
   {
     "ticker": "PRME",
-    "price": 3.065000057220459,
+    "price": 3.0299999713897705,
     "market_cap": 580685120,
     "enterprise_value": 497387072,
     "shares_outstanding": 180617451,
@@ -5809,7 +5809,7 @@
   },
   {
     "ticker": "PRQR",
-    "price": 1.74399995803833,
+    "price": 1.7300000190734863,
     "market_cap": 200188848,
     "enterprise_value": 94796080,
     "shares_outstanding": 105362551,
@@ -5833,7 +5833,7 @@
   },
   {
     "ticker": "PRTA",
-    "price": 8.470000267028809,
+    "price": 8.5600004196167,
     "market_cap": 467776192,
     "enterprise_value": 112200336,
     "shares_outstanding": 52353237,
@@ -5857,7 +5857,7 @@
   },
   {
     "ticker": "PRVA",
-    "price": 24.479999542236328,
+    "price": 24.1200008392334,
     "market_cap": 2975152384,
     "enterprise_value": 2607413248,
     "shares_outstanding": 126012374,
@@ -5881,7 +5881,7 @@
   },
   {
     "ticker": "PSNL",
-    "price": 11.800000190734863,
+    "price": 11.729999542236328,
     "market_cap": 1052447040,
     "enterprise_value": 820310464,
     "shares_outstanding": 104721098,
@@ -5905,7 +5905,7 @@
   },
   {
     "ticker": "PTCT",
-    "price": 75.05500030517578,
+    "price": 74.48999786376953,
     "market_cap": 6546361344,
     "enterprise_value": 6907551744,
     "shares_outstanding": 82949338,
@@ -5929,7 +5929,7 @@
   },
   {
     "ticker": "PTGX",
-    "price": 134.5800018310547,
+    "price": 133.0,
     "market_cap": 7294838784,
     "enterprise_value": 6577400320,
     "shares_outstanding": 64311373,
@@ -5953,7 +5953,7 @@
   },
   {
     "ticker": "PVLA",
-    "price": 144.35000610351562,
+    "price": 142.60000610351562,
     "market_cap": 1613139712,
     "enterprise_value": 1337964032,
     "shares_outstanding": 14342844,
@@ -5977,7 +5977,7 @@
   },
   {
     "ticker": "PYXS",
-    "price": 2.9739999771118164,
+    "price": 2.9200000762939453,
     "market_cap": 127027744,
     "enterprise_value": 88111096,
     "shares_outstanding": 63355482,
@@ -6001,7 +6001,7 @@
   },
   {
     "ticker": "QSI",
-    "price": 0.7730000019073486,
+    "price": 0.7023000121116638,
     "market_cap": 215887424,
     "enterprise_value": 84116192,
     "shares_outstanding": 197822663,
@@ -6025,7 +6025,7 @@
   },
   {
     "ticker": "QTRX",
-    "price": 3.5,
+    "price": 3.380000114440918,
     "market_cap": 156862912,
     "enterprise_value": 80215304,
     "shares_outstanding": 47105981,
@@ -6049,7 +6049,7 @@
   },
   {
     "ticker": "QURE",
-    "price": 38.48500061035156,
+    "price": 40.06999969482422,
     "market_cap": 2957234176,
     "enterprise_value": 1661297408,
     "shares_outstanding": 63067485,
@@ -6073,7 +6073,7 @@
   },
   {
     "ticker": "RANI",
-    "price": 0.8172000050544739,
+    "price": 0.8439000248908997,
     "market_cap": 106481136,
     "enterprise_value": 43579536,
     "shares_outstanding": 112389152,
@@ -6097,7 +6097,7 @@
   },
   {
     "ticker": "RAPP",
-    "price": 41.790000915527344,
+    "price": 40.939998626708984,
     "market_cap": 1783944320,
     "enterprise_value": 1374879488,
     "shares_outstanding": 47826929,
@@ -6121,7 +6121,7 @@
   },
   {
     "ticker": "RARE",
-    "price": 25.459999084472656,
+    "price": 25.0,
     "market_cap": 2731106048,
     "enterprise_value": 3234002176,
     "shares_outstanding": 98489224,
@@ -6145,7 +6145,7 @@
   },
   {
     "ticker": "RCKT",
-    "price": 3.0899999141693115,
+    "price": 3.140000104904175,
     "market_cap": 354879040,
     "enterprise_value": 186126944,
     "shares_outstanding": 109193549,
@@ -6169,7 +6169,7 @@
   },
   {
     "ticker": "RCUS",
-    "price": 26.889999389648438,
+    "price": 26.450000762939453,
     "market_cap": 3042452736,
     "enterprise_value": 2252957952,
     "shares_outstanding": 125773162,
@@ -6193,7 +6193,7 @@
   },
   {
     "ticker": "REGN",
-    "price": 697.64501953125,
+    "price": 695.4199829101562,
     "market_cap": 62885072896,
     "enterprise_value": 56494534656,
     "shares_outstanding": 103021886,
@@ -6217,7 +6217,7 @@
   },
   {
     "ticker": "REPL",
-    "price": 5.010000228881836,
+    "price": 5.409999847412109,
     "market_cap": 836460608,
     "enterprise_value": 532196608,
     "shares_outstanding": 82572619,
@@ -6241,7 +6241,7 @@
   },
   {
     "ticker": "RGEN",
-    "price": 148.50999450683594,
+    "price": 141.22999572753906,
     "market_cap": 7423828480,
     "enterprise_value": 7331424256,
     "shares_outstanding": 56407740,
@@ -6265,7 +6265,7 @@
   },
   {
     "ticker": "RGNX",
-    "price": 9.520000457763672,
+    "price": 9.619999885559082,
     "market_cap": 420787584,
     "enterprise_value": 456169504,
     "shares_outstanding": 51697621,
@@ -6289,7 +6289,7 @@
   },
   {
     "ticker": "RIGL",
-    "price": 38.369998931884766,
+    "price": 39.06999969482422,
     "market_cap": 610106048,
     "enterprise_value": 499613504,
     "shares_outstanding": 18502080,
@@ -6313,7 +6313,7 @@
   },
   {
     "ticker": "RLAY",
-    "price": 18.30500030517578,
+    "price": 18.3700008392334,
     "market_cap": 3480507136,
     "enterprise_value": 2272873728,
     "shares_outstanding": 217940332,
@@ -6337,7 +6337,7 @@
   },
   {
     "ticker": "RNA",
-    "price": 11.489999771118164,
+    "price": 11.180000305175781,
     "market_cap": 217583792,
     "enterprise_value": -49466840,
     "shares_outstanding": 17105643,
@@ -6357,11 +6357,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-28"
+    "collected_at": "2026-07-29"
   },
   {
     "ticker": "ROIV",
-    "price": 33.47999954223633,
+    "price": 32.869998931884766,
     "market_cap": 22434043904,
     "enterprise_value": 18453659648,
     "shares_outstanding": 719270385,
@@ -6385,7 +6385,7 @@
   },
   {
     "ticker": "RPRX",
-    "price": 59.939998626708984,
+    "price": 59.18000030517578,
     "market_cap": 30254223360,
     "enterprise_value": 35444817920,
     "shares_outstanding": 443274104,
@@ -6409,7 +6409,7 @@
   },
   {
     "ticker": "RVMD",
-    "price": 180.5050048828125,
+    "price": 180.9199981689453,
     "market_cap": 34376847360,
     "enterprise_value": 31817541632,
     "shares_outstanding": 212596462,
@@ -6433,7 +6433,7 @@
   },
   {
     "ticker": "RXRX",
-    "price": 3.0350000858306885,
+    "price": 2.9700000286102295,
     "market_cap": 1685170048,
     "enterprise_value": 1103000576,
     "shares_outstanding": 524677865,
@@ -6457,7 +6457,7 @@
   },
   {
     "ticker": "RYTM",
-    "price": 107.79000091552734,
+    "price": 106.52999877929688,
     "market_cap": 6710509568,
     "enterprise_value": 6035138560,
     "shares_outstanding": 68593574,
@@ -6481,7 +6481,7 @@
   },
   {
     "ticker": "SABS",
-    "price": 3.4600000381469727,
+    "price": 3.4800000190734863,
     "market_cap": 303180128,
     "enterprise_value": 178640192,
     "shares_outstanding": 76464094,
@@ -6505,7 +6505,7 @@
   },
   {
     "ticker": "SANA",
-    "price": 3.1449999809265137,
+    "price": 3.1700000762939453,
     "market_cap": 866878272,
     "enterprise_value": 769057216,
     "shares_outstanding": 278291590,
@@ -6529,7 +6529,7 @@
   },
   {
     "ticker": "SEPN",
-    "price": 34.17499923706055,
+    "price": 33.61000061035156,
     "market_cap": 1593194752,
     "enterprise_value": 1260995456,
     "shares_outstanding": 45075533,
@@ -6601,7 +6601,7 @@
   },
   {
     "ticker": "SGMT",
-    "price": 7.179999828338623,
+    "price": 7.039999961853027,
     "market_cap": 411267040,
     "enterprise_value": 284536384,
     "shares_outstanding": 61184313,
@@ -6625,7 +6625,7 @@
   },
   {
     "ticker": "SIGA",
-    "price": 3.384999990463257,
+    "price": 3.3399999141693115,
     "market_cap": 308055008,
     "enterprise_value": 163452496,
     "shares_outstanding": 71724097,
@@ -6649,7 +6649,7 @@
   },
   {
     "ticker": "SION",
-    "price": 45.86000061035156,
+    "price": 44.810001373291016,
     "market_cap": 1694266112,
     "enterprise_value": 1361201024,
     "shares_outstanding": 45150330,
@@ -6673,7 +6673,7 @@
   },
   {
     "ticker": "SKYE",
-    "price": 0.6140000224113464,
+    "price": 0.6150000095367432,
     "market_cap": 25029356,
     "enterprise_value": 8449939,
     "shares_outstanding": 35143722,
@@ -6697,7 +6697,7 @@
   },
   {
     "ticker": "SLDB",
-    "price": 7.900000095367432,
+    "price": 8.039999961853027,
     "market_cap": 791534848,
     "enterprise_value": 336024704,
     "shares_outstanding": 98449606,
@@ -6721,7 +6721,7 @@
   },
   {
     "ticker": "SLN",
-    "price": 11.0,
+    "price": 11.550000190734863,
     "market_cap": 321195360,
     "enterprise_value": 246997792,
     "shares_outstanding": 47234613,
@@ -6745,7 +6745,7 @@
   },
   {
     "ticker": "SMMT",
-    "price": 12.364999771118164,
+    "price": 12.800000190734863,
     "market_cap": 10687759360,
     "enterprise_value": 10194444288,
     "shares_outstanding": 776162645,
@@ -6769,7 +6769,7 @@
   },
   {
     "ticker": "SNDX",
-    "price": 19.28499984741211,
+    "price": 19.219999313354492,
     "market_cap": 1726123264,
     "enterprise_value": 1627837056,
     "shares_outstanding": 88610027,
@@ -6793,7 +6793,7 @@
   },
   {
     "ticker": "SNY",
-    "price": 45.540000915527344,
+    "price": 44.849998474121094,
     "market_cap": 101160673280,
     "enterprise_value": 120902017024,
     "shares_outstanding": 2393769026,
@@ -6817,7 +6817,7 @@
   },
   {
     "ticker": "SPRY",
-    "price": 5.494999885559082,
+    "price": 5.829999923706055,
     "market_cap": 959269504,
     "enterprise_value": 933467648,
     "shares_outstanding": 99303262,
@@ -6841,7 +6841,7 @@
   },
   {
     "ticker": "SRPT",
-    "price": 15.319999694824219,
+    "price": 15.53499984741211,
     "market_cap": 1882424064,
     "enterprise_value": 2059849728,
     "shares_outstanding": 105576222,
@@ -6865,7 +6865,7 @@
   },
   {
     "ticker": "SRRK",
-    "price": 49.099998474121094,
+    "price": 49.060001373291016,
     "market_cap": 5628337152,
     "enterprise_value": 5185108992,
     "shares_outstanding": 119828338,
@@ -6889,7 +6889,7 @@
   },
   {
     "ticker": "SRZN",
-    "price": 19.510000228881836,
+    "price": 19.200000762939453,
     "market_cap": 262626608,
     "enterprise_value": 164003936,
     "shares_outstanding": 11610371,
@@ -6913,7 +6913,7 @@
   },
   {
     "ticker": "STOK",
-    "price": 29.34000015258789,
+    "price": 29.479999542236328,
     "market_cap": 1918586496,
     "enterprise_value": 1475388288,
     "shares_outstanding": 62281655,
@@ -6961,7 +6961,7 @@
   },
   {
     "ticker": "STVN",
-    "price": 20.28499984741211,
+    "price": 20.40999984741211,
     "market_cap": 4757088768,
     "enterprise_value": 4845635072,
     "shares_outstanding": 49709718,
@@ -6985,7 +6985,7 @@
   },
   {
     "ticker": "SUPN",
-    "price": 47.66999816894531,
+    "price": 46.56999969482422,
     "market_cap": 2561292800,
     "enterprise_value": 2186033152,
     "shares_outstanding": 58039721,
@@ -7009,7 +7009,7 @@
   },
   {
     "ticker": "SVRA",
-    "price": 5.295000076293945,
+    "price": 5.28000020980835,
     "market_cap": 1109680896,
     "enterprise_value": 1169635456,
     "shares_outstanding": 204927212,
@@ -7029,11 +7029,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-28"
+    "collected_at": "2026-07-29"
   },
   {
     "ticker": "SYRE",
-    "price": 96.43000030517578,
+    "price": 97.87000274658203,
     "market_cap": 7630741504,
     "enterprise_value": 6657781760,
     "shares_outstanding": 86841253,
@@ -7057,7 +7057,7 @@
   },
   {
     "ticker": "TARA",
-    "price": 3.9000000953674316,
+    "price": 3.809999942779541,
     "market_cap": 225097968,
     "enterprise_value": 81409144,
     "shares_outstanding": 56204237,
@@ -7081,7 +7081,7 @@
   },
   {
     "ticker": "TARS",
-    "price": 58.71500015258789,
+    "price": 58.52000045776367,
     "market_cap": 2726858752,
     "enterprise_value": 2315800832,
     "shares_outstanding": 43023959,
@@ -7105,7 +7105,7 @@
   },
   {
     "ticker": "TBPH",
-    "price": 16.90999984741211,
+    "price": 16.850000381469727,
     "market_cap": 859646272,
     "enterprise_value": 506257664,
     "shares_outstanding": 51553005,
@@ -7129,7 +7129,7 @@
   },
   {
     "ticker": "TCRX",
-    "price": 0.7738000154495239,
+    "price": 0.741599977016449,
     "market_cap": 59560736,
     "enterprise_value": 19904028,
     "shares_outstanding": 61074229,
@@ -7153,7 +7153,7 @@
   },
   {
     "ticker": "TECH",
-    "price": 72.00499725341797,
+    "price": 72.02999877929688,
     "market_cap": 8969824256,
     "enterprise_value": 8848754688,
     "shares_outstanding": 156568751,
@@ -7177,7 +7177,7 @@
   },
   {
     "ticker": "TECX",
-    "price": 29.145000457763672,
+    "price": 28.43000030517578,
     "market_cap": 560980864,
     "enterprise_value": 334003264,
     "shares_outstanding": 18869186,
@@ -7201,7 +7201,7 @@
   },
   {
     "ticker": "TEM",
-    "price": 43.04499816894531,
+    "price": 41.54999923706055,
     "market_cap": 8881272832,
     "enterprise_value": 9758255104,
     "shares_outstanding": 174520978,
@@ -7225,7 +7225,7 @@
   },
   {
     "ticker": "TENX",
-    "price": 15.5649995803833,
+    "price": 14.819999694824219,
     "market_cap": 320158688,
     "enterprise_value": 156286416,
     "shares_outstanding": 26525159,
@@ -7249,7 +7249,7 @@
   },
   {
     "ticker": "TEVA",
-    "price": 34.2400016784668,
+    "price": 34.709999084472656,
     "market_cap": 36434923520,
     "enterprise_value": 51509293056,
     "shares_outstanding": 1164426972,
@@ -7273,7 +7273,7 @@
   },
   {
     "ticker": "TGTX",
-    "price": 54.38999938964844,
+    "price": 53.47999954223633,
     "market_cap": 8064443392,
     "enterprise_value": 7401807872,
     "shares_outstanding": 153083580,
@@ -7297,7 +7297,7 @@
   },
   {
     "ticker": "TKNO",
-    "price": 5.130000114440918,
+    "price": 4.960000038146973,
     "market_cap": 276112256,
     "enterprise_value": 257203664,
     "shares_outstanding": 53614028,
@@ -7321,7 +7321,7 @@
   },
   {
     "ticker": "TNGX",
-    "price": 26.364999771118164,
+    "price": 25.850000381469727,
     "market_cap": 4566950912,
     "enterprise_value": 4304827904,
     "shares_outstanding": 162814649,
@@ -7345,7 +7345,7 @@
   },
   {
     "ticker": "TNYA",
-    "price": 0.7502999901771545,
+    "price": 0.7350999712944031,
     "market_cap": 153787104,
     "enterprise_value": 76789232,
     "shares_outstanding": 216998876,
@@ -7369,7 +7369,7 @@
   },
   {
     "ticker": "TRDA",
-    "price": 5.860000133514404,
+    "price": 6.550000190734863,
     "market_cap": 270385600,
     "enterprise_value": 29109062,
     "shares_outstanding": 38820616,
@@ -7393,7 +7393,7 @@
   },
   {
     "ticker": "TRVI",
-    "price": 18.135000228881836,
+    "price": 18.09000015258789,
     "market_cap": 2399457024,
     "enterprise_value": 2015386496,
     "shares_outstanding": 141979708,
@@ -7417,7 +7417,7 @@
   },
   {
     "ticker": "TSHA",
-    "price": 5.434999942779541,
+    "price": 5.610000133514404,
     "market_cap": 1820432128,
     "enterprise_value": 1473036928,
     "shares_outstanding": 287361020,
@@ -7441,7 +7441,7 @@
   },
   {
     "ticker": "TVTX",
-    "price": 54.86000061035156,
+    "price": 55.560001373291016,
     "market_cap": 5058349056,
     "enterprise_value": 5026947072,
     "shares_outstanding": 92992905,
@@ -7465,7 +7465,7 @@
   },
   {
     "ticker": "TWST",
-    "price": 87.38999938964844,
+    "price": 85.47000122070312,
     "market_cap": 5294618624,
     "enterprise_value": 5229117952,
     "shares_outstanding": 62271314,
@@ -7489,7 +7489,7 @@
   },
   {
     "ticker": "TXG",
-    "price": 47.244998931884766,
+    "price": 46.31999969482422,
     "market_cap": 4458701312,
     "enterprise_value": 3572400128,
     "shares_outstanding": 116877317,
@@ -7513,7 +7513,7 @@
   },
   {
     "ticker": "TYRA",
-    "price": 30.6299991607666,
+    "price": 31.110000610351562,
     "market_cap": 1681524992,
     "enterprise_value": 1299890432,
     "shares_outstanding": 59470381,
@@ -7537,7 +7537,7 @@
   },
   {
     "ticker": "UPB",
-    "price": 6.389999866485596,
+    "price": 6.409999847412109,
     "market_cap": 353185696,
     "enterprise_value": 28701318,
     "shares_outstanding": 54419986,
@@ -7561,7 +7561,7 @@
   },
   {
     "ticker": "URGN",
-    "price": 40.65999984741211,
+    "price": 40.45000076293945,
     "market_cap": 1596366464,
     "enterprise_value": 1613477376,
     "shares_outstanding": 48721701,
@@ -7585,7 +7585,7 @@
   },
   {
     "ticker": "UTHR",
-    "price": 521.7000122070312,
+    "price": 524.7000122070312,
     "market_cap": 22975989760,
     "enterprise_value": 21118570496,
     "shares_outstanding": 42446733,
@@ -7609,7 +7609,7 @@
   },
   {
     "ticker": "VCEL",
-    "price": 46.83000183105469,
+    "price": 46.619998931884766,
     "market_cap": 2029962112,
     "enterprise_value": 1913786112,
     "shares_outstanding": 51068228,
@@ -7633,7 +7633,7 @@
   },
   {
     "ticker": "VCYT",
-    "price": 56.15999984741211,
+    "price": 55.709999084472656,
     "market_cap": 4230606336,
     "enterprise_value": 3663314688,
     "shares_outstanding": 79792647,
@@ -7657,7 +7657,7 @@
   },
   {
     "ticker": "VERA",
-    "price": 32.2599983215332,
+    "price": 32.5099983215332,
     "market_cap": 2554753536,
     "enterprise_value": 1897063424,
     "shares_outstanding": 71782904,
@@ -7681,7 +7681,7 @@
   },
   {
     "ticker": "VIR",
-    "price": 8.760000228881836,
+    "price": 8.640000343322754,
     "market_cap": 1555814528,
     "enterprise_value": 1071373504,
     "shares_outstanding": 168651974,
@@ -7705,7 +7705,7 @@
   },
   {
     "ticker": "VKTX",
-    "price": 33.31999969482422,
+    "price": 33.43000030517578,
     "market_cap": 3566765056,
     "enterprise_value": 2839568384,
     "shares_outstanding": 116105643,
@@ -7729,7 +7729,7 @@
   },
   {
     "ticker": "VNDA",
-    "price": 5.105000019073486,
+    "price": 5.050000190734863,
     "market_cap": 351492320,
     "enterprise_value": 155339776,
     "shares_outstanding": 60135562,
@@ -7753,7 +7753,7 @@
   },
   {
     "ticker": "VOR",
-    "price": 19.584999084472656,
+    "price": 19.549999237060547,
     "market_cap": 792739392,
     "enterprise_value": 275976736,
     "shares_outstanding": 54185877,
@@ -7777,7 +7777,7 @@
   },
   {
     "ticker": "VRDN",
-    "price": 19.264999389648438,
+    "price": 19.8799991607666,
     "market_cap": 1833099520,
     "enterprise_value": 1070359360,
     "shares_outstanding": 110427682,
@@ -7801,7 +7801,7 @@
   },
   {
     "ticker": "VRTX",
-    "price": 491.2974853515625,
+    "price": 483.3299865722656,
     "market_cap": 115241623552,
     "enterprise_value": 109756801024,
     "shares_outstanding": 253805417,
@@ -7825,7 +7825,7 @@
   },
   {
     "ticker": "VTRS",
-    "price": 17.969999313354492,
+    "price": 17.81999969482422,
     "market_cap": 17829302272,
     "enterprise_value": 30889224192,
     "shares_outstanding": 1164552654,
@@ -7849,7 +7849,7 @@
   },
   {
     "ticker": "VYGR",
-    "price": 3.0850000381469727,
+    "price": 3.0,
     "market_cap": 224465072,
     "enterprise_value": 106374144,
     "shares_outstanding": 60421287,
@@ -7873,7 +7873,7 @@
   },
   {
     "ticker": "WVE",
-    "price": 5.835000038146973,
+    "price": 5.809999942779541,
     "market_cap": 1174615424,
     "enterprise_value": 575385088,
     "shares_outstanding": 192402202,
@@ -7897,7 +7897,7 @@
   },
   {
     "ticker": "XENE",
-    "price": 64.63999938964844,
+    "price": 63.099998474121094,
     "market_cap": 5174507008,
     "enterprise_value": 3938385920,
     "shares_outstanding": 96665550,
@@ -7921,7 +7921,7 @@
   },
   {
     "ticker": "XERS",
-    "price": 8.3100004196167,
+    "price": 8.380000114440918,
     "market_cap": 1205041536,
     "enterprise_value": 1338033152,
     "shares_outstanding": 172642055,
@@ -7945,7 +7945,7 @@
   },
   {
     "ticker": "XNCR",
-    "price": 19.700000762939453,
+    "price": 19.530000686645508,
     "market_cap": 951236736,
     "enterprise_value": 634741440,
     "shares_outstanding": 74141596,
@@ -7969,7 +7969,7 @@
   },
   {
     "ticker": "ZBIO",
-    "price": 31.575000762939453,
+    "price": 31.09000015258789,
     "market_cap": 1210898176,
     "enterprise_value": 698020096,
     "shares_outstanding": 63133377,
@@ -7993,7 +7993,7 @@
   },
   {
     "ticker": "ZLAB",
-    "price": 18.139999389648438,
+    "price": 18.309999465942383,
     "market_cap": 2076160384,
     "enterprise_value": 1562644608,
     "shares_outstanding": 112354858,
@@ -8017,7 +8017,7 @@
   },
   {
     "ticker": "ZVRA",
-    "price": 9.65999984741211,
+    "price": 9.779999732971191,
     "market_cap": 761993472,
     "enterprise_value": 548336832,
     "shares_outstanding": 59115084,
@@ -8041,7 +8041,7 @@
   },
   {
     "ticker": "ZYME",
-    "price": 22.209999084472656,
+    "price": 22.010000228881836,
     "market_cap": 1704340480,
     "enterprise_value": 1294603648,
     "shares_outstanding": 73023061,
@@ -8065,7 +8065,7 @@
   },
   {
     "ticker": "KYNB",
-    "price": 7.0,
+    "price": 6.78000020980835,
     "market_cap": 27365238,
     "enterprise_value": -5502546,
     "shares_outstanding": 4048112,
@@ -8085,11 +8085,11 @@
     "exchange": "NMS",
     "sector": "Healthcare",
     "industry": "Biotechnology",
-    "collected_at": "2026-07-28"
+    "collected_at": "2026-07-29"
   },
   {
     "ticker": "ABBV",
-    "price": 266.010009765625,
+    "price": 263.29998779296875,
     "market_cap": 405205090304,
     "enterprise_value": 446057971712,
     "shares_outstanding": 1766792821,
@@ -8113,7 +8113,7 @@
   },
   {
     "ticker": "AKBA",
-    "price": 1.25,
+    "price": 1.2599999904632568,
     "market_cap": 297766656,
     "enterprise_value": 321916320,
     "shares_outstanding": 268258243,
@@ -8185,7 +8185,7 @@
   },
   {
     "ticker": "DMRA",
-    "price": 30.0,
+    "price": 28.329999923706055,
     "market_cap": 1465735424,
     "enterprise_value": 906327296,
     "shares_outstanding": 61553194,
@@ -8209,7 +8209,7 @@
   },
   {
     "ticker": "IMNM",
-    "price": 22.809999465942383,
+    "price": 23.110000610351562,
     "market_cap": 2215177728,
     "enterprise_value": 1543313408,
     "shares_outstanding": 113250394,
@@ -8233,7 +8233,7 @@
   },
   {
     "ticker": "MDXG",
-    "price": 4.389999866485596,
+    "price": 4.230000019073486,
     "market_cap": 548865024,
     "enterprise_value": 404451840,
     "shares_outstanding": 148945731,
@@ -8257,7 +8257,7 @@
   },
   {
     "ticker": "RNAC",
-    "price": 7.599999904632568,
+    "price": 7.420000076293945,
     "market_cap": 297194016,
     "enterprise_value": 176157984,
     "shares_outstanding": 29381514,
@@ -8281,7 +8281,7 @@
   },
   {
     "ticker": "SLS",
-    "price": 10.199999809265137,
+    "price": 10.100000381469727,
     "market_cap": 1712669696,
     "enterprise_value": 1391336192,
     "shares_outstanding": 196632574,
@@ -8305,7 +8305,7 @@
   },
   {
     "ticker": "TRAX",
-    "price": 41.21500015258789,
+    "price": 41.869998931884766,
     "market_cap": 617944000,
     "enterprise_value": 321370272,
     "shares_outstanding": 34892381,
@@ -8329,7 +8329,7 @@
   },
   {
     "ticker": "VSTM",
-    "price": 6.139999866485596,
+    "price": 6.010000228881836,
     "market_cap": 366433088,
     "enterprise_value": 265836400,
     "shares_outstanding": 87873639,
@@ -8353,7 +8353,7 @@
   },
   {
     "ticker": "KLRA",
-    "price": 17.125,
+    "price": 16.8799991607666,
     "market_cap": 2775295232,
     "enterprise_value": null,
     "shares_outstanding": 129565608,
@@ -8377,7 +8377,7 @@
   },
   {
     "ticker": "PBLS",
-    "price": 31.540000915527344,
+    "price": 31.780000686645508,
     "market_cap": 3363592192,
     "enterprise_value": 623304320,
     "shares_outstanding": 120731236,
@@ -8401,7 +8401,7 @@
   },
   {
     "ticker": "GENB",
-    "price": 13.319999694824219,
+    "price": 13.079999923706055,
     "market_cap": 1991470208,
     "enterprise_value": 1406438144,
     "shares_outstanding": 128192484,
@@ -8425,7 +8425,7 @@
   },
   {
     "ticker": "KARD",
-    "price": 20.850000381469727,
+    "price": 19.729999542236328,
     "market_cap": 1856466944,
     "enterprise_value": 1739814656,
     "shares_outstanding": 89339121,
