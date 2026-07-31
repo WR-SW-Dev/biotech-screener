@@ -1,0 +1,633 @@
+{
+    "date": "2026-07-31",
+    "monitoring_day": 39,
+    "monitoring_period_note": "Day 39 — PRE-MARKET snapshot (09:00 ET). Data: July 30 (Wednesday) close. MASSIVE RECOVERY DAY: 14 up / 1 flat (NRIX). Portfolio avg +4.48% vs XBI +2.40% (+2.08pp outperformance). ALL FIVE Day-38 escalations RESOLVED in a single session (ALMS +9.74%, PRAX +5.75%, ERAS +5.42%, SYRE +3.71%, CMPS +6.15%). ALL positions now profitable vs entry for first time (CMPS back above entry +2.39%). Portfolio avg P&L vs entry: +32.02% (Day 38: +26.41%, +5.61pp). TODAY: NRIX binary event — Phase 1b bexobrutideg data presentation. Pre-market: $23.58 (flat). Roche deal ($700M upfront, up to $2.3B) closed July 21. UPCOMING: SYRE earnings Aug 4, URGN earnings Aug 5. 8 gap flags (all POSITIVE from broad biotech rally).",
+    "timestamp": "2026-07-31T09:00:00.000000Z",
+    "phase": "Day 39 — BROAD BIOTECH RALLY + ALL ESCALATIONS RESOLVED: 14 up / 1 flat. Portfolio avg +4.48% vs XBI +2.40% (+2.08pp outperformance). Best portfolio session since initiation. Avg P&L vs entry: +32.02% (Day 38: +26.41%, +5.61pp gain). XBI +2.40% to $151.46 driven by sector M&A momentum and clinical catalysts. FIVE ESCALATION RESOLUTIONS in a single day: (1) ALMS +9.74% to $28.95 — $26.50 fully reclaimed, approaching $29.00; (2) PRAX +5.75% to $307.75 — $290 support reclaimed by $17.75; (3) ERAS +5.42% to $18.68 — $18.00 support reclaimed, $17.50 offering price no longer at risk; (4) SYRE +3.71% to $101.50 — $100 reclaimed; (5) CMPS +6.15% to $11.57 — BACK ABOVE ENTRY ($11.30) for first time since Day 37 breach. NEAR-BREAKEVEN watches both resolved: CMPS now +2.39% vs entry; STOK +1.90% to $30.04, closed above $30 for first time. TODAY (July 31): NRIX binary event — Phase 1b bexobrutideg CLL/SLL data presentation. Pre-market: $23.58 (flat from $23.60 close). Roche deal context: Nurix-Roche $700M upfront ($2.3B potential) collaboration closed July 21. Q2 data (July 9): 92.9% ORR CLL, 84.2% BTK-naive. Governance gates all CLEAR on drawdown (+18.67pp); IC/h20d gates still overdue 30 days (governance constraint unchanged).",
+    "data_as_of": "2026-07-30 close (StockAnalysis verified per-ticker: XBI $151.46, COGT $41.36, DNTH $112.64, NRIX $23.60, URGN $41.09, ALMS $28.95, SYRE $101.50, RVMD $192.17, CMPS $11.57, SLDB $8.49, DRUG $74.63, STOK $30.04, PRAX $307.75, TRVI $18.40, ERAS $18.68, XENE $64.19). Prev data: 2026-07-29 close (Day 38). XBI Jul 30 close: $151.46.",
+    "missed_run_note": null,
+    "account": {
+        "account_id": "Robinhood 802349084",
+        "equity_fetchable": false,
+        "equity_estimated_usd": 132.18,
+        "equity_note": "Robinhood MCP unavailable (Days 1-39). Equity computed from Day 38 quantities × Jul 30 close prices per-share. Total gain: $32.05 on $100.13 invested. Up from Day 38 ($126.57) by +$5.61 (+4.43%), reflecting portfolio +4.48% session in broad biotech rally.",
+        "cash_carried": 99.87,
+        "buying_power_carried": 232.05,
+        "total_estimated_account_value": 232.05,
+        "data_source": "StockAnalysis July 30 close (equity); baseline_2026-06-10 carry-forward (cash)"
+    },
+    "portfolio_overview": {
+        "total_positions": 15,
+        "positions_negative_vs_entry": 0,
+        "positions_near_breakeven_lt10pct": 3,
+        "positions_positive_vs_entry": 15,
+        "avg_pnl_vs_entry_pct": 32.02,
+        "avg_pnl_note": "Portfolio avg +32.02% vs entry (Jul 30 close). ALL 15 positions profitable for first time. Range: CMPS +2.39% to DNTH +56.23%. Day 38 +26.41% → Day 39 +32.02% (+5.61pp). Best single-session gain in P&L terms since initiation. CMPS crossed above entry ($11.57 vs $11.30 entry = +2.39%) for the first time since the Day 37 breach.",
+        "session_breadth_jul30": "14 up / 1 flat (NRIX 0.00%). Up leaders: ALMS +9.74%, DNTH +8.21%, RVMD +6.22%, CMPS +6.15%, PRAX +5.75%, SLDB +5.60%, ERAS +5.42%, DRUG +5.02%, COGT +4.52%, SYRE +3.71%, URGN +1.58%, XENE +1.73%, TRVI +1.71%, STOK +1.90%. Flat: NRIX 0.00%.",
+        "xbi_entry_price": 133.62,
+        "xbi_prev_close_jul29": 147.91,
+        "xbi_current_price_jul30": 151.46,
+        "xbi_day_change_jul30_pct": 2.40,
+        "xbi_return_since_entry_pct": 13.35,
+        "drawdown_vs_xbi_pp": 18.67,
+        "drawdown_threshold_pp": -2.0,
+        "drawdown_status": "CLEAR — +18.67pp above XBI (threshold -2.0pp). Day 38 +15.71pp → Day 39 +18.67pp (+2.96pp improvement). Outperformance expanding. Well clear of threshold by 20.67pp.",
+        "portfolio_avg_day_change_pct": 4.48,
+        "relative_performance_vs_xbi_pp": 2.08
+    },
+    "gap_flags": [
+        {
+            "ticker": "ALMS",
+            "direction": "POSITIVE",
+            "day_change_pct": 9.74,
+            "close_jul29": 26.38,
+            "close_jul30": 28.95,
+            "flag_threshold_pct": 5.0,
+            "flag_reason": "POSITIVE gap +9.74% — ALL Day-38 escalations resolved. $26.50 escalation level fully reclaimed ($28.95 = +$2.45 above). Context: LUMUS Phase 2b SLE readout expected Q3 2026 (imminent). Flag for manual review: large single-session move warrants attention."
+        },
+        {
+            "ticker": "DNTH",
+            "direction": "POSITIVE",
+            "day_change_pct": 8.21,
+            "close_jul29": 104.09,
+            "close_jul30": 112.64,
+            "flag_reason": "POSITIVE gap +8.21% — Phase 3 EMERGE trial momentum (initiation announced July 17). New 52-week high. Analyst target: $128.58 avg. Continuation of July 17 Phase 3 catalyst rally. Flag for manual review."
+        },
+        {
+            "ticker": "RVMD",
+            "direction": "POSITIVE",
+            "day_change_pct": 6.22,
+            "close_jul29": 180.92,
+            "close_jul30": 192.17,
+            "flag_reason": "POSITIVE gap +6.22% — broad biotech rally + sector momentum. $192 is new recent high. Flag for manual review."
+        },
+        {
+            "ticker": "CMPS",
+            "direction": "POSITIVE",
+            "day_change_pct": 6.15,
+            "close_jul29": 10.90,
+            "close_jul30": 11.57,
+            "flag_reason": "POSITIVE gap +6.15% — recovery from below-entry position. Now +2.39% vs entry ($11.30). Phase 2b TRD recovery narrative. Flag for manual review."
+        },
+        {
+            "ticker": "PRAX",
+            "direction": "POSITIVE",
+            "day_change_pct": 5.75,
+            "close_jul29": 291.03,
+            "close_jul30": 307.75,
+            "flag_reason": "POSITIVE gap +5.75% — partial recovery from 4-day decline (Day35 $325.30 → Day38 $291.03 → Day39 $307.75). $290 support reclaimed decisively. 5-day decline stabilized. EMERALD Sept 1. Flag for manual review."
+        },
+        {
+            "ticker": "SLDB",
+            "direction": "POSITIVE",
+            "day_change_pct": 5.60,
+            "close_jul29": 8.04,
+            "close_jul30": 8.49,
+            "flag_reason": "POSITIVE gap +5.60% — building on Day 38 escalation resolution (first close above $8). Now $8.49 with pre-market $8.72 (+2.71%). Flag for manual review."
+        },
+        {
+            "ticker": "ERAS",
+            "direction": "POSITIVE",
+            "day_change_pct": 5.42,
+            "close_jul29": 17.72,
+            "close_jul30": 18.68,
+            "flag_reason": "POSITIVE gap +5.42% — $18.00 support reclaimed ($18.68). $17.50 offering price (July 14-15 $550M) no longer threatened. Escalation resolved. T-52 to catalyst. Flag for manual review."
+        },
+        {
+            "ticker": "DRUG",
+            "direction": "POSITIVE",
+            "day_change_pct": 5.02,
+            "close_jul29": 71.06,
+            "close_jul30": 74.63,
+            "flag_reason": "POSITIVE gap +5.02% — borderline gap flag (>5%). Bright Minds Biosciences recovery. $74-75 zone now. Day34 gap flag cause still unconfirmed. Flag for manual review."
+        }
+    ],
+    "gap_note": "8 positive gap flags on July 30 (all upside, >5% threshold). Driven by broad XBI +2.40% biotech rally + company-specific momentum (ALMS LUMUS Q3 approaching, DNTH Phase 3 EMERGE momentum, ERAS offering-price recovery, CMPS technical recovery). No negative gap flags. All flags require manual review per protocol.",
+    "escalation_flags": [],
+    "escalation_resolved_this_session": [
+        {
+            "ticker": "ALMS",
+            "resolution": "ESCALATION RESOLVED — $26.50 fully reclaimed. Close $28.95 (+9.74%)",
+            "entry_price": 20.37,
+            "close_jul29": 26.38,
+            "close_jul30": 28.95,
+            "day_change_pct": 9.74,
+            "pnl_vs_entry_pct": 42.12,
+            "prior_escalation_level_usd": 26.50,
+            "resolution_note": "ALMS +9.74% to $28.95. Day 38 had $26.50 escalation broken on close ($26.38). Day 39 fully resolves: $28.95 = $2.45 above the escalation level. The LUMUS Phase 2b SLE readout (expected Q3 2026) appears to be driving renewed buying. Context: LUMUS is on track per company update. P&L: +29.50% (Day38) → +42.12% (Day39, +12.62pp in a single session). Return to normal monitoring with escalation cleared."
+        },
+        {
+            "ticker": "PRAX",
+            "resolution": "ESCALATION RESOLVED — $290 support reclaimed. Close $307.75 (+5.75%)",
+            "entry_price": 241.92,
+            "close_jul29": 291.03,
+            "close_jul30": 307.75,
+            "day_change_pct": 5.75,
+            "pnl_vs_entry_pct": 27.21,
+            "prior_escalation_level_usd": 290.00,
+            "resolution_note": "PRAX +5.75% to $307.75. Day 38 had $290 barely held on close ($291.03). Day 39: $307.75 = $17.75 above $290 support. The 4-day decline (Day35 $325.30 → Day38 $291.03) has been partially reversed. P&L: +20.30% (Day38) → +27.21% (Day39, +6.91pp). EMERALD Phase 3 completes Sept 1 (31 days). Escalation CLOSED. Return to normal monitoring."
+        },
+        {
+            "ticker": "ERAS",
+            "resolution": "ESCALATION RESOLVED — $18.00 reclaimed. Close $18.68 (+5.42%)",
+            "entry_price": 13.27,
+            "close_jul29": 17.72,
+            "close_jul30": 18.68,
+            "day_change_pct": 5.42,
+            "pnl_vs_entry_pct": 40.77,
+            "prior_escalation_level_usd": 17.50,
+            "offering_price_usd": 17.50,
+            "resolution_note": "ERAS +5.42% to $18.68. Day 38 had $18.00 broken on close ($17.72) with $17.50 offering price under threat (intraday $17.13). Day 39: $18.68 = $1.18 above $18.00 support and $1.18 above offering price. The recovery through $18 with a strong close suggests institutional buyers defended the July 14-15 offering price ($17.50) and pushed back above $18. Morgan Stanley PT $21 (raised July 20). P&L: +33.53% (Day38) → +40.77% (Day39, +7.24pp). T-52 (~Sept 21). Escalation CLOSED."
+        },
+        {
+            "ticker": "SYRE",
+            "resolution": "ESCALATION RESOLVED — $100 reclaimed. Close $101.50 (+3.71%)",
+            "entry_price": 76.10,
+            "close_jul29": 97.87,
+            "close_jul30": 101.50,
+            "day_change_pct": 3.71,
+            "pnl_vs_entry_pct": 33.38,
+            "prior_escalation_level_usd": 95.00,
+            "resolution_note": "SYRE +3.71% to $101.50. Day 38 had $95 intraday breach (low $94.52), close $97.87. Day 39: $101.50 = $100 reclaimed. The $95 escalation never broke on close basis and the $100 psychological level is now retaken. Q2 Earnings Aug 4 (4 days) remains the key upcoming catalyst. P&L: +28.61% (Day38) → +33.38% (Day39, +4.77pp). Escalation CLOSED. Watch $100 going into earnings."
+        },
+        {
+            "ticker": "CMPS",
+            "resolution": "ESCALATION RESOLVED — BACK ABOVE ENTRY. Close $11.57 (+6.15%), entry $11.30 = +2.39%",
+            "entry_price": 11.30,
+            "close_jul29": 10.90,
+            "close_jul30": 11.57,
+            "day_change_pct": 6.15,
+            "pnl_vs_entry_pct": 2.39,
+            "prior_escalation_level_usd": 11.00,
+            "resolution_note": "CMPS +6.15% to $11.57. Day 38 had CMPS below entry (-3.54%, $10.90). Day 39: $11.57 = $0.27 above entry ($11.30) = +2.39%. This is the first time ALL 15 positions are profitable vs entry since monitoring began. The recovery from $10.85 (Day 37 low) to $11.57 is +6.6% over 3 sessions, indicating the Phase 2b TRD concern has been priced in. P&L: -3.54% (Day38) → +2.39% (Day39, +5.93pp). Escalation CLOSED. Monitor: if CMPS closes below $11.00 again, escalation would re-open."
+        }
+    ],
+    "near_breakeven_resolved": [
+        {
+            "ticker": "CMPS",
+            "resolution": "RESOLVED — back above entry +2.39%",
+            "entry_price": 11.30,
+            "close_jul30": 11.57
+        },
+        {
+            "ticker": "STOK",
+            "resolution": "RESOLVED — closed above $30 for first time (+4.53%)",
+            "entry_price": 28.74,
+            "close_jul30": 30.04,
+            "pnl_vs_entry_pct": 4.53,
+            "resolution_note": "STOK +1.90% to $30.04. Day 38 near-breakeven watch (intraday low $28.83 = $0.09 above entry). Day 39: FIRST CLOSE ABOVE $30. P&L: +2.57% → +4.53% (+1.96pp). $30 is the psychological breakout level. Pre-market July 31: $30.21 (+0.57%) = holding above $30. Near-breakeven watch CLOSED."
+        }
+    ],
+    "notable_events": [
+        {
+            "ticker": "NRIX",
+            "event": "TODAY: Binary event — Phase 1b bexobrutideg data presentation. Pre-market $23.58 (flat). ROCHE DEAL CLOSED July 21 ($700M upfront, up to $2.3B).",
+            "price_jul29": 23.60,
+            "price_jul30": 23.60,
+            "premarket_jul31": 23.58,
+            "day_change_jul30_pct": 0.00,
+            "volume_jul30": null,
+            "pnl_vs_entry_pct": 52.65,
+            "catalyst_date": "2026-07-31",
+            "priority": "CRITICAL — Binary event TODAY July 31. NRIX flat on July 30 ($23.60, 0.00%). Pre-market: $23.58. Roche deal closed July 21 ($700M upfront, $2.3B potential). Phase 1b data (92.9% ORR CLL, 84.2% BTK-naive per July 9 Q2 update). Position +52.65%.",
+            "note": "NRIX Jul 30 FLAT at $23.60 (0.00% day change). Pre-market Jul 31: $23.58 (-0.01%). The binary event is TODAY July 31 — Phase 1b bexobrutideg updated data presentation. KEY CONTEXT DISCOVERED (search): Nurix-Roche global collaboration CLOSED July 21, 2026 (HSR clearance). Terms: $700M upfront cash payment, potential total of $2.3B including milestones. Co-develop/co-commercialize in malignant hematology, immunology, neurology. Costs: 40% Nurix / 60% Roche. US profit/loss 50/50 split. Ex-US: Roche responsible, Nurix receives low-teens to high-teens royalties. Pro-forma cash: $1.14B post-payment. This MAJOR validation event (Roche deal) was not in prior monitoring snapshots — it was announced June 6 (before monitoring start entry June 10) and closed July 21, 2026. NRIX entry price $15.46 was POST-announcement. Q2 Corporate Update (July 9): 92.9% ORR in BTK-inhibitor-pretreated CLL (18/19 on treatment), 84.2% ORR BTK-naive (19/20 on treatment). Today's Phase 1b presentation may include updated/deeper cohort data, safety follow-up, earlier-line results, or CSU data. Pre-market flat suggests no major binary surprise pre-open; event likely at market hours. Position +52.65% ($15.46 → $23.60). Support: $23.33 (T-1 intraday low)."
+        },
+        {
+            "ticker": "DNTH",
+            "event": "+8.21% to $112.64 — Phase 3 EMERGE continuation. New 52-week high. GAP FLAG.",
+            "price_jul29": 104.09,
+            "price_jul30": 112.64,
+            "day_change_pct": 8.21,
+            "pnl_vs_entry_pct": 56.23,
+            "catalyst": "Phase 3 EMERGE trial initiation (claseprubart in gMG, announced July 17). Continuation buying.",
+            "priority": "POSITIVE — New 52-week high ($112.64). +8.21% gap flag. Phase 3 EMERGE momentum. Analyst avg target $128.58 (+14.15% from current). P&L: +56.23% — now portfolio leader.",
+            "note": "DNTH +8.21% to $112.64. NEW 52-WEEK HIGH. This is the highest DNTH has traded in the portfolio's 39-day history. Phase 3 EMERGE trial for claseprubart (generalized Myasthenia Gravis) was announced July 17, 2026 (+10.75% that day). July 30 continuation buying adds +8.21% on what appears to be a sector-wide rally + ongoing Phase 3 momentum. Analyst consensus: 15 analysts, 'Strong Buy', avg PT $128.58. Enterprise value ~$4.1B+. P&L: +40.93% (Day37) → +44.37% (Day38) → +56.23% (Day39, +11.86pp single session). Portfolio leader — DNTH now leads by P&L with +56.23%, surpassing NRIX +52.65%. $100 support confirmed multiple times; now $112 zone."
+        },
+        {
+            "ticker": "ALMS",
+            "event": "+9.74% to $28.95 — LARGEST POSITIVE GAPPER. LUMUS Phase 2b Q3 readout approaching. All escalations resolved.",
+            "price_jul29": 26.38,
+            "price_jul30": 28.95,
+            "day_change_pct": 9.74,
+            "pnl_vs_entry_pct": 42.12,
+            "catalyst": "LUMUS Phase 2b SLE readout expected Q3 2026 (imminent). Sector rally + proximity to catalyst.",
+            "priority": "POSITIVE — +9.74% largest portfolio gapper. LUMUS Q3 approaching. P&L: +42.12% (from +29.50% Day38, +12.62pp). Escalation fully resolved.",
+            "note": "ALMS +9.74% to $28.95. LARGEST POSITIVE GAP FLAG. Day 38 had $26.50 escalation broken on close ($26.38). Day 39: $28.95 = $2.45 above escalation level. Web research (Day 38) confirms: LUMUS Phase 2b topline readout in SLE expected Q3 2026 (on track per company). The proximity of this readout is likely driving accelerated buying: envudeucitinib (ESK-001) LUMUS Phase 2b data = the primary near-term binary catalyst for ALMS. If positive, could represent pivotal pathway in SLE. Entry $20.37 provides $8.58 cushion. Next escalation targets: $29.00 / $30.00. P&L progression: Day35 +37.46% → Day38 +29.50% → Day39 +42.12% (full recovery + new high vs Day35). LUMUS readout monitor: ACTIVE."
+        },
+        {
+            "ticker": "RVMD",
+            "event": "+6.22% to $192.17 — GAP FLAG. New recent high. Low $178 tested yesterday now well behind.",
+            "price_jul29": 180.92,
+            "price_jul30": 192.17,
+            "day_change_pct": 6.22,
+            "pnl_vs_entry_pct": 33.67,
+            "priority": "POSITIVE — +6.22% gap flag. New recent high $192. P&L: +33.67%. Normal monitoring; catalyst T-248.",
+            "note": "RVMD +6.22% to $192.17. GAP FLAG. Broad rally recovery after approaching $178 support. $192 is a new recent high in the portfolio. No specific news identified; driven by broad biotech strength. T-248. P&L: +25.85% (Day38) → +33.67% (Day39, +7.82pp). Continue normal monitoring."
+        },
+        {
+            "ticker": "URGN",
+            "event": "+1.58% to $41.09. Pre-market $41.15. Q2 Earnings Aug 5 (5 days).",
+            "price_jul29": 40.45,
+            "price_jul30": 41.09,
+            "premarket_jul31": 41.15,
+            "day_change_pct": 1.58,
+            "pnl_vs_entry_pct": 46.65,
+            "catalyst": "Q2 Earnings Aug 5 before market open (5 days).",
+            "priority": "MONITORING — +1.58% in rally, orderly. Pre-market $41.15 flat. Q2 earnings Aug 5 (5 days). P&L: +46.65%.",
+            "note": "URGN +1.58% to $41.09. Orderly move in a strong tape. Pre-market Jul 31: $41.15 (+0.15%). Q2 earnings August 5 (before market open) — now 5 days away. ZUSDURI commercial trajectory and UGN-501 Phase 1 start (Q4 2026) will be focal points. July 15 patent allowance (ZUSDURI/UGN-103 to 2044) is a structural positive. P&L: +44.36% → +46.65% (+2.29pp). Entering pre-earnings monitoring window."
+        },
+        {
+            "ticker": "CMPS",
+            "event": "+6.15% to $11.57 — BACK ABOVE ENTRY. All 15 positions now profitable vs entry.",
+            "price_jul29": 10.90,
+            "price_jul30": 11.57,
+            "day_change_pct": 6.15,
+            "pnl_vs_entry_pct": 2.39,
+            "priority": "MILESTONE — ALL 15 positions now profitable vs entry for the first time. CMPS: +6.15% gap flag. Close $11.57 vs entry $11.30 = +2.39%. Phase 2b TRD concern priced in.",
+            "note": "CMPS +6.15% to $11.57. PORTFOLIO MILESTONE: ALL 15 POSITIONS NOW POSITIVE VS ENTRY. CMPS was the last holdout (was -3.54% at Day 38). Day 39: $11.57 = $0.27 above entry ($11.30) = +2.39%. The Phase 2b TRD data (June 30 primary endpoint miss) appears fully priced in; stock has stabilized and is recovering. $0.27 above entry is still a thin margin — monitor for re-break. If CMPS closes below $11.00, escalation would re-open. P&L: -3.54% → +2.39% (+5.93pp)."
+        },
+        {
+            "ticker": "SLDB",
+            "event": "+5.60% to $8.49. Pre-market $8.72. Building on Day 38 escalation resolution.",
+            "price_jul29": 8.04,
+            "price_jul30": 8.49,
+            "premarket_jul31": 8.72,
+            "day_change_pct": 5.60,
+            "pnl_vs_entry_pct": 30.82,
+            "priority": "POSITIVE — +5.60% gap flag. Day 38 escalation resolved ($8.04). Day 39 continuation ($8.49). Pre-market $8.72 (+2.71%). P&L: +30.82%. Next target: $8.50/$9.00.",
+            "note": "SLDB +5.60% to $8.49. Two consecutive strong sessions: Day38 $8.04 (+0.88%, escalation resolved) → Day39 $8.49 (+5.60%). Pre-market Jul 31: $8.72 (+2.71%). The $8.00 support from Day 38 resolution has now become a springboard for continued buying. P&L: +23.88% → +30.82% (+6.94pp). Volume context not available (data source limit). Next resistance: $8.50/$9.00."
+        },
+        {
+            "ticker": "STOK",
+            "event": "+1.90% to $30.04 — FIRST CLOSE ABOVE $30. Near-breakeven watch RESOLVED.",
+            "price_jul29": 29.48,
+            "price_jul30": 30.04,
+            "premarket_jul31": 30.21,
+            "day_change_pct": 1.90,
+            "pnl_vs_entry_pct": 4.53,
+            "priority": "MILESTONE — First close above $30 (intraday attempts multiple times failed previously). Near-breakeven watch RESOLVED. Pre-market $30.21. P&L: +4.53%.",
+            "note": "STOK +1.90% to $30.04. FIRST SUSTAINED CLOSE ABOVE $30 (Day 37 high $29.875, Day 38 high $30.11 intraday but closed $29.48). Day 39: close $30.04 = first confirmed close above $30. Pre-market Jul 31: $30.21 (+0.57%) = holding. Entry $28.74 provides $1.30 cushion. Near-breakeven watch CLOSED. Normal monitoring above $30. P&L: +2.57% → +4.53% (+1.96pp)."
+        }
+    ],
+    "binary_window": {
+        "NRIX": {
+            "catalyst_date": "2026-07-31",
+            "binary_window_day": "T-0 EVENT DAY (July 31 pre-market)",
+            "premarket_jul31": 23.58,
+            "price_jul30": 23.60,
+            "price_jul29": 23.60,
+            "day_change_jul30_pct": 0.00,
+            "pnl_vs_entry_pct": 52.65,
+            "support_level": 23.33,
+            "binary_window_status": "T-0 EVENT DAY. Pre-market flat ($23.58 = -$0.02 from $23.60 close). No major pre-open move detected.",
+            "roche_deal_context": {
+                "deal_announced": "2026-06-06 (before monitoring period started)",
+                "deal_closed_hsr": "2026-07-21",
+                "upfront_payment_usd_mm": 700,
+                "total_potential_usd_mm": 2300,
+                "cost_share": "Nurix 40% / Roche 60%",
+                "us_profit_split": "50/50",
+                "ex_us_royalties": "Low-teens to high-teens on ex-US sales",
+                "pro_forma_cash_bn": 1.14,
+                "note": "Nurix-Roche deal CLOSED July 21, 2026. This is the primary strategic validation that was not captured in prior monitoring snapshots. $700M upfront payment provides substantial runway. Roche partnership validates bexobrutideg as potential best-in-class BTK degrader."
+            },
+            "clinical_data_context": {
+                "phase_1a_orr": "83% (median, heavily pretreated R/R, n=48, 50-600mg, 22.1-month PFS)",
+                "phase_1b_btk_pretreated_orr": "92.9% (18/19 remaining on treatment, per July 9 Q2 update)",
+                "phase_1b_btk_naive_orr": "84.2% (19/20 remaining on treatment)",
+                "todays_event": "Updated Phase 1a/b results presentation — may include additional cohorts, durability, safety updates, CSU data, or earlier-line results"
+            },
+            "checkpoint_history": {
+                "T7_Jul23": {"price": 23.74, "vol": 965900, "price_ok": true, "vol_ok": false},
+                "T4_Jul24": {"price": 23.38, "vol": 833300, "price_ok": false, "vol_ok": false},
+                "T3_Jul27": {"price_close": 23.43, "vol": 1282800, "price_close_ok": false, "price_intraday_high": 24.29, "vol_ok": true},
+                "T2_Jul28": {"price_close": 24.15, "vol": 1113398, "price_close_ok": true, "vol_ok": false},
+                "T1_Jul29": {"price_close": 23.60, "vol": 1168600, "price_close_ok": true, "vol_ok": false},
+                "T0_Jul30": {"price_close": 23.60, "vol": null, "price_close_ok": true, "note": "Flat on event eve; pre-market Jul 31 $23.58 flat."}
+            },
+            "note": "T-0: July 31 is the binary event day. NRIX flat on July 30 (0.00% change, $23.60). Pre-market July 31: $23.58 (-$0.02). The binary window was never dual-pass (no checkpoint met both price AND volume thresholds simultaneously), but the last two close-based price thresholds were met (T-2 and T-1 close $24.15 and $23.60 both above $23.50). Today's Phase 1b data presentation is the catalyst. Given the Roche deal ($700M upfront) closed July 21 as a major validation event, any incremental Phase 1b data update is additive positive context. Risk: if data disappoints OR data is fully priced, stock may not move materially. Support: $23.33 (T-1 intraday low). Position +52.65%."
+        },
+        "URGN": {
+            "catalyst_date": "2026-08-05",
+            "calendar_days_to_catalyst": 5,
+            "note": "T-5. URGN Q2 earnings Aug 5 (before market open). Entering pre-earnings window. +1.58% to $41.09. Pre-market $41.15 flat. P&L: +46.65%. Monitor pre-earnings drift.",
+            "pnl_vs_entry_pct": 46.65
+        },
+        "SYRE": {
+            "catalyst_date": "2026-08-04",
+            "calendar_days_to_catalyst": 4,
+            "note": "T-4. SYRE Q2 earnings Aug 4 (before market open). $101.50 = $100 reclaimed on Day 39. Escalation resolved. P&L: +33.38%. Key questions for earnings: interim data update on SPYRE-101 and SPYRE-102 programs; cash runway. Watch for IV crush post-earnings.",
+            "pnl_vs_entry_pct": 33.38
+        },
+        "ALMS": {
+            "catalyst_date": "~Q3 2026",
+            "calendar_days_to_catalyst": "30-60 (Q3 window)",
+            "note": "LUMUS Phase 2b SLE readout expected Q3 2026. On track per company update. +9.74% to $28.95 suggests market is positioning for an imminent readout. P&L: +42.12%. This is the key near-term binary for ALMS.",
+            "pnl_vs_entry_pct": 42.12
+        }
+    },
+    "governance_gates": {
+        "drawdown_gate": {
+            "status": "CLEAR",
+            "current_pp": 18.67,
+            "threshold_pp": -2.0,
+            "detail": "+18.67pp vs XBI (threshold -2.0pp). Day 38: +15.71pp → Day 39: +18.67pp (+2.96pp). Portfolio outperformed XBI by +2.08pp on July 30 (portfolio +4.48% vs XBI +2.40%). Clear of threshold by 20.67pp."
+        },
+        "ic_gate": {
+            "status": "OVERDUE — 30 days",
+            "last_measured": "2026-06-24",
+            "last_ic": 0.0432,
+            "gate_was_due": "2026-07-01",
+            "days_overdue": 30,
+            "next_review": "Requires explicit operator freeze lift. DEM candidate freeze + NO_MODEL_CHANGE forward-validation window active (0/20 eligible LIVE windows). No new measurement possible without freeze lift.",
+            "note": "IC gate overdue 30 days (Day 38: 29 days → Day 39: 30 days). No change. Governance constraint unchanged."
+        },
+        "h20d_gate": {
+            "status": "OVERDUE — 30 days",
+            "gate_date": "2026-07-01",
+            "days_overdue": 30,
+            "override_posture": "MAINTAINED (OPTION_B_OVERRIDE_2026_05_26)",
+            "note": "h20d gate due 2026-07-01. Sequential gate requires explicit operator freeze lift. Q1 2026 13F data not yet promoted to production."
+        },
+        "jaccard_gate": {
+            "status": "MAINTAINED",
+            "last_measured": "2026-06-23",
+            "top30_jaccard": 0.875,
+            "threshold": 0.40,
+            "note": "Jaccard 0.875 as of June 23. Override maintained. Well above 0.40 threshold."
+        },
+        "emergency_gate": {
+            "status": "CLEAR",
+            "detail": "No emergency conditions. Drawdown +18.67pp vs XBI. ALL 15 positions profitable vs entry for first time. No position below entry. No emergency gate action required."
+        },
+        "positions_20pct_loss": {
+            "status": "CLEAR",
+            "count": 0,
+            "detail": "No positions >20% below entry. CMPS (lowest P&L) now +2.39% vs entry ($11.57 vs $11.30). All 15 positions profitable. 20% loss threshold concern: NONE."
+        }
+    },
+    "positions": [
+        {
+            "ticker": "COGT", "company_name": "Cogent Biosciences, Inc.",
+            "entry_price": 31.35, "price_jul29": 39.57, "price_jul30": 41.36,
+            "pnl_vs_entry_pct": 31.93, "day_change_jul30_pct": 4.52,
+            "equity_position_usd": 8.80,
+            "catalyst_status": "POST_CATALYST — FIRED 2026-07-01. Normal monitoring. $41 new recent high.",
+            "gap_flag": false, "tier": "A",
+            "notes": "+4.52% to $41.36. Post-catalyst consolidation breaking higher. P&L: +26.22% → +31.93% (+5.71pp). $39-$41 range now becoming $41+ breakout."
+        },
+        {
+            "ticker": "DNTH", "company_name": "Dianthus Therapeutics, Inc.",
+            "entry_price": 72.10, "price_jul29": 104.09, "price_jul30": 112.64,
+            "pnl_vs_entry_pct": 56.23, "day_change_jul30_pct": 8.21,
+            "equity_position_usd": 10.47,
+            "catalyst_status": "POSITIVE — Phase 3 EMERGE momentum. +8.21% GAP FLAG. New 52-week high. Portfolio leader (+56.23%).",
+            "gap_flag": true,
+            "notes": "+8.21% to $112.64. NEW 52-WEEK HIGH. Phase 3 EMERGE claseprubart (gMG) initiation July 17. Continuation buying. Analyst avg target $128.58 (+14.15%). P&L: +44.37% → +56.23% (+11.86pp). Now portfolio P&L leader."
+        },
+        {
+            "ticker": "NRIX", "company_name": "Nurix Therapeutics, Inc.",
+            "entry_price": 15.46, "price_jul29": 23.60, "price_jul30": 23.60,
+            "premarket_jul31": 23.58, "pnl_vs_entry_pct": 52.65, "day_change_jul30_pct": 0.00,
+            "equity_position_usd": 10.15,
+            "catalyst_status": "BINARY EVENT TODAY July 31. Flat on July 30 (0.00%). Pre-market $23.58. Roche deal closed July 21 ($700M). Phase 1b: 92.9% ORR CLL.",
+            "gap_flag": false, "binary_window": true,
+            "watch_priority": "CRITICAL: Binary event TODAY July 31. Pre-market flat $23.58. Roche deal ($700M) closed July 21 — major validation. Phase 1b data presentation ongoing. Support $23.33.",
+            "tier": "A",
+            "notes": "0.00% July 30 ($23.60). T-0 TODAY. Pre-market $23.58 flat. Roche collaboration closed July 21 ($700M upfront, $2.3B potential). P&L: +52.65% (2nd highest in portfolio, behind DNTH +56.23%)."
+        },
+        {
+            "ticker": "URGN", "company_name": "UroGen Pharma Ltd.",
+            "entry_price": 28.02, "price_jul29": 40.45, "price_jul30": 41.09,
+            "premarket_jul31": 41.15, "pnl_vs_entry_pct": 46.65, "day_change_jul30_pct": 1.58,
+            "equity_position_usd": 9.77,
+            "catalyst_status": "PRE-EARNINGS — Q2 Aug 5 (5 days). +1.58%. Pre-market $41.15. July 15 patent (ZUSDURI to 2044) validated.",
+            "gap_flag": false, "tier": "A",
+            "notes": "+1.58% to $41.09. Pre-market $41.15. Q2 earnings Aug 5 entering monitoring window. P&L: +44.36% → +46.65% (+2.29pp)."
+        },
+        {
+            "ticker": "ALMS", "company_name": "Alumis Inc.",
+            "entry_price": 20.37, "price_jul29": 26.38, "price_jul30": 28.95,
+            "pnl_vs_entry_pct": 42.12, "day_change_jul30_pct": 9.74,
+            "equity_position_usd": 9.44,
+            "catalyst_status": "GAP FLAG — +9.74% LARGEST GAPPER. LUMUS Phase 2b SLE Q3 readout approaching. All escalations resolved.",
+            "gap_flag": true,
+            "watch_priority": "ALMS: +9.74% positive gap flag. LUMUS Phase 2b SLE readout expected Q3 2026 (imminent). $26.50 escalation fully resolved.",
+            "tier": "A",
+            "notes": "+9.74% to $28.95. LARGEST PORTFOLIO GAPPER. Day 38 escalation ($26.50 broken) fully reversed. LUMUS SLE Phase 2b approaching readout. P&L: +29.50% → +42.12% (+12.62pp)."
+        },
+        {
+            "ticker": "SYRE", "company_name": "Spyre Therapeutics, Inc.",
+            "entry_price": 76.10, "price_jul29": 97.87, "price_jul30": 101.50,
+            "pnl_vs_entry_pct": 33.38, "day_change_jul30_pct": 3.71,
+            "equity_position_usd": 8.94,
+            "catalyst_status": "ESCALATION RESOLVED — $100 reclaimed ($101.50). Q2 Earnings Aug 4 (4 days). Pre-earnings window.",
+            "gap_flag": false,
+            "notes": "+3.71% to $101.50. $100 reclaimed. Escalation CLOSED. Q2 earnings Aug 4 (T-4). P&L: +28.61% → +33.38% (+4.77pp). Watch IV behavior pre/post earnings."
+        },
+        {
+            "ticker": "RVMD", "company_name": "Revolution Medicines, Inc.",
+            "entry_price": 143.76, "price_jul29": 180.92, "price_jul30": 192.17,
+            "pnl_vs_entry_pct": 33.67, "day_change_jul30_pct": 6.22,
+            "equity_position_usd": 8.93,
+            "catalyst_status": "GAP FLAG — +6.22%. New recent high. Broad biotech rally. T-247.",
+            "gap_flag": true,
+            "notes": "+6.22% to $192.17. New recent high. P&L: +25.85% → +33.67% (+7.82pp). Escalation from Day 38 ($178 test) fully reversed. T-247."
+        },
+        {
+            "ticker": "CMPS", "company_name": "COMPASS Pathways Plc",
+            "entry_price": 11.30, "price_jul29": 10.90, "price_jul30": 11.57,
+            "pnl_vs_entry_pct": 2.39, "day_change_jul30_pct": 6.15,
+            "equity_position_usd": 6.83,
+            "catalyst_status": "MILESTONE — BACK ABOVE ENTRY (+2.39%). GAP FLAG +6.15%. First time ALL 15 positions profitable. Thin margin: monitor $11.00 as re-escalation trigger.",
+            "gap_flag": true,
+            "below_entry_alert": false,
+            "near_breakeven_alert": true,
+            "notes": "+6.15% to $11.57. BACK ABOVE ENTRY for first time since Day 37 breach. P&L: -3.54% → +2.39% (+5.93pp). Phase 2b TRD concern priced in. Monitor: close below $11.00 = re-escalation."
+        },
+        {
+            "ticker": "SLDB", "company_name": "Solid Biosciences Inc.",
+            "entry_price": 6.49, "price_jul29": 8.04, "price_jul30": 8.49,
+            "premarket_jul31": 8.72, "pnl_vs_entry_pct": 30.82, "day_change_jul30_pct": 5.60,
+            "equity_position_usd": 8.73,
+            "catalyst_status": "POSITIVE — +5.60% GAP FLAG. Day 38 escalation resolved. Pre-market $8.72 (+2.71%). Building momentum.",
+            "gap_flag": true,
+            "notes": "+5.60% to $8.49. GAP FLAG. Day 38 escalation (first close above $8) momentum continues. Pre-market $8.72 (+2.71%). P&L: +23.88% → +30.82% (+6.94pp). Next: $8.50/$9.00."
+        },
+        {
+            "ticker": "DRUG", "company_name": "Bright Minds Biosciences Inc.",
+            "entry_price": 63.59, "price_jul29": 71.06, "price_jul30": 74.63,
+            "pnl_vs_entry_pct": 17.37, "day_change_jul30_pct": 5.02,
+            "equity_position_usd": 7.90,
+            "catalyst_status": "GAP FLAG — borderline +5.02%. Bright Minds Biosciences. Day34 gap flag monitoring ongoing. Stabilizing $74 range.",
+            "gap_flag": true,
+            "notes": "+5.02% to $74.63. Borderline GAP FLAG (>5%). 13D/A July 2. Day34 gap flag cause unconfirmed. P&L: +11.74% → +17.37% (+5.63pp). Stabilizing."
+        },
+        {
+            "ticker": "STOK", "company_name": "Stoke Therapeutics, Inc.",
+            "entry_price": 28.74, "price_jul29": 29.48, "price_jul30": 30.04,
+            "premarket_jul31": 30.21, "pnl_vs_entry_pct": 4.53, "day_change_jul30_pct": 1.90,
+            "equity_position_usd": 6.96,
+            "catalyst_status": "MILESTONE — FIRST CLOSE ABOVE $30. Near-breakeven watch RESOLVED. Pre-market $30.21. P&L: +4.53%.",
+            "gap_flag": false, "near_breakeven_alert": false,
+            "notes": "+1.90% to $30.04. FIRST CLOSE ABOVE $30. Near-breakeven watch RESOLVED. Pre-market $30.21. Entry $28.74 = $1.30 cushion. P&L: +2.57% → +4.53%. Normal monitoring above $30."
+        },
+        {
+            "ticker": "PRAX", "company_name": "Praxis Precision Medicine, Inc.",
+            "entry_price": 241.92, "price_jul29": 291.03, "price_jul30": 307.75,
+            "pnl_vs_entry_pct": 27.21, "day_change_jul30_pct": 5.75,
+            "equity_position_usd": 8.47,
+            "catalyst_status": "ESCALATION RESOLVED — $290 reclaimed ($307.75). +5.75% GAP FLAG. 5-day decline reversed. EMERALD Sept 1.",
+            "gap_flag": true,
+            "notes": "+5.75% to $307.75. GAP FLAG. Day38 escalation ($290 barely held) resolved. 4-day decline (Day35 $325.30 → Day38 $291.03) being reversed. P&L: +20.30% → +27.21% (+6.91pp). EMERALD completes Sept 1. Need to recover $325 for full restoration."
+        },
+        {
+            "ticker": "TRVI", "company_name": "Travere Therapeutics, Inc.",
+            "entry_price": 13.43, "price_jul29": 18.09, "price_jul30": 18.40,
+            "premarket_jul31": 18.80, "pnl_vs_entry_pct": 37.01, "day_change_jul30_pct": 1.71,
+            "equity_position_usd": 9.14,
+            "catalyst_status": "POSITIVE — +1.71%. Pre-market $18.80 (+2.17%). Consolidating above $18. P&L: +37.01%.",
+            "gap_flag": false,
+            "notes": "+1.71% to $18.40. Pre-market Jul 31: $18.80 (+2.17%). $18 support confirmed (Day38 tested $17.69, fully recovered). P&L: +34.70% → +37.01% (+2.31pp). Strong position."
+        },
+        {
+            "ticker": "ERAS", "company_name": "Erasca, Inc.",
+            "entry_price": 13.27, "price_jul29": 17.72, "price_jul30": 18.68,
+            "pnl_vs_entry_pct": 40.77, "day_change_jul30_pct": 5.42,
+            "equity_position_usd": 9.40,
+            "catalyst_status": "ESCALATION RESOLVED — $18.00 reclaimed ($18.68). +5.42% GAP FLAG. $17.50 offering price no longer threatened. T-52.",
+            "gap_flag": true,
+            "notes": "+5.42% to $18.68. GAP FLAG. Day38 escalation ($18 broken, $17.50 offering price at risk) RESOLVED. $18.68 = $1.18 above $18. Morgan Stanley PT $21 (raised July 20). T-52 (~Sept 21). P&L: +33.53% → +40.77% (+7.24pp)."
+        },
+        {
+            "ticker": "XENE", "company_name": "Xenon Pharmaceuticals Inc.",
+            "entry_price": 51.95, "price_jul29": 63.10, "price_jul30": 64.19,
+            "pnl_vs_entry_pct": 23.56, "day_change_jul30_pct": 1.73,
+            "equity_position_usd": 8.25,
+            "catalyst_status": "MONITORING — +1.73%. $63 support confirmed. T-52. Volume 1.45x concern from Day 38 abated in broad rally.",
+            "gap_flag": false,
+            "notes": "+1.73% to $64.19. $63 support from Day 38 (intraday $62.85) now confirmed support zone. P&L: +21.46% → +23.56% (+2.10pp). T-52 (~Sept 21). Normal monitoring."
+        }
+    ],
+    "session_summary": {
+        "date": "2026-07-30",
+        "event": "BROAD BIOTECH RALLY — 14 up / 1 flat (NRIX). Portfolio +4.48% vs XBI +2.40% (+2.08pp outperformance). ALL FIVE Day-38 escalations resolved in a single session. Historic portfolio day.",
+        "breadth": "14 up / 1 flat",
+        "portfolio_avg_day_change_pct": 4.48,
+        "xbi_day_change_pct": 2.40,
+        "xbi_close_jul30": 151.46,
+        "relative_performance_pp": 2.08,
+        "up_positions": [
+            "ALMS +9.74% (largest gapper, LUMUS Q3 approaching, escalation resolved)",
+            "DNTH +8.21% (new 52-wk high, Phase 3 EMERGE momentum, now portfolio P&L leader)",
+            "RVMD +6.22% (new recent high, broad rally)",
+            "CMPS +6.15% (back above entry, escalation resolved, milestone)",
+            "PRAX +5.75% ($290 reclaimed, escalation resolved)",
+            "SLDB +5.60% (Day 38 escalation momentum continues, pre-market $8.72)",
+            "ERAS +5.42% ($18 reclaimed, offering price no longer at risk, escalation resolved)",
+            "DRUG +5.02% (borderline gap flag, recovery)",
+            "COGT +4.52%",
+            "SYRE +3.71% ($100 reclaimed, escalation resolved)",
+            "URGN +1.58% (earnings Aug 5 in 5 days)",
+            "XENE +1.73%",
+            "TRVI +1.71%",
+            "STOK +1.90% (FIRST CLOSE ABOVE $30, near-breakeven watch resolved)"
+        ],
+        "flat_positions": ["NRIX 0.00% ($23.60, binary event TOMORROW Jul 31)"],
+        "key_events": [
+            "ALL FIVE Day-38 escalations resolved: ALMS ($26.50 reclaimed), PRAX ($290 reclaimed), ERAS ($18 reclaimed), SYRE ($100 reclaimed), CMPS (back above entry).",
+            "PORTFOLIO MILESTONE: ALL 15 positions now profitable vs entry for first time.",
+            "DNTH +8.21% to $112.64 — new 52-week high. Phase 3 EMERGE claseprubart momentum. Now portfolio P&L leader (+56.23%).",
+            "ALMS +9.74% to $28.95 — largest positive gapper. LUMUS Phase 2b SLE readout expected Q3 2026 (imminent).",
+            "STOK +1.90% to $30.04 — first close above $30. Near-breakeven watch resolved.",
+            "NRIX 0.00% at $23.60 — Roche deal ($700M upfront) CLOSED July 21. Phase 1b data presentation TOMORROW July 31. Pre-market $23.58 flat.",
+            "SLDB pre-market $8.72 (+2.71%) — continuing momentum from Day 38 escalation resolution.",
+            "XBI +2.40% to $151.46 (from $147.91 prev close, entry $133.62 = +13.35% return since initiation)."
+        ]
+    },
+    "upcoming_catalysts": {
+        "NRIX_jul31_today": {
+            "event": "Phase 1b bexobrutideg updated data presentation — CLL/SLL + possible CSU/immunology updates",
+            "calendar_days": 0,
+            "note": "TODAY July 31. Pre-market flat $23.58. Roche deal ($700M upfront, up to $2.3B) closed July 21. Strong validation context. Phase 1b: 92.9% ORR CLL. Today's event is additive context, not a primary readout."
+        },
+        "SYRE_aug4_earnings": {
+            "event": "Q2 2026 Earnings (before market open) — T-4",
+            "calendar_days": 4,
+            "note": "SYRE Q2 earnings Aug 4. $101.50 = $100 reclaimed. P&L: +33.38%. Key: program updates for SPYRE-101/102, cash runway, and whether company comments on interim signals. Watch IV compression post-earnings."
+        },
+        "URGN_aug5_earnings": {
+            "event": "Q2 2026 Earnings (before market open, 10 AM ET call) — T-5",
+            "calendar_days": 5,
+            "note": "URGN Q2 earnings Aug 5. $41.09 pre-close, pre-market $41.15. P&L: +46.65%. Key: ZUSDURI commercial performance, UGN-501 Phase 1 start timeline. July 15 patent (to 2044) is structural positive. Entering pre-earnings monitoring window."
+        },
+        "ALMS_lumus_q3": {
+            "event": "LUMUS Phase 2b SLE topline readout — expected Q3 2026",
+            "calendar_days": "30-60",
+            "note": "LUMUS Phase 2b SLE readout expected Q3 2026. On track per company. +9.74% rally may indicate market is pricing in imminent readout. This is the primary binary for ALMS. P&L: +42.12% heading into readout."
+        },
+        "PRAX_emerald_sep1": {
+            "event": "EMERALD trial completion",
+            "calendar_days": 31,
+            "note": "EMERALD Phase 3 completes Sept 1. Data readout Q4 2026/Q1 2027. $307.75 after Day 38 escalation fully resolved. P&L: +27.21%."
+        },
+        "ERAS_xene_sep21": {
+            "event": "ERAS and XENE catalysts (~Sept 21)",
+            "calendar_days": 52,
+            "note": "T-52. ERAS: $18.68 — escalation resolved, $17.50 offering price no longer threatened. XENE: $64.19, normal monitoring."
+        }
+    },
+    "watchlist_priorities": {
+        "today_jul31_thursday": [
+            "NRIX: BINARY EVENT TODAY. Monitor for press release, conference presentation, or halt from Nurix Therapeutics on Phase 1b bexobrutideg data. Pre-market flat $23.58. Entry $15.46 = $8.14/share at stake. Roche deal ($700M) provides strong validation floor. Support: $23.33.",
+            "ALMS: +9.74% gap flag. LUMUS Phase 2b SLE readout expected Q3 2026 — may be imminent. Monitor for any company announcement. $28.95 = new near-term high.",
+            "DNTH: +8.21% to $112.64 (new 52-week high). Monitor for continued momentum. Phase 3 EMERGE claseprubart in gMG. Analyst target $128.58 (14.15% above current price). Earnings likely Q3 2026.",
+            "SLDB: Pre-market $8.72 (+2.71%). Two consecutive strong sessions. Watch for $8.50/$9.00 resistance.",
+            "STOK: Pre-market $30.21. First close above $30 yesterday. Monitor for sustainability above $30.",
+            "CMPS: Close $11.57 = only $0.27 above entry ($11.30). Thin margin. Monitor: close below $11.00 would re-open escalation.",
+            "SYRE: Q2 earnings Aug 4 (4 days). $101.50 = $100 reclaimed. Begin pre-earnings IV monitoring.",
+            "URGN: Q2 earnings Aug 5 (5 days). Pre-market $41.15. Entering pre-earnings window."
+        ],
+        "ongoing": [
+            "IC gate overdue 30 days — requires operator freeze lift",
+            "h20d gate overdue 30 days — requires operator freeze lift",
+            "NRIX Roche deal context ($700M closed July 21) — not in prior monitoring snapshots; now confirmed",
+            "ALMS LUMUS Phase 2b timing — market may be pricing imminent readout (Q3 2026)",
+            "DRUG (Bright Minds) Day34 gap flag cause still unconfirmed"
+        ]
+    },
+    "intelligence_updates": {
+        "NRIX_roche_deal_discovered": "MAJOR: Nurix-Roche $2.3B global collaboration CLOSED July 21, 2026. Announced June 6, closed upon HSR clearance July 21. Terms: $700M upfront cash, $2.3B total potential milestones. Co-develop/co-commercialize malignant hematology, immunology, neurology. Nurix 40%/Roche 60% cost share. US profits 50/50 split. Pro-forma cash $1.14B. This was not captured in prior monitoring snapshots (entry June 10 was post-announcement). Provides major validation context for NRIX.",
+        "DNTH_phase3_emergence": "Phase 3 EMERGE trial of claseprubart in generalized Myasthenia Gravis initiated July 17, 2026 (10.75% move on announcement). Phase 2 MaGic trial data positive; ~195 patients, primary endpoint data H2 2028. 15 analysts 'Strong Buy', avg PT $128.58. July 30 continuation (+8.21%) consistent with ongoing institutional accumulation.",
+        "ALMS_lumus_timing": "LUMUS Phase 2b SLE readout expected Q3 2026 (company update confirms 'on track'). The +9.74% rally on July 30 may reflect market pricing of imminent readout. Envudeucitinib (ESK-001) in SLE is the primary binary catalyst.",
+        "XBI_context": "XBI at $151.46 (July 30 close), 52-week high $164.35. XBI has returned +13.35% since monitoring start. Biotech sector driven by M&A ($106B in deals through July 2026, $140-160B projected for full year). Broad sector tailwind."
+    },
+    "monitoring_status": {
+        "period_extended": true,
+        "original_end": "2026-06-30",
+        "extension_rationale": "NRIX binary event July 31 (TODAY), SYRE earnings Aug 4, URGN earnings Aug 5, ALMS LUMUS Q3 readout approaching, IC/h20d governance gates overdue 30 days, PRAX EMERALD Sept 1",
+        "governance_gates_overdue_days": 30,
+        "alerts_active": [
+            "NRIX_BINARY_EVENT_TODAY_JUL31_PREMARKET_FLAT_23.58",
+            "ALMS_LUMUS_Q3_READOUT_APPROACHING_POSITIVE_GAPPER_9.74PCT",
+            "DNTH_PHASE3_EMERGE_MOMENTUM_NEW_52WK_HIGH_GAPPER_8.21PCT",
+            "CMPS_THIN_MARGIN_ABOVE_ENTRY_MONITOR_11.00"
+        ],
+        "alerts_resolved_this_session": [
+            "ALMS_ESCALATION_2650_FULLY_RESOLVED_2895",
+            "PRAX_290_ESCALATION_RESOLVED_30775",
+            "ERAS_18_ESCALATION_RESOLVED_1868",
+            "SYRE_95_ESCALATION_RESOLVED_10150",
+            "CMPS_BELOW_ENTRY_RESOLVED_1157",
+            "STOK_NEAR_BREAKEVEN_RESOLVED_ABOVE_30",
+            "ALL_15_POSITIONS_PROFITABLE_FIRST_TIME"
+        ],
+        "upcoming_critical": [
+            "NRIX Phase 1b data presentation — TODAY July 31",
+            "SYRE Q2 earnings — Aug 4 (4 days)",
+            "URGN Q2 earnings — Aug 5 (5 days)",
+            "ALMS LUMUS Phase 2b readout — Q3 2026 (imminent)"
+        ],
+        "next_governance_action": "h20d quarantine script + IC refresh requires explicit operator freeze lift"
+    }
+}
