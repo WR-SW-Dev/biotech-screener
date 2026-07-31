@@ -34,7 +34,7 @@ pandas==2.3.3
 numpy==1.26.3
 orjson==3.11.9
 requests==2.34.2
-scipy==1.11.4
+scipy==1.15.3
 
 # ----------------------------------------------------------------------------
 # Agent Workflow / Scientific Cartography (LangGraph review orchestrator)
