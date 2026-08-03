@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — Biotech Screener</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; margin: 0; background: #f6f7f9;
+    }
+    @media (prefers-color-scheme: dark) { body { background: #14161a; } }
+    .card {
+      background: Canvas; padding: 2rem; border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.18); width: min(360px, 92vw);
+    }
+    h1 { font-size: 1.05rem; margin: 0 0 1.25rem; font-weight: 600; }
+    label { display: block; font-size: .8rem; margin: .85rem 0 .3rem; opacity: .75; }
+    input {
+      width: 100%; padding: .55rem .65rem; font-size: .95rem; box-sizing: border-box;
+      border: 1px solid rgba(128,128,128,.45); border-radius: 6px;
+      background: Canvas; color: CanvasText;
+    }
+    button {
+      margin-top: 1.35rem; width: 100%; padding: .6rem; font-size: .95rem;
+      border: 0; border-radius: 6px; background: #2f6feb; color: #fff; cursor: pointer;
+    }
+    button:hover { background: #2558c0; }
+    .error {
+      margin-top: 1rem; padding: .55rem .7rem; border-radius: 6px; font-size: .85rem;
+      background: rgba(200,40,40,.12); color: #c02626;
+    }
+    @media (prefers-color-scheme: dark) { .error { color: #ff8f8f; } }
+  </style>
+</head>
+<body>
+  <form class="card" method="post" action="/login">
+    <h1>Biotech Screener</h1>
+    <label for="user_id">User</label>
+    <input id="user_id" name="user_id" autocomplete="username" autocapitalize="none"
+           spellcheck="false" required autofocus>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password"
+           autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  </form>
+</body>
+</html>
