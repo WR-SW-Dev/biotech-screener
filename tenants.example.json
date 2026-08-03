@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "Example tenant registry. Copy to tenants.json (gitignored) and edit.",
+    "See docs/design/MULTI_TENANCY.md §5.",
+    "",
+    "INVARIANTS enforced at load time by common.tenancy.load_registry():",
+    "  - user_id: lowercase alnum plus '_' and '-', 2-32 chars, must start alnum.",
+    "  - account_number: EXACTLY ONE tenant per brokerage account. Two tenants sharing",
+    "    an account number is a hard config error, because it would make the ownership",
+    "    guard meaningless.",
+    "  - broker_server: the MCP server name bound to THAT user's Robinhood OAuth token.",
+    "    Note that all Robinhood MCP servers currently share one URL, so the server name",
+    "    plus its bound token is the only thing distinguishing accounts. This file does",
+    "    not create that binding; it records it so code can refuse mismatches.",
+    "",
+    "OWNERSHIP: this file should be owned by an administrative account and NOT writable",
+    "by any tenant. A tenant able to edit it can reassign its own account number."
+  ],
+  "tenants": {
+    "alice": {
+      "account_number": "111111111",
+      "broker_server": "robinhood-alice",
+      "retention_days": 180,
+      "min_keep_snapshots": 60
+    },
+    "bob": {
+      "account_number": "222222222",
+      "broker_server": "robinhood-bob",
+      "retention_days": 90,
+      "min_keep_snapshots": 30
+    }
+  }
+}
