@@ -96,15 +96,50 @@ The gate everything else depends on. Without a session there is no `user_id`, an
   env) → one call → exit. Non-zero exit or timeout fails closed.
 - `trading_guard` binds inside the subprocess, so the latch covers exactly one account.
 
-### PR 4 — Path migration + retention
+### PR 4 — Retention, and why the path migration mostly evaporated
 
-- Migrate the ~1,894 hardcoded path references onto `common/paths.py`. Mechanical but
-  large; done as its own PR so review is tractable and a bad rewrite is revertible.
-- Snapshot retention: **180 days** (operator decision #4), floor of
-  `DEFAULT_MIN_KEEP_SNAPSHOTS`.
-- `artifacts/trading/isolation_audit.jsonl` currently appends forever with no retention.
-  It is an audit trail, not routine data, so it is **compressed, never deleted**: entries
-  older than **1 year** roll into `isolation_audit-YYYY.jsonl.gz`.
+The original plan budgeted PR 4 for migrating ~1,894 hardcoded path references onto
+`common/paths.py`. **Most of that work should not be done**, and the rescope in §1 is why.
+
+Decision #2 keeps market data single-copy, and §1 establishes that screening is
+deterministic and shared — the same inputs produce byte-identical outputs for every user,
+so there is no per-tenant screening *output* to separate. Snapshots, `rankings.csv`,
+prices, 13F and catalyst caches are therefore all **shared by design**. Rewriting those
+call sites onto per-tenant paths would not just be wasted effort; it would give each
+tenant a private copy of data the architecture says is single-copy, and quietly break the
+determinism claim the whole rescope rests on.
+
+Measured: ~540 references to `data/snapshots`, ~1,064 to `artifacts/`, across 224 files
+that define their own `REPO_ROOT`. Essentially all of them read shared data.
+
+What is genuinely per-tenant is small, and already handled:
+
+| State | Where | Status |
+| --- | --- | --- |
+| Credentials | encrypted store, keyed by `user_id` | PR 2 |
+| Session → tenant | signed cookie | PR 2 |
+| Execution idempotency | ledger keyed `(user_id, basket_id)` | PR 3b |
+| Trading decisions | `isolation_audit.jsonl`, `user_id` on every record | PR 1 |
+
+The two trading logs stay as single append-only files carrying `user_id` per record,
+rather than being split per tenant. For an audit trail that is the better shape: one
+chronological source of truth, and cross-tenant questions ("did anything ever bind two
+accounts in one process?") stay answerable in one pass.
+
+So PR 4 reduces to retention:
+
+- **Snapshots: 180 days** (decision #4). Already the default —
+  `tenancy.DEFAULT_RETENTION_DAYS = 180`, honoured by `tools/prune_user_data.py`, with a
+  `DEFAULT_MIN_KEEP_SNAPSHOTS` floor. No code change; confirmed by inspection.
+- **`artifacts/trading/isolation_audit.jsonl`** had no retention at all and appended
+  forever. It is an audit trail, not routine data, so entries older than **1 year** are
+  **compressed, never deleted** — they roll into `isolation_audit-YYYY.jsonl.gz` beside
+  the live log via `tools/compress_audit_log.py` and stay readable indefinitely.
+
+If a per-tenant path boundary is ever genuinely needed — e.g. tenant-specific overrides
+of shared inputs — `common/paths.py` already carries `shared_root`/`shared_market_file`
+alongside the per-tenant properties, so the split can be made then, against a real
+requirement rather than a speculative one.
 
 ### Unchanged from operator decisions
 
