@@ -1,0 +1,199 @@
+{
+    "date": "2026-08-03",
+    "monitoring_day": 41,
+    "monitoring_period_note": "Day 41 — PRE-MARKET snapshot (09:00 ET). MONITORING GAP: Days 40 (Aug 1, Friday) run missed. Data as of July 30 close (Day 39 = last verified). Robinhood MCP unavailable (Days 1-41). Cannot verify July 31 session (NRIX binary event) or August 1 session. CRITICAL UPCOMING: SYRE Q2 earnings Aug 4 (TOMORROW, T-1). URGN Q2 earnings Aug 5 (T-2). Governance gates IC/h20d overdue 33 days.",
+    "timestamp": "2026-08-03T09:00:00.000000Z",
+    "phase": "Day 41 — MONITORING GAP + PRE-EARNINGS ALERT. Last verified session: July 30 close (Day 39, +4.48% broad rally, all escalations resolved, all 15 positions profitable). MISSED SESSIONS: July 31 (NRIX binary event day — outcome unknown) and August 1 (Friday — session unknown). CRITICAL CATALYSTS THIS WEEK: SYRE Q2 earnings Aug 4 TOMORROW before market open; URGN Q2 earnings Aug 5 before market open. ALMS LUMUS Phase 2b SLE readout expected Q3 (imminent — was +9.74% on July 30 positioning). Governance IC/h20d gates 33 days overdue. No live price data available.",
+    "data_as_of": "2026-07-30 close (StockAnalysis verified — Day 39). UNVERIFIED: July 31 session (NRIX binary event) and August 1 session. Robinhood MCP unavailable Days 1-41. No live pre-market data accessible this run.",
+    "missed_run_note": "Day 40 (August 1, 2026 — Friday) monitoring run was NOT executed. Monitoring gap: July 31 close and August 1 close prices are unverified. NRIX Phase 1b binary event occurred July 31 — outcome unknown. This gap spans the critical NRIX binary event and immediately precedes SYRE earnings (Aug 4) and URGN earnings (Aug 5).",
+
+    "account": {
+        "account_id": "Robinhood 802349084",
+        "equity_fetchable": false,
+        "equity_estimated_usd": null,
+        "equity_note": "Robinhood MCP unavailable. Last verified equity: $132.18 (Day 39, based on July 30 close prices). July 31 and August 1 session outcomes unknown — cannot update equity estimate without verified price data.",
+        "cash_carried": 99.87,
+        "buying_power_carried": null,
+        "total_estimated_account_value": null,
+        "data_source": "Day 39 carry-forward ($132.18 equity as of July 30 close) — unverified for Aug 1 close"
+    },
+
+    "portfolio_overview": {
+        "total_positions": 15,
+        "positions_negative_vs_entry": "UNKNOWN (last verified: 0 as of July 30 close)",
+        "positions_positive_vs_entry": "UNKNOWN (last verified: 15/15 as of July 30 close — first time all positive)",
+        "avg_pnl_vs_entry_pct": "UNKNOWN (last verified: +32.02% as of July 30 close)",
+        "session_breadth_unverified": "July 31 and August 1 sessions unverified. Last known: July 30 — 14 up / 1 flat (NRIX). Portfolio avg +4.48% vs XBI +2.40%.",
+        "xbi_entry_price": 133.62,
+        "xbi_last_verified_close_jul30": 151.46,
+        "xbi_return_since_entry_pct_last_verified": 13.35,
+        "drawdown_vs_xbi_pp_last_verified": 18.67,
+        "drawdown_threshold_pp": -2.0,
+        "drawdown_status": "LAST VERIFIED CLEAR (+18.67pp as of July 30). July 31 and August 1 unverified — NRIX binary event and subsequent sessions may have changed this. Verify immediately if possible.",
+        "data_gap_alert": "MONITORING GAP — 2 unverified sessions (July 31 and August 1). NRIX binary event result unknown. Cannot confirm current drawdown status or position P&L."
+    },
+
+    "critical_upcoming_catalysts": {
+        "SYRE_aug4_earnings_TOMORROW": {
+            "ticker": "SYRE",
+            "event": "Q2 2026 Earnings — BEFORE MARKET OPEN",
+            "date": "2026-08-04",
+            "days_to_catalyst": 1,
+            "status": "TOMORROW — T-1 PRE-EARNINGS ALERT",
+            "last_verified_price": 101.50,
+            "last_verified_price_date": "2026-07-30",
+            "last_verified_pnl_vs_entry_pct": 33.38,
+            "entry_price": 76.10,
+            "priority": "CRITICAL — Q2 earnings tomorrow before open. $100 reclaimed July 30 ($101.50). Key watch: SPYRE-101/SPYRE-102 program updates, cash runway guidance. Watch for IV crush post-earnings. Position +33.38% at last verified price. Needs operator attention.",
+            "watch_items": [
+                "SPYRE-101 (anti-integrin α4β7) Phase 1/2 update in IBD",
+                "SPYRE-102 program update",
+                "Cash runway and 2026 guidance",
+                "IV compression post-earnings — position is +33.38%",
+                "$100 psychological level as post-earnings support"
+            ]
+        },
+        "URGN_aug5_earnings": {
+            "ticker": "URGN",
+            "event": "Q2 2026 Earnings — BEFORE MARKET OPEN (10 AM ET call)",
+            "date": "2026-08-05",
+            "days_to_catalyst": 2,
+            "status": "T-2 PRE-EARNINGS WINDOW",
+            "last_verified_price": 41.09,
+            "last_verified_price_date": "2026-07-30",
+            "last_verified_pnl_vs_entry_pct": 46.65,
+            "entry_price": 28.02,
+            "priority": "CRITICAL — Q2 earnings Tuesday before open. Last verified $41.09 (+46.65% vs entry). Key: ZUSDURI commercial performance, UGN-501 Phase 1 start timeline. July 15 patent to 2044 (structural positive).",
+            "watch_items": [
+                "ZUSDURI (uro/recurrent UTI) commercial revenue trajectory",
+                "UGN-501 Phase 1 trial initiation timeline (Q4 2026 guided)",
+                "Cash position and 2026 guidance",
+                "July 15 patent allowance context (ZUSDURI/UGN-103 extended to 2044)"
+            ]
+        },
+        "NRIX_jul31_binary_UNVERIFIED": {
+            "ticker": "NRIX",
+            "event": "Phase 1b bexobrutideg updated data presentation",
+            "date": "2026-07-31",
+            "days_since_event": 3,
+            "status": "BINARY EVENT OCCURRED July 31 — OUTCOME UNKNOWN. Day 40 run missed. Verify NRIX price immediately.",
+            "last_verified_premarket_jul31": 23.58,
+            "last_verified_price_date": "2026-07-30 close",
+            "last_verified_pnl_vs_entry_pct": 52.65,
+            "entry_price": 15.46,
+            "roche_deal_note": "Nurix-Roche $700M upfront / $2.3B total collaboration CLOSED July 21. Major validation event.",
+            "priority": "HIGH — Binary event was July 31. Outcome unknown (monitoring gap). Pre-market July 31 was flat ($23.58). Verify current NRIX price. Phase 1b: 92.9% ORR CLL (per July 9 Q2 update)."
+        },
+        "ALMS_lumus_q3_imminent": {
+            "ticker": "ALMS",
+            "event": "LUMUS Phase 2b SLE topline readout — expected Q3 2026",
+            "days_to_catalyst": "0-60 (Q3 window, potentially imminent)",
+            "last_verified_price": 28.95,
+            "last_verified_price_date": "2026-07-30",
+            "last_verified_pnl_vs_entry_pct": 42.12,
+            "entry_price": 20.37,
+            "status": "MONITORING — LUMUS readout expected Q3 2026 (imminent). +9.74% on July 30 may indicate market pricing imminent readout.",
+            "priority": "ELEVATED — +9.74% on July 30 suggesting imminent readout positioning. Envudeucitinib (ESK-001) SLE Phase 2b = primary binary catalyst. Monitor for any company announcement."
+        }
+    },
+
+    "gap_flags": [],
+    "gap_note": "Cannot compute gap flags — July 31 and August 1 price data unavailable (Robinhood MCP unavailable, no live data source accessible). Last gap flags: 8 positive flags on July 30 (all resolved escalations + positive momentum). Check NRIX urgently for binary event outcome.",
+
+    "escalation_flags": [
+        {
+            "ticker": "NRIX",
+            "reason": "DATA GAP — Binary event occurred July 31. Price unknown. Treat as unresolved until verified.",
+            "priority": "VERIFY IMMEDIATELY"
+        },
+        {
+            "ticker": "CMPS",
+            "reason": "THIN MARGIN WATCH — Last verified +2.39% vs entry ($11.57 vs $11.30 entry). Monitor: close below $11.00 re-opens escalation.",
+            "priority": "WATCH — close below $11.00 = re-escalation"
+        }
+    ],
+
+    "governance_gates": {
+        "drawdown_gate": {
+            "status": "LAST VERIFIED CLEAR — +18.67pp vs XBI (July 30 close). UNVERIFIED for July 31 and August 1 sessions.",
+            "last_verified_pp": 18.67,
+            "last_verified_date": "2026-07-30",
+            "threshold_pp": -2.0,
+            "detail": "Last verified +18.67pp vs XBI (July 30, Day 39). July 31 and August 1 sessions unverified. NRIX binary event could have material impact. Verify immediately."
+        },
+        "ic_gate": {
+            "status": "OVERDUE — 33 days",
+            "last_measured": "2026-06-24",
+            "last_ic": 0.0432,
+            "gate_was_due": "2026-07-01",
+            "days_overdue": 33,
+            "note": "IC gate overdue 33 days (was 30 days at Day 39). No change. Requires explicit operator freeze lift. DEM candidate freeze + NO_MODEL_CHANGE forward-validation window active (0/20 eligible LIVE windows)."
+        },
+        "h20d_gate": {
+            "status": "OVERDUE — 33 days",
+            "gate_date": "2026-07-01",
+            "days_overdue": 33,
+            "override_posture": "MAINTAINED (OPTION_B_OVERRIDE_2026_05_26)",
+            "note": "h20d gate due 2026-07-01. Sequential gate requires explicit operator freeze lift. Q1 2026 13F data not yet promoted to production."
+        },
+        "jaccard_gate": {
+            "status": "MAINTAINED",
+            "last_measured": "2026-06-23",
+            "top30_jaccard": 0.875,
+            "threshold": 0.40,
+            "note": "Jaccard 0.875 as of June 23. Well above 0.40 threshold."
+        },
+        "emergency_gate": {
+            "status": "LAST VERIFIED CLEAR (July 30). July 31 and August 1 unverified.",
+            "detail": "Drawdown was +18.67pp at July 30 close. No emergency conditions as of last verified. July 31 NRIX binary event and August 1 session unverified — manual check advised."
+        },
+        "positions_20pct_loss": {
+            "status": "LAST VERIFIED CLEAR (July 30). CMPS watch ongoing.",
+            "count": 0,
+            "detail": "No positions >20% below entry at July 30 close. CMPS (lowest P&L) was +2.39% vs entry. Current status for July 31 and August 1 sessions: UNKNOWN."
+        }
+    },
+
+    "positions_last_verified_jul30_close": [
+        {"ticker": "COGT", "entry": 31.35, "last_price": 41.36, "pnl_pct": 31.93},
+        {"ticker": "DNTH", "entry": 72.10, "last_price": 112.64, "pnl_pct": 56.23},
+        {"ticker": "NRIX", "entry": 15.46, "last_price": 23.60, "pnl_pct": 52.65, "note": "BINARY EVENT July 31 — current price UNKNOWN"},
+        {"ticker": "URGN", "entry": 28.02, "last_price": 41.09, "pnl_pct": 46.65, "note": "Q2 Earnings Aug 5"},
+        {"ticker": "ALMS", "entry": 20.37, "last_price": 28.95, "pnl_pct": 42.12, "note": "LUMUS Phase 2b SLE Q3 readout imminent"},
+        {"ticker": "TRVI", "entry": 13.43, "last_price": 18.40, "pnl_pct": 37.01},
+        {"ticker": "SYRE", "entry": 76.10, "last_price": 101.50, "pnl_pct": 33.38, "note": "Q2 Earnings TOMORROW Aug 4"},
+        {"ticker": "RVMD", "entry": 143.76, "last_price": 192.17, "pnl_pct": 33.67},
+        {"ticker": "SLDB", "entry": 6.49, "last_price": 8.49, "pnl_pct": 30.82},
+        {"ticker": "XENE", "entry": 51.95, "last_price": 64.19, "pnl_pct": 23.56},
+        {"ticker": "ERAS", "entry": 13.27, "last_price": 18.68, "pnl_pct": 40.77},
+        {"ticker": "DRUG", "entry": 63.59, "last_price": 74.63, "pnl_pct": 17.37},
+        {"ticker": "PRAX", "entry": 241.92, "last_price": 307.75, "pnl_pct": 27.21},
+        {"ticker": "STOK", "entry": 28.74, "last_price": 30.04, "pnl_pct": 4.53, "note": "First close above $30 on July 30"},
+        {"ticker": "CMPS", "entry": 11.30, "last_price": 11.57, "pnl_pct": 2.39, "note": "Thin margin — monitor $11.00"}
+    ],
+
+    "monitoring_status": {
+        "period_extended": true,
+        "original_end": "2026-06-30",
+        "extension_rationale": "SYRE Q2 earnings Aug 4 (TOMORROW), URGN Q2 earnings Aug 5, NRIX binary event July 31 (occurred, outcome unknown), ALMS LUMUS Phase 2b readout Q3 (imminent), PRAX EMERALD Sept 1, IC/h20d governance gates overdue 33 days",
+        "monitoring_gap": "Day 40 (August 1, 2026 — Friday) run MISSED. 2 unverified sessions: July 31 close and August 1 close.",
+        "robinhood_mcp_status": "UNAVAILABLE — Days 1-41 (all monitoring days). Equity estimated from carry-forward × last verified close prices.",
+        "alerts_active": [
+            "MONITORING_GAP_DAY40_AUG1_MISSED",
+            "NRIX_BINARY_EVENT_JUL31_OUTCOME_UNKNOWN",
+            "SYRE_Q2_EARNINGS_TOMORROW_AUG4",
+            "URGN_Q2_EARNINGS_AUG5",
+            "ALMS_LUMUS_Q3_READOUT_IMMINENT",
+            "IC_GATE_OVERDUE_33_DAYS",
+            "H20D_GATE_OVERDUE_33_DAYS",
+            "CMPS_THIN_MARGIN_ABOVE_ENTRY_MONITOR_1100"
+        ],
+        "upcoming_critical_this_week": [
+            "SYRE Q2 earnings — TOMORROW Aug 4 before open (T-1)",
+            "URGN Q2 earnings — Aug 5 before open (T-2)",
+            "ALMS LUMUS Phase 2b SLE readout — Q3 (potentially imminent)",
+            "NRIX outcome from July 31 Phase 1b data — verify current price"
+        ],
+        "next_governance_action": "h20d quarantine script + IC refresh requires explicit operator freeze lift (33 days overdue)"
+    }
+}
