@@ -22,9 +22,10 @@ python-dotenv==1.2.2
 
 # ----------------------------------------------------------------------------
 # Security (Required by common/credstore.py — encryption at rest for the
-# per-tenant credential store)
+# per-tenant credential store). Keep current: pip-audit gates the build, and
+# 41.x/42.x carry known CVEs.
 # ----------------------------------------------------------------------------
-cryptography==41.0.7
+cryptography==50.0.0
 
 # ----------------------------------------------------------------------------
 # Testing
