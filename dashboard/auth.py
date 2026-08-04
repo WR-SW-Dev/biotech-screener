@@ -36,7 +36,9 @@ from common.credstore import CredentialNotFound, CredentialStore, CredentialStor
 from common.tenancy import DEFAULT_MIN_KEEP_SNAPSHOTS, DEFAULT_RETENTION_DAYS, UserContext, validate_user_id
 
 SESSION_COOKIE = "biotech_session"
-ENV_SESSION_SECRET = "BIOTECH_SESSION_SECRET"
+# The value below is an environment-variable *name* used for an os.environ lookup, not a
+# secret. detect-secrets' keyword heuristic matches on "SECRET =" alone.
+ENV_SESSION_SECRET = "BIOTECH_SESSION_SECRET"  # pragma: allowlist secret
 
 #: Absolute session lifetime. Deliberately short: this session can authorise a live trade.
 DEFAULT_MAX_AGE = 12 * 3600
