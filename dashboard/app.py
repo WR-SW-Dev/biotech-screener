@@ -161,7 +161,7 @@ ENV_EXEC_LEDGER = "BIOTECH_EXECUTION_LEDGER"
 
 
 def _execution_ledger() -> ExecutionLedger:
-    path = os.environ.get(ENV_EXEC_LEDGER) or str(REPO_ROOT / "artifacts" / "trading" / "executions.jsonl")
+    path = os.environ.get(ENV_EXEC_LEDGER) or str(REPO_ROOT / "artifacts" / "trading" / "executions.db")
     return ExecutionLedger(path)
 
 
@@ -220,9 +220,14 @@ async def execute_basket(request: Request):
     except BasketMismatch as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
+    # Claim the basket BEFORE placing anything. This is an atomic insert, so of two
+    # concurrent requests for the same (user_id, basket_id) exactly one proceeds — the
+    # loser gets 409 without reaching the broker. Previously the check and the write were
+    # separated by the whole placement loop, and only incidental event-loop blocking kept
+    # them apart; that guarantee vanished under multiple workers.
     ledger = _execution_ledger()
     try:
-        ledger.assert_not_executed(ctx.user_id, basket.basket_id)
+        ledger.reserve(ctx.user_id, basket.basket_id)
     except BasketAlreadyExecuted as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
@@ -275,8 +280,10 @@ async def execute_basket(request: Request):
         "results": results,
         "failures": failures,
     }
-    # Recorded even on partial failure: a basket that placed some orders must not be
-    # re-runnable from the top.
+    # Attach the outcome to the claim made before the loop. The claim already blocks
+    # re-runs; this fills in what happened. If the process dies before reaching here the
+    # row stays 'reserved', which keeps the basket un-runnable — orders may have been
+    # placed, so an unfinished run must be reconciled against the account, not retried.
     ledger.record(ctx.user_id, basket.basket_id, summary)
     return JSONResponse(summary)
 

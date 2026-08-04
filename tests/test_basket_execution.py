@@ -120,52 +120,155 @@ class TestCSRF:
 
 
 class TestIdempotency:
-    def test_first_execution_is_allowed(self, tmp_path):
-        led = ExecutionLedger(tmp_path / "exec.jsonl")
-        led.assert_not_executed("scott", "basket-abc")
+    def test_first_reservation_is_allowed(self, tmp_path):
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
 
-    def test_second_execution_of_same_basket_is_refused(self, tmp_path):
-        led = ExecutionLedger(tmp_path / "exec.jsonl")
-        led.record("scott", "basket-abc", {"placed": 3})
+    def test_second_reservation_of_same_basket_is_refused(self, tmp_path):
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
         with pytest.raises(BasketAlreadyExecuted):
-            led.assert_not_executed("scott", "basket-abc")
+            led.reserve("scott", "basket-abc")
+
+    def test_reservation_blocks_even_before_the_result_is_recorded(self, tmp_path):
+        """The window the review identified: claimed, orders in flight, nothing recorded."""
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        # ...order loop would run here...
+        with pytest.raises(BasketAlreadyExecuted):
+            led.reserve("scott", "basket-abc")
 
     def test_ledger_is_per_tenant(self, tmp_path):
         """Scott executing his basket must not block Darren executing his."""
-        led = ExecutionLedger(tmp_path / "exec.jsonl")
-        led.record("scott", "basket-abc", {"placed": 3})
-        led.assert_not_executed("darren", "basket-abc")
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.reserve("darren", "basket-abc")
 
     def test_different_basket_same_tenant_allowed(self, tmp_path):
-        led = ExecutionLedger(tmp_path / "exec.jsonl")
-        led.record("scott", "basket-abc", {"placed": 3})
-        led.assert_not_executed("scott", "basket-def")
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.reserve("scott", "basket-def")
 
-    def test_record_survives_reopen(self, tmp_path):
-        path = tmp_path / "exec.jsonl"
-        ExecutionLedger(path).record("scott", "basket-abc", {"placed": 1})
+    def test_reservation_survives_reopen(self, tmp_path):
+        path = tmp_path / "exec.db"
+        ExecutionLedger(path).reserve("scott", "basket-abc")
         with pytest.raises(BasketAlreadyExecuted):
-            ExecutionLedger(path).assert_not_executed("scott", "basket-abc")
-
-    def test_ledger_entry_carries_no_credential(self, tmp_path):
-        path = tmp_path / "exec.jsonl"
-        ExecutionLedger(path).record("scott", "basket-abc", {"placed": 1, "bearer": "LEAK"})
-        assert "LEAK" not in path.read_text(encoding="utf-8")
-
-    def test_corrupt_ledger_line_does_not_open_the_gate(self, tmp_path):
-        """A malformed line must not be read as 'nothing executed yet'."""
-        path = tmp_path / "exec.jsonl"
-        led = ExecutionLedger(path)
-        led.record("scott", "basket-abc", {"placed": 1})
-        with path.open("a", encoding="utf-8") as fh:
-            fh.write("{not json\n")
-        with pytest.raises(BasketAlreadyExecuted):
-            led.assert_not_executed("scott", "basket-abc")
+            ExecutionLedger(path).reserve("scott", "basket-abc")
 
     def test_recorded_payload_is_readable_back(self, tmp_path):
-        path = tmp_path / "exec.jsonl"
-        ExecutionLedger(path).record("scott", "basket-abc", {"placed": 2, "mode": "LIVE"})
-        rec = json.loads(path.read_text(encoding="utf-8").strip().splitlines()[-1])
-        assert rec["user_id"] == "scott"
-        assert rec["basket_id"] == "basket-abc"
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.record("scott", "basket-abc", {"placed": 2, "mode": "LIVE"})
+        rec = led.get("scott", "basket-abc")
+        assert rec["status"] == "completed"
         assert rec["result"]["mode"] == "LIVE"
+
+    def test_status_is_reserved_until_recorded(self, tmp_path):
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        assert led.get("scott", "basket-abc")["status"] == "reserved"
+
+
+class TestConcurrentExecutionIsSerialised:
+    """The PR #14 review finding, exercised concurrently rather than sequentially.
+
+    Previously the check (assert_not_executed) and the write (record) were separated by
+    the entire order-placement loop with no lock, so two requests could both pass the
+    check before either recorded. The old test only proved the sequential case. These
+    launch real threads contending for the same key and assert exactly one wins.
+    """
+
+    @staticmethod
+    def _race(path, user_id, basket_id, n_threads):
+        import threading
+
+        winners, losers = [], []
+        lock = threading.Lock()
+        barrier = threading.Barrier(n_threads)
+
+        def attempt(i):
+            led = ExecutionLedger(path)  # separate connection, as a separate worker would
+            barrier.wait()  # maximise overlap
+            try:
+                led.reserve(user_id, basket_id)
+            except BasketAlreadyExecuted:
+                with lock:
+                    losers.append(i)
+            else:
+                with lock:
+                    winners.append(i)
+
+        threads = [threading.Thread(target=attempt, args=(i,)) for i in range(n_threads)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+        return winners, losers
+
+    def test_exactly_one_of_two_concurrent_requests_wins(self, tmp_path):
+        winners, losers = self._race(tmp_path / "exec.db", "scott", "basket-abc", 2)
+        assert len(winners) == 1, f"expected exactly one winner, got {winners}"
+        assert len(losers) == 1
+
+    def test_exactly_one_of_sixteen_concurrent_requests_wins(self, tmp_path):
+        winners, losers = self._race(tmp_path / "exec.db", "scott", "basket-abc", 16)
+        assert len(winners) == 1, f"expected exactly one winner, got {winners}"
+        assert len(losers) == 15
+
+    def test_concurrent_requests_for_different_tenants_all_win(self, tmp_path):
+        """Serialisation must be per-key, not a global mutex on the whole ledger."""
+        import threading
+
+        path = tmp_path / "exec.db"
+        results = []
+        lock = threading.Lock()
+        barrier = threading.Barrier(8)
+
+        def attempt(uid):
+            led = ExecutionLedger(path)
+            barrier.wait()
+            try:
+                led.reserve(uid, "basket-abc")
+            except BasketAlreadyExecuted:
+                pass
+            else:
+                with lock:
+                    results.append(uid)
+
+        threads = [threading.Thread(target=attempt, args=(f"tenant{i:02d}",)) for i in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+        assert len(results) == 8, "distinct tenants must not contend with each other"
+
+
+class TestCredentialRedaction:
+    def test_top_level_credential_is_stripped(self, tmp_path):
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.record("scott", "basket-abc", {"placed": 1, "bearer": "LEAK_TOP"})
+        assert "LEAK_TOP" not in json.dumps(led.get("scott", "basket-abc"))
+
+    def test_nested_credential_is_stripped(self, tmp_path):
+        """Review note: review/raw come straight from the broker response."""
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.record(
+            "scott",
+            "basket-abc",
+            {"results": [{"ticker": "COGT", "raw": {"authorization": "LEAK_NESTED"}}]},
+        )
+        assert "LEAK_NESTED" not in json.dumps(led.get("scott", "basket-abc"))
+
+    def test_deeply_nested_credential_is_stripped(self, tmp_path):
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.record("scott", "basket-abc", {"a": {"b": {"c": {"token": "LEAK_DEEP"}}}})
+        assert "LEAK_DEEP" not in json.dumps(led.get("scott", "basket-abc"))
+
+    def test_non_credential_nested_data_is_preserved(self, tmp_path):
+        led = ExecutionLedger(tmp_path / "exec.db")
+        led.reserve("scott", "basket-abc")
+        led.record("scott", "basket-abc", {"results": [{"ticker": "COGT", "order_id": "ord-1"}]})
+        assert "ord-1" in json.dumps(led.get("scott", "basket-abc"))

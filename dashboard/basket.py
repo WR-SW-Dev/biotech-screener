@@ -29,6 +29,7 @@ import hashlib
 import hmac
 import json
 import os
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import ROUND_DOWN, Decimal, InvalidOperation
@@ -180,61 +181,124 @@ def verify_csrf(token: Any, user_id: str, *, secret: bytes | str | None = None) 
 # ---------------------------------------------------------------------------------
 
 
+def _redact(value: Any) -> Any:
+    """Recursively strip credential-shaped keys from a nested structure.
+
+    The ``review``/``raw`` sub-objects come straight from the broker's MCP response, whose
+    exact shape we do not control. Stripping only top-level keys meant "no credential
+    reaches the ledger" held one level deep and nowhere else.
+    """
+    if isinstance(value, Mapping):
+        return {k: _redact(v) for k, v in value.items() if str(k).lower() not in _LEDGER_REDACT}
+    if isinstance(value, (list, tuple)):
+        return [_redact(v) for v in value]
+    return value
+
+
 class ExecutionLedger:
-    """Append-only record of executed baskets, keyed on ``(user_id, basket_id)``."""
+    """Atomic execution claims, keyed on ``(user_id, basket_id)``.
+
+    SQLite with a composite primary key, so a duplicate claim fails at the database level
+    regardless of timing — the same pattern ``common/credstore.py`` already uses.
+
+    This replaces an append-only JSONL file whose check (``assert_not_executed``) and write
+    (``record``) were separated by the entire order-placement loop, with nothing locking
+    between them. Two concurrent requests for the same key could both pass the check before
+    either wrote, and both would place the full basket. Serialisation appeared to work only
+    because the handler blocks the event loop in a single-worker deployment — an accident of
+    deployment shape that breaks under multiple Uvicorn workers.
+
+    Usage is two-phase, and the order matters:
+
+    1. :meth:`reserve` — claim the key **before** placing anything. Atomic; the loser of a
+       race raises :class:`BasketAlreadyExecuted`.
+    2. :meth:`record` — attach the outcome once the loop finishes.
+
+    A row left in ``reserved`` state means a run claimed the basket and did not report back
+    (crash, kill, timeout). That deliberately keeps the basket un-runnable: the orders may
+    have been placed, so the safe reading of an unfinished run is "assume it happened" and
+    reconcile against the account.
+    """
+
+    _SCHEMA = """
+    CREATE TABLE IF NOT EXISTS executions (
+        user_id    TEXT NOT NULL,
+        basket_id  TEXT NOT NULL,
+        reserved_at TEXT NOT NULL,
+        recorded_at TEXT,
+        status     TEXT NOT NULL,
+        result     TEXT,
+        PRIMARY KEY (user_id, basket_id)
+    );
+    """
 
     def __init__(self, path: Path | str) -> None:
         self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        con = self._connect()
+        try:
+            con.executescript(self._SCHEMA)
+            con.commit()
+        finally:
+            con.close()
 
-    def _executed_keys(self) -> "set[tuple[str, str]]":
-        """Every ``(user_id, basket_id)`` seen.
+    def _connect(self) -> sqlite3.Connection:
+        # timeout covers the brief writer lock; isolation_level=None keeps the INSERT its
+        # own immediate transaction rather than deferring inside an implicit one.
+        con = sqlite3.connect(self.path, timeout=30.0, isolation_level=None)
+        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA busy_timeout=30000")
+        return con
 
-        A malformed line is *not* skipped silently — it is counted as unreadable and the
-        caller is refused, because "I could not tell whether this executed" must not be
-        treated as "it did not execute".
-        """
-        keys: "set[tuple[str, str]]" = set()
-        if not self.path.exists():
-            return keys
-        self._unreadable = 0
-        with self.path.open("r", encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except ValueError:
-                    self._unreadable += 1
-                    continue
-                uid = rec.get("user_id")
-                bid = rec.get("basket_id")
-                if uid and bid:
-                    keys.add((str(uid), str(bid)))
-        return keys
-
-    def assert_not_executed(self, user_id: str, basket_id: str) -> None:
-        self._unreadable = 0
-        keys = self._executed_keys()
-        if (str(user_id), str(basket_id)) in keys:
+    def reserve(self, user_id: str, basket_id: str) -> None:
+        """Atomically claim ``(user_id, basket_id)``. Raises if already claimed."""
+        con = self._connect()
+        try:
+            con.execute(
+                "INSERT INTO executions (user_id, basket_id, reserved_at, status) VALUES (?, ?, ?, 'reserved')",
+                (str(user_id), str(basket_id), datetime.now(timezone.utc).isoformat()),
+            )
+        except sqlite3.IntegrityError as exc:
             raise BasketAlreadyExecuted(
                 "tenant " + repr(user_id) + " already executed basket " + repr(str(basket_id)[:12])
-            )
-        if getattr(self, "_unreadable", 0):
-            raise BasketAlreadyExecuted(
-                "execution ledger has "
-                + str(self._unreadable)
-                + " unreadable record(s); refusing to execute rather than risk a duplicate"
-            )
+            ) from exc
+        finally:
+            con.close()
 
     def record(self, user_id: str, basket_id: str, result: Mapping[str, Any]) -> None:
-        safe = {k: v for k, v in dict(result).items() if k.lower() not in _LEDGER_REDACT}
-        rec = {
-            "ts": datetime.now(timezone.utc).isoformat(),
+        """Attach the outcome to a previously reserved claim."""
+        safe = _redact(dict(result))
+        con = self._connect()
+        try:
+            con.execute(
+                "UPDATE executions SET status='completed', recorded_at=?, result=? " "WHERE user_id=? AND basket_id=?",
+                (
+                    datetime.now(timezone.utc).isoformat(),
+                    json.dumps(safe, sort_keys=True),
+                    str(user_id),
+                    str(basket_id),
+                ),
+            )
+        finally:
+            con.close()
+
+    def get(self, user_id: str, basket_id: str) -> "Optional[dict[str, Any]]":
+        con = self._connect()
+        try:
+            row = con.execute(
+                "SELECT reserved_at, recorded_at, status, result FROM executions " "WHERE user_id=? AND basket_id=?",
+                (str(user_id), str(basket_id)),
+            ).fetchone()
+        finally:
+            con.close()
+        if row is None:
+            return None
+        reserved_at, recorded_at, status, result = row
+        return {
             "user_id": str(user_id),
             "basket_id": str(basket_id),
-            "result": safe,
+            "reserved_at": reserved_at,
+            "recorded_at": recorded_at,
+            "status": status,
+            "result": json.loads(result) if result else {},
         }
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True) + "\n")
