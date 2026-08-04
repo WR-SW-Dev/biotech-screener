@@ -108,6 +108,22 @@ class TestFailClosed:
         rc, _, err = _run(_job(expect_account="999999999"), extra_args=("--dry-run",))
         assert rc != 0
 
+    def test_missing_expect_account_exits_nonzero(self):
+        """Omission must be refused, not treated as 'no check requested' (PR #13 review).
+
+        The worker is a second direct entry point into execute_order, so making the
+        argument mandatory there is not sufficient on its own.
+        """
+        job = _job()
+        del job["expect_account"]
+        rc, _, err = _run(job, extra_args=("--dry-run",))
+        assert rc != 0
+        assert "expect_account" in err
+
+    def test_empty_expect_account_exits_nonzero(self):
+        rc, _, err = _run(_job(expect_account=""), extra_args=("--dry-run",))
+        assert rc != 0
+
     def test_invalid_order_exits_nonzero(self):
         job = _job()
         job["order"]["side"] = "sideways"

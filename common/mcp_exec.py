@@ -58,6 +58,14 @@ class AccountMismatch(Exception):
     """The order's account does not match the account the caller expected."""
 
 
+class UnprovenAccountError(Exception):
+    """No expected account was supplied, so ownership cannot be proven.
+
+    Mirrors ``trading_guard.UnprovenAccountError``: a missing account is refused rather
+    than treated as "no check requested". See ``execute_order``.
+    """
+
+
 @dataclass(frozen=True)
 class OrderRequest:
     """One equity order. Validated at construction so a malformed order cannot travel."""
@@ -237,18 +245,31 @@ def execute_order(
     order: OrderRequest,
     *,
     bearer: str,
+    expect_account: Optional[str],
     live: bool = False,
-    expect_account: Optional[str] = None,
     url: str = DEFAULT_MCP_URL,
     timeout: float = DEFAULT_TIMEOUT,
     transport: Any = None,
 ) -> OrderResult:
     """Review an order, and place it only when both live gates are satisfied.
 
+    ``expect_account`` is **required** and must be non-empty. It was previously optional,
+    which meant a caller that simply omitted it got no cross-tenant verification at all —
+    the ownership check silently skipped rather than refusing. The one sanctioned caller
+    (``order_broker.place_order_for_tenant``) always passes it, but that made the safety
+    property depend on every future caller happening to behave. ``trading_guard`` already
+    refuses an unproven account rather than skipping; this primitive now holds that bar too.
+
     Order of operations is deliberate: every refusal that can be decided locally happens
     *before* any network call, so a misconfigured caller never touches the broker at all.
     """
-    if expect_account is not None and order.account_number != expect_account:
+    if not expect_account:
+        raise UnprovenAccountError(
+            "expect_account is required and must be non-empty; refusing to place an order "
+            "for account " + repr(order.account_number) + " with no ownership check"
+        )
+
+    if order.account_number != expect_account:
         raise AccountMismatch(
             "order targets account "
             + repr(order.account_number)
