@@ -16,7 +16,15 @@ import json
 
 import pytest
 
-from common.mcp_exec import LiveTradingDisabled, MCPClient, MCPError, OrderRequest, OrderResult, execute_order
+from common.mcp_exec import (
+    LiveTradingDisabled,
+    MCPClient,
+    MCPError,
+    OrderRequest,
+    OrderResult,
+    UnprovenAccountError,
+    execute_order,
+)
 
 
 class _FakeResponse:
@@ -109,7 +117,7 @@ class TestFailClosedByDefault:
 
     def test_default_is_review_only_and_places_nothing(self, order):
         t = _FakeTransport([_tool_ok({"status": "ok", "estimated_cost": "42.00"})])
-        res = execute_order(order, bearer="tok", transport=t, live=False)
+        res = execute_order(order, bearer="tok", transport=t, live=False, expect_account="111111111")
         assert isinstance(res, OrderResult)
         assert res.placed is False
         assert res.mode == "REVIEW_ONLY"
@@ -120,20 +128,20 @@ class TestFailClosedByDefault:
         monkeypatch.delenv("BIOTECH_LIVE_TRADING", raising=False)
         t = _FakeTransport([_tool_ok({"status": "ok"})])
         with pytest.raises(LiveTradingDisabled):
-            execute_order(order, bearer="tok", transport=t, live=True)
+            execute_order(order, bearer="tok", transport=t, live=True, expect_account="111111111")
         assert t.requests == [], "must refuse before any network call"
 
     def test_env_flag_alone_does_not_enable_live(self, order, monkeypatch):
         """Both the flag and the explicit argument are required — neither alone."""
         monkeypatch.setenv("BIOTECH_LIVE_TRADING", "1")
         t = _FakeTransport([_tool_ok({"status": "ok"})])
-        res = execute_order(order, bearer="tok", transport=t, live=False)
+        res = execute_order(order, bearer="tok", transport=t, live=False, expect_account="111111111")
         assert res.placed is False
 
     def test_live_with_both_gates_places(self, order, monkeypatch):
         monkeypatch.setenv("BIOTECH_LIVE_TRADING", "1")
         t = _FakeTransport([_tool_ok({"status": "ok"}), _tool_ok({"id": "ord-99", "state": "queued"})])
-        res = execute_order(order, bearer="tok", transport=t, live=True)
+        res = execute_order(order, bearer="tok", transport=t, live=True, expect_account="111111111")
         assert res.placed is True
         assert res.mode == "LIVE"
         assert res.order_id == "ord-99"
@@ -147,8 +155,52 @@ class TestFailClosedByDefault:
         bad = {"content": [{"type": "text", "text": "rejected: market closed"}], "isError": True}
         t = _FakeTransport([_ok(bad)])
         with pytest.raises(MCPError):
-            execute_order(order, bearer="tok", transport=t, live=True)
+            execute_order(order, bearer="tok", transport=t, live=True, expect_account="111111111")
         assert len(t.requests) == 1, "must not place after a failed review"
+
+
+class TestAccountOwnershipIsMandatory:
+    """expect_account must be supplied — omitting it must not skip the check.
+
+    Review finding on PR #13: the check was ``if expect_account is not None and ...``,
+    so a caller that simply left it out got zero cross-tenant verification. The one
+    sanctioned caller (order_broker.place_order_for_tenant) always passes it, but that
+    made the safety property depend on every *future* caller behaving. This mirrors
+    trading_guard.assert_account_owned, which raises UnprovenAccountError rather than
+    skipping when the account is missing.
+    """
+
+    def test_omitting_expect_account_is_a_type_error(self, order):
+        """It is not an optional argument any more — omission cannot compile away."""
+        t = _FakeTransport([_tool_ok({"status": "ok"})])
+        with pytest.raises(TypeError):
+            execute_order(order, bearer="tok", transport=t, live=False)
+        assert t.requests == [], "must refuse before any network call"
+
+    def test_explicit_none_is_refused(self, order):
+        t = _FakeTransport([_tool_ok({"status": "ok"})])
+        with pytest.raises(UnprovenAccountError):
+            execute_order(order, bearer="tok", transport=t, live=False, expect_account=None)
+        assert t.requests == []
+
+    def test_empty_string_is_refused(self, order):
+        t = _FakeTransport([_tool_ok({"status": "ok"})])
+        with pytest.raises(UnprovenAccountError):
+            execute_order(order, bearer="tok", transport=t, live=False, expect_account="")
+        assert t.requests == []
+
+    def test_refusal_happens_even_in_live_mode(self, order, monkeypatch):
+        monkeypatch.setenv("BIOTECH_LIVE_TRADING", "1")
+        t = _FakeTransport([_tool_ok({"status": "ok"}), _tool_ok({"id": "x"})])
+        with pytest.raises(UnprovenAccountError):
+            execute_order(order, bearer="tok", transport=t, live=True, expect_account=None)
+        assert t.requests == [], "an unproven account must never reach the broker"
+
+    def test_matching_account_still_proceeds(self, order):
+        t = _FakeTransport([_tool_ok({"status": "ok"})])
+        res = execute_order(order, bearer="tok", transport=t, live=False, expect_account="111111111")
+        assert res.placed is False
+        assert len(t.requests) == 1
 
 
 class TestOrderValidation:
@@ -201,5 +253,5 @@ class TestSecretHandling:
 
     def test_result_does_not_carry_the_token(self, order):
         t = _FakeTransport([_tool_ok({"status": "ok"})])
-        res = execute_order(order, bearer="SUPER_SECRET_TOKEN", transport=t, live=False)
+        res = execute_order(order, bearer="SUPER_SECRET_TOKEN", transport=t, live=False, expect_account="111111111")
         assert "SUPER_SECRET_TOKEN" not in json.dumps(res.as_dict())

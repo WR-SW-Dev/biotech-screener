@@ -122,13 +122,17 @@ def main(argv: "list[str] | None" = None) -> int:
     if bool(job.get("live", False)) and args.dry_run:
         return _fail(EXIT_REFUSED, "job requests live placement but --dry-run was passed")
 
-    if job.get("expect_account") is not None and order.account_number != job["expect_account"]:
+    # expect_account is mandatory, including in --dry-run. A job that omits it gets no
+    # cross-tenant verification at all, which is exactly the gap the PR #13 review closed
+    # in execute_order — the worker must not be a way around it.
+    expect_account = job.get("expect_account")
+    if not expect_account:
+        return _fail(EXIT_REFUSED, "job carries no expect_account; refusing an unverified order")
+
+    if order.account_number != expect_account:
         return _fail(
             EXIT_REFUSED,
-            "order targets account "
-            + repr(order.account_number)
-            + " but the caller expected "
-            + repr(job["expect_account"]),
+            "order targets account " + repr(order.account_number) + " but the caller expected " + repr(expect_account),
         )
 
     # --dry-run is offline: validate the order and the gates, touch no network. This is
@@ -178,7 +182,7 @@ def main(argv: "list[str] | None" = None) -> int:
             order,
             bearer=bearer,
             live=live,
-            expect_account=job.get("expect_account"),
+            expect_account=expect_account,
             url=args.url,
             timeout=args.timeout,
         )
