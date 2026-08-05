@@ -33,13 +33,13 @@ class TestRoundTrip:
             "scott",
             account_number="123456789",
             robinhood_bearer="rh-token-abc",
-            anthropic_api_key="sk-ant-xyz",
+            anthropic_api_key="sk-ant-xyz",  # pragma: allowlist secret
         )
         c = store.get("scott")
         assert c.user_id == "scott"
         assert c.account_number == "123456789"
         assert c.robinhood_bearer == "rh-token-abc"
-        assert c.anthropic_api_key == "sk-ant-xyz"
+        assert c.anthropic_api_key == "sk-ant-xyz"  # pragma: allowlist secret
 
     def test_put_is_upsert(self, store):
         store.put("scott", account_number="1", robinhood_bearer="a")
@@ -68,7 +68,7 @@ class TestEncryptionAtRest:
             "scott",
             account_number="987654321",
             robinhood_bearer="SUPER_SECRET_BEARER",
-            anthropic_api_key="sk-ant-SUPER_SECRET_KEY",
+            anthropic_api_key="sk-ant-SUPER_SECRET_KEY",  # pragma: allowlist secret
         )
         raw = path.read_bytes()
         assert b"SUPER_SECRET_BEARER" not in raw

@@ -28,6 +28,21 @@ python-dotenv==1.2.2
 cryptography==50.0.0
 
 # ----------------------------------------------------------------------------
+# Web / dashboard (dashboard/app.py, web/app.py) and the MCP order client
+# (common/mcp_exec.py). These were imported but undeclared — a clean install had
+# no fastapi, uvicorn or jinja2 at all, and httpx only arrived transitively.
+#
+# starlette is pinned via the lockfile as a fastapi dependency, not directly. Note
+# that starlette >= 0.29 removed the old TemplateResponse(name, {"request": ...})
+# calling convention; dashboard/app.py uses the request-first signature, so do not
+# downgrade below that line without converting the call sites back.
+# ----------------------------------------------------------------------------
+fastapi==0.141.1
+uvicorn==0.52.1
+jinja2==3.1.6
+httpx==0.28.1
+
+# ----------------------------------------------------------------------------
 # Testing
 # ----------------------------------------------------------------------------
 pytest==9.1.1
