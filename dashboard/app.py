@@ -113,7 +113,7 @@ async def _require_session(request: Request, call_next):
 
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
 @app.post("/login")
@@ -126,8 +126,9 @@ async def login_submit(request: Request):
     except AuthError:
         # Deliberately identical for unknown tenant and wrong password.
         return templates.TemplateResponse(
+            request,
             "login.html",
-            {"request": request, "error": "Invalid credentials."},
+            {"error": "Invalid credentials."},
             status_code=401,
         )
     resp = RedirectResponse("/", status_code=302)
@@ -182,9 +183,9 @@ def basket_review(request: Request):
     ctx = current_user(request)
     date, basket, _ = _current_basket()
     return templates.TemplateResponse(
+        request,
         "basket.html",
         {
-            "request": request,
             "user_id": ctx.user_id,
             "account_number": ctx.account_number,
             "as_of_date": date,
@@ -716,9 +717,9 @@ async def index(request: Request, date: str = ""):
         p["on_time_prob"] = th.get("on_time_prob")
 
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "date": date,
             "dates": dates[:30],
             "positions": enriched_positions,
@@ -1793,7 +1794,7 @@ async def api_expression_calibration(date: str):
 @app.get("/expression", response_class=HTMLResponse)
 async def expression_dashboard(request: Request):
     """Expression overlay dashboard page."""
-    return templates.TemplateResponse("expression.html", {"request": request})
+    return templates.TemplateResponse(request, "expression.html", {})
 
 
 if __name__ == "__main__":
