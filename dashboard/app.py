@@ -15,6 +15,7 @@ import csv
 import json
 import logging
 import os
+import secrets
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from decimal import ROUND_DOWN, Decimal
@@ -29,10 +30,11 @@ from fastapi.templating import Jinja2Templates
 from common.credstore import CredentialStore
 from common.mcp_exec import live_trading_enabled
 from common.order_broker import OrderBrokerError, OrderOutcomeUnknown, place_order_for_tenant
+from common.rh_oauth import OAuthError, build_authorize_url, discover, exchange_code, new_pkce, register_client
 from common.tenancy import UserContext, multi_tenant_enabled
 from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError
 from dashboard.auth import login as auth_login
-from dashboard.auth import resolve_session_user
+from dashboard.auth import resolve_session_user, sign_payload, verify_payload
 from dashboard.basket import (
     Basket,
     BasketAlreadyExecuted,
@@ -136,7 +138,12 @@ async def login_submit(request: Request):
         SESSION_COOKIE,
         token,
         httponly=True,
-        samesite="strict",
+        # Lax, not Strict. The Robinhood OAuth callback is a cross-site top-level GET
+        # navigation back to /connect/robinhood/callback; Strict withholds the cookie on
+        # it, so the tenant would appear logged out exactly when we need to know who they
+        # are. Lax still withholds on cross-site POST, and /api/execute additionally
+        # requires a tenant-bound CSRF token, so the state-changing path is unchanged.
+        samesite="lax",
         secure=os.environ.get("BIOTECH_COOKIE_INSECURE", "") != "1",
         max_age=DEFAULT_MAX_AGE,
         path="/",
@@ -149,6 +156,190 @@ def logout():
     resp = RedirectResponse("/login", status_code=302)
     resp.delete_cookie(SESSION_COOKIE, path="/")
     return resp
+
+
+# --- Account connection (self-service onboarding) ---
+#
+# Replaces tools/provision_tenant.py as the primary onboarding path for end users; that
+# tool stays for admin and scripted use.
+#
+# Robinhood is a plain OAuth 2.1 authorization-code + PKCE flow against the MCP endpoint's
+# own authorization server. No Claude Code session is spawned or driven — see
+# common/rh_oauth.py for the discovery evidence that made the bridge unnecessary.
+
+ENV_PUBLIC_BASE_URL = "BIOTECH_PUBLIC_BASE_URL"
+ENV_RH_CLIENT_ID = "BIOTECH_RH_CLIENT_ID"
+_OAUTH_STATE_COOKIE = "biotech_rh_oauth"
+_OAUTH_STATE_MAX_AGE = 600  # a consent screen the user leaves open past this must restart
+
+_rh_client_id_cache: Optional[str] = None
+
+
+def _public_base_url(request: Request) -> str:
+    """Base URL for building the OAuth redirect_uri.
+
+    Must match what was registered. Behind a proxy the request's own host is not
+    trustworthy, so an explicit override wins.
+    """
+    override = os.environ.get(ENV_PUBLIC_BASE_URL, "").strip()
+    return override.rstrip("/") if override else str(request.base_url).rstrip("/")
+
+
+def _rh_redirect_uri(request: Request) -> str:
+    return _public_base_url(request) + "/connect/robinhood/callback"
+
+
+def _rh_client_id(meta, redirect_uri: str) -> str:
+    """Registered client id, from env or dynamic registration (cached per process)."""
+    global _rh_client_id_cache
+    configured = os.environ.get(ENV_RH_CLIENT_ID, "").strip()
+    if configured:
+        return configured
+    if _rh_client_id_cache is None:
+        _rh_client_id_cache = register_client(meta, redirect_uri)
+    return _rh_client_id_cache
+
+
+@app.get("/connect", response_class=HTMLResponse)
+def connect_page(request: Request):
+    """Self-service connection status for the signed-in tenant."""
+    ctx = current_user(request)
+    store = _credstore()
+    return templates.TemplateResponse(
+        request,
+        "connect.html",
+        {
+            "user_id": ctx.user_id,
+            "account_number": ctx.account_number,
+            "robinhood_connected": store.has_robinhood(ctx.user_id),
+            "anthropic_connected": store.has_anthropic(ctx.user_id),
+            "csrf_token": issue_csrf(ctx.user_id),
+            "error": request.query_params.get("error"),
+            "connected": request.query_params.get("connected"),
+        },
+    )
+
+
+@app.get("/connect/robinhood/start")
+def connect_robinhood_start(request: Request):
+    """Begin the OAuth flow: mint PKCE + state, then redirect to Robinhood."""
+    ctx = current_user(request)
+    redirect_uri = _rh_redirect_uri(request)
+    try:
+        meta = discover()
+        client_id = _rh_client_id(meta, redirect_uri)
+    except OAuthError as exc:
+        logger.warning("robinhood oauth discovery failed: %s", exc)
+        return RedirectResponse("/connect?error=discovery", status_code=302)
+
+    verifier, challenge = new_pkce()
+    state = secrets.token_urlsafe(24)
+    url = build_authorize_url(meta, client_id=client_id, redirect_uri=redirect_uri, challenge=challenge, state=state)
+
+    # Verifier and state ride in a short-lived signed cookie rather than server state, so
+    # there is no session table to keep. Bound to the tenant so another signed-in user
+    # cannot complete someone else's pending connection.
+    payload = sign_payload(ctx.user_id + "|" + state + "|" + verifier, secret=_oauth_state_secret())
+    resp = RedirectResponse(url, status_code=302)
+    resp.set_cookie(
+        _OAUTH_STATE_COOKIE,
+        payload,
+        httponly=True,
+        samesite="lax",
+        secure=os.environ.get("BIOTECH_COOKIE_INSECURE", "") != "1",
+        max_age=_OAUTH_STATE_MAX_AGE,
+        path="/connect/robinhood",
+    )
+    return resp
+
+
+def _oauth_state_secret() -> bytes:
+    """Separate derivation from the session secret, so one cannot forge the other."""
+    from hashlib import sha256
+
+    base = os.environ.get("BIOTECH_SESSION_SECRET", "")
+    if not base:
+        raise AuthError("no session secret configured")
+    return sha256(("rh-oauth-state:" + base).encode()).digest()
+
+
+@app.get("/connect/robinhood/callback")
+def connect_robinhood_callback(request: Request):
+    """Complete the OAuth flow and store the tokens for the signed-in tenant."""
+    ctx = current_user(request)
+
+    if request.query_params.get("error"):
+        return RedirectResponse("/connect?error=denied", status_code=302)
+
+    raw = request.cookies.get(_OAUTH_STATE_COOKIE)
+    if not raw:
+        return RedirectResponse("/connect?error=expired", status_code=302)
+    try:
+        stored = verify_payload(raw, secret=_oauth_state_secret(), max_age=_OAUTH_STATE_MAX_AGE)
+    except AuthError:
+        return RedirectResponse("/connect?error=expired", status_code=302)
+
+    try:
+        owner, expected_state, verifier = stored.split("|", 2)
+    except ValueError:
+        return RedirectResponse("/connect?error=state", status_code=302)
+
+    # The pending connection belongs to whoever started it — not merely to whoever is
+    # signed in when the callback lands.
+    if owner != ctx.user_id:
+        return RedirectResponse("/connect?error=state", status_code=302)
+    if not secrets.compare_digest(expected_state, str(request.query_params.get("state", ""))):
+        return RedirectResponse("/connect?error=state", status_code=302)
+
+    code = request.query_params.get("code")
+    if not code:
+        return RedirectResponse("/connect?error=nocode", status_code=302)
+
+    redirect_uri = _rh_redirect_uri(request)
+    try:
+        meta = discover()
+        tokens = exchange_code(
+            meta,
+            client_id=_rh_client_id(meta, redirect_uri),
+            redirect_uri=redirect_uri,
+            code=code,
+            verifier=verifier,
+        )
+    except OAuthError as exc:
+        logger.warning("robinhood token exchange failed for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=exchange", status_code=302)
+
+    _credstore().set_robinhood_tokens(
+        ctx.user_id,
+        access_token=tokens.access_token,
+        refresh_token=tokens.refresh_token,
+        expires_at=tokens.expires_at,
+    )
+    resp = RedirectResponse("/connect?connected=robinhood", status_code=302)
+    resp.delete_cookie(_OAUTH_STATE_COOKIE, path="/connect/robinhood")
+    return resp
+
+
+@app.post("/connect/anthropic")
+async def connect_anthropic(request: Request):
+    """Store a pasted Anthropic API key for the signed-in tenant."""
+    ctx = current_user(request)
+    form = await request.form()
+    try:
+        verify_csrf(form.get("csrf_token"), ctx.user_id)
+    except CSRFError:
+        return RedirectResponse("/connect?error=csrf", status_code=302)
+
+    key = str(form.get("anthropic_key", "")).strip()
+    if not key:
+        return RedirectResponse("/connect?error=emptykey", status_code=302)
+    # Cheap shape check only. Validating against Anthropic would mean spending a token on
+    # every paste; a wrong key surfaces at first use.
+    if not key.startswith("sk-ant-"):
+        return RedirectResponse("/connect?error=keyshape", status_code=302)
+
+    _credstore().set_anthropic_key(ctx.user_id, key)
+    return RedirectResponse("/connect?connected=anthropic", status_code=302)
 
 
 # --- Approval flow (PR 3b) ---

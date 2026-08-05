@@ -65,6 +65,13 @@ CREATE TABLE IF NOT EXISTS tenant_credentials (
 );
 """
 
+#: Added after the initial release. Applied with ALTER TABLE on open so an existing
+#: store upgrades in place rather than needing a manual migration step.
+_MIGRATIONS = (
+    ("rh_refresh_token", "BLOB"),
+    ("rh_expires_at", "REAL"),
+)
+
 
 class CredentialStoreError(Exception):
     """Store is unusable, or a stored value failed to decrypt/authenticate."""
@@ -124,6 +131,10 @@ class CredentialStore:
         con = self._connect()
         try:
             con.executescript(_SCHEMA)
+            existing = {r[1] for r in con.execute("PRAGMA table_info(tenant_credentials)")}
+            for column, decl in _MIGRATIONS:
+                if column not in existing:
+                    con.execute("ALTER TABLE tenant_credentials ADD COLUMN " + column + " " + decl)
             con.commit()
         finally:
             con.close()
@@ -205,6 +216,103 @@ class CredentialStore:
             robinhood_bearer=self._dec(bearer, field="robinhood_bearer", user_id=user_id),
             anthropic_api_key=(self._dec(anth, field="anthropic_api_key", user_id=user_id) if anth else None),
         )
+
+    def set_robinhood_tokens(
+        self,
+        user_id: str,
+        *,
+        access_token: str,
+        refresh_token: Optional[str],
+        expires_at: Optional[float],
+    ) -> None:
+        """Store an OAuth-obtained token set for one tenant.
+
+        The access token lands in ``robinhood_bearer`` — the same column the order path
+        already reads — so nothing downstream needs to know whether a token arrived via
+        OAuth or was pasted in by an admin.
+        """
+        validate_user_id(user_id)
+        con = self._connect()
+        try:
+            cur = con.execute(
+                "UPDATE tenant_credentials SET robinhood_bearer=?, rh_refresh_token=?, rh_expires_at=? "
+                "WHERE user_id=?",
+                (
+                    self._enc(access_token),
+                    self._enc(refresh_token) if refresh_token else None,
+                    expires_at,
+                    user_id,
+                ),
+            )
+            if cur.rowcount == 0:
+                raise CredentialNotFound("no credentials for tenant " + repr(user_id))
+            con.commit()
+        finally:
+            con.close()
+
+    def get_robinhood_tokens(self, user_id: str) -> "tuple[Optional[str], Optional[float]]":
+        """Return ``(refresh_token, expires_at)``; either may be None."""
+        validate_user_id(user_id)
+        con = self._connect()
+        try:
+            row = con.execute(
+                "SELECT rh_refresh_token, rh_expires_at FROM tenant_credentials WHERE user_id=?",
+                (user_id,),
+            ).fetchone()
+        finally:
+            con.close()
+        if row is None:
+            raise CredentialNotFound("no credentials for tenant " + repr(user_id))
+        blob, exp = row
+        return (self._dec(blob, field="rh_refresh_token", user_id=user_id) if blob else None, exp)
+
+    def has_robinhood(self, user_id: str) -> bool:
+        """Whether this tenant has a usable Robinhood bearer. Never raises."""
+        try:
+            return bool(self.get(user_id).robinhood_bearer)
+        except CredentialStoreError:
+            return False
+
+    def has_anthropic(self, user_id: str) -> bool:
+        try:
+            return bool(self.get(user_id).anthropic_api_key)
+        except CredentialStoreError:
+            return False
+
+    def set_anthropic_key(self, user_id: str, key: str) -> None:
+        """Store or replace this tenant's Anthropic API key."""
+        validate_user_id(user_id)
+        if not key:
+            raise CredentialStoreError("anthropic key cannot be empty")
+        con = self._connect()
+        try:
+            cur = con.execute(
+                "UPDATE tenant_credentials SET anthropic_api_key=? WHERE user_id=?",
+                (self._enc(key), user_id),
+            )
+            if cur.rowcount == 0:
+                raise CredentialNotFound("no credentials for tenant " + repr(user_id))
+            con.commit()
+        finally:
+            con.close()
+
+    def ensure_tenant(self, user_id: str, *, account_number: str = "") -> None:
+        """Create a row for a tenant that has no credentials yet.
+
+        Onboarding inverts the old order: a user now exists (has a password) before they
+        have connected anything, so the row must be creatable empty.
+        """
+        validate_user_id(user_id)
+        con = self._connect()
+        try:
+            con.execute(
+                "INSERT OR IGNORE INTO tenant_credentials (user_id, account_number, robinhood_bearer) "
+                "VALUES (?, ?, ?)",
+                (user_id, self._enc(account_number), self._enc("")),
+            )
+            con.commit()
+        finally:
+            con.close()
 
     def list_user_ids(self) -> "list[str]":
         con = self._connect()
