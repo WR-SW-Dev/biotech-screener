@@ -52,7 +52,15 @@ class OrderBrokerError(Exception):
     """The subprocess refused, failed, or could not be interpreted."""
 
 
-class OrderTimeout(OrderBrokerError):
+class OrderOutcomeUnknown(OrderBrokerError):
+    """The placement call failed after review succeeded — the order may have landed.
+
+    Like :class:`OrderTimeout`, this must never be treated as a clean failure. Both block
+    a basket from being released for retry.
+    """
+
+
+class OrderTimeout(OrderOutcomeUnknown):
     """The subprocess did not finish in time. Outcome is UNKNOWN — do not retry blindly."""
 
 
@@ -131,6 +139,8 @@ def place_order_for_tenant(
             detail = parsed.get("error", detail)
         except ValueError:
             pass
+        if proc.returncode == 5:
+            raise OrderOutcomeUnknown("order subprocess reported an ambiguous placement (exit 5): " + detail)
         raise OrderBrokerError("order subprocess refused (exit " + str(proc.returncode) + "): " + detail)
 
     try:
