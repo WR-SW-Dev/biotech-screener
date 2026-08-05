@@ -14,15 +14,22 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import os
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+
+from common.credstore import CredentialStore
+from common.tenancy import UserContext, multi_tenant_enabled
+from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError
+from dashboard.auth import login as auth_login
+from dashboard.auth import resolve_session_user
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("dashboard")
@@ -41,6 +48,93 @@ app.add_middleware(
     allow_headers=["*"],
 )
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+
+# --- Authentication (PR 2) ---
+#
+# Only active when BIOTECH_MULTI_TENANT is on. In single-user mode the dashboard keeps
+# its historical unauthenticated behaviour, so this PR cannot break the running operator
+# install. See docs/design/MULTI_TENANCY_PR_PLAN.md §3.
+
+_ENV_CREDSTORE_PATH = "BIOTECH_CREDSTORE_PATH"
+
+#: Paths reachable without a session. Everything else 302s to /login in multi-tenant mode.
+_PUBLIC_PATHS = frozenset({"/login", "/logout", "/health", "/favicon.ico"})
+
+_credstore_singleton: Optional["CredentialStore"] = None
+
+
+def _credstore() -> "CredentialStore":
+    """Lazily open the credential store. Never cached across key changes in tests."""
+    global _credstore_singleton
+    if _credstore_singleton is None:
+        path = os.environ.get(_ENV_CREDSTORE_PATH) or str(REPO_ROOT / "credentials" / "tenants.db")
+        _credstore_singleton = CredentialStore(path)
+    return _credstore_singleton
+
+
+def current_user(request: Request) -> UserContext:
+    """FastAPI dependency: the tenant this request acts for.
+
+    Resolved from the signed session cookie only — see dashboard/auth.py for why no
+    request-controlled value may influence this.
+    """
+    try:
+        return resolve_session_user(request, store=_credstore())
+    except AuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
+@app.middleware("http")
+async def _require_session(request: Request, call_next):
+    if not multi_tenant_enabled() or request.url.path in _PUBLIC_PATHS:
+        return await call_next(request)
+    try:
+        resolve_session_user(request, store=_credstore())
+    except AuthError:
+        if request.url.path.startswith("/api/"):
+            return JSONResponse({"detail": "authentication required"}, status_code=401)
+        return RedirectResponse("/login", status_code=302)
+    return await call_next(request)
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+
+
+@app.post("/login")
+async def login_submit(request: Request):
+    form = await request.form()
+    user_id = str(form.get("user_id", "")).strip().lower()
+    password = str(form.get("password", ""))
+    try:
+        token = auth_login(_credstore(), user_id, password)
+    except AuthError:
+        # Deliberately identical for unknown tenant and wrong password.
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Invalid credentials."},
+            status_code=401,
+        )
+    resp = RedirectResponse("/", status_code=302)
+    resp.set_cookie(
+        SESSION_COOKIE,
+        token,
+        httponly=True,
+        samesite="strict",
+        secure=os.environ.get("BIOTECH_COOKIE_INSECURE", "") != "1",
+        max_age=DEFAULT_MAX_AGE,
+        path="/",
+    )
+    return resp
+
+
+@app.post("/logout")
+def logout():
+    resp = RedirectResponse("/login", status_code=302)
+    resp.delete_cookie(SESSION_COOKIE, path="/")
+    return resp
 
 
 # --- Data loaders ---
