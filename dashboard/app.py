@@ -17,6 +17,7 @@ import logging
 import os
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -26,10 +27,22 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from common.credstore import CredentialStore
+from common.mcp_exec import live_trading_enabled
+from common.order_broker import OrderBrokerError, place_order_for_tenant
 from common.tenancy import UserContext, multi_tenant_enabled
 from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError
 from dashboard.auth import login as auth_login
 from dashboard.auth import resolve_session_user
+from dashboard.basket import (
+    Basket,
+    BasketAlreadyExecuted,
+    BasketMismatch,
+    CSRFError,
+    ExecutionLedger,
+    build_basket,
+    issue_csrf,
+    verify_csrf,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("dashboard")
@@ -135,6 +148,144 @@ def logout():
     resp = RedirectResponse("/login", status_code=302)
     resp.delete_cookie(SESSION_COOKIE, path="/")
     return resp
+
+
+# --- Approval flow (PR 3b) ---
+#
+# "log in -> see the latest blotter -> review the basket -> click Execute". The click is
+# the only moment tenant separation matters, so everything here resolves the tenant from
+# the session and hands exactly one tenant's token to a short-lived subprocess.
+
+ENV_BASKET_EQUITY = "BIOTECH_BASKET_EQUITY_USD"
+ENV_EXEC_LEDGER = "BIOTECH_EXECUTION_LEDGER"
+
+
+def _execution_ledger() -> ExecutionLedger:
+    path = os.environ.get(ENV_EXEC_LEDGER) or str(REPO_ROOT / "artifacts" / "trading" / "executions.db")
+    return ExecutionLedger(path)
+
+
+def _current_basket() -> "tuple[str, Basket, Dict[str, Dict]]":
+    """Build the basket from the most recent snapshot. Shared, single-copy market data."""
+    dates = _available_snapshot_dates()
+    if not dates:
+        raise HTTPException(status_code=503, detail="no snapshot available")
+    date = dates[0]
+    rankings = _load_rankings(date)
+    equity = os.environ.get(ENV_BASKET_EQUITY, "0")
+    return date, build_basket(date, rankings, top_n=30, equity_usd=equity), rankings
+
+
+@app.get("/basket", response_class=HTMLResponse)
+def basket_review(request: Request):
+    """Review the latest basket. Renders the basket_id the execute call must echo back."""
+    ctx = current_user(request)
+    date, basket, _ = _current_basket()
+    return templates.TemplateResponse(
+        "basket.html",
+        {
+            "request": request,
+            "user_id": ctx.user_id,
+            "account_number": ctx.account_number,
+            "as_of_date": date,
+            "basket": basket.as_dict(),
+            "csrf_token": issue_csrf(ctx.user_id),
+            "live_enabled": live_trading_enabled(),
+        },
+    )
+
+
+@app.post("/api/execute")
+async def execute_basket(request: Request):
+    """Execute the approved basket for the authenticated tenant.
+
+    Refusals are ordered cheapest-first: everything decidable locally happens before any
+    credential is read or any subprocess is spawned.
+    """
+    ctx = current_user(request)
+    body = (
+        await request.json()
+        if request.headers.get("content-type", "").startswith("application/json")
+        else dict(await request.form())
+    )
+
+    try:
+        verify_csrf(body.get("csrf_token"), ctx.user_id)
+    except CSRFError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    date, basket, rankings = _current_basket()
+    try:
+        basket.assert_matches(str(body.get("basket_id", "")))
+    except BasketMismatch as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    # Claim the basket BEFORE placing anything. This is an atomic insert, so of two
+    # concurrent requests for the same (user_id, basket_id) exactly one proceeds — the
+    # loser gets 409 without reaching the broker. Previously the check and the write were
+    # separated by the whole placement loop, and only incidental event-loop blocking kept
+    # them apart; that guarantee vanished under multiple workers.
+    ledger = _execution_ledger()
+    try:
+        ledger.reserve(ctx.user_id, basket.basket_id)
+    except BasketAlreadyExecuted as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    # Live requires the operator gate AND an explicit request from the client. Absent
+    # either, this is a review-only pass that places nothing.
+    want_live = str(body.get("live", "")).lower() in ("1", "true", "yes")
+    live = want_live and live_trading_enabled()
+
+    try:
+        creds = _credstore().get(ctx.user_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="credentials unavailable") from exc
+
+    results, failures = [], []
+    for pos in basket.positions:
+        row = rankings.get(pos["ticker"], {})
+        price = str(row.get("close_price", "")).strip()
+        if not price or Decimal(price) <= 0:
+            failures.append({"ticker": pos["ticker"], "error": "no usable close_price in snapshot"})
+            continue
+        qty = (Decimal(pos["notional_usd"]) / Decimal(price)).quantize(Decimal("0.000001"), rounding=ROUND_DOWN)
+        if qty <= 0:
+            failures.append({"ticker": pos["ticker"], "error": "notional too small for one share unit"})
+            continue
+        try:
+            res = place_order_for_tenant(
+                user_id=ctx.user_id,
+                bearer=creds.robinhood_bearer,
+                account_number=ctx.account_number,
+                order={
+                    "account_number": ctx.account_number,
+                    "symbol": pos["ticker"],
+                    "side": "buy",
+                    "quantity": str(qty),
+                    "order_type": "market",
+                    "time_in_force": "gfd",
+                },
+                live=live,
+            )
+            results.append({"ticker": pos["ticker"], "mode": res.mode, "placed": res.placed, "order_id": res.order_id})
+        except OrderBrokerError as exc:
+            # Includes OrderTimeout, whose outcome is UNKNOWN — surfaced, never retried.
+            failures.append({"ticker": pos["ticker"], "error": str(exc)})
+
+    summary = {
+        "basket_id": basket.basket_id,
+        "as_of_date": date,
+        "mode": "LIVE" if live else "REVIEW_ONLY",
+        "placed": sum(1 for r in results if r["placed"]),
+        "results": results,
+        "failures": failures,
+    }
+    # Attach the outcome to the claim made before the loop. The claim already blocks
+    # re-runs; this fills in what happened. If the process dies before reaching here the
+    # row stays 'reserved', which keeps the basket un-runnable — orders may have been
+    # placed, so an unfinished run must be reconciled against the account, not retried.
+    ledger.record(ctx.user_id, basket.basket_id, summary)
+    return JSONResponse(summary)
 
 
 # --- Data loaders ---

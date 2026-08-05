@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Latest basket — {{ as_of_date }}</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 1.5rem; background: #f6f7f9; color: #14161a;
+    }
+    @media (prefers-color-scheme: dark) { body { background: #14161a; color: #e8eaed; } }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: baseline; }
+    h1 { font-size: 1.15rem; margin: 0; }
+    .meta { font-size: .8rem; opacity: .7; }
+    .card {
+      background: Canvas; border-radius: 10px; padding: 1rem 1.25rem; margin-top: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.14);
+    }
+    .scroll { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: .875rem; min-width: 460px; }
+    th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid rgba(128,128,128,.22); }
+    th { font-weight: 600; font-size: .75rem; text-transform: uppercase; opacity: .65; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .banner { padding: .6rem .8rem; border-radius: 6px; font-size: .85rem; margin-top: 1rem; }
+    .banner.review { background: rgba(70,130,220,.14); }
+    .banner.live { background: rgba(210,140,20,.16); }
+    code { font-size: .78rem; opacity: .8; word-break: break-all; }
+    button {
+      margin-top: 1rem; padding: .6rem 1.1rem; font-size: .95rem; border: 0;
+      border-radius: 6px; background: #2f6feb; color: #fff; cursor: pointer;
+    }
+    button:hover { background: #2558c0; }
+    button[disabled] { opacity: .55; cursor: not-allowed; }
+    #out { margin-top: 1rem; white-space: pre-wrap; font-size: .8rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Latest basket</h1>
+    <span class="meta">as of <strong>{{ as_of_date }}</strong> · {{ basket.positions|length }} positions
+      · account {{ account_number }} · signed in as {{ user_id }}</span>
+  </header>
+
+  {% if live_enabled %}
+    <div class="banner live"><strong>Live trading is enabled on this host.</strong>
+      Executing will place real orders against account {{ account_number }}.</div>
+  {% else %}
+    <div class="banner review"><strong>Review only.</strong>
+      BIOTECH_LIVE_TRADING is not set, so executing will review orders without placing them.</div>
+  {% endif %}
+
+  <div class="card scroll">
+    <table>
+      <thead>
+        <tr><th class="num">Rank</th><th>Ticker</th><th class="num">Notional</th><th class="num">Score</th></tr>
+      </thead>
+      <tbody>
+        {% for p in basket.positions %}
+        <tr>
+          <td class="num">{{ p.rank }}</td>
+          <td>{{ p.ticker }}</td>
+          <td class="num">${{ p.notional_usd }}</td>
+          <td class="num">{{ p.final_score }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">No ranked positions in this snapshot.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="meta">Basket id <code>{{ basket.basket_id }}</code></div>
+    <button id="go" {% if not basket.positions %}disabled{% endif %}>
+      Execute trading for latest basket
+    </button>
+    <div id="out"></div>
+  </div>
+</div>
+
+<script>
+  const btn = document.getElementById('go');
+  const out = document.getElementById('out');
+  btn?.addEventListener('click', async () => {
+    if (!confirm('Execute this basket for account {{ account_number }}?')) return;
+    btn.disabled = true;              // guard the double-click; server is idempotent too
+    out.textContent = 'Working…';
+    try {
+      const resp = await fetch('/api/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          basket_id: {{ basket.basket_id | tojson }},
+          csrf_token: {{ csrf_token | tojson }},
+          live: {{ 'true' if live_enabled else 'false' }}
+        })
+      });
+      const body = await resp.json();
+      out.textContent = JSON.stringify(body, null, 2);
+      if (!resp.ok) btn.disabled = false;
+    } catch (err) {
+      out.textContent = 'Request failed: ' + err;
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
