@@ -282,6 +282,60 @@ class ExecutionLedger:
         finally:
             con.close()
 
+    @staticmethod
+    def is_safe_to_release(*, placed: int, failures: "list[Mapping[str, Any]]") -> bool:
+        """Whether a claim may be dropped so the basket can be attempted again.
+
+        This is the entire safety argument for :meth:`release`, kept as one small pure
+        function so it can be read and tested on its own. A claim is releasable only when
+        it is *provable* that nothing reached the broker:
+
+        * ``placed == 0`` — no order was confirmed placed, and
+        * there was at least one failure — a run with nothing placed and nothing failed
+          is an empty basket that completed, not a failed attempt, and
+        * **every** failure is unambiguous — none timed out, and none failed during the
+          placement call itself, where the order may have landed before the error.
+
+        A failure missing the ``ambiguous`` key counts as ambiguous. Failing closed on an
+        unclassified failure is the only safe default: the cost of a wrong "safe" is a
+        duplicated position.
+        """
+        if placed != 0:
+            return False
+        if not failures:
+            return False
+        return all(f.get("ambiguous") is False for f in failures)
+
+    def release(self, user_id: str, basket_id: str, *, reason: str) -> None:
+        """Drop a *reserved* claim so the basket can be attempted again.
+
+        Refuses once the claim is ``completed``: a recorded outcome means the placement
+        loop ran to the end, and releasing it would permit a genuine double-execution.
+        Callers must gate on :meth:`is_safe_to_release` first — this method enforces only
+        the state precondition, not the safety analysis.
+        """
+        rec = self.get(user_id, basket_id)
+        if rec is None:
+            return  # nothing claimed; nothing to release
+        if rec.get("status") != "reserved":
+            raise BasketAlreadyExecuted(
+                "refusing to release basket "
+                + repr(str(basket_id)[:12])
+                + " for tenant "
+                + repr(user_id)
+                + ": it is "
+                + str(rec.get("status"))
+                + ", not merely reserved"
+            )
+        con = self._connect()
+        try:
+            con.execute(
+                "DELETE FROM executions WHERE user_id=? AND basket_id=? AND status='reserved'",
+                (str(user_id), str(basket_id)),
+            )
+        finally:
+            con.close()
+
     def get(self, user_id: str, basket_id: str) -> "Optional[dict[str, Any]]":
         con = self._connect()
         try:

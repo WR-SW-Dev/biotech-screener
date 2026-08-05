@@ -23,7 +23,8 @@ Exit codes — every non-zero path means *nothing was placed*:
 * ``0``  success (order placed in live mode, or reviewed in dry-run)
 * ``2``  malformed or missing job on stdin
 * ``3``  refused locally (bad order, account mismatch, live gate not satisfied)
-* ``4``  the broker call failed
+* ``4``  the broker call failed before placement (nothing was submitted)
+* ``5``  the placement call failed — outcome UNKNOWN, reconcile before any retry
 
 Usage (the caller is ``dashboard``, not a human)::
 
@@ -50,6 +51,7 @@ from common.mcp_exec import (  # noqa: E402
     LiveTradingDisabled,
     MCPError,
     OrderRequest,
+    PlacementAmbiguous,
     execute_order,
 )
 
@@ -57,6 +59,7 @@ EXIT_OK = 0
 EXIT_BAD_JOB = 2
 EXIT_REFUSED = 3
 EXIT_BROKER_FAILED = 4
+EXIT_PLACEMENT_AMBIGUOUS = 5
 
 
 def _fail(code: int, message: str) -> int:
@@ -190,6 +193,9 @@ def main(argv: "list[str] | None" = None) -> int:
         return _fail(EXIT_REFUSED, str(exc))
     except LiveTradingDisabled as exc:
         return _fail(EXIT_REFUSED, str(exc))
+    except PlacementAmbiguous as exc:
+        # Must precede MCPError — placement outcome is UNKNOWN, not a clean failure.
+        return _fail(EXIT_PLACEMENT_AMBIGUOUS, str(exc))
     except MCPError as exc:
         return _fail(EXIT_BROKER_FAILED, str(exc))
     except Exception as exc:  # never let an unexpected error look like success

@@ -28,7 +28,7 @@ from fastapi.templating import Jinja2Templates
 
 from common.credstore import CredentialStore
 from common.mcp_exec import live_trading_enabled
-from common.order_broker import OrderBrokerError, place_order_for_tenant
+from common.order_broker import OrderBrokerError, OrderOutcomeUnknown, place_order_for_tenant
 from common.tenancy import UserContext, multi_tenant_enabled
 from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError
 from dashboard.auth import login as auth_login
@@ -247,11 +247,13 @@ async def execute_basket(request: Request):
         row = rankings.get(pos["ticker"], {})
         price = str(row.get("close_price", "")).strip()
         if not price or Decimal(price) <= 0:
-            failures.append({"ticker": pos["ticker"], "error": "no usable close_price in snapshot"})
+            failures.append({"ticker": pos["ticker"], "error": "no usable close_price in snapshot", "ambiguous": False})
             continue
         qty = (Decimal(pos["notional_usd"]) / Decimal(price)).quantize(Decimal("0.000001"), rounding=ROUND_DOWN)
         if qty <= 0:
-            failures.append({"ticker": pos["ticker"], "error": "notional too small for one share unit"})
+            failures.append(
+                {"ticker": pos["ticker"], "error": "notional too small for one share unit", "ambiguous": False}
+            )
             continue
         try:
             res = place_order_for_tenant(
@@ -270,8 +272,15 @@ async def execute_basket(request: Request):
             )
             results.append({"ticker": pos["ticker"], "mode": res.mode, "placed": res.placed, "order_id": res.order_id})
         except OrderBrokerError as exc:
-            # Includes OrderTimeout, whose outcome is UNKNOWN — surfaced, never retried.
-            failures.append({"ticker": pos["ticker"], "error": str(exc)})
+            # OrderOutcomeUnknown (incl. OrderTimeout) means the order may have reached
+            # the broker. Anything else failed before submission and is provably clean.
+            failures.append(
+                {
+                    "ticker": pos["ticker"],
+                    "error": str(exc),
+                    "ambiguous": isinstance(exc, OrderOutcomeUnknown),
+                }
+            )
 
     summary = {
         "basket_id": basket.basket_id,
@@ -281,10 +290,25 @@ async def execute_basket(request: Request):
         "results": results,
         "failures": failures,
     }
+    # If every order failed and none of those failures could have reached the broker,
+    # release the claim so the basket can be attempted again. Without this a wrong bearer
+    # token on the first try permanently burns that snapshot date — the first thing a new
+    # tester hits. The check is deliberately narrow: any placement, any timeout, or any
+    # failure during the placement call keeps the claim held.
+    if ExecutionLedger.is_safe_to_release(placed=summary["placed"], failures=failures):
+        ledger.release(
+            ctx.user_id,
+            basket.basket_id,
+            reason="all " + str(len(failures)) + " order(s) failed before submission",
+        )
+        summary["retryable"] = True
+        return JSONResponse(summary, status_code=502)
+
     # Attach the outcome to the claim made before the loop. The claim already blocks
     # re-runs; this fills in what happened. If the process dies before reaching here the
     # row stays 'reserved', which keeps the basket un-runnable — orders may have been
     # placed, so an unfinished run must be reconciled against the account, not retried.
+    summary["retryable"] = False
     ledger.record(ctx.user_id, basket.basket_id, summary)
     return JSONResponse(summary)
 

@@ -58,6 +58,15 @@ class AccountMismatch(Exception):
     """The order's account does not match the account the caller expected."""
 
 
+class PlacementAmbiguous(MCPError):
+    """The placement call itself failed, so the order may or may not have landed.
+
+    Distinct from a plain ``MCPError`` raised while *reviewing*: a review failure proves
+    nothing was submitted, and is therefore safe to retry. A placement failure is not.
+    Callers must treat this as UNKNOWN and reconcile against the account.
+    """
+
+
 class UnprovenAccountError(Exception):
     """No expected account was supplied, so ownership cannot be proven.
 
@@ -300,7 +309,16 @@ def execute_order(
             review=review,
         )
 
-    placed = client.call_tool("place_equity_order", order.as_arguments())
+    try:
+        placed = client.call_tool("place_equity_order", order.as_arguments())
+    except MCPError as exc:
+        # Review already succeeded, so the order was submitted. Whether the broker acted
+        # on it before failing is unknowable from here — never report this as a clean
+        # failure, because a caller might then retry and double the position.
+        raise PlacementAmbiguous(
+            "placement failed after a successful review; outcome is UNKNOWN and must be "
+            "reconciled against the account rather than retried: " + str(exc)
+        ) from exc
     order_id = placed.get("id") or placed.get("order_id")
     return OrderResult(
         mode="LIVE",
