@@ -41,6 +41,11 @@ fastapi==0.141.1
 uvicorn==0.52.1
 jinja2==3.1.6
 httpx==0.28.1
+# Starlette parses form bodies through python-multipart and asserts on it lazily, so a
+# missing install is a 500 on POST rather than an ImportError at startup — GET /login
+# renders fine and only the actual login attempt fails. dashboard/app.py calls
+# request.form() in login_submit() and in the execute endpoint's form fallback.
+python-multipart==0.0.31
 
 # ----------------------------------------------------------------------------
 # Testing
