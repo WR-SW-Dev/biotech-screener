@@ -266,6 +266,81 @@ class TestCheckInvariants:
 
 
 # ---------------------------------------------------------------------------
+# D2) Eligibility parsing must not depend on pandas dtype inference
+#
+# Regression for 2026-08-06. #555 gated APGE as pending_acquisition but left its
+# ``eligible`` cell blank. One blank cell moved the whole column from int64 to
+# float64, so ``str(x)`` yielded "1.0" instead of "1" and the literal comparison
+# against "1" inverted for every row: 219 correctly-eligible names were reported
+# as CRITICAL ineligible_has_rank, the snapshot was not promoted, and the
+# forward-validation capture was skipped.
+#
+# These go through a real CSV round-trip because that is what the pipeline does,
+# and it is precisely the step the string-built fixtures above never exercised.
+# ---------------------------------------------------------------------------
+
+
+def _rankings_csv(tmp_path, rows):
+    """Write a rankings-shaped CSV and read it back the way the audit does."""
+    path = tmp_path / "rankings.csv"
+    frame = pd.DataFrame(rows)
+    frame.to_csv(path, index=False, encoding="utf-8", lineterminator="\n")
+    return pd.read_csv(path)
+
+
+class TestEligibilityDtypeRobustness:
+    def _mixed_rows(self):
+        """219 eligible + ranked, 79 ineligible, 1 gated-but-unlabelled — as shipped."""
+        rows = []
+        for i in range(219):
+            rows.append({"ticker": f"E{i}", "eligible": 1, "ineligible_reasons": "", "actionable_rank": i + 1})
+        for i in range(79):
+            rows.append({"ticker": f"I{i}", "eligible": 0, "ineligible_reasons": "no_data", "actionable_rank": ""})
+        rows.append(
+            {"ticker": "APGE", "eligible": "", "ineligible_reasons": "pending_acquisition", "actionable_rank": ""}
+        )
+        return rows
+
+    def test_blank_cell_does_not_flag_every_eligible_row(self, tmp_path):
+        """The production failure: 219 false CRITICALs from one blank cell."""
+        df = _rankings_csv(tmp_path, self._mixed_rows())
+        assert df["eligible"].dtype == "float64", "precondition: the blank forces a float column"
+        offenders = [v for v in check_invariants(df) if v["rule"] == "ineligible_has_rank"]
+        assert offenders == []
+
+    def test_a_genuinely_ineligible_ranked_row_is_still_caught(self, tmp_path):
+        """Guard against fixing the false positives by disabling the rule."""
+        rows = self._mixed_rows()
+        rows.append({"ticker": "BAD", "eligible": 0, "ineligible_reasons": "halted", "actionable_rank": 7})
+        df = _rankings_csv(tmp_path, rows)
+        offenders = [v for v in check_invariants(df) if v["rule"] == "ineligible_has_rank"]
+        assert [v["ticker"] for v in offenders] == ["BAD"]
+
+    def test_blank_eligible_with_a_rank_is_still_a_violation(self, tmp_path):
+        """Unknown eligibility is not eligibility — a blank with a rank must flag."""
+        rows = self._mixed_rows()
+        rows.append({"ticker": "ODD", "eligible": "", "ineligible_reasons": "", "actionable_rank": 12})
+        df = _rankings_csv(tmp_path, rows)
+        offenders = [v for v in check_invariants(df) if v["rule"] == "ineligible_has_rank"]
+        assert [v["ticker"] for v in offenders] == ["ODD"]
+
+    def test_reasons_mismatch_still_detected_in_a_float_column(self, tmp_path):
+        """The quieter half: under float64 rule 1 stopped firing at all."""
+        rows = self._mixed_rows()
+        rows.append({"ticker": "MIS", "eligible": 1, "ineligible_reasons": "low_volume", "actionable_rank": 4})
+        df = _rankings_csv(tmp_path, rows)
+        offenders = [v for v in check_invariants(df) if v["rule"] == "eligible_reasons_mismatch"]
+        assert [v["ticker"] for v in offenders] == ["MIS"]
+
+    def test_all_integer_column_behaves_identically(self, tmp_path):
+        """int64 (no blanks) and float64 (one blank) must agree on the same data."""
+        rows = [r for r in self._mixed_rows() if r["ticker"] != "APGE"]
+        df = _rankings_csv(tmp_path, rows)
+        assert df["eligible"].dtype == "int64", "precondition: no blank, so an int column"
+        assert [v for v in check_invariants(df) if v["rule"] == "ineligible_has_rank"] == []
+
+
+# ---------------------------------------------------------------------------
 # E) check_universe_coverage
 # ---------------------------------------------------------------------------
 

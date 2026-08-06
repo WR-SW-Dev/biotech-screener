@@ -1,0 +1,313 @@
+{
+    "date": "2026-08-05",
+    "monitoring_day": 43,
+    "monitoring_period_note": "Day 43 — PRE-MARKET snapshot (09:00 ET). URGN Q2 earnings BEFORE OPEN TODAY. SYRE and COGT Q2 earnings were BEFORE OPEN YESTERDAY (Aug 4) — post-earnings prices UNVERIFIED. PRAX Q2 earnings tomorrow Aug 6 before open. ALMS LUMUS Phase 2b SLE readout still imminent (Q3 2026). Q2 13F filing deadline ~Aug 14 (9 days away). Governance IC/h20d gates overdue 35 days. Robinhood MCP unavailable Days 1-43.",
+    "timestamp": "2026-08-05T09:00:00.000000Z",
+    "phase": "Day 43 — URGN EARNINGS TODAY BEFORE OPEN. SYRE Q2 and COGT Q2 earnings results from yesterday (Aug 4 before open) are UNVERIFIED — post-earnings prices unknown. PRAX Q2 earnings Aug 6 before open (tomorrow). ALMS LUMUS Phase 2b SLE binary catalyst imminent (Q3 2026 = anytime through Sep 30). Q2 13F filing deadline ~August 14 (9 days). IC/h20d governance gates 35 days overdue pending operator freeze lift.",
+    "data_as_of": "MIXED: July 30 close (DNTH $112.64, SYRE $101.50 [PRE-EARNINGS], RVMD $192.17, SLDB $8.49, DRUG $74.63, STOK $30.04, PRAX $307.75, TRVI $18.40, ERAS $18.68, CMPS $11.57); July 31 close (ALMS $28.11); Aug 2 close est (NRIX ~$23.03); Aug 3 close est (COGT $39.66 [PRE-EARNINGS], URGN $40.97 [PRE-EARNINGS], XENE $62.26). Robinhood MCP unavailable. No post-earnings prices for SYRE (Aug 4) or COGT (Aug 4). URGN results unknown (reporting before open today).",
+
+    "account": {
+        "account_id": "Robinhood 802349084",
+        "equity_fetchable": false,
+        "equity_estimated_usd": 127.39,
+        "equity_note": "Carried from Day 42 estimate ($127.39). Post-earnings moves for SYRE and COGT (both Aug 4 before open) are UNVERIFIED — true equity unknown until prices confirmed. URGN reports before open today, adding further uncertainty. Estimate should be treated as floor/stale until post-market verification. Cash $99.87 unchanged.",
+        "equity_delta_vs_day42": "UNKNOWN — SYRE and COGT post-earnings price moves unverified",
+        "cash_carried": 99.87,
+        "buying_power_carried": null,
+        "total_estimated_account_value_pre_earnings": 227.26,
+        "post_earnings_equity_unknown": true,
+        "data_source": "Day 42 carry-forward. SYRE/COGT/URGN post-earnings prices unavailable (Robinhood MCP Day 43 unavailable)"
+    },
+
+    "portfolio_overview": {
+        "total_positions": 15,
+        "positions_negative_vs_entry": 0,
+        "positions_at_risk_below_entry": "CMPS — last verified +2.39% ($11.57 vs $11.30 entry). Monitor close below $11.00. All others comfortably above entry.",
+        "positions_positive_vs_entry": 15,
+        "avg_pnl_vs_entry_pct_est": "~29.5% (STALE — SYRE, COGT, URGN post-earnings unknown)",
+        "avg_pnl_note": "Carry-forward from Day 42. Three positions have unverified post-earnings prices (SYRE, COGT, URGN). Estimate not updated pending price verification.",
+        "xbi_entry_price": 133.62,
+        "xbi_last_verified_close_jul30": 151.46,
+        "xbi_return_since_entry_pct_last_verified": 13.35,
+        "drawdown_vs_xbi_pp_last_verified": 18.67,
+        "drawdown_vs_xbi_pp_estimated": "~15pp estimated (stale — XBI not re-measured since Jul 30; SYRE/COGT/URGN earnings could shift this meaningfully)",
+        "drawdown_threshold_pp": -2.0,
+        "drawdown_status": "ESTIMATED CLEAR — pre-earnings. Post-earnings for SYRE/COGT/URGN may shift this. Monitor today's close.",
+        "data_gap_note": "Three earnings events span Aug 4-5 with unverified outcomes. Gap flags pending post-open verification."
+    },
+
+    "earnings_today_and_recent": {
+        "URGN_aug5_TODAY": {
+            "ticker": "URGN",
+            "event": "Q2 2026 Earnings — BEFORE MARKET OPEN (TODAY Aug 5)",
+            "date": "2026-08-05",
+            "status": "EARNINGS DAY — Pre-market results may be out at time of snapshot",
+            "entry_price": 28.02,
+            "quantity": 0.237681,
+            "last_verified_price": 40.97,
+            "last_verified_date": "2026-08-03 (approx)",
+            "pnl_pct_at_carry": 46.3,
+            "key_watch": [
+                "ZUSDURI (uro/recurrent UTI) commercial revenue trajectory — key commercial product",
+                "2026 guidance update (cash runway, commercialization trajectory)",
+                "UGN-501 Phase 1 trial initiation timeline (Q4 2026 guided)",
+                "July 15 patent allowance: ZUSDURI/UGN-103 extended to 2044 — structural positive",
+                "Analysts: 7x Strong Buy, consensus PT $36.43 (below current $40.97 — analysts lagging)"
+            ],
+            "context": "Stock at ~$40.97 (Aug 3), well above $36.43 analyst PT consensus — market already pricing in more than analysts model. Patent to 2044 extends commercial moat. Pre-earnings position well above entry ($28.02), +46.3% unrealized. Primary earnings risk: miss on ZUSDURI ramp or guidance cut. Upside: commercial beat + raised guidance.",
+            "priority": "CRITICAL — Earnings before open today. Update position after open."
+        },
+        "SYRE_aug4_results_unverified": {
+            "ticker": "SYRE",
+            "event": "Q2 2026 Earnings — Results UNVERIFIED (reported Aug 4 before open)",
+            "date": "2026-08-04",
+            "status": "POST-EARNINGS — PRICE UNVERIFIED",
+            "entry_price": 76.10,
+            "quantity": 0.088041,
+            "pre_earnings_carry_price": 101.50,
+            "pre_earnings_date": "2026-07-30",
+            "pnl_pct_at_carry": 33.38,
+            "analyst_consensus_eps": -0.71,
+            "context": "SYRE reported Q2 before open Aug 4. Prior quarter Q1 missed by $0.08. SKYLINE Phase 2 clinical backdrop is strongly positive: SPY001 9.2-pt RHI reduction (primary endpoint met), SPY002 10.7-pt RHI reduction (primary endpoint met). Earnings primarily a financial check given already-positive clinical news. Post-earnings price unknown — Robinhood MCP unavailable. Gap magnitude (positive or negative) requires verification today.",
+            "priority": "HIGH — Verify post-earnings price. Flag any gap >5% for governance."
+        },
+        "COGT_aug4_results_unverified": {
+            "ticker": "COGT",
+            "event": "Q2 2026 Earnings — Results UNVERIFIED (reported Aug 4 before open). Earnings call TODAY at 12:30 PM ET.",
+            "date": "2026-08-04",
+            "status": "POST-EARNINGS — PRICE UNVERIFIED. EARNINGS CALL TODAY 12:30 PM ET",
+            "entry_price": 31.35,
+            "quantity": 0.212789,
+            "pre_earnings_carry_price": 39.66,
+            "pre_earnings_date": "2026-08-03 (est)",
+            "pnl_pct_at_carry": 26.5,
+            "analyst_consensus_eps": -0.55,
+            "context": "COGT reported Q2 before open Aug 4. Pre-earnings: -5.9% on July 31 ($41.36→$38.93), recovered to ~$39.66 Aug 3. Key catalyst: CGT9486 (bezuclastinib) BezginD Phase 3 progress. Earnings call today at 12:30 PM ET. Post-Q2 price unknown. Prior July 31 gap already flagged; post-earnings gap direction unknown.",
+            "priority": "HIGH — Verify post-earnings price. Earnings call 12:30 PM ET today."
+        },
+        "PRAX_aug6_tomorrow": {
+            "ticker": "PRAX",
+            "event": "Q2 2026 Earnings — BEFORE MARKET OPEN (Aug 6, tomorrow)",
+            "date": "2026-08-06",
+            "status": "T-1 PRE-EARNINGS ALERT",
+            "entry_price": 241.92,
+            "quantity": 0.027530,
+            "last_verified_price": 307.75,
+            "last_verified_date": "2026-07-30",
+            "pnl_pct_at_carry": 27.21,
+            "key_watch": [
+                "Elsunersen commercial/pipeline update",
+                "Cash runway and EMERALD Phase 3 (readout expected September 1) preparation",
+                "Breakthrough therapy designation (granted June 2026) context",
+                "Analyst PT raised to $1,201 — watch for any PT revision"
+            ],
+            "context": "PRAX earnings are primarily a financial check ahead of the major EMERALD Phase 3 readout September 1. Breakthrough therapy designation strengthens regulatory posture. Analyst PT ($1,201) far above current carry price ($307.75). Stock relatively low volatility ahead of earnings given clinical momentum.",
+            "priority": "WATCH — Tomorrow before open. Monitor post-close today for any pre-earnings moves."
+        }
+    },
+
+    "alms_lumus_watch": {
+        "ticker": "ALMS",
+        "event": "LUMUS Phase 2b SLE topline readout — envudeucitinib (ESK-001)",
+        "status": "IMMINENT — Q3 2026 window (ends September 30, 2026)",
+        "last_verified_price_jul31": 28.11,
+        "entry_price": 20.37,
+        "quantity": 0.326013,
+        "pnl_vs_entry_pct": 38.0,
+        "note": "Carry-forward from Day 42. Q3 2026 means anytime through September 30. LUMUS: randomized, double-blind, placebo-controlled, 48-week primary endpoint on BICLA response rate. Binary catalyst — failure would generate large negative move. ALMS +9.74% on July 30 may have been LUMUS positioning.",
+        "priority": "ELEVATED — Binary event could arrive any day before September 30."
+    },
+
+    "gap_flags": [
+        {
+            "ticker": "SYRE",
+            "direction": "UNKNOWN",
+            "gap_pct": "PENDING — post-earnings price unverified",
+            "from_date": "2026-07-30",
+            "from_price": 101.50,
+            "to_date": "2026-08-04",
+            "to_price": "UNKNOWN",
+            "flag_reason": "SYRE reported Q2 before open Aug 4. Post-earnings price unknown. Gap direction and magnitude unverified. Clinical backdrop (SKYLINE Phase 2 positive) reduces downside risk but earnings financial miss could still cause move. Manual verification required.",
+            "current_vs_entry_pct": 33.38,
+            "gate_status": "PENDING VERIFICATION"
+        },
+        {
+            "ticker": "COGT",
+            "direction": "UNKNOWN",
+            "gap_pct": "PENDING — post-earnings price unverified",
+            "from_date": "2026-08-03",
+            "from_price": 39.66,
+            "to_date": "2026-08-04",
+            "to_price": "UNKNOWN",
+            "flag_reason": "COGT reported Q2 before open Aug 4. Pre-earnings -5.9% gap on July 31 was already flagged (Day 42). Post-Aug-4 price unknown. Earnings call today at 12:30 PM ET. Manual verification required.",
+            "current_vs_entry_pct": 26.5,
+            "gate_status": "PENDING VERIFICATION — Earnings call 12:30 PM ET today"
+        },
+        {
+            "ticker": "URGN",
+            "direction": "UNKNOWN",
+            "gap_pct": "PENDING — earnings before open today",
+            "from_date": "2026-08-03",
+            "from_price": 40.97,
+            "to_date": "2026-08-05",
+            "to_price": "UNKNOWN",
+            "flag_reason": "URGN reports Q2 before open today. Gap direction unknown until open. Monitor post-open.",
+            "current_vs_entry_pct": 46.3,
+            "gate_status": "PENDING — reporting today before open"
+        }
+    ],
+    "gap_flag_note": "Three open gap flags: SYRE (Aug 4 post-earnings, unverified), COGT (Aug 4 post-earnings, unverified), URGN (Aug 5 pre-market today). PRAX earnings tomorrow. Manual verification of SYRE and COGT post-open prices today is critical.",
+
+    "escalation_flags": [
+        {
+            "ticker": "CMPS",
+            "reason": "THIN MARGIN WATCH — Last verified +2.39% vs entry ($11.57 vs $11.30 entry). Re-escalation if close below $11.00.",
+            "priority": "WATCH — Monitor. Not breached.",
+            "last_verified": "2026-07-30"
+        },
+        {
+            "ticker": "SYRE",
+            "reason": "POST-EARNINGS PRICE UNKNOWN — Pre-earnings carry +33.38%. Q2 reported Aug 4 before open. Price unverified.",
+            "priority": "HIGH — Requires manual price check today.",
+            "last_verified": "2026-07-30"
+        },
+        {
+            "ticker": "COGT",
+            "reason": "POST-EARNINGS PRICE UNKNOWN — Earnings call today 12:30 PM ET. Pre-earnings carry +26.5%. Q2 reported Aug 4 before open. Price unverified.",
+            "priority": "HIGH — Requires manual price check. Earnings call 12:30 PM ET.",
+            "last_verified": "2026-08-03 (est)"
+        },
+        {
+            "ticker": "URGN",
+            "reason": "EARNINGS BEFORE OPEN TODAY — Pre-earnings carry +46.3%. Q2 results will be out before market open.",
+            "priority": "CRITICAL — Active earnings day. Update post-open.",
+            "last_verified": "2026-08-03 (approx)"
+        }
+    ],
+
+    "governance_gates": {
+        "drawdown_gate": {
+            "status": "ESTIMATED CLEAR (PRE-EARNINGS UNCERTAINTY)",
+            "last_verified_pp": 18.67,
+            "last_verified_date": "2026-07-30",
+            "estimated_current_pp": "~15pp estimated (stale — SYRE/COGT/URGN post-earnings unknown; XBI not re-measured)",
+            "threshold_pp": -2.0,
+            "detail": "Last verified +18.67pp vs XBI (July 30 close). SYRE and COGT had earnings before open Aug 4; URGN reports today. Significant negative moves could compress the drawdown buffer. Monitor today's close for full picture. Emergency threshold -2.0pp has large cushion but post-earnings moves increase uncertainty."
+        },
+        "ic_gate": {
+            "status": "OVERDUE — 35 days",
+            "last_measured": "2026-06-24",
+            "last_ic": 0.0432,
+            "hit_rate": 0.543,
+            "gate_was_due": "2026-07-01",
+            "days_overdue": 35,
+            "note": "IC gate overdue 35 days. Requires explicit operator freeze lift. DEM candidate freeze + NO_MODEL_CHANGE forward-validation window active. 0/20 eligible LIVE windows accumulated. Mandate SM-20260629-001 binding."
+        },
+        "h20d_gate": {
+            "status": "OVERDUE — 35 days",
+            "gate_date": "2026-07-01",
+            "days_overdue": 35,
+            "override_posture": "MAINTAINED (OPTION_B_OVERRIDE_2026_05_26)",
+            "sequential_gate_steps": [
+                "1. Explicit operator freeze lift",
+                "2. Run h20d quarantine script (python3 tools/check_13f_cohort_quarantine.py --pre-date <last-pre-promo> --post-date <first-post-promo>)",
+                "3. Warm Q2 13F cache via tools/warm_13f_cache.py (period ends Jun 30; filing deadline ~Aug 14)",
+                "4. Run cohort quarantine check",
+                "5. Refresh IC decomposition"
+            ],
+            "note": "Q2 13F filing deadline ~August 14 (9 days away). Sequential gate requires operator freeze lift before any action. All three managers (Fairmount, Deep Track, Logos Global) expected to file on deadline day based on prior pattern."
+        },
+        "jaccard_gate": {
+            "status": "MAINTAINED",
+            "last_measured": "2026-06-23",
+            "top30_jaccard": 0.875,
+            "threshold": 0.40,
+            "note": "0.875 as of June 23. Well above 0.40 threshold. Next measurement pending freeze lift."
+        },
+        "q2_13f_deadline": {
+            "status": "APPROACHING — 9 days",
+            "filing_deadline": "~2026-08-14",
+            "period_ending": "2026-06-30",
+            "days_to_deadline": 9,
+            "action": "Monitor EDGAR for Fairmount (CIK 1802528), Deep Track (CIK 1856083), Logos Global (CIK 1792126) starting ~August 11. Warm 13F cache after filings via tools/warm_13f_cache.py. Sequential gate requires operator freeze lift first.",
+            "prior_cycle": "Q1 2026: all 3 managers filed on deadline day (May 15). Same pattern expected for Q2."
+        },
+        "emergency_gate": {
+            "status": "ESTIMATED CLEAR (PRE-EARNINGS UNCERTAINTY)",
+            "detail": "No positions confirmed below entry. CMPS at +2.39% (watch). SYRE/COGT/URGN post-earnings unknown. Post-earnings verification today is critical for emergency gate confidence."
+        },
+        "positions_20pct_loss": {
+            "status": "ESTIMATED CLEAR — No position confirmed below entry",
+            "count": 0,
+            "lowest_pnl_name": "CMPS",
+            "lowest_pnl_pct": 2.39,
+            "detail": "CMPS lowest at +2.39% (carry Jul 30). All 15 positions above entry at last verification. Post-earnings moves for SYRE/COGT/URGN not yet reflected. -20% threshold vs entry would require extreme moves (e.g., SYRE below $60.88, COGT below $25.08, URGN below $22.42). None plausible absent catastrophic news."
+        }
+    },
+
+    "positions_current_est": [
+        {"ticker": "DNTH", "entry": 72.10, "quantity": 0.092928, "last_price": 112.64, "last_price_date": "2026-07-30", "pnl_pct": 56.23, "note": "Carry-forward. Phase 3 EMERGE trial enrollment ongoing."},
+        {"ticker": "NRIX", "entry": 15.46, "quantity": 0.430232, "last_price": 23.03, "last_price_date": "2026-08-02 (approx)", "pnl_pct": 49.0, "note": "Binary event RESOLVED (Jul 31). UBS PT lowered $35→$30. Roche $700M upfront intact. Flat post-event."},
+        {"ticker": "URGN", "entry": 28.02, "quantity": 0.237681, "last_price": 40.97, "last_price_date": "2026-08-03 (approx)", "pnl_pct": 46.3, "note": "EARNINGS BEFORE OPEN TODAY. Pre-earnings carry. Post-earnings price TBD."},
+        {"ticker": "ERAS", "entry": 13.27, "quantity": 0.503396, "last_price": 18.68, "last_price_date": "2026-07-30", "pnl_pct": 40.77, "note": "Carry-forward."},
+        {"ticker": "ALMS", "entry": 20.37, "quantity": 0.326013, "last_price": 28.11, "last_price_date": "2026-07-31", "pnl_pct": 38.0, "note": "LUMUS Phase 2b SLE readout imminent (Q3 2026)."},
+        {"ticker": "TRVI", "entry": 13.43, "quantity": 0.496649, "last_price": 18.40, "last_price_date": "2026-07-30", "pnl_pct": 37.01, "note": "Carry-forward."},
+        {"ticker": "RVMD", "entry": 143.76, "quantity": 0.046465, "last_price": 192.17, "last_price_date": "2026-07-30", "pnl_pct": 33.67, "note": "Carry-forward. Strong Buy consensus."},
+        {"ticker": "SYRE", "entry": 76.10, "quantity": 0.088041, "last_price": 101.50, "last_price_date": "2026-07-30 [PRE-EARNINGS]", "pnl_pct": 33.38, "note": "Q2 EARNINGS AUG 4 (yesterday). Post-earnings price UNVERIFIED. SKYLINE Phase 2 positive backdrop (SPY001 + SPY002). Pre-earnings carry shown."},
+        {"ticker": "PRAX", "entry": 241.92, "quantity": 0.027530, "last_price": 307.75, "last_price_date": "2026-07-30", "pnl_pct": 27.21, "note": "Q2 EARNINGS TOMORROW Aug 6 before open. EMERALD Phase 3 readout Sep 1. Breakthrough therapy (elsunersen). Analyst PT $1,201."},
+        {"ticker": "COGT", "entry": 31.35, "quantity": 0.212789, "last_price": 39.66, "last_price_date": "2026-08-03 (est) [PRE-EARNINGS]", "pnl_pct": 26.5, "note": "Q2 EARNINGS AUG 4 (yesterday). Post-earnings price UNVERIFIED. Earnings call TODAY 12:30 PM ET. Prior -5.9% gap Jul 31 noted."},
+        {"ticker": "XENE", "entry": 51.95, "quantity": 0.128578, "last_price": 62.26, "last_price_date": "2026-08-03", "pnl_pct": 19.8, "note": "Mild pullback from $64.19 (Jul 30) to $62.26 (Aug 3). -3.0%."},
+        {"ticker": "SLDB", "entry": 6.49, "quantity": 1.028527, "last_price": 8.49, "last_price_date": "2026-07-30", "pnl_pct": 30.82, "note": "Carry-forward."},
+        {"ticker": "DRUG", "entry": 63.59, "quantity": 0.105839, "last_price": 74.63, "last_price_date": "2026-07-30", "pnl_pct": 17.37, "note": "Carry-forward."},
+        {"ticker": "STOK", "entry": 28.74, "quantity": 0.231758, "last_price": 30.04, "last_price_date": "2026-07-30", "pnl_pct": 4.53, "note": "Carry-forward. First close above $30 July 30."},
+        {"ticker": "CMPS", "entry": 11.30, "quantity": 0.590265, "last_price": 11.57, "last_price_date": "2026-07-30", "pnl_pct": 2.39, "note": "THIN MARGIN WATCH. Monitor: close below $11.00 = re-escalation."}
+    ],
+
+    "q2_13f_approaching": {
+        "status": "APPROACHING — 9 days to deadline",
+        "filing_deadline": "~2026-08-14",
+        "period_ending": "2026-06-30",
+        "days_to_deadline": 9,
+        "managers": [
+            {"name": "Fairmount Funds", "cik": "0001802528"},
+            {"name": "Deep Track Capital", "cik": "0001856083"},
+            {"name": "Logos Global Management", "cik": "0001792126"}
+        ],
+        "action_sequence": [
+            "Monitor EDGAR starting ~August 11",
+            "Warm 13F cache post-filing via tools/warm_13f_cache.py",
+            "Run cohort quarantine check post-promotion",
+            "Refresh IC decomposition (requires operator freeze lift first)"
+        ],
+        "prior_cycle_note": "Q1 2026: All 3 managers filed on deadline day (May 15). Expect same for Q2. Key portfolio positions in prior 13F cycle: NRIX, ALMS, COGT — monitor for position changes."
+    },
+
+    "monitoring_status": {
+        "period_extended": true,
+        "original_end": "2026-06-30",
+        "extension_rationale": "Active earnings week (URGN today Aug 5, PRAX tomorrow Aug 6; SYRE/COGT results yesterday unverified), ALMS LUMUS Phase 2b imminent, IC/h20d governance gates 35 days overdue, Q2 13F cycle approaching (deadline ~Aug 14), PRAX EMERALD Sept 1",
+        "robinhood_mcp_status": "UNAVAILABLE — Days 1-43. All equity estimates from price carry-forward × web-sourced prices.",
+        "alerts_active": [
+            "URGN_Q2_EARNINGS_TODAY_AUG5_BEFORE_OPEN",
+            "SYRE_Q2_EARNINGS_RESULTS_UNVERIFIED_AUG4",
+            "COGT_Q2_EARNINGS_RESULTS_UNVERIFIED_AUG4_CALL_TODAY_1230ET",
+            "PRAX_Q2_EARNINGS_TOMORROW_AUG6",
+            "ALMS_LUMUS_SLE_PHASE2B_READOUT_IMMINENT_Q3",
+            "IC_GATE_OVERDUE_35_DAYS",
+            "H20D_GATE_OVERDUE_35_DAYS",
+            "Q2_13F_DEADLINE_APPROACHING_9_DAYS_AUG14",
+            "CMPS_THIN_MARGIN_WATCH",
+            "THREE_GAP_FLAGS_PENDING_VERIFICATION"
+        ],
+        "this_week_critical": [
+            "URGN Q2 earnings — BEFORE OPEN TODAY Aug 5",
+            "SYRE Q2 earnings — Results from Aug 4 UNVERIFIED",
+            "COGT Q2 earnings — Results from Aug 4 UNVERIFIED; earnings call 12:30 PM ET today",
+            "PRAX Q2 earnings — BEFORE OPEN Aug 6 (tomorrow)",
+            "ALMS LUMUS Phase 2b SLE — imminent Q3 readout (anytime through Sep 30)",
+            "Q2 13F cycle: Deadline ~Aug 14 (9 days)"
+        ],
+        "next_governance_action": "h20d quarantine script + IC refresh requires explicit operator freeze lift (35 days overdue). Q2 13F monitoring begins ~Aug 11 via EDGAR watch.",
+        "next_scheduled_monitoring": "2026-08-06 09:00 ET — PRAX earnings day"
+    }
+}
