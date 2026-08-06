@@ -17,6 +17,11 @@ from typing import Dict, List
 
 import requests
 
+# Single authority for CT.gov date granularity. Reused rather than
+# reimplemented so this collector and data_sources/ctgov_client.py cannot drift
+# apart on what "MONTH" means. See Spec 114.
+from data_sources.ctgov_client import date_provenance_shadow
+
 # =============================================================================
 # SPONSOR NAME MAPPING
 # =============================================================================
@@ -39,6 +44,7 @@ TICKER_TO_SPONSORS = {
     "ACRV": ["Acrivon Therapeutics", "Acrivon Therapeutics, Inc."],
     "ADCT": ["ADC Therapeutics", "ADC Therapeutics SA"],
     "ADMA": ["ADMA Biologics", "ADMA Biologics Inc"],
+    "ADPT": ["Adaptive Biotechnologies"],
     "AGIO": ["Agios Pharmaceuticals", "Agios Pharmaceuticals, Inc."],
     "AKRO": ["Akero Therapeutics"],
     "AKTX": ["Akari Therapeutics, Plc"],
@@ -95,11 +101,13 @@ TICKER_TO_SPONSORS = {
     "BMEA": ["Biomea Fusion", "Biomea Fusion, Inc."],
     "BMRN": ["BioMarin Pharmaceutical", "BioMarin"],
     "BNTX": ["BioNTech SE", "BioNTech"],
+    "BRKR": ["Bruker"],
     "CABA": ["Cabaletta Bio", "Cabaletta Bio, Inc."],
     "CADL": ["Candel Therapeutics", "Candel Therapeutics, Inc."],
     "CATX": ["Perspective Therapeutics", "Perspective Therapeutics, Inc."],
     "CCCC": ["C4 Therapeutics", "C4 Therapeutics, Inc."],
     "CDTX": ["Cidara Therapeutics"],
+    "CDXS": ["Codexis"],
     "CELC": ["Celcuity", "Celcuity Inc."],
     "CERS": ["Cerus", "Cerus Corporation"],
     "CGEM": ["Cullinan Therapeutics", "Cullinan Therapeutics, Inc."],
@@ -114,16 +122,19 @@ TICKER_TO_SPONSORS = {
     "CNTX": ["Context Therapeutics"],
     "COGT": ["Cogent Biosciences", "Cogent Biosciences, Inc."],
     "COLL": ["Collegium Pharmaceutical", "Collegium Pharmaceutical, Inc."],
+    "CPRX": ["Catalyst Pharmaceuticals"],
     "CRBU": ["Caribou Biosciences", "Caribou Biosciences, Inc."],
     "CRMD": ["CorMedix", "CorMedix Inc."],
     "CRNX": ["Crinetics Pharmaceuticals", "Crinetics Pharmaceuticals, Inc."],
     "CRSP": ["CRISPR Therapeutics"],
     "CRVS": ["Corvus Pharmaceuticals", "Corvus Pharmaceuticals, Inc."],
+    "CSTL": ["Castle Biosciences"],
     "CTMX": ["CytomX Therapeutics", "CytomX Therapeutics, Inc."],
     "CTNM": ["Contineum Therapeutics", "Contineum Therapeutics, Inc."],
     "CVAC": ["CureVac"],
     "CYTK": ["Cytokinetics", "Cytokinetics, Incorporated"],
     "DAWN": ["Day One Biopharmaceuticals", "Day One Biopharmaceuticals, Inc."],
+    "DFTX": ["Definium Therapeutics"],
     "DNLI": ["Denali Therapeutics"],
     "DNTH": ["Dianthus Therapeutics", "Dianthus Therapeutics, Inc."],
     "DRMA": ["Dermata Therapeutics", "Dermata Therapeutics, Inc."],
@@ -149,13 +160,17 @@ TICKER_TO_SPONSORS = {
     "FDMT": ["4D Molecular Therapeutics", "4D Molecular Therapeutics, Inc."],
     "KYNB": ["Kyntra Bio", "Kyntra Biosciences", "FibroGen", "FibroGen, Inc."],
     "FHTX": ["Foghorn Therapeutics", "Foghorn Therapeutics Inc."],
+    "FLGT": ["Fulgent Genetics"],
     "FOLD": ["Amicus Therapeutics"],
+    "FTRE": ["Fortrea"],
     "FULC": ["Fulcrum Therapeutics", "Fulcrum Therapeutics, Inc."],
     "GBIO": ["Generation Bio", "Generation Bio Co."],
     "GERN": ["Geron", "Geron Corporation"],
     "GHRS": ["GH Research", "GH Research PLC"],
     "GILD": ["Gilead Sciences"],
-    "GLPG": ["Galapagos NV"],
+    # Galapagos NV is registered on CT.gov as Lakefront Biotherapeutics NV as of
+    # 2026; the old string returns 0 studies. See Spec 114 re-warm 2026-07-30.
+    "GLPG": ["Lakefront Biotherapeutics", "Lakefront Biotherapeutics NV"],
     "GLUE": ["Monte Rosa Therapeutics", "Monte Rosa Therapeutics, Inc."],
     "GMAB": ["Genmab"],
     "GOSS": ["Gossamer Bio", "Gossamer Bio, Inc."],
@@ -202,6 +217,7 @@ TICKER_TO_SPONSORS = {
     "LEGN": ["Legend Biotech", "Legend Biotech Corporation"],
     "LENZ": ["LENZ Therapeutics", "LENZ Therapeutics, Inc."],
     "LFCR": ["Lifecore Biomedical", "Lifecore Biomedical, Inc."],
+    "LGND": ["Ligand Pharmaceuticals"],
     "LQDA": ["Liquidia Technologies", "Liquidia"],
     "LRMR": ["Larimar Therapeutics", "Larimar Therapeutics, Inc."],
     "LXEO": ["Lexeo Therapeutics", "Lexeo Therapeutics, Inc."],
@@ -211,6 +227,7 @@ TICKER_TO_SPONSORS = {
     "MBX": ["MBX Biosciences", "MBX Biosciences, Inc."],
     "MCRB": ["Seres Therapeutics", "Seres Therapeutics, Inc."],
     "MDGL": ["Madrigal Pharmaceuticals"],
+    "MDXG": ["MiMedx"],
     "MENS": ["Jyong Biotech", "Jyong Biotech Ltd."],
     "MESO": ["Mesoblast", "Mesoblast Limited"],
     "MGTX": ["MeiraGTx Holdings", "MeiraGTx Holdings plc"],
@@ -223,6 +240,7 @@ TICKER_TO_SPONSORS = {
     "MRNA": ["ModernaTX, Inc.", "Moderna"],
     "MRSN": ["Mersana Therapeutics", "Mersana Therapeutics, Inc."],
     "MRUS": ["Merus", "Merus N.V."],
+    "MYGN": ["Myriad Genetics"],
     "NAMS": ["NewAmsterdam Pharma Company", "NewAmsterdam Pharma"],
     "NBIX": ["Neurocrine Biosciences"],
     "NBP": ["NovaBridge Biosciences"],
@@ -259,10 +277,12 @@ TICKER_TO_SPONSORS = {
     "PRME": ["Prime Medicine", "Prime Medicine, Inc."],
     "PRQR": ["ProQR Therapeutics", "ProQR Therapeutics N.V."],
     "PRTA": ["Prothena Corporation", "Prothena"],
+    "PSNL": ["Personalis"],
     "PTCT": ["PTC Therapeutics"],
     "PTGX": ["Protagonist Therapeutics", "Protagonist Therapeutics, Inc."],
     "PVLA": ["Palvella Therapeutics", "Palvella Therapeutics, Inc."],
     "PYXS": ["Pyxis Oncology", "Pyxis Oncology, Inc."],
+    "QTRX": ["Quanterix"],
     "QURE": ["uniQure"],
     "RANI": ["Rani Therapeutics Holdings", "Rani Therapeutics"],
     "RAPP": ["Rapport Therapeutics", "Rapport Therapeutics, Inc."],
@@ -278,6 +298,7 @@ TICKER_TO_SPONSORS = {
     "RNA": ["Avidity Biosciences", "Avidity Biosciences, Inc."],
     "ROIV": ["Roivant Sciences"],
     "RVMD": ["Revolution Medicines"],
+    "RXRX": ["Recursion Pharmaceuticals"],
     "RYTM": ["Rhythm Pharmaceuticals"],
     "SABS": ["SAB Biotherapeutics", "SAB Biotherapeutics, Inc."],
     "SANA": ["Sana Biotechnology", "Sana Biotechnology, Inc."],
@@ -330,6 +351,7 @@ TICKER_TO_SPONSORS = {
     "VOR": ["Vor Biopharma", "Vor Biopharma Inc."],
     "VRDN": ["Viridian Therapeutics", "Viridian Therapeutics, Inc."],
     "VRTX": ["Vertex Pharmaceuticals"],
+    "VTRS": ["Viatris", "Mylan"],
     "VTYX": ["Ventyx Biosciences", "Ventyx Biosciences, Inc."],
     "VYGR": ["Voyager Therapeutics", "Voyager Therapeutics, Inc."],
     "WVE": ["Wave Life Sciences"],
@@ -404,7 +426,7 @@ def _parse_study(study: dict, ticker: str) -> dict:
     conditions_module = protocol.get("conditionsModule", {})
     arms_module = protocol.get("armsInterventionsModule", {})
 
-    return {
+    record = {
         "ticker": ticker,
         "nct_id": id_module.get("nctId"),
         "title": id_module.get("briefTitle"),
@@ -423,6 +445,19 @@ def _parse_study(study: dict, ticker: str) -> dict:
         "sponsor": sponsor_module.get("leadSponsor", {}).get("name"),
         "collected_at": date.today().isoformat(),
     }
+
+    # Provenance for the primary completion date — the field that drives
+    # catalyst timing. _normalize_date() above snaps "2026-08" to "2026-08-01"
+    # and returns a bare string, so without this the granularity is
+    # unrecoverable downstream and ctgov_adapter resolves precision to None.
+    #
+    # NON-ROUTING: additive only. primary_completion_date keeps its normalized
+    # value and module_3_catalyst still stamps date_precision="DAY"
+    # unconditionally. Flipping that is Spec 114 Phase 2, which is held back
+    # under the DEM candidate freeze / NO_MODEL_CHANGE window.
+    record.update(date_provenance_shadow(status_module.get("primaryCompletionDateStruct", {})))
+
+    return record
 
 
 def _fetch_all_trials(query_params: dict, ticker: str, max_retries: int = 3, max_results: int = 1000) -> List[Dict]:
@@ -449,6 +484,13 @@ def _fetch_all_trials(query_params: dict, ticker: str, max_retries: int = 3, max
 
         time.sleep(0.2)
 
+    # Sort before truncating. CT.gov pagination order is not stable, so an
+    # unsorted cap hands back a different arbitrary subset on every run for any
+    # sponsor with more than max_results trials (AMGN, ABBV, AZN, GILD, SNY and
+    # 5 others sit exactly at the cap). That breaks the "identical inputs ->
+    # byte-identical outputs" rule and makes a golden replay baseline
+    # unreproducible for those names.
+    all_trials.sort(key=lambda t: t.get("nct_id") or "")
     return all_trials[:max_results]
 
 
@@ -485,7 +527,32 @@ def get_trials_for_ticker(ticker: str, max_retries: int = 3, max_results: int = 
     return all_trials[:max_results]
 
 
-def collect_all_trials(universe_file: Path, output_file: Path):
+def detect_coverage_regressions(previous_records: List[Dict], current_records: List[Dict]) -> Dict[str, int]:
+    """Tickers that had trials before and have none now.
+
+    Returns {ticker: previous_trial_count}, empty when nothing regressed.
+
+    Total loss is the tripwire, not ordinary churn. A sponsor rename or a
+    dropped TICKER_TO_SPONSORS entry silently zeroes a ticker: the 2026-07-30
+    re-warm lost all 1,003 trials across 16 in-universe tickers, including 134
+    for GLPG when Galapagos NV was re-registered as Lakefront Biotherapeutics
+    NV, and the run reported success. Partial changes are left alone so a
+    normal refresh is never blocked.
+    """
+    if not previous_records:
+        return {}
+
+    prev_counts: Dict[str, int] = {}
+    for record in previous_records:
+        ticker = record.get("ticker")
+        if ticker:
+            prev_counts[ticker] = prev_counts.get(ticker, 0) + 1
+
+    current_tickers = {r.get("ticker") for r in current_records if r.get("ticker")}
+    return {t: n for t, n in sorted(prev_counts.items()) if n > 0 and t not in current_tickers}
+
+
+def collect_all_trials(universe_file: Path, output_file: Path, allow_coverage_drop: bool = False):
     """Collect trials for all tickers"""
 
     print("=" * 80)
@@ -530,6 +597,37 @@ def collect_all_trials(universe_file: Path, output_file: Path):
             print(f"\n  Progress: {i}/{len(tickers)} ({i/len(tickers)*100:.1f}%)")
             print(f"  Trials found: {stats['total_trials']}\n")
 
+    # Coverage guard: refuse to overwrite good data with a regressed fetch.
+    # Runs BEFORE the write, so a bad run leaves the previous cache intact.
+    if output_file.exists():
+        try:
+            with open(output_file) as f:
+                previous = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"\n⚠️  Could not read existing {output_file} for coverage check: {e}")
+            previous = []
+
+        regressions = detect_coverage_regressions(previous, all_trials)
+        if regressions:
+            lost = sum(regressions.values())
+            print(f"\n{'='*80}")
+            print(f"❌ COVERAGE REGRESSION: {len(regressions)} ticker(s) lost ALL trials ({lost} total)")
+            print(f"{'='*80}")
+            for ticker, count in regressions.items():
+                mapped = TICKER_TO_SPONSORS.get(ticker)
+                reason = f"sponsor(s)={mapped}" if mapped else "NOT in TICKER_TO_SPONSORS (term-search fallback)"
+                print(f"  {ticker:6s} had {count:5d} trials -> 0   {reason}")
+            print(
+                "\nNot writing output. A sponsor rename or a missing mapping entry looks\n"
+                "identical to 'no trials' at the API level, so this is treated as a\n"
+                "failed fetch rather than a data update. Verify the sponsor names against\n"
+                "CT.gov, then re-run. Use --allow-coverage-drop to override deliberately."
+            )
+            print(f"{'='*80}\n")
+            if not allow_coverage_drop:
+                raise SystemExit(2)
+            print("⚠️  --allow-coverage-drop set; writing anyway.\n")
+
     # Save
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w") as f:
@@ -552,6 +650,11 @@ def main():
     parser = argparse.ArgumentParser(description="Collect clinical trials from ClinicalTrials.gov")
     parser.add_argument("--universe", type=Path, default=Path("production_data/universe.json"))
     parser.add_argument("--output", type=Path, default=Path("production_data/trial_records.json"))
+    parser.add_argument(
+        "--allow-coverage-drop",
+        action="store_true",
+        help="Write output even if tickers lost all their trials (default: abort)",
+    )
     args = parser.parse_args()
 
     if not args.universe.exists():
@@ -559,7 +662,7 @@ def main():
         return 1
 
     try:
-        collect_all_trials(args.universe, args.output)
+        collect_all_trials(args.universe, args.output, allow_coverage_drop=args.allow_coverage_drop)
         return 0
     except KeyboardInterrupt:
         print("\n\n❌ Cancelled by user")
