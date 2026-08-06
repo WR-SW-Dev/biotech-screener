@@ -144,6 +144,21 @@ artifacts/return_integrity_audit.md
 *.pem
 *.key
 
+# Multi-tenancy (docs/design/MULTI_TENANCY.md)
+# Per-tenant secrets. `.env` above already matches nested files, but these are listed
+# explicitly so the intent is unmissable: NO tenant credential may ever be committed.
+# NOTE: `credentials/*` not `credentials/` — git does not descend into an ignored
+# directory, so a negation inside one can never take effect.
+credentials/*
+!credentials/README.md
+# Live tenant registry maps user -> brokerage account; the example is tracked, the real
+# one is not.
+/tenants.json
+# Per-tenant derived output (snapshots, artifacts, caches).
+/tenants/
+# Trading isolation audit trail.
+artifacts/trading/isolation_audit.jsonl
+
 # Generated validation data (use export_price_data.py to regenerate)
 data/universe_prices.csv
 data/indices_prices.csv

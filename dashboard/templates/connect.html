@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect your accounts</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 1.5rem; background: #f6f7f9; color: #14161a;
+    }
+    @media (prefers-color-scheme: dark) { body { background: #14161a; color: #e8eaed; } }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 1.15rem; margin: 0 0 .35rem; }
+    .meta { font-size: .8rem; opacity: .7; }
+    .card {
+      background: Canvas; border-radius: 10px; padding: 1.1rem 1.25rem; margin-top: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.14);
+    }
+    .row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+    .row h2 { font-size: .95rem; margin: 0; flex: 1 1 auto; }
+    .pill { font-size: .72rem; padding: .18rem .5rem; border-radius: 999px; white-space: nowrap; }
+    .pill.on { background: rgba(40,160,90,.18); color: #1c7a45; }
+    .pill.off { background: rgba(128,128,128,.2); opacity: .8; }
+    @media (prefers-color-scheme: dark) { .pill.on { color: #67d69b; } }
+    p.help { font-size: .84rem; opacity: .8; margin: .6rem 0 0; }
+    a.btn, button {
+      display: inline-block; margin-top: .9rem; padding: .55rem 1rem; font-size: .9rem;
+      border: 0; border-radius: 6px; background: #2f6feb; color: #fff; cursor: pointer;
+      text-decoration: none;
+    }
+    a.btn:hover, button:hover { background: #2558c0; }
+    a.btn.secondary { background: transparent; color: #2f6feb; border: 1px solid currentColor; }
+    input[type=password] {
+      width: 100%; margin-top: .7rem; padding: .5rem .6rem; font-size: .9rem;
+      box-sizing: border-box; border: 1px solid rgba(128,128,128,.45); border-radius: 6px;
+      background: Canvas; color: CanvasText;
+    }
+    .banner { padding: .55rem .8rem; border-radius: 6px; font-size: .85rem; margin-top: 1rem; }
+    .banner.ok { background: rgba(40,160,90,.15); }
+    .banner.err { background: rgba(200,40,40,.13); }
+    .next { margin-top: 1.25rem; font-size: .88rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Connect your accounts</h1>
+  <div class="meta">Signed in as {{ user_id }}</div>
+
+  {% if connected == 'robinhood' %}<div class="banner ok">Robinhood connected.</div>{% endif %}
+  {% if connected == 'anthropic' %}<div class="banner ok">Anthropic API key saved.</div>{% endif %}
+  {% if error %}
+    <div class="banner err">
+      {% if error == 'denied' %}You declined the Robinhood authorization request.
+      {% elif error == 'expired' %}That connection attempt timed out. Please start again.
+      {% elif error == 'state' %}Could not verify the authorization response. Please start again.
+      {% elif error == 'exchange' %}Robinhood rejected the authorization. Please try again.
+      {% elif error == 'discovery' %}Could not reach Robinhood's authorization service.
+      {% elif error == 'account' %}Connected to Robinhood, but we could not read your account
+        number, so trading stays disabled. Please try connecting again.
+      {% elif error == 'multiaccount' %}Your Robinhood login reaches more than one account.
+        We will not guess which one to trade, so nothing was saved — ask an operator to set
+        your account explicitly.
+      {% elif error == 'acctclaimed' %}That Robinhood account is already linked to another
+        user here. One brokerage account can belong to only one user.
+      {% elif error == 'keyshape' %}That does not look like an Anthropic key — they begin with <code>sk-ant-</code>.
+      {% elif error == 'emptykey' %}Please paste a key.
+      {% elif error == 'csrf' %}Your session expired. Please try again.
+      {% else %}Something went wrong. Please try again.{% endif %}
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="row">
+      <h2>Robinhood</h2>
+      <span class="pill {{ 'on' if robinhood_connected else 'off' }}">
+        {{ 'Connected' if robinhood_connected else 'Not connected' }}
+      </span>
+    </div>
+    <p class="help">
+      Authorize this dashboard to place orders in your Robinhood account
+      {% if account_number %}({{ account_number }}){% endif %}.
+      You will be sent to Robinhood to approve, then returned here. Your Robinhood
+      password is never seen by this application.
+    </p>
+    <a class="btn {{ 'secondary' if robinhood_connected else '' }}" href="/connect/robinhood/start">
+      {{ 'Reconnect Robinhood' if robinhood_connected else 'Connect Robinhood' }}
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <h2>Anthropic</h2>
+      <span class="pill {{ 'on' if anthropic_connected else 'off' }}">
+        {{ 'Connected' if anthropic_connected else 'Not connected' }}
+      </span>
+    </div>
+    <p class="help">
+      Paste an API key from the
+      <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">Anthropic console</a>.
+      Keys are stored encrypted and are never shown again after saving.
+    </p>
+    <form method="post" action="/connect/anthropic">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="password" name="anthropic_key" placeholder="sk-ant-..." autocomplete="off" required>
+      <button type="submit">{{ 'Replace key' if anthropic_connected else 'Save key' }}</button>
+    </form>
+  </div>
+
+  {% if robinhood_connected and not account_number %}
+    <div class="banner err">
+      Robinhood is connected but no account number is on file, so orders will be refused.
+      Reconnect to fix this.
+    </div>
+  {% endif %}
+
+  {% if robinhood_connected %}
+    <div class="next"><a href="/basket">Go to your latest basket →</a></div>
+  {% endif %}
+</div>
+</body>
+</html>
