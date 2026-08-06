@@ -88,6 +88,55 @@ Every new signal must include:
 
 ---
 
+## Git Remotes & PR Policy
+
+This repository has two GitHub remotes. Both must receive every feature branch.
+
+| Remote | GitHub repository | Role |
+|--------|-------------------|------|
+| `origin` | `Warrenpoobear/biotech-screener` | **Primary** |
+| `WR-SW-Dev` | `WR-SW-Dev/biotech-screener` | Mirror — must stay in sync |
+
+**Never push feature work directly to `main` on either remote.** A `pre-push`
+hook (INC-2026-06-20-AUTOPUSH) blocks non-interactive pushes to `main`; that
+guard is a backstop, not the policy. The policy is: branch, push, PR.
+
+For every change, push the current branch to both remotes, then open one PR per
+GitHub repository — commits and branches replicate across remotes, but **PRs are
+repository-specific, so two separate PRs are always required**, with the same
+title and description.
+
+```bash
+branch=$(git branch --show-current)
+
+git push --set-upstream origin     "$branch"
+git push --set-upstream WR-SW-Dev  "$branch"
+
+gh pr create --repo Warrenpoobear/biotech-screener --base main --head "$branch" --fill
+gh pr create --repo WR-SW-Dev/biotech-screener     --base main --head "$branch" --fill
+```
+
+Verify both pushes and report both PR URLs.
+
+**Stop conditions — report, never force-push:**
+
+- A push or `gh pr create` fails.
+- The two `main` branches have diverged. Check before opening the second PR:
+  ```bash
+  git fetch origin && git fetch WR-SW-Dev
+  git rev-list --left-right --count origin/main...WR-SW-Dev/main
+  ```
+  Any result other than two zeros means a branch cut from one `main` will carry
+  the other's missing commits into its PR diff. Opening that PR risks merging
+  unrelated work across repositories. Reconcile the two `main` branches first,
+  or cut a second branch from the other remote's `main` and cherry-pick the
+  change onto it so each PR is a clean single-purpose diff.
+
+Keeping both `main` branches synchronized is the standing expectation; treat
+drift between them as a problem to fix, not a condition to work around.
+
+---
+
 ## Key File Locations
 
 | Area | File |
