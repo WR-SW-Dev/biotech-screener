@@ -81,6 +81,23 @@ class CredentialNotFound(CredentialStoreError):
     """No record for this tenant."""
 
 
+class TenantExists(CredentialStoreError):
+    """A tenant with this id already exists.
+
+    Distinct from a silent no-op: self-service signup must refuse a taken username
+    rather than adopt (or reset) the existing tenant.
+    """
+
+
+class AccountAlreadyClaimed(CredentialStoreError):
+    """Another tenant already claims this brokerage account number.
+
+    The trading guard proves ownership by comparing a tenant's stored account number to
+    the account an order targets. That proof only means anything while the mapping is
+    one-to-one, so a second claimant is refused rather than recorded.
+    """
+
+
 @dataclass(frozen=True)
 class TenantCredentials:
     """One tenant's secrets. Frozen so a resolved credential cannot be edited in flight."""
@@ -310,6 +327,83 @@ class CredentialStore:
                 "VALUES (?, ?, ?)",
                 (user_id, self._enc(account_number), self._enc("")),
             )
+            con.commit()
+        finally:
+            con.close()
+
+    def create_tenant(self, user_id: str, *, account_number: str = "") -> None:
+        """Create a tenant row, refusing if the id is taken.
+
+        The strict sibling of :meth:`ensure_tenant`. Signup cannot use the idempotent
+        form: ``INSERT OR IGNORE`` followed by ``set_password`` has a window in which two
+        concurrent signups for the same name both pass a prior existence check, the
+        second insert is silently ignored, and the second password overwrites the
+        first — handing one person's account to another. A plain ``INSERT`` makes the
+        claim atomic in SQLite, so exactly one of the two racers wins and the loser is
+        told the name is taken.
+        """
+        validate_user_id(user_id)
+        con = self._connect()
+        try:
+            con.execute(
+                "INSERT INTO tenant_credentials (user_id, account_number, robinhood_bearer) VALUES (?, ?, ?)",
+                (user_id, self._enc(account_number), self._enc("")),
+            )
+            con.commit()
+        except sqlite3.IntegrityError as exc:
+            raise TenantExists("tenant " + repr(user_id) + " already exists") from exc
+        finally:
+            con.close()
+
+    def find_account_owner(self, account_number: str, *, excluding: Optional[str] = None) -> Optional[str]:
+        """Return the tenant id claiming ``account_number``, or None.
+
+        Canonical implementation of the one-tenant-per-account invariant. Account numbers
+        are encrypted with a non-deterministic scheme, so this cannot be a WHERE clause —
+        every row has to be decrypted and compared. Fine at the scale this store is for
+        (a handful of tenants) and it keeps the check in one place rather than copied
+        into every caller that can set an account number.
+        """
+        if not account_number:
+            return None
+        for other in self.list_user_ids():
+            if excluding is not None and other == excluding:
+                continue
+            try:
+                if self.get(other).account_number == account_number:
+                    return other
+            except CredentialNotFound:  # pragma: no cover - race with concurrent removal
+                continue
+        return None
+
+    def set_account_number(self, user_id: str, account_number: str) -> None:
+        """Record the brokerage account this tenant owns.
+
+        Refuses an account already claimed by someone else. The check lives here rather
+        than at the call site so no future caller can set an account number without it.
+        """
+        validate_user_id(user_id)
+        if not account_number:
+            raise CredentialStoreError("account_number cannot be empty")
+
+        claimed_by = self.find_account_owner(account_number, excluding=user_id)
+        if claimed_by is not None:
+            raise AccountAlreadyClaimed(
+                "account "
+                + repr(account_number)
+                + " is already claimed by tenant "
+                + repr(claimed_by)
+                + "; two tenants must not share a brokerage account"
+            )
+
+        con = self._connect()
+        try:
+            cur = con.execute(
+                "UPDATE tenant_credentials SET account_number=? WHERE user_id=?",
+                (self._enc(account_number), user_id),
+            )
+            if cur.rowcount == 0:
+                raise CredentialNotFound("no credentials for tenant " + repr(user_id))
             con.commit()
         finally:
             con.close()

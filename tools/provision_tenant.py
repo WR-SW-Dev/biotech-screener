@@ -97,20 +97,16 @@ def provision(
     # A brokerage account claimed by two tenants would make the trading guard's ownership
     # check meaningless — it can only prove "this tenant owns this account" if that
     # mapping is unique. Same invariant load_registry() enforces for the old registry.
-    for other in store.list_user_ids():
-        if other == user_id:
-            continue
-        try:
-            if store.get(other).account_number == account_number:
-                raise ProvisionError(
-                    "account "
-                    + repr(account_number)
-                    + " is already claimed by tenant "
-                    + repr(other)
-                    + "; two tenants must not share a brokerage account"
-                )
-        except CredentialNotFound:  # pragma: no cover - race with concurrent removal
-            continue
+    # Delegated to the store so this tool and the OAuth connect flow cannot drift apart.
+    claimed_by = store.find_account_owner(account_number, excluding=user_id)
+    if claimed_by is not None:
+        raise ProvisionError(
+            "account "
+            + repr(account_number)
+            + " is already claimed by tenant "
+            + repr(claimed_by)
+            + "; two tenants must not share a brokerage account"
+        )
 
     store.put(
         user_id,

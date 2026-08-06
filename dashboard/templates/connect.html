@@ -57,6 +57,13 @@
       {% elif error == 'state' %}Could not verify the authorization response. Please start again.
       {% elif error == 'exchange' %}Robinhood rejected the authorization. Please try again.
       {% elif error == 'discovery' %}Could not reach Robinhood's authorization service.
+      {% elif error == 'account' %}Connected to Robinhood, but we could not read your account
+        number, so trading stays disabled. Please try connecting again.
+      {% elif error == 'multiaccount' %}Your Robinhood login reaches more than one account.
+        We will not guess which one to trade, so nothing was saved — ask an operator to set
+        your account explicitly.
+      {% elif error == 'acctclaimed' %}That Robinhood account is already linked to another
+        user here. One brokerage account can belong to only one user.
       {% elif error == 'keyshape' %}That does not look like an Anthropic key — they begin with <code>sk-ant-</code>.
       {% elif error == 'emptykey' %}Please paste a key.
       {% elif error == 'csrf' %}Your session expired. Please try again.
@@ -100,6 +107,13 @@
       <button type="submit">{{ 'Replace key' if anthropic_connected else 'Save key' }}</button>
     </form>
   </div>
+
+  {% if robinhood_connected and not account_number %}
+    <div class="banner err">
+      Robinhood is connected but no account number is on file, so orders will be refused.
+      Reconnect to fix this.
+    </div>
+  {% endif %}
 
   {% if robinhood_connected %}
     <div class="next"><a href="/basket">Go to your latest basket →</a></div>

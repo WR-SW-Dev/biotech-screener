@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in — Biotech Screener</title>
+  <title>Create an account — Biotech Screener</title>
   <style>
     :root { color-scheme: light dark; }
     body {
@@ -16,13 +16,15 @@
       background: Canvas; padding: 2rem; border-radius: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,.18); width: min(360px, 92vw);
     }
-    h1 { font-size: 1.05rem; margin: 0 0 1.25rem; font-weight: 600; }
+    h1 { font-size: 1.05rem; margin: 0 0 .35rem; font-weight: 600; }
+    .sub { font-size: .82rem; opacity: .7; margin: 0 0 1rem; }
     label { display: block; font-size: .8rem; margin: .85rem 0 .3rem; opacity: .75; }
     input {
       width: 100%; padding: .55rem .65rem; font-size: .95rem; box-sizing: border-box;
       border: 1px solid rgba(128,128,128,.45); border-radius: 6px;
       background: Canvas; color: CanvasText;
     }
+    .hint { font-size: .74rem; opacity: .6; margin-top: .3rem; }
     button {
       margin-top: 1.35rem; width: 100%; padding: .6rem; font-size: .95rem;
       border: 0; border-radius: 6px; background: #2f6feb; color: #fff; cursor: pointer;
@@ -37,17 +39,31 @@
   </style>
 </head>
 <body>
-  <form class="card" method="post" action="/login">
-    <h1>Biotech Screener</h1>
-    <label for="user_id">User</label>
+  <form class="card" method="post" action="/signup">
+    <h1>Create an account</h1>
+    <p class="sub">You will connect Robinhood on the next step.</p>
+
+    <label for="user_id">Username</label>
     <input id="user_id" name="user_id" autocomplete="username" autocapitalize="none"
-           spellcheck="false" required autofocus>
+           spellcheck="false" value="{{ user_id or '' }}" required autofocus>
+    <div class="hint">Lowercase letters, numbers, <code>_</code> and <code>-</code>. 2–32 characters.</div>
+
     <label for="password">Password</label>
     <input id="password" name="password" type="password"
-           autocomplete="current-password" required>
-    <button type="submit">Sign in</button>
+           autocomplete="new-password" required>
+
+    <label for="password_confirm">Confirm password</label>
+    <input id="password_confirm" name="password_confirm" type="password"
+           autocomplete="new-password" required>
+
+    {% if invite_required %}
+      <label for="invite_code">Invite code</label>
+      <input id="invite_code" name="invite_code" autocomplete="off" spellcheck="false" required>
+    {% endif %}
+
+    <button type="submit">Create account</button>
     {% if error %}<div class="error">{{ error }}</div>{% endif %}
-    <div class="alt">No account yet? <a href="/signup">Create one</a></div>
+    <div class="alt">Already have an account? <a href="/login">Sign in</a></div>
   </form>
 </body>
 </html>

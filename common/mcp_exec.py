@@ -75,6 +75,30 @@ class UnprovenAccountError(Exception):
     """
 
 
+class AccountDiscoveryError(MCPError):
+    """The broker did not tell us exactly one account number for this token."""
+
+
+class MultipleAccountsFound(AccountDiscoveryError):
+    """The token can reach more than one account, so ownership is ambiguous.
+
+    Picking one would silently bind the trading guard to an account the user may not
+    have meant, and the guard is the only thing standing between a tenant and someone
+    else's positions. Refused instead; an operator can set the intended account with
+    ``tools/provision_tenant.py --update``.
+    """
+
+    def __init__(self, accounts: "list[str]") -> None:
+        self.accounts = list(accounts)
+        super().__init__(
+            "token reaches "
+            + str(len(self.accounts))
+            + " accounts ("
+            + ", ".join(self.accounts)
+            + "); refusing to guess which one this tenant owns"
+        )
+
+
 @dataclass(frozen=True)
 class OrderRequest:
     """One equity order. Validated at construction so a malformed order cannot travel."""
@@ -248,6 +272,58 @@ def _decode_content(result: Any) -> "dict[str, Any]":
 def live_trading_enabled() -> bool:
     """True only when the environment gate is explicitly set to 1."""
     return os.environ.get(ENV_LIVE_TRADING, "").strip() == "1"
+
+
+def _collect_account_numbers(node: Any, out: "list[str]") -> None:
+    """Depth-first walk collecting every ``account_number`` string, in order, deduped.
+
+    The tool's envelope is not pinned by any contract we control — ``get_accounts`` has
+    been seen wrapping its payload in ``data``/``results``/``accounts`` at different
+    depths. Walking for the field is more durable than hard-coding a path, and a shape
+    change surfaces as "no account found" rather than a wrong account number.
+    """
+    if isinstance(node, dict):
+        value = node.get("account_number")
+        if isinstance(value, str) and value.strip() and value.strip() not in out:
+            out.append(value.strip())
+        for child in node.values():
+            _collect_account_numbers(child, out)
+    elif isinstance(node, list):
+        for child in node:
+            _collect_account_numbers(child, out)
+
+
+def fetch_account_number(
+    *,
+    bearer: str,
+    url: str = DEFAULT_MCP_URL,
+    timeout: float = DEFAULT_TIMEOUT,
+    transport: Any = None,
+) -> str:
+    """Ask the broker which account this token can reach, and return it.
+
+    This is the *only* sanctioned way to learn a self-signed-up tenant's account number.
+    It is deliberately not user input: the stored account number is the value
+    ``trading_guard`` compares an order against to prove the tenant owns the account it
+    is trading. A number typed into a form proves nothing — anyone could type someone
+    else's — so the ownership check would be verifying a claim against itself. Asking
+    the broker under the tenant's own freshly-granted token is what makes it evidence.
+
+    Read-only: ``get_accounts`` places nothing, so no live-trading gate applies.
+    """
+    client = MCPClient(url, bearer=bearer, timeout=timeout, transport=transport)
+    payload = client.call_tool("get_accounts", {})
+
+    found: "list[str]" = []
+    _collect_account_numbers(payload, found)
+
+    if not found:
+        raise AccountDiscoveryError(
+            "get_accounts returned no account_number; cannot prove which account this token owns"
+        )
+    if len(found) > 1:
+        raise MultipleAccountsFound(found)
+    return found[0]
 
 
 def execute_order(

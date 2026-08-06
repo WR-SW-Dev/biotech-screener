@@ -27,12 +27,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from common.credstore import CredentialStore
-from common.mcp_exec import live_trading_enabled
+from common.credstore import AccountAlreadyClaimed, CredentialStore, CredentialStoreError, TenantExists
+from common.mcp_exec import MCPError, MultipleAccountsFound, fetch_account_number, live_trading_enabled
 from common.order_broker import OrderBrokerError, OrderOutcomeUnknown, place_order_for_tenant
 from common.rh_oauth import OAuthError, build_authorize_url, discover, exchange_code, new_pkce, register_client
-from common.tenancy import UserContext, multi_tenant_enabled
-from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError
+from common.tenancy import LEGACY_TENANT, InvalidUserIdError, UserContext, multi_tenant_enabled, validate_user_id
+from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError, issue_session
 from dashboard.auth import login as auth_login
 from dashboard.auth import resolve_session_user, sign_payload, verify_payload
 from dashboard.basket import (
@@ -74,7 +74,9 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 _ENV_CREDSTORE_PATH = "BIOTECH_CREDSTORE_PATH"
 
 #: Paths reachable without a session. Everything else 302s to /login in multi-tenant mode.
-_PUBLIC_PATHS = frozenset({"/login", "/logout", "/health", "/favicon.ico"})
+#: ``/signup`` is here by necessity — a new user has no session to present. See the
+#: signup section below for what that exposure is bounded by.
+_PUBLIC_PATHS = frozenset({"/login", "/logout", "/signup", "/health", "/favicon.ico"})
 
 _credstore_singleton: Optional["CredentialStore"] = None
 
@@ -133,7 +135,17 @@ async def login_submit(request: Request):
             {"error": "Invalid credentials."},
             status_code=401,
         )
-    resp = RedirectResponse("/", status_code=302)
+    return _session_redirect("/", token)
+
+
+def _session_redirect(location: str, token: str) -> RedirectResponse:
+    """Redirect to ``location`` carrying a freshly minted session cookie.
+
+    Shared by /login and /signup so the two cannot drift apart on cookie flags — a
+    signup path that quietly dropped ``httponly`` or ``secure`` would be a real hole and
+    an easy one to miss in review.
+    """
+    resp = RedirectResponse(location, status_code=302)
     resp.set_cookie(
         SESSION_COOKIE,
         token,
@@ -149,6 +161,92 @@ async def login_submit(request: Request):
         path="/",
     )
     return resp
+
+
+# --- Signup (self-service account creation) ---
+#
+# Until now the only way to create a tenant was tools/provision_tenant.py on the host,
+# so the login page was a door with no way to get a key. This is that missing route.
+#
+# Validation mirrors provision_tenant.py deliberately: the same user-id charset, the same
+# password confirmation, and the same refusal to touch an existing tenant. Two front
+# doors that disagree about what a valid tenant is would eventually let one create
+# something the other cannot address.
+#
+# **Exposure.** This endpoint is unauthenticated by construction. It is currently reached
+# only over a private tailnet, and a tenant it creates can do nothing on its own: no
+# Robinhood token, no account number, and execute_order() refuses an empty account
+# number, so a signup grants read access to shared market data and nothing more. If this
+# is ever exposed more widely, set BIOTECH_SIGNUP_INVITE_CODE (below) and put rate
+# limiting in the reverse proxy — see docs/design/MULTI_TENANCY.md.
+
+ENV_SIGNUP_INVITE_CODE = "BIOTECH_SIGNUP_INVITE_CODE"  # pragma: allowlist secret
+
+
+def _signup_invite_code() -> str:
+    """Shared invite code, or '' when signup is open. Unset keeps today's behaviour."""
+    return os.environ.get(ENV_SIGNUP_INVITE_CODE, "").strip()
+
+
+def _signup_form(request: Request, error: Optional[str], *, user_id: str = "", status: int = 200):
+    return templates.TemplateResponse(
+        request,
+        "signup.html",
+        {"error": error, "user_id": user_id, "invite_required": bool(_signup_invite_code())},
+        status_code=status,
+    )
+
+
+@app.get("/signup", response_class=HTMLResponse)
+def signup_form(request: Request):
+    return _signup_form(request, None)
+
+
+@app.post("/signup")
+async def signup_submit(request: Request):
+    form = await request.form()
+    user_id = str(form.get("user_id", "")).strip().lower()
+    password = str(form.get("password", ""))
+    confirm = str(form.get("password_confirm", ""))
+
+    expected_invite = _signup_invite_code()
+    if expected_invite and not secrets.compare_digest(str(form.get("invite_code", "")), expected_invite):
+        return _signup_form(request, "That invite code is not valid.", user_id=user_id, status=403)
+
+    try:
+        validate_user_id(user_id)
+    except InvalidUserIdError as exc:
+        return _signup_form(request, str(exc), user_id=user_id, status=400)
+
+    # validate_user_id() permits LEGACY_TENANT on purpose — it is the sentinel that
+    # resolves to the historical single-user layout for ~1,900 unmigrated call sites. It
+    # is an internal identity, not a name a signup form may hand out.
+    if user_id == LEGACY_TENANT:
+        return _signup_form(request, "That username is reserved.", user_id=user_id, status=400)
+
+    if not password:
+        return _signup_form(request, "Password cannot be empty.", user_id=user_id, status=400)
+    if password != confirm:
+        return _signup_form(request, "The two passwords did not match.", user_id=user_id, status=400)
+
+    store = _credstore()
+    try:
+        # Atomic claim. Not ensure_tenant(): its INSERT OR IGNORE would silently adopt an
+        # existing tenant and the set_password() below would then reset that person's
+        # password. create_tenant() refuses instead.
+        store.create_tenant(user_id)
+    except TenantExists:
+        return _signup_form(request, "That username is already taken.", user_id=user_id, status=409)
+    except CredentialStoreError as exc:
+        logger.warning("signup failed for %s: %s", user_id, exc)
+        return _signup_form(request, "Could not create the account. Please try again.", user_id=user_id, status=500)
+
+    store.set_password(user_id, password)
+    logger.info("tenant %s created via self-service signup", user_id)
+
+    # To /connect, not to the basket: nothing is attached yet, so a basket would render a
+    # blotter this tenant has no way to act on.
+    return _session_redirect("/connect", issue_session(user_id))
 
 
 @app.post("/logout")
@@ -309,12 +407,47 @@ def connect_robinhood_callback(request: Request):
         logger.warning("robinhood token exchange failed for %s: %s", ctx.user_id, exc)
         return RedirectResponse("/connect?error=exchange", status_code=302)
 
-    _credstore().set_robinhood_tokens(
+    # Learn the account number from the broker, under the token the tenant just granted.
+    #
+    # Without this a self-signed-up tenant is permanently stuck: ensure_tenant/create_tenant
+    # leave account_number empty, nothing else ever fills it, and execute_order() raises
+    # UnprovenAccountError on an empty expected account — so every order, including a
+    # review, is refused. The failure is silent at connect time and only surfaces at the
+    # click that was supposed to trade.
+    #
+    # It is asked of the broker rather than of the user on purpose. This value is what
+    # trading_guard compares an order's account against to prove ownership; a number the
+    # user typed would make that check verify a claim against itself.
+    store = _credstore()
+    try:
+        account_number = fetch_account_number(bearer=tokens.access_token)
+    except MultipleAccountsFound as exc:
+        logger.warning("robinhood account discovery ambiguous for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=multiaccount", status_code=302)
+    except MCPError as exc:
+        logger.warning("robinhood account discovery failed for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=account", status_code=302)
+
+    # Checked before any write, so a refused connection leaves no partial state behind —
+    # no token stored for an account this tenant would not be allowed to trade.
+    # set_account_number re-checks; this is the early, clean-failure path.
+    claimed_by = store.find_account_owner(account_number, excluding=ctx.user_id)
+    if claimed_by is not None:
+        logger.warning("tenant %s connected an account already claimed by %s; refusing", ctx.user_id, claimed_by)
+        return RedirectResponse("/connect?error=acctclaimed", status_code=302)
+
+    store.set_robinhood_tokens(
         ctx.user_id,
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,
         expires_at=tokens.expires_at,
     )
+    try:
+        store.set_account_number(ctx.user_id, account_number)
+    except AccountAlreadyClaimed as exc:  # pragma: no cover - lost race against the check above
+        logger.warning("account claim raced for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=acctclaimed", status_code=302)
+
     resp = RedirectResponse("/connect?connected=robinhood", status_code=302)
     resp.delete_cookie(_OAUTH_STATE_COOKIE, path="/connect/robinhood")
     return resp
