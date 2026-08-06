@@ -21,6 +21,33 @@ PyYAML==6.0.3
 python-dotenv==1.2.2
 
 # ----------------------------------------------------------------------------
+# Security (Required by common/credstore.py — encryption at rest for the
+# per-tenant credential store). Keep current: pip-audit gates the build, and
+# 41.x/42.x carry known CVEs.
+# ----------------------------------------------------------------------------
+cryptography==50.0.0
+
+# ----------------------------------------------------------------------------
+# Web / dashboard (dashboard/app.py, web/app.py) and the MCP order client
+# (common/mcp_exec.py). These were imported but undeclared — a clean install had
+# no fastapi, uvicorn or jinja2 at all, and httpx only arrived transitively.
+#
+# starlette is pinned via the lockfile as a fastapi dependency, not directly. Note
+# that starlette >= 0.29 removed the old TemplateResponse(name, {"request": ...})
+# calling convention; dashboard/app.py uses the request-first signature, so do not
+# downgrade below that line without converting the call sites back.
+# ----------------------------------------------------------------------------
+fastapi==0.141.1
+uvicorn==0.52.1
+jinja2==3.1.6
+httpx==0.28.1
+# Starlette parses form bodies through python-multipart and asserts on it lazily, so a
+# missing install is a 500 on POST rather than an ImportError at startup — GET /login
+# renders fine and only the actual login attempt fails. dashboard/app.py calls
+# request.form() in login_submit() and in the execute endpoint's form fallback.
+python-multipart==0.0.31
+
+# ----------------------------------------------------------------------------
 # Testing
 # ----------------------------------------------------------------------------
 pytest==9.1.1

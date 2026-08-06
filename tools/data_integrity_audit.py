@@ -103,6 +103,36 @@ def _violation_severity(rule: str) -> str:
     return "warn"  # unknown rules default to warn
 
 
+def _eligibility_flag(val) -> str:
+    """Normalise an ``eligible`` cell to "1" / "0" / "" independent of dtype.
+
+    pandas types this column from whatever it happens to see. An all-integer
+    column reads back as int64 and stringifies to "1"; a single blank cell
+    anywhere in the file makes the same column float64, which stringifies to
+    "1.0". So comparing the stringified value against a literal made the result
+    for one row depend on whether some *other* row was blank.
+
+    On 2026-08-06 that is exactly what happened: #555 gated APGE as
+    pending_acquisition and left its ``eligible`` cell empty, the column became
+    float64, and every one of the 219 correctly-eligible names was reported as a
+    CRITICAL ineligible_has_rank. The snapshot was not promoted and the
+    forward-validation capture was skipped. The quieter half of the same bug is
+    that eligible_reasons_mismatch stopped matching anything at all.
+
+    Parse the value instead of stringifying it. Non-numeric encodings pass
+    through unchanged so their existing treatment is preserved.
+    """
+    num = _safe_float(val)
+    if num is not None:
+        if num == 1.0:
+            return "1"
+        if num == 0.0:
+            return "0"
+        return str(num)
+    s = "" if val is None else str(val).strip()
+    return "" if s.lower() in ("", "nan", "none") else s
+
+
 # ---------------------------------------------------------------------------
 # Part B — Invariant Checks
 # ---------------------------------------------------------------------------
@@ -115,7 +145,7 @@ def check_invariants(df: pd.DataFrame) -> List[Dict[str, str]]:
 
     for _, row in df.iterrows():
         t = row.get("ticker", "?")
-        eligible = str(row.get("eligible", "")).strip()
+        eligible = _eligibility_flag(row.get("eligible"))
         inelig = str(row.get("ineligible_reasons", "")).strip()
         act_rank = str(row.get("actionable_rank", "")).strip()
         cat_iw = str(row.get("catalyst_in_window", "")).strip().lower()

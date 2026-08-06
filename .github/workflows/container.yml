@@ -25,6 +25,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Deliberately NOT ghcr.io/${{ github.repository }}. Docker requires repository names
+  # to be lowercase, and github.repository preserves the owner's case — under the
+  # WR-SW-Dev org that yields "ghcr.io/WR-SW-Dev/biotech-screener", which docker build
+  # rejects outright ("repository name must be lowercase"). Actions expressions have no
+  # lower() function, so each job resolves the real value into $GITHUB_ENV via bash
+  # case conversion. This value is only the fallback for anything that reads it before
+  # that step runs.
   IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
@@ -36,6 +43,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve lowercase image name
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - name: Build image
         run: docker build -t ${{ env.IMAGE_NAME }}:test .
@@ -100,6 +110,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve lowercase image name
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
