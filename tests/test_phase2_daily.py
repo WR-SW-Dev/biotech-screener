@@ -1553,44 +1553,100 @@ class TestDecisionEngineSchemaGate:
 # ---------------------------------------------------------------------------
 
 
+def _write_portfolio_positions_csv(
+    path: Path,
+    rows: List[Dict[str, str]],
+) -> None:
+    """Write portfolio_positions.csv — the buy list the weights gate reads."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["ticker", "target_weight_pct"])
+        writer.writeheader()
+        for r in rows:
+            writer.writerow({"ticker": r.get("ticker", ""), "target_weight_pct": r.get("target_weight_pct", "")})
+
+
 class TestPortfolioWeightsGate:
 
     def test_sum_100_pass(self, tmp_path):
-        """Weights sum to 100% → PASS."""
+        """Buy list sums to 100% and matches rankings.csv → PASS."""
         snap = tmp_path / "snap"
+        _write_portfolio_positions_csv(
+            snap / "portfolio_positions.csv",
+            [
+                {"ticker": "A", "target_weight_pct": "60.0"},
+                {"ticker": "B", "target_weight_pct": "40.0"},
+            ],
+        )
         _write_full_rankings_csv(
             snap / "rankings.csv",
             [
-                {"ticker": "A", "eligible": "1", "target_weight_pct": "60.0"},
-                {"ticker": "B", "eligible": "1", "target_weight_pct": "40.0"},
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "12.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": "8.0"},
                 {"ticker": "C", "eligible": "0", "target_weight_pct": ""},
             ],
         )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "PASS"
 
-    def test_sum_80_warn(self, tmp_path):
-        """Weights sum to 80% (20pp off) → WARN."""
+    def test_research_list_partial_weights_pass(self, tmp_path):
+        """Eligible non-portfolio names carry no weight — by design → PASS.
+
+        Regression guard for the pre-2026-08-06 behaviour, where summing the
+        rankings.csv column produced a permanent ~16% WARN on every run.
+        """
         snap = tmp_path / "snap"
+        _write_portfolio_positions_csv(
+            snap / "portfolio_positions.csv",
+            [{"ticker": "A", "target_weight_pct": "100.0"}],
+        )
         _write_full_rankings_csv(
             snap / "rankings.csv",
             [
-                {"ticker": "A", "eligible": "1", "target_weight_pct": "50.0"},
-                {"ticker": "B", "eligible": "1", "target_weight_pct": "30.0"},
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "16.34"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": ""},
+                {"ticker": "C", "eligible": "1", "target_weight_pct": ""},
+            ],
+        )
+        result = check_portfolio_weights(snap, tolerance=1.0)
+        assert result.status == "PASS"
+
+    def test_sum_80_warn(self, tmp_path):
+        """Buy list sums to 80% (20pp off) → WARN."""
+        snap = tmp_path / "snap"
+        _write_portfolio_positions_csv(
+            snap / "portfolio_positions.csv",
+            [
+                {"ticker": "A", "target_weight_pct": "50.0"},
+                {"ticker": "B", "target_weight_pct": "30.0"},
+            ],
+        )
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "12.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": "8.0"},
             ],
         )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "WARN"
         assert "weight sum" in result.detail
 
-    def test_eligible_missing_weight_warn(self, tmp_path):
-        """Eligible row with no weight → WARN."""
+    def test_portfolio_missing_weight_warn(self, tmp_path):
+        """Portfolio row with no weight → WARN."""
         snap = tmp_path / "snap"
+        _write_portfolio_positions_csv(
+            snap / "portfolio_positions.csv",
+            [
+                {"ticker": "A", "target_weight_pct": "100.0"},
+                {"ticker": "B", "target_weight_pct": ""},
+            ],
+        )
         _write_full_rankings_csv(
             snap / "rankings.csv",
             [
-                {"ticker": "A", "eligible": "1", "target_weight_pct": "100.0"},
-                {"ticker": "B", "eligible": "1", "target_weight_pct": ""},
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "16.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": "4.0"},
             ],
         )
         result = check_portfolio_weights(snap, tolerance=1.0)
@@ -1600,16 +1656,52 @@ class TestPortfolioWeightsGate:
     def test_ineligible_with_weight_warn(self, tmp_path):
         """Ineligible row with non-zero weight → WARN."""
         snap = tmp_path / "snap"
+        _write_portfolio_positions_csv(
+            snap / "portfolio_positions.csv",
+            [{"ticker": "A", "target_weight_pct": "100.0"}],
+        )
         _write_full_rankings_csv(
             snap / "rankings.csv",
             [
-                {"ticker": "A", "eligible": "1", "target_weight_pct": "100.0"},
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "16.0"},
                 {"ticker": "B", "eligible": "0", "target_weight_pct": "5.0"},
             ],
         )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "WARN"
         assert "ineligible" in result.detail
+
+    def test_portfolio_name_unweighted_in_rankings_warn(self, tmp_path):
+        """A buy-list name with no weight in rankings.csv → WARN."""
+        snap = tmp_path / "snap"
+        _write_portfolio_positions_csv(
+            snap / "portfolio_positions.csv",
+            [
+                {"ticker": "A", "target_weight_pct": "50.0"},
+                {"ticker": "B", "target_weight_pct": "50.0"},
+            ],
+        )
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "16.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": ""},
+            ],
+        )
+        result = check_portfolio_weights(snap, tolerance=1.0)
+        assert result.status == "WARN"
+        assert "unweighted in rankings.csv" in result.detail
+
+    def test_positions_file_missing_warn(self, tmp_path):
+        """No portfolio_positions.csv → WARN, not a crash."""
+        snap = tmp_path / "snap"
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [{"ticker": "A", "eligible": "1", "target_weight_pct": "16.0"}],
+        )
+        result = check_portfolio_weights(snap, tolerance=1.0)
+        assert result.status == "WARN"
+        assert "portfolio_positions.csv not found" in result.detail
 
 
 # ---------------------------------------------------------------------------

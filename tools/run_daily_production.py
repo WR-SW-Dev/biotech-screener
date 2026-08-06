@@ -3143,73 +3143,103 @@ def check_portfolio_weights(
     snapshot_date_dir: Path,
     tolerance: float = 1.0,
 ) -> GateResult:
-    """Verify target_weight_pct sums to ~100% for eligible rows. WARN-only.
+    """Verify the portfolio buy list is fully weighted. WARN-only.
+
+    Authority is ``portfolio_positions.csv`` — the buy list. ``rankings.csv``
+    deliberately carries ``target_weight_pct`` for the top-30 portfolio names
+    only: ``run_screen.py`` normalizes weights across every eligible row, then
+    blanks all non-portfolio names without renormalizing (documented output
+    contract — the research list is not the buy list). Its column therefore
+    sums to the top-30's share of an all-eligible book (~16%), never 100%.
+    Summing it, as this gate did before 2026-08-06, warned on every run by
+    construction and made ``overall=WARN`` carry no information.
 
     Checks:
-    - Sum of target_weight_pct ≈ 100% (within tolerance pp)
-    - No eligible row has empty weight
-    - No ineligible row has non-empty weight
+    - Sum of portfolio_positions.csv target_weight_pct ≈ 100% (within tolerance pp)
+    - Every portfolio row carries a parseable, non-empty weight
+    - The weighted set in rankings.csv matches the portfolio_positions.csv set
+    - No ineligible rankings.csv row carries a non-zero weight
     """
-    rankings_path = snapshot_date_dir / "rankings.csv"
-    if not rankings_path.exists():
+    positions_path = snapshot_date_dir / "portfolio_positions.csv"
+    if not positions_path.exists():
         return GateResult(
             name="portfolio_weights",
             status="WARN",
-            detail="rankings.csv not found",
+            detail="portfolio_positions.csv not found",
         )
 
     warn_reasons: List[str] = []
     weight_sum = 0.0
-    eligible_count = 0
-    eligible_no_weight = 0
-    ineligible_with_weight = 0
+    position_count = 0
+    position_no_weight = 0
+    portfolio_tickers: set[str] = set()
 
-    with open(rankings_path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            eligible = (row.get("eligible") or "").strip()
+    with open(positions_path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            position_count += 1
+            ticker = (row.get("ticker") or "?").strip()
+            portfolio_tickers.add(ticker)
             weight_str = (row.get("target_weight_pct") or "").strip()
-            ticker = row.get("ticker", "?")
+            if not weight_str or weight_str.lower() == "nan":
+                position_no_weight += 1
+                continue
+            try:
+                weight_sum += float(weight_str)
+            except ValueError:
+                warn_reasons.append(f"{ticker}: invalid weight '{weight_str}'")
 
-            if eligible == "1":
-                eligible_count += 1
-                if weight_str and weight_str.lower() not in ("", "nan"):
-                    try:
-                        weight_sum += float(weight_str)
-                    except ValueError:
-                        warn_reasons.append(f"{ticker}: invalid weight '{weight_str}'")
-                else:
-                    eligible_no_weight += 1
-            else:
-                if weight_str and weight_str.lower() not in ("", "nan"):
-                    try:
-                        w = float(weight_str)
-                        if w > 0:
-                            ineligible_with_weight += 1
-                    except ValueError:
-                        pass
-
-    if eligible_count == 0:
+    if position_count == 0:
         return GateResult(
             name="portfolio_weights",
             status="WARN",
-            detail="No eligible rows found",
+            detail="portfolio_positions.csv has no rows",
         )
 
     if abs(weight_sum - 100.0) > tolerance:
         warn_reasons.append(f"weight sum={weight_sum:.2f}%, expected ~100% (tolerance={tolerance}pp)")
 
-    if eligible_no_weight > 0:
-        warn_reasons.append(f"{eligible_no_weight} eligible row(s) missing target_weight_pct")
+    if position_no_weight > 0:
+        warn_reasons.append(f"{position_no_weight} portfolio row(s) missing target_weight_pct")
 
-    if ineligible_with_weight > 0:
-        warn_reasons.append(f"{ineligible_with_weight} ineligible row(s) have non-zero target_weight_pct")
+    # Cross-artifact consistency: rankings.csv must weight exactly the
+    # portfolio set, and must never weight an ineligible name.
+    rankings_path = snapshot_date_dir / "rankings.csv"
+    if not rankings_path.exists():
+        warn_reasons.append("rankings.csv not found (cross-check skipped)")
+    else:
+        weighted_in_rankings: set[str] = set()
+        ineligible_with_weight = 0
+        with open(rankings_path, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                weight_str = (row.get("target_weight_pct") or "").strip()
+                if not weight_str or weight_str.lower() == "nan":
+                    continue
+                try:
+                    if float(weight_str) <= 0:
+                        continue
+                except ValueError:
+                    continue
+                ticker = (row.get("ticker") or "?").strip()
+                if (row.get("eligible") or "").strip() == "1":
+                    weighted_in_rankings.add(ticker)
+                else:
+                    ineligible_with_weight += 1
+
+        if ineligible_with_weight > 0:
+            warn_reasons.append(f"{ineligible_with_weight} ineligible row(s) have non-zero target_weight_pct")
+
+        missing = portfolio_tickers - weighted_in_rankings
+        extra = weighted_in_rankings - portfolio_tickers
+        if missing:
+            warn_reasons.append(f"{len(missing)} portfolio name(s) unweighted in rankings.csv: {sorted(missing)[:5]}")
+        if extra:
+            warn_reasons.append(f"{len(extra)} non-portfolio name(s) weighted in rankings.csv: {sorted(extra)[:5]}")
 
     if not warn_reasons:
         return GateResult(
             name="portfolio_weights",
             status="PASS",
-            detail=f"weight sum={weight_sum:.2f}%, {eligible_count} eligible rows",
+            detail=f"weight sum={weight_sum:.2f}%, {position_count} portfolio positions",
         )
 
     return GateResult(
