@@ -14,15 +14,37 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import os
+import secrets
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+
+from common.credstore import AccountAlreadyClaimed, CredentialStore, CredentialStoreError, TenantExists
+from common.mcp_exec import MCPError, MultipleAccountsFound, fetch_account_number, live_trading_enabled
+from common.order_broker import OrderBrokerError, OrderOutcomeUnknown, place_order_for_tenant
+from common.rh_oauth import OAuthError, build_authorize_url, discover, exchange_code, new_pkce, register_client
+from common.tenancy import LEGACY_TENANT, InvalidUserIdError, UserContext, multi_tenant_enabled, validate_user_id
+from dashboard.auth import DEFAULT_MAX_AGE, SESSION_COOKIE, AuthError, issue_session
+from dashboard.auth import login as auth_login
+from dashboard.auth import resolve_session_user, sign_payload, verify_payload
+from dashboard.basket import (
+    Basket,
+    BasketAlreadyExecuted,
+    BasketMismatch,
+    CSRFError,
+    ExecutionLedger,
+    build_basket,
+    issue_csrf,
+    verify_csrf,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("dashboard")
@@ -41,6 +63,578 @@ app.add_middleware(
     allow_headers=["*"],
 )
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+
+# --- Authentication (PR 2) ---
+#
+# Only active when BIOTECH_MULTI_TENANT is on. In single-user mode the dashboard keeps
+# its historical unauthenticated behaviour, so this PR cannot break the running operator
+# install. See docs/design/MULTI_TENANCY_PR_PLAN.md §3.
+
+_ENV_CREDSTORE_PATH = "BIOTECH_CREDSTORE_PATH"
+
+#: Paths reachable without a session. Everything else 302s to /login in multi-tenant mode.
+#: ``/signup`` is here by necessity — a new user has no session to present. See the
+#: signup section below for what that exposure is bounded by.
+_PUBLIC_PATHS = frozenset({"/login", "/logout", "/signup", "/health", "/favicon.ico"})
+
+_credstore_singleton: Optional["CredentialStore"] = None
+
+
+def _credstore() -> "CredentialStore":
+    """Lazily open the credential store. Never cached across key changes in tests."""
+    global _credstore_singleton
+    if _credstore_singleton is None:
+        path = os.environ.get(_ENV_CREDSTORE_PATH) or str(REPO_ROOT / "credentials" / "tenants.db")
+        _credstore_singleton = CredentialStore(path)
+    return _credstore_singleton
+
+
+def current_user(request: Request) -> UserContext:
+    """FastAPI dependency: the tenant this request acts for.
+
+    Resolved from the signed session cookie only — see dashboard/auth.py for why no
+    request-controlled value may influence this.
+    """
+    try:
+        return resolve_session_user(request, store=_credstore())
+    except AuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
+@app.middleware("http")
+async def _require_session(request: Request, call_next):
+    if not multi_tenant_enabled() or request.url.path in _PUBLIC_PATHS:
+        return await call_next(request)
+    try:
+        resolve_session_user(request, store=_credstore())
+    except AuthError:
+        if request.url.path.startswith("/api/"):
+            return JSONResponse({"detail": "authentication required"}, status_code=401)
+        return RedirectResponse("/login", status_code=302)
+    return await call_next(request)
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    return templates.TemplateResponse(request, "login.html", {"error": None})
+
+
+@app.post("/login")
+async def login_submit(request: Request):
+    form = await request.form()
+    user_id = str(form.get("user_id", "")).strip().lower()
+    password = str(form.get("password", ""))
+    try:
+        token = auth_login(_credstore(), user_id, password)
+    except AuthError:
+        # Deliberately identical for unknown tenant and wrong password.
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {"error": "Invalid credentials."},
+            status_code=401,
+        )
+    return _session_redirect("/", token)
+
+
+def _session_redirect(location: str, token: str) -> RedirectResponse:
+    """Redirect to ``location`` carrying a freshly minted session cookie.
+
+    Shared by /login and /signup so the two cannot drift apart on cookie flags — a
+    signup path that quietly dropped ``httponly`` or ``secure`` would be a real hole and
+    an easy one to miss in review.
+    """
+    resp = RedirectResponse(location, status_code=302)
+    resp.set_cookie(
+        SESSION_COOKIE,
+        token,
+        httponly=True,
+        # Lax, not Strict. The Robinhood OAuth callback is a cross-site top-level GET
+        # navigation back to /connect/robinhood/callback; Strict withholds the cookie on
+        # it, so the tenant would appear logged out exactly when we need to know who they
+        # are. Lax still withholds on cross-site POST, and /api/execute additionally
+        # requires a tenant-bound CSRF token, so the state-changing path is unchanged.
+        samesite="lax",
+        secure=os.environ.get("BIOTECH_COOKIE_INSECURE", "") != "1",
+        max_age=DEFAULT_MAX_AGE,
+        path="/",
+    )
+    return resp
+
+
+# --- Signup (self-service account creation) ---
+#
+# Until now the only way to create a tenant was tools/provision_tenant.py on the host,
+# so the login page was a door with no way to get a key. This is that missing route.
+#
+# Validation mirrors provision_tenant.py deliberately: the same user-id charset, the same
+# password confirmation, and the same refusal to touch an existing tenant. Two front
+# doors that disagree about what a valid tenant is would eventually let one create
+# something the other cannot address.
+#
+# **Exposure.** This endpoint is unauthenticated by construction. It is currently reached
+# only over a private tailnet, and a tenant it creates can do nothing on its own: no
+# Robinhood token, no account number, and execute_order() refuses an empty account
+# number, so a signup grants read access to shared market data and nothing more. If this
+# is ever exposed more widely, set BIOTECH_SIGNUP_INVITE_CODE (below) and put rate
+# limiting in the reverse proxy — see docs/design/MULTI_TENANCY.md.
+
+ENV_SIGNUP_INVITE_CODE = "BIOTECH_SIGNUP_INVITE_CODE"  # pragma: allowlist secret
+
+
+def _signup_invite_code() -> str:
+    """Shared invite code, or '' when signup is open. Unset keeps today's behaviour."""
+    return os.environ.get(ENV_SIGNUP_INVITE_CODE, "").strip()
+
+
+def _signup_form(request: Request, error: Optional[str], *, user_id: str = "", status: int = 200):
+    return templates.TemplateResponse(
+        request,
+        "signup.html",
+        {"error": error, "user_id": user_id, "invite_required": bool(_signup_invite_code())},
+        status_code=status,
+    )
+
+
+@app.get("/signup", response_class=HTMLResponse)
+def signup_form(request: Request):
+    return _signup_form(request, None)
+
+
+@app.post("/signup")
+async def signup_submit(request: Request):
+    form = await request.form()
+    user_id = str(form.get("user_id", "")).strip().lower()
+    password = str(form.get("password", ""))
+    confirm = str(form.get("password_confirm", ""))
+
+    expected_invite = _signup_invite_code()
+    if expected_invite and not secrets.compare_digest(str(form.get("invite_code", "")), expected_invite):
+        return _signup_form(request, "That invite code is not valid.", user_id=user_id, status=403)
+
+    try:
+        validate_user_id(user_id)
+    except InvalidUserIdError as exc:
+        return _signup_form(request, str(exc), user_id=user_id, status=400)
+
+    # validate_user_id() permits LEGACY_TENANT on purpose — it is the sentinel that
+    # resolves to the historical single-user layout for ~1,900 unmigrated call sites. It
+    # is an internal identity, not a name a signup form may hand out.
+    if user_id == LEGACY_TENANT:
+        return _signup_form(request, "That username is reserved.", user_id=user_id, status=400)
+
+    if not password:
+        return _signup_form(request, "Password cannot be empty.", user_id=user_id, status=400)
+    if password != confirm:
+        return _signup_form(request, "The two passwords did not match.", user_id=user_id, status=400)
+
+    store = _credstore()
+    try:
+        # Atomic claim. Not ensure_tenant(): its INSERT OR IGNORE would silently adopt an
+        # existing tenant and the set_password() below would then reset that person's
+        # password. create_tenant() refuses instead.
+        store.create_tenant(user_id)
+    except TenantExists:
+        return _signup_form(request, "That username is already taken.", user_id=user_id, status=409)
+    except CredentialStoreError as exc:
+        logger.warning("signup failed for %s: %s", user_id, exc)
+        return _signup_form(request, "Could not create the account. Please try again.", user_id=user_id, status=500)
+
+    store.set_password(user_id, password)
+    logger.info("tenant %s created via self-service signup", user_id)
+
+    # To /connect, not to the basket: nothing is attached yet, so a basket would render a
+    # blotter this tenant has no way to act on.
+    return _session_redirect("/connect", issue_session(user_id))
+
+
+@app.post("/logout")
+def logout():
+    resp = RedirectResponse("/login", status_code=302)
+    resp.delete_cookie(SESSION_COOKIE, path="/")
+    return resp
+
+
+# --- Account connection (self-service onboarding) ---
+#
+# Replaces tools/provision_tenant.py as the primary onboarding path for end users; that
+# tool stays for admin and scripted use.
+#
+# Robinhood is a plain OAuth 2.1 authorization-code + PKCE flow against the MCP endpoint's
+# own authorization server. No Claude Code session is spawned or driven — see
+# common/rh_oauth.py for the discovery evidence that made the bridge unnecessary.
+
+ENV_PUBLIC_BASE_URL = "BIOTECH_PUBLIC_BASE_URL"
+ENV_RH_CLIENT_ID = "BIOTECH_RH_CLIENT_ID"
+_OAUTH_STATE_COOKIE = "biotech_rh_oauth"
+_OAUTH_STATE_MAX_AGE = 600  # a consent screen the user leaves open past this must restart
+
+_rh_client_id_cache: Optional[str] = None
+
+
+def _public_base_url(request: Request) -> str:
+    """Base URL for building the OAuth redirect_uri.
+
+    Must match what was registered. Behind a proxy the request's own host is not
+    trustworthy, so an explicit override wins.
+    """
+    override = os.environ.get(ENV_PUBLIC_BASE_URL, "").strip()
+    return override.rstrip("/") if override else str(request.base_url).rstrip("/")
+
+
+def _rh_redirect_uri(request: Request) -> str:
+    return _public_base_url(request) + "/connect/robinhood/callback"
+
+
+def _rh_client_id(meta, redirect_uri: str) -> str:
+    """Registered client id, from env or dynamic registration (cached per process)."""
+    global _rh_client_id_cache
+    configured = os.environ.get(ENV_RH_CLIENT_ID, "").strip()
+    if configured:
+        return configured
+    if _rh_client_id_cache is None:
+        _rh_client_id_cache = register_client(meta, redirect_uri)
+    return _rh_client_id_cache
+
+
+@app.get("/connect", response_class=HTMLResponse)
+def connect_page(request: Request):
+    """Self-service connection status for the signed-in tenant."""
+    ctx = current_user(request)
+    store = _credstore()
+    return templates.TemplateResponse(
+        request,
+        "connect.html",
+        {
+            "user_id": ctx.user_id,
+            "account_number": ctx.account_number,
+            "robinhood_connected": store.has_robinhood(ctx.user_id),
+            "anthropic_connected": store.has_anthropic(ctx.user_id),
+            "csrf_token": issue_csrf(ctx.user_id),
+            "error": request.query_params.get("error"),
+            "connected": request.query_params.get("connected"),
+        },
+    )
+
+
+@app.get("/connect/robinhood/start")
+def connect_robinhood_start(request: Request):
+    """Begin the OAuth flow: mint PKCE + state, then redirect to Robinhood."""
+    ctx = current_user(request)
+    redirect_uri = _rh_redirect_uri(request)
+    try:
+        meta = discover()
+        client_id = _rh_client_id(meta, redirect_uri)
+    except OAuthError as exc:
+        logger.warning("robinhood oauth discovery failed: %s", exc)
+        return RedirectResponse("/connect?error=discovery", status_code=302)
+
+    verifier, challenge = new_pkce()
+    state = secrets.token_urlsafe(24)
+    url = build_authorize_url(meta, client_id=client_id, redirect_uri=redirect_uri, challenge=challenge, state=state)
+
+    # Verifier and state ride in a short-lived signed cookie rather than server state, so
+    # there is no session table to keep. Bound to the tenant so another signed-in user
+    # cannot complete someone else's pending connection.
+    payload = sign_payload(ctx.user_id + "|" + state + "|" + verifier, secret=_oauth_state_secret())
+    resp = RedirectResponse(url, status_code=302)
+    resp.set_cookie(
+        _OAUTH_STATE_COOKIE,
+        payload,
+        httponly=True,
+        samesite="lax",
+        secure=os.environ.get("BIOTECH_COOKIE_INSECURE", "") != "1",
+        max_age=_OAUTH_STATE_MAX_AGE,
+        path="/connect/robinhood",
+    )
+    return resp
+
+
+def _oauth_state_secret() -> bytes:
+    """Separate derivation from the session secret, so one cannot forge the other."""
+    from hashlib import sha256
+
+    base = os.environ.get("BIOTECH_SESSION_SECRET", "")
+    if not base:
+        raise AuthError("no session secret configured")
+    return sha256(("rh-oauth-state:" + base).encode()).digest()
+
+
+@app.get("/connect/robinhood/callback")
+def connect_robinhood_callback(request: Request):
+    """Complete the OAuth flow and store the tokens for the signed-in tenant."""
+    ctx = current_user(request)
+
+    if request.query_params.get("error"):
+        return RedirectResponse("/connect?error=denied", status_code=302)
+
+    raw = request.cookies.get(_OAUTH_STATE_COOKIE)
+    if not raw:
+        return RedirectResponse("/connect?error=expired", status_code=302)
+    try:
+        stored = verify_payload(raw, secret=_oauth_state_secret(), max_age=_OAUTH_STATE_MAX_AGE)
+    except AuthError:
+        return RedirectResponse("/connect?error=expired", status_code=302)
+
+    try:
+        owner, expected_state, verifier = stored.split("|", 2)
+    except ValueError:
+        return RedirectResponse("/connect?error=state", status_code=302)
+
+    # The pending connection belongs to whoever started it — not merely to whoever is
+    # signed in when the callback lands.
+    if owner != ctx.user_id:
+        return RedirectResponse("/connect?error=state", status_code=302)
+    if not secrets.compare_digest(expected_state, str(request.query_params.get("state", ""))):
+        return RedirectResponse("/connect?error=state", status_code=302)
+
+    code = request.query_params.get("code")
+    if not code:
+        return RedirectResponse("/connect?error=nocode", status_code=302)
+
+    redirect_uri = _rh_redirect_uri(request)
+    try:
+        meta = discover()
+        tokens = exchange_code(
+            meta,
+            client_id=_rh_client_id(meta, redirect_uri),
+            redirect_uri=redirect_uri,
+            code=code,
+            verifier=verifier,
+        )
+    except OAuthError as exc:
+        logger.warning("robinhood token exchange failed for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=exchange", status_code=302)
+
+    # Learn the account number from the broker, under the token the tenant just granted.
+    #
+    # Without this a self-signed-up tenant is permanently stuck: ensure_tenant/create_tenant
+    # leave account_number empty, nothing else ever fills it, and execute_order() raises
+    # UnprovenAccountError on an empty expected account — so every order, including a
+    # review, is refused. The failure is silent at connect time and only surfaces at the
+    # click that was supposed to trade.
+    #
+    # It is asked of the broker rather than of the user on purpose. This value is what
+    # trading_guard compares an order's account against to prove ownership; a number the
+    # user typed would make that check verify a claim against itself.
+    store = _credstore()
+    try:
+        account_number = fetch_account_number(bearer=tokens.access_token)
+    except MultipleAccountsFound as exc:
+        logger.warning("robinhood account discovery ambiguous for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=multiaccount", status_code=302)
+    except MCPError as exc:
+        logger.warning("robinhood account discovery failed for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=account", status_code=302)
+
+    # Checked before any write, so a refused connection leaves no partial state behind —
+    # no token stored for an account this tenant would not be allowed to trade.
+    # set_account_number re-checks; this is the early, clean-failure path.
+    claimed_by = store.find_account_owner(account_number, excluding=ctx.user_id)
+    if claimed_by is not None:
+        logger.warning("tenant %s connected an account already claimed by %s; refusing", ctx.user_id, claimed_by)
+        return RedirectResponse("/connect?error=acctclaimed", status_code=302)
+
+    store.set_robinhood_tokens(
+        ctx.user_id,
+        access_token=tokens.access_token,
+        refresh_token=tokens.refresh_token,
+        expires_at=tokens.expires_at,
+    )
+    try:
+        store.set_account_number(ctx.user_id, account_number)
+    except AccountAlreadyClaimed as exc:  # pragma: no cover - lost race against the check above
+        logger.warning("account claim raced for %s: %s", ctx.user_id, exc)
+        return RedirectResponse("/connect?error=acctclaimed", status_code=302)
+
+    resp = RedirectResponse("/connect?connected=robinhood", status_code=302)
+    resp.delete_cookie(_OAUTH_STATE_COOKIE, path="/connect/robinhood")
+    return resp
+
+
+@app.post("/connect/anthropic")
+async def connect_anthropic(request: Request):
+    """Store a pasted Anthropic API key for the signed-in tenant."""
+    ctx = current_user(request)
+    form = await request.form()
+    try:
+        verify_csrf(form.get("csrf_token"), ctx.user_id)
+    except CSRFError:
+        return RedirectResponse("/connect?error=csrf", status_code=302)
+
+    key = str(form.get("anthropic_key", "")).strip()
+    if not key:
+        return RedirectResponse("/connect?error=emptykey", status_code=302)
+    # Cheap shape check only. Validating against Anthropic would mean spending a token on
+    # every paste; a wrong key surfaces at first use.
+    if not key.startswith("sk-ant-"):
+        return RedirectResponse("/connect?error=keyshape", status_code=302)
+
+    _credstore().set_anthropic_key(ctx.user_id, key)
+    return RedirectResponse("/connect?connected=anthropic", status_code=302)
+
+
+# --- Approval flow (PR 3b) ---
+#
+# "log in -> see the latest blotter -> review the basket -> click Execute". The click is
+# the only moment tenant separation matters, so everything here resolves the tenant from
+# the session and hands exactly one tenant's token to a short-lived subprocess.
+
+ENV_BASKET_EQUITY = "BIOTECH_BASKET_EQUITY_USD"
+ENV_EXEC_LEDGER = "BIOTECH_EXECUTION_LEDGER"
+
+
+def _execution_ledger() -> ExecutionLedger:
+    path = os.environ.get(ENV_EXEC_LEDGER) or str(REPO_ROOT / "artifacts" / "trading" / "executions.db")
+    return ExecutionLedger(path)
+
+
+def _current_basket() -> "tuple[str, Basket, Dict[str, Dict]]":
+    """Build the basket from the most recent snapshot. Shared, single-copy market data."""
+    dates = _available_snapshot_dates()
+    if not dates:
+        raise HTTPException(status_code=503, detail="no snapshot available")
+    date = dates[0]
+    rankings = _load_rankings(date)
+    equity = os.environ.get(ENV_BASKET_EQUITY, "0")
+    return date, build_basket(date, rankings, top_n=30, equity_usd=equity), rankings
+
+
+@app.get("/basket", response_class=HTMLResponse)
+def basket_review(request: Request):
+    """Review the latest basket. Renders the basket_id the execute call must echo back."""
+    ctx = current_user(request)
+    date, basket, _ = _current_basket()
+    return templates.TemplateResponse(
+        request,
+        "basket.html",
+        {
+            "user_id": ctx.user_id,
+            "account_number": ctx.account_number,
+            "as_of_date": date,
+            "basket": basket.as_dict(),
+            "csrf_token": issue_csrf(ctx.user_id),
+            "live_enabled": live_trading_enabled(),
+        },
+    )
+
+
+@app.post("/api/execute")
+async def execute_basket(request: Request):
+    """Execute the approved basket for the authenticated tenant.
+
+    Refusals are ordered cheapest-first: everything decidable locally happens before any
+    credential is read or any subprocess is spawned.
+    """
+    ctx = current_user(request)
+    body = (
+        await request.json()
+        if request.headers.get("content-type", "").startswith("application/json")
+        else dict(await request.form())
+    )
+
+    try:
+        verify_csrf(body.get("csrf_token"), ctx.user_id)
+    except CSRFError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    date, basket, rankings = _current_basket()
+    try:
+        basket.assert_matches(str(body.get("basket_id", "")))
+    except BasketMismatch as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    # Claim the basket BEFORE placing anything. This is an atomic insert, so of two
+    # concurrent requests for the same (user_id, basket_id) exactly one proceeds — the
+    # loser gets 409 without reaching the broker. Previously the check and the write were
+    # separated by the whole placement loop, and only incidental event-loop blocking kept
+    # them apart; that guarantee vanished under multiple workers.
+    ledger = _execution_ledger()
+    try:
+        ledger.reserve(ctx.user_id, basket.basket_id)
+    except BasketAlreadyExecuted as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    # Live requires the operator gate AND an explicit request from the client. Absent
+    # either, this is a review-only pass that places nothing.
+    want_live = str(body.get("live", "")).lower() in ("1", "true", "yes")
+    live = want_live and live_trading_enabled()
+
+    try:
+        creds = _credstore().get(ctx.user_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="credentials unavailable") from exc
+
+    results, failures = [], []
+    for pos in basket.positions:
+        row = rankings.get(pos["ticker"], {})
+        price = str(row.get("close_price", "")).strip()
+        if not price or Decimal(price) <= 0:
+            failures.append({"ticker": pos["ticker"], "error": "no usable close_price in snapshot", "ambiguous": False})
+            continue
+        qty = (Decimal(pos["notional_usd"]) / Decimal(price)).quantize(Decimal("0.000001"), rounding=ROUND_DOWN)
+        if qty <= 0:
+            failures.append(
+                {"ticker": pos["ticker"], "error": "notional too small for one share unit", "ambiguous": False}
+            )
+            continue
+        try:
+            res = place_order_for_tenant(
+                user_id=ctx.user_id,
+                bearer=creds.robinhood_bearer,
+                account_number=ctx.account_number,
+                order={
+                    "account_number": ctx.account_number,
+                    "symbol": pos["ticker"],
+                    "side": "buy",
+                    "quantity": str(qty),
+                    "order_type": "market",
+                    "time_in_force": "gfd",
+                },
+                live=live,
+            )
+            results.append({"ticker": pos["ticker"], "mode": res.mode, "placed": res.placed, "order_id": res.order_id})
+        except OrderBrokerError as exc:
+            # OrderOutcomeUnknown (incl. OrderTimeout) means the order may have reached
+            # the broker. Anything else failed before submission and is provably clean.
+            failures.append(
+                {
+                    "ticker": pos["ticker"],
+                    "error": str(exc),
+                    "ambiguous": isinstance(exc, OrderOutcomeUnknown),
+                }
+            )
+
+    summary = {
+        "basket_id": basket.basket_id,
+        "as_of_date": date,
+        "mode": "LIVE" if live else "REVIEW_ONLY",
+        "placed": sum(1 for r in results if r["placed"]),
+        "results": results,
+        "failures": failures,
+    }
+    # If every order failed and none of those failures could have reached the broker,
+    # release the claim so the basket can be attempted again. Without this a wrong bearer
+    # token on the first try permanently burns that snapshot date — the first thing a new
+    # tester hits. The check is deliberately narrow: any placement, any timeout, or any
+    # failure during the placement call keeps the claim held.
+    if ExecutionLedger.is_safe_to_release(placed=summary["placed"], failures=failures):
+        ledger.release(
+            ctx.user_id,
+            basket.basket_id,
+            reason="all " + str(len(failures)) + " order(s) failed before submission",
+        )
+        summary["retryable"] = True
+        return JSONResponse(summary, status_code=502)
+
+    # Attach the outcome to the claim made before the loop. The claim already blocks
+    # re-runs; this fills in what happened. If the process dies before reaching here the
+    # row stays 'reserved', which keeps the basket un-runnable — orders may have been
+    # placed, so an unfinished run must be reconciled against the account, not retried.
+    summary["retryable"] = False
+    ledger.record(ctx.user_id, basket.basket_id, summary)
+    return JSONResponse(summary)
 
 
 # --- Data loaders ---
@@ -471,9 +1065,9 @@ async def index(request: Request, date: str = ""):
         p["on_time_prob"] = th.get("on_time_prob")
 
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "date": date,
             "dates": dates[:30],
             "positions": enriched_positions,
@@ -1548,7 +2142,7 @@ async def api_expression_calibration(date: str):
 @app.get("/expression", response_class=HTMLResponse)
 async def expression_dashboard(request: Request):
     """Expression overlay dashboard page."""
-    return templates.TemplateResponse("expression.html", {"request": request})
+    return templates.TemplateResponse(request, "expression.html", {})
 
 
 if __name__ == "__main__":
