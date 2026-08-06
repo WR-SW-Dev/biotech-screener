@@ -63,10 +63,21 @@ artifacts/*
 artifacts/governance/**
 !artifacts/governance/**/
 !artifacts/governance/**/latest_heartbeat.json
-# Allow forward validation immutable ledger (captures, fills, candidate declaration)
+# Allow forward validation immutable ledger (captures, fills, candidate declaration).
+#
+# The un-ignore of the directory itself is load-bearing. `artifacts/*` above excludes
+# `artifacts/forward_validation` as a directory, and git does not descend into an
+# excluded directory — so without the line below, none of the `!` rules that follow can
+# match anything. They were silently inert: the ledger files are tracked only because
+# they predate the rule, and a genuinely new evidence file needed `git add -f` to stage.
+# That is a bad property for the directory holding mandate evidence of record, which has
+# already lost windows to git (2026-07-23). Same shape as artifacts/audit/ below.
+!artifacts/forward_validation/
+artifacts/forward_validation/*
+# Per-date working directories stay ignored — re-ignored by the line above.
 !artifacts/forward_validation/CANDIDATE.json
-!artifacts/forward_validation/captures.jsonl
-!artifacts/forward_validation/fills.jsonl
+!artifacts/forward_validation/*.jsonl
+!artifacts/forward_validation/*.md
 # Allow governance memos and summary reports (but not date-stamped one-offs)
 !artifacts/audit/
 artifacts/audit/*
