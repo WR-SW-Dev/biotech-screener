@@ -15,6 +15,7 @@ pytest.importorskip("fastapi.testclient")
 from fastapi.testclient import TestClient  # noqa: E402
 
 from common.credstore import CredentialStore, generate_key  # noqa: E402
+from common.mcp_exec import MCPError, MultipleAccountsFound  # noqa: E402
 from common.rh_oauth import AuthServerMetadata, TokenSet  # noqa: E402
 
 META = AuthServerMetadata(
@@ -39,9 +40,11 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setenv("BIOTECH_RH_CLIENT_ID", "test-client")
     monkeypatch.setenv("BIOTECH_PUBLIC_BASE_URL", "http://testserver")
 
+    # Both tenants start unbound, which is what a self-signed-up user actually looks like:
+    # a password and nothing else. The account number arrives from the OAuth callback.
     store = CredentialStore(tmp_path / "c.db", key=key)
-    for uid, acct, pw in (("scott", "111111111", "pw-scott"), ("darren", "222222222", "pw-darren")):
-        store.ensure_tenant(uid, account_number=acct)
+    for uid, pw in (("scott", "pw-scott"), ("darren", "pw-darren")):
+        store.ensure_tenant(uid)
         store.set_password(uid, pw)
 
     import dashboard.app as app_module
@@ -190,21 +193,37 @@ class TestRobinhoodCallbackGuards:
         assert store.get("scott").robinhood_bearer == ""
 
 
+def _complete_callback(
+    app_module, monkeypatch, *, user="scott", pw="pw-scott", access="new-access", account="111111111"
+):
+    """Drive start -> callback with the network halves stubbed. Returns the response."""
+    monkeypatch.setattr(
+        app_module,
+        "exchange_code",
+        lambda meta, **kw: TokenSet(access_token=access, refresh_token="new-refresh", expires_at=9e9, scope="internal"),
+    )
+    if not isinstance(account, BaseException):
+        monkeypatch.setattr(app_module, "fetch_account_number", lambda **kw: account)
+    else:
+        monkeypatch.setattr(app_module, "fetch_account_number", _raiser(account))
+    c = _client(app_module, user, pw)
+    st = parse_qs(urlparse(c.get("/connect/robinhood/start", follow_redirects=False).headers["location"]).query)[
+        "state"
+    ][0]
+    return c.get("/connect/robinhood/callback?code=abc&state=" + st, follow_redirects=False)
+
+
+def _raiser(exc):
+    def _raise(**kw):
+        raise exc
+
+    return _raise
+
+
 class TestSuccessfulExchange:
     def test_tokens_are_stored_for_the_signed_in_tenant(self, env, monkeypatch):
         app_module, store = env
-        monkeypatch.setattr(
-            app_module,
-            "exchange_code",
-            lambda meta, **kw: TokenSet(
-                access_token="new-access", refresh_token="new-refresh", expires_at=9e9, scope="internal"
-            ),
-        )
-        c = _client(app_module)
-        st = parse_qs(urlparse(c.get("/connect/robinhood/start", follow_redirects=False).headers["location"]).query)[
-            "state"
-        ][0]
-        r = c.get("/connect/robinhood/callback?code=abc&state=" + st, follow_redirects=False)
+        r = _complete_callback(app_module, monkeypatch)
         assert r.headers["location"] == "/connect?connected=robinhood"
         assert store.get("scott").robinhood_bearer == "new-access"
         refresh, expires = store.get_robinhood_tokens("scott")
@@ -213,14 +232,77 @@ class TestSuccessfulExchange:
 
     def test_the_other_tenant_is_untouched(self, env, monkeypatch):
         app_module, store = env
+        _complete_callback(app_module, monkeypatch, account="333333333")
+        assert store.get("darren").robinhood_bearer == ""
+
+
+class TestAccountNumberIsBoundOnConnect:
+    """Without this the tenant connects successfully and then cannot trade, silently.
+
+    execute_order() raises UnprovenAccountError on an empty expected account, so a token
+    with no account number behind it is a connection that refuses every order — including
+    a review — at the click that was supposed to trade.
+    """
+
+    def test_account_number_comes_from_the_broker(self, env, monkeypatch):
+        app_module, store = env
+        _complete_callback(app_module, monkeypatch, account="802349084")
+        assert store.get("scott").account_number == "802349084"
+
+    def test_account_number_is_fetched_with_the_new_token(self, env, monkeypatch):
+        """It must be the token just granted, not some ambient credential."""
+        app_module, _ = env
+        seen = {}
         monkeypatch.setattr(
             app_module,
             "exchange_code",
-            lambda meta, **kw: TokenSet(access_token="a", refresh_token="r", expires_at=None, scope=""),
+            lambda meta, **kw: TokenSet(access_token="fresh", refresh_token="r", expires_at=9e9, scope=""),
         )
+
+        def _capture(*, bearer, **kw):
+            seen["bearer"] = bearer
+            return "111111111"
+
+        monkeypatch.setattr(app_module, "fetch_account_number", _capture)
         c = _client(app_module)
         st = parse_qs(urlparse(c.get("/connect/robinhood/start", follow_redirects=False).headers["location"]).query)[
             "state"
         ][0]
         c.get("/connect/robinhood/callback?code=abc&state=" + st, follow_redirects=False)
-        assert store.get("darren").robinhood_bearer == ""
+        assert seen["bearer"] == "fresh"
+
+    def test_a_tenant_cannot_claim_another_tenants_account(self, env, monkeypatch):
+        app_module, store = env
+        store.set_account_number("darren", "222222222")
+        r = _complete_callback(app_module, monkeypatch, account="222222222")
+        assert r.headers["location"] == "/connect?error=acctclaimed"
+        assert store.get("scott").account_number == ""
+
+    def test_a_refused_claim_stores_no_token_either(self, env, monkeypatch):
+        """Fail closed and leave no partial state: no token for an unusable account."""
+        app_module, store = env
+        store.set_account_number("darren", "222222222")
+        _complete_callback(app_module, monkeypatch, account="222222222")
+        assert store.get("scott").robinhood_bearer == ""
+
+    def test_ambiguous_account_is_refused_not_guessed(self, env, monkeypatch):
+        app_module, store = env
+        r = _complete_callback(app_module, monkeypatch, account=MultipleAccountsFound(["1", "2"]))
+        assert r.headers["location"] == "/connect?error=multiaccount"
+        assert store.get("scott").account_number == ""
+        assert store.get("scott").robinhood_bearer == ""
+
+    def test_discovery_failure_stores_nothing(self, env, monkeypatch):
+        app_module, store = env
+        r = _complete_callback(app_module, monkeypatch, account=MCPError("upstream is down"))
+        assert r.headers["location"] == "/connect?error=account"
+        assert store.get("scott").account_number == ""
+        assert store.get("scott").robinhood_bearer == ""
+
+    def test_reconnecting_the_same_account_still_works(self, env, monkeypatch):
+        app_module, store = env
+        _complete_callback(app_module, monkeypatch, account="111111111")
+        r = _complete_callback(app_module, monkeypatch, access="second-token", account="111111111")
+        assert r.headers["location"] == "/connect?connected=robinhood"
+        assert store.get("scott").account_number == "111111111"
+        assert store.get("scott").robinhood_bearer == "second-token"
