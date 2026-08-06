@@ -142,6 +142,43 @@ def read_session(
     return sub
 
 
+def sign_payload(payload: str, *, secret: bytes | str, issued_at: float | None = None) -> str:
+    """Sign an arbitrary short-lived string. Same envelope as a session, no user-id rules.
+
+    ``issue_session`` validates its subject as a tenant id, so it cannot carry packed
+    values like the OAuth ``state|verifier`` pair. This is the generic form.
+    """
+    body = _b64e(
+        json.dumps(
+            {"p": payload, "iat": int(issued_at if issued_at is not None else time.time())},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    )
+    return body + "." + hmac.new(_secret(secret), body.encode(), sha256).hexdigest()
+
+
+def verify_payload(token: str, *, secret: bytes | str, max_age: int, now: float | None = None) -> str:
+    """Verify and unpack a :func:`sign_payload` token, or raise."""
+    if not token or token.count(".") != 1:
+        raise AuthError("malformed signed payload")
+    body, sig = token.rsplit(".", 1)
+    if not hmac.compare_digest(hmac.new(_secret(secret), body.encode(), sha256).hexdigest(), sig):
+        raise AuthError("signed payload does not verify")
+    try:
+        data = json.loads(_b64d(body))
+    except (ValueError, binascii.Error) as exc:
+        raise AuthError("signed payload is not decodable") from exc
+    if not isinstance(data, dict) or not isinstance(data.get("p"), str):
+        raise AuthError("signed payload is malformed")
+    iat = data.get("iat")
+    if not isinstance(iat, (int, float)):
+        raise AuthError("signed payload carries no issued-at")
+    if (now if now is not None else time.time()) - iat > max_age:
+        raise SessionExpired("signed payload is older than max_age")
+    return data["p"]
+
+
 def _cookie_from(request: Any) -> Optional[str]:
     cookies = getattr(request, "cookies", None) or {}
     try:
