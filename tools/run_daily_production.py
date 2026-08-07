@@ -90,6 +90,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "forward_eval",
         "pit_bundle_health",
         "decision_engine_schema",
+        "deploy_freshness",
         "sort_contrib_sanity",
         "portfolio_weights",
         "eligibility_consistency",
@@ -1077,6 +1078,120 @@ def check_split_adj_freshness(
         detail=f"split-adjusted series current: last={adj_last}, raw last={raw_last}, gap={gap}",
         value=gap,
         threshold=max_gap_days,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Deploy freshness gate (WARN-only)
+# ---------------------------------------------------------------------------
+
+
+def check_deploy_freshness(
+    repo_root: Path,
+    remote: str = "origin",
+    branch: str = "main",
+    timeout_s: int = 30,
+) -> GateResult:
+    """Warn when the production checkout is behind the remote. WARN-only.
+
+    Merging is not deploying. The pipeline runs from this working tree, so a
+    merged fix stays inert until someone pulls. On 2026-08-06 the
+    portfolio_weights fix sat merged-but-undeployed for a full day behind a
+    checkout 60 commits stale, and nothing in the run said so -- the gate it
+    fixed kept warning as if the fix did not exist.
+
+    Read-only: fetches, never pulls, and never modifies the working tree.
+    Network and git failures degrade to WARN rather than taking the run down --
+    an unknown deploy state is worth surfacing, but is not worth losing a
+    snapshot over.
+    """
+
+    def _git(*args: str, timeout: int = timeout_s) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+
+    try:
+        probe = _git("rev-parse", "--git-dir", timeout=10)
+        if probe.returncode != 0:
+            return GateResult(
+                name="deploy_freshness",
+                status="WARN",
+                detail=f"{repo_root} is not a git checkout; deploy state unknown",
+            )
+
+        # Fetch only. A stale remote ref would make this gate lie, and lying
+        # quietly is the exact failure it exists to catch.
+        fetched = _git("fetch", "--quiet", remote, branch)
+        if fetched.returncode != 0:
+            err = (fetched.stderr or "").strip().splitlines()
+            return GateResult(
+                name="deploy_freshness",
+                status="WARN",
+                detail=f"could not fetch {remote}/{branch}; deploy state unknown: {err[-1] if err else 'unknown error'}",
+            )
+
+        behind_p = _git("rev-list", "--count", "HEAD..FETCH_HEAD")
+        ahead_p = _git("rev-list", "--count", "FETCH_HEAD..HEAD")
+        head_p = _git("rev-parse", "--short", "HEAD")
+        remote_p = _git("rev-parse", "--short", "FETCH_HEAD")
+
+        if any(p.returncode != 0 for p in (behind_p, ahead_p, head_p, remote_p)):
+            return GateResult(
+                name="deploy_freshness",
+                status="WARN",
+                detail="git rev-list failed; deploy state unknown",
+            )
+
+        behind = int((behind_p.stdout or "0").strip() or 0)
+        ahead = int((ahead_p.stdout or "0").strip() or 0)
+        head_sha = (head_p.stdout or "").strip()
+        remote_sha = (remote_p.stdout or "").strip()
+
+    except subprocess.TimeoutExpired:
+        return GateResult(
+            name="deploy_freshness",
+            status="WARN",
+            detail=f"git timed out after {timeout_s}s; deploy state unknown",
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        return GateResult(
+            name="deploy_freshness",
+            status="WARN",
+            detail=f"deploy freshness check errored: {type(exc).__name__}: {exc}",
+        )
+
+    # Local commits not on the remote are reported but do not warn on their own:
+    # a checkout mid-work is normal, and a second permanently-yellow gate would
+    # defeat the purpose of this one.
+    ahead_note = f"; {ahead} local commit(s) not on {remote}/{branch}" if ahead else ""
+
+    if behind == 0:
+        return GateResult(
+            name="deploy_freshness",
+            status="PASS",
+            detail=f"checkout current with {remote}/{branch} ({head_sha}){ahead_note}",
+            value=0,
+        )
+
+    subjects_p = _git("log", "--oneline", "--no-decorate", "-3", "HEAD..FETCH_HEAD")
+    subjects = [s.strip() for s in (subjects_p.stdout or "").splitlines() if s.strip()]
+    preview = "; ".join(subjects)
+    if behind > len(subjects):
+        preview += f"; +{behind - len(subjects)} more"
+
+    return GateResult(
+        name="deploy_freshness",
+        status="WARN",
+        detail=(
+            f"checkout is {behind} commit(s) behind {remote}/{branch} "
+            f"({head_sha} vs {remote_sha}){ahead_note} — merged work is not deployed: {preview}"
+        ),
+        value=behind,
+        threshold=0,
     )
 
 
@@ -5265,6 +5380,11 @@ def run_daily(
                 _sa_status,
                 split_adj_stats.get("detail", "no detail"),
             )
+
+    # --- Gate: deploy freshness (WARN) — merging is not deploying ---
+    deploy_gate = check_deploy_freshness(REPO_ROOT)
+    gate_results.append(deploy_gate)
+    _logger.info(f"Deploy gate: {deploy_gate.status} — {deploy_gate.detail}")
 
     # --- Gate: split-adjusted freshness (WARN) — stops silent drift recurring ---
     split_adj_gate = check_split_adj_freshness(price_csv, _split_adj_csv)
