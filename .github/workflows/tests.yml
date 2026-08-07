@@ -117,7 +117,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12"]
+        # 3.12 only: the codebase uses PEP 701 f-strings (3.12+) and
+        # datetime.UTC (3.11+), so 3.10 cannot even import the test suite.
+        # See pyproject requires-python.
+        python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v4
         with:
