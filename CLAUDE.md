@@ -135,6 +135,18 @@ Verify both pushes and report both PR URLs.
 Keeping both `main` branches synchronized is the standing expectation; treat
 drift between them as a problem to fix, not a condition to work around.
 
+**`main` sync is automated.** `.github/workflows/mirror-main-to-wr-sw-dev.yml`
+fast-forwards `WR-SW-Dev/main` after every merge to `origin/main`. It never
+force-pushes: if the mirror holds commits `origin` lacks, the job fails loudly
+and touches nothing, which is a real divergence for a human to reconcile. So
+`main`-to-`main` drift should self-heal within a minute of a merge; if the
+divergence check above is non-zero, look at that workflow's last run before
+assuming anything else.
+
+This does **not** replace the dual push and two PRs — the mirror only moves
+`main`. Feature branches still go to both remotes, and each GitHub repository
+still needs its own PR.
+
 ---
 
 ## Key File Locations

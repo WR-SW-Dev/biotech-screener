@@ -1,0 +1,101 @@
+name: mirror-main-to-wr-sw-dev
+
+# Keeps WR-SW-Dev/biotech-screener's `main` identical to this repository's
+# `main`. `origin` (Warrenpoobear) is primary; the mirror only ever moves
+# forward.
+#
+# Why this exists: every merge here re-opens a gap against the mirror, and
+# closing it by hand needs a direct push to `main`, which the local pre-push
+# guard (INC-2026-06-20-AUTOPUSH) deliberately reserves for a human at a
+# terminal. That guard protects the operator's clone; it does not and should
+# not gate a server-side mirror. This workflow uses its own credential, so it
+# closes the gap without weakening the guard.
+#
+# Safety: this NEVER force-pushes. It verifies the mirror's `main` is an
+# ancestor of ours and then does a plain `git push`, which refuses a
+# non-fast-forward by default. If the mirror has commits we lack, the job
+# fails loudly and leaves both repositories untouched — that is a genuine
+# divergence for a human to reconcile, exactly as CLAUDE.md requires.
+#
+# Setup (one time): add a repository secret WRSWDEV_MIRROR_TOKEN — a
+# fine-grained PAT scoped to WR-SW-Dev/biotech-screener with
+# "Contents: read and write". No other permission is needed.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Queue mirror pushes rather than cancelling them, so no commit is skipped
+# when several merges land close together.
+concurrency:
+  group: mirror-main-to-wr-sw-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify mirror credential is configured
+        env:
+          MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
+        run: |
+          if [ -z "${MIRROR_TOKEN}" ]; then
+            echo "::error::WRSWDEV_MIRROR_TOKEN is not set. Add a fine-grained PAT with 'Contents: read and write' on WR-SW-Dev/biotech-screener as a repository secret."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward WR-SW-Dev/main
+        env:
+          MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git remote add mirror \
+            "https://x-access-token:${MIRROR_TOKEN}@github.com/WR-SW-Dev/biotech-screener.git"
+          git fetch --quiet mirror main
+
+          ours=$(git rev-parse HEAD)
+          theirs=$(git rev-parse mirror/main)
+
+          if [ "${ours}" = "${theirs}" ]; then
+            echo "Already in sync at ${ours}. Nothing to do."
+            exit 0
+          fi
+
+          # Refuse anything that is not a clean fast-forward. A mirror that has
+          # diverged means someone committed to WR-SW-Dev/main directly; that
+          # needs a human, not a force-push.
+          if ! git merge-base --is-ancestor "${theirs}" "${ours}"; then
+            echo "::error::WR-SW-Dev/main has commits this repository's main does not contain — refusing to push."
+            echo "Commits only on the mirror:"
+            git log --oneline "${ours}..${theirs}" | head -20
+            exit 1
+          fi
+
+          ahead=$(git rev-list --count "${theirs}..${ours}")
+          echo "Fast-forwarding WR-SW-Dev/main by ${ahead} commit(s): ${theirs:0:8} -> ${ours:0:8}"
+
+          # Plain push: git rejects a non-fast-forward by default, so this
+          # cannot clobber the mirror even if the checks above were wrong.
+          git push mirror "HEAD:refs/heads/main"
+
+          echo "Mirror updated to ${ours:0:8}."
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Mirror to WR-SW-Dev"
+            echo ""
+            echo "- Source: \`${GITHUB_REPOSITORY}@${GITHUB_SHA:0:8}\`"
+            echo "- Target: \`WR-SW-Dev/biotech-screener:main\`"
+            echo "- Result: \`${{ job.status }}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
