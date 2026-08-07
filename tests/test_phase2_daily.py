@@ -1452,6 +1452,72 @@ def _write_full_rankings_csv(
 
 class TestDecisionEngineSchemaGate:
 
+    def test_vetoed_row_blank_eligible_with_reason_pass(self, tmp_path):
+        """A veto blanks `eligible` but records a reason → PASS.
+
+        The pending-acquisition gate in run_screen.py writes eligible="" plus
+        ineligible_reasons so the name stays observable without being ranked.
+        Before 2026-08-07 this gate asserted eligible in {"0","1"} and so
+        warned on every run in which any name was under a pending-deal veto
+        (APGE, daily).
+        """
+        snap = tmp_path / "snap"
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "1",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "100.0",
+                },
+                {
+                    "ticker": "APGE",
+                    "eligible": "",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "",
+                    "ineligible_reasons": "pending_acquisition",
+                    "target_weight_pct": "",
+                },
+            ],
+        )
+        result = check_decision_engine_schema(snap)
+        assert result.status == "PASS", result.detail
+
+    def test_blank_eligible_without_reason_warn(self, tmp_path):
+        """Blank `eligible` with no reason is still an unexplained hole → WARN."""
+        snap = tmp_path / "snap"
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "1",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "100.0",
+                },
+                {
+                    "ticker": "ODD",
+                    "eligible": "",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "",
+                },
+            ],
+        )
+        result = check_decision_engine_schema(snap)
+        assert result.status == "WARN"
+        assert "eligible='' invalid" in result.detail
+
     def test_valid_pass(self, tmp_path):
         """All DE columns present, valid values → PASS."""
         snap = tmp_path / "snap"

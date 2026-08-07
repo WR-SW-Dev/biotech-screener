@@ -2848,7 +2848,7 @@ def check_decision_engine_schema(
     - All DECISION_COLUMNS + ACTIONABLE_COLUMNS present in headers
     - tier_dev ∈ {A, B, C, D, ""}
     - tier_any ∈ {A, B, C, D, ""}
-    - eligible ∈ {"0", "1"}
+    - eligible ∈ {"0", "1"}, or "" when ineligible_reasons records a veto
     - actionable_rank sequential 1..N for eligible rows, empty for ineligible
     """
     rankings_path = snapshot_date_dir / "rankings.csv"
@@ -2896,7 +2896,13 @@ def check_decision_engine_schema(
                 warn_reasons.append(f"{ticker}: tier_any='{tier_any}' invalid")
 
             eligible = (row.get("eligible") or "").strip()
-            if eligible not in valid_eligible:
+            reasons = (row.get("ineligible_reasons") or "").strip()
+            # A veto blanks `eligible` rather than writing "0", so the name stays
+            # observable in rankings.csv without being ranked or sized — see the
+            # pending-acquisition gate in run_screen.py. That empty value is only
+            # legitimate when a reason is recorded alongside it; a bare "" with no
+            # reason is an unexplained hole and still warns.
+            if eligible not in valid_eligible and not (eligible == "" and reasons):
                 warn_reasons.append(f"{ticker}: eligible='{eligible}' invalid")
 
             act_rank = (row.get("actionable_rank") or "").strip()
