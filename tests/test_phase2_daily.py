@@ -1565,12 +1565,15 @@ class TestWorkingTreeCleanGate:
         permanently yellow, which is the failure mode it exists to avoid.
         """
         _upstream, clone = _make_upstream_and_clone(tmp_path)
+        # Production tracks these and the pipeline rewrites them each run, so
+        # commit first and then modify — an untracked data file is not what a
+        # real run leaves behind.
         (clone / "production_data").mkdir()
-        (clone / "production_data" / "market_data.json").write_text("{}", encoding="utf-8")
+        _commit(clone, "production_data/market_data.json", "{}")
         (clone / "artifacts").mkdir()
-        (clone / "artifacts" / "captures.jsonl").write_text("{}\n", encoding="utf-8")
-        (clone / "logs").mkdir()
-        (clone / "logs" / "cron.log").write_text("x", encoding="utf-8")
+        _commit(clone, "artifacts/captures.jsonl", "{}\n")
+        (clone / "production_data" / "market_data.json").write_text('{"a":1}', encoding="utf-8")
+        (clone / "artifacts" / "captures.jsonl").write_text('{"b":2}\n', encoding="utf-8")
 
         result = check_working_tree_clean(clone)
         assert result.status == "PASS", result.detail
@@ -1608,9 +1611,10 @@ class TestWorkingTreeCleanGate:
         """Source change alongside expected output churn still warns."""
         _upstream, clone = _make_upstream_and_clone(tmp_path)
         _commit(clone, "run_screen.py", "x = 1\n")
-        (clone / "run_screen.py").write_text("x = 2\n", encoding="utf-8")
         (clone / "production_data").mkdir()
-        (clone / "production_data" / "market_data.json").write_text("{}", encoding="utf-8")
+        _commit(clone, "production_data/market_data.json", "{}")
+        (clone / "run_screen.py").write_text("x = 2\n", encoding="utf-8")
+        (clone / "production_data" / "market_data.json").write_text('{"a":1}', encoding="utf-8")
 
         result = check_working_tree_clean(clone)
         assert result.status == "WARN"

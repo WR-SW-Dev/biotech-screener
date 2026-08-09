@@ -1232,7 +1232,7 @@ def _is_code_path(path: str) -> bool:
 
 def check_working_tree_clean(
     repo_root: Path,
-    timeout_s: int = 30,
+    timeout_s: int = 120,
 ) -> GateResult:
     """Warn when the snapshot is produced from modified source. WARN-only.
 
@@ -1253,22 +1253,37 @@ def check_working_tree_clean(
     An unreadable git state is WARN, never PASS: run_manifest has recorded
     dirty=None on days when `git status` failed (a stranded index.lock does
     it), and "unknown provenance" must not be reported as "clean".
+
+    Cost matters here. `git status --porcelain -uall` walks every untracked
+    file and takes ~22s warm and over 30s cold on this repo (4.2k tracked
+    files, 308 MB pack, 9p mount) — the first deploy of this gate timed out
+    and reported "provenance unknown" on a healthy tree, which is exactly the
+    permanently-yellow outcome it was written to avoid. Two narrower commands
+    answer the same question for ~3s combined:
+      - `git diff --name-only HEAD`  -> tracked modifications  (~2.5s)
+      - `git ls-files --others` with a code pathspec -> untracked source (~1s)
+    The pathspec also removes the need for -uall: untracked entries arrive as
+    individual files, never collapsed to "?? tools/".
     """
-    try:
-        proc = subprocess.run(
-            # -uall expands untracked directories. Without it git collapses them
-            # to "?? tools/", which both hides the offending filename and makes
-            # classification a guess for a directory of mixed content.
-            ["git", "-C", str(repo_root), "status", "--porcelain", "-uall"],
+
+    def _run(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
             capture_output=True,
             text=True,
             timeout=timeout_s,
         )
+
+    code_globs = [f"*{suffix}" for suffix in sorted(_CODE_SUFFIXES)]
+
+    try:
+        tracked = _run("diff", "--name-only", "HEAD")
+        untracked = _run("ls-files", "--others", "--exclude-standard", "--", *code_globs)
     except subprocess.TimeoutExpired:
         return GateResult(
             name="working_tree_clean",
             status="WARN",
-            detail=f"git status timed out after {timeout_s}s — provenance unknown",
+            detail=f"git timed out after {timeout_s}s — provenance unknown",
         )
     except Exception as exc:  # pragma: no cover - defensive
         return GateResult(
@@ -1277,27 +1292,29 @@ def check_working_tree_clean(
             detail=f"working tree check errored: {type(exc).__name__}: {exc}",
         )
 
-    if proc.returncode != 0:
-        err = (proc.stderr or "").strip().splitlines()
-        return GateResult(
-            name="working_tree_clean",
-            status="WARN",
-            detail=f"git status failed — provenance unknown: {err[-1] if err else 'unknown error'}",
-        )
+    for proc, what in ((tracked, "git diff"), (untracked, "git ls-files")):
+        if proc.returncode != 0:
+            err = (proc.stderr or "").strip().splitlines()
+            return GateResult(
+                name="working_tree_clean",
+                status="WARN",
+                detail=f"{what} failed — provenance unknown: {err[-1] if err else 'unknown error'}",
+            )
 
     code_paths: List[str] = []
     n_output = 0
-    for line in (proc.stdout or "").splitlines():
-        if len(line) < 4:
-            continue
-        # Porcelain v1: XY<space>path, and "orig -> new" for renames.
-        path = line[3:].split(" -> ")[-1].strip()
+    for path in (tracked.stdout or "").splitlines():
+        path = path.strip()
         if not path:
             continue
         if _is_code_path(path):
             code_paths.append(path)
         else:
             n_output += 1
+    for path in (untracked.stdout or "").splitlines():
+        path = path.strip()
+        if path and _is_code_path(path) and path not in code_paths:
+            code_paths.append(path)
 
     output_note = f"; {n_output} pipeline output file(s) modified, as expected" if n_output else ""
 
