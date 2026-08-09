@@ -1,39 +1,44 @@
 name: mirror-main-to-wr-sw-dev
 
-# Keeps WR-SW-Dev/biotech-screener's `main` identical to this repository's
-# `main`. `origin` (Warrenpoobear) is primary; the mirror only ever moves
-# forward.
+# Keeps WR-SW-Dev/biotech-screener's `main` in step with this repository's
+# `main`. `origin` (Warrenpoobear) is primary.
 #
-# Why this exists: every merge here re-opens a gap against the mirror, and
-# closing it by hand needs a direct push to `main`, which the local pre-push
-# guard (INC-2026-06-20-AUTOPUSH) deliberately reserves for a human at a
-# terminal. That guard protects the operator's clone; it does not and should
-# not gate a server-side mirror. This workflow uses its own credential, so it
-# closes the gap without weakening the guard.
+# This opens a pull request rather than pushing to `main`. WR-SW-Dev/main is a
+# protected branch (classic branch protection, added 2026-08-08 or -09), so a
+# direct push is declined:
 #
-# Safety: this NEVER force-pushes. It verifies the mirror's `main` is an
-# ancestor of ours and then does a plain `git push`, which refuses a
-# non-fast-forward by default. If the mirror has commits we lack, the job
-# fails loudly and leaves both repositories untouched — that is a genuine
-# divergence for a human to reconcile, exactly as CLAUDE.md requires.
+#     ! [remote rejected] origin/main -> main (protected branch hook declined)
 #
-# Setup (one time): add a repository secret WRSWDEV_MIRROR_TOKEN — a
-# fine-grained PAT scoped to WR-SW-Dev/biotech-screener with
-# "Contents: read and write". No other permission is needed.
+# Pushing a *branch* there is still permitted, so the mirror pushes a branch and
+# proposes it. The protection stays intact and a human merges — which is the
+# point of protecting the branch. Nothing here tries to route around it.
+#
+# Safety: never force-pushes, never pushes to `main`. Before proposing anything
+# it checks whether the mirror carries content this repository lacks; if so it
+# fails loudly rather than opening a PR that would revert someone's work.
+#
+# Setup (one time): repository secret WRSWDEV_MIRROR_TOKEN — a fine-grained PAT
+# scoped to WR-SW-Dev/biotech-screener with:
+#   - Contents: read and write        (push the mirror branch)
+#   - Pull requests: read and write   (open / update the PR)
+# The token's own access is enough for both; it does not need, and must not be
+# given, any bypass of the branch protection.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Queue mirror pushes rather than cancelling them, so no commit is skipped
-# when several merges land close together.
 concurrency:
   group: mirror-main-to-wr-sw-dev
   cancel-in-progress: false
 
 permissions:
   contents: read
+
+env:
+  MIRROR_REPO: WR-SW-Dev/biotech-screener
+  MIRROR_BRANCH: mirror/main-sync
 
 jobs:
   mirror:
@@ -44,7 +49,7 @@ jobs:
           MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
         run: |
           if [ -z "${MIRROR_TOKEN}" ]; then
-            echo "::error::WRSWDEV_MIRROR_TOKEN is not set. Add a fine-grained PAT with 'Contents: read and write' on WR-SW-Dev/biotech-screener as a repository secret."
+            echo "::error::WRSWDEV_MIRROR_TOKEN is not set. Add a fine-grained PAT on ${MIRROR_REPO} with 'Contents: read and write' and 'Pull requests: read and write' as a repository secret."
             exit 1
           fi
 
@@ -52,50 +57,102 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fast-forward WR-SW-Dev/main
+      - name: Compare against the mirror
+        id: compare
         env:
           MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
         run: |
           set -euo pipefail
 
           git remote add mirror \
-            "https://x-access-token:${MIRROR_TOKEN}@github.com/WR-SW-Dev/biotech-screener.git"
+            "https://x-access-token:${MIRROR_TOKEN}@github.com/${MIRROR_REPO}.git"
           git fetch --quiet mirror main
 
           ours=$(git rev-parse HEAD)
           theirs=$(git rev-parse mirror/main)
 
-          if [ "${ours}" = "${theirs}" ]; then
-            echo "Already in sync at ${ours}. Nothing to do."
+          # Content parity, not commit identity. Merging a PR on the mirror
+          # creates a merge commit that this repository will never have, so the
+          # two branches legitimately differ in history while holding identical
+          # trees. Comparing trees is what actually answers "is the mirror
+          # current?".
+          if [ "$(git rev-parse "${ours}^{tree}")" = "$(git rev-parse "${theirs}^{tree}")" ]; then
+            echo "Mirror content is identical to ${ours:0:8}. Nothing to propose."
+            echo "action=none" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
-          # Refuse anything that is not a clean fast-forward. A mirror that has
-          # diverged means someone committed to WR-SW-Dev/main directly; that
-          # needs a human, not a force-push.
-          if ! git merge-base --is-ancestor "${theirs}" "${ours}"; then
-            echo "::error::WR-SW-Dev/main has commits this repository's main does not contain — refusing to push."
-            echo "Commits only on the mirror:"
-            git log --oneline "${ours}..${theirs}" | head -20
+          # Would a sync discard work that exists only on the mirror? Three-dot
+          # diff = changes made on the mirror side since the branches parted.
+          # Expected to be empty: the mirror is downstream, not a fork.
+          if ! git diff --quiet "${ours}...${theirs}"; then
+            echo "::error::${MIRROR_REPO} carries changes this repository does not have — refusing to propose a sync that would revert them."
+            git diff --stat "${ours}...${theirs}" | tail -20
             exit 1
           fi
 
-          ahead=$(git rev-list --count "${theirs}..${ours}")
-          echo "Fast-forwarding WR-SW-Dev/main by ${ahead} commit(s): ${theirs:0:8} -> ${ours:0:8}"
+          echo "Mirror is behind by $(git rev-list --count "${theirs}..${ours}") commit(s)."
+          echo "action=propose" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${ours}" >> "${GITHUB_OUTPUT}"
 
-          # Plain push: git rejects a non-fast-forward by default, so this
-          # cannot clobber the mirror even if the checks above were wrong.
-          git push mirror "HEAD:refs/heads/main"
+      - name: Push the mirror branch
+        if: steps.compare.outputs.action == 'propose'
+        env:
+          MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Plain push to a NON-protected branch. Not a force push: this branch
+          # only ever tracks origin/main, which moves forward. If it is ever
+          # rejected as non-fast-forward, something rewrote history and a human
+          # should look rather than have the mirror overwrite it.
+          git push mirror "HEAD:refs/heads/${MIRROR_BRANCH}"
 
-          echo "Mirror updated to ${ours:0:8}."
+      - name: Open or update the pull request
+        if: steps.compare.outputs.action == 'propose'
+        env:
+          GH_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
+          HEAD_SHA: ${{ steps.compare.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+
+          existing=$(gh pr list --repo "${MIRROR_REPO}" --head "${MIRROR_BRANCH}" \
+                       --state open --json url --jq '.[0].url // ""')
+
+          if [ -n "${existing}" ]; then
+            # The branch push above already moved the PR's head; no second PR.
+            echo "Updated existing PR: ${existing}"
+            echo "PR=${existing}" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          cat > "${RUNNER_TEMP}/mirror-pr-body.md" <<EOF
+          Automated mirror sync from \`Warrenpoobear/biotech-screener@${HEAD_SHA}\`.
+
+          \`origin\` (Warrenpoobear) is the primary remote; this branch carries its
+          \`main\` verbatim. No commits originate here, so this diff should only
+          ever be work already reviewed upstream.
+
+          Opened as a pull request rather than pushed directly because \`main\` is
+          protected on this repository. Merging is a human decision by design.
+
+          Raised by \`.github/workflows/mirror-main-to-wr-sw-dev.yml\`.
+          EOF
+
+          url=$(gh pr create --repo "${MIRROR_REPO}" \
+                  --base main --head "${MIRROR_BRANCH}" \
+                  --title "mirror: sync main from Warrenpoobear/biotech-screener" \
+                  --body-file "${RUNNER_TEMP}/mirror-pr-body.md")
+          echo "Opened PR: ${url}"
+          echo "PR=${url}" >> "${GITHUB_ENV}"
 
       - name: Summary
         if: always()
         run: |
           {
-            echo "### Mirror to WR-SW-Dev"
+            echo "### Mirror to ${MIRROR_REPO}"
             echo ""
             echo "- Source: \`${GITHUB_REPOSITORY}@${GITHUB_SHA:0:8}\`"
-            echo "- Target: \`WR-SW-Dev/biotech-screener:main\`"
+            echo "- Action: \`${{ steps.compare.outputs.action || 'failed' }}\`"
+            if [ -n "${PR:-}" ]; then echo "- Pull request: ${PR}"; fi
             echo "- Result: \`${{ job.status }}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
