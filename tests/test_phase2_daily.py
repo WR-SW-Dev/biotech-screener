@@ -45,6 +45,7 @@ from run_daily_production import (
     check_audit_result,
     check_ctgov_cache,
     check_decision_engine_schema,
+    check_deploy_freshness,
     check_eligibility_consistency,
     check_exposure_missingness,
     check_inputs_present,
@@ -56,6 +57,7 @@ from run_daily_production import (
     check_risk_concentration,
     check_sort_contrib_sanity,
     check_turnover,
+    check_working_tree_clean,
     check_xbi_staleness,
     promote_snapshot,
     run_daily,
@@ -1155,6 +1157,8 @@ class TestOpsContract:
             "forward_eval",
             "pit_bundle_health",
             "decision_engine_schema",
+            "deploy_freshness",
+            "working_tree_clean",
             "sort_contrib_sanity",
             "portfolio_weights",
             "eligibility_consistency",
@@ -1446,11 +1450,261 @@ def _write_full_rankings_csv(
 
 
 # ---------------------------------------------------------------------------
+# Tests: Deploy freshness gate
+# ---------------------------------------------------------------------------
+
+
+def _git(cwd: Path, *args: str) -> None:
+    """Run a git command in cwd, failing the test loudly on error."""
+    proc = subprocess.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", "-C", str(cwd), *args],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, f"git {' '.join(args)} failed: {proc.stderr}"
+
+
+def _commit(repo: Path, filename: str, text: str) -> None:
+    (repo / filename).write_text(text, encoding="utf-8")
+    _git(repo, "add", filename)
+    _git(repo, "commit", "-m", f"add {filename}")
+
+
+def _make_upstream_and_clone(tmp_path: Path) -> tuple[Path, Path]:
+    """Build a local upstream repo and a clone of it. No network involved."""
+    upstream = tmp_path / "upstream"
+    upstream.mkdir()
+    _git(upstream, "init", "-b", "main")
+    _commit(upstream, "seed.txt", "seed")
+
+    clone = tmp_path / "clone"
+    subprocess.run(
+        ["git", "clone", "--quiet", str(upstream), str(clone)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return upstream, clone
+
+
+class TestDeployFreshnessGate:
+
+    def test_in_sync_pass(self, tmp_path):
+        """Checkout level with the remote → PASS."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        result = check_deploy_freshness(clone)
+        assert result.status == "PASS", result.detail
+        assert result.value == 0
+        assert "current with" in result.detail
+
+    def test_behind_warns_and_names_commits(self, tmp_path):
+        """Checkout behind the remote → WARN naming the undeployed work.
+
+        This is the 2026-08-06 case: the portfolio_weights fix was merged but
+        the production checkout was 60 commits stale, so the fix was inert and
+        nothing in the run said so.
+        """
+        upstream, clone = _make_upstream_and_clone(tmp_path)
+        _commit(upstream, "fix_one.txt", "a")
+        _commit(upstream, "fix_two.txt", "b")
+
+        result = check_deploy_freshness(clone)
+        assert result.status == "WARN"
+        assert result.value == 2
+        assert "2 commit(s) behind" in result.detail
+        assert "merged work is not deployed" in result.detail
+        assert "add fix_two.txt" in result.detail
+
+    def test_ahead_only_still_passes(self, tmp_path):
+        """Local commits not yet on the remote are reported, not warned on.
+
+        A checkout mid-work is normal; a second permanently-yellow gate would
+        defeat the purpose of this one.
+        """
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        _commit(clone, "wip.txt", "wip")
+
+        result = check_deploy_freshness(clone)
+        assert result.status == "PASS", result.detail
+        assert "1 local commit(s) not on" in result.detail
+
+    def test_not_a_git_checkout_warns(self, tmp_path):
+        """A non-repo path → WARN, never an exception."""
+        plain = tmp_path / "plain"
+        plain.mkdir()
+        result = check_deploy_freshness(plain)
+        assert result.status == "WARN"
+        assert "not a git checkout" in result.detail
+
+    def test_unreachable_remote_warns(self, tmp_path):
+        """An unreachable remote degrades to WARN, not a crash."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        _git(clone, "remote", "set-url", "origin", str(tmp_path / "does-not-exist"))
+
+        result = check_deploy_freshness(clone)
+        assert result.status == "WARN"
+        assert "deploy state unknown" in result.detail
+
+    def test_gate_is_allowlisted(self):
+        assert "deploy_freshness" in GATE_ALLOWLIST
+
+
+class TestWorkingTreeCleanGate:
+
+    def test_clean_tree_pass(self, tmp_path):
+        """No modifications at all -> PASS."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        result = check_working_tree_clean(clone)
+        assert result.status == "PASS", result.detail
+        assert result.value == 0
+
+    def test_pipeline_output_only_pass(self, tmp_path):
+        """production_data/ and artifacts/ churn every run -> still PASS.
+
+        Regression guard: warning on pipeline output would make this gate
+        permanently yellow, which is the failure mode it exists to avoid.
+        """
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        # Production tracks these and the pipeline rewrites them each run, so
+        # commit first and then modify — an untracked data file is not what a
+        # real run leaves behind.
+        (clone / "production_data").mkdir()
+        _commit(clone, "production_data/market_data.json", "{}")
+        (clone / "artifacts").mkdir()
+        _commit(clone, "artifacts/captures.jsonl", "{}\n")
+        (clone / "production_data" / "market_data.json").write_text('{"a":1}', encoding="utf-8")
+        (clone / "artifacts" / "captures.jsonl").write_text('{"b":2}\n', encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "PASS", result.detail
+        assert "pipeline output" in result.detail
+
+    def test_modified_source_warns(self, tmp_path):
+        """An edited tracked .py -> WARN naming it.
+
+        This is the 2026-08-06 case: that run recorded dirty_pre_run and
+        dirty_post_run true, produced a CTGov count of 2417 against a
+        1114-1192 baseline, and nothing in overall=WARN said the snapshot
+        was unreproducible.
+        """
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        _commit(clone, "run_screen.py", "x = 1\n")
+        (clone / "run_screen.py").write_text("x = 2\n", encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "WARN"
+        assert result.value == 1
+        assert "run_screen.py" in result.detail
+        assert "cannot be reproduced" in result.detail
+
+    def test_untracked_source_warns(self, tmp_path):
+        """A new, uncommitted .py is source too -> WARN."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        (clone / "tools").mkdir()
+        (clone / "tools" / "scratch_patch.py").write_text("print(1)\n", encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "WARN"
+        assert "scratch_patch.py" in result.detail
+
+    def test_source_and_output_together_warn(self, tmp_path):
+        """Source change alongside expected output churn still warns."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        _commit(clone, "run_screen.py", "x = 1\n")
+        (clone / "production_data").mkdir()
+        _commit(clone, "production_data/market_data.json", "{}")
+        (clone / "run_screen.py").write_text("x = 2\n", encoding="utf-8")
+        (clone / "production_data" / "market_data.json").write_text('{"a":1}', encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "WARN"
+        assert "run_screen.py" in result.detail
+        assert "pipeline output" in result.detail
+
+    def test_not_a_repo_warns_not_passes(self, tmp_path):
+        """Unreadable git state is WARN -- unknown provenance is not clean."""
+        plain = tmp_path / "plain"
+        plain.mkdir()
+        result = check_working_tree_clean(plain)
+        assert result.status == "WARN"
+        assert "provenance unknown" in result.detail
+
+    def test_gate_is_allowlisted(self):
+        assert "working_tree_clean" in GATE_ALLOWLIST
+
+
+# ---------------------------------------------------------------------------
 # Tests: Decision Engine schema gate (B1)
 # ---------------------------------------------------------------------------
 
 
 class TestDecisionEngineSchemaGate:
+
+    def test_vetoed_row_blank_eligible_with_reason_pass(self, tmp_path):
+        """A veto blanks `eligible` but records a reason → PASS.
+
+        The pending-acquisition gate in run_screen.py writes eligible="" plus
+        ineligible_reasons so the name stays observable without being ranked.
+        Before 2026-08-07 this gate asserted eligible in {"0","1"} and so
+        warned on every run in which any name was under a pending-deal veto
+        (APGE, daily).
+        """
+        snap = tmp_path / "snap"
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "1",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "100.0",
+                },
+                {
+                    "ticker": "APGE",
+                    "eligible": "",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "",
+                    "ineligible_reasons": "pending_acquisition",
+                    "target_weight_pct": "",
+                },
+            ],
+        )
+        result = check_decision_engine_schema(snap)
+        assert result.status == "PASS", result.detail
+
+    def test_blank_eligible_without_reason_warn(self, tmp_path):
+        """Blank `eligible` with no reason is still an unexplained hole → WARN."""
+        snap = tmp_path / "snap"
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "1",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "100.0",
+                },
+                {
+                    "ticker": "ODD",
+                    "eligible": "",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "",
+                },
+            ],
+        )
+        result = check_decision_engine_schema(snap)
+        assert result.status == "WARN"
+        assert "eligible='' invalid" in result.detail
 
     def test_valid_pass(self, tmp_path):
         """All DE columns present, valid values → PASS."""
@@ -1844,8 +2098,8 @@ class TestOpsContractWithNewGates:
         assert "eligibility_consistency" in GATE_ALLOWLIST
 
     def test_allowlist_count_updated(self):
-        """Allowlist has 39 entries."""
-        assert len(GATE_ALLOWLIST) == 39
+        """Allowlist has 44 entries."""
+        assert len(GATE_ALLOWLIST) == 44
 
     def test_new_gates_in_allowlist_v2(self):
         assert "exposure_missingness" in GATE_ALLOWLIST

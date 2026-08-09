@@ -4,8 +4,8 @@
     "short_interest_pct": 4.4,
     "days_to_cover": 1.3,
     "short_interest_change_pct": -28.5,
-    "institutional_long_pct": 56.1,
-    "avg_daily_volume": 271061,
+    "institutional_long_pct": 55.7,
+    "avg_daily_volume": 278732,
     "report_date": "2026-07-14"
   },
   {
@@ -13,8 +13,8 @@
     "short_interest_pct": 1.4,
     "days_to_cover": 2.4,
     "short_interest_change_pct": -3.5,
-    "institutional_long_pct": 76.9,
-    "avg_daily_volume": 6768979,
+    "institutional_long_pct": 76.8,
+    "avg_daily_volume": 6864177,
     "report_date": "2026-07-14"
   },
   {
@@ -23,7 +23,7 @@
     "days_to_cover": 5.9,
     "short_interest_change_pct": 0.4,
     "institutional_long_pct": 43.1,
-    "avg_daily_volume": 7632356,
+    "avg_daily_volume": 7326269,
     "report_date": "2026-07-14"
   },
   {
@@ -31,8 +31,8 @@
     "short_interest_pct": 24.9,
     "days_to_cover": 8.4,
     "short_interest_change_pct": -6.4,
-    "institutional_long_pct": 70.5,
-    "avg_daily_volume": 1259309,
+    "institutional_long_pct": 70.9,
+    "avg_daily_volume": 1231362,
     "report_date": "2026-07-14"
   },
   {
@@ -40,8 +40,8 @@
     "short_interest_pct": 5.6,
     "days_to_cover": 4.0,
     "short_interest_change_pct": 49.2,
-    "institutional_long_pct": 64.7,
-    "avg_daily_volume": 457745,
+    "institutional_long_pct": 64.9,
+    "avg_daily_volume": 466444,
     "report_date": "2026-07-14"
   },
   {
@@ -49,8 +49,8 @@
     "short_interest_pct": 25.8,
     "days_to_cover": 4.6,
     "short_interest_change_pct": 7.2,
-    "institutional_long_pct": 73.0,
-    "avg_daily_volume": 5622445,
+    "institutional_long_pct": 72.0,
+    "avg_daily_volume": 5498005,
     "report_date": "2026-07-14"
   },
   {
@@ -58,8 +58,8 @@
     "short_interest_pct": 14.8,
     "days_to_cover": 6.5,
     "short_interest_change_pct": 12.2,
-    "institutional_long_pct": 72.1,
-    "avg_daily_volume": 1944811,
+    "institutional_long_pct": 72.3,
+    "avg_daily_volume": 2015877,
     "report_date": "2026-07-14"
   },
   {
@@ -67,8 +67,8 @@
     "short_interest_pct": 4.7,
     "days_to_cover": 1.7,
     "short_interest_change_pct": -17.8,
-    "institutional_long_pct": 70.7,
-    "avg_daily_volume": 2082870,
+    "institutional_long_pct": 71.5,
+    "avg_daily_volume": 2144574,
     "report_date": "2026-07-14"
   },
   {
@@ -76,8 +76,8 @@
     "short_interest_pct": 10.2,
     "days_to_cover": 5.9,
     "short_interest_change_pct": -6.6,
-    "institutional_long_pct": 98.9,
-    "avg_daily_volume": 1608083,
+    "institutional_long_pct": 98.4,
+    "avg_daily_volume": 1541830,
     "report_date": "2026-07-14"
   },
   {
@@ -86,7 +86,7 @@
     "days_to_cover": 13.2,
     "short_interest_change_pct": -3.4,
     "institutional_long_pct": 24.8,
-    "avg_daily_volume": 272435,
+    "avg_daily_volume": 267208,
     "report_date": "2026-07-14"
   },
   {
@@ -96,7 +96,7 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   },
   {
     "ticker": "ACRS",
@@ -104,7 +104,7 @@
     "days_to_cover": 5.8,
     "short_interest_change_pct": 50.1,
     "institutional_long_pct": 79.8,
-    "avg_daily_volume": 1641832,
+    "avg_daily_volume": 1697866,
     "report_date": "2026-07-14"
   },
   {
@@ -113,7 +113,7 @@
     "days_to_cover": 3.0,
     "short_interest_change_pct": -47.4,
     "institutional_long_pct": 47.4,
-    "avg_daily_volume": 447132,
+    "avg_daily_volume": 424638,
     "report_date": "2026-07-14"
   },
   {
@@ -122,7 +122,7 @@
     "days_to_cover": 3.5,
     "short_interest_change_pct": -7.8,
     "institutional_long_pct": 67.8,
-    "avg_daily_volume": 1876148,
+    "avg_daily_volume": 1846200,
     "report_date": "2026-07-14"
   },
   {
@@ -130,26 +130,26 @@
     "short_interest_pct": 12.7,
     "days_to_cover": 6.9,
     "short_interest_change_pct": 12.9,
-    "institutional_long_pct": 93.7,
-    "avg_daily_volume": 4246111,
+    "institutional_long_pct": 96.8,
+    "avg_daily_volume": 3495700,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "ADPT",
-    "short_interest_pct": 9.0,
+    "short_interest_pct": 9.1,
     "days_to_cover": 2.9,
     "short_interest_change_pct": 49.1,
-    "institutional_long_pct": 96.1,
-    "avg_daily_volume": 2856951,
+    "institutional_long_pct": 94.8,
+    "avg_daily_volume": 2872528,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "AGIO",
-    "short_interest_pct": 11.3,
+    "short_interest_pct": 11.2,
     "days_to_cover": 5.4,
     "short_interest_change_pct": -3.9,
-    "institutional_long_pct": 108.3,
-    "avg_daily_volume": 1083088,
+    "institutional_long_pct": 108.6,
+    "avg_daily_volume": 1102055,
     "report_date": "2026-07-14"
   },
   {
@@ -157,8 +157,8 @@
     "short_interest_pct": 7.2,
     "days_to_cover": 3.3,
     "short_interest_change_pct": -34.7,
-    "institutional_long_pct": 42.2,
-    "avg_daily_volume": 5021527,
+    "institutional_long_pct": 40.5,
+    "avg_daily_volume": 4941105,
     "report_date": "2026-07-14"
   },
   {
@@ -167,7 +167,7 @@
     "days_to_cover": 0.2,
     "short_interest_change_pct": -63.6,
     "institutional_long_pct": 9.0,
-    "avg_daily_volume": 796016,
+    "avg_daily_volume": 834764,
     "report_date": "2026-07-14"
   },
   {
@@ -176,7 +176,7 @@
     "days_to_cover": 1.8,
     "short_interest_change_pct": -47.6,
     "institutional_long_pct": 62.7,
-    "avg_daily_volume": 1369432,
+    "avg_daily_volume": 1387855,
     "report_date": "2026-07-14"
   },
   {
@@ -185,16 +185,16 @@
     "days_to_cover": 1.8,
     "short_interest_change_pct": -14.8,
     "institutional_long_pct": 55.1,
-    "avg_daily_volume": 176258,
+    "avg_daily_volume": 177271,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "ALKS",
-    "short_interest_pct": 12.5,
+    "short_interest_pct": 12.4,
     "days_to_cover": 5.7,
     "short_interest_change_pct": -16.4,
-    "institutional_long_pct": 108.8,
-    "avg_daily_volume": 2280482,
+    "institutional_long_pct": 109.2,
+    "avg_daily_volume": 2256396,
     "report_date": "2026-07-14"
   },
   {
@@ -202,8 +202,8 @@
     "short_interest_pct": 19.1,
     "days_to_cover": 5.6,
     "short_interest_change_pct": 24.3,
-    "institutional_long_pct": 54.0,
-    "avg_daily_volume": 8233616,
+    "institutional_long_pct": 56.2,
+    "avg_daily_volume": 8341520,
     "report_date": "2026-07-14"
   },
   {
@@ -211,8 +211,8 @@
     "short_interest_pct": 9.4,
     "days_to_cover": 3.7,
     "short_interest_change_pct": -46.6,
-    "institutional_long_pct": 100.2,
-    "avg_daily_volume": 1295279,
+    "institutional_long_pct": 100.3,
+    "avg_daily_volume": 1336289,
     "report_date": "2026-07-14"
   },
   {
@@ -220,8 +220,8 @@
     "short_interest_pct": 5.8,
     "days_to_cover": 3.6,
     "short_interest_change_pct": 6.2,
-    "institutional_long_pct": 102.2,
-    "avg_daily_volume": 1414882,
+    "institutional_long_pct": 101.8,
+    "avg_daily_volume": 1523669,
     "report_date": "2026-07-14"
   },
   {
@@ -229,8 +229,8 @@
     "short_interest_pct": 24.8,
     "days_to_cover": 9.9,
     "short_interest_change_pct": 15.1,
-    "institutional_long_pct": 58.2,
-    "avg_daily_volume": 3941269,
+    "institutional_long_pct": 58.7,
+    "avg_daily_volume": 3923355,
     "report_date": "2026-07-14"
   },
   {
@@ -239,7 +239,7 @@
     "days_to_cover": 4.1,
     "short_interest_change_pct": 7.8,
     "institutional_long_pct": 5.1,
-    "avg_daily_volume": 787879,
+    "avg_daily_volume": 845079,
     "report_date": "2026-07-14"
   },
   {
@@ -247,8 +247,8 @@
     "short_interest_pct": 2.4,
     "days_to_cover": 4.7,
     "short_interest_change_pct": 5.3,
-    "institutional_long_pct": 85.0,
-    "avg_daily_volume": 2731753,
+    "institutional_long_pct": 84.9,
+    "avg_daily_volume": 2677484,
     "report_date": "2026-07-14"
   },
   {
@@ -256,8 +256,8 @@
     "short_interest_pct": 14.3,
     "days_to_cover": 6.9,
     "short_interest_change_pct": -6.5,
-    "institutional_long_pct": 105.5,
-    "avg_daily_volume": 1548906,
+    "institutional_long_pct": 106.4,
+    "avg_daily_volume": 1593079,
     "report_date": "2026-07-14"
   },
   {
@@ -265,8 +265,8 @@
     "short_interest_pct": 19.8,
     "days_to_cover": 7.5,
     "short_interest_change_pct": 9.9,
-    "institutional_long_pct": 75.2,
-    "avg_daily_volume": 612496,
+    "institutional_long_pct": 71.6,
+    "avg_daily_volume": 623425,
     "report_date": "2026-07-14"
   },
   {
@@ -274,8 +274,8 @@
     "short_interest_pct": 3.8,
     "days_to_cover": 3.5,
     "short_interest_change_pct": 2.5,
-    "institutional_long_pct": 52.5,
-    "avg_daily_volume": 1933990,
+    "institutional_long_pct": 52.7,
+    "avg_daily_volume": 1983489,
     "report_date": "2026-07-14"
   },
   {
@@ -283,8 +283,8 @@
     "short_interest_pct": 37.6,
     "days_to_cover": 6.8,
     "short_interest_change_pct": 7.9,
-    "institutional_long_pct": 100.8,
-    "avg_daily_volume": 672643,
+    "institutional_long_pct": 100.7,
+    "avg_daily_volume": 658222,
     "report_date": "2026-07-14"
   },
   {
@@ -292,8 +292,8 @@
     "short_interest_pct": 18.1,
     "days_to_cover": 10.0,
     "short_interest_change_pct": 5.3,
-    "institutional_long_pct": 110.7,
-    "avg_daily_volume": 342006,
+    "institutional_long_pct": 110.6,
+    "avg_daily_volume": 342935,
     "report_date": "2026-07-14"
   },
   {
@@ -301,8 +301,8 @@
     "short_interest_pct": 19.5,
     "days_to_cover": 5.7,
     "short_interest_change_pct": 13.0,
-    "institutional_long_pct": 103.0,
-    "avg_daily_volume": 3498956,
+    "institutional_long_pct": 103.8,
+    "avg_daily_volume": 3614093,
     "report_date": "2026-07-14"
   },
   {
@@ -310,8 +310,8 @@
     "short_interest_pct": 9.3,
     "days_to_cover": 4.2,
     "short_interest_change_pct": 90.9,
-    "institutional_long_pct": 80.5,
-    "avg_daily_volume": 496459,
+    "institutional_long_pct": 79.7,
+    "avg_daily_volume": 505171,
     "report_date": "2026-07-14"
   },
   {
@@ -319,8 +319,8 @@
     "short_interest_pct": 7.0,
     "days_to_cover": 0.7,
     "short_interest_change_pct": -60.6,
-    "institutional_long_pct": 108.7,
-    "avg_daily_volume": 2594977,
+    "institutional_long_pct": 108.1,
+    "avg_daily_volume": 2736810,
     "report_date": "2026-07-14"
   },
   {
@@ -330,15 +330,15 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   },
   {
     "ticker": "AQST",
     "short_interest_pct": 13.9,
     "days_to_cover": 7.4,
     "short_interest_change_pct": 12.7,
-    "institutional_long_pct": 58.8,
-    "avg_daily_volume": 1957343,
+    "institutional_long_pct": 58.7,
+    "avg_daily_volume": 2025805,
     "report_date": "2026-07-14"
   },
   {
@@ -346,8 +346,8 @@
     "short_interest_pct": 30.6,
     "days_to_cover": 13.0,
     "short_interest_change_pct": 4.4,
-    "institutional_long_pct": 80.5,
-    "avg_daily_volume": 475603,
+    "institutional_long_pct": 79.6,
+    "avg_daily_volume": 476125,
     "report_date": "2026-07-14"
   },
   {
@@ -355,8 +355,8 @@
     "short_interest_pct": 10.9,
     "days_to_cover": 5.5,
     "short_interest_change_pct": -2.6,
-    "institutional_long_pct": 70.8,
-    "avg_daily_volume": 3857262,
+    "institutional_long_pct": 71.1,
+    "avg_daily_volume": 3570549,
     "report_date": "2026-07-14"
   },
   {
@@ -364,8 +364,8 @@
     "short_interest_pct": 2.5,
     "days_to_cover": 4.1,
     "short_interest_change_pct": 4.9,
-    "institutional_long_pct": 47.4,
-    "avg_daily_volume": 339591,
+    "institutional_long_pct": 47.2,
+    "avg_daily_volume": 335945,
     "report_date": "2026-07-14"
   },
   {
@@ -373,8 +373,8 @@
     "short_interest_pct": 11.6,
     "days_to_cover": 7.3,
     "short_interest_change_pct": -14.3,
-    "institutional_long_pct": 109.8,
-    "avg_daily_volume": 1800950,
+    "institutional_long_pct": 108.4,
+    "avg_daily_volume": 1753745,
     "report_date": "2026-07-14"
   },
   {
@@ -382,8 +382,8 @@
     "short_interest_pct": 5.1,
     "days_to_cover": 2.8,
     "short_interest_change_pct": 59.7,
-    "institutional_long_pct": 52.8,
-    "avg_daily_volume": 602043,
+    "institutional_long_pct": 57.9,
+    "avg_daily_volume": 632920,
     "report_date": "2026-07-14"
   },
   {
@@ -391,8 +391,8 @@
     "short_interest_pct": 7.2,
     "days_to_cover": 5.2,
     "short_interest_change_pct": -11.4,
-    "institutional_long_pct": 82.2,
-    "avg_daily_volume": 822727,
+    "institutional_long_pct": 81.3,
+    "avg_daily_volume": 781703,
     "report_date": "2026-07-14"
   },
   {
@@ -400,8 +400,8 @@
     "short_interest_pct": 9.5,
     "days_to_cover": 3.4,
     "short_interest_change_pct": -17.9,
-    "institutional_long_pct": 88.6,
-    "avg_daily_volume": 2220562,
+    "institutional_long_pct": 87.4,
+    "avg_daily_volume": 2241874,
     "report_date": "2026-07-14"
   },
   {
@@ -409,8 +409,8 @@
     "short_interest_pct": 15.7,
     "days_to_cover": 8.9,
     "short_interest_change_pct": 23.9,
-    "institutional_long_pct": 48.6,
-    "avg_daily_volume": 210627,
+    "institutional_long_pct": 51.8,
+    "avg_daily_volume": 204861,
     "report_date": "2026-07-14"
   },
   {
@@ -418,8 +418,8 @@
     "short_interest_pct": 5.6,
     "days_to_cover": 3.4,
     "short_interest_change_pct": 56.2,
-    "institutional_long_pct": 101.7,
-    "avg_daily_volume": 685648,
+    "institutional_long_pct": 101.6,
+    "avg_daily_volume": 679530,
     "report_date": "2026-07-14"
   },
   {
@@ -427,8 +427,8 @@
     "short_interest_pct": 12.0,
     "days_to_cover": 3.5,
     "short_interest_change_pct": 60.5,
-    "institutional_long_pct": 44.8,
-    "avg_daily_volume": 11343662,
+    "institutional_long_pct": 45.9,
+    "avg_daily_volume": 11946037,
     "report_date": "2026-07-14"
   },
   {
@@ -436,8 +436,8 @@
     "short_interest_pct": 8.4,
     "days_to_cover": 4.7,
     "short_interest_change_pct": 5.0,
-    "institutional_long_pct": 60.7,
-    "avg_daily_volume": 1484640,
+    "institutional_long_pct": 60.8,
+    "avg_daily_volume": 1501028,
     "report_date": "2026-07-14"
   },
   {
@@ -445,8 +445,8 @@
     "short_interest_pct": 5.5,
     "days_to_cover": 7.8,
     "short_interest_change_pct": 4.1,
-    "institutional_long_pct": 49.4,
-    "avg_daily_volume": 669020,
+    "institutional_long_pct": 49.3,
+    "avg_daily_volume": 556793,
     "report_date": "2026-07-14"
   },
   {
@@ -455,7 +455,7 @@
     "days_to_cover": 12.5,
     "short_interest_change_pct": 12.4,
     "institutional_long_pct": 64.2,
-    "avg_daily_volume": 1338609,
+    "avg_daily_volume": 1514308,
     "report_date": "2026-07-14"
   },
   {
@@ -463,8 +463,8 @@
     "short_interest_pct": 17.5,
     "days_to_cover": 12.2,
     "short_interest_change_pct": -2.3,
-    "institutional_long_pct": 96.2,
-    "avg_daily_volume": 557929,
+    "institutional_long_pct": 96.3,
+    "avg_daily_volume": 567705,
     "report_date": "2026-07-14"
   },
   {
@@ -473,16 +473,16 @@
     "days_to_cover": 20.2,
     "short_interest_change_pct": 9.7,
     "institutional_long_pct": 79.7,
-    "avg_daily_volume": 359172,
+    "avg_daily_volume": 368328,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "AVTR",
-    "short_interest_pct": 9.9,
+    "short_interest_pct": 10.1,
     "days_to_cover": 6.6,
     "short_interest_change_pct": 27.1,
     "institutional_long_pct": 103.7,
-    "avg_daily_volume": 10594927,
+    "avg_daily_volume": 10793628,
     "report_date": "2026-07-14"
   },
   {
@@ -490,8 +490,8 @@
     "short_interest_pct": 15.9,
     "days_to_cover": 9.6,
     "short_interest_change_pct": -19.3,
-    "institutional_long_pct": 43.8,
-    "avg_daily_volume": 1209179,
+    "institutional_long_pct": 44.8,
+    "avg_daily_volume": 1245645,
     "report_date": "2026-07-14"
   },
   {
@@ -499,8 +499,8 @@
     "short_interest_pct": 9.2,
     "days_to_cover": 2.5,
     "short_interest_change_pct": -7.9,
-    "institutional_long_pct": 75.8,
-    "avg_daily_volume": 898395,
+    "institutional_long_pct": 75.6,
+    "avg_daily_volume": 861076,
     "report_date": "2026-07-14"
   },
   {
@@ -508,8 +508,8 @@
     "short_interest_pct": 0.2,
     "days_to_cover": 1.0,
     "short_interest_change_pct": 91.0,
-    "institutional_long_pct": 68.3,
-    "avg_daily_volume": 2258154,
+    "institutional_long_pct": 65.8,
+    "avg_daily_volume": 2506132,
     "report_date": "2026-07-14"
   },
   {
@@ -517,8 +517,8 @@
     "short_interest_pct": 14.7,
     "days_to_cover": 5.1,
     "short_interest_change_pct": 1.3,
-    "institutional_long_pct": 102.2,
-    "avg_daily_volume": 3425212,
+    "institutional_long_pct": 101.4,
+    "avg_daily_volume": 3466603,
     "report_date": "2026-07-14"
   },
   {
@@ -527,7 +527,7 @@
     "days_to_cover": 9.8,
     "short_interest_change_pct": 44.4,
     "institutional_long_pct": 68.9,
-    "avg_daily_volume": 412353,
+    "avg_daily_volume": 422357,
     "report_date": "2026-07-14"
   },
   {
@@ -535,8 +535,8 @@
     "short_interest_pct": 19.8,
     "days_to_cover": 9.0,
     "short_interest_change_pct": -8.3,
-    "institutional_long_pct": 105.4,
-    "avg_daily_volume": 687250,
+    "institutional_long_pct": 105.9,
+    "avg_daily_volume": 710881,
     "report_date": "2026-07-14"
   },
   {
@@ -544,8 +544,8 @@
     "short_interest_pct": 12.4,
     "days_to_cover": 4.7,
     "short_interest_change_pct": -23.2,
-    "institutional_long_pct": 100.4,
-    "avg_daily_volume": 4936111,
+    "institutional_long_pct": 101.0,
+    "avg_daily_volume": 4882872,
     "report_date": "2026-07-14"
   },
   {
@@ -553,8 +553,8 @@
     "short_interest_pct": 7.7,
     "days_to_cover": 4.8,
     "short_interest_change_pct": 5.6,
-    "institutional_long_pct": 74.2,
-    "avg_daily_volume": 437751,
+    "institutional_long_pct": 71.5,
+    "avg_daily_volume": 432037,
     "report_date": "2026-07-14"
   },
   {
@@ -562,8 +562,8 @@
     "short_interest_pct": 14.7,
     "days_to_cover": 2.8,
     "short_interest_change_pct": 17.4,
-    "institutional_long_pct": 67.3,
-    "avg_daily_volume": 1724959,
+    "institutional_long_pct": 67.0,
+    "avg_daily_volume": 1739722,
     "report_date": "2026-07-14"
   },
   {
@@ -571,8 +571,8 @@
     "short_interest_pct": 35.0,
     "days_to_cover": 8.6,
     "short_interest_change_pct": -18.0,
-    "institutional_long_pct": 106.8,
-    "avg_daily_volume": 2268225,
+    "institutional_long_pct": 106.3,
+    "avg_daily_volume": 2260464,
     "report_date": "2026-07-14"
   },
   {
@@ -580,8 +580,8 @@
     "short_interest_pct": 16.5,
     "days_to_cover": 5.2,
     "short_interest_change_pct": -24.1,
-    "institutional_long_pct": 91.7,
-    "avg_daily_volume": 2900938,
+    "institutional_long_pct": 91.5,
+    "avg_daily_volume": 2923047,
     "report_date": "2026-07-14"
   },
   {
@@ -589,8 +589,8 @@
     "short_interest_pct": 4.5,
     "days_to_cover": 3.9,
     "short_interest_change_pct": 15.6,
-    "institutional_long_pct": 96.4,
-    "avg_daily_volume": 1243848,
+    "institutional_long_pct": 96.5,
+    "avg_daily_volume": 1283645,
     "report_date": "2026-07-14"
   },
   {
@@ -598,8 +598,8 @@
     "short_interest_pct": 6.2,
     "days_to_cover": 3.3,
     "short_interest_change_pct": 23.0,
-    "institutional_long_pct": 85.2,
-    "avg_daily_volume": 554022,
+    "institutional_long_pct": 83.1,
+    "avg_daily_volume": 781255,
     "report_date": "2026-07-14"
   },
   {
@@ -607,8 +607,8 @@
     "short_interest_pct": 6.3,
     "days_to_cover": 6.0,
     "short_interest_change_pct": -0.7,
-    "institutional_long_pct": 23.7,
-    "avg_daily_volume": 201643,
+    "institutional_long_pct": 23.5,
+    "avg_daily_volume": 208113,
     "report_date": "2026-07-14"
   },
   {
@@ -617,7 +617,7 @@
     "days_to_cover": 10.4,
     "short_interest_change_pct": -25.2,
     "institutional_long_pct": 39.1,
-    "avg_daily_volume": 994127,
+    "avg_daily_volume": 934020,
     "report_date": "2026-07-14"
   },
   {
@@ -625,8 +625,8 @@
     "short_interest_pct": 7.4,
     "days_to_cover": 7.7,
     "short_interest_change_pct": 14.4,
-    "institutional_long_pct": 102.2,
-    "avg_daily_volume": 2079922,
+    "institutional_long_pct": 102.3,
+    "avg_daily_volume": 2046105,
     "report_date": "2026-07-14"
   },
   {
@@ -634,8 +634,8 @@
     "short_interest_pct": 3.3,
     "days_to_cover": 2.7,
     "short_interest_change_pct": -17.1,
-    "institutional_long_pct": 20.6,
-    "avg_daily_volume": 930288,
+    "institutional_long_pct": 20.5,
+    "avg_daily_volume": 910210,
     "report_date": "2026-07-14"
   },
   {
@@ -643,8 +643,8 @@
     "short_interest_pct": 18.5,
     "days_to_cover": 6.8,
     "short_interest_change_pct": 13.0,
-    "institutional_long_pct": 92.9,
-    "avg_daily_volume": 2466427,
+    "institutional_long_pct": 92.2,
+    "avg_daily_volume": 2470401,
     "report_date": "2026-07-14"
   },
   {
@@ -652,8 +652,8 @@
     "short_interest_pct": 27.8,
     "days_to_cover": 6.0,
     "short_interest_change_pct": 56.3,
-    "institutional_long_pct": 62.6,
-    "avg_daily_volume": 5012419,
+    "institutional_long_pct": 63.4,
+    "avg_daily_volume": 4433513,
     "report_date": "2026-07-14"
   },
   {
@@ -661,8 +661,8 @@
     "short_interest_pct": 23.0,
     "days_to_cover": 6.3,
     "short_interest_change_pct": -4.8,
-    "institutional_long_pct": 60.2,
-    "avg_daily_volume": 1948667,
+    "institutional_long_pct": 60.4,
+    "avg_daily_volume": 1895005,
     "report_date": "2026-07-14"
   },
   {
@@ -671,7 +671,7 @@
     "days_to_cover": 3.5,
     "short_interest_change_pct": 0.8,
     "institutional_long_pct": 56.9,
-    "avg_daily_volume": 3265974,
+    "avg_daily_volume": 3395786,
     "report_date": "2026-07-14"
   },
   {
@@ -679,8 +679,8 @@
     "short_interest_pct": 29.7,
     "days_to_cover": 9.1,
     "short_interest_change_pct": 33.1,
-    "institutional_long_pct": 59.6,
-    "avg_daily_volume": 2492329,
+    "institutional_long_pct": 62.3,
+    "avg_daily_volume": 2748679,
     "report_date": "2026-07-14"
   },
   {
@@ -688,8 +688,8 @@
     "short_interest_pct": 23.9,
     "days_to_cover": 8.6,
     "short_interest_change_pct": 67.1,
-    "institutional_long_pct": 78.6,
-    "avg_daily_volume": 1748093,
+    "institutional_long_pct": 79.1,
+    "avg_daily_volume": 1671152,
     "report_date": "2026-07-14"
   },
   {
@@ -697,8 +697,8 @@
     "short_interest_pct": 21.7,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 7.1,
-    "institutional_long_pct": 86.9,
-    "avg_daily_volume": 3274061,
+    "institutional_long_pct": 88.0,
+    "avg_daily_volume": 3268386,
     "report_date": "2026-07-14"
   },
   {
@@ -706,8 +706,8 @@
     "short_interest_pct": 12.2,
     "days_to_cover": 6.3,
     "short_interest_change_pct": -26.6,
-    "institutional_long_pct": 101.8,
-    "avg_daily_volume": 904717,
+    "institutional_long_pct": 101.0,
+    "avg_daily_volume": 993044,
     "report_date": "2026-07-14"
   },
   {
@@ -715,8 +715,8 @@
     "short_interest_pct": 4.2,
     "days_to_cover": 4.2,
     "short_interest_change_pct": 15.1,
-    "institutional_long_pct": 72.6,
-    "avg_daily_volume": 1119922,
+    "institutional_long_pct": 71.0,
+    "avg_daily_volume": 1089761,
     "report_date": "2026-07-14"
   },
   {
@@ -724,8 +724,8 @@
     "short_interest_pct": 34.4,
     "days_to_cover": 6.8,
     "short_interest_change_pct": 4.6,
-    "institutional_long_pct": 95.9,
-    "avg_daily_volume": 1672458,
+    "institutional_long_pct": 96.5,
+    "avg_daily_volume": 1607700,
     "report_date": "2026-07-14"
   },
   {
@@ -734,7 +734,7 @@
     "days_to_cover": 4.9,
     "short_interest_change_pct": -30.5,
     "institutional_long_pct": 73.3,
-    "avg_daily_volume": 2909216,
+    "avg_daily_volume": 2635901,
     "report_date": "2026-07-14"
   },
   {
@@ -742,8 +742,8 @@
     "short_interest_pct": 23.8,
     "days_to_cover": 8.7,
     "short_interest_change_pct": 25.7,
-    "institutional_long_pct": 107.8,
-    "avg_daily_volume": 1052991,
+    "institutional_long_pct": 107.9,
+    "avg_daily_volume": 1028444,
     "report_date": "2026-07-14"
   },
   {
@@ -751,8 +751,8 @@
     "short_interest_pct": 14.0,
     "days_to_cover": 9.4,
     "short_interest_change_pct": 14.6,
-    "institutional_long_pct": 109.7,
-    "avg_daily_volume": 1055366,
+    "institutional_long_pct": 109.3,
+    "avg_daily_volume": 1069798,
     "report_date": "2026-07-14"
   },
   {
@@ -760,8 +760,8 @@
     "short_interest_pct": 16.0,
     "days_to_cover": 22.2,
     "short_interest_change_pct": -6.8,
-    "institutional_long_pct": 38.7,
-    "avg_daily_volume": 1035325,
+    "institutional_long_pct": 38.5,
+    "avg_daily_volume": 1029522,
     "report_date": "2026-07-14"
   },
   {
@@ -769,8 +769,8 @@
     "short_interest_pct": 11.6,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 5.0,
-    "institutional_long_pct": 96.2,
-    "avg_daily_volume": 986875,
+    "institutional_long_pct": 96.6,
+    "avg_daily_volume": 1028094,
     "report_date": "2026-07-14"
   },
   {
@@ -779,7 +779,7 @@
     "days_to_cover": 11.1,
     "short_interest_change_pct": -22.0,
     "institutional_long_pct": 16.5,
-    "avg_daily_volume": 31448,
+    "avg_daily_volume": 32152,
     "report_date": "2026-07-14"
   },
   {
@@ -787,8 +787,8 @@
     "short_interest_pct": 16.9,
     "days_to_cover": 4.5,
     "short_interest_change_pct": 128.9,
-    "institutional_long_pct": 64.8,
-    "avg_daily_volume": 1246422,
+    "institutional_long_pct": 65.0,
+    "avg_daily_volume": 1222276,
     "report_date": "2026-07-14"
   },
   {
@@ -796,8 +796,8 @@
     "short_interest_pct": 9.6,
     "days_to_cover": 3.1,
     "short_interest_change_pct": 53.7,
-    "institutional_long_pct": 73.0,
-    "avg_daily_volume": 4063791,
+    "institutional_long_pct": 71.1,
+    "avg_daily_volume": 4049332,
     "report_date": "2026-07-14"
   },
   {
@@ -805,8 +805,8 @@
     "short_interest_pct": 26.1,
     "days_to_cover": 11.9,
     "short_interest_change_pct": 20.9,
-    "institutional_long_pct": 94.1,
-    "avg_daily_volume": 4218919,
+    "institutional_long_pct": 94.5,
+    "avg_daily_volume": 3651742,
     "report_date": "2026-07-14"
   },
   {
@@ -823,8 +823,8 @@
     "short_interest_pct": 8.3,
     "days_to_cover": 1.3,
     "short_interest_change_pct": 675.7,
-    "institutional_long_pct": 82.5,
-    "avg_daily_volume": 2322374,
+    "institutional_long_pct": 80.1,
+    "avg_daily_volume": 2431705,
     "report_date": "2026-07-14"
   },
   {
@@ -832,8 +832,8 @@
     "short_interest_pct": 9.8,
     "days_to_cover": 5.0,
     "short_interest_change_pct": 23.1,
-    "institutional_long_pct": 113.3,
-    "avg_daily_volume": 2444341,
+    "institutional_long_pct": 117.3,
+    "avg_daily_volume": 2466052,
     "report_date": "2026-07-14"
   },
   {
@@ -841,8 +841,8 @@
     "short_interest_pct": 19.3,
     "days_to_cover": 10.8,
     "short_interest_change_pct": -1.8,
-    "institutional_long_pct": 128.6,
-    "avg_daily_volume": 426504,
+    "institutional_long_pct": 128.1,
+    "avg_daily_volume": 408615,
     "report_date": "2026-07-14"
   },
   {
@@ -859,8 +859,8 @@
     "short_interest_pct": 12.2,
     "days_to_cover": 4.2,
     "short_interest_change_pct": 53.9,
-    "institutional_long_pct": 38.4,
-    "avg_daily_volume": 2000846,
+    "institutional_long_pct": 37.3,
+    "avg_daily_volume": 2042888,
     "report_date": "2026-07-14"
   },
   {
@@ -868,8 +868,8 @@
     "short_interest_pct": 8.0,
     "days_to_cover": 3.6,
     "short_interest_change_pct": -7.5,
-    "institutional_long_pct": 123.7,
-    "avg_daily_volume": 902133,
+    "institutional_long_pct": 124.8,
+    "avg_daily_volume": 881811,
     "report_date": "2026-07-14"
   },
   {
@@ -877,8 +877,8 @@
     "short_interest_pct": 19.8,
     "days_to_cover": 10.8,
     "short_interest_change_pct": 5.8,
-    "institutional_long_pct": 54.6,
-    "avg_daily_volume": 1310519,
+    "institutional_long_pct": 54.4,
+    "avg_daily_volume": 1322055,
     "report_date": "2026-07-14"
   },
   {
@@ -886,8 +886,8 @@
     "short_interest_pct": 6.9,
     "days_to_cover": 0.8,
     "short_interest_change_pct": -51.7,
-    "institutional_long_pct": 121.9,
-    "avg_daily_volume": 3714779,
+    "institutional_long_pct": 121.6,
+    "avg_daily_volume": 3854067,
     "report_date": "2026-07-14"
   },
   {
@@ -895,8 +895,8 @@
     "short_interest_pct": 23.0,
     "days_to_cover": 11.3,
     "short_interest_change_pct": -25.5,
-    "institutional_long_pct": 79.4,
-    "avg_daily_volume": 1722182,
+    "institutional_long_pct": 79.5,
+    "avg_daily_volume": 1683362,
     "report_date": "2026-07-14"
   },
   {
@@ -904,8 +904,8 @@
     "short_interest_pct": 24.4,
     "days_to_cover": 12.4,
     "short_interest_change_pct": 1.0,
-    "institutional_long_pct": 85.7,
-    "avg_daily_volume": 1448356,
+    "institutional_long_pct": 85.9,
+    "avg_daily_volume": 1447762,
     "report_date": "2026-07-14"
   },
   {
@@ -913,8 +913,8 @@
     "short_interest_pct": 4.8,
     "days_to_cover": 4.0,
     "short_interest_change_pct": -4.3,
-    "institutional_long_pct": 92.6,
-    "avg_daily_volume": 408346,
+    "institutional_long_pct": 91.5,
+    "avg_daily_volume": 413184,
     "report_date": "2026-07-14"
   },
   {
@@ -922,8 +922,8 @@
     "short_interest_pct": 4.9,
     "days_to_cover": 2.3,
     "short_interest_change_pct": -28.6,
-    "institutional_long_pct": 66.2,
-    "avg_daily_volume": 1387561,
+    "institutional_long_pct": 66.0,
+    "avg_daily_volume": 1429905,
     "report_date": "2026-07-14"
   },
   {
@@ -931,8 +931,8 @@
     "short_interest_pct": 21.0,
     "days_to_cover": 6.8,
     "short_interest_change_pct": 31.7,
-    "institutional_long_pct": 96.4,
-    "avg_daily_volume": 4131225,
+    "institutional_long_pct": 96.6,
+    "avg_daily_volume": 4234276,
     "report_date": "2026-07-14"
   },
   {
@@ -940,8 +940,8 @@
     "short_interest_pct": 7.5,
     "days_to_cover": 4.6,
     "short_interest_change_pct": 47.7,
-    "institutional_long_pct": 92.5,
-    "avg_daily_volume": 306069,
+    "institutional_long_pct": 92.1,
+    "avg_daily_volume": 308284,
     "report_date": "2026-07-14"
   },
   {
@@ -949,8 +949,8 @@
     "short_interest_pct": 19.4,
     "days_to_cover": 6.6,
     "short_interest_change_pct": 15.5,
-    "institutional_long_pct": 119.5,
-    "avg_daily_volume": 2596172,
+    "institutional_long_pct": 120.4,
+    "avg_daily_volume": 2184437,
     "report_date": "2026-07-14"
   },
   {
@@ -960,15 +960,15 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   },
   {
     "ticker": "DFTX",
     "short_interest_pct": 8.1,
     "days_to_cover": 2.3,
     "short_interest_change_pct": 0.1,
-    "institutional_long_pct": 74.4,
-    "avg_daily_volume": 2786672,
+    "institutional_long_pct": 76.3,
+    "avg_daily_volume": 2878045,
     "report_date": "2026-07-14"
   },
   {
@@ -976,8 +976,8 @@
     "short_interest_pct": 8.9,
     "days_to_cover": 4.8,
     "short_interest_change_pct": 257.8,
-    "institutional_long_pct": 94.2,
-    "avg_daily_volume": 589956,
+    "institutional_long_pct": 95.1,
+    "avg_daily_volume": 583774,
     "report_date": "2026-07-14"
   },
   {
@@ -985,8 +985,8 @@
     "short_interest_pct": 10.1,
     "days_to_cover": 4.6,
     "short_interest_change_pct": 6.1,
-    "institutional_long_pct": 69.8,
-    "avg_daily_volume": 1211237,
+    "institutional_long_pct": 70.4,
+    "avg_daily_volume": 1143557,
     "report_date": "2026-07-14"
   },
   {
@@ -994,8 +994,8 @@
     "short_interest_pct": 10.7,
     "days_to_cover": 7.7,
     "short_interest_change_pct": 4.1,
-    "institutional_long_pct": 105.4,
-    "avg_daily_volume": 1891200,
+    "institutional_long_pct": 105.2,
+    "avg_daily_volume": 1864459,
     "report_date": "2026-07-14"
   },
   {
@@ -1003,8 +1003,8 @@
     "short_interest_pct": 19.4,
     "days_to_cover": 6.7,
     "short_interest_change_pct": 32.1,
-    "institutional_long_pct": 121.7,
-    "avg_daily_volume": 1006103,
+    "institutional_long_pct": 121.2,
+    "avg_daily_volume": 1044598,
     "report_date": "2026-07-14"
   },
   {
@@ -1013,7 +1013,7 @@
     "days_to_cover": 0.7,
     "short_interest_change_pct": -30.2,
     "institutional_long_pct": 7.4,
-    "avg_daily_volume": 66598,
+    "avg_daily_volume": 70610,
     "report_date": "2026-07-14"
   },
   {
@@ -1021,8 +1021,8 @@
     "short_interest_pct": 12.6,
     "days_to_cover": 3.0,
     "short_interest_change_pct": 16.9,
-    "institutional_long_pct": 93.0,
-    "avg_daily_volume": 318929,
+    "institutional_long_pct": 93.3,
+    "avg_daily_volume": 325289,
     "report_date": "2026-07-14"
   },
   {
@@ -1030,8 +1030,8 @@
     "short_interest_pct": 12.0,
     "days_to_cover": 5.7,
     "short_interest_change_pct": 22.4,
-    "institutional_long_pct": 62.3,
-    "avg_daily_volume": 944593,
+    "institutional_long_pct": 62.2,
+    "avg_daily_volume": 964464,
     "report_date": "2026-07-14"
   },
   {
@@ -1039,8 +1039,8 @@
     "short_interest_pct": 17.2,
     "days_to_cover": 8.9,
     "short_interest_change_pct": -5.8,
-    "institutional_long_pct": 102.5,
-    "avg_daily_volume": 2103909,
+    "institutional_long_pct": 102.7,
+    "avg_daily_volume": 2156774,
     "report_date": "2026-07-14"
   },
   {
@@ -1048,8 +1048,8 @@
     "short_interest_pct": 20.3,
     "days_to_cover": 10.2,
     "short_interest_change_pct": 5.8,
-    "institutional_long_pct": 87.6,
-    "avg_daily_volume": 836419,
+    "institutional_long_pct": 90.9,
+    "avg_daily_volume": 811583,
     "report_date": "2026-07-14"
   },
   {
@@ -1057,8 +1057,8 @@
     "short_interest_pct": 14.5,
     "days_to_cover": 7.5,
     "short_interest_change_pct": 20.5,
-    "institutional_long_pct": 49.4,
-    "avg_daily_volume": 2484435,
+    "institutional_long_pct": 49.6,
+    "avg_daily_volume": 2545676,
     "report_date": "2026-07-14"
   },
   {
@@ -1066,8 +1066,8 @@
     "short_interest_pct": 7.2,
     "days_to_cover": 2.9,
     "short_interest_change_pct": -26.4,
-    "institutional_long_pct": 59.9,
-    "avg_daily_volume": 1348580,
+    "institutional_long_pct": 60.9,
+    "avg_daily_volume": 1349272,
     "report_date": "2026-07-14"
   },
   {
@@ -1075,8 +1075,8 @@
     "short_interest_pct": 17.6,
     "days_to_cover": 4.5,
     "short_interest_change_pct": 59.4,
-    "institutional_long_pct": 91.0,
-    "avg_daily_volume": 1308519,
+    "institutional_long_pct": 91.1,
+    "avg_daily_volume": 1394394,
     "report_date": "2026-07-14"
   },
   {
@@ -1084,8 +1084,8 @@
     "short_interest_pct": 3.0,
     "days_to_cover": 1.3,
     "short_interest_change_pct": 18.0,
-    "institutional_long_pct": 106.9,
-    "avg_daily_volume": 1935033,
+    "institutional_long_pct": 107.0,
+    "avg_daily_volume": 1614601,
     "report_date": "2026-07-14"
   },
   {
@@ -1094,7 +1094,7 @@
     "days_to_cover": 9.7,
     "short_interest_change_pct": 0.6,
     "institutional_long_pct": 92.9,
-    "avg_daily_volume": 216582,
+    "avg_daily_volume": 213738,
     "report_date": "2026-07-14"
   },
   {
@@ -1102,8 +1102,8 @@
     "short_interest_pct": 9.1,
     "days_to_cover": 7.1,
     "short_interest_change_pct": 0.2,
-    "institutional_long_pct": 70.6,
-    "avg_daily_volume": 829830,
+    "institutional_long_pct": 71.0,
+    "avg_daily_volume": 740789,
     "report_date": "2026-07-14"
   },
   {
@@ -1111,8 +1111,8 @@
     "short_interest_pct": null,
     "days_to_cover": 14.3,
     "short_interest_change_pct": 18.8,
-    "institutional_long_pct": 41.1,
-    "avg_daily_volume": 347114,
+    "institutional_long_pct": 41.6,
+    "avg_daily_volume": 357040,
     "report_date": "2026-07-14"
   },
   {
@@ -1120,8 +1120,8 @@
     "short_interest_pct": 9.8,
     "days_to_cover": 5.0,
     "short_interest_change_pct": -2.3,
-    "institutional_long_pct": 85.4,
-    "avg_daily_volume": 5270345,
+    "institutional_long_pct": 86.5,
+    "avg_daily_volume": 5108727,
     "report_date": "2026-07-14"
   },
   {
@@ -1138,8 +1138,8 @@
     "short_interest_pct": 6.3,
     "days_to_cover": 2.8,
     "short_interest_change_pct": -14.0,
-    "institutional_long_pct": 65.8,
-    "avg_daily_volume": 475391,
+    "institutional_long_pct": 66.2,
+    "avg_daily_volume": 460094,
     "report_date": "2026-07-14"
   },
   {
@@ -1147,8 +1147,8 @@
     "short_interest_pct": 13.2,
     "days_to_cover": 6.1,
     "short_interest_change_pct": 1.4,
-    "institutional_long_pct": 113.2,
-    "avg_daily_volume": 1417820,
+    "institutional_long_pct": 113.1,
+    "avg_daily_volume": 1345540,
     "report_date": "2026-07-14"
   },
   {
@@ -1156,8 +1156,8 @@
     "short_interest_pct": 16.7,
     "days_to_cover": 10.8,
     "short_interest_change_pct": 0.9,
-    "institutional_long_pct": 106.5,
-    "avg_daily_volume": 2672967,
+    "institutional_long_pct": 108.5,
+    "avg_daily_volume": 2585232,
     "report_date": "2026-07-14"
   },
   {
@@ -1165,8 +1165,8 @@
     "short_interest_pct": 20.6,
     "days_to_cover": 10.4,
     "short_interest_change_pct": 8.9,
-    "institutional_long_pct": 111.9,
-    "avg_daily_volume": 1269914,
+    "institutional_long_pct": 110.1,
+    "avg_daily_volume": 1303279,
     "report_date": "2026-07-14"
   },
   {
@@ -1174,8 +1174,8 @@
     "short_interest_pct": 7.1,
     "days_to_cover": 1.5,
     "short_interest_change_pct": -32.4,
-    "institutional_long_pct": 73.5,
-    "avg_daily_volume": 4169509,
+    "institutional_long_pct": 73.2,
+    "avg_daily_volume": 3838420,
     "report_date": "2026-07-14"
   },
   {
@@ -1183,8 +1183,8 @@
     "short_interest_pct": 25.1,
     "days_to_cover": 10.3,
     "short_interest_change_pct": -12.1,
-    "institutional_long_pct": 101.4,
-    "avg_daily_volume": 859572,
+    "institutional_long_pct": 101.7,
+    "avg_daily_volume": 866733,
     "report_date": "2026-07-14"
   },
   {
@@ -1192,8 +1192,8 @@
     "short_interest_pct": 4.8,
     "days_to_cover": 4.0,
     "short_interest_change_pct": 10.1,
-    "institutional_long_pct": 76.7,
-    "avg_daily_volume": 246214,
+    "institutional_long_pct": 76.8,
+    "avg_daily_volume": 255383,
     "report_date": "2026-07-14"
   },
   {
@@ -1201,8 +1201,8 @@
     "short_interest_pct": 15.3,
     "days_to_cover": 9.6,
     "short_interest_change_pct": 0.9,
-    "institutional_long_pct": 63.4,
-    "avg_daily_volume": 415896,
+    "institutional_long_pct": 65.8,
+    "avg_daily_volume": 389467,
     "report_date": "2026-07-14"
   },
   {
@@ -1212,24 +1212,24 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   },
   {
     "ticker": "FTRE",
-    "short_interest_pct": 12.8,
+    "short_interest_pct": 12.7,
     "days_to_cover": 7.2,
     "short_interest_change_pct": 4.0,
-    "institutional_long_pct": 110.4,
-    "avg_daily_volume": 1477367,
+    "institutional_long_pct": 111.1,
+    "avg_daily_volume": 1433323,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "FULC",
-    "short_interest_pct": 10.5,
+    "short_interest_pct": 9.2,
     "days_to_cover": 2.2,
     "short_interest_change_pct": 25.1,
-    "institutional_long_pct": 134.0,
-    "avg_daily_volume": 2470648,
+    "institutional_long_pct": 120.3,
+    "avg_daily_volume": 2641808,
     "report_date": "2026-07-14"
   },
   {
@@ -1237,8 +1237,8 @@
     "short_interest_pct": 9.4,
     "days_to_cover": 6.4,
     "short_interest_change_pct": 53.6,
-    "institutional_long_pct": 76.1,
-    "avg_daily_volume": 813682,
+    "institutional_long_pct": 76.2,
+    "avg_daily_volume": 842379,
     "report_date": "2026-07-14"
   },
   {
@@ -1246,17 +1246,17 @@
     "short_interest_pct": 10.9,
     "days_to_cover": 5.2,
     "short_interest_change_pct": -6.6,
-    "institutional_long_pct": 79.9,
-    "avg_daily_volume": 12592595,
+    "institutional_long_pct": 80.5,
+    "avg_daily_volume": 12648250,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "GH",
-    "short_interest_pct": 9.0,
+    "short_interest_pct": 8.9,
     "days_to_cover": 3.3,
     "short_interest_change_pct": -12.7,
-    "institutional_long_pct": 106.2,
-    "avg_daily_volume": 2629738,
+    "institutional_long_pct": 101.4,
+    "avg_daily_volume": 2739657,
     "report_date": "2026-07-14"
   },
   {
@@ -1264,8 +1264,8 @@
     "short_interest_pct": 7.2,
     "days_to_cover": 8.1,
     "short_interest_change_pct": -4.0,
-    "institutional_long_pct": 70.2,
-    "avg_daily_volume": 262530,
+    "institutional_long_pct": 69.7,
+    "avg_daily_volume": 265122,
     "report_date": "2026-07-14"
   },
   {
@@ -1273,8 +1273,8 @@
     "short_interest_pct": 2.0,
     "days_to_cover": 3.1,
     "short_interest_change_pct": 5.9,
-    "institutional_long_pct": 92.1,
-    "avg_daily_volume": 7569472,
+    "institutional_long_pct": 91.9,
+    "avg_daily_volume": 7636613,
     "report_date": "2026-07-14"
   },
   {
@@ -1284,7 +1284,7 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   },
   {
     "ticker": "GLUE",
@@ -1292,7 +1292,7 @@
     "days_to_cover": 9.9,
     "short_interest_change_pct": 0.1,
     "institutional_long_pct": 113.5,
-    "avg_daily_volume": 1199466,
+    "avg_daily_volume": 1362620,
     "report_date": "2026-07-14"
   },
   {
@@ -1300,8 +1300,8 @@
     "short_interest_pct": 1.2,
     "days_to_cover": 3.6,
     "short_interest_change_pct": -12.0,
-    "institutional_long_pct": 13.6,
-    "avg_daily_volume": 1969759,
+    "institutional_long_pct": 13.5,
+    "avg_daily_volume": 1999093,
     "report_date": "2026-07-14"
   },
   {
@@ -1309,8 +1309,8 @@
     "short_interest_pct": 15.2,
     "days_to_cover": 4.0,
     "short_interest_change_pct": 30.2,
-    "institutional_long_pct": 68.3,
-    "avg_daily_volume": 24883964,
+    "institutional_long_pct": 76.0,
+    "avg_daily_volume": 26569413,
     "report_date": "2026-07-14"
   },
   {
@@ -1318,8 +1318,8 @@
     "short_interest_pct": 12.0,
     "days_to_cover": 7.3,
     "short_interest_change_pct": 5.3,
-    "institutional_long_pct": 96.1,
-    "avg_daily_volume": 752370,
+    "institutional_long_pct": 96.4,
+    "avg_daily_volume": 722061,
     "report_date": "2026-07-14"
   },
   {
@@ -1327,8 +1327,8 @@
     "short_interest_pct": 18.3,
     "days_to_cover": 12.7,
     "short_interest_change_pct": 8.9,
-    "institutional_long_pct": 83.1,
-    "avg_daily_volume": 671804,
+    "institutional_long_pct": 80.1,
+    "avg_daily_volume": 660544,
     "report_date": "2026-07-14"
   },
   {
@@ -1337,7 +1337,7 @@
     "days_to_cover": 8.9,
     "short_interest_change_pct": 1.8,
     "institutional_long_pct": 58.2,
-    "avg_daily_volume": 704729,
+    "avg_daily_volume": 717630,
     "report_date": "2026-07-14"
   },
   {
@@ -1345,8 +1345,8 @@
     "short_interest_pct": 14.5,
     "days_to_cover": 6.7,
     "short_interest_change_pct": 2.7,
-    "institutional_long_pct": 108.4,
-    "avg_daily_volume": 1855833,
+    "institutional_long_pct": 108.9,
+    "avg_daily_volume": 1899537,
     "report_date": "2026-07-14"
   },
   {
@@ -1354,8 +1354,8 @@
     "short_interest_pct": 2.3,
     "days_to_cover": 0.9,
     "short_interest_change_pct": -3.1,
-    "institutional_long_pct": 26.7,
-    "avg_daily_volume": 753051,
+    "institutional_long_pct": 26.8,
+    "avg_daily_volume": 820857,
     "report_date": "2026-07-14"
   },
   {
@@ -1363,8 +1363,8 @@
     "short_interest_pct": 11.8,
     "days_to_cover": 6.4,
     "short_interest_change_pct": 10.1,
-    "institutional_long_pct": 103.0,
-    "avg_daily_volume": 827198,
+    "institutional_long_pct": 102.4,
+    "avg_daily_volume": 813691,
     "report_date": "2026-07-14"
   },
   {
@@ -1372,8 +1372,8 @@
     "short_interest_pct": 20.4,
     "days_to_cover": 9.3,
     "short_interest_change_pct": -6.3,
-    "institutional_long_pct": 58.4,
-    "avg_daily_volume": 825803,
+    "institutional_long_pct": 57.7,
+    "avg_daily_volume": 836040,
     "report_date": "2026-07-14"
   },
   {
@@ -1381,8 +1381,8 @@
     "short_interest_pct": 28.7,
     "days_to_cover": 12.2,
     "short_interest_change_pct": 1.8,
-    "institutional_long_pct": 81.4,
-    "avg_daily_volume": 3329127,
+    "institutional_long_pct": 82.1,
+    "avg_daily_volume": 3334533,
     "report_date": "2026-07-14"
   },
   {
@@ -1390,8 +1390,8 @@
     "short_interest_pct": 12.0,
     "days_to_cover": 1.9,
     "short_interest_change_pct": -12.0,
-    "institutional_long_pct": 22.3,
-    "avg_daily_volume": 10533972,
+    "institutional_long_pct": 24.2,
+    "avg_daily_volume": 10714947,
     "report_date": "2026-07-14"
   },
   {
@@ -1399,8 +1399,8 @@
     "short_interest_pct": 34.6,
     "days_to_cover": 10.2,
     "short_interest_change_pct": -0.6,
-    "institutional_long_pct": 17.6,
-    "avg_daily_volume": 12711090,
+    "institutional_long_pct": 17.5,
+    "avg_daily_volume": 12522227,
     "report_date": "2026-07-14"
   },
   {
@@ -1408,8 +1408,8 @@
     "short_interest_pct": 11.6,
     "days_to_cover": 6.7,
     "short_interest_change_pct": -9.9,
-    "institutional_long_pct": 102.0,
-    "avg_daily_volume": 1116543,
+    "institutional_long_pct": 102.2,
+    "avg_daily_volume": 1113962,
     "report_date": "2026-07-14"
   },
   {
@@ -1417,8 +1417,8 @@
     "short_interest_pct": 17.1,
     "days_to_cover": 16.9,
     "short_interest_change_pct": -3.4,
-    "institutional_long_pct": 94.5,
-    "avg_daily_volume": 859825,
+    "institutional_long_pct": 80.5,
+    "avg_daily_volume": 861955,
     "report_date": "2026-07-14"
   },
   {
@@ -1426,8 +1426,8 @@
     "short_interest_pct": 9.5,
     "days_to_cover": 4.2,
     "short_interest_change_pct": -4.9,
-    "institutional_long_pct": 107.4,
-    "avg_daily_volume": 1893500,
+    "institutional_long_pct": 108.1,
+    "avg_daily_volume": 1957808,
     "report_date": "2026-07-14"
   },
   {
@@ -1435,8 +1435,8 @@
     "short_interest_pct": 19.6,
     "days_to_cover": 12.7,
     "short_interest_change_pct": -1.1,
-    "institutional_long_pct": 104.5,
-    "avg_daily_volume": 503353,
+    "institutional_long_pct": 104.0,
+    "avg_daily_volume": 520386,
     "report_date": "2026-07-14"
   },
   {
@@ -1444,8 +1444,8 @@
     "short_interest_pct": 1.5,
     "days_to_cover": 5.3,
     "short_interest_change_pct": -51.6,
-    "institutional_long_pct": 1.8,
-    "avg_daily_volume": 657329,
+    "institutional_long_pct": 1.5,
+    "avg_daily_volume": 588903,
     "report_date": "2026-07-14"
   },
   {
@@ -1453,8 +1453,8 @@
     "short_interest_pct": 17.8,
     "days_to_cover": 9.3,
     "short_interest_change_pct": -5.0,
-    "institutional_long_pct": 108.0,
-    "avg_daily_volume": 1345004,
+    "institutional_long_pct": 108.1,
+    "avg_daily_volume": 1393133,
     "report_date": "2026-07-14"
   },
   {
@@ -1462,8 +1462,8 @@
     "short_interest_pct": 31.0,
     "days_to_cover": 10.6,
     "short_interest_change_pct": 8.4,
-    "institutional_long_pct": 48.5,
-    "avg_daily_volume": 1515420,
+    "institutional_long_pct": 50.0,
+    "avg_daily_volume": 1544350,
     "report_date": "2026-07-14"
   },
   {
@@ -1471,8 +1471,8 @@
     "short_interest_pct": 5.3,
     "days_to_cover": 13.1,
     "short_interest_change_pct": -10.5,
-    "institutional_long_pct": 79.7,
-    "avg_daily_volume": 498838,
+    "institutional_long_pct": 79.6,
+    "avg_daily_volume": 483520,
     "report_date": "2026-07-14"
   },
   {
@@ -1481,7 +1481,7 @@
     "days_to_cover": 11.2,
     "short_interest_change_pct": -8.2,
     "institutional_long_pct": 54.0,
-    "avg_daily_volume": 1734119,
+    "avg_daily_volume": 1752811,
     "report_date": "2026-07-14"
   },
   {
@@ -1489,17 +1489,17 @@
     "short_interest_pct": 31.3,
     "days_to_cover": 9.3,
     "short_interest_change_pct": 4.1,
-    "institutional_long_pct": 82.2,
-    "avg_daily_volume": 384119,
+    "institutional_long_pct": 88.4,
+    "avg_daily_volume": 365427,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "INCY",
-    "short_interest_pct": 9.1,
+    "short_interest_pct": 9.0,
     "days_to_cover": 5.3,
     "short_interest_change_pct": -0.5,
-    "institutional_long_pct": 105.1,
-    "avg_daily_volume": 1824096,
+    "institutional_long_pct": 105.2,
+    "avg_daily_volume": 1879364,
     "report_date": "2026-07-14"
   },
   {
@@ -1507,8 +1507,8 @@
     "short_interest_pct": 11.3,
     "days_to_cover": 6.0,
     "short_interest_change_pct": -4.8,
-    "institutional_long_pct": 109.7,
-    "avg_daily_volume": 1906064,
+    "institutional_long_pct": 114.2,
+    "avg_daily_volume": 1853294,
     "report_date": "2026-07-14"
   },
   {
@@ -1516,8 +1516,8 @@
     "short_interest_pct": 6.1,
     "days_to_cover": 2.8,
     "short_interest_change_pct": -37.7,
-    "institutional_long_pct": 105.8,
-    "avg_daily_volume": 3895651,
+    "institutional_long_pct": 106.1,
+    "avg_daily_volume": 3852152,
     "report_date": "2026-07-14"
   },
   {
@@ -1525,17 +1525,17 @@
     "short_interest_pct": 12.8,
     "days_to_cover": 7.4,
     "short_interest_change_pct": 6.3,
-    "institutional_long_pct": 108.1,
-    "avg_daily_volume": 837274,
+    "institutional_long_pct": 111.8,
+    "avg_daily_volume": 847196,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "IONS",
-    "short_interest_pct": 16.1,
+    "short_interest_pct": 16.0,
     "days_to_cover": 5.2,
     "short_interest_change_pct": 12.9,
-    "institutional_long_pct": 106.8,
-    "avg_daily_volume": 2749738,
+    "institutional_long_pct": 106.9,
+    "avg_daily_volume": 2851189,
     "report_date": "2026-07-14"
   },
   {
@@ -1543,17 +1543,17 @@
     "short_interest_pct": 23.9,
     "days_to_cover": 6.4,
     "short_interest_change_pct": -3.5,
-    "institutional_long_pct": 67.8,
-    "avg_daily_volume": 15255354,
+    "institutional_long_pct": 68.9,
+    "avg_daily_volume": 14746100,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "IRON",
-    "short_interest_pct": 22.3,
+    "short_interest_pct": 22.2,
     "days_to_cover": 8.8,
     "short_interest_change_pct": 21.3,
-    "institutional_long_pct": 113.0,
-    "avg_daily_volume": 569540,
+    "institutional_long_pct": 112.3,
+    "avg_daily_volume": 576891,
     "report_date": "2026-07-14"
   },
   {
@@ -1561,8 +1561,8 @@
     "short_interest_pct": 11.4,
     "days_to_cover": 6.2,
     "short_interest_change_pct": 8.1,
-    "institutional_long_pct": 98.9,
-    "avg_daily_volume": 2426372,
+    "institutional_long_pct": 98.8,
+    "avg_daily_volume": 2375876,
     "report_date": "2026-07-14"
   },
   {
@@ -1570,8 +1570,8 @@
     "short_interest_pct": 11.0,
     "days_to_cover": 4.9,
     "short_interest_change_pct": -14.9,
-    "institutional_long_pct": 84.6,
-    "avg_daily_volume": 4449303,
+    "institutional_long_pct": 84.9,
+    "avg_daily_volume": 4577884,
     "report_date": "2026-07-14"
   },
   {
@@ -1580,7 +1580,7 @@
     "days_to_cover": 4.4,
     "short_interest_change_pct": -15.3,
     "institutional_long_pct": 102.8,
-    "avg_daily_volume": 1072520,
+    "avg_daily_volume": 1074337,
     "report_date": "2026-07-14"
   },
   {
@@ -1588,8 +1588,8 @@
     "short_interest_pct": 6.2,
     "days_to_cover": 4.4,
     "short_interest_change_pct": -3.5,
-    "institutional_long_pct": 107.8,
-    "avg_daily_volume": 870772,
+    "institutional_long_pct": 103.9,
+    "avg_daily_volume": 848113,
     "report_date": "2026-07-14"
   },
   {
@@ -1597,8 +1597,8 @@
     "short_interest_pct": 15.3,
     "days_to_cover": 5.4,
     "short_interest_change_pct": 52.2,
-    "institutional_long_pct": 97.4,
-    "avg_daily_volume": 1040500,
+    "institutional_long_pct": 100.4,
+    "avg_daily_volume": 1072811,
     "report_date": "2026-07-14"
   },
   {
@@ -1607,7 +1607,7 @@
     "days_to_cover": 1.2,
     "short_interest_change_pct": 295.5,
     "institutional_long_pct": 0.6,
-    "avg_daily_volume": 139128,
+    "avg_daily_volume": 142746,
     "report_date": "2026-07-14"
   },
   {
@@ -1624,8 +1624,8 @@
     "short_interest_pct": 2.2,
     "days_to_cover": 1.9,
     "short_interest_change_pct": null,
-    "institutional_long_pct": 34.9,
-    "avg_daily_volume": 626303,
+    "institutional_long_pct": 40.9,
+    "avg_daily_volume": 602209,
     "report_date": "2026-07-14"
   },
   {
@@ -1633,8 +1633,8 @@
     "short_interest_pct": 5.0,
     "days_to_cover": 5.5,
     "short_interest_change_pct": 146.7,
-    "institutional_long_pct": 47.1,
-    "avg_daily_volume": 699174,
+    "institutional_long_pct": 49.4,
+    "avg_daily_volume": 705135,
     "report_date": "2026-07-14"
   },
   {
@@ -1642,17 +1642,17 @@
     "short_interest_pct": 0.4,
     "days_to_cover": 3.7,
     "short_interest_change_pct": 16.4,
-    "institutional_long_pct": 48.5,
-    "avg_daily_volume": 44314,
+    "institutional_long_pct": 48.3,
+    "avg_daily_volume": 44435,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "KNSA",
-    "short_interest_pct": 11.9,
+    "short_interest_pct": 11.3,
     "days_to_cover": 4.3,
     "short_interest_change_pct": 53.1,
-    "institutional_long_pct": 98.8,
-    "avg_daily_volume": 771619,
+    "institutional_long_pct": 99.2,
+    "avg_daily_volume": 777083,
     "report_date": "2026-07-14"
   },
   {
@@ -1660,8 +1660,8 @@
     "short_interest_pct": 26.4,
     "days_to_cover": 11.7,
     "short_interest_change_pct": -0.6,
-    "institutional_long_pct": 99.7,
-    "avg_daily_volume": 727103,
+    "institutional_long_pct": 99.6,
+    "avg_daily_volume": 727755,
     "report_date": "2026-07-14"
   },
   {
@@ -1669,8 +1669,8 @@
     "short_interest_pct": 6.2,
     "days_to_cover": 3.2,
     "short_interest_change_pct": -24.8,
-    "institutional_long_pct": 95.0,
-    "avg_daily_volume": 290924,
+    "institutional_long_pct": 94.5,
+    "avg_daily_volume": 286481,
     "report_date": "2026-07-14"
   },
   {
@@ -1679,7 +1679,7 @@
     "days_to_cover": 8.8,
     "short_interest_change_pct": 11.4,
     "institutional_long_pct": 99.5,
-    "avg_daily_volume": 423727,
+    "avg_daily_volume": 435801,
     "report_date": "2026-07-14"
   },
   {
@@ -1687,8 +1687,8 @@
     "short_interest_pct": 15.9,
     "days_to_cover": 7.7,
     "short_interest_change_pct": -6.0,
-    "institutional_long_pct": 97.3,
-    "avg_daily_volume": 1757574,
+    "institutional_long_pct": 98.3,
+    "avg_daily_volume": 1795588,
     "report_date": "2026-07-14"
   },
   {
@@ -1696,8 +1696,8 @@
     "short_interest_pct": 15.5,
     "days_to_cover": 7.8,
     "short_interest_change_pct": -0.6,
-    "institutional_long_pct": 115.7,
-    "avg_daily_volume": 796437,
+    "institutional_long_pct": 114.7,
+    "avg_daily_volume": 810715,
     "report_date": "2026-07-14"
   },
   {
@@ -1705,8 +1705,8 @@
     "short_interest_pct": 2.5,
     "days_to_cover": 5.9,
     "short_interest_change_pct": -14.8,
-    "institutional_long_pct": 25.6,
-    "avg_daily_volume": 18248,
+    "institutional_long_pct": 26.0,
+    "avg_daily_volume": 18730,
     "report_date": "2026-07-14"
   },
   {
@@ -1714,8 +1714,8 @@
     "short_interest_pct": 15.2,
     "days_to_cover": 5.5,
     "short_interest_change_pct": 29.3,
-    "institutional_long_pct": 75.5,
-    "avg_daily_volume": 1055353,
+    "institutional_long_pct": 75.9,
+    "avg_daily_volume": 1077715,
     "report_date": "2026-07-14"
   },
   {
@@ -1723,8 +1723,8 @@
     "short_interest_pct": 0.9,
     "days_to_cover": 0.5,
     "short_interest_change_pct": -77.9,
-    "institutional_long_pct": 76.7,
-    "avg_daily_volume": 3543193,
+    "institutional_long_pct": 76.6,
+    "avg_daily_volume": 3593015,
     "report_date": "2026-07-14"
   },
   {
@@ -1732,8 +1732,8 @@
     "short_interest_pct": 17.9,
     "days_to_cover": 12.0,
     "short_interest_change_pct": -1.0,
-    "institutional_long_pct": 107.5,
-    "avg_daily_volume": 265720,
+    "institutional_long_pct": 107.8,
+    "avg_daily_volume": 288138,
     "report_date": "2026-07-14"
   },
   {
@@ -1742,7 +1742,7 @@
     "days_to_cover": 14.3,
     "short_interest_change_pct": 16.9,
     "institutional_long_pct": 48.0,
-    "avg_daily_volume": 1509998,
+    "avg_daily_volume": 1485245,
     "report_date": "2026-07-14"
   },
   {
@@ -1750,8 +1750,8 @@
     "short_interest_pct": 17.3,
     "days_to_cover": 5.6,
     "short_interest_change_pct": 8.4,
-    "institutional_long_pct": 54.0,
-    "avg_daily_volume": 2819370,
+    "institutional_long_pct": 53.8,
+    "avg_daily_volume": 2765620,
     "report_date": "2026-07-14"
   },
   {
@@ -1759,8 +1759,8 @@
     "short_interest_pct": 62.3,
     "days_to_cover": 11.6,
     "short_interest_change_pct": 14.3,
-    "institutional_long_pct": 109.8,
-    "avg_daily_volume": 907011,
+    "institutional_long_pct": 110.7,
+    "avg_daily_volume": 910215,
     "report_date": "2026-07-14"
   },
   {
@@ -1768,8 +1768,8 @@
     "short_interest_pct": 8.1,
     "days_to_cover": 10.5,
     "short_interest_change_pct": 4.5,
-    "institutional_long_pct": 77.6,
-    "avg_daily_volume": 199750,
+    "institutional_long_pct": 76.9,
+    "avg_daily_volume": 198359,
     "report_date": "2026-07-14"
   },
   {
@@ -1777,8 +1777,8 @@
     "short_interest_pct": 11.5,
     "days_to_cover": 3.3,
     "short_interest_change_pct": 13.5,
-    "institutional_long_pct": 107.7,
-    "avg_daily_volume": 354301,
+    "institutional_long_pct": 108.1,
+    "avg_daily_volume": 356591,
     "report_date": "2026-07-14"
   },
   {
@@ -1786,8 +1786,8 @@
     "short_interest_pct": 17.2,
     "days_to_cover": 5.3,
     "short_interest_change_pct": 6.2,
-    "institutional_long_pct": 71.1,
-    "avg_daily_volume": 1985109,
+    "institutional_long_pct": 71.3,
+    "avg_daily_volume": 2042091,
     "report_date": "2026-07-14"
   },
   {
@@ -1796,7 +1796,7 @@
     "days_to_cover": 3.7,
     "short_interest_change_pct": 7.3,
     "institutional_long_pct": 86.2,
-    "avg_daily_volume": 2207377,
+    "avg_daily_volume": 2177098,
     "report_date": "2026-07-14"
   },
   {
@@ -1804,8 +1804,8 @@
     "short_interest_pct": 24.5,
     "days_to_cover": 15.1,
     "short_interest_change_pct": 16.0,
-    "institutional_long_pct": 114.5,
-    "avg_daily_volume": 889151,
+    "institutional_long_pct": 115.3,
+    "avg_daily_volume": 917725,
     "report_date": "2026-07-14"
   },
   {
@@ -1814,7 +1814,7 @@
     "days_to_cover": 4.7,
     "short_interest_change_pct": -7.3,
     "institutional_long_pct": 56.9,
-    "avg_daily_volume": 160658,
+    "avg_daily_volume": 168277,
     "report_date": "2026-07-14"
   },
   {
@@ -1822,8 +1822,8 @@
     "short_interest_pct": 11.2,
     "days_to_cover": 6.6,
     "short_interest_change_pct": 36.2,
-    "institutional_long_pct": 96.6,
-    "avg_daily_volume": 594445,
+    "institutional_long_pct": 96.4,
+    "avg_daily_volume": 586191,
     "report_date": "2026-07-14"
   },
   {
@@ -1831,8 +1831,8 @@
     "short_interest_pct": 17.0,
     "days_to_cover": 5.5,
     "short_interest_change_pct": 1.2,
-    "institutional_long_pct": 120.3,
-    "avg_daily_volume": 855769,
+    "institutional_long_pct": 120.4,
+    "avg_daily_volume": 873237,
     "report_date": "2026-07-14"
   },
   {
@@ -1840,8 +1840,8 @@
     "short_interest_pct": 4.1,
     "days_to_cover": 2.2,
     "short_interest_change_pct": 38.0,
-    "institutional_long_pct": 24.0,
-    "avg_daily_volume": 84858,
+    "institutional_long_pct": 23.2,
+    "avg_daily_volume": 84784,
     "report_date": "2026-07-14"
   },
   {
@@ -1849,17 +1849,17 @@
     "short_interest_pct": 10.5,
     "days_to_cover": 4.8,
     "short_interest_change_pct": -45.4,
-    "institutional_long_pct": 107.0,
-    "avg_daily_volume": 352206,
+    "institutional_long_pct": 106.4,
+    "avg_daily_volume": 363233,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "MDXG",
-    "short_interest_pct": 6.3,
+    "short_interest_pct": 6.5,
     "days_to_cover": 5.7,
     "short_interest_change_pct": -2.4,
-    "institutional_long_pct": 76.7,
-    "avg_daily_volume": 1436082,
+    "institutional_long_pct": 78.2,
+    "avg_daily_volume": 1424311,
     "report_date": "2026-07-14"
   },
   {
@@ -1867,8 +1867,8 @@
     "short_interest_pct": 9.8,
     "days_to_cover": 6.6,
     "short_interest_change_pct": 5.0,
-    "institutional_long_pct": 89.0,
-    "avg_daily_volume": 345701,
+    "institutional_long_pct": 88.6,
+    "avg_daily_volume": 341564,
     "report_date": "2026-07-14"
   },
   {
@@ -1877,7 +1877,7 @@
     "days_to_cover": 1.7,
     "short_interest_change_pct": -26.4,
     "institutional_long_pct": 0.7,
-    "avg_daily_volume": 92996,
+    "avg_daily_volume": 93771,
     "report_date": "2026-07-14"
   },
   {
@@ -1886,7 +1886,7 @@
     "days_to_cover": 12.9,
     "short_interest_change_pct": 0.8,
     "institutional_long_pct": 3.0,
-    "avg_daily_volume": 216620,
+    "avg_daily_volume": 220181,
     "report_date": "2026-07-14"
   },
   {
@@ -1894,8 +1894,8 @@
     "short_interest_pct": 6.5,
     "days_to_cover": 3.2,
     "short_interest_change_pct": -24.0,
-    "institutional_long_pct": 61.7,
-    "avg_daily_volume": 883938,
+    "institutional_long_pct": 62.2,
+    "avg_daily_volume": 905650,
     "report_date": "2026-07-14"
   },
   {
@@ -1903,17 +1903,17 @@
     "short_interest_pct": 15.6,
     "days_to_cover": 6.7,
     "short_interest_change_pct": 5.3,
-    "institutional_long_pct": 114.9,
-    "avg_daily_volume": 994756,
+    "institutional_long_pct": 108.8,
+    "avg_daily_volume": 949645,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "MLTX",
-    "short_interest_pct": 10.5,
+    "short_interest_pct": 10.3,
     "days_to_cover": 4.1,
     "short_interest_change_pct": 19.1,
     "institutional_long_pct": 78.6,
-    "avg_daily_volume": 1124133,
+    "avg_daily_volume": 1150638,
     "report_date": "2026-07-14"
   },
   {
@@ -1921,8 +1921,8 @@
     "short_interest_pct": 13.0,
     "days_to_cover": 6.1,
     "short_interest_change_pct": 9.8,
-    "institutional_long_pct": 107.0,
-    "avg_daily_volume": 1467804,
+    "institutional_long_pct": 107.2,
+    "avg_daily_volume": 1452393,
     "report_date": "2026-07-14"
   },
   {
@@ -1930,8 +1930,8 @@
     "short_interest_pct": 9.2,
     "days_to_cover": 5.2,
     "short_interest_change_pct": -9.8,
-    "institutional_long_pct": 57.3,
-    "avg_daily_volume": 5835479,
+    "institutional_long_pct": 58.1,
+    "avg_daily_volume": 5256405,
     "report_date": "2026-07-14"
   },
   {
@@ -1939,8 +1939,8 @@
     "short_interest_pct": 16.1,
     "days_to_cover": 5.2,
     "short_interest_change_pct": -10.7,
-    "institutional_long_pct": 78.4,
-    "avg_daily_volume": 7702654,
+    "institutional_long_pct": 78.0,
+    "avg_daily_volume": 7711603,
     "report_date": "2026-07-14"
   },
   {
@@ -1948,8 +1948,8 @@
     "short_interest_pct": 7.5,
     "days_to_cover": 2.7,
     "short_interest_change_pct": 7.1,
-    "institutional_long_pct": 87.9,
-    "avg_daily_volume": 3058287,
+    "institutional_long_pct": 87.8,
+    "avg_daily_volume": 3068862,
     "report_date": "2026-07-14"
   },
   {
@@ -1957,8 +1957,8 @@
     "short_interest_pct": 8.7,
     "days_to_cover": 5.2,
     "short_interest_change_pct": -7.4,
-    "institutional_long_pct": 96.2,
-    "avg_daily_volume": 1638256,
+    "institutional_long_pct": 94.1,
+    "avg_daily_volume": 1864628,
     "report_date": "2026-07-14"
   },
   {
@@ -1966,8 +1966,8 @@
     "short_interest_pct": 9.2,
     "days_to_cover": 8.6,
     "short_interest_change_pct": 0.1,
-    "institutional_long_pct": 106.7,
-    "avg_daily_volume": 1302612,
+    "institutional_long_pct": 103.8,
+    "avg_daily_volume": 1279337,
     "report_date": "2026-07-14"
   },
   {
@@ -1975,8 +1975,8 @@
     "short_interest_pct": 2.3,
     "days_to_cover": 1.2,
     "short_interest_change_pct": 167.7,
-    "institutional_long_pct": 41.0,
-    "avg_daily_volume": 757001,
+    "institutional_long_pct": 40.4,
+    "avg_daily_volume": 810783,
     "report_date": "2026-07-14"
   },
   {
@@ -1984,8 +1984,8 @@
     "short_interest_pct": 6.9,
     "days_to_cover": 4.4,
     "short_interest_change_pct": -6.3,
-    "institutional_long_pct": 104.3,
-    "avg_daily_volume": 1223856,
+    "institutional_long_pct": 103.7,
+    "avg_daily_volume": 1261828,
     "report_date": "2026-07-14"
   },
   {
@@ -1993,8 +1993,8 @@
     "short_interest_pct": 6.2,
     "days_to_cover": 5.5,
     "short_interest_change_pct": 4.0,
-    "institutional_long_pct": 39.9,
-    "avg_daily_volume": 701338,
+    "institutional_long_pct": 39.8,
+    "avg_daily_volume": 623069,
     "report_date": "2026-07-14"
   },
   {
@@ -2003,7 +2003,7 @@
     "days_to_cover": 9.4,
     "short_interest_change_pct": -17.5,
     "institutional_long_pct": 88.5,
-    "avg_daily_volume": 210309,
+    "avg_daily_volume": 211144,
     "report_date": "2026-07-14"
   },
   {
@@ -2011,8 +2011,8 @@
     "short_interest_pct": 5.6,
     "days_to_cover": 3.9,
     "short_interest_change_pct": -7.4,
-    "institutional_long_pct": 80.8,
-    "avg_daily_volume": 708911,
+    "institutional_long_pct": 81.0,
+    "avg_daily_volume": 672810,
     "report_date": "2026-07-14"
   },
   {
@@ -2021,7 +2021,7 @@
     "days_to_cover": 1.8,
     "short_interest_change_pct": 58.3,
     "institutional_long_pct": 58.0,
-    "avg_daily_volume": 2127200,
+    "avg_daily_volume": 2101506,
     "report_date": "2026-07-14"
   },
   {
@@ -2029,8 +2029,8 @@
     "short_interest_pct": 17.5,
     "days_to_cover": 7.7,
     "short_interest_change_pct": -10.2,
-    "institutional_long_pct": 115.2,
-    "avg_daily_volume": 2017280,
+    "institutional_long_pct": 115.5,
+    "avg_daily_volume": 2084181,
     "report_date": "2026-07-14"
   },
   {
@@ -2038,8 +2038,8 @@
     "short_interest_pct": 41.3,
     "days_to_cover": 7.4,
     "short_interest_change_pct": -9.0,
-    "institutional_long_pct": 76.8,
-    "avg_daily_volume": 5719854,
+    "institutional_long_pct": 77.9,
+    "avg_daily_volume": 5687869,
     "report_date": "2026-07-14"
   },
   {
@@ -2048,7 +2048,7 @@
     "days_to_cover": 2.9,
     "short_interest_change_pct": 15.1,
     "institutional_long_pct": 96.0,
-    "avg_daily_volume": 1502059,
+    "avg_daily_volume": 1481516,
     "report_date": "2026-07-14"
   },
   {
@@ -2056,8 +2056,8 @@
     "short_interest_pct": 26.5,
     "days_to_cover": 6.1,
     "short_interest_change_pct": 13.8,
-    "institutional_long_pct": 65.0,
-    "avg_daily_volume": 6478969,
+    "institutional_long_pct": 65.1,
+    "avg_daily_volume": 6441000,
     "report_date": "2026-07-14"
   },
   {
@@ -2074,17 +2074,17 @@
     "short_interest_pct": 26.8,
     "days_to_cover": 10.0,
     "short_interest_change_pct": -2.9,
-    "institutional_long_pct": 69.4,
-    "avg_daily_volume": 4806477,
+    "institutional_long_pct": 69.6,
+    "avg_daily_volume": 4543406,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "NVCR",
-    "short_interest_pct": 13.4,
+    "short_interest_pct": 13.3,
     "days_to_cover": 6.4,
     "short_interest_change_pct": 18.7,
-    "institutional_long_pct": 86.9,
-    "avg_daily_volume": 1796146,
+    "institutional_long_pct": 87.3,
+    "avg_daily_volume": 1738103,
     "report_date": "2026-07-14"
   },
   {
@@ -2092,8 +2092,8 @@
     "short_interest_pct": 4.4,
     "days_to_cover": 8.9,
     "short_interest_change_pct": 25.1,
-    "institutional_long_pct": 51.0,
-    "avg_daily_volume": 691954,
+    "institutional_long_pct": 51.4,
+    "avg_daily_volume": 699562,
     "report_date": "2026-07-14"
   },
   {
@@ -2101,8 +2101,8 @@
     "short_interest_pct": 7.0,
     "days_to_cover": 5.0,
     "short_interest_change_pct": 109.0,
-    "institutional_long_pct": 42.3,
-    "avg_daily_volume": 329791,
+    "institutional_long_pct": 42.6,
+    "avg_daily_volume": 333283,
     "report_date": "2026-07-14"
   },
   {
@@ -2110,8 +2110,8 @@
     "short_interest_pct": 29.9,
     "days_to_cover": 10.1,
     "short_interest_change_pct": 16.2,
-    "institutional_long_pct": 34.4,
-    "avg_daily_volume": 7597641,
+    "institutional_long_pct": 34.7,
+    "avg_daily_volume": 6910169,
     "report_date": "2026-07-14"
   },
   {
@@ -2119,8 +2119,8 @@
     "short_interest_pct": 2.9,
     "days_to_cover": 3.0,
     "short_interest_change_pct": 36.5,
-    "institutional_long_pct": 39.0,
-    "avg_daily_volume": 692277,
+    "institutional_long_pct": 39.8,
+    "avg_daily_volume": 707838,
     "report_date": "2026-07-14"
   },
   {
@@ -2128,8 +2128,8 @@
     "short_interest_pct": 14.6,
     "days_to_cover": 8.8,
     "short_interest_change_pct": 2.2,
-    "institutional_long_pct": 95.6,
-    "avg_daily_volume": 2694414,
+    "institutional_long_pct": 94.9,
+    "avg_daily_volume": 2666330,
     "report_date": "2026-07-14"
   },
   {
@@ -2137,8 +2137,8 @@
     "short_interest_pct": 21.0,
     "days_to_cover": 7.9,
     "short_interest_change_pct": 17.6,
-    "institutional_long_pct": 119.0,
-    "avg_daily_volume": 1447393,
+    "institutional_long_pct": 117.1,
+    "avg_daily_volume": 1471394,
     "report_date": "2026-07-14"
   },
   {
@@ -2147,7 +2147,7 @@
     "days_to_cover": 7.5,
     "short_interest_change_pct": -16.6,
     "institutional_long_pct": 44.7,
-    "avg_daily_volume": 1846000,
+    "avg_daily_volume": 1911544,
     "report_date": "2026-07-14"
   },
   {
@@ -2156,25 +2156,25 @@
     "days_to_cover": 2.8,
     "short_interest_change_pct": 2.7,
     "institutional_long_pct": 33.0,
-    "avg_daily_volume": 309014,
+    "avg_daily_volume": 313791,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "OPCH",
-    "short_interest_pct": 11.8,
+    "short_interest_pct": 12.5,
     "days_to_cover": 5.3,
     "short_interest_change_pct": 10.0,
-    "institutional_long_pct": 114.9,
-    "avg_daily_volume": 3269037,
+    "institutional_long_pct": 112.7,
+    "avg_daily_volume": 3020074,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "OPK",
-    "short_interest_pct": 7.9,
+    "short_interest_pct": 8.1,
     "days_to_cover": 10.8,
     "short_interest_change_pct": 2.6,
-    "institutional_long_pct": 27.3,
-    "avg_daily_volume": 3443830,
+    "institutional_long_pct": 27.2,
+    "avg_daily_volume": 3577922,
     "report_date": "2026-07-14"
   },
   {
@@ -2183,7 +2183,7 @@
     "days_to_cover": 12.8,
     "short_interest_change_pct": 4.7,
     "institutional_long_pct": 114.5,
-    "avg_daily_volume": 1674775,
+    "avg_daily_volume": 1702472,
     "report_date": "2026-07-14"
   },
   {
@@ -2191,8 +2191,8 @@
     "short_interest_pct": 22.3,
     "days_to_cover": 5.0,
     "short_interest_change_pct": 28.1,
-    "institutional_long_pct": 95.7,
-    "avg_daily_volume": 1467667,
+    "institutional_long_pct": 98.4,
+    "avg_daily_volume": 1346703,
     "report_date": "2026-07-14"
   },
   {
@@ -2200,8 +2200,8 @@
     "short_interest_pct": 17.1,
     "days_to_cover": 7.7,
     "short_interest_change_pct": -23.7,
-    "institutional_long_pct": 53.8,
-    "avg_daily_volume": 6263385,
+    "institutional_long_pct": 53.3,
+    "avg_daily_volume": 6216350,
     "report_date": "2026-07-14"
   },
   {
@@ -2209,8 +2209,8 @@
     "short_interest_pct": 6.9,
     "days_to_cover": 4.0,
     "short_interest_change_pct": -0.9,
-    "institutional_long_pct": 100.1,
-    "avg_daily_volume": 358811,
+    "institutional_long_pct": 103.9,
+    "avg_daily_volume": 340972,
     "report_date": "2026-07-14"
   },
   {
@@ -2218,8 +2218,8 @@
     "short_interest_pct": 3.3,
     "days_to_cover": 4.9,
     "short_interest_change_pct": 254.2,
-    "institutional_long_pct": 57.4,
-    "avg_daily_volume": 844097,
+    "institutional_long_pct": 58.6,
+    "avg_daily_volume": 826902,
     "report_date": "2026-07-14"
   },
   {
@@ -2228,7 +2228,7 @@
     "days_to_cover": 10.0,
     "short_interest_change_pct": 5.7,
     "institutional_long_pct": 74.9,
-    "avg_daily_volume": 310564,
+    "avg_daily_volume": 306944,
     "report_date": "2026-07-14"
   },
   {
@@ -2236,8 +2236,8 @@
     "short_interest_pct": 25.6,
     "days_to_cover": 13.8,
     "short_interest_change_pct": 10.9,
-    "institutional_long_pct": 115.2,
-    "avg_daily_volume": 522167,
+    "institutional_long_pct": 113.9,
+    "avg_daily_volume": 504808,
     "report_date": "2026-07-14"
   },
   {
@@ -2245,8 +2245,8 @@
     "short_interest_pct": 9.9,
     "days_to_cover": 7.7,
     "short_interest_change_pct": -2.7,
-    "institutional_long_pct": 113.9,
-    "avg_daily_volume": 1586537,
+    "institutional_long_pct": 109.3,
+    "avg_daily_volume": 1505864,
     "report_date": "2026-07-14"
   },
   {
@@ -2255,7 +2255,7 @@
     "days_to_cover": 4.1,
     "short_interest_change_pct": 17.7,
     "institutional_long_pct": 86.5,
-    "avg_daily_volume": 877353,
+    "avg_daily_volume": 829903,
     "report_date": "2026-07-14"
   },
   {
@@ -2263,17 +2263,17 @@
     "short_interest_pct": 21.2,
     "days_to_cover": 7.9,
     "short_interest_change_pct": -5.3,
-    "institutional_long_pct": 71.2,
-    "avg_daily_volume": 4610253,
+    "institutional_long_pct": 71.4,
+    "avg_daily_volume": 4814225,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "PHAT",
-    "short_interest_pct": 16.0,
+    "short_interest_pct": 15.9,
     "days_to_cover": 10.3,
     "short_interest_change_pct": 8.6,
-    "institutional_long_pct": 88.9,
-    "avg_daily_volume": 1204464,
+    "institutional_long_pct": 87.6,
+    "avg_daily_volume": 1234381,
     "report_date": "2026-07-14"
   },
   {
@@ -2281,8 +2281,8 @@
     "short_interest_pct": 2.0,
     "days_to_cover": 2.1,
     "short_interest_change_pct": 1.5,
-    "institutional_long_pct": 85.3,
-    "avg_daily_volume": 426753,
+    "institutional_long_pct": 85.6,
+    "avg_daily_volume": 422425,
     "report_date": "2026-07-14"
   },
   {
@@ -2290,8 +2290,8 @@
     "short_interest_pct": 13.5,
     "days_to_cover": 6.3,
     "short_interest_change_pct": 5.5,
-    "institutional_long_pct": 117.7,
-    "avg_daily_volume": 483432,
+    "institutional_long_pct": 118.3,
+    "avg_daily_volume": 486801,
     "report_date": "2026-07-14"
   },
   {
@@ -2299,8 +2299,8 @@
     "short_interest_pct": 13.1,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 83.3,
-    "institutional_long_pct": 64.9,
-    "avg_daily_volume": 452395,
+    "institutional_long_pct": 65.1,
+    "avg_daily_volume": 425881,
     "report_date": "2026-07-14"
   },
   {
@@ -2308,8 +2308,8 @@
     "short_interest_pct": 23.8,
     "days_to_cover": 7.7,
     "short_interest_change_pct": 3.1,
-    "institutional_long_pct": 66.9,
-    "avg_daily_volume": 3325806,
+    "institutional_long_pct": 66.5,
+    "avg_daily_volume": 3383289,
     "report_date": "2026-07-14"
   },
   {
@@ -2317,8 +2317,8 @@
     "short_interest_pct": 2.1,
     "days_to_cover": 1.4,
     "short_interest_change_pct": 128.7,
-    "institutional_long_pct": 38.7,
-    "avg_daily_volume": 958520,
+    "institutional_long_pct": 42.5,
+    "avg_daily_volume": 990923,
     "report_date": "2026-07-14"
   },
   {
@@ -2326,8 +2326,8 @@
     "short_interest_pct": 18.8,
     "days_to_cover": 12.8,
     "short_interest_change_pct": 4.2,
-    "institutional_long_pct": 90.8,
-    "avg_daily_volume": 581566,
+    "institutional_long_pct": 90.3,
+    "avg_daily_volume": 592815,
     "report_date": "2026-07-14"
   },
   {
@@ -2335,8 +2335,8 @@
     "short_interest_pct": 4.4,
     "days_to_cover": 2.9,
     "short_interest_change_pct": 23.2,
-    "institutional_long_pct": 97.4,
-    "avg_daily_volume": 1139029,
+    "institutional_long_pct": 97.1,
+    "avg_daily_volume": 1091020,
     "report_date": "2026-07-14"
   },
   {
@@ -2344,17 +2344,17 @@
     "short_interest_pct": 16.7,
     "days_to_cover": 2.5,
     "short_interest_change_pct": -0.1,
-    "institutional_long_pct": 67.1,
-    "avg_daily_volume": 3884111,
+    "institutional_long_pct": 67.4,
+    "avg_daily_volume": 4030867,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "PTCT",
-    "short_interest_pct": 16.1,
+    "short_interest_pct": 16.0,
     "days_to_cover": 3.6,
     "short_interest_change_pct": -16.5,
-    "institutional_long_pct": 118.2,
-    "avg_daily_volume": 1790698,
+    "institutional_long_pct": 117.6,
+    "avg_daily_volume": 1890972,
     "report_date": "2026-07-14"
   },
   {
@@ -2362,8 +2362,8 @@
     "short_interest_pct": 15.0,
     "days_to_cover": 8.7,
     "short_interest_change_pct": 7.3,
-    "institutional_long_pct": 125.7,
-    "avg_daily_volume": 697598,
+    "institutional_long_pct": 125.8,
+    "avg_daily_volume": 696967,
     "report_date": "2026-07-14"
   },
   {
@@ -2371,8 +2371,8 @@
     "short_interest_pct": 17.2,
     "days_to_cover": 7.1,
     "short_interest_change_pct": 4.8,
-    "institutional_long_pct": 97.4,
-    "avg_daily_volume": 265603,
+    "institutional_long_pct": 100.6,
+    "avg_daily_volume": 261671,
     "report_date": "2026-07-14"
   },
   {
@@ -2381,7 +2381,7 @@
     "days_to_cover": 2.3,
     "short_interest_change_pct": 61.4,
     "institutional_long_pct": 42.8,
-    "avg_daily_volume": 975587,
+    "avg_daily_volume": 990238,
     "report_date": "2026-07-14"
   },
   {
@@ -2389,8 +2389,8 @@
     "short_interest_pct": 8.0,
     "days_to_cover": 2.8,
     "short_interest_change_pct": -37.2,
-    "institutional_long_pct": 29.8,
-    "avg_daily_volume": 5341501,
+    "institutional_long_pct": 29.4,
+    "avg_daily_volume": 5278713,
     "report_date": "2026-07-14"
   },
   {
@@ -2398,17 +2398,17 @@
     "short_interest_pct": 10.4,
     "days_to_cover": 4.0,
     "short_interest_change_pct": -3.1,
-    "institutional_long_pct": 83.2,
-    "avg_daily_volume": 1098032,
+    "institutional_long_pct": 79.8,
+    "avg_daily_volume": 1035893,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "QURE",
-    "short_interest_pct": 15.3,
+    "short_interest_pct": 15.2,
     "days_to_cover": 3.5,
     "short_interest_change_pct": -12.2,
-    "institutional_long_pct": 84.8,
-    "avg_daily_volume": 2180687,
+    "institutional_long_pct": 84.5,
+    "avg_daily_volume": 2160820,
     "report_date": "2026-07-14"
   },
   {
@@ -2416,8 +2416,8 @@
     "short_interest_pct": 8.1,
     "days_to_cover": 13.1,
     "short_interest_change_pct": 13.8,
-    "institutional_long_pct": 43.9,
-    "avg_daily_volume": 976030,
+    "institutional_long_pct": 44.4,
+    "avg_daily_volume": 989032,
     "report_date": "2026-07-14"
   },
   {
@@ -2425,8 +2425,8 @@
     "short_interest_pct": 8.9,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 19.8,
-    "institutional_long_pct": 109.6,
-    "avg_daily_volume": 367380,
+    "institutional_long_pct": 109.4,
+    "avg_daily_volume": 362703,
     "report_date": "2026-07-14"
   },
   {
@@ -2434,8 +2434,8 @@
     "short_interest_pct": 14.1,
     "days_to_cover": 4.2,
     "short_interest_change_pct": -6.1,
-    "institutional_long_pct": 102.2,
-    "avg_daily_volume": 2194308,
+    "institutional_long_pct": 105.2,
+    "avg_daily_volume": 2194891,
     "report_date": "2026-07-14"
   },
   {
@@ -2443,8 +2443,8 @@
     "short_interest_pct": 18.6,
     "days_to_cover": 5.5,
     "short_interest_change_pct": -24.3,
-    "institutional_long_pct": 89.5,
-    "avg_daily_volume": 2410785,
+    "institutional_long_pct": 90.0,
+    "avg_daily_volume": 2448083,
     "report_date": "2026-07-14"
   },
   {
@@ -2452,26 +2452,26 @@
     "short_interest_pct": 16.4,
     "days_to_cover": 8.2,
     "short_interest_change_pct": -5.4,
-    "institutional_long_pct": 72.6,
-    "avg_daily_volume": 1224182,
+    "institutional_long_pct": 71.8,
+    "avg_daily_volume": 1219444,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "REGN",
-    "short_interest_pct": 3.5,
+    "short_interest_pct": 3.6,
     "days_to_cover": 3.6,
     "short_interest_change_pct": 6.0,
-    "institutional_long_pct": 92.2,
-    "avg_daily_volume": 1002995,
+    "institutional_long_pct": 94.2,
+    "avg_daily_volume": 1029596,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "REPL",
-    "short_interest_pct": 49.9,
+    "short_interest_pct": 49.8,
     "days_to_cover": 7.6,
     "short_interest_change_pct": 3.4,
-    "institutional_long_pct": 112.1,
-    "avg_daily_volume": 5847779,
+    "institutional_long_pct": 111.9,
+    "avg_daily_volume": 6446732,
     "report_date": "2026-07-14"
   },
   {
@@ -2479,8 +2479,8 @@
     "short_interest_pct": 10.3,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 1.5,
-    "institutional_long_pct": 120.2,
-    "avg_daily_volume": 1233116,
+    "institutional_long_pct": 121.2,
+    "avg_daily_volume": 1214179,
     "report_date": "2026-07-14"
   },
   {
@@ -2488,8 +2488,8 @@
     "short_interest_pct": 18.0,
     "days_to_cover": 2.9,
     "short_interest_change_pct": -6.9,
-    "institutional_long_pct": 66.9,
-    "avg_daily_volume": 2241767,
+    "institutional_long_pct": 67.5,
+    "avg_daily_volume": 2311081,
     "report_date": "2026-07-14"
   },
   {
@@ -2497,8 +2497,8 @@
     "short_interest_pct": 17.5,
     "days_to_cover": 7.5,
     "short_interest_change_pct": -8.7,
-    "institutional_long_pct": 93.8,
-    "avg_daily_volume": 391970,
+    "institutional_long_pct": 93.7,
+    "avg_daily_volume": 382162,
     "report_date": "2026-07-14"
   },
   {
@@ -2506,8 +2506,8 @@
     "short_interest_pct": 22.8,
     "days_to_cover": 9.5,
     "short_interest_change_pct": 11.6,
-    "institutional_long_pct": 88.8,
-    "avg_daily_volume": 4012785,
+    "institutional_long_pct": 90.7,
+    "avg_daily_volume": 4019625,
     "report_date": "2026-07-14"
   },
   {
@@ -2515,8 +2515,8 @@
     "short_interest_pct": null,
     "days_to_cover": 14.3,
     "short_interest_change_pct": 1.3,
-    "institutional_long_pct": 89.2,
-    "avg_daily_volume": 202448,
+    "institutional_long_pct": 89.3,
+    "avg_daily_volume": 197593,
     "report_date": "2026-07-14"
   },
   {
@@ -2524,8 +2524,8 @@
     "short_interest_pct": 14.8,
     "days_to_cover": 7.0,
     "short_interest_change_pct": -0.1,
-    "institutional_long_pct": 24.6,
-    "avg_daily_volume": 278467,
+    "institutional_long_pct": 25.0,
+    "avg_daily_volume": 276706,
     "report_date": "2026-07-14"
   },
   {
@@ -2533,8 +2533,8 @@
     "short_interest_pct": 6.7,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 10.4,
-    "institutional_long_pct": 76.2,
-    "avg_daily_volume": 5791643,
+    "institutional_long_pct": 76.6,
+    "avg_daily_volume": 5949596,
     "report_date": "2026-07-14"
   },
   {
@@ -2542,8 +2542,8 @@
     "short_interest_pct": 2.8,
     "days_to_cover": 3.5,
     "short_interest_change_pct": 9.0,
-    "institutional_long_pct": 86.3,
-    "avg_daily_volume": 3656619,
+    "institutional_long_pct": 84.6,
+    "avg_daily_volume": 3596777,
     "report_date": "2026-07-14"
   },
   {
@@ -2551,8 +2551,8 @@
     "short_interest_pct": 7.0,
     "days_to_cover": 4.4,
     "short_interest_change_pct": 14.0,
-    "institutional_long_pct": 98.0,
-    "avg_daily_volume": 2719487,
+    "institutional_long_pct": 98.6,
+    "avg_daily_volume": 2668286,
     "report_date": "2026-07-14"
   },
   {
@@ -2560,8 +2560,8 @@
     "short_interest_pct": 36.1,
     "days_to_cover": 7.7,
     "short_interest_change_pct": -1.8,
-    "institutional_long_pct": 68.2,
-    "avg_daily_volume": 20715361,
+    "institutional_long_pct": 69.3,
+    "avg_daily_volume": 21162833,
     "report_date": "2026-07-14"
   },
   {
@@ -2569,8 +2569,8 @@
     "short_interest_pct": 14.1,
     "days_to_cover": 9.0,
     "short_interest_change_pct": 19.6,
-    "institutional_long_pct": 110.6,
-    "avg_daily_volume": 813424,
+    "institutional_long_pct": 110.1,
+    "avg_daily_volume": 779750,
     "report_date": "2026-07-14"
   },
   {
@@ -2579,7 +2579,7 @@
     "days_to_cover": 3.7,
     "short_interest_change_pct": 52.1,
     "institutional_long_pct": 92.4,
-    "avg_daily_volume": 896059,
+    "avg_daily_volume": 864130,
     "report_date": "2026-07-14"
   },
   {
@@ -2587,8 +2587,8 @@
     "short_interest_pct": 25.4,
     "days_to_cover": 11.0,
     "short_interest_change_pct": -2.3,
-    "institutional_long_pct": 82.9,
-    "avg_daily_volume": 3664924,
+    "institutional_long_pct": 80.4,
+    "avg_daily_volume": 3750462,
     "report_date": "2026-07-14"
   },
   {
@@ -2596,8 +2596,8 @@
     "short_interest_pct": 14.7,
     "days_to_cover": 5.7,
     "short_interest_change_pct": 25.7,
-    "institutional_long_pct": 102.7,
-    "avg_daily_volume": 397709,
+    "institutional_long_pct": 103.6,
+    "avg_daily_volume": 401935,
     "report_date": "2026-07-14"
   },
   {
@@ -2605,8 +2605,8 @@
     "short_interest_pct": 0.8,
     "days_to_cover": 6.2,
     "short_interest_change_pct": -9.2,
-    "institutional_long_pct": 51.6,
-    "avg_daily_volume": 54908,
+    "institutional_long_pct": 51.3,
+    "avg_daily_volume": 54530,
     "report_date": "2026-07-14"
   },
   {
@@ -2623,8 +2623,8 @@
     "short_interest_pct": 16.1,
     "days_to_cover": 6.3,
     "short_interest_change_pct": 67.1,
-    "institutional_long_pct": 22.8,
-    "avg_daily_volume": 1061425,
+    "institutional_long_pct": 24.7,
+    "avg_daily_volume": 1071338,
     "report_date": "2026-07-14"
   },
   {
@@ -2632,8 +2632,8 @@
     "short_interest_pct": 8.5,
     "days_to_cover": 6.0,
     "short_interest_change_pct": 15.3,
-    "institutional_long_pct": 49.9,
-    "avg_daily_volume": 633712,
+    "institutional_long_pct": 50.0,
+    "avg_daily_volume": 649732,
     "report_date": "2026-07-14"
   },
   {
@@ -2641,8 +2641,8 @@
     "short_interest_pct": 18.9,
     "days_to_cover": 10.6,
     "short_interest_change_pct": 5.2,
-    "institutional_long_pct": 100.3,
-    "avg_daily_volume": 465600,
+    "institutional_long_pct": 99.4,
+    "avg_daily_volume": 471255,
     "report_date": "2026-07-14"
   },
   {
@@ -2651,7 +2651,7 @@
     "days_to_cover": 7.7,
     "short_interest_change_pct": 8.2,
     "institutional_long_pct": 46.0,
-    "avg_daily_volume": 153811,
+    "avg_daily_volume": 150862,
     "report_date": "2026-07-14"
   },
   {
@@ -2659,8 +2659,8 @@
     "short_interest_pct": 20.6,
     "days_to_cover": 6.3,
     "short_interest_change_pct": 52.1,
-    "institutional_long_pct": 104.7,
-    "avg_daily_volume": 1723470,
+    "institutional_long_pct": 104.8,
+    "avg_daily_volume": 1729710,
     "report_date": "2026-07-14"
   },
   {
@@ -2668,8 +2668,8 @@
     "short_interest_pct": 4.4,
     "days_to_cover": 2.5,
     "short_interest_change_pct": -23.9,
-    "institutional_long_pct": 44.5,
-    "avg_daily_volume": 419443,
+    "institutional_long_pct": 44.6,
+    "avg_daily_volume": 442732,
     "report_date": "2026-07-14"
   },
   {
@@ -2677,8 +2677,8 @@
     "short_interest_pct": 28.2,
     "days_to_cover": 5.0,
     "short_interest_change_pct": -12.8,
-    "institutional_long_pct": 27.8,
-    "avg_daily_volume": 9650220,
+    "institutional_long_pct": 28.1,
+    "avg_daily_volume": 10054372,
     "report_date": "2026-07-14"
   },
   {
@@ -2686,8 +2686,8 @@
     "short_interest_pct": 24.6,
     "days_to_cover": 7.6,
     "short_interest_change_pct": 1.4,
-    "institutional_long_pct": 15.4,
-    "avg_daily_volume": 5279456,
+    "institutional_long_pct": 15.5,
+    "avg_daily_volume": 5069572,
     "report_date": "2026-07-14"
   },
   {
@@ -2695,8 +2695,8 @@
     "short_interest_pct": 23.9,
     "days_to_cover": 8.9,
     "short_interest_change_pct": 4.8,
-    "institutional_long_pct": 117.1,
-    "avg_daily_volume": 1899904,
+    "institutional_long_pct": 118.2,
+    "avg_daily_volume": 1845555,
     "report_date": "2026-07-14"
   },
   {
@@ -2704,8 +2704,8 @@
     "short_interest_pct": 0.3,
     "days_to_cover": 1.8,
     "short_interest_change_pct": 14.7,
-    "institutional_long_pct": 8.9,
-    "avg_daily_volume": 3376804,
+    "institutional_long_pct": 8.7,
+    "avg_daily_volume": 3456932,
     "report_date": "2026-07-14"
   },
   {
@@ -2713,8 +2713,8 @@
     "short_interest_pct": 32.9,
     "days_to_cover": 11.3,
     "short_interest_change_pct": -1.8,
-    "institutional_long_pct": 94.3,
-    "avg_daily_volume": 2030927,
+    "institutional_long_pct": 94.9,
+    "avg_daily_volume": 2042386,
     "report_date": "2026-07-14"
   },
   {
@@ -2722,8 +2722,8 @@
     "short_interest_pct": 32.3,
     "days_to_cover": 7.1,
     "short_interest_change_pct": 13.2,
-    "institutional_long_pct": 99.3,
-    "avg_daily_volume": 3386353,
+    "institutional_long_pct": 101.3,
+    "avg_daily_volume": 3393438,
     "report_date": "2026-07-14"
   },
   {
@@ -2731,8 +2731,8 @@
     "short_interest_pct": 18.4,
     "days_to_cover": 9.8,
     "short_interest_change_pct": 5.2,
-    "institutional_long_pct": 117.8,
-    "avg_daily_volume": 1396872,
+    "institutional_long_pct": 116.1,
+    "avg_daily_volume": 1394569,
     "report_date": "2026-07-14"
   },
   {
@@ -2740,8 +2740,8 @@
     "short_interest_pct": 15.2,
     "days_to_cover": 5.0,
     "short_interest_change_pct": 180.6,
-    "institutional_long_pct": 100.1,
-    "avg_daily_volume": 161270,
+    "institutional_long_pct": 100.6,
+    "avg_daily_volume": 169376,
     "report_date": "2026-07-14"
   },
   {
@@ -2749,8 +2749,8 @@
     "short_interest_pct": 26.2,
     "days_to_cover": 14.7,
     "short_interest_change_pct": 33.9,
-    "institutional_long_pct": 120.2,
-    "avg_daily_volume": 723680,
+    "institutional_long_pct": 115.9,
+    "avg_daily_volume": 786879,
     "report_date": "2026-07-14"
   },
   {
@@ -2758,8 +2758,8 @@
     "short_interest_pct": 10.0,
     "days_to_cover": 3.5,
     "short_interest_change_pct": 79.2,
-    "institutional_long_pct": 88.2,
-    "avg_daily_volume": 352167,
+    "institutional_long_pct": 88.7,
+    "avg_daily_volume": 357010,
     "report_date": "2026-07-14"
   },
   {
@@ -2767,8 +2767,8 @@
     "short_interest_pct": 2.0,
     "days_to_cover": 2.9,
     "short_interest_change_pct": 6.2,
-    "institutional_long_pct": 96.1,
-    "avg_daily_volume": 368570,
+    "institutional_long_pct": 101.0,
+    "avg_daily_volume": 350793,
     "report_date": "2026-07-14"
   },
   {
@@ -2776,8 +2776,8 @@
     "short_interest_pct": 10.3,
     "days_to_cover": 4.9,
     "short_interest_change_pct": -20.5,
-    "institutional_long_pct": 103.1,
-    "avg_daily_volume": 765817,
+    "institutional_long_pct": 103.2,
+    "avg_daily_volume": 787449,
     "report_date": "2026-07-14"
   },
   {
@@ -2785,8 +2785,8 @@
     "short_interest_pct": 19.5,
     "days_to_cover": 16.4,
     "short_interest_change_pct": 8.9,
-    "institutional_long_pct": 104.4,
-    "avg_daily_volume": 1725904,
+    "institutional_long_pct": 104.5,
+    "avg_daily_volume": 1775722,
     "report_date": "2026-07-14"
   },
   {
@@ -2794,8 +2794,8 @@
     "short_interest_pct": 15.4,
     "days_to_cover": 6.6,
     "short_interest_change_pct": -0.9,
-    "institutional_long_pct": 93.4,
-    "avg_daily_volume": 1335912,
+    "institutional_long_pct": 92.7,
+    "avg_daily_volume": 1325900,
     "report_date": "2026-07-14"
   },
   {
@@ -2803,8 +2803,8 @@
     "short_interest_pct": 8.2,
     "days_to_cover": 6.0,
     "short_interest_change_pct": 1.7,
-    "institutional_long_pct": 81.1,
-    "avg_daily_volume": 703866,
+    "institutional_long_pct": 81.3,
+    "avg_daily_volume": 691867,
     "report_date": "2026-07-14"
   },
   {
@@ -2812,8 +2812,8 @@
     "short_interest_pct": 13.7,
     "days_to_cover": 4.3,
     "short_interest_change_pct": 16.1,
-    "institutional_long_pct": 109.9,
-    "avg_daily_volume": 975135,
+    "institutional_long_pct": 109.1,
+    "avg_daily_volume": 982376,
     "report_date": "2026-07-14"
   },
   {
@@ -2822,7 +2822,7 @@
     "days_to_cover": 4.6,
     "short_interest_change_pct": -9.9,
     "institutional_long_pct": 98.5,
-    "avg_daily_volume": 590920,
+    "avg_daily_volume": 609564,
     "report_date": "2026-07-14"
   },
   {
@@ -2830,8 +2830,8 @@
     "short_interest_pct": 3.1,
     "days_to_cover": 1.4,
     "short_interest_change_pct": 81.6,
-    "institutional_long_pct": 59.8,
-    "avg_daily_volume": 711670,
+    "institutional_long_pct": 58.6,
+    "avg_daily_volume": 693111,
     "report_date": "2026-07-14"
   },
   {
@@ -2839,8 +2839,8 @@
     "short_interest_pct": 8.9,
     "days_to_cover": 1.5,
     "short_interest_change_pct": -33.4,
-    "institutional_long_pct": 117.7,
-    "avg_daily_volume": 5049290,
+    "institutional_long_pct": 115.1,
+    "avg_daily_volume": 5026483,
     "report_date": "2026-07-14"
   },
   {
@@ -2848,17 +2848,17 @@
     "short_interest_pct": 21.6,
     "days_to_cover": 9.7,
     "short_interest_change_pct": -10.0,
-    "institutional_long_pct": 74.1,
-    "avg_daily_volume": 195367,
+    "institutional_long_pct": 74.2,
+    "avg_daily_volume": 196579,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "TEM",
-    "short_interest_pct": 30.7,
+    "short_interest_pct": 30.4,
     "days_to_cover": 5.0,
     "short_interest_change_pct": -20.2,
-    "institutional_long_pct": 54.7,
-    "avg_daily_volume": 6473188,
+    "institutional_long_pct": 54.2,
+    "avg_daily_volume": 6407664,
     "report_date": "2026-07-14"
   },
   {
@@ -2866,8 +2866,8 @@
     "short_interest_pct": 7.8,
     "days_to_cover": 1.4,
     "short_interest_change_pct": 166.6,
-    "institutional_long_pct": 75.9,
-    "avg_daily_volume": 1091277,
+    "institutional_long_pct": 56.3,
+    "avg_daily_volume": 1154303,
     "report_date": "2026-07-14"
   },
   {
@@ -2877,15 +2877,15 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   },
   {
     "ticker": "TEVA",
     "short_interest_pct": 2.8,
     "days_to_cover": 5.8,
     "short_interest_change_pct": -1.8,
-    "institutional_long_pct": 62.9,
-    "avg_daily_volume": 6002082,
+    "institutional_long_pct": 63.3,
+    "avg_daily_volume": 5846118,
     "report_date": "2026-07-14"
   },
   {
@@ -2893,8 +2893,8 @@
     "short_interest_pct": 29.0,
     "days_to_cover": 10.8,
     "short_interest_change_pct": 1.6,
-    "institutional_long_pct": 70.3,
-    "avg_daily_volume": 2438608,
+    "institutional_long_pct": 70.6,
+    "avg_daily_volume": 2429140,
     "report_date": "2026-07-14"
   },
   {
@@ -2902,8 +2902,8 @@
     "short_interest_pct": 14.4,
     "days_to_cover": 6.6,
     "short_interest_change_pct": 60.8,
-    "institutional_long_pct": 84.7,
-    "avg_daily_volume": 169162,
+    "institutional_long_pct": 84.8,
+    "avg_daily_volume": 170523,
     "report_date": "2026-07-14"
   },
   {
@@ -2911,8 +2911,8 @@
     "short_interest_pct": 26.5,
     "days_to_cover": 9.3,
     "short_interest_change_pct": 25.5,
-    "institutional_long_pct": 114.8,
-    "avg_daily_volume": 4044656,
+    "institutional_long_pct": 116.2,
+    "avg_daily_volume": 4041081,
     "report_date": "2026-07-14"
   },
   {
@@ -2921,7 +2921,7 @@
     "days_to_cover": 9.2,
     "short_interest_change_pct": -13.1,
     "institutional_long_pct": 48.4,
-    "avg_daily_volume": 3407148,
+    "avg_daily_volume": 3299469,
     "report_date": "2026-07-14"
   },
   {
@@ -2929,8 +2929,8 @@
     "short_interest_pct": null,
     "days_to_cover": 4.9,
     "short_interest_change_pct": 33.2,
-    "institutional_long_pct": 52.6,
-    "avg_daily_volume": 719633,
+    "institutional_long_pct": 52.2,
+    "avg_daily_volume": 726042,
     "report_date": "2026-07-14"
   },
   {
@@ -2938,8 +2938,8 @@
     "short_interest_pct": 8.9,
     "days_to_cover": 6.3,
     "short_interest_change_pct": 16.6,
-    "institutional_long_pct": 78.9,
-    "avg_daily_volume": 482217,
+    "institutional_long_pct": 78.8,
+    "avg_daily_volume": 424681,
     "report_date": "2026-07-14"
   },
   {
@@ -2947,8 +2947,8 @@
     "short_interest_pct": 9.9,
     "days_to_cover": 4.2,
     "short_interest_change_pct": -11.8,
-    "institutional_long_pct": 99.6,
-    "avg_daily_volume": 2069603,
+    "institutional_long_pct": 99.7,
+    "avg_daily_volume": 2076850,
     "report_date": "2026-07-14"
   },
   {
@@ -2956,8 +2956,8 @@
     "short_interest_pct": 16.0,
     "days_to_cover": 10.3,
     "short_interest_change_pct": 17.0,
-    "institutional_long_pct": 87.3,
-    "avg_daily_volume": 3053616,
+    "institutional_long_pct": 88.0,
+    "avg_daily_volume": 3063301,
     "report_date": "2026-07-14"
   },
   {
@@ -2965,8 +2965,8 @@
     "short_interest_pct": 16.9,
     "days_to_cover": 5.9,
     "short_interest_change_pct": -10.6,
-    "institutional_long_pct": 114.2,
-    "avg_daily_volume": 2066230,
+    "institutional_long_pct": 112.5,
+    "avg_daily_volume": 1873903,
     "report_date": "2026-07-14"
   },
   {
@@ -2974,8 +2974,8 @@
     "short_interest_pct": 29.1,
     "days_to_cover": 6.9,
     "short_interest_change_pct": -20.1,
-    "institutional_long_pct": 129.1,
-    "avg_daily_volume": 1740924,
+    "institutional_long_pct": 119.4,
+    "avg_daily_volume": 1736261,
     "report_date": "2026-07-14"
   },
   {
@@ -2983,8 +2983,8 @@
     "short_interest_pct": 19.0,
     "days_to_cover": 4.6,
     "short_interest_change_pct": -26.5,
-    "institutional_long_pct": 112.1,
-    "avg_daily_volume": 3151835,
+    "institutional_long_pct": 111.1,
+    "avg_daily_volume": 3196525,
     "report_date": "2026-07-14"
   },
   {
@@ -2992,8 +2992,8 @@
     "short_interest_pct": 30.9,
     "days_to_cover": 10.3,
     "short_interest_change_pct": 0.6,
-    "institutional_long_pct": 111.8,
-    "avg_daily_volume": 813366,
+    "institutional_long_pct": 111.9,
+    "avg_daily_volume": 822300,
     "report_date": "2026-07-14"
   },
   {
@@ -3001,8 +3001,8 @@
     "short_interest_pct": 10.2,
     "days_to_cover": 6.1,
     "short_interest_change_pct": -7.2,
-    "institutional_long_pct": 88.5,
-    "avg_daily_volume": 578343,
+    "institutional_long_pct": 87.8,
+    "avg_daily_volume": 596516,
     "report_date": "2026-07-14"
   },
   {
@@ -3010,8 +3010,8 @@
     "short_interest_pct": 11.9,
     "days_to_cover": 7.5,
     "short_interest_change_pct": -13.2,
-    "institutional_long_pct": 101.7,
-    "avg_daily_volume": 786741,
+    "institutional_long_pct": 101.4,
+    "avg_daily_volume": 748384,
     "report_date": "2026-07-14"
   },
   {
@@ -3019,8 +3019,8 @@
     "short_interest_pct": 5.8,
     "days_to_cover": 3.8,
     "short_interest_change_pct": 1.7,
-    "institutional_long_pct": 101.6,
-    "avg_daily_volume": 486233,
+    "institutional_long_pct": 100.3,
+    "avg_daily_volume": 483971,
     "report_date": "2026-07-14"
   },
   {
@@ -3028,8 +3028,8 @@
     "short_interest_pct": 11.6,
     "days_to_cover": 6.5,
     "short_interest_change_pct": -13.0,
-    "institutional_long_pct": 112.9,
-    "avg_daily_volume": 635759,
+    "institutional_long_pct": 112.3,
+    "avg_daily_volume": 627991,
     "report_date": "2026-07-14"
   },
   {
@@ -3037,8 +3037,8 @@
     "short_interest_pct": 9.9,
     "days_to_cover": 4.8,
     "short_interest_change_pct": -21.4,
-    "institutional_long_pct": 113.5,
-    "avg_daily_volume": 1249679,
+    "institutional_long_pct": 112.3,
+    "avg_daily_volume": 1323011,
     "report_date": "2026-07-14"
   },
   {
@@ -3046,8 +3046,8 @@
     "short_interest_pct": 23.9,
     "days_to_cover": 5.8,
     "short_interest_change_pct": 27.4,
-    "institutional_long_pct": 110.9,
-    "avg_daily_volume": 1701814,
+    "institutional_long_pct": 110.7,
+    "avg_daily_volume": 1746522,
     "report_date": "2026-07-14"
   },
   {
@@ -3055,17 +3055,17 @@
     "short_interest_pct": 11.1,
     "days_to_cover": 7.8,
     "short_interest_change_pct": 2.0,
-    "institutional_long_pct": 80.8,
-    "avg_daily_volume": 1859220,
+    "institutional_long_pct": 82.2,
+    "avg_daily_volume": 1859749,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "VKTX",
-    "short_interest_pct": 21.1,
+    "short_interest_pct": 21.0,
     "days_to_cover": 8.0,
     "short_interest_change_pct": -0.7,
     "institutional_long_pct": 64.4,
-    "avg_daily_volume": 2351532,
+    "avg_daily_volume": 2327761,
     "report_date": "2026-07-14"
   },
   {
@@ -3073,8 +3073,8 @@
     "short_interest_pct": 12.6,
     "days_to_cover": 8.0,
     "short_interest_change_pct": 2.8,
-    "institutional_long_pct": 78.8,
-    "avg_daily_volume": 978793,
+    "institutional_long_pct": 78.6,
+    "avg_daily_volume": 923028,
     "report_date": "2026-07-14"
   },
   {
@@ -3082,8 +3082,8 @@
     "short_interest_pct": 16.1,
     "days_to_cover": 3.9,
     "short_interest_change_pct": 22.5,
-    "institutional_long_pct": 75.3,
-    "avg_daily_volume": 1188772,
+    "institutional_long_pct": 75.7,
+    "avg_daily_volume": 1218205,
     "report_date": "2026-07-14"
   },
   {
@@ -3091,8 +3091,8 @@
     "short_interest_pct": 17.8,
     "days_to_cover": 7.5,
     "short_interest_change_pct": 26.0,
-    "institutional_long_pct": 112.2,
-    "avg_daily_volume": 2539645,
+    "institutional_long_pct": 113.2,
+    "avg_daily_volume": 2085911,
     "report_date": "2026-07-14"
   },
   {
@@ -3100,8 +3100,8 @@
     "short_interest_pct": 2.2,
     "days_to_cover": 2.5,
     "short_interest_change_pct": 8.0,
-    "institutional_long_pct": 98.0,
-    "avg_daily_volume": 1551379,
+    "institutional_long_pct": 98.3,
+    "avg_daily_volume": 1562991,
     "report_date": "2026-07-14"
   },
   {
@@ -3109,8 +3109,8 @@
     "short_interest_pct": 23.0,
     "days_to_cover": 6.3,
     "short_interest_change_pct": -7.7,
-    "institutional_long_pct": 98.5,
-    "avg_daily_volume": 2636969,
+    "institutional_long_pct": 100.1,
+    "avg_daily_volume": 2659479,
     "report_date": "2026-07-14"
   },
   {
@@ -3118,8 +3118,8 @@
     "short_interest_pct": 4.1,
     "days_to_cover": 4.7,
     "short_interest_change_pct": 4.8,
-    "institutional_long_pct": 88.2,
-    "avg_daily_volume": 10805888,
+    "institutional_long_pct": 88.5,
+    "avg_daily_volume": 10180945,
     "report_date": "2026-07-14"
   },
   {
@@ -3127,17 +3127,17 @@
     "short_interest_pct": 7.5,
     "days_to_cover": 5.1,
     "short_interest_change_pct": 5.2,
-    "institutional_long_pct": 55.5,
-    "avg_daily_volume": 643827,
+    "institutional_long_pct": 57.1,
+    "avg_daily_volume": 654062,
     "report_date": "2026-07-14"
   },
   {
     "ticker": "WVE",
-    "short_interest_pct": 10.9,
+    "short_interest_pct": 10.8,
     "days_to_cover": 5.3,
     "short_interest_change_pct": -7.2,
-    "institutional_long_pct": 82.7,
-    "avg_daily_volume": 3371995,
+    "institutional_long_pct": 80.7,
+    "avg_daily_volume": 3272089,
     "report_date": "2026-07-14"
   },
   {
@@ -3145,8 +3145,8 @@
     "short_interest_pct": 6.6,
     "days_to_cover": 3.3,
     "short_interest_change_pct": 43.8,
-    "institutional_long_pct": 108.1,
-    "avg_daily_volume": 1396035,
+    "institutional_long_pct": 106.8,
+    "avg_daily_volume": 1401464,
     "report_date": "2026-07-14"
   },
   {
@@ -3154,8 +3154,8 @@
     "short_interest_pct": 6.0,
     "days_to_cover": 4.3,
     "short_interest_change_pct": -21.3,
-    "institutional_long_pct": 62.7,
-    "avg_daily_volume": 1893596,
+    "institutional_long_pct": 63.8,
+    "avg_daily_volume": 1846281,
     "report_date": "2026-07-14"
   },
   {
@@ -3163,8 +3163,8 @@
     "short_interest_pct": 20.8,
     "days_to_cover": 11.0,
     "short_interest_change_pct": -3.7,
-    "institutional_long_pct": 115.0,
-    "avg_daily_volume": 924301,
+    "institutional_long_pct": 115.9,
+    "avg_daily_volume": 927254,
     "report_date": "2026-07-14"
   },
   {
@@ -3172,8 +3172,8 @@
     "short_interest_pct": 28.7,
     "days_to_cover": 11.1,
     "short_interest_change_pct": 9.3,
-    "institutional_long_pct": 90.6,
-    "avg_daily_volume": 800306,
+    "institutional_long_pct": 91.1,
+    "avg_daily_volume": 806503,
     "report_date": "2026-07-14"
   },
   {
@@ -3181,8 +3181,8 @@
     "short_interest_pct": 5.7,
     "days_to_cover": 6.8,
     "short_interest_change_pct": -12.4,
-    "institutional_long_pct": 31.3,
-    "avg_daily_volume": 866229,
+    "institutional_long_pct": 31.5,
+    "avg_daily_volume": 869181,
     "report_date": "2026-07-14"
   },
   {
@@ -3190,8 +3190,8 @@
     "short_interest_pct": 13.3,
     "days_to_cover": 5.2,
     "short_interest_change_pct": 19.6,
-    "institutional_long_pct": 74.0,
-    "avg_daily_volume": 1833625,
+    "institutional_long_pct": 75.2,
+    "avg_daily_volume": 1841562,
     "report_date": "2026-07-14"
   },
   {
@@ -3200,7 +3200,7 @@
     "days_to_cover": 6.5,
     "short_interest_change_pct": -8.5,
     "institutional_long_pct": 102.8,
-    "avg_daily_volume": 626129,
+    "avg_daily_volume": 632588,
     "report_date": "2026-07-14"
   },
   {
@@ -3210,6 +3210,6 @@
     "short_interest_change_pct": null,
     "institutional_long_pct": null,
     "avg_daily_volume": null,
-    "report_date": "2026-07-31"
+    "report_date": "2026-08-07"
   }
 ]

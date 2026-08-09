@@ -90,6 +90,8 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "forward_eval",
         "pit_bundle_health",
         "decision_engine_schema",
+        "deploy_freshness",
+        "working_tree_clean",
         "sort_contrib_sanity",
         "portfolio_weights",
         "eligibility_consistency",
@@ -1077,6 +1079,266 @@ def check_split_adj_freshness(
         detail=f"split-adjusted series current: last={adj_last}, raw last={raw_last}, gap={gap}",
         value=gap,
         threshold=max_gap_days,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Deploy freshness gate (WARN-only)
+# ---------------------------------------------------------------------------
+
+
+def check_deploy_freshness(
+    repo_root: Path,
+    remote: str = "origin",
+    branch: str = "main",
+    timeout_s: int = 30,
+) -> GateResult:
+    """Warn when the production checkout is behind the remote. WARN-only.
+
+    Merging is not deploying. The pipeline runs from this working tree, so a
+    merged fix stays inert until someone pulls. On 2026-08-06 the
+    portfolio_weights fix sat merged-but-undeployed for a full day behind a
+    checkout 60 commits stale, and nothing in the run said so -- the gate it
+    fixed kept warning as if the fix did not exist.
+
+    Read-only: fetches, never pulls, and never modifies the working tree.
+    Network and git failures degrade to WARN rather than taking the run down --
+    an unknown deploy state is worth surfacing, but is not worth losing a
+    snapshot over.
+    """
+
+    def _git(*args: str, timeout: int = timeout_s) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+
+    try:
+        probe = _git("rev-parse", "--git-dir", timeout=10)
+        if probe.returncode != 0:
+            return GateResult(
+                name="deploy_freshness",
+                status="WARN",
+                detail=f"{repo_root} is not a git checkout; deploy state unknown",
+            )
+
+        # Fetch only. A stale remote ref would make this gate lie, and lying
+        # quietly is the exact failure it exists to catch.
+        fetched = _git("fetch", "--quiet", remote, branch)
+        if fetched.returncode != 0:
+            err = (fetched.stderr or "").strip().splitlines()
+            return GateResult(
+                name="deploy_freshness",
+                status="WARN",
+                detail=f"could not fetch {remote}/{branch}; deploy state unknown: {err[-1] if err else 'unknown error'}",
+            )
+
+        behind_p = _git("rev-list", "--count", "HEAD..FETCH_HEAD")
+        ahead_p = _git("rev-list", "--count", "FETCH_HEAD..HEAD")
+        head_p = _git("rev-parse", "--short", "HEAD")
+        remote_p = _git("rev-parse", "--short", "FETCH_HEAD")
+
+        if any(p.returncode != 0 for p in (behind_p, ahead_p, head_p, remote_p)):
+            return GateResult(
+                name="deploy_freshness",
+                status="WARN",
+                detail="git rev-list failed; deploy state unknown",
+            )
+
+        behind = int((behind_p.stdout or "0").strip() or 0)
+        ahead = int((ahead_p.stdout or "0").strip() or 0)
+        head_sha = (head_p.stdout or "").strip()
+        remote_sha = (remote_p.stdout or "").strip()
+
+    except subprocess.TimeoutExpired:
+        return GateResult(
+            name="deploy_freshness",
+            status="WARN",
+            detail=f"git timed out after {timeout_s}s; deploy state unknown",
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        return GateResult(
+            name="deploy_freshness",
+            status="WARN",
+            detail=f"deploy freshness check errored: {type(exc).__name__}: {exc}",
+        )
+
+    # Local commits not on the remote are reported but do not warn on their own:
+    # a checkout mid-work is normal, and a second permanently-yellow gate would
+    # defeat the purpose of this one.
+    ahead_note = f"; {ahead} local commit(s) not on {remote}/{branch}" if ahead else ""
+
+    if behind == 0:
+        return GateResult(
+            name="deploy_freshness",
+            status="PASS",
+            detail=f"checkout current with {remote}/{branch} ({head_sha}){ahead_note}",
+            value=0,
+        )
+
+    subjects_p = _git("log", "--oneline", "--no-decorate", "-3", "HEAD..FETCH_HEAD")
+    subjects = [s.strip() for s in (subjects_p.stdout or "").splitlines() if s.strip()]
+    preview = "; ".join(subjects)
+    if behind > len(subjects):
+        preview += f"; +{behind - len(subjects)} more"
+
+    return GateResult(
+        name="deploy_freshness",
+        status="WARN",
+        detail=(
+            f"checkout is {behind} commit(s) behind {remote}/{branch} "
+            f"({head_sha} vs {remote_sha}){ahead_note} — merged work is not deployed: {preview}"
+        ),
+        value=behind,
+        threshold=0,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Working-tree provenance gate (WARN-only)
+# ---------------------------------------------------------------------------
+
+# Paths whose modification makes a snapshot unreproducible. Everything else in
+# the tree — production_data/, artifacts/, logs/, docs/, snapshots — is written
+# by the pipeline itself, so it is dirty on every run by design and must not
+# warn or this gate would be permanently yellow and therefore ignored.
+_CODE_SUFFIXES = {".py", ".sh", ".yml", ".yaml", ".toml", ".cfg", ".ini"}
+_CODE_DIRS = (
+    "tools/",
+    "scripts/",
+    "common/",
+    "agents/",
+    "config/",
+    "event_ev/",
+    "adapters/",
+    "mcp_server/",
+    "wake_robin_data_pipeline/",
+    "scientific_cartography/",
+    ".github/",
+)
+
+
+def _is_code_path(path: str) -> bool:
+    """True when a repo-relative path is source rather than pipeline output."""
+    p = path.strip().strip('"')
+    if p.startswith("production_data/") or p.startswith("data/") or p.startswith("logs/"):
+        return False
+    if Path(p).suffix in _CODE_SUFFIXES:
+        return True
+    return any(p.startswith(d) for d in _CODE_DIRS)
+
+
+def check_working_tree_clean(
+    repo_root: Path,
+    timeout_s: int = 120,
+) -> GateResult:
+    """Warn when the snapshot is produced from modified source. WARN-only.
+
+    A run against edited code cannot be reproduced from any commit, so the
+    snapshot's provenance is unrecoverable. On 2026-08-06 exactly that
+    happened: the run executed with dirty_pre_run and dirty_post_run both
+    true, and its CTGov catalyst count came out at 2417 against a 1114-1192
+    baseline — a number no commit can reproduce. Nothing in that run's
+    overall=WARN said so; the dirty flag sat in run_manifest.json unread.
+
+    Deliberately narrow. The pipeline writes production_data/, artifacts/ and
+    logs/ into its own working tree, so `git status` is non-empty on every
+    healthy run. Warning on that would make this gate permanently yellow —
+    the same failure mode as portfolio_weights (#558) and
+    decision_engine_schema (#563), both of which warned by construction and
+    quietly consumed the overall=WARN signal. Only source changes warn.
+
+    An unreadable git state is WARN, never PASS: run_manifest has recorded
+    dirty=None on days when `git status` failed (a stranded index.lock does
+    it), and "unknown provenance" must not be reported as "clean".
+
+    Cost matters here. `git status --porcelain -uall` walks every untracked
+    file and takes ~22s warm and over 30s cold on this repo (4.2k tracked
+    files, 308 MB pack, 9p mount) — the first deploy of this gate timed out
+    and reported "provenance unknown" on a healthy tree, which is exactly the
+    permanently-yellow outcome it was written to avoid. Two narrower commands
+    answer the same question for ~3s combined:
+      - `git diff --name-only HEAD`  -> tracked modifications  (~2.5s)
+      - `git ls-files --others` with a code pathspec -> untracked source (~1s)
+    The pathspec also removes the need for -uall: untracked entries arrive as
+    individual files, never collapsed to "?? tools/".
+    """
+
+    def _run(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+        )
+
+    code_globs = [f"*{suffix}" for suffix in sorted(_CODE_SUFFIXES)]
+
+    try:
+        tracked = _run("diff", "--name-only", "HEAD")
+        untracked = _run("ls-files", "--others", "--exclude-standard", "--", *code_globs)
+    except subprocess.TimeoutExpired:
+        return GateResult(
+            name="working_tree_clean",
+            status="WARN",
+            detail=f"git timed out after {timeout_s}s — provenance unknown",
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        return GateResult(
+            name="working_tree_clean",
+            status="WARN",
+            detail=f"working tree check errored: {type(exc).__name__}: {exc}",
+        )
+
+    for proc, what in ((tracked, "git diff"), (untracked, "git ls-files")):
+        if proc.returncode != 0:
+            err = (proc.stderr or "").strip().splitlines()
+            return GateResult(
+                name="working_tree_clean",
+                status="WARN",
+                detail=f"{what} failed — provenance unknown: {err[-1] if err else 'unknown error'}",
+            )
+
+    code_paths: List[str] = []
+    n_output = 0
+    for path in (tracked.stdout or "").splitlines():
+        path = path.strip()
+        if not path:
+            continue
+        if _is_code_path(path):
+            code_paths.append(path)
+        else:
+            n_output += 1
+    for path in (untracked.stdout or "").splitlines():
+        path = path.strip()
+        if path and _is_code_path(path) and path not in code_paths:
+            code_paths.append(path)
+
+    output_note = f"; {n_output} pipeline output file(s) modified, as expected" if n_output else ""
+
+    if not code_paths:
+        return GateResult(
+            name="working_tree_clean",
+            status="PASS",
+            detail=f"no source modifications — snapshot is reproducible from HEAD{output_note}",
+            value=0,
+        )
+
+    preview = ", ".join(sorted(code_paths)[:5])
+    if len(code_paths) > 5:
+        preview += f", +{len(code_paths) - 5} more"
+
+    return GateResult(
+        name="working_tree_clean",
+        status="WARN",
+        detail=(
+            f"{len(code_paths)} source file(s) modified — this snapshot cannot be "
+            f"reproduced from any commit: {preview}{output_note}"
+        ),
+        value=len(code_paths),
+        threshold=0,
     )
 
 
@@ -2848,7 +3110,7 @@ def check_decision_engine_schema(
     - All DECISION_COLUMNS + ACTIONABLE_COLUMNS present in headers
     - tier_dev ∈ {A, B, C, D, ""}
     - tier_any ∈ {A, B, C, D, ""}
-    - eligible ∈ {"0", "1"}
+    - eligible ∈ {"0", "1"}, or "" when ineligible_reasons records a veto
     - actionable_rank sequential 1..N for eligible rows, empty for ineligible
     """
     rankings_path = snapshot_date_dir / "rankings.csv"
@@ -2896,7 +3158,13 @@ def check_decision_engine_schema(
                 warn_reasons.append(f"{ticker}: tier_any='{tier_any}' invalid")
 
             eligible = (row.get("eligible") or "").strip()
-            if eligible not in valid_eligible:
+            reasons = (row.get("ineligible_reasons") or "").strip()
+            # A veto blanks `eligible` rather than writing "0", so the name stays
+            # observable in rankings.csv without being ranked or sized — see the
+            # pending-acquisition gate in run_screen.py. That empty value is only
+            # legitimate when a reason is recorded alongside it; a bare "" with no
+            # reason is an unexplained hole and still warns.
+            if eligible not in valid_eligible and not (eligible == "" and reasons):
                 warn_reasons.append(f"{ticker}: eligible='{eligible}' invalid")
 
             act_rank = (row.get("actionable_rank") or "").strip()
@@ -5265,6 +5533,16 @@ def run_daily(
                 _sa_status,
                 split_adj_stats.get("detail", "no detail"),
             )
+
+    # --- Gate: deploy freshness (WARN) — merging is not deploying ---
+    deploy_gate = check_deploy_freshness(REPO_ROOT)
+    gate_results.append(deploy_gate)
+    _logger.info(f"Deploy gate: {deploy_gate.status} — {deploy_gate.detail}")
+
+    # --- Gate: working-tree provenance (WARN) — a dirty source tree is unreproducible ---
+    tree_gate = check_working_tree_clean(REPO_ROOT)
+    gate_results.append(tree_gate)
+    _logger.info(f"Working-tree gate: {tree_gate.status} — {tree_gate.detail}")
 
     # --- Gate: split-adjusted freshness (WARN) — stops silent drift recurring ---
     split_adj_gate = check_split_adj_freshness(price_csv, _split_adj_csv)

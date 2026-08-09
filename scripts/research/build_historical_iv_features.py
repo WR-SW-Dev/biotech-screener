@@ -166,66 +166,150 @@ def main(argv=None) -> int:
         logger.error("Surface not found: %s — run build_historical_iv_surface.py first", args.surface)
         return 1
 
-    logger.info("Loading surface from %s...", args.surface)
-    # Group by (date, ticker)
-    groups: Dict[tuple, List[Dict[str, Any]]] = defaultdict(list)
-    underlying_prices: Dict[tuple, float] = {}
-    n_rows = 0
+    logger.info("Streaming surface from %s...", args.surface)
 
-    with open(args.surface, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            dt = row["date"]
-            tk = row["ticker"]
-            key = (dt, tk)
-            groups[key].append(
-                {
-                    "expiry": row["expiry"],
-                    "dte": int(row["dte"]),
-                    "option_type": row["option_type"],
-                    "strike": float(row["strike"]),
-                    "underlying_close": float(row["underlying_close"]),
-                    "option_close": float(row["option_close"]),
-                    "implied_vol": float(row["implied_vol"]),
-                    "delta": float(row["delta"]) if row.get("delta") else None,
-                    "gamma": float(row["gamma"]) if row.get("gamma") else None,
-                    "vega": float(row["vega"]) if row.get("vega") else None,
-                    "theta": float(row["theta"]) if row.get("theta") else None,
-                    "volume": int(float(row["volume"])) if row.get("volume") else 0,
-                }
-            )
-            underlying_prices[key] = float(row["underlying_close"])
-            n_rows += 1
-
-    logger.info("  %d surface rows, %d date×ticker groups", n_rows, len(groups))
-
-    # Compute features
+    # Streamed group-at-a-time, not loaded whole.
+    #
+    # This previously accumulated every row into `groups` before computing
+    # anything. The surface is 683 MB / 5.68 M rows, and one dict per row put
+    # peak RSS at 2.5-3.1 GB — enough to be OOM-killed on a 5.8 GiB WSL2 box.
+    # It died 62 times out of 344 runs, and because the kill took the exit code
+    # of the whole `cron_data_refresh.sh all` chain with it, the failure
+    # surfaced as "data_refresh done (exit 137)" rather than naming this stage.
+    #
+    # The work was always group-local: compute_features() consumes one
+    # date×ticker group and nothing else. The surface is written sorted and
+    # contiguous by (date, ticker) — verified across all 5,676,296 rows and
+    # 254,442 groups, zero revisits — so a group can be flushed as soon as the
+    # key changes. Average group is ~22 rows, so peak memory drops from every
+    # row in the file to one group.
+    #
+    # Output order must not change. The previous implementation wrote
+    # sorted(groups.items()) — (date, ticker) ascending. Tickers are NOT
+    # ascending within a date in the surface as written (e.g. CABA follows
+    # SVRA on 2022-03-16), so streaming in file order would silently reorder
+    # the artifact. Instead each date's feature rows are buffered and sorted by
+    # ticker before being written: identical bytes, and the buffer holds one
+    # date's ~1.2k feature rows rather than the file's 5.68 M contract rows.
+    #
+    # This relies on dates being contiguous and ascending, which is enforced
+    # below rather than trusted. A future surface that violates it fails loudly
+    # instead of silently emitting a reordered or duplicated feature set.
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    n_rows = 0
+    n_groups = 0
     n_features = 0
     n_with_rr = 0
     n_with_straddle = 0
+    dates_seen: set = set()
     tickers_with_30d: Dict[str, int] = defaultdict(int)
 
-    with open(args.output, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FEATURE_COLUMNS)
+    with open(args.output, "w", newline="", encoding="utf-8") as out_f:
+        writer = csv.DictWriter(out_f, fieldnames=FEATURE_COLUMNS)
         writer.writeheader()
 
-        for (dt, tk), contracts in sorted(groups.items()):
-            underlying = underlying_prices[(dt, tk)]
+        date_buffer: List[Dict[str, Any]] = []
+
+        def end_group(key: tuple, contracts: List[Dict[str, Any]], underlying: float) -> None:
+            dt, tk = key
             features = compute_features(contracts, underlying)
             features["date"] = dt
             features["ticker"] = tk
-            writer.writerow(features)
-            n_features += 1
-            tickers_with_30d[tk] += 1
-            if features.get("rr_25d") not in ("", None):
-                n_with_rr += 1
-            if features.get("atm_straddle_price") not in ("", None):
-                n_with_straddle += 1
+            date_buffer.append(features)
+
+        def end_date() -> None:
+            nonlocal n_features, n_with_rr, n_with_straddle
+            for features in sorted(date_buffer, key=lambda r: r["ticker"]):
+                writer.writerow(features)
+                n_features += 1
+                tickers_with_30d[features["ticker"]] += 1
+                if features.get("rr_25d") not in ("", None):
+                    n_with_rr += 1
+                if features.get("atm_straddle_price") not in ("", None):
+                    n_with_straddle += 1
+            date_buffer.clear()
+
+        cur_key: tuple | None = None
+        cur_date: str | None = None
+        cur_contracts: List[Dict[str, Any]] = []
+        cur_underlying = 0.0
+        keys_this_date: set = set()
+
+        with open(args.surface, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                dt = row["date"]
+                key = (dt, row["ticker"])
+
+                if key != cur_key:
+                    if cur_key is not None:
+                        end_group(cur_key, cur_contracts, cur_underlying)
+
+                    if dt != cur_date:
+                        if cur_date is not None:
+                            if dt in dates_seen:
+                                logger.error(
+                                    "Surface date %s is not contiguous — it reappears after %s. "
+                                    "Rebuild the surface with build_historical_iv_surface.py.",
+                                    dt,
+                                    cur_date,
+                                )
+                                return 1
+                            if dt < cur_date:
+                                logger.error(
+                                    "Surface dates are not ascending: %s follows %s. "
+                                    "Rebuild the surface with build_historical_iv_surface.py.",
+                                    dt,
+                                    cur_date,
+                                )
+                                return 1
+                            end_date()
+                        cur_date = dt
+                        dates_seen.add(dt)
+                        keys_this_date = set()
+
+                    if key in keys_this_date:
+                        logger.error(
+                            "Surface group %s is not contiguous — it reappears within its date. "
+                            "Rebuild the surface with build_historical_iv_surface.py.",
+                            key,
+                        )
+                        return 1
+                    keys_this_date.add(key)
+
+                    cur_key = key
+                    cur_contracts = []
+                    n_groups += 1
+
+                cur_contracts.append(
+                    {
+                        "expiry": row["expiry"],
+                        "dte": int(row["dte"]),
+                        "option_type": row["option_type"],
+                        "strike": float(row["strike"]),
+                        "underlying_close": float(row["underlying_close"]),
+                        "option_close": float(row["option_close"]),
+                        "implied_vol": float(row["implied_vol"]),
+                        "delta": float(row["delta"]) if row.get("delta") else None,
+                        "gamma": float(row["gamma"]) if row.get("gamma") else None,
+                        "vega": float(row["vega"]) if row.get("vega") else None,
+                        "theta": float(row["theta"]) if row.get("theta") else None,
+                        "volume": int(float(row["volume"])) if row.get("volume") else 0,
+                    }
+                )
+                cur_underlying = float(row["underlying_close"])
+                n_rows += 1
+
+        # The final group and final date have no successor to trigger a flush.
+        if cur_key is not None:
+            end_group(cur_key, cur_contracts, cur_underlying)
+            end_date()
+
+    logger.info("  %d surface rows, %d date×ticker groups", n_rows, n_groups)
 
     tickers_30plus = sum(1 for n in tickers_with_30d.values() if n >= 30)
 
     logger.info("=== Coverage Report ===")
-    logger.info("  Total dates: %d", len(set(k[0] for k in groups)))
+    logger.info("  Total dates: %d", len(dates_seen))
     logger.info("  Total feature rows: %d", n_features)
     logger.info("  Tickers with >= 30 daily rows: %d", tickers_30plus)
     logger.info("  rr_25d coverage: %d/%d (%.1f%%)", n_with_rr, n_features, 100 * n_with_rr / max(n_features, 1))
