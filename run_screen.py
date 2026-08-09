@@ -8650,8 +8650,16 @@ def save_validation_snapshot(
 
     # Regulatory coverage telemetry (all sources: M3, event ledger, manual calendar)
     _n_pdufa_events = len(_pdufa_manual)
-    _n_reg_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
+    # Numerator and denominator must span the same population. This counted
+    # flags across the whole universe but divided by the eligible count, so a
+    # field named n_eligible_flagged — and a ratio documented as "% of eligible
+    # tickers" — silently included ineligible names. On 2026-08-07 that was 39
+    # flagged against 217 eligible = 18.0%, when only 30 of those 39 were
+    # eligible; like-for-like was 13.8%, an inflation of 4.2pp. Same shape as
+    # the portfolio_weights defect (#558): a ratio built from two populations.
     _eligible_count = sum(1 for r in csv_rows if _is_eligible(r))
+    _n_reg_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1" and _is_eligible(r))
+    _n_reg_flagged_all = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
     _reg_type_counts: Dict[str, int] = {}
     for r in csv_rows:
         et = r.get("regulatory_event_type", "")
@@ -8685,6 +8693,8 @@ def save_validation_snapshot(
         "event_ledger_regulatory_entries": _n_ledger_reg,
         "event_ledger_sources": _ledger_source_counts,
         "n_eligible_flagged": _n_reg_flagged,
+        "n_universe_flagged": _n_reg_flagged_all,
+        "n_eligible": _eligible_count,
         "regulatory_secondary_coverage_pct": round(_n_reg_flagged / max(_eligible_count, 1) * 100, 1),
         "flagged_event_types": _reg_type_counts,
         "reg_calendar_entries_raw": _n_pdufa_events,
