@@ -135,12 +135,27 @@ Verify both pushes and report both PR URLs.
 Keeping both `main` branches synchronized is the standing expectation; treat
 drift between them as a problem to fix, not a condition to work around.
 
-**`main` sync is automated, but lands by pull request.**
+**`main` sync lands by pull request, and is currently MANUAL.**
 `.github/workflows/mirror-main-to-wr-sw-dev.yml` runs after every merge to
 `origin/main`. `WR-SW-Dev/main` is a **protected branch**, so a direct push is
 declined (`protected branch hook declined`) — the workflow therefore pushes the
 `mirror/main-sync` branch and opens a PR against `main` there. Merging that PR
 is a human step, by design; the protection is respected, not bypassed.
+
+**The workflow is dormant until `WRSWDEV_MIRROR_TOKEN` exists.** Without the
+secret it logs a notice and exits 0 — deliberately a skip, not a failure, so it
+does not put a red X on every merge. Check the workflow's run summary: `Action:
+skipped` means dormant, not broken. To enable it, add a fine-grained PAT on
+`WR-SW-Dev/biotech-screener` with **Contents: read and write** and **Pull
+requests: read and write** — no bypass of the branch protection is needed.
+
+Until then, sync by hand (no token or admin required — a branch push to that
+repo is allowed, only `main` is protected):
+
+```bash
+git push WR-SW-Dev main:refs/heads/mirror/main-sync
+gh pr create --repo WR-SW-Dev/biotech-screener --base main --head mirror/main-sync --fill
+```
 
 It never force-pushes and never pushes to `main`. Before proposing anything it
 checks whether the mirror carries content `origin` lacks and fails loudly if so,
