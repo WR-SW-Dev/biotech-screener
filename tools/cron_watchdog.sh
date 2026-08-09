@@ -42,6 +42,30 @@ else
     PROD_RAN=false
 fi
 
+# A run that has not happened yet is not a missed run. Production is scheduled
+# for 16:30 ET (crontab: 30 16 * * 1-5), deliberately after the close so the
+# snapshot can see the day's prices. Before that time, an absent snapshot means
+# "not due", not "failed".
+#
+# Without this guard the watchdog fires on every WSL2 boot — in practice ~09:00
+# — and manufactures a PRE-MARKET snapshot. That snapshot then satisfies the
+# 16:30 run's own "already done" check, so the real post-close run never
+# regenerates it and only performs housekeeping. Every weekday this week went
+# that way (starts 08:37, 09:05, 09:12, 09:54, 09:05), which is why:
+#   - pnl_attribution reported coverage 0.0% (no same-day prices exist yet, so
+#     price_d1 was null for all 20 positions and n_priced was 0)
+#   - market_data sat a day stale (age_days=1)
+#   - drift_monitoring saw next_earnings_date coverage drop 20.4pp
+# Thursday passed only because that day's run happened to land at 14:52.
+#
+# Override for testing or a changed schedule: PROD_DUE_HHMM=0930 bash ...
+PROD_DUE_HHMM="${PROD_DUE_HHMM:-1630}"
+NOW_HHMM=$(date +%H%M)
+if [ "$PROD_RAN" = false ] && [ "$((10#$NOW_HHMM))" -lt "$((10#$PROD_DUE_HHMM))" ]; then
+    log "Production for $TODAY not due until ${PROD_DUE_HHMM} (now ${NOW_HHMM}) — not a missed run, skipping recovery"
+    PROD_RAN=notdue
+fi
+
 if [ "$PROD_RAN" = false ]; then
     # If daily_production is currently mid-flight (lock held by an active PID),
     # skip the recovery — it's already running. The wrapper has its own lock,
