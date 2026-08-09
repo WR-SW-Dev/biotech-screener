@@ -135,13 +135,28 @@ Verify both pushes and report both PR URLs.
 Keeping both `main` branches synchronized is the standing expectation; treat
 drift between them as a problem to fix, not a condition to work around.
 
-**`main` sync is automated.** `.github/workflows/mirror-main-to-wr-sw-dev.yml`
-fast-forwards `WR-SW-Dev/main` after every merge to `origin/main`. It never
-force-pushes: if the mirror holds commits `origin` lacks, the job fails loudly
-and touches nothing, which is a real divergence for a human to reconcile. So
-`main`-to-`main` drift should self-heal within a minute of a merge; if the
-divergence check above is non-zero, look at that workflow's last run before
-assuming anything else.
+**`main` sync is automated, but lands by pull request.**
+`.github/workflows/mirror-main-to-wr-sw-dev.yml` runs after every merge to
+`origin/main`. `WR-SW-Dev/main` is a **protected branch**, so a direct push is
+declined (`protected branch hook declined`) — the workflow therefore pushes the
+`mirror/main-sync` branch and opens a PR against `main` there. Merging that PR
+is a human step, by design; the protection is respected, not bypassed.
+
+It never force-pushes and never pushes to `main`. Before proposing anything it
+checks whether the mirror carries content `origin` lacks and fails loudly if so,
+rather than opening a PR that would revert someone's work.
+
+So drift does **not** self-heal any more — expect an open mirror PR on
+WR-SW-Dev after each merge here, and merge it to close the gap. If the
+divergence check above is non-zero, look for that PR first.
+
+Note the two branches will differ in *history* even when fully in sync, because
+merging the mirror PR creates a merge commit that `origin` never sees. Compare
+**trees**, not commit SHAs, when asking whether the mirror is current:
+
+```bash
+git rev-parse origin/main^{tree} WR-SW-Dev/main^{tree}   # equal => in sync
+```
 
 This does **not** replace the dual push and two PRs — the mirror only moves
 `main`. Feature branches still go to both remotes, and each GitHub repository
