@@ -44,21 +44,31 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify mirror credential is configured
+      # An unconfigured mirror is a deferred decision, not a failure. Failing
+      # here put a red X on every merge to main — 16 consecutive failed runs,
+      # all the same missing secret — and a check that is always red teaches
+      # everyone to ignore red. Skip cleanly instead: the workflow stays armed
+      # and starts working the moment the secret exists.
+      - name: Check for mirror credential
+        id: credential
         env:
           MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
         run: |
           if [ -z "${MIRROR_TOKEN}" ]; then
-            echo "::error::WRSWDEV_MIRROR_TOKEN is not set. Add a fine-grained PAT on ${MIRROR_REPO} with 'Contents: read and write' and 'Pull requests: read and write' as a repository secret."
-            exit 1
+            echo "::notice::WRSWDEV_MIRROR_TOKEN is not set — skipping mirror sync. To enable, add a fine-grained PAT on ${MIRROR_REPO} with 'Contents: read and write' and 'Pull requests: read and write'. Until then the mirror is synced by hand; see CLAUDE.md."
+            echo "configured=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "configured=true" >> "${GITHUB_OUTPUT}"
           fi
 
       - uses: actions/checkout@v4
+        if: steps.credential.outputs.configured == 'true'
         with:
           fetch-depth: 0
 
       - name: Compare against the mirror
         id: compare
+        if: steps.credential.outputs.configured == 'true'
         env:
           MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
         run: |
@@ -96,7 +106,7 @@ jobs:
           echo "head_sha=${ours}" >> "${GITHUB_OUTPUT}"
 
       - name: Push the mirror branch
-        if: steps.compare.outputs.action == 'propose'
+        if: steps.credential.outputs.configured == 'true' && steps.compare.outputs.action == 'propose'
         env:
           MIRROR_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
         run: |
@@ -108,7 +118,7 @@ jobs:
           git push mirror "HEAD:refs/heads/${MIRROR_BRANCH}"
 
       - name: Open or update the pull request
-        if: steps.compare.outputs.action == 'propose'
+        if: steps.credential.outputs.configured == 'true' && steps.compare.outputs.action == 'propose'
         env:
           GH_TOKEN: ${{ secrets.WRSWDEV_MIRROR_TOKEN }}
           HEAD_SHA: ${{ steps.compare.outputs.head_sha }}
@@ -152,7 +162,11 @@ jobs:
             echo "### Mirror to ${MIRROR_REPO}"
             echo ""
             echo "- Source: \`${GITHUB_REPOSITORY}@${GITHUB_SHA:0:8}\`"
-            echo "- Action: \`${{ steps.compare.outputs.action || 'failed' }}\`"
+            if [ "${{ steps.credential.outputs.configured }}" != "true" ]; then
+              echo "- Action: \`skipped — WRSWDEV_MIRROR_TOKEN not configured\`"
+            else
+              echo "- Action: \`${{ steps.compare.outputs.action || 'failed' }}\`"
+            fi
             if [ -n "${PR:-}" ]; then echo "- Pull request: ${PR}"; fi
             echo "- Result: \`${{ job.status }}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
