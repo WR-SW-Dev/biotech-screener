@@ -91,6 +91,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "pit_bundle_health",
         "decision_engine_schema",
         "deploy_freshness",
+        "working_tree_clean",
         "sort_contrib_sanity",
         "portfolio_weights",
         "eligibility_consistency",
@@ -1191,6 +1192,135 @@ def check_deploy_freshness(
             f"({head_sha} vs {remote_sha}){ahead_note} — merged work is not deployed: {preview}"
         ),
         value=behind,
+        threshold=0,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Working-tree provenance gate (WARN-only)
+# ---------------------------------------------------------------------------
+
+# Paths whose modification makes a snapshot unreproducible. Everything else in
+# the tree — production_data/, artifacts/, logs/, docs/, snapshots — is written
+# by the pipeline itself, so it is dirty on every run by design and must not
+# warn or this gate would be permanently yellow and therefore ignored.
+_CODE_SUFFIXES = {".py", ".sh", ".yml", ".yaml", ".toml", ".cfg", ".ini"}
+_CODE_DIRS = (
+    "tools/",
+    "scripts/",
+    "common/",
+    "agents/",
+    "config/",
+    "event_ev/",
+    "adapters/",
+    "mcp_server/",
+    "wake_robin_data_pipeline/",
+    "scientific_cartography/",
+    ".github/",
+)
+
+
+def _is_code_path(path: str) -> bool:
+    """True when a repo-relative path is source rather than pipeline output."""
+    p = path.strip().strip('"')
+    if p.startswith("production_data/") or p.startswith("data/") or p.startswith("logs/"):
+        return False
+    if Path(p).suffix in _CODE_SUFFIXES:
+        return True
+    return any(p.startswith(d) for d in _CODE_DIRS)
+
+
+def check_working_tree_clean(
+    repo_root: Path,
+    timeout_s: int = 30,
+) -> GateResult:
+    """Warn when the snapshot is produced from modified source. WARN-only.
+
+    A run against edited code cannot be reproduced from any commit, so the
+    snapshot's provenance is unrecoverable. On 2026-08-06 exactly that
+    happened: the run executed with dirty_pre_run and dirty_post_run both
+    true, and its CTGov catalyst count came out at 2417 against a 1114-1192
+    baseline — a number no commit can reproduce. Nothing in that run's
+    overall=WARN said so; the dirty flag sat in run_manifest.json unread.
+
+    Deliberately narrow. The pipeline writes production_data/, artifacts/ and
+    logs/ into its own working tree, so `git status` is non-empty on every
+    healthy run. Warning on that would make this gate permanently yellow —
+    the same failure mode as portfolio_weights (#558) and
+    decision_engine_schema (#563), both of which warned by construction and
+    quietly consumed the overall=WARN signal. Only source changes warn.
+
+    An unreadable git state is WARN, never PASS: run_manifest has recorded
+    dirty=None on days when `git status` failed (a stranded index.lock does
+    it), and "unknown provenance" must not be reported as "clean".
+    """
+    try:
+        proc = subprocess.run(
+            # -uall expands untracked directories. Without it git collapses them
+            # to "?? tools/", which both hides the offending filename and makes
+            # classification a guess for a directory of mixed content.
+            ["git", "-C", str(repo_root), "status", "--porcelain", "-uall"],
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+        )
+    except subprocess.TimeoutExpired:
+        return GateResult(
+            name="working_tree_clean",
+            status="WARN",
+            detail=f"git status timed out after {timeout_s}s — provenance unknown",
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        return GateResult(
+            name="working_tree_clean",
+            status="WARN",
+            detail=f"working tree check errored: {type(exc).__name__}: {exc}",
+        )
+
+    if proc.returncode != 0:
+        err = (proc.stderr or "").strip().splitlines()
+        return GateResult(
+            name="working_tree_clean",
+            status="WARN",
+            detail=f"git status failed — provenance unknown: {err[-1] if err else 'unknown error'}",
+        )
+
+    code_paths: List[str] = []
+    n_output = 0
+    for line in (proc.stdout or "").splitlines():
+        if len(line) < 4:
+            continue
+        # Porcelain v1: XY<space>path, and "orig -> new" for renames.
+        path = line[3:].split(" -> ")[-1].strip()
+        if not path:
+            continue
+        if _is_code_path(path):
+            code_paths.append(path)
+        else:
+            n_output += 1
+
+    output_note = f"; {n_output} pipeline output file(s) modified, as expected" if n_output else ""
+
+    if not code_paths:
+        return GateResult(
+            name="working_tree_clean",
+            status="PASS",
+            detail=f"no source modifications — snapshot is reproducible from HEAD{output_note}",
+            value=0,
+        )
+
+    preview = ", ".join(sorted(code_paths)[:5])
+    if len(code_paths) > 5:
+        preview += f", +{len(code_paths) - 5} more"
+
+    return GateResult(
+        name="working_tree_clean",
+        status="WARN",
+        detail=(
+            f"{len(code_paths)} source file(s) modified — this snapshot cannot be "
+            f"reproduced from any commit: {preview}{output_note}"
+        ),
+        value=len(code_paths),
         threshold=0,
     )
 
@@ -5391,6 +5521,11 @@ def run_daily(
     deploy_gate = check_deploy_freshness(REPO_ROOT)
     gate_results.append(deploy_gate)
     _logger.info(f"Deploy gate: {deploy_gate.status} — {deploy_gate.detail}")
+
+    # --- Gate: working-tree provenance (WARN) — a dirty source tree is unreproducible ---
+    tree_gate = check_working_tree_clean(REPO_ROOT)
+    gate_results.append(tree_gate)
+    _logger.info(f"Working-tree gate: {tree_gate.status} — {tree_gate.detail}")
 
     # --- Gate: split-adjusted freshness (WARN) — stops silent drift recurring ---
     split_adj_gate = check_split_adj_freshness(price_csv, _split_adj_csv)
