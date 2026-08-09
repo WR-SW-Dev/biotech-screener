@@ -57,6 +57,7 @@ from run_daily_production import (
     check_risk_concentration,
     check_sort_contrib_sanity,
     check_turnover,
+    check_working_tree_clean,
     check_xbi_staleness,
     promote_snapshot,
     run_daily,
@@ -1157,6 +1158,7 @@ class TestOpsContract:
             "pit_bundle_health",
             "decision_engine_schema",
             "deploy_freshness",
+            "working_tree_clean",
             "sort_contrib_sanity",
             "portfolio_weights",
             "eligibility_consistency",
@@ -1545,6 +1547,86 @@ class TestDeployFreshnessGate:
 
     def test_gate_is_allowlisted(self):
         assert "deploy_freshness" in GATE_ALLOWLIST
+
+
+class TestWorkingTreeCleanGate:
+
+    def test_clean_tree_pass(self, tmp_path):
+        """No modifications at all -> PASS."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        result = check_working_tree_clean(clone)
+        assert result.status == "PASS", result.detail
+        assert result.value == 0
+
+    def test_pipeline_output_only_pass(self, tmp_path):
+        """production_data/ and artifacts/ churn every run -> still PASS.
+
+        Regression guard: warning on pipeline output would make this gate
+        permanently yellow, which is the failure mode it exists to avoid.
+        """
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        (clone / "production_data").mkdir()
+        (clone / "production_data" / "market_data.json").write_text("{}", encoding="utf-8")
+        (clone / "artifacts").mkdir()
+        (clone / "artifacts" / "captures.jsonl").write_text("{}\n", encoding="utf-8")
+        (clone / "logs").mkdir()
+        (clone / "logs" / "cron.log").write_text("x", encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "PASS", result.detail
+        assert "pipeline output" in result.detail
+
+    def test_modified_source_warns(self, tmp_path):
+        """An edited tracked .py -> WARN naming it.
+
+        This is the 2026-08-06 case: that run recorded dirty_pre_run and
+        dirty_post_run true, produced a CTGov count of 2417 against a
+        1114-1192 baseline, and nothing in overall=WARN said the snapshot
+        was unreproducible.
+        """
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        _commit(clone, "run_screen.py", "x = 1\n")
+        (clone / "run_screen.py").write_text("x = 2\n", encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "WARN"
+        assert result.value == 1
+        assert "run_screen.py" in result.detail
+        assert "cannot be reproduced" in result.detail
+
+    def test_untracked_source_warns(self, tmp_path):
+        """A new, uncommitted .py is source too -> WARN."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        (clone / "tools").mkdir()
+        (clone / "tools" / "scratch_patch.py").write_text("print(1)\n", encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "WARN"
+        assert "scratch_patch.py" in result.detail
+
+    def test_source_and_output_together_warn(self, tmp_path):
+        """Source change alongside expected output churn still warns."""
+        _upstream, clone = _make_upstream_and_clone(tmp_path)
+        _commit(clone, "run_screen.py", "x = 1\n")
+        (clone / "run_screen.py").write_text("x = 2\n", encoding="utf-8")
+        (clone / "production_data").mkdir()
+        (clone / "production_data" / "market_data.json").write_text("{}", encoding="utf-8")
+
+        result = check_working_tree_clean(clone)
+        assert result.status == "WARN"
+        assert "run_screen.py" in result.detail
+        assert "pipeline output" in result.detail
+
+    def test_not_a_repo_warns_not_passes(self, tmp_path):
+        """Unreadable git state is WARN -- unknown provenance is not clean."""
+        plain = tmp_path / "plain"
+        plain.mkdir()
+        result = check_working_tree_clean(plain)
+        assert result.status == "WARN"
+        assert "provenance unknown" in result.detail
+
+    def test_gate_is_allowlisted(self):
+        assert "working_tree_clean" in GATE_ALLOWLIST
 
 
 # ---------------------------------------------------------------------------
@@ -2012,8 +2094,8 @@ class TestOpsContractWithNewGates:
         assert "eligibility_consistency" in GATE_ALLOWLIST
 
     def test_allowlist_count_updated(self):
-        """Allowlist has 43 entries."""
-        assert len(GATE_ALLOWLIST) == 43
+        """Allowlist has 44 entries."""
+        assert len(GATE_ALLOWLIST) == 44
 
     def test_new_gates_in_allowlist_v2(self):
         assert "exposure_missingness" in GATE_ALLOWLIST
