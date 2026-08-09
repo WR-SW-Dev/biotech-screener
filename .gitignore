@@ -82,6 +82,19 @@ artifacts/forward_validation/*
 !artifacts/audit/
 artifacts/audit/*
 !artifacts/audit/*.md
+# Forward-shadow evidence ledgers live one level down, and `artifacts/audit/*`
+# above ignores the directory itself. Git does not descend into an ignored
+# directory, so `!artifacts/**/*.jsonl` alone would never match — the directory
+# un-ignore is load-bearing. Same shape as artifacts/forward_validation/ above.
+#
+# buckets.jsonl and checkpoints.jsonl are tracked today only because they
+# predate the rule. A NEW ledger in either directory was silently untrackable:
+# `git add` refused it, and `git status` never showed it. That is the failure
+# that lost forward-validation windows to git on 2026-07-23 (SM-20260629-001).
+!artifacts/audit/*_forward_shadow/
+artifacts/audit/*_forward_shadow/*
+!artifacts/audit/*_forward_shadow/*.jsonl
+!artifacts/audit/*_forward_shadow/*.md
 !artifacts/spec100/
 artifacts/spec100/*
 !artifacts/spec100/*.md
