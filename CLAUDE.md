@@ -112,6 +112,9 @@ branch=$(git branch --show-current)
 git push --set-upstream origin     "$branch"
 git push --set-upstream WR-SW-Dev  "$branch"
 
+# --fill is fine HERE: "$branch" is checked out locally, so gh can read its
+# commits for the title and body. It does NOT work for the mirror sync below,
+# where the branch exists only on the remote.
 gh pr create --repo Warrenpoobear/biotech-screener --base main --head "$branch" --fill
 gh pr create --repo WR-SW-Dev/biotech-screener     --base main --head "$branch" --fill
 ```
@@ -153,8 +156,32 @@ Until then, sync by hand (no token or admin required — a branch push to that
 repo is allowed, only `main` is protected):
 
 ```bash
+# 1. Safety check. Three-dot diff = changes made on the MIRROR side since the
+#    branches parted. Must be EMPTY: anything here is content the mirror has
+#    and origin does not, and syncing would revert it. Two-dot (`..`) does NOT
+#    answer this — it is just the forward diff inverted, and always non-empty.
+git fetch origin && git fetch WR-SW-Dev
+git diff --stat origin/main...WR-SW-Dev/main     # empty => safe to proceed
+
+# 2. Push origin/main onto the mirror's sync branch.
 git push WR-SW-Dev main:refs/heads/mirror/main-sync
-gh pr create --repo WR-SW-Dev/biotech-screener --base main --head mirror/main-sync --fill
+
+# 3. Open the PR. Do NOT use --fill: it derives the title and body by
+#    inspecting the head branch LOCALLY, but mirror/main-sync only ever exists
+#    on the remote (step 2 pushes main directly to that ref, creating no local
+#    branch). gh then fails with "Use '--' to separate paths from revisions".
+gh pr create --repo WR-SW-Dev/biotech-screener \
+  --base main --head mirror/main-sync \
+  --title "mirror: sync main from Warrenpoobear/biotech-screener" \
+  --body "Mirror sync from Warrenpoobear/biotech-screener, carried verbatim. No commits originate here. Verified before pushing: three-dot diff origin/main...WR-SW-Dev/main is empty."
+```
+
+Then merge that PR. Confirm parity by **tree**, not by SHA — the merge commit
+lives only on the mirror, so the histories differ permanently even when the
+content is identical:
+
+```bash
+git rev-parse origin/main^{tree} WR-SW-Dev/main^{tree}   # equal => in sync
 ```
 
 It never force-pushes and never pushes to `main`. Before proposing anything it
