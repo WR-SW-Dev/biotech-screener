@@ -964,3 +964,40 @@ Tier 0 observability/plumbing only. No ranker, selector, sizing, or `final_score
 - Weekly universe refresh cron created: `cron_universe_weekly_refresh.sh` (Monday 08:30 ET, 4 steps)
 - Universe nested `market_data` dict in universe.json entries is distinct from `production_data/market_data.json`
 ### Sync: pending (run sync_hermes_skills.py after this entry)
+
+## 2026-08-06
+### Git activity (past 7d)
+- **biotech-screener**: 24 commits reviewed. Key items:
+  - `2946964b` feat(selector): gate pending-acquisition names from ranker/selector (#555) — SIGNAL/MODEL change
+  - `050098c5` fix(run_screen): make price staleness check per-ticker, not global-max (#551) — SIGNAL/MODEL fix
+  - `faafd21f` feat(pipeline): refresh split-adjusted price series, with retroactive-rewrite guard (#549) — PIPELINE, new data-integrity safety pattern
+  - `d090713a` fix(monitoring): resolve prior snapshots from `_prior_dir`, not staging parent (#546) — PIPELINE bug fix
+  - `75d6d9ba` fix(fv): compute bottom-30 adversarial control as excess, not raw return (#548) — PIPELINE/forward-validation correctness fix
+  - `9a0fe8f1` fix(universe): honor every retirement status, not just "delisted" (#552) — PIPELINE
+  - `1a802e50` feat(corporate-actions): support pending_acquisition, register CPRX/ESPR/SGMO (#553) — PIPELINE
+  - `2e483395` fix(ctgov+replay): emit collector date precision (#535 Phase 1b), unblock replay-regression drift check (#550) — PIPELINE
+  - `6509a001` perf(crt): memoize snapshot scan + rankings parse in CRT options join (#547) — PIPELINE (perf, no behavior change)
+  - `26000700` fix(audit): parse the eligible column instead of stringifying it — PIPELINE (audit tool fix)
+  - `8814b751` fix(pipeline): allowlist the split_adj_freshness gate — PIPELINE
+  - Remainder: routine `monitoring:`/`x-intelligence:`/`chore:` daily snapshot and evidence-capture commits — HOUSEKEEPING, skipped
+- **asset-allocation**: 1 commit — `a3aa65e` docs(tracking): MODE A sync 2026-08-03 (598 passed, 0 ruff errors, no drift) — routine tracker sync, not actionable
+
+### Sessions reviewed: 5
+- "biotech screener pipeline cron failure debug" — no hits within 7-day window (all results May–June 2026)
+- "biotech screener ruleset selector signal governance" — no hits within 7-day window
+- "asset allocation phase tracker" — no hits within 7-day window
+- "hermes token cost skill" — no hits within 7-day window
+- "ees veto shadow monitor raw_veto_core gate" — no hits within 7-day window
+No confirmed session findings from the past 7 days; nearest relevant sessions are 1+ month old (already harvested previously).
+
+### EES v3 veto monitor findings (run_findings.jsonl, past 7d, 2026-07-28 → 2026-08-06)
+- All 9 daily runs: `script_exit: 0`, `gate_20d.met: true`, `anomalies: []` — clean throughout.
+- `veto_alpha_20d` drifting down 7.4 → 6.44 across the window (still positive, no ALERT threshold crossed).
+- `n_vetoed` stable in 6–9/day range. No SCRIPT_ERROR / ZERO_VETOES / HIGH_VETO_COUNT / ALPHA_NEGATIVE / ALPHA_SPIKE flags fired.
+
+### Skill patches
+- None. No confirmed real-instance finding this cycle maps cleanly to the 6 candidate skills (openclaw-cron-scheduler-debug, openclaw-agent-scope-audit, openclaw-session-routing-debug, openclaw-data-pipeline-debug, aa-model-tracker, ees-v3-veto-monitor). The pipeline/data-integrity fixes above are screener-internal (run_screen.py, monitoring snapshot resolver, forward-validation) rather than OpenClaw-agent-fleet failure modes, so they don't fit the existing skill scopes without stretching them.
+
+### New skills created: none
+
+### No new findings: harvest_log.md only — no skill patches this run.
