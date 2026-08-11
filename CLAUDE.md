@@ -88,121 +88,34 @@ Every new signal must include:
 
 ---
 
-## Git Remotes & PR Policy
+## Governance: what needs prior agreement vs. what needs review
 
-This repository has two GitHub remotes. Both must receive every feature branch.
+Two different categories of change, with two different processes.
 
-| Remote | GitHub repository | Role |
-|--------|-------------------|------|
-| `origin` | `Warrenpoobear/biotech-screener` | **Primary** |
-| `WR-SW-Dev` | `WR-SW-Dev/biotech-screener` | Mirror — must stay in sync |
+**Ordinary code changes** (bug fixes, features, tests, data/pipeline work) — branch,
+open a PR, get it reviewed and approved, merge. This repository's branch protection
+enforces the review step; it does not enforce the category below.
 
-**Never push feature work directly to `main` on either remote.** A `pre-push`
-hook (INC-2026-06-20-AUTOPUSH) blocks non-interactive pushes to `main`; that
-guard is a backstop, not the policy. The policy is: branch, push, PR.
+**Governance changes** — anything touching:
+- repository policy or this file's own policy sections
+- `.github/workflows/` (CI/CD configuration)
+- branch protection, collaborator access, or repository/org settings
+- cross-repository sync or mirroring mechanisms
+- credential, secrets, or trading-execution infrastructure
 
-For every change, push the current branch to both remotes, then open one PR per
-GitHub repository — commits and branches replicate across remotes, but **PRs are
-repository-specific, so two separate PRs are always required**, with the same
-title and description.
+...require **explicit prior agreement between the maintainer and Wake Robin's CTO
+before a PR is opened** — not review-and-approve after the fact. A governance change
+is not something a code review checkbox can ratify; opening a PR is how an *agreed*
+change gets implemented, not how the agreement itself gets made. If you're unsure
+which category a change falls into, ask first.
 
-```bash
-branch=$(git branch --show-current)
-
-git push --set-upstream origin     "$branch"
-git push --set-upstream WR-SW-Dev  "$branch"
-
-# --fill is fine HERE: "$branch" is checked out locally, so gh can read its
-# commits for the title and body. It does NOT work for the mirror sync below,
-# where the branch exists only on the remote.
-gh pr create --repo Warrenpoobear/biotech-screener --base main --head "$branch" --fill
-gh pr create --repo WR-SW-Dev/biotech-screener     --base main --head "$branch" --fill
-```
-
-Verify both pushes and report both PR URLs.
-
-**Stop conditions — report, never force-push:**
-
-- A push or `gh pr create` fails.
-- The two `main` branches have diverged. Check before opening the second PR:
-  ```bash
-  git fetch origin && git fetch WR-SW-Dev
-  git rev-list --left-right --count origin/main...WR-SW-Dev/main
-  ```
-  Any result other than two zeros means a branch cut from one `main` will carry
-  the other's missing commits into its PR diff. Opening that PR risks merging
-  unrelated work across repositories. Reconcile the two `main` branches first,
-  or cut a second branch from the other remote's `main` and cherry-pick the
-  change onto it so each PR is a clean single-purpose diff.
-
-Keeping both `main` branches synchronized is the standing expectation; treat
-drift between them as a problem to fix, not a condition to work around.
-
-**`main` sync lands by pull request, and is currently MANUAL.**
-`.github/workflows/mirror-main-to-wr-sw-dev.yml` runs after every merge to
-`origin/main`. `WR-SW-Dev/main` is a **protected branch**, so a direct push is
-declined (`protected branch hook declined`) — the workflow therefore pushes the
-`mirror/main-sync` branch and opens a PR against `main` there. Merging that PR
-is a human step, by design; the protection is respected, not bypassed.
-
-**The workflow is dormant until `WRSWDEV_MIRROR_TOKEN` exists.** Without the
-secret it logs a notice and exits 0 — deliberately a skip, not a failure, so it
-does not put a red X on every merge. Check the workflow's run summary: `Action:
-skipped` means dormant, not broken. To enable it, add a fine-grained PAT on
-`WR-SW-Dev/biotech-screener` with **Contents: read and write** and **Pull
-requests: read and write** — no bypass of the branch protection is needed.
-
-Until then, sync by hand (no token or admin required — a branch push to that
-repo is allowed, only `main` is protected):
-
-```bash
-# 1. Safety check. Three-dot diff = changes made on the MIRROR side since the
-#    branches parted. Must be EMPTY: anything here is content the mirror has
-#    and origin does not, and syncing would revert it. Two-dot (`..`) does NOT
-#    answer this — it is just the forward diff inverted, and always non-empty.
-git fetch origin && git fetch WR-SW-Dev
-git diff --stat origin/main...WR-SW-Dev/main     # empty => safe to proceed
-
-# 2. Push origin/main onto the mirror's sync branch.
-git push WR-SW-Dev main:refs/heads/mirror/main-sync
-
-# 3. Open the PR. Do NOT use --fill: it derives the title and body by
-#    inspecting the head branch LOCALLY, but mirror/main-sync only ever exists
-#    on the remote (step 2 pushes main directly to that ref, creating no local
-#    branch). gh then fails with "Use '--' to separate paths from revisions".
-gh pr create --repo WR-SW-Dev/biotech-screener \
-  --base main --head mirror/main-sync \
-  --title "mirror: sync main from Warrenpoobear/biotech-screener" \
-  --body "Mirror sync from Warrenpoobear/biotech-screener, carried verbatim. No commits originate here. Verified before pushing: three-dot diff origin/main...WR-SW-Dev/main is empty."
-```
-
-Then merge that PR. Confirm parity by **tree**, not by SHA — the merge commit
-lives only on the mirror, so the histories differ permanently even when the
-content is identical:
-
-```bash
-git rev-parse origin/main^{tree} WR-SW-Dev/main^{tree}   # equal => in sync
-```
-
-It never force-pushes and never pushes to `main`. Before proposing anything it
-checks whether the mirror carries content `origin` lacks and fails loudly if so,
-rather than opening a PR that would revert someone's work.
-
-So drift does **not** self-heal any more — expect an open mirror PR on
-WR-SW-Dev after each merge here, and merge it to close the gap. If the
-divergence check above is non-zero, look for that PR first.
-
-Note the two branches will differ in *history* even when fully in sync, because
-merging the mirror PR creates a merge commit that `origin` never sees. Compare
-**trees**, not commit SHAs, when asking whether the mirror is current:
-
-```bash
-git rev-parse origin/main^{tree} WR-SW-Dev/main^{tree}   # equal => in sync
-```
-
-This does **not** replace the dual push and two PRs — the mirror only moves
-`main`. Feature branches still go to both remotes, and each GitHub repository
-still needs its own PR.
+The prior version of this section documented a dual-remote arrangement (personal
+repo as primary, org repo as mirror), including a manual "mirror sync" PR procedure
+whose own template PR body read "no commits originate here" — a self-merged PR
+satisfying the letter of branch protection while bypassing its intent. That
+arrangement was implemented without this agreement step and is superseded by this
+section pending an actual decision on repo ownership and mirroring between the
+maintainer and Wake Robin.
 
 ---
 
